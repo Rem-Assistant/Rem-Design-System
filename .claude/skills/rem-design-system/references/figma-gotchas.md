@@ -48,19 +48,32 @@ runs JS against the Figma Plugin API; `figma` is the global.
 ## SF Symbols (the icon "wall" is not real)
 
 - **`SF Pro` renders SF Symbols** when you use the **correct PUA codepoint**. The earlier
-  "SF Pro can't render symbols" belief came from *wrong* codepoints off web tables. Verified:
-  `chevron.right = U+10018A`, `chevron.left = U+100189`,
-  `message.badge.waveform.fill = U+100F02`.
-- The community file "SF Symbols | Text objects for Figma" (`eMocgqr193EB694SlKtYZP`) uses
-  **"SF Pro Display"** (not installed in the cloud plugin env — only "SF Pro" is) and lists
-  symbols as text nodes **named by glyph**, with **no name→codepoint index**. So it confirms
-  the approach but isn't a lookup table.
-- **Sourcing codepoints:** paste the needed symbols into the **icon-request frame** (a
-  labeled grid the user fills using their Mac's SF Pro Display), then read each node's
-  codepoint (`[...t.characters].map(c=>c.codePointAt(0).toString(16))`) and reproduce with
-  `figma.createText()` + `{family:"SF Pro"}` + `String.fromCodePoint(cp)`. **Never return raw
-  PUA glyphs in a `use_figma` return value** — the transport proxy 500s on them; return
-  hex codepoints or booleans.
+  "SF Pro can't render symbols" belief came from *wrong* codepoints off web tables (never
+  trust those). Verified: `chevron.right = U+10018A`, `chevron.left = U+100189`,
+  `message.badge.waveform.fill = U+100F02`, `calendar = U+100249`.
+- **Sourcing codepoints — the community file IS a lookup table (spatial pairing).** The file
+  "SF Symbols | Text objects for Figma" (`eMocgqr193EB694SlKtYZP`) holds two kinds of TEXT
+  nodes on its **"Start here"** page: a **caption** node whose `characters` are the ascii
+  symbol name (e.g. `"calendar"`), and next to it the **glyph** node whose `characters` are
+  the single PUA glyph (its `name` is the glyph, not the symbol name — so you can't grep the
+  name). They pair **by position**: for a given caption, the paired glyph is the nearest glyph
+  node on the **same row, ~68px to the LEFT** (`dy≈0, dx≈-68`). To resolve a symbol:
+  1. `findAllWithCriteria({types:['TEXT']})` on the current page (~28k nodes; don't
+     `loadAllPagesAsync`).
+  2. Build the glyph list = single-char nodes with `codePointAt(0) >= 0x100000`, recording
+     each center from `absoluteBoundingBox`.
+  3. Find the caption node whose `characters` equal the symbol name, take the nearest glyph by
+     2D distance (the same-row left neighbour wins), read `cp.toString(16)`.
+  - **Anchor the method with a known answer** (`chevron.right` must come back `10018a`) before
+    trusting a new lookup — the pairing offset was proven that way.
+  - **Fallback** (symbol/name absent, or verifying): paste the needed symbols into the
+    **icon-request frame** (the user fills it using their Mac's SF Pro Display) and read each
+    node's codepoint directly.
+  - Reproduce with `figma.createText()` + `{family:"SF Pro", style:"Bold"}` +
+    `String.fromCodePoint(cp)`. **Always screenshot the result to confirm the glyph** — a
+    wrong codepoint renders a plausible-but-wrong symbol, not tofu, so only the render proves
+    it. **Never return raw PUA glyphs in a `use_figma` return value** — the transport proxy
+    500s on them; return hex codepoints or booleans.
 
 ## Kit / library
 

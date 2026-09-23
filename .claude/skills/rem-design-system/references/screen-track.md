@@ -4,14 +4,30 @@ For a **screen or flow** (Agenda, Chat, Settings, Inbox, a pattern). A screen is
 canonical components — it is not a new component. Ground it in the real SwiftUI view so the
 structure and every state are faithful, not invented.
 
-## Ground in the source first
+## Ground in BOTH the source and the screenshot — then diff
 
-Open the shipping SwiftUI view (`Shared/Views/…`, `Rem/Sources/…`) and read its actual
-structure **and its state machine**. The states are the point: e.g. Agenda has
+The single biggest fidelity failure is building from a mock-derived frame or from memory
+instead of the ground truth. **Two grounds, used together, before the first node:**
+
+1. **The shipping SwiftUI view** (`Shared/Views/…`, `Rem/Sources/…`) for **exact values** —
+   font sizes/weights, colors, paddings, glyph names, and the **state machine**. Write these
+   down as a short spec. (Agenda's `DateNavigationHeader` is a blue `calendar` icon (22 bold)
+   + "Today" (22 **bold**, not 17 semibold) + date (13 bold) + **three 10×4 dashes** at 50%
+   opacity beside 22-bold chevrons; its toolbar is **three separate circular buttons**, not a
+   glass pill. Missing any of that = "not faithful" — that exact miss happened by skipping
+   this step.)
+2. **The committed app screenshot** (`docs/screenshots/*.png`, e.g. `01-agenda`, `05-connectors`,
+   `06-chat`) for the **visual truth** — read it with the image reader and note structure,
+   proportions, which state it's in (e.g. `06-chat` shows the voice bar **active/Listening**).
+
+The states are the point — "every screen + its states" means all of them: Agenda has
 scheduled/empty/loading/jump-to-today/sort-modes; Chat has the 3-way empty gate, run
-lifecycle, tool-result error/unknown, and the voice bar's 6 states (from
-`MiniPlayerBar.swift`: connecting/listening/speaking/muted/reading/closing). Enumerate them
-before building — "every screen + its states" means all of them.
+lifecycle, tool-result error/unknown, and the voice bar's 6 states (`MiniPlayerBar.swift`:
+connecting/listening/speaking/muted/reading/closing).
+
+**After building, diff against the screenshot** — screenshot the Figma frame and compare it
+to `docs/screenshots/<screen>.png` side by side; fix every mismatch. This is the visual half
+of "verified against the app"; skipping it is how unfaithful screens ship.
 
 ## Build native, in auto-layout, on canonical components
 
