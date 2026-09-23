@@ -23,6 +23,50 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Consolidation pass — 2026-09-23 (component model + kit adoption)
+
+A second pass reworked the foundation for correctness and to kill duplication. What changed:
+
+- **One row, one slot.** `ListRow`, `ToggleRow`, and `ActionRow` were three near-identical
+  components. They are now a **single `ListRow`** with a trailing **Accessory instance-swap slot**:
+  **Chevron / Switch / Button / None**. ToggleRow + ActionRow are deleted. The blocker (a nested
+  instance's *size* can't be overridden, so a swapped-in Switch stayed chevron-sized) was solved by
+  making `Switch` **HUG-wrap a fixed 51×31 track** — instance-swap then resizes it the way the
+  HUG-sized Button already did.
+- **Row metrics match Apple.** 12pt top/bottom padding → **46pt single-line / 65pt with subtitle**,
+  matching Apple's `Row` set (`Height=Regular` 44, `Height=Tall` 60). Divider is bottom-pinned via a
+  `Show Separator` toggle (hidden on the last row of a card).
+- **Real kit chrome, not hand-drawn.** Screens sit in the **Apple iPhone 16 Pro bezel** (Apple Design
+  Resources; 402×874 screen cutout) via a `DeviceFrame` component with a `Screen` instance-swap slot.
+  Nav bars use the **Apple Navigation Bar - iPhone (Compact)** component — `Default` (inline) for
+  Settings/About, `Large` for Connectors; Agenda keeps `DateNavigationHeader`.
+- **Dedupe + organization.** Deleted orphaned duplicate `Button`/`ContainedIcon` masters and the
+  bespoke `DateNav` frames (now the canonical `DateNavigationHeader`). Device-framed screens live on
+  one **Screens** page in labeled Sections (① Device Kit ② Settings ③ Agenda + states ④ Chat).
+
+**Mac-verify pipeline:** `visual-verify.yml` run **#6** (commit `d31e59d`) is **green** — the
+ground-truth iOS screenshot pipeline is live; no Swift regressions.
+
+### Figma ↔ SwiftUI mapping (manual Code Connect)
+
+Figma **Code Connect** needs a paid Dev/Enterprise seat (unavailable on this plan), so the
+design↔code binding is recorded in each component's Figma **description** and here:
+
+| Figma component | SwiftUI source |
+|---|---|
+| ListRow (+ Accessory slot) | insetGrouped List rows — `Rem/Shared/Views/Settings/SharedSettingsView.swift` |
+| Switch accessory | `Toggle().labelsHidden().tint(.green)` |
+| Button accessory | `Button(.borderedProminent)` / brandBlue capsule |
+| TaskEventRow | `Rem/Rem/Sources/Components/TaskEventRowView.swift` |
+| SuggestedTaskRow | `Rem/Shared/Views/Tasks/SuggestedTaskRow.swift` |
+| MessageBubble | `Rem/Packages/RemKit/Sources/RemChatUI/ChatMessageViews.swift` |
+| ComposerBar | `Rem/Shared/Views/Chat/SharedRemChatView.swift` |
+| DateNavigationHeader | `SharedDateNavigationHeader` — `Rem/Shared/Views/Tasks/SharedAgendaView.swift` |
+| VoiceBar / MiniPlayerBar | `Rem/Shared/Views/Components/MiniPlayerBar.swift` |
+| Task detail screen | `Rem/Rem/Sources/Screens/TaskEventView.swift` |
+
+---
+
 ## Verified components (25/25)
 
 Legend — **✅ faithful**: matches the real render on structure, layout, type, color and glyphs.
@@ -34,9 +78,11 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 | Surface | `8-12` | ✅ | Background tokens (`background/*`), radius tokens. |
 | Card | `11-11` | ✅ | `secondarySystemBackground`, `large`/`medium` corner tokens. |
 | Pill | `64-14` | ✅ | Subtle gray capsule (`secondarySystemBackground`, `caption1`) + optional colored dot — matches the app; earlier saturated-blob version was corrected. |
-| ListRow | `68-6` | ✅ | Leading icon · title · subtitle · trailing chevron, inset separator. Verified vs `05-connectors` and reused in Settings/Inbox. Clean text props (`title`/`subtitle`/`separator`). |
-| ContainedIcon | `12-19` | ✅ | Colored rounded-square icon container; verified in Settings/Inbox rows. |
-| Button | `66-10` | ✅ | Verified via ProposalCard (filled brand-blue **Approve** / outlined **Dismiss**). |
+| ListRow | `101-18` | ✅ | **Unified row** — leading icon · title · subtitle · **Accessory slot** (Chevron/Switch/Button/None), 12pt padding, bottom-pinned divider. Verified vs `05-connectors`, reused across Settings/Connectors/About. (old `68-6` retired) |
+| ContainedIcon | `110-54` | ✅ | Colored rounded-square icon container; per-row fill override for section colors. (old `12-19` deleted) |
+| Button | `110-47` | ✅ | Accessory pill (`Label` TEXT prop); brand-blue **Connect**/action. Also used in ProposalCard. (old `66-10` deleted) |
+| Switch | `110-50` | ✅ | 51×31 green Toggle, HUG-wrapped track so instance-swap resizes it in the ListRow slot. |
+| DeviceFrame | `128-46` | ✅ | Real Apple iPhone 16 Pro bezel + 402×874 Screen instance-swap slot. |
 | MessageBubble | `50-7` | ✅ | Corner **18** (chat constant, not a token); **no tail** in normal style (tail is onboarding-only); user text **14pt**; brand-blue fill + 0.5px white-12% border. Assistant turns render as **bubble-less prose**. Matches `06-chat` + `ChatMessageViews.swift`. |
 | ComposerBar | `53-2` | ✅ | "Ask anything" · `+` attach · brand-blue **Speak** pill (`waveform` + "Speak", corner `medium`/12, white semibold) · `↑` send. Matches `SharedRemChatView.speakButton`. |
 | ContextualMessage | `73-39` | ✅ | Five states (info/success/warning/error/neutral) with correct colored status glyphs. |
