@@ -95,3 +95,5 @@ scratch pages.
 - `references/figma-gotchas.md` — the `use_figma` plugin traps + how to work around each.
 - `references/component-track.md` — the Fluent component-page recipe (anatomy, slots, matrices).
 - `references/screen-track.md` — the device-bezel screen recipe (native auto-layout, sections, states).
+- `references/sf-symbols-map.md` — verified SF Symbol → PUA codepoint table (the app's icon set)
+  + how it was sourced. Read it before adding any icon so you reuse a verified codepoint.

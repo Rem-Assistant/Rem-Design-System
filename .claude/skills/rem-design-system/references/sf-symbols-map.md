@@ -1,0 +1,53 @@
+# SF Symbols → PUA codepoint map (verified)
+
+The name→codepoint lookup for rendering real SF Symbols in Figma with **`SF Pro`** +
+`String.fromCodePoint(cp)`. Every row below was **screenshot-verified** (rendered at SF Pro
+Bold and eyeballed against its name) — a wrong codepoint renders a plausible-but-wrong symbol,
+not tofu, so the render is the only proof. Names come from the real app's `Image(systemName:)`
+usages (`grep -rho 'systemName: "..."' Rem/**.swift`).
+
+**How these were sourced:** spatial pairing in the community file
+"SF Symbols | Text objects for Figma" (`eMocgqr193EB694SlKtYZP`, "Start here" page). Each
+symbol has an ascii **caption** node and, on the **same row ~68–120px to its LEFT**, its
+**glyph** node (single PUA char). Pair caption→nearest-left glyph; the left offset grows with
+name length (glyph fixed-left, caption grows rightward). Anchor with a known answer
+(`chevron.right → 10018a`) before trusting a batch. Full method: `figma-gotchas.md`.
+
+## Verified map
+
+| SF Symbol | Codepoint | SF Symbol | Codepoint |
+|---|---|---|---|
+| `chevron.right` | `U+10018A` | `chevron.left` | `U+100189` |
+| `chevron.down` | `U+100188` | `chevron.up.chevron.down` | `U+10018F` |
+| `calendar` | `U+100249` | `calendar.badge.plus` | `U+10024A` |
+| `line.3.horizontal` | `U+100307` | `list.bullet` | `U+1002F2` |
+| `plus` | `U+10017C` | `xmark` | `U+100184` |
+| `xmark.circle.fill` | `U+100061` | `checkmark` | `U+100185` |
+| `checkmark.circle.fill` | `U+100063` | `magnifyingglass` | `U+1002AB` |
+| `ellipsis` | `U+100360` | `ellipsis.circle` | `U+100361` |
+| `arrow.up` | `U+100128` | `arrow.up.circle.fill` | `U+100077` |
+| `arrow.clockwise` | `U+100148` | `waveform` | `U+10066B` |
+| `message.badge.waveform.fill` | `U+100F02` | `paperclip` | `U+100262` |
+| `exclamationmark.triangle.fill` | `U+1001FF` | `exclamationmark.circle.fill` | `U+10005F` |
+| `clock` | `U+10042B` | `tray` | `U+100223` |
+| `person.fill` | `U+10026A` | `stop.fill` | `U+1006F7` |
+| `play.fill` | `U+100284` | `brain.head.profile` | `U+100BCF` |
+
+## Still needed (not in the community file's caption index)
+
+- `mic.fill` — no ascii caption on the "Start here" page. Source via the **icon-request frame**
+  fallback (paste it using a Mac's SF Pro Display, then read the node's codepoint), or find it
+  under a different representation. Do **not** guess it from a web table.
+
+## Usage
+
+```js
+await figma.loadFontAsync({family:'SF Pro', style:'Bold'});
+const t = figma.createText();
+t.fontName = {family:'SF Pro', style:'Bold'};
+t.characters = String.fromCodePoint(0x100249); // calendar
+t.fontSize = 22;
+```
+
+Never return raw PUA glyphs from a `use_figma` return value (the transport proxy 500s) — return
+hex codepoints or booleans.
