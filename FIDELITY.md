@@ -23,6 +23,31 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Real SF Symbols pass — 2026-09-23 (icon set unblocked)
+
+The earlier belief that "SF Pro can't render SF Symbols in this file" (note 2 below) was **wrong** —
+it came from incorrect codepoints off web tables. `SF Pro` renders SF Symbols correctly with the
+right **PUA codepoint**. Established this pass:
+
+- **Verified codepoint map** for the app's full icon set (28 symbols grep'd from `Image(systemName:)`),
+  each screenshot-checked at SF Pro Bold, sourced by spatial-pairing in the community SF Symbols file
+  and anchored by a known answer (`chevron.right → U+10018A`). Recorded in the skill's
+  `references/sf-symbols-map.md`.
+- **DateNavigationHeader** (`43:2`): hand-drawn calendar → real `calendar` (`U+100249`), corrected to
+  **brand blue `#0C50FF`** (was iOS system blue), horizontal padding removed (Agenda provides the gutter).
+- **Agenda screen** (`181:754`): ascii placeholders → real glyphs — brief `›` → `chevron.right`, sort
+  `⇅`/`⌄` → `chevron.up.chevron.down`/`chevron.down`, `+ Add New` → real `plus` (also corrected
+  system-blue → brand blue); toolbar hand-drawn hamburger/plus → real `line.3.horizontal`/`plus`.
+- **Toolbar overflow fixed**: `Content` set to FILL so the toolbar pins flush at the bottom (`y 790`,
+  bottom `874`) instead of hanging 71px below the clipped frame — the three circular buttons
+  (hamburger · waveform FAB · plus) now match `01-agenda`.
+
+**Still traced/deferred:** `mic.fill` and the brief's `speaker.wave.2.fill` have no ascii caption in
+the community file (source via the icon-request frame); the TaskEventRow status rings and
+SuggestedTaskRow Add/Move CTA glyphs are component-level vectors, not yet swapped.
+
+---
+
 ## Consolidation pass — 2026-09-23 (component model + kit adoption)
 
 A second pass reworked the foundation for correctness and to kill duplication. What changed:
@@ -135,13 +160,13 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 1. **Row leading icons** in SettingsView/InboxView are the generic blue rounded-square; the real app
    uses type-specific SF Symbols (e.g. person/antenna for Account/Gateway, per-notification icons in
    Inbox). They render correctly, just not context-specific.
-2. **Icon glyphs — kit chrome vs. custom.** Custom components use **app-traced vector glyphs** and
-   render correctly everywhere. Imported iOS 26 kit chrome renders SF Symbols as **SF Pro PUA text**;
-   the SF Pro webfont available in this Figma file lacks those private-use glyphs, so kit symbols
-   fall back to missing-glyph boxes. The only place this surfaced (the Agenda toolbar) is fixed by
-   overlaying traced vectors. **If pixel-exact official SF Symbols are wanted throughout the kit
-   chrome, add an SF Symbols component library and instance-swap** — the custom components already
-   read correctly without it.
+2. **Icon glyphs — now real SF Symbols.** *(Superseded 2026-09-23 — see the Real SF Symbols pass
+   above.)* The earlier claim here — that the SF Pro webfont in this file lacks the private-use
+   glyphs — was wrong; it came from incorrect codepoints. `SF Pro` renders SF Symbols with the
+   correct **PUA codepoint**, so custom components and screens now use **real SF Symbols** (verified
+   map in the skill's `references/sf-symbols-map.md`), not traced vectors. Remaining traced glyphs are
+   only those with no caption in the source file (`mic.fill`, `speaker.wave.2.fill`) and the row
+   components' status/CTA vectors.
 
 ---
 
