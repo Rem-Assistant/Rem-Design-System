@@ -18,8 +18,10 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 
 | Component | Page | Node | SwiftUI source | Status |
 |---|---|---|---|---|
-| ListRow (+ Accessory slot: Chevron/Switch/Button/None) | ListRow | `101:18` | `SharedSettingsView.swift` (insetGrouped rows) | ✓ canonical |
-| SectionHeader | ListRow | `161:68` | `Section { } header: { Text }` | ✓ canonical |
+| ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) | ListRow | `101:18` | `SharedSettingsView.swift` (insetGrouped rows) — LabeledListRow pattern | ✓ canonical |
+| ListRowLabel (default Content: Title/Subtitle) | ListRow | `188:2` | the row's text block | ✓ canonical |
+| Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
+| SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
 | SectionFooter | ListRow | `161:70` | `Section { } footer: { Text }` | ✓ canonical |
 | TaskEventRow (task/event) | TaskEventRow | `46:21` | `TaskEventRowView.swift` | ✓ canonical |
 | SuggestedTaskRow (add/move) | SuggestedTaskRow | `48:25` | `SuggestedTaskRow.swift` | ✓ canonical |
