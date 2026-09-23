@@ -32,12 +32,18 @@ name length (glyph fixed-left, caption grows rightward). Anchor with a known ans
 | `clock` | `U+10042B` | `tray` | `U+100223` |
 | `person.fill` | `U+10026A` | `stop.fill` | `U+1006F7` |
 | `play.fill` | `U+100284` | `brain.head.profile` | `U+100BCF` |
+| `arrow.turn.up.right` | `U+100139` | `speaker.wave.2.fill` | `U+1002A7` |
+| `speaker.wave.2` | `U+1002A6` | | |
+
+`arrow.turn.up.right` (SuggestedTaskRow "Move") and `speaker.wave.2.fill` (Agenda brief read-aloud)
+were sourced from the row-component / brief SwiftUI. `circle` resolves to `U+100000` but is left out
+here pending a screenshot check (TaskEventRow status ring — verify before use).
 
 ## Still needed (not in the community file's caption index)
 
-- `mic.fill` — no ascii caption on the "Start here" page. Source via the **icon-request frame**
-  fallback (paste it using a Mac's SF Pro Display, then read the node's codepoint), or find it
-  under a different representation. Do **not** guess it from a web table.
+- `mic.fill` — no ascii caption on the "Start here" page (the voice bar / composer mic). Source via
+  the **icon-request frame** fallback (paste it using a Mac's SF Pro Display, then read the node's
+  codepoint). Do **not** guess it from a web table.
 
 ## Usage
 
