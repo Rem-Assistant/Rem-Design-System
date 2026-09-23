@@ -1,0 +1,20 @@
+{
+  "name": "rem-design-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rem Design System — single-source design tokens (tokens.json -> SwiftUI + CSS) and human/agent-readable component docs for the Rem iOS + macOS app.",
+  "type": "module",
+  "scripts": {
+    "tokens": "node tools/generate-tokens.mjs",
+    "check-tokens": "node tools/generate-tokens.mjs --check",
+    "build": "node tools/build-site.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rem-Assistant/Rem-Design-System.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "marked": "^18.0.14"
+  }
+}
