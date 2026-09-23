@@ -29,11 +29,11 @@ const FIGMA_SLUG = "Rem-Design-System";
 // Corrected (app-traced, SF Pro) frames are pointed at their new node-ids as the sweep lands;
 // the rest keep their v1 frame until corrected.
 const FIGMA_NODES = {
-  Text: "13-27", Surface: "8-12", Card: "11-11", Pill: "64-14", ListRow: "14-3", ContainedIcon: "12-19", Button: "6-11",
-  MessageBubble: "50-7", ComposerBar: "53-2", ContextualMessage: "21-40", ThinkingBlock: "63-20", TypingDots: "17-3", Toast: "18-25", ToolResultCard: "62-2",
+  Text: "65-26", Surface: "8-12", Card: "11-11", Pill: "64-14", ListRow: "68-6", ContainedIcon: "12-19", Button: "66-10",
+  MessageBubble: "50-7", ComposerBar: "53-2", ContextualMessage: "73-39", ThinkingBlock: "63-20", TypingDots: "17-3", Toast: "72-24", ToolResultCard: "62-2",
   TaskEventRow: "46-21", SuggestedTaskRow: "48-25", ProposalCard: "54-55", DateNavigationHeader: "43-2",
-  CalendarEventsCard: "29-3", RemindersCard: "29-29",
-  AgendaView: "49-67", InboxView: "37-3", SettingsView: "39-3", ChatScreen: "33-3", ConversationView: "32-3",
+  CalendarEventsCard: "67-2", RemindersCard: "67-481",
+  AgendaView: "49-67", InboxView: "69-54", SettingsView: "70-54", ChatScreen: "71-533", ConversationView: "71-35",
 };
 function figmaPreview(name) {
   const node = FIGMA_NODES[name];
