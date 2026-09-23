@@ -53,7 +53,7 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 | AgendaView | `49-67` | ✱ fixed | Bottom toolbar corrected from 5 tofu slots to the real **☰ (glass) · blue chat FAB · + (glass)** — see below. Rest (header, brief, sort, overdue/to-do rows, suggestions) matches `01-agenda`. |
 | InboxView | `69-54` | ✅ | Large title + notification rows (icon · title · relative time · chevron). |
 | SettingsView | `70-54` | ✱ fixed | Grouped rows + green toggle. Mock **real email replaced** with `avery@example.com` (see below). |
-| ChatScreen | `71-533` | ✅ | Full chat: status bar, bubbles, cards, composer. Minor nav notes below. |
+| ChatScreen | `71-533` | ✱ fixed | Full chat: status bar, bubbles, cards, composer. Nav retitled "New conversation" + trailing `⋯` more button added to match the app. |
 | ConversationView | `71-35` | ✅ | Composite: user bubbles, assistant prose, CalendarEventsCard, ProposalCard. |
 
 ---
@@ -72,6 +72,9 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
   these frames embed on the public doc site, it was replaced with the repo's placeholder
   `avery@example.com`. A scan of all 33 pages confirms no other real-email leak.
 
+- **ChatScreen nav** (`71-533`). Retitled the centered nav from "Rem" to **"New conversation"**
+  (recentered) and added the **trailing `⋯` more** glass button, matching `06-chat`.
+
 - **Build fixes (Rem repo)** that unblocked the macOS visual-verify CI:
   - `ReadmeChatFixtureView.swift` still imported the pre-rebrand `OpenClaw*` modules/types →
     renamed to `Rem*` (`RemChatUI`/`RemKit`/`RemProtocol`, `RemChat*`).
@@ -83,12 +86,10 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 
 ## Residual minor mismatches (flagged, non-blocking)
 
-1. **ChatScreen nav** (`71-533`): title reads "Rem" and lacks the trailing `⋯` (more) button; the
-   real chat shows the conversation title (or "New conversation") plus the `⋯` glass button.
-2. **Row leading icons** in SettingsView/InboxView are the generic blue rounded-square; the real app
+1. **Row leading icons** in SettingsView/InboxView are the generic blue rounded-square; the real app
    uses type-specific SF Symbols (e.g. person/antenna for Account/Gateway, per-notification icons in
    Inbox). They render correctly, just not context-specific.
-3. **Icon glyphs — kit chrome vs. custom.** Custom components use **app-traced vector glyphs** and
+2. **Icon glyphs — kit chrome vs. custom.** Custom components use **app-traced vector glyphs** and
    render correctly everywhere. Imported iOS 26 kit chrome renders SF Symbols as **SF Pro PUA text**;
    the SF Pro webfont available in this Figma file lacks those private-use glyphs, so kit symbols
    fall back to missing-glyph boxes. The only place this surfaced (the Agenda toolbar) is fixed by
