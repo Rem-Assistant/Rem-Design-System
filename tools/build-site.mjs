@@ -22,6 +22,27 @@ const GROUPS = {
 };
 const COMPONENT_NAMES = new Set(Object.values(GROUPS).flat());
 
+// Live Figma preview: the Rem Design System file (built from tokens.json → Figma variables) and the
+// frame node-id per component. Embeds render once the file is shared "Anyone with the link · view".
+const FIGMA_FILE = "af4yDqCzp57jds9lkFiIaO";
+const FIGMA_SLUG = "Rem-Design-System";
+const FIGMA_NODES = {
+  Text: "13-27", Surface: "8-12", Card: "11-11", Pill: "7-13", ListRow: "14-3", ContainedIcon: "12-19", Button: "6-11",
+  MessageBubble: "16-7", ComposerBar: "22-3", ContextualMessage: "21-40", ThinkingBlock: "19-14", TypingDots: "17-3", Toast: "18-25", ToolResultCard: "20-3",
+  TaskEventRow: "25-3", SuggestedTaskRow: "26-3", ProposalCard: "27-33", DateNavigationHeader: "23-3",
+  CalendarEventsCard: "29-3", RemindersCard: "29-29",
+  AgendaView: "31-3", InboxView: "37-3", SettingsView: "39-3", ChatScreen: "33-3", ConversationView: "32-3",
+};
+function figmaPreview(name) {
+  const node = FIGMA_NODES[name];
+  if (!node) return "";
+  const embed = `https://embed.figma.com/design/${FIGMA_FILE}/${FIGMA_SLUG}?node-id=${node}&embed-host=rem-docs&footer=false&theme=system`;
+  const open = `https://www.figma.com/design/${FIGMA_FILE}/${FIGMA_SLUG}?node-id=${node}`;
+  return `<div class="preview"><div class="preview-hd"><span class="preview-lbl">Live preview</span><a class="preview-open" href="${open}" target="_blank" rel="noopener">Open in Figma ↗</a></div>`
+    + `<div class="figwrap"><iframe class="figframe" title="${esc(name)} — Figma" src="${embed}" allowfullscreen loading="lazy"></iframe>`
+    + `<div class="fsignote">Bound to the token variables generated from <code>tokens.json</code>. If the frame is blank, the Figma file isn't shared yet — <a href="${open}" target="_blank" rel="noopener">open it directly ↗</a>.</div></div></div>`;
+}
+
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function stripFrontmatter(md) {
   let s = md.replace(/^<!--[\s\S]*?-->\s*/, "");
@@ -126,7 +147,7 @@ function componentPage(relPath, out, name) {
     `<section class="panel${t === active ? " on" : ""}" role="tabpanel" data-panel="${t}"><div class="prose">${buckets[t].join("\n")}</div></section>`).join("");
 
   const main = `<main class="content">
-<div class="phead"><div class="crumb">Components</div><h1>${h1}</h1>${meta}${head}</div>
+<div class="phead"><div class="crumb">Components</div><h1>${h1}</h1>${meta}${head}${figmaPreview(name)}</div>
 <div class="tabs" role="tablist">${tablist}</div>
 ${panels}
 ${FOOT}</main>`;
@@ -204,6 +225,13 @@ code{background:var(--code);padding:.1em .4em;border-radius:3px;font-size:.88em}
 pre{background:var(--code);padding:16px;border-radius:0;overflow:auto;border:1px solid var(--line)}pre code{background:none;padding:0}
 .sw{display:inline-block;width:14px;height:14px;border-radius:2px;border:1px solid var(--line);vertical-align:-2px;margin-right:6px}
 .content.prose,article.prose{padding:48px}article.prose h1{font-size:42px;font-weight:300;margin:.1em 0 .5em}
+.preview{margin:24px 0 8px;max-width:720px}
+.preview-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.preview-lbl{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--fg3)}
+.preview-open{font-size:13px}
+.figwrap{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--code)}
+.figframe{display:block;width:100%;height:460px;border:0}
+.fsignote{border-top:1px solid var(--line);padding:8px 12px;font-size:12px;color:var(--fg2);background:var(--bg)}
 .foot{margin:64px 48px 0;padding:20px 0;border-top:1px solid var(--line);color:var(--fg2);font-size:13px;max-width:672px}
 @media(max-width:820px){.shell{flex-direction:column}.side{position:static;flex-basis:auto;width:100%;height:auto;border-right:0;border-bottom:1px solid var(--line)}.phead,.tabs,.panel{padding-left:16px;padding-right:16px}article.prose{padding:24px 16px}.phead h1,article.prose h1{font-size:32px}.tabs{position:static}}
 `;
