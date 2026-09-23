@@ -42,9 +42,16 @@ right **PUA codepoint**. Established this pass:
   bottom `874`) instead of hanging 71px below the clipped frame — the three circular buttons
   (hamburger · waveform FAB · plus) now match `01-agenda`.
 
-**Still traced/deferred:** `mic.fill` and the brief's `speaker.wave.2.fill` have no ascii caption in
-the community file (source via the icon-request frame); the TaskEventRow status rings and
-SuggestedTaskRow Add/Move CTA glyphs are component-level vectors, not yet swapped.
+- **SuggestedTaskRow** (`48:25`, both variants): drawn CTA vectors → real `plus` (add) /
+  `arrow.turn.up.right` (move), **corrected black → brand blue** (source uses
+  `.foregroundStyle(DesignTokens.Color.brandBlue)`); dismiss vector → real `xmark` in
+  `labelSecondary`. Propagates to both Agenda suggestion instances.
+
+**Still traced/deferred:** `mic.fill` has no ascii caption in the community file (source via the
+icon-request frame). The brief's speaker still renders as the 🔊 emoji — `speaker.wave.2.fill`
+(`U+1002A7`) is now in the map but the exact app variant (`.2` vs `.3`) needs a source check before
+swapping. The TaskEventRow status rings are component-level vectors pending a source check (may be
+an intentional dashed "incomplete" ring, not an SF Symbol).
 
 ---
 
