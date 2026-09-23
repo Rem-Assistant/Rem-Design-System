@@ -26,12 +26,14 @@ const COMPONENT_NAMES = new Set(Object.values(GROUPS).flat());
 // frame node-id per component. Embeds render once the file is shared "Anyone with the link · view".
 const FIGMA_FILE = "af4yDqCzp57jds9lkFiIaO";
 const FIGMA_SLUG = "Rem-Design-System";
+// Corrected (app-traced, SF Pro) frames are pointed at their new node-ids as the sweep lands;
+// the rest keep their v1 frame until corrected.
 const FIGMA_NODES = {
-  Text: "13-27", Surface: "8-12", Card: "11-11", Pill: "7-13", ListRow: "14-3", ContainedIcon: "12-19", Button: "6-11",
-  MessageBubble: "16-7", ComposerBar: "22-3", ContextualMessage: "21-40", ThinkingBlock: "19-14", TypingDots: "17-3", Toast: "18-25", ToolResultCard: "20-3",
-  TaskEventRow: "25-3", SuggestedTaskRow: "26-3", ProposalCard: "27-33", DateNavigationHeader: "23-3",
+  Text: "13-27", Surface: "8-12", Card: "11-11", Pill: "64-14", ListRow: "14-3", ContainedIcon: "12-19", Button: "6-11",
+  MessageBubble: "50-7", ComposerBar: "53-2", ContextualMessage: "21-40", ThinkingBlock: "63-20", TypingDots: "17-3", Toast: "18-25", ToolResultCard: "62-2",
+  TaskEventRow: "46-21", SuggestedTaskRow: "48-25", ProposalCard: "54-55", DateNavigationHeader: "43-2",
   CalendarEventsCard: "29-3", RemindersCard: "29-29",
-  AgendaView: "31-3", InboxView: "37-3", SettingsView: "39-3", ChatScreen: "33-3", ConversationView: "32-3",
+  AgendaView: "49-67", InboxView: "37-3", SettingsView: "39-3", ChatScreen: "33-3", ConversationView: "32-3",
 };
 function figmaPreview(name) {
   const node = FIGMA_NODES[name];
