@@ -1,0 +1,29 @@
+name: tokens
+
+# Design-token drift guard: fails if a generated file (Swift / CSS) is out of sync
+# with tokens.json — i.e. someone edited a generated file by hand or forgot to
+# regenerate after changing the source. See tools/README.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tokens/**"
+      - "tools/**"
+      - ".github/workflows/tokens.yml"
+  pull_request:
+    paths:
+      - "tokens/**"
+      - "tools/**"
+      - ".github/workflows/tokens.yml"
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check generated tokens are in sync with tokens.json
+        run: node tools/generate-tokens.mjs --check
