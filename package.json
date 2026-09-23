@@ -7,7 +7,9 @@
   "scripts": {
     "tokens": "node tools/generate-tokens.mjs",
     "check-tokens": "node tools/generate-tokens.mjs --check",
-    "build": "node tools/build-site.mjs"
+    "build": "node tools/build-site.mjs",
+    "manifest": "node tools/build-manifest.mjs",
+    "check-manifest": "node tools/build-manifest.mjs --check"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,1049 @@
+{
+  "$note": "Agent-facing contract for the Rem Design System. One read gives every component's props, variants, usage rules, and platform mirror. GENERATED — do not edit. Sources: agent/props.json + components/*.md front-matter + tokens/tokens.json.",
+  "$version": "0.1.0",
+  "tokens": "tokens/tokens.json",
+  "tokenVersion": "0.1.0-seed",
+  "count": 25,
+  "components": {
+    "Text": {
+      "group": "general",
+      "mirrors": "SwiftUI Text + DesignTokens.Typography / DesignTokens.Color.label*",
+      "status": "draft",
+      "props": {
+        "variant": {
+          "type": "enum",
+          "enum": [
+            "largeTitle",
+            "title1",
+            "title1Bold",
+            "title3",
+            "title3Bold",
+            "body",
+            "bodyBold",
+            "subheadline",
+            "footnote",
+            "caption1",
+            "caption1Bold",
+            "chatCode"
+          ],
+          "default": "body",
+          "desc": "Typographic role"
+        },
+        "color": {
+          "type": "enum",
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary",
+            "brand",
+            "brandOnFill"
+          ],
+          "default": "primary",
+          "desc": "Label color role"
+        },
+        "as": {
+          "type": "text",
+          "desc": "Element/tag to render"
+        },
+        "children": {
+          "type": "content",
+          "desc": "Text content"
+        }
+      },
+      "rules": [
+        {
+          "id": "use-variant-not-manual-font",
+          "do": "Set the type role with `variant`; it maps 1:1 to a DesignTokens.Typography role.",
+          "dont": "Apply a raw font size/weight to Text or wrap it to restyle.",
+          "enforced_by": "no-restricted-syntax: Text variant must be one of the 12 roles (web); ds_no_raw_font_size (Swift)"
+        },
+        {
+          "id": "use-color-roles",
+          "do": "Pick a label role with `color` (primary/secondary/tertiary) or brand/brandOnFill.",
+          "dont": "Pass a raw hex/CSS color to Text.",
+          "enforced_by": "no-restricted-syntax: Text color must be primary|secondary|tertiary|brand|brandOnFill"
+        },
+        {
+          "id": "brand-on-fill-for-tinted-on-gray",
+          "do": "Use `color=\"brandOnFill\"` for brand-tinted text sitting on a gray fill (it clears AA in dark mode).",
+          "dont": "Use plain `brand` on a gray pill — it fails contrast in dark mode.",
+          "enforced_by": "prose-only"
+        }
+      ]
+    },
+    "Surface": {
+      "group": "general",
+      "mirrors": "The card/panel shell used across Rem surfaces",
+      "status": "draft",
+      "props": {
+        "material": {
+          "type": "enum",
+          "enum": [
+            "solid",
+            "inset",
+            "glass"
+          ],
+          "desc": "Fill treatment (wins over background)"
+        },
+        "background": {
+          "type": "enum",
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary"
+          ],
+          "desc": "Raw background layer"
+        },
+        "padding": {
+          "type": "enum",
+          "enum": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl",
+            "xxxl",
+            "none"
+          ],
+          "default": "md",
+          "desc": "Inner padding token"
+        },
+        "radius": {
+          "type": "enum",
+          "enum": [
+            "none",
+            "small",
+            "medium",
+            "large",
+            "xlarge"
+          ],
+          "default": "medium",
+          "desc": "Corner radius token"
+        },
+        "bordered": {
+          "type": "bool",
+          "default": false,
+          "desc": "Hairline separator border"
+        },
+        "as": {
+          "type": "text",
+          "desc": "Element/tag to render"
+        }
+      },
+      "rules": [
+        {
+          "id": "material-vocabulary",
+          "do": "Use one of the three materials by meaning: solid = a thing you act on, inset = quiet tool output, glass = floating/translucent status.",
+          "dont": "Invent a new fill treatment or mix material semantics.",
+          "enforced_by": "no-restricted-syntax: Surface material must be solid|inset|glass"
+        },
+        {
+          "id": "token-radius-padding",
+          "do": "Use the `radius` / `padding` tokens (default `medium` / `md`).",
+          "dont": "Hardcode a corner radius or padding value.",
+          "enforced_by": "no-restricted-syntax: Surface radius/padding must be a token; ds_no_hardcoded_corner_radius / ds_no_magic_padding (Swift)"
+        }
+      ]
+    },
+    "Card": {
+      "group": "general",
+      "mirrors": "A Surface preset (secondary background, medium radius, hairline border)",
+      "status": "draft",
+      "extends": "Surface",
+      "props": {
+        "material": {
+          "type": "enum",
+          "enum": [
+            "solid",
+            "inset",
+            "glass"
+          ]
+        },
+        "background": {
+          "type": "enum",
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary"
+          ]
+        },
+        "padding": {
+          "type": "enum",
+          "enum": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "xxl",
+            "xxxl",
+            "none"
+          ],
+          "default": "md"
+        },
+        "radius": {
+          "type": "enum",
+          "enum": [
+            "none",
+            "small",
+            "medium",
+            "large",
+            "xlarge"
+          ],
+          "default": "medium"
+        },
+        "bordered": {
+          "type": "bool"
+        },
+        "as": {
+          "type": "text"
+        }
+      },
+      "rules": [
+        {
+          "id": "card-for-grouped-content",
+          "do": "Use Card as the standard container for grouped content; set `padding=\"none\"` and nest ListRows for a grouped list.",
+          "dont": "Rebuild a bordered secondary panel by hand, or nest a Card in a Card.",
+          "enforced_by": "prose-only"
+        },
+        {
+          "id": "material-and-radius-tokens",
+          "do": "Keep the material vocabulary (solid/inset/glass) and token radius (default medium).",
+          "dont": "Invent a fill or hardcode a radius.",
+          "enforced_by": "no-restricted-syntax: Card material/radius/padding/background must be tokens"
+        }
+      ]
+    },
+    "Pill": {
+      "group": "general",
+      "mirrors": "SharedPillView / the single badge in the system",
+      "status": "draft",
+      "props": {
+        "tone": {
+          "type": "enum",
+          "enum": [
+            "neutral",
+            "blue",
+            "green",
+            "red",
+            "orange"
+          ],
+          "default": "neutral",
+          "desc": "Color tint"
+        },
+        "dot": {
+          "type": "color",
+          "desc": "Leading color dot"
+        },
+        "icon": {
+          "type": "content",
+          "desc": "Leading glyph"
+        },
+        "children": {
+          "type": "content",
+          "desc": "Label"
+        }
+      },
+      "rules": [
+        {
+          "id": "one-badge",
+          "do": "Use Pill for every badge — status and category alike.",
+          "dont": "Hand-roll badge markup or introduce a second badge component.",
+          "enforced_by": "prose-only (system rule from README)"
+        },
+        {
+          "id": "tone-for-status",
+          "do": "Tint status with `tone` (neutral/blue/green/red/orange).",
+          "dont": "Pass a raw color; use the tone that carries the meaning.",
+          "enforced_by": "no-restricted-syntax: Pill tone must be neutral|blue|green|red|orange"
+        },
+        {
+          "id": "dot-or-icon-for-category",
+          "do": "Add a leading `dot` (e.g. a calendar color) or `icon` for category badges.",
+          "dont": "Encode category by inventing new tones.",
+          "enforced_by": "prose-only"
+        }
+      ]
+    },
+    "ListRow": {
+      "group": "general",
+      "mirrors": "SharedDeviceRow / SharedGatewayRow / SharedSkillRow (the settings/list row pattern)",
+      "status": "draft",
+      "props": {
+        "leading": {
+          "type": "content",
+          "desc": "Leading accessory (usually ContainedIcon)"
+        },
+        "title": {
+          "type": "content",
+          "required": true,
+          "desc": "Primary label"
+        },
+        "subtitle": {
+          "type": "content",
+          "desc": "Secondary label"
+        },
+        "trailing": {
+          "type": "content",
+          "desc": "Trailing accessory"
+        },
+        "separator": {
+          "type": "bool",
+          "desc": "Show hairline under the row"
+        }
+      },
+      "rules": [
+        {
+          "id": "use-listrow-for-rows",
+          "do": "Use ListRow for settings/list rows: leading icon, title + subtitle, trailing accessory.",
+          "dont": "Hand-build a row from an HStack/flex with ad-hoc spacing.",
+          "enforced_by": "prose-only"
+        },
+        {
+          "id": "group-in-card",
+          "do": "Group rows in a `Card padding=\"none\"`; hide the last row's separator.",
+          "dont": "Stack bare rows with manual dividers.",
+          "enforced_by": "prose-only"
+        }
+      ]
+    },
+    "ContainedIcon": {
+      "group": "general",
+      "mirrors": "The settings-row icon (rounded colored container + white glyph)",
+      "status": "draft",
+      "props": {
+        "color": {
+          "type": "color",
+          "default": "brand blue",
+          "desc": "Container fill (token var)"
+        },
+        "size": {
+          "type": "number",
+          "default": 28,
+          "desc": "Container edge length (px)"
+        },
+        "children": {
+          "type": "content",
+          "desc": "The glyph (white, centered)"
+        }
+      },
+      "rules": [
+        {
+          "id": "token-container-color",
+          "do": "Set the container `color` from a token var (brand blue by default, or a system color).",
+          "dont": "Pass a raw hex color to the container.",
+          "enforced_by": "prose-only (color is a free string; keep it a token var by convention)"
+        },
+        {
+          "id": "standard-sizes",
+          "do": "Use the default 28px in rows; 44px for a larger emphasis icon.",
+          "dont": "Sprinkle arbitrary sizes.",
+          "enforced_by": "prose-only"
+        }
+      ]
+    },
+    "Button": {
+      "group": "general",
+      "mirrors": "RemPrimaryActionButtonStyle / RemSettingsCTAButtonStyle",
+      "status": "draft",
+      "replaces": [
+        "button"
+      ],
+      "props": {
+        "variant": {
+          "type": "enum",
+          "enum": [
+            "primary",
+            "settingsCTA",
+            "recovery",
+            "connect"
+          ],
+          "default": "primary",
+          "desc": "Button treatment"
+        },
+        "role": {
+          "type": "enum",
+          "enum": [
+            "primary",
+            "destructive"
+          ],
+          "default": "primary",
+          "desc": "Tint; applies to settingsCTA/recovery"
+        },
+        "size": {
+          "type": "enum",
+          "enum": [
+            "regular",
+            "compact"
+          ],
+          "default": "regular",
+          "desc": "settingsCTA only"
+        },
+        "children": {
+          "type": "content",
+          "desc": "Label"
+        }
+      },
+      "rules": [
+        {
+          "id": "no-raw-button",
+          "do": "Use the design-system Button for every tappable action.",
+          "dont": "Drop a raw <button> (web) or bare Button {} styling (SwiftUI) into a screen.",
+          "enforced_by": "react/forbid-elements (button) + no-restricted-syntax in _adherence.oxlintrc.json"
+        },
+        {
+          "id": "one-primary-per-context",
+          "do": "Use exactly one `primary` button as the main action of a screen or sheet.",
+          "dont": "Place two `primary` buttons in the same row or context — the user can't tell which is the main action.",
+          "enforced_by": "prose-only (candidate for a new adherence rule)"
+        },
+        {
+          "id": "destructive-role",
+          "do": "Express destructive actions with role=\"destructive\" on settingsCTA/recovery.",
+          "dont": "Hand-tint a button red to mean 'dangerous'.",
+          "enforced_by": "no-restricted-syntax: Button role must be 'primary' | 'destructive'"
+        },
+        {
+          "id": "variant-vocabulary",
+          "do": "Pick the variant that matches the action's job (primary / settingsCTA / recovery / connect).",
+          "dont": "Invent a new visual treatment or override the button's classes for a one-off look.",
+          "enforced_by": "no-restricted-syntax: Button variant must be 'primary' | 'settingsCTA' | 'recovery' | 'connect'"
+        }
+      ]
+    },
+    "MessageBubble": {
+      "group": "general",
+      "mirrors": "Rem chat message (user bubble / assistant prose)",
+      "status": "draft",
+      "props": {
+        "role": {
+          "type": "enum",
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "required": true,
+          "desc": "Speaker (drives alignment + treatment)"
+        },
+        "children": {
+          "type": "content",
+          "desc": "Message content"
+        }
+      },
+      "rules": [
+        {
+          "id": "role-drives-treatment",
+          "do": "Set `role` — `user` renders a right-aligned brand-blue bubble; `assistant` renders left-aligned plain prose (no bubble).",
+          "dont": "Wrap assistant text in a bubble, or right-align it.",
+          "enforced_by": "no-restricted-syntax: MessageBubble role must be user|assistant"
+        }
+      ]
+    },
+    "ComposerBar": {
+      "group": "general",
+      "mirrors": "RemComposerBar (the chat composer shell)",
+      "status": "draft",
+      "props": {
+        "placeholder": {
+          "type": "text"
+        },
+        "value": {
+          "type": "text",
+          "desc": "Controlled text"
+        },
+        "defaultValue": {
+          "type": "text"
+        },
+        "onChange": {
+          "type": "action"
+        },
+        "onSubmit": {
+          "type": "action",
+          "desc": "Enter (no Shift) or send"
+        },
+        "maxRows": {
+          "type": "number",
+          "desc": "Growth cap before scroll"
+        },
+        "attachments": {
+          "type": "content"
+        },
+        "leading": {
+          "type": "content"
+        },
+        "trailing": {
+          "type": "content"
+        },
+        "send": {
+          "type": "content"
+        }
+      },
+      "rules": [
+        {
+          "id": "presentation-only-slots",
+          "do": "Inject affordances through the slots (`leading`, `trailing`, `send`, `attachments`); the bar is presentation-only.",
+          "dont": "Fork the composer to hardcode a specific button set.",
+          "enforced_by": "no-restricted-syntax: ComposerBar accepts only its declared props"
+        }
+      ]
+    },
+    "ContextualMessage": {
+      "group": "general",
+      "mirrors": "RemContextualMessage (persistent in-context status card, glass material)",
+      "status": "draft",
+      "props": {
+        "tone": {
+          "type": "enum",
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error",
+            "neutral"
+          ],
+          "default": "neutral",
+          "desc": "Semantic tone (glyph + accent)"
+        },
+        "icon": {
+          "type": "content"
+        },
+        "iconColor": {
+          "type": "color"
+        },
+        "title": {
+          "type": "content",
+          "required": true
+        },
+        "subtitle": {
+          "type": "content"
+        },
+        "actions": {
+          "type": "content",
+          "desc": "Footer action row"
+        }
+      },
+      "rules": [
+        {
+          "id": "persistent-vs-transient",
+          "do": "Use ContextualMessage for a persistent, in-context state (connection problem, empty/loading, inline notice).",
+          "dont": "Use it for a brief confirmation — that's a Toast.",
+          "enforced_by": "prose-only"
+        },
+        {
+          "id": "tone-vocabulary",
+          "do": "Set `tone` (info/success/warning/error/neutral) — it picks the glyph and accent.",
+          "dont": "Hand-pick a glyph/color that contradicts the tone.",
+          "enforced_by": "no-restricted-syntax: ContextualMessage tone must be info|success|warning|error|neutral"
+        }
+      ]
+    },
+    "ThinkingBlock": {
+      "group": "general",
+      "mirrors": "SharedChatThinkingBlock (collapsible reasoning disclosure)",
+      "status": "draft",
+      "props": {
+        "title": {
+          "type": "content",
+          "default": "Thought for a moment"
+        },
+        "children": {
+          "type": "content",
+          "desc": "Reasoning text"
+        },
+        "defaultExpanded": {
+          "type": "bool",
+          "default": false
+        },
+        "live": {
+          "type": "bool",
+          "default": false,
+          "desc": "Shimmer while thinking"
+        }
+      },
+      "rules": [
+        {
+          "id": "quiet-and-collapsed",
+          "do": "Keep it quiet and collapsed by default; use `live` for the still-thinking shimmer.",
+          "dont": "Force reasoning open by default or style it as primary content.",
+          "enforced_by": "prose-only"
+        }
+      ]
+    },
+    "TypingDots": {
+      "group": "general",
+      "mirrors": "SharedChatTypingDots (assistant typing indicator)",
+      "status": "draft",
+      "props": {},
+      "rules": [
+        {
+          "id": "indicator-only",
+          "do": "Use it purely as the transient 'assistant is typing' indicator, typically inside a bubble/surface.",
+          "dont": "Use it as a general-purpose loading spinner elsewhere.",
+          "enforced_by": "prose-only"
+        }
+      ]
+    },
+    "Toast": {
+      "group": "general",
+      "mirrors": "RemToast (compact transient notice)",
+      "status": "draft",
+      "props": {
+        "variant": {
+          "type": "enum",
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error"
+          ],
+          "default": "info",
+          "desc": "Semantic glyph + tint"
+        },
+        "message": {
+          "type": "content",
+          "required": true
+        }
+      },
+      "rules": [
+        {
+          "id": "transient-nonactionable",
+          "do": "Use Toast for a brief, non-blocking confirmation or notice ('Reconnected', 'Task added').",
+          "dont": "Put actions/buttons in a Toast, or use it for a persistent state (use ContextualMessage).",
+          "enforced_by": "no-restricted-syntax: Toast accepts variant + message only"
+        },
+        {
+          "id": "variant-vocabulary",
+          "do": "Set `variant` (info/success/warning/error) — it sets the glyph and tint.",
+          "dont": "Hand-tint the capsule.",
+          "enforced_by": "no-restricted-syntax: Toast variant must be info|success|warning|error"
+        }
+      ]
+    },
+    "ToolResultCard": {
+      "group": "general",
+      "mirrors": "ToolResultCardView (wrapper for a tool-call result; inset material)",
+      "status": "draft",
+      "props": {
+        "icon": {
+          "type": "content"
+        },
+        "tint": {
+          "type": "color"
+        },
+        "title": {
+          "type": "content",
+          "required": true,
+          "desc": "Header summary"
+        },
+        "collapsible": {
+          "type": "bool",
+          "default": false
+        },
+        "defaultExpanded": {
+          "type": "bool"
+        }
+      },
+      "rules": [
+        {
+          "id": "inset-tool-output",
+          "do": "Use ToolResultCard (inset material) to wrap any tool-call result in a conversation: icon + title header, result rows in the body.",
+          "dont": "Render tool output as a solid Card or as loose text in the thread.",
+          "enforced_by": "prose-only (material vocabulary: inset = quiet tool output)"
+        },
+        {
+          "id": "collapsible-for-long",
+          "do": "Make long results `collapsible` and default them collapsed.",
+          "dont": "Dump a long result fully expanded into the thread.",
+          "enforced_by": "no-restricted-syntax: ToolResultCard accepts only its declared props"
+        }
+      ]
+    },
+    "TaskEventRow": {
+      "group": "general",
+      "mirrors": "TaskEventRowView (the primary agenda task/event row)",
+      "status": "draft",
+      "props": {
+        "time": {
+          "type": "content",
+          "desc": "Time in the 64px slot"
+        },
+        "title": {
+          "type": "content",
+          "required": true
+        },
+        "done": {
+          "type": "bool",
+          "desc": "Task completion (status circle)"
+        },
+        "eventColor": {
+          "type": "color",
+          "desc": "Left color bar (events)"
+        },
+        "calendar": {
+          "type": "data",
+          "desc": "{name,color} calendar badge"
+        },
+        "list": {
+          "type": "text",
+          "desc": "List badge"
+        },
+        "duration": {
+          "type": "text",
+          "desc": "Duration/range pill"
+        },
+        "overdue": {
+          "type": "bool",
+          "desc": "Overdue pill"
+        }
+      },
+      "rules": [
+        {
+          "id": "one-row-tasks-and-events",
+          "do": "Use TaskEventRow for both tasks and calendar events in the agenda; `time` fills the fixed 64px leading slot, `done` renders the task status circle.",
+          "dont": "Build separate bespoke rows for tasks vs events.",
+          "enforced_by": "no-restricted-syntax: TaskEventRow accepts only its declared props"
+        },
+        {
+          "id": "badges-via-props",
+          "do": "Express calendar / list / duration / overdue through the provided props.",
+          "dont": "Hand-roll Pills inside the row for those badges.",
+          "enforced_by": "prose-only"
+        },
+        {
+          "id": "deemphasis-once",
+          "do": "For a receded (done/blocked/stale) row, apply the deemphasized opacity ONCE.",
+          "dont": "Stack dimming (two applications multiply to ~0.30 and read as broken).",
+          "enforced_by": "prose-only (DesignTokens.Opacity.deemphasized)"
+        }
+      ]
+    },
+    "SuggestedTaskRow": {
+      "group": "general",
+      "mirrors": "SuggestedTaskRow (a proposed task in the Agenda)",
+      "status": "draft",
+      "props": {
+        "action": {
+          "type": "enum",
+          "enum": [
+            "add",
+            "move"
+          ],
+          "default": "add",
+          "desc": "Left CTA kind"
+        },
+        "title": {
+          "type": "content",
+          "required": true
+        },
+        "subtitle": {
+          "type": "content",
+          "desc": "Attribution / WHY"
+        },
+        "onAccept": {
+          "type": "action"
+        },
+        "onDismiss": {
+          "type": "action"
+        }
+      },
+      "rules": [
+        {
+          "id": "always-show-why",
+          "do": "Always give the `subtitle` — the attribution / WHY line (what the suggestion is based on).",
+          "dont": "Show a bare suggested title with no reason.",
+          "enforced_by": "prose-only (product: proposals must explain themselves)"
+        },
+        {
+          "id": "not-yet-real",
+          "do": "Keep the dashed-ring 'not yet real' treatment; offer accept (`onAccept`) and dismiss (`onDismiss`).",
+          "dont": "Style a suggestion like a committed TaskEventRow.",
+          "enforced_by": "no-restricted-syntax: SuggestedTaskRow action must be add|move"
+        }
+      ]
+    },
+    "ProposalCard": {
+      "group": "general",
+      "mirrors": "RemProposalCardView (a task-update proposal in a conversation)",
+      "status": "draft",
+      "props": {
+        "title": {
+          "type": "content",
+          "required": true
+        },
+        "actionSentence": {
+          "type": "content",
+          "required": true,
+          "desc": "The proposed change"
+        },
+        "explanation": {
+          "type": "content",
+          "desc": "Quiet rationale"
+        },
+        "state": {
+          "type": "enum",
+          "enum": [
+            "pending",
+            "succeeded",
+            "failed",
+            "dismissed",
+            "stale"
+          ],
+          "default": "pending",
+          "desc": "Lifecycle"
+        },
+        "onApprove": {
+          "type": "action"
+        },
+        "onDismiss": {
+          "type": "action"
+        },
+        "busy": {
+          "type": "bool"
+        },
+        "error": {
+          "type": "content"
+        },
+        "terminalText": {
+          "type": "content",
+          "desc": "Resolved summary override"
+        }
+      },
+      "rules": [
+        {
+          "id": "pending-actionable-resolved-terminal",
+          "do": "Pending shows the change + Approve/Dismiss; resolved states (succeeded/failed/dismissed/stale) show a terminal, non-actionable summary.",
+          "dont": "Leave Approve/Dismiss live on a resolved proposal.",
+          "enforced_by": "no-restricted-syntax: ProposalCard state must be pending|succeeded|failed|dismissed|stale"
+        },
+        {
+          "id": "stale-is-stop-nagging",
+          "do": "Use `stale` to mean the proposal is no longer relevant — a quiet terminal state, not an error.",
+          "dont": "Delete/hide it or render `stale` like `failed`.",
+          "enforced_by": "prose-only (product: stale = stop-nagging, not delete)"
+        }
+      ]
+    },
+    "DateNavigationHeader": {
+      "group": "general",
+      "mirrors": "SharedDateNavigationHeader (the Agenda day header)",
+      "status": "draft",
+      "props": {
+        "label": {
+          "type": "content",
+          "required": true,
+          "desc": "Relative label"
+        },
+        "date": {
+          "type": "content",
+          "required": true,
+          "desc": "Full date line"
+        },
+        "isToday": {
+          "type": "bool",
+          "desc": "Hide the Today jump"
+        },
+        "onPrev": {
+          "type": "action"
+        },
+        "onNext": {
+          "type": "action"
+        },
+        "onToday": {
+          "type": "action"
+        }
+      },
+      "rules": [
+        {
+          "id": "relative-plus-full-date",
+          "do": "Show the relative `label` (Today/Tomorrow/weekday) over the full `date`; hide the Today jump when `isToday`.",
+          "dont": "Show only a raw date with no relative label, or keep a redundant Today jump on today.",
+          "enforced_by": "no-restricted-syntax: DateNavigationHeader accepts only its declared props"
+        }
+      ]
+    },
+    "CalendarEventsCard": {
+      "group": "toolresultcard",
+      "mirrors": "CalendarEventsCard (a calendar tool-call result)",
+      "status": "draft",
+      "extends": "ToolResultCard",
+      "props": {
+        "events": {
+          "type": "data",
+          "required": true,
+          "desc": "Event list"
+        },
+        "calendarName": {
+          "type": "text",
+          "desc": "Header suffix"
+        },
+        "collapsible": {
+          "type": "bool",
+          "default": false
+        },
+        "defaultExpanded": {
+          "type": "bool"
+        }
+      },
+      "rules": [
+        {
+          "id": "preset-of-toolresultcard",
+          "do": "Use CalendarEventsCard to render a calendar tool result — it's the ToolResultCard preset for events (inset material).",
+          "dont": "Hand-build an events list in a solid Card, or bypass the ToolResultCard header.",
+          "enforced_by": "no-restricted-syntax: CalendarEventsCard accepts events, calendarName, collapsible, defaultExpanded"
+        }
+      ]
+    },
+    "RemindersCard": {
+      "group": "toolresultcard",
+      "mirrors": "RemindersCard (a reminders tool-call result)",
+      "status": "draft",
+      "extends": "ToolResultCard",
+      "props": {
+        "reminders": {
+          "type": "data",
+          "required": true,
+          "desc": "Reminder list"
+        },
+        "collapsible": {
+          "type": "bool",
+          "default": false
+        },
+        "defaultExpanded": {
+          "type": "bool"
+        }
+      },
+      "rules": [
+        {
+          "id": "preset-of-toolresultcard",
+          "do": "Use RemindersCard to render a reminders tool result — the ToolResultCard preset for reminders (inset material).",
+          "dont": "Hand-build a reminders list in a solid Card, or bypass the ToolResultCard header.",
+          "enforced_by": "no-restricted-syntax: RemindersCard accepts reminders, collapsible, defaultExpanded"
+        }
+      ]
+    },
+    "AgendaView": {
+      "kind": "screen-template",
+      "mirrors": "The Agenda screen",
+      "status": "draft",
+      "composedOf": [
+        "DateNavigationHeader",
+        "TaskEventRow",
+        "SuggestedTaskRow"
+      ],
+      "props": {
+        "width": {
+          "type": "number",
+          "desc": "Fixed template width"
+        }
+      },
+      "rules": [
+        {
+          "id": "start-from-the-template",
+          "do": "Start a new Agenda-like screen from this template and swap in real data; keep the composition (day header → rows → suggestion).",
+          "dont": "Re-lay-out the agenda from scratch or reorder its regions arbitrarily.",
+          "enforced_by": "prose-only (screen template — the on-rails starting point)"
+        }
+      ]
+    },
+    "InboxView": {
+      "kind": "screen-template",
+      "mirrors": "The Inbox / tasks-list screen",
+      "status": "draft",
+      "composedOf": [
+        "TaskEventRow",
+        "SuggestedTaskRow"
+      ],
+      "props": {
+        "width": {
+          "type": "number"
+        }
+      },
+      "rules": [
+        {
+          "id": "start-from-the-template",
+          "do": "Start a tasks-list screen from this template: large title over grouped task rows and a suggestion.",
+          "dont": "Rebuild the list layout or invent a different grouping affordance.",
+          "enforced_by": "prose-only (screen template)"
+        }
+      ]
+    },
+    "SettingsView": {
+      "kind": "screen-template",
+      "mirrors": "The Settings screen",
+      "status": "draft",
+      "composedOf": [
+        "Card",
+        "ListRow",
+        "ContainedIcon",
+        "Button"
+      ],
+      "props": {
+        "width": {
+          "type": "number"
+        }
+      },
+      "rules": [
+        {
+          "id": "grouped-rows-in-cards",
+          "do": "Group settings into `Card padding=\"none\"` blocks of `ListRow`s with `ContainedIcon` leadings; put destructive actions in a `Button` with role=\"destructive\".",
+          "dont": "Lay out settings as ad-hoc stacks or hand-styled rows.",
+          "enforced_by": "prose-only (screen template)"
+        }
+      ]
+    },
+    "ChatScreen": {
+      "kind": "screen-template",
+      "mirrors": "The full-screen chat",
+      "status": "draft",
+      "composedOf": [
+        "MessageBubble",
+        "ToolResultCard",
+        "ThinkingBlock",
+        "TypingDots",
+        "ComposerBar"
+      ],
+      "props": {
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        }
+      },
+      "rules": [
+        {
+          "id": "thread-plus-pinned-composer",
+          "do": "Keep the structure: nav bar → scrolling thread (turns, tool results, reasoning, typing) → ComposerBar pinned at the bottom.",
+          "dont": "Float the composer, or rebuild the thread with bespoke bubbles.",
+          "enforced_by": "prose-only (screen template)"
+        }
+      ]
+    },
+    "ConversationView": {
+      "kind": "screen-template",
+      "mirrors": "Rem's conversation region",
+      "status": "draft",
+      "composedOf": [
+        "MessageBubble",
+        "ThinkingBlock",
+        "ToolResultCard",
+        "ProposalCard",
+        "ComposerBar"
+      ],
+      "props": {
+        "width": {
+          "type": "number"
+        }
+      },
+      "rules": [
+        {
+          "id": "canonical-conversation-composition",
+          "do": "Use this as the canonical conversation composition: user + assistant turns, a reasoning disclosure, a tool-result card, an inline proposal, and the composer.",
+          "dont": "Improvise a different arrangement of chat elements.",
+          "enforced_by": "prose-only (screen template)"
+        }
+      ]
+    }
+  }
+}

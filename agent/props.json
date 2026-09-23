@@ -1,0 +1,123 @@
+{
+  "$note": "Structured prop/variant contract, one entry per component. The single source for the human API tables (rendered on the doc site) AND the agent manifest (manifest.json). Types are platform-neutral: content=a view/child, text=string label, color=token or color, bool, number, action=callback, data=array/object. Derived from the design system's adherence rules; keep in sync with them.",
+  "$version": "0.1.0",
+  "components": {
+    "Button": { "replaces": ["button"], "props": {
+      "variant": { "type": "enum", "enum": ["primary", "settingsCTA", "recovery", "connect"], "default": "primary", "desc": "Button treatment" },
+      "role": { "type": "enum", "enum": ["primary", "destructive"], "default": "primary", "desc": "Tint; applies to settingsCTA/recovery" },
+      "size": { "type": "enum", "enum": ["regular", "compact"], "default": "regular", "desc": "settingsCTA only" },
+      "children": { "type": "content", "desc": "Label" }
+    }},
+    "Text": { "props": {
+      "variant": { "type": "enum", "enum": ["largeTitle", "title1", "title1Bold", "title3", "title3Bold", "body", "bodyBold", "subheadline", "footnote", "caption1", "caption1Bold", "chatCode"], "default": "body", "desc": "Typographic role" },
+      "color": { "type": "enum", "enum": ["primary", "secondary", "tertiary", "brand", "brandOnFill"], "default": "primary", "desc": "Label color role" },
+      "as": { "type": "text", "desc": "Element/tag to render" },
+      "children": { "type": "content", "desc": "Text content" }
+    }},
+    "Surface": { "props": {
+      "material": { "type": "enum", "enum": ["solid", "inset", "glass"], "desc": "Fill treatment (wins over background)" },
+      "background": { "type": "enum", "enum": ["primary", "secondary", "tertiary"], "desc": "Raw background layer" },
+      "padding": { "type": "enum", "enum": ["xs", "sm", "md", "lg", "xl", "xxl", "xxxl", "none"], "default": "md", "desc": "Inner padding token" },
+      "radius": { "type": "enum", "enum": ["none", "small", "medium", "large", "xlarge"], "default": "medium", "desc": "Corner radius token" },
+      "bordered": { "type": "bool", "default": false, "desc": "Hairline separator border" },
+      "as": { "type": "text", "desc": "Element/tag to render" }
+    }},
+    "Card": { "extends": "Surface", "props": {
+      "material": { "type": "enum", "enum": ["solid", "inset", "glass"] },
+      "background": { "type": "enum", "enum": ["primary", "secondary", "tertiary"] },
+      "padding": { "type": "enum", "enum": ["xs", "sm", "md", "lg", "xl", "xxl", "xxxl", "none"], "default": "md" },
+      "radius": { "type": "enum", "enum": ["none", "small", "medium", "large", "xlarge"], "default": "medium" },
+      "bordered": { "type": "bool" },
+      "as": { "type": "text" }
+    }},
+    "Pill": { "props": {
+      "tone": { "type": "enum", "enum": ["neutral", "blue", "green", "red", "orange"], "default": "neutral", "desc": "Color tint" },
+      "dot": { "type": "color", "desc": "Leading color dot" },
+      "icon": { "type": "content", "desc": "Leading glyph" },
+      "children": { "type": "content", "desc": "Label" }
+    }},
+    "ListRow": { "props": {
+      "leading": { "type": "content", "desc": "Leading accessory (usually ContainedIcon)" },
+      "title": { "type": "content", "required": true, "desc": "Primary label" },
+      "subtitle": { "type": "content", "desc": "Secondary label" },
+      "trailing": { "type": "content", "desc": "Trailing accessory" },
+      "separator": { "type": "bool", "desc": "Show hairline under the row" }
+    }},
+    "ContainedIcon": { "props": {
+      "color": { "type": "color", "default": "brand blue", "desc": "Container fill (token var)" },
+      "size": { "type": "number", "default": 28, "desc": "Container edge length (px)" },
+      "children": { "type": "content", "desc": "The glyph (white, centered)" }
+    }},
+    "MessageBubble": { "props": {
+      "role": { "type": "enum", "enum": ["user", "assistant"], "required": true, "desc": "Speaker (drives alignment + treatment)" },
+      "children": { "type": "content", "desc": "Message content" }
+    }},
+    "ComposerBar": { "props": {
+      "placeholder": { "type": "text" }, "value": { "type": "text", "desc": "Controlled text" }, "defaultValue": { "type": "text" },
+      "onChange": { "type": "action" }, "onSubmit": { "type": "action", "desc": "Enter (no Shift) or send" },
+      "maxRows": { "type": "number", "desc": "Growth cap before scroll" },
+      "attachments": { "type": "content" }, "leading": { "type": "content" }, "trailing": { "type": "content" }, "send": { "type": "content" }
+    }},
+    "ContextualMessage": { "props": {
+      "tone": { "type": "enum", "enum": ["info", "success", "warning", "error", "neutral"], "default": "neutral", "desc": "Semantic tone (glyph + accent)" },
+      "icon": { "type": "content" }, "iconColor": { "type": "color" },
+      "title": { "type": "content", "required": true }, "subtitle": { "type": "content" }, "actions": { "type": "content", "desc": "Footer action row" }
+    }},
+    "ThinkingBlock": { "props": {
+      "title": { "type": "content", "default": "Thought for a moment" },
+      "children": { "type": "content", "desc": "Reasoning text" },
+      "defaultExpanded": { "type": "bool", "default": false }, "live": { "type": "bool", "default": false, "desc": "Shimmer while thinking" }
+    }},
+    "TypingDots": { "props": {} },
+    "Toast": { "props": {
+      "variant": { "type": "enum", "enum": ["info", "success", "warning", "error"], "default": "info", "desc": "Semantic glyph + tint" },
+      "message": { "type": "content", "required": true }
+    }},
+    "ToolResultCard": { "props": {
+      "icon": { "type": "content" }, "tint": { "type": "color" },
+      "title": { "type": "content", "required": true, "desc": "Header summary" },
+      "collapsible": { "type": "bool", "default": false }, "defaultExpanded": { "type": "bool" }
+    }},
+    "TaskEventRow": { "props": {
+      "time": { "type": "content", "desc": "Time in the 64px slot" },
+      "title": { "type": "content", "required": true },
+      "done": { "type": "bool", "desc": "Task completion (status circle)" },
+      "eventColor": { "type": "color", "desc": "Left color bar (events)" },
+      "calendar": { "type": "data", "desc": "{name,color} calendar badge" },
+      "list": { "type": "text", "desc": "List badge" },
+      "duration": { "type": "text", "desc": "Duration/range pill" },
+      "overdue": { "type": "bool", "desc": "Overdue pill" }
+    }},
+    "SuggestedTaskRow": { "props": {
+      "action": { "type": "enum", "enum": ["add", "move"], "default": "add", "desc": "Left CTA kind" },
+      "title": { "type": "content", "required": true }, "subtitle": { "type": "content", "desc": "Attribution / WHY" },
+      "onAccept": { "type": "action" }, "onDismiss": { "type": "action" }
+    }},
+    "ProposalCard": { "props": {
+      "title": { "type": "content", "required": true }, "actionSentence": { "type": "content", "required": true, "desc": "The proposed change" },
+      "explanation": { "type": "content", "desc": "Quiet rationale" },
+      "state": { "type": "enum", "enum": ["pending", "succeeded", "failed", "dismissed", "stale"], "default": "pending", "desc": "Lifecycle" },
+      "onApprove": { "type": "action" }, "onDismiss": { "type": "action" },
+      "busy": { "type": "bool" }, "error": { "type": "content" }, "terminalText": { "type": "content", "desc": "Resolved summary override" }
+    }},
+    "DateNavigationHeader": { "props": {
+      "label": { "type": "content", "required": true, "desc": "Relative label" }, "date": { "type": "content", "required": true, "desc": "Full date line" },
+      "isToday": { "type": "bool", "desc": "Hide the Today jump" },
+      "onPrev": { "type": "action" }, "onNext": { "type": "action" }, "onToday": { "type": "action" }
+    }},
+    "CalendarEventsCard": { "extends": "ToolResultCard", "props": {
+      "events": { "type": "data", "required": true, "desc": "Event list" },
+      "calendarName": { "type": "text", "desc": "Header suffix" },
+      "collapsible": { "type": "bool", "default": false }, "defaultExpanded": { "type": "bool" }
+    }},
+    "RemindersCard": { "extends": "ToolResultCard", "props": {
+      "reminders": { "type": "data", "required": true, "desc": "Reminder list" },
+      "collapsible": { "type": "bool", "default": false }, "defaultExpanded": { "type": "bool" }
+    }},
+    "AgendaView": { "kind": "screen-template", "props": { "width": { "type": "number", "desc": "Fixed template width" } } },
+    "InboxView": { "kind": "screen-template", "props": { "width": { "type": "number" } } },
+    "SettingsView": { "kind": "screen-template", "props": { "width": { "type": "number" } } },
+    "ConversationView": { "kind": "screen-template", "props": { "width": { "type": "number" } } },
+    "ChatScreen": { "kind": "screen-template", "props": { "width": { "type": "number" }, "height": { "type": "number" } } }
+  }
+}

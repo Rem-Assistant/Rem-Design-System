@@ -1,19 +1,25 @@
-name: tokens
+name: contract
 
-# Design-token drift guard: fails if a generated file (Swift / CSS) is out of sync
-# with tokens.json — i.e. someone edited a generated file by hand or forgot to
-# regenerate after changing the source. See tools/README.md.
+# Drift guards for the machine contract: the generated token files must match tokens.json,
+# and manifest.json must match agent/props.json + the component front-matter. Both generators
+# are dependency-free Node. See tools/README.md.
 
 on:
   push:
     branches: [main]
     paths:
       - "tokens/**"
+      - "agent/**"
+      - "components/**"
+      - "manifest.json"
       - "tools/**"
       - ".github/workflows/tokens.yml"
   pull_request:
     paths:
       - "tokens/**"
+      - "agent/**"
+      - "components/**"
+      - "manifest.json"
       - "tools/**"
       - ".github/workflows/tokens.yml"
 
@@ -25,5 +31,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Check generated tokens are in sync with tokens.json
+      - name: Tokens in sync with tokens.json
         run: node tools/generate-tokens.mjs --check
+      - name: manifest.json in sync with props + docs
+        run: node tools/build-manifest.mjs --check
