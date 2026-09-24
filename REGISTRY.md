@@ -59,6 +59,11 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 
 ## Screens (one generation — device-framed on the Screens page)
 
+> **Settings-domain screens are consolidated on one `Settings` page** (Settings · Connectors · About ·
+> Billing · Permissions + Sign Out / Delete Account states, laid out in a row) — the separate
+> Connectors/About/Billing/Permissions pages were removed (founder: "group all the settings screens on
+> the same page"). Onboarding screens live on the `Onboarding` page; task screens on `Task & Events`.
+
 Built on the canonical components above, housed in `DeviceFrame/iPhone`, organized in labeled
 Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/SettingsView) are being
 **retired** in favor of these.
