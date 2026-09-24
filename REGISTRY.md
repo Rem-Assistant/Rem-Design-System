@@ -47,7 +47,8 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | ErrorBanner | States | `108:56` | — | ✓ canonical |
 | LoadingSkeleton | States | `108:62` | — | ✓ canonical |
 | Pill | Pill | `64:14` | — | ✓ canonical |
-| DeviceFrame/iPhone (bezel + Screen slot) | Screens | `128:46` | presentation-only | ✓ canonical |
+| DeviceFrame/iPhone (bezel + Screen slot + HomeIndicator) | Screens | `128:46` | presentation-only | ✓ canonical |
+| HomeIndicator (bottom safe-area handle) | Platform Controls | `333:102` | system safe-area overlay | ✓ canonical |
 | Navigation Bar | imported | `d29957…` | iOS 26 kit (Apple) | kit |
 | Status Bar / Toolbar | imported | — | iOS 26 kit (Apple) | kit |
 

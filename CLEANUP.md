@@ -154,8 +154,11 @@ their **codebase source** (path) so reviewers can find them.
   section (and this feeds the per-screen-pages split).
 - [ ] **Arrangement is scattered** — "things are all over the place, I have to hunt for the right
   screen." Impose a clean, findable layout before adding more.
-- [ ] **Home indicator + safe area.** Adopt the bottom home-indicator/safe-area in the device frame;
-  its background must **sync to whatever sits at the bottom** (e.g. the voice bar's bg on Chat).
+- [x] **Home indicator adopted.** Built canonical **HomeIndicator** (`333:102`, Platform Controls):
+  transparent band + 144×5 labelPrimary pill, added to the **DeviceFrame master** (`128:46`) so every
+  device-framed screen shows it. Transparent band = bg inherits whatever's docked behind it. Verified
+  on Device — Inbox. FOLLOW-UP (per-screen bg sync): on **Chat**, extend the voice bar's bg down to the
+  bottom edge so the indicator sits over the voice-bar material (not white); same for any docked bar.
 - [x] **Agenda no-state rebuilt** from the real `AgendaNullStateView`: was a `◔` emoji + wrong copy;
   now real `calendar.badge.plus` (64pt), "No agenda yet" (title1Bold), "Create a new task or schedule
   existing ones" (body), "+ Add New" button. Verified. (Schedule button — only shows when
