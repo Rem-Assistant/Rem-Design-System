@@ -73,6 +73,12 @@ Re-base every kit usage to iOS 26:
   (Agenda/Chat/Task detail/Settings/Inbox/Connectors/About) under the `SCREENS` divider as screens
   are built/re-verified.
 
+## Components still needed
+- [ ] **RemFaceMark** — Task detail's activity avatar is a placeholder (brand-blue tint circle +
+  drawn eyes/smile). The app uses `RemFaceMark` (the Rem brand face, `.idle`/`.thinking` modes,
+  tinted). Build a canonical `RemFaceMark` component and swap it into Task detail + the empty-state
+  face + the voice-bar/thinking marks.
+
 ## Icons
 - [ ] `mic.fill` — no caption in the community SF Symbols file; source via the icon-request frame
   (needs a Mac). Voice bar currently renders its own mic.

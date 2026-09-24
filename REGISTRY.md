@@ -65,4 +65,5 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Connectors | `133:192` | connected / not-connected rows |
 | About | `134:242` | — |
 | Agenda | rebuilding | scheduled · empty · loading (jump-to-today, sort modes to add) |
-| Chat | rebuilding | empty gate · run lifecycle · tool-result states + voice bar |
+| Chat | `71:533` | voice-active thread (iOS 26 Toolbar-Top nav, bound, real symbols) ✓ |
+| Task detail | `299:2` | root — iOS 26 nav (back+Task), title/date/meta, Last-activity card, notes, composer; bound + real symbols ✓ |
