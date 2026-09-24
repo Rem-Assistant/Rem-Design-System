@@ -197,11 +197,11 @@ so re-read node positions before moving things.
   types — an Inspector (medium) and a Full-height sheet** — New Task/compose is the **Full-height** one.
 
 ### Flows
-- [ ] **Navigation map — redraw VERTICALLY** (horizontal won't scale). `420:15`. Two paths: (a) **FigJam via
-  `generate_diagram`** (founder's suggestion — native vertical layout + auto-routed connectors) needs the
-  founder's Figma **plan key** (`team::…`/`organization::…`), which the agent doesn't have — provide it and
-  this is a quick win; or (b) a **manual vertical tree** rebuild in the Figma Flows page (indented depth
-  levels + straight connectors). Deferring pending the plan key vs. manual decision.
+- [x] **Navigation map redrawn VERTICALLY** — `496:2` on the Flows page: an indented vertical tree
+  (onboarding chain → Main → tabs → sub-screens) with connectors; Deploying/Activation dashed-orange
+  (deprecation), General purple (proposed). Scales vertically as the founder wanted. The old horizontal map
+  (`420:15` boxes) is superseded — remove it when confirmed. (If the founder still wants it in FigJam, provide
+  the Figma **plan key** and I'll regenerate via `generate_diagram`.)
 
 ### New card types (founder, with screenshots) — BUILT
 - [x] **Code hunt: neither exists.** Confirmed both are net-new (no `PollCard`/`ChoiceCard`, no
