@@ -78,6 +78,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Connector consent pre-screen (sheet) — logo tile + name + tagline + 3 icon-rows + legal + **gradient Connect** / Cancel | `434:21` | connector consent sheet ("Connect Notion?") |
 | Accessory/MenuValue — value + up/down chevron pull-down (**Value** text prop: Ask / Allow / Deny), on canonical ListRow | `435:22` | per-capability permission menu (Browser perms) |
 | ContentUnavailableView + CTA — empty state with an action slot (icon + title + subtitle + **Button/Standard-blue**) | `436:67` | "No info saved → Add login info" |
+| Browser takeover (screen) — dark chrome (title/subtitle/X) + embedded browser + coachmark + **Take control (gradient) / Stop the task** | `437:68` | human-in-the-loop browser takeover |
 
 ## Screens (one generation — device-framed on the Screens page)
 
