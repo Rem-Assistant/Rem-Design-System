@@ -79,9 +79,14 @@ so re-read node positions before moving things.
 - [x] **Voice screen built** (`476:530`, Settings page) — faithful to `SharedVoiceSettingsView.swift`
   (preview / Spoken responses / Character & speed sliders), on the **kit nav bar**. This is the "set up
   voice" destination for the onboarding flow.
-- [ ] Build the **Connectors** entry as the "connect apps" onboarding step, then assemble the coach-mark
-  (GuidedFlow) → Connectors → Voice sequence as **Proposed onboarding**.
-- [ ] **Componentize the onboarding screens** (founder: "componentize the screen").
+- [x] **Proposed onboarding flow assembled** — new page **`Proposed · Onboarding`** lays out the sequence:
+  ① GuidedFlow coach-mark (relabeled "Step 1 of 2 · Connect your apps") → ② **Connectors** screen `133:192`
+  (real connector rows) → ③ **Voice** screen `476:530`. Built from the existing pieces per epic #1373;
+  replaces the deploy/education onboarding. NEXT refinement: reposition the coach-mark spotlight onto each
+  step's real target (currently the demo position) for a true overlay, and componentize the coach-mark's
+  Step/Skip/Next as a reusable Coachmark component.
+- [ ] **Componentize the onboarding screens** (founder: "componentize the screen") — extract the Coachmark
+  overlay (scrim + spotlight + Step/Skip/Next tooltip) as a reusable component.
 - [ ] Onboarding page itself still needs the auto-layout organization pass (like the other pages).
 - [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
 
