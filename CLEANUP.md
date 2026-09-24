@@ -129,10 +129,10 @@ their **codebase source** (path) so reviewers can find them.
   via the community-file lookup, then swap.
 - [ ] **TaskEventRow pills missing.** task + event variants support pills (list badge, duration,
   overdue) per `TaskEventRowView.taskContent`. Add a pills row (as a variant/optional slot).
-- [ ] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug — founder saw it
-  on **Task detail** (dates/meta, and a frame literally named "action" still unfixed) and on
-  **Agenda TaskEventRows**. Sweep every screen/component for FIXED-100 frames → set hug
-  (`primaryAxisSizingMode='AUTO'`).
+- [~] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug.
+  **Agenda rows FIXED** (`182:2/15/28` were `counterAxisSizingMode=FIXED` h100 → set to hug; now 64/64/58;
+  spacing verified). **Task detail** still pending — the frame named "action" + dates/meta (founder
+  fixed some manually; re-read live state before touching to avoid clobbering their edits).
 - [ ] **Card icons wrong.** CalendarEventsCard, RemindersCard, **ProposalCard** icons don't match
   fidelity — replace drawn/placeholder icons with the real SF Symbols the app uses.
 - [ ] **Row hierarchy idea.** TaskEventRow is conceptually a **Row** with re-slotted
@@ -147,10 +147,17 @@ their **codebase source** (path) so reviewers can find them.
   screen." Impose a clean, findable layout before adding more.
 - [ ] **Home indicator + safe area.** Adopt the bottom home-indicator/safe-area in the device frame;
   its background must **sync to whatever sits at the bottom** (e.g. the voice bar's bg on Chat).
-- [ ] **Agenda no-state is wrong** — build it from the **actual app** behavior, not a guess. **Delete
-  Screen/Agenda-Loading** (140:1643).
-- [ ] **Agenda bottom toolbar wrong across all** agenda screens — and it should **not** use glass
-  buttons. Fix to match the app.
+- [x] **Agenda no-state rebuilt** from the real `AgendaNullStateView`: was a `◔` emoji + wrong copy;
+  now real `calendar.badge.plus` (64pt), "No agenda yet" (title1Bold), "Create a new task or schedule
+  existing ones" (body), "+ Add New" button. Verified. (Schedule button — only shows when
+  `hasAvailableTasks` — deferred pending the `calendar.badge.clock` glyph.) **Screen/Agenda-Loading
+  deleted** (140:1643).
+- [x] **Agenda bottom toolbar removed** (was glass icon buttons — wrong). The app has **no** bottom
+  toolbar; the only bottom element is a floating **Jump to Today** capsule (`.ultraThinMaterial`,
+  `arrow.uturn.backward` + "Jump to Today"), shown **only when not on today**. TODO: build that capsule
+  (needs `arrow.uturn.backward` glyph) as the not-today state.
+- [x] **DateNavigationHeader** — removed stray `- - -` rectangles (`208:4/208:18`) from the master's
+  side frames; app has chevron-only sides. Cleans all agenda instances.
 - [ ] **Task detail composer is the wrong one.** It uses a "composer doc"-style field; must use the
   canonical **RemComposerBar** (`53:2`) — the one we are keeping, not the one slated for deprecation.
 - [ ] **List styles.** SwiftUI has many list styles (plain/inset/grouped/insetGrouped/sidebar).
