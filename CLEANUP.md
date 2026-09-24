@@ -186,10 +186,13 @@ their **codebase source** (path) so reviewers can find them.
   alone.
 - [~] **Settings sub-screens** (founder: build them). **Billing & Usage DONE** (`341:862`, Free-plan
   Upgrade CTA, Current Plan + Usage progress bars; from `BillingSettingsView.swift`; verified).
-  REMAINING: **Permissions** (iOS source: locate — `PermissionUtils.swift` is utils, the screen may be
-  a Settings section/onboarding view; find the real iOS permissions screen before building) and
-  **About** (already at `134:242` — verify against `SharedAboutView.swift`, likely just needs a fidelity
-  pass rather than a fresh build).
+  **About DONE** (`134:242`) — added the missing **hero** (real Rem AppIcon embedded via createImage +
+  "Rem" + "Turn your thoughts into actions"), reordered to Hero → Legal → Version, and hugged the
+  Version card off fixed-100. Matches `SharedAboutView` iOS. Verified.
+  REMAINING: **Permissions** (`DevicePermissionsView` in `Rem/Sources/Settings/SettingsView.swift:400`):
+  inset-grouped ContainedIcon rows — Notifications (bell.fill/red), Calendar, Reminders
+  (AppleRemindersLogo/purple), Microphone (mic.fill/orange), Speech Recognition (waveform/indigo),
+  Camera (camera.fill/gray); 3 sections with footers. Needs `bell.fill` + `camera.fill` glyphs sourced.
 - [x] **Inbox nav actions removed** — header now title-only ("Inbox" Large Title), Leading/Trailing
   control frames hidden, matching `InboxHeader` (title-only). Populated list = TaskEventRow rows with
   `calendar.badge.plus` unscheduled leading. **Inbox-Loading intentionally NOT built** (founder cut).
