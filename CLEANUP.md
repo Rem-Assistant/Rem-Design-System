@@ -311,12 +311,16 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   remaining "event type" from the Muse-audit list.
 
 ### View-history Rem avatar render (2026-09-24)
-- [ ] **Rem activity avatar renders dark.** On View history (`413:32`), the Rem rows' avatar
-  (`RemFaceMark` `362:7` idle in a `brand/blue`@0.15 circle) renders as a **dark navy blob**, not the
-  intended small blue face on a light-blue tint (`TaskCommentsSection`: `Circle().fill(accent.opacity(0.15))`
-  + `RemFaceMark(tint: accent)`). The `person.fill` "You" avatars are correct. Likely the RemFaceMark
-  default variant's fill/size — fix the instance tint+size (or wrap), then reuse for the task-detail
-  activity avatar too.
+- [~] **Rem activity avatar — RemFaceMark renders as a dark blob.** On View history (`413:32`), the Rem
+  rows' avatar should be a small blue face on `brand/blue`@0.15 (`TaskCommentsSection`:
+  `Circle().fill(accent.opacity(0.15))` + `RemFaceMark(tint: accent)`). **Fixed:** the circle bg opacity
+  (was solid from the `bindFill` one-step opacity bug; now 0.15) and the `person.fill` "You" avatars are
+  correct. **Still broken:** the `RemFaceMark` `362:7` shape renders **dark** — recoloring its child
+  VECTOR fills to brand/blue did NOT change it, so the dark shape is the component's **own frame/blob
+  fill**, not a child vector. Needs a focused RemFaceMark-component fix (expose a tint / fix the default
+  fill), then reuse for the task-detail activity avatar. **NB the inline `bindFill` helper used across the
+  new screens has the one-step opacity-reset bug — any tinted (<1 opacity) fill went solid** (grabbers
+  @0.5, inactive pager dots @0.4); use the two-step re-apply pattern in future builds.
 
 ### Login / onboarding brand-icon debt (2026-09-24)
 - [ ] **Google multicolor "G" logo** on the Login "Continue with Google" button (`411:15`) is a **white
