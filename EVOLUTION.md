@@ -138,4 +138,25 @@ Self-verify every deliverable (screenshot + property read + code check for fidel
 log-don't-fix debt in `CLEANUP.md`; keep `REGISTRY.md` + Code Connect in sync; commit + push; leave
 written review summaries (founder is often away).
 
+## Build status (2026-09-24 autonomous run)
+
+**FOUNDATION — complete.** Button emphasis tier (Neutral/Standard/Commit) `377:8`; onboarding flow
+(Login `411:15`, Privacy `410:16`, Deploying `415:15`, Activation `414:15`); New Task `404:5`;
+View history `413:32`; Sign Out `412:15` + Delete Account `412:24`; task state badges
+(RunStatus `417:60`, Deemphasis `419:41`, Overdue `419:42`, Priority `419:48`); settings-page
+consolidation; nav map `420:15`; RemFaceMark component fix; Component Index synced.
+
+**PROPOSED — 9 of ~10 built** (on `Proposed · Agent surfaces`, clearly labeled, code-unverified):
+AgentStatusPill `427:21`, ActionCard `428:37`, ApprovalGate `429:20`, Execution trace `431:21`,
+RunningTaskBanner `432:39`, Connector consent pre-screen `434:21`, MenuValue permission accessory
+`435:22`, ContentUnavailableView+CTA `436:67`, Browser takeover `437:68`.
+
+**Remaining — founder-gated:**
+- **Chats tab** (main orchestrator + side chats). Founder is still deciding the model ("haven't thought
+  this through … could study Muse's pattern"); the as-built version also needs a `ChatHistoryView.swift`
+  read + a few new glyphs (chat bubble, compose, archive). Not built — awaiting the model decision.
+- **IA/placement**: Agent hub structure, Wallet home, Settings "Rem"→"General" — held.
+- **Debates**: deprecate Calendar/Reminders cards?; Composio in the consent pre-screen?; drop the deploy
+  step (still in code)? — held.
+
 _Seeded 2026-09-24 from the Muse audit (15 screenshots) + founder direction._
