@@ -302,6 +302,14 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   candidate: unify Billing on the Rem button system. This is *app-code* debt → a GitHub issue if the
   founder wants it tracked, not Figma debt.
 
+### Task state badges — minor (2026-09-24)
+- [ ] **Working badge uses `arrow.clockwise` (`U+100148`)** as a stand-in for `arrow.triangle.2.circlepath`
+  (the pulsing two-arrow loop in `TaskRunStatusBadge.swift`) — not captioned in the community symbol
+  file. Visually reads as "working/syncing"; swap to the exact glyph via the icon-request fallback.
+- [ ] **All-day event TaskEventRow variant** not yet added (Leading shows "All day", no time). The
+  status badges (RunStatus/Deemphasis/Overdue/Priority) are built; the all-day *row* variant is the
+  remaining "event type" from the Muse-audit list.
+
 ### View-history Rem avatar render (2026-09-24)
 - [ ] **Rem activity avatar renders dark.** On View history (`413:32`), the Rem rows' avatar
   (`RemFaceMark` `362:7` idle in a `brand/blue`@0.15 circle) renders as a **dark navy blob**, not the

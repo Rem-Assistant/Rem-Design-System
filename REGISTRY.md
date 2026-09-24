@@ -24,6 +24,10 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
 | SectionFooter | ListRow | `161:70` | `Section { } footer: { Text }` | ✓ canonical |
 | TaskEventRow (task/event) — Row descendant; props **Kind**, **Leading** (Time/Schedule/Clock), **Pills** (bool) | Tasks & Agenda | `46:21` | `TaskEventRowView.swift` (taskContent) | ✓ canonical |
+| TaskRunStatusBadge — **Status** = Working / Needs review / Needs attention / Done (tint@12% + border + icon) | Tasks & Agenda | `417:60` | `TaskRunStatusBadge.swift` | ✓ canonical |
+| TaskDeemphasisBadge — **Reason** = Blocked / Stale (icon + label, pill) | Tasks & Agenda | `419:41` | `TaskDeemphasisBadge.swift` | ✓ canonical |
+| Overdue (pill) | Tasks & Agenda | `419:42` | `OverduePillView` (`TaskEventRowView`/`SharedTaskRow`) | ✓ canonical |
+| Priority — **Level** = High / Low (tinted pill) | Tasks & Agenda | `419:48` | `SharedTaskRow` priority pill | ✓ canonical |
 | SuggestedTaskRow (add/move) | SuggestedTaskRow | `48:25` | `SuggestedTaskRow.swift` | ✓ canonical |
 | Button — **Style** = Primary (filled `.label`, login CTA) / **Primary Blue** (standard emphasis) / **Primary Gradient** (commit emphasis, blue→purple) / CTA (accent text) / Connect (capsule) / Destructive (red text). **Emphasis tier** (Neutral·black / Standard·blue / Commit·gradient) per the Muse audit — belongs in `RemButtonTokenSet`. | Primitives | `377:8` | `RemSettingsCTAButtonStyle.swift` — `RemPrimaryActionButtonStyle` (Primary), `RemSettingsCTAButtonStyle` (CTA/Destructive), `RemRowConnectCTA` (Connect); blue/gradient tiers are new (design-leads-code, see EVOLUTION.md) | ✓ canonical |
 | PermissionStatusBadge — **Status** = Enabled / Denied / Limited / Not Set (dot + label) | Rows & Controls | `383:14` | `PermissionUtils.swift` `PermissionStatusBadge` | ✓ canonical |
