@@ -129,11 +129,11 @@ so re-read node positions before moving things.
   `Tasks & Agenda components` column (`456:14`) has exactly **3 sections** — ① **TaskEventRow** `456:15`
   (task/event, 4 variants → `TaskEventRowView.swift`), ② **SuggestedTaskRow** `456:16` (add/move →
   `SuggestedTaskRow.swift`), ③ **DateNavigationHeader** `456:17` (→ `SharedAgendaView.swift`). Off to the
-  side: a **Task badges** frame `456:18` (RunStatus/Deemphasis/Overdue/Priority) and the loose
-  **AgendaAddSchedule** symbol `490:22` at (900,1600). **All three column sections map to live shipping
-  code**, so none is an obvious orphan from the design side — which is why I'm not guessing. Point at one
-  (by name/number) and I delete it. The loose `AgendaAddSchedule` is newly built + wired (not unused); it
-  could be tucked into the column as a 4th section if you want it catalogued there.
+  side: a **Task badges** frame `456:18` (RunStatus/Deemphasis/Overdue/Priority). **All three column sections
+  map to live shipping code**, so none is an obvious orphan from the design side — which is why I'm not
+  guessing. Point at one (by name/number) and I delete it. (The formerly-loose **AgendaAddSchedule** `490:22`
+  has now been tidied into the column as a proper **4th section** `518:30` — page-header + component — so it's
+  catalogued rather than floating; it's newly built + wired, not the unused one.)
 
 ### Chat
 - [?] **Remove the unused section on the Chat page** — one section unused; **which one?** (confirm before delete).
