@@ -198,10 +198,15 @@ their **codebase source** (path) so reviewers can find them.
   **RemComposerBar** (`53:2`) with `leading` + `trailing-speak` hidden and placeholder "Continue in
   chat…", exactly matching `TaskCommentComposer` (leading/trailing = EmptyView, doorway placeholder).
   Verified. Also hugged the Task-detail `activity` (→112) and `action` (→14) frames off fixed-100.
-- [ ] **List styles.** SwiftUI has many list styles (plain/inset/grouped/insetGrouped/sidebar).
-  Open question how the system represents them component-side (founder may share docs). `Section`
-  should also be shown **in combination with a real list** (header + rows + footer), not header/footer
-  alone.
+- [x] **Section shown in combination with a list** — built a "Section (grouped list — in use)"
+  specimen on Rows & Controls (`360:204`): SectionHeader + a grouped card of 3 ListRows (separators
+  between, none on the last) + SectionFooter. Verified.
+- [ ] **List styles (open design Q).** SwiftUI has many list styles (plain/inset/grouped/insetGrouped/
+  sidebar). Still open how the system represents them component-side — founder may share docs. The
+  grouped/insetGrouped style is now shown (Settings screens + the Section specimen); plain is shown
+  (Inbox/Agenda). Sidebar/inset variants TBD.
+- [x] **Switch / Button need no glyphs** — Switch is a track+knob toggle, Button is a text label; the
+  "symbol pass" gap was **ContainedIcon only** (now fixed).
 - [~] **Settings sub-screens** (founder: build them). **Billing & Usage DONE** (`341:862`, Free-plan
   Upgrade CTA, Current Plan + Usage progress bars; from `BillingSettingsView.swift`; verified).
   **About DONE** (`134:242`) — added the missing **hero** (real Rem AppIcon embedded via createImage +
