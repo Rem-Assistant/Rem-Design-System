@@ -162,9 +162,14 @@ their **codebase source** (path) so reviewers can find them.
   Consider modeling it as a descendant of the base Row rather than a parallel component.
 
 ### Screens (paused — fidelity + arrangement first)
+- [x] **Real page dividers** — replaced the dash-name section pages (`—  FOUNDATIONS  —`, etc.) with
+  actual `createPageDivider()` dividers (`isPageDivider:true`) at Foundations / Components / Screens.
+  NOTE: Figma ties `isPageDivider` to the name — a real divider **can't carry a custom label** (setting
+  one reverts it to a regular page), so section identity now comes from the content pages after each
+  divider. Verified the page order.
 - [ ] **Sections don't contain their screens.** The Figma SECTIONs (③ Agenda, ⑤ Inbox, …) don't
-  actually enclose the screen frames, so the section labels are useless. Move each screen inside its
-  section (and this feeds the per-screen-pages split).
+  actually enclose the screen frames (and Billing/Permissions are loose on the Screens page), so the
+  section labels are useless. Move each screen inside its section (feeds the per-screen-pages split).
 - [ ] **Arrangement is scattered** — "things are all over the place, I have to hunt for the right
   screen." Impose a clean, findable layout before adding more.
 - [x] **Home indicator adopted.** Built canonical **HomeIndicator** (`333:102`, Platform Controls):
