@@ -136,7 +136,17 @@ so re-read node positions before moving things.
   using the canonical SectionHeader/SectionFooter components. Flagged rather than guessing at "not using
   sections" when the screen is already sectioned.
 - [ ] **Sign Out**: use the **official iOS 26 action/activity sheet** from the kit (not a hand-built dialog).
-- [ ] **Delete Account**: use an **iOS 26 kit sheet**; the destructive **button "looks like nothing"** — fix it.
+  Part of the cross-cutting **kit-sheet swap** (see below) — needs the kit's Sheet/ActionSheet component
+  identified first.
+- [x/?] **Delete Account button** — the button `412:36` already renders as a proper **solid-red destructive
+  button** (white label). "Looks like nothing" most likely refers to its **disabled** state (prod disables it
+  until you type "delete"), which the current specimen doesn't show. Proposed: add an enabled/disabled state
+  pair rather than restyle the enabled one. Confirm with founder. The **kit-sheet** part is the cross-cutting
+  item below.
+- [ ] **Cross-cutting: kit sheets.** Founder wants all sheet interfaces (Sign out, Delete, Inbox "+",
+  Agenda Schedule, voice/connector sheets) to use the **iOS 26 kit Sheet** components ("already declared
+  there") instead of hand-built sheet frames. First step: locate the kit Sheet/ActionSheet component in the
+  iOS-26 library, then swap. Not yet started.
 - [ ] **Settings page**: organize with a layout (stop things flying around).
 - [ ] **Build the "General" child view** — we renamed Settings "Rem" → **General**; the child screen isn't
   built. (This unblocks the earlier founder-gated rename.)
