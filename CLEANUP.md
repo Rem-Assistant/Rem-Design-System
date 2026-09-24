@@ -329,6 +329,13 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   (neutral/black fill + icon + label), faithful to `SignInButton.swift`, but per the code-arch doc they
   should become a **Button "SignIn" variant with an icon slot** (RemButton). Until then they're screen-local.
 
+### Proposed agentic surfaces — polish follow-ups (2026-09-24)
+- [ ] **Execution trace dashed rail.** The step timeline (`431:21`) has status icons + steps but not the
+  **dashed vertical rail** connecting them (Muse's timeline connector). Add a per-step dashed line segment
+  in the leading column (or a LINE node with `dashPattern`) — decorative, deferred.
+- [ ] **ApprovalGate / ActionCard connector logos** use a neutral tile + glyph, not the real brand logo
+  (Notion, etc.) — network-blocked; fetch in CI (same as the other brand-logo debt).
+
 ### Button emphasis tier — Label binding fixed (2026-09-24)
 - [x] **Primary Blue / Primary Gradient tiers didn't respond to the `Label` prop.** Cloning Primary to
   make the tiers dropped the text node's `componentPropertyReferences` (came back `{}`), so instances
