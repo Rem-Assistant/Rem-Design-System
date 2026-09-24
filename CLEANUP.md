@@ -64,12 +64,14 @@ Re-base every kit usage to iOS 26:
   (system overlay). Decide whether to add a simple home-indicator bar to the bezel (would overlay
   bottom bars like the voice bar, as on-device) or leave it kit-faithful.
 
-## Structure — decision needed
-- [ ] **Per-screen pages + domain-clubbed component pages** (proposed): SCREENS → one page per
-  screen (Agenda/Chat/Task detail/Settings/Inbox/Connectors/About); COMPONENTS → ~6 domain pages
-  (Primitives · Rows & Controls · Chat · Tasks & Agenda · Cards · Platform). Reverses strict
-  one-component-per-page. Awaiting sign-off on the grouping before the ~30-page move. Specs live
-  on each domain page (no separate Specs section — removed).
+## Structure
+- [x] **Component domain pages — DONE.** Consolidated ~20 one-per-page components into 5 domain
+  pages (Primitives · Rows & Controls · Chat · Tasks & Agenda · Cards) + Platform Controls, under
+  the real `COMPONENTS` divider. Each stacked component-under-page-header, verified no overlap.
+  File down from ~33 → 15 pages. Specs live per domain page (no separate Specs section).
+- [ ] **Per-screen pages** (Phase 2): split the single `Screens` page into one page per screen
+  (Agenda/Chat/Task detail/Settings/Inbox/Connectors/About) under the `SCREENS` divider as screens
+  are built/re-verified.
 
 ## Icons
 - [ ] `mic.fill` — no caption in the community SF Symbols file; source via the icon-request frame
