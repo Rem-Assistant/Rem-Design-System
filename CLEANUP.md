@@ -329,6 +329,12 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   (neutral/black fill + icon + label), faithful to `SignInButton.swift`, but per the code-arch doc they
   should become a **Button "SignIn" variant with an icon slot** (RemButton). Until then they're screen-local.
 
+### Button emphasis tier — Label binding fixed (2026-09-24)
+- [x] **Primary Blue / Primary Gradient tiers didn't respond to the `Label` prop.** Cloning Primary to
+  make the tiers dropped the text node's `componentPropertyReferences` (came back `{}`), so instances
+  showed the static "Continue". Re-bound both variants' text to `Label#377:0` (`408:15`/`408:17`); the
+  tiers now honor the Label component property.
+
 ### Button emphasis tier — token follow-ups (2026-09-24, Muse audit)
 - [ ] **`on-accent` label token missing.** The new **Primary Blue** / **Primary Gradient** tiers use
   **raw white** text (a blue/gradient fill is the same in light+dark, so `background/primary` — which
