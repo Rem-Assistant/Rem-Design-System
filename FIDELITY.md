@@ -205,3 +205,38 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 drift-check contract passes (`tokens: in sync ✓`, `manifest: in sync ✓`). The app's
 `DesignTokens.swift` `CornerRadius` scale was realigned to the same monotonic values
 (`small 8 < medium 12 < large 16 < xlarge 24`) so the app and the generated Figma variables agree.
+
+---
+
+## Founder-review fidelity pass — 2026-09-24
+
+Worked the founder's full review + the goal's "Done when" bar end-to-end. Every item below was
+verified against the shipping SwiftUI (screenshot + source) and committed.
+
+**Components**
+- VoiceBar: all 6 states — button bg `color.opacity(0.2)` (not solid), Muted mic glyph red, Reading
+  uses `stop.fill`. `MiniPlayerBar.swift` + `ContentView.voiceMiniPlayerBar`.
+- Cards: CalendarEventsCard real `calendar` (systemRed); RemindersCard real **AppleRemindersLogo**
+  (embedded via `createImage`); ProposalCard `checklist` header (brandBlue) + terminal status icons
+  (checkmark.circle.fill / xmark.octagon.fill / clock.badge.exclamationmark.fill) all 4 states;
+  RemindersCard copy → "3 reminders".
+- **ContainedIcon**: was a blank colored square — now bakes a white `Symbol` glyph prop; Settings +
+  Connectors re-glyphed from `SharedSettingsView` / `SharedComposioConnectionsView` fallbacks.
+- TaskEventRow: reworked to the 3-slot Row model + **pills** (canonical Pill), pills gated by a
+  `Pills` BOOLEAN prop (Agenda on, Inbox off).
+- **RemFaceMark** built from `RemFaceMark.swift`'s `CustomFaceShape` SVG path (+ eyes + smile), bound
+  to labelPrimary, swapped into Task detail.
+- Removed Text / Surface / Card primitives (founder call; zero instances). Descriptions link to source.
+- HomeIndicator added to DeviceFrame (transparent band; Chat bg-sync verified — VoiceBar reaches y=874).
+
+**Screens** (all on the finalized components, code-verified)
+- Agenda (real no-state, no bogus toolbar, hugged rows, cleaned DateNav) · Chat · Task detail
+  (canonical RemComposerBar, hugged frames) · Inbox (title-only nav) · Settings · Connectors · About
+  (app-icon hero) · **Billing & Usage** (new) · **Permissions** (new). Agenda-Loading deleted.
+
+**File** — real `createPageDivider()` dividers (Foundations · Components · Screens); **one page per
+screen** under the SCREENS divider; Section-in-use specimen (header + rows + footer).
+
+**Deferred (logged in CLEANUP.md, need founder/network/app-repo):** connector *brand* logos (remote
+SVGs; SF fallbacks in place) · SwiftUI list-style variants (open design Q) · TaskEventRow leading-state
+variant · RemFaceMark `.thinking` mode · global page-bg variable · app dead-code deprecation (verified PR).
