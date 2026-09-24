@@ -102,11 +102,10 @@ building it. Main intent restated: (1) **code-sync** so the file is true to the 
 their **codebase source** (path) so reviewers can find them.
 
 ### Primitives / set membership (decide — some are removals)
-- [ ] **Text primitive** — founder: "why do we need Text at all, we already have text styles."
-  Lean **remove** `Text` (65:26); the type ramp lives in the local text styles. Confirm, then delete +
-  drop from REGISTRY/Index.
-- [ ] **Surface / Card** — founder questions both; a surface is already expressed by foundation
-  color/background styles. Lean **remove Surface**, *maybe* keep **Card**. Confirm scope before cutting.
+- [x] **Removed Text, Surface, AND Card** primitives (founder confirmed all three). Swept all pages
+  first — **zero instances** anywhere, so no screens/components broke. Type ramp lives in the local
+  text styles; surfaces/containers come from the color/background foundation + Section header/footer.
+  Dropped from REGISTRY.
 - [x] **ErrorBanner — answered: it IS used.** No shared `ErrorBanner` component in code; it's a
   private `errorBanner(_:)` view duplicated inline in 4 files — `SharedRemChatView` (3849),
   `RemConversationView` (86), `TaskCommentThreadView` (178), `TaskCommentsSection` (357) — shown on a

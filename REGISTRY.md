@@ -46,8 +46,6 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | ContentUnavailableView | States | `108:51` | `ContentUnavailableView` | ✓ canonical |
 | ErrorBanner | States | `108:56` | — | ✓ canonical |
 | LoadingSkeleton | States | `108:62` | — | ✓ canonical |
-| Text (type ramp) | Text | `65:26` | iOS 26 text styles | ✓ canonical |
-| Surface / Card → **Section** | Surface / Card | `8:12` / `11:11` | grouped Section container | rename → Section |
 | Pill | Pill | `64:14` | — | ✓ canonical |
 | DeviceFrame/iPhone (bezel + Screen slot) | Screens | `128:46` | presentation-only | ✓ canonical |
 | Navigation Bar | imported | `d29957…` | iOS 26 kit (Apple) | kit |
