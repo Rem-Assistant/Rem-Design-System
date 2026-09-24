@@ -71,6 +71,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Proposed component | Node | Muse pattern |
 |---|---|---|
 | AgentStatusPill — **Tone** = Neutral / Attention · **Status** text prop (Working / Generating PDF / Reviewing guidance / Needs approval / Needs you) | `427:21` | glass status pill under the agent avatar |
+| ActionCard — **State** = Active / Completed (agent-initiated input: icon tile + title + subtitle + CTA → "Added") | `428:37` | inline "Secure Store" action card |
 
 ## Screens (one generation — device-framed on the Screens page)
 
