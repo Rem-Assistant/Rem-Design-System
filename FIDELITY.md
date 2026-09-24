@@ -39,8 +39,11 @@ Re-based onto the **official iOS 26** library and bound colors to the local **Co
   resets paint opacity — re-applied), on-fill white text left unbound. Verified ProposalCard (4
   states) + MessageBubble.
 
-Remaining Phase 1: ContainedIcon/Switch/Button symbols + ListRow metrics (iOS 26 52pt), TypingDots
-color, then page consolidation into domain pages; then screens.
+Page consolidation **done** (33→15 pages, domain sections). **Screens on the iOS 26 foundation:**
+Chat + Task detail (built), Settings/Connectors/About (navs re-based to `Toolbar-Top`, Large Title
+for Settings/Connectors, subtitle hidden). Agenda keeps its custom `DateNavigationHeader` (correct —
+app-specific). Remaining: build **Inbox**, re-verify **Agenda**, split into per-screen pages; minor
+component polish (RemFaceMark, ContainedIcon/Switch/Button symbols, TypingDots color, ListRow 52pt).
 
 ## Real SF Symbols pass — 2026-09-23 (icon set unblocked)
 
