@@ -23,6 +23,25 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## iOS 26 foundation + variable-binding pass — 2026-09-24
+
+Re-based onto the **official iOS 26** library and bound colors to the local **Color** variables
+(Light/Dark). Self-verified each via screenshot.
+- **Nav → official iOS 26 `Toolbar-Top-iPhone`** (Chat: status bar + centered title + Liquid Glass
+  ⋯, set via the button's `Symbol` **text** property). Retired the iOS 18 `Navigation Bar`.
+- **VoiceBar — all 6 states**: real SF Symbols (`microphone.fill` / `microphone.slash.fill` /
+  `phone.down.fill`), flush bars (no radius), colors bound.
+- **Row** — kept custom **`ListRow`**: the kit iOS 26 `Row` has no instance-swap and its leading
+  `Image` (`Type`=Fill/Circular/Rounded/Symbol) can't take our `ContainedIcon`, so wholesale
+  adoption was rejected (founder-caught). ListRow colors bound; swappable leading preserved.
+- **Color-binding sweep** — **97 fills across ~20 components** bound to `Color` variables
+  (`label/*`, `background/*`, `separator`, `brand/blue`, `system/*`); opacity preserved (a bind
+  resets paint opacity — re-applied), on-fill white text left unbound. Verified ProposalCard (4
+  states) + MessageBubble.
+
+Remaining Phase 1: ContainedIcon/Switch/Button symbols + ListRow metrics (iOS 26 52pt), TypingDots
+color, then page consolidation into domain pages; then screens.
+
 ## Real SF Symbols pass — 2026-09-23 (icon set unblocked)
 
 The earlier belief that "SF Pro can't render SF Symbols in this file" (note 2 below) was **wrong** —
