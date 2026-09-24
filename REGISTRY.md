@@ -78,3 +78,4 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Login — Sign in | `411:15` | Onboarding page — Rem logo + "Rem" + tagline, two **SignInButtons** (neutral/black filled): Continue with Google (placeholder G) / Apple (apple.logo U+F8FF), legal footer — `OnboardingFlow.signInContent` |
 | Sign Out — confirmation | `412:15` | Settings page — iOS action sheet: message + red "Sign Out" + separate "Cancel" — `SharedSettingsView` confirmationDialog |
 | Delete Account — sheet | `412:24` | Settings page — `.medium` sheet: Cancel/title nav, warning copy, "type delete" confirm field, red destructive button — `SharedDeleteAccountSheet` |
+| View history — Activity | `413:32` | Task & Events page — back+"Activity" nav, alternating Rem/You activity rows (avatar + author + time + body, separators) — `TaskActivityHistoryView` (Rem avatar render debt logged) |

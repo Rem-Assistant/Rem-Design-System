@@ -302,6 +302,14 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   candidate: unify Billing on the Rem button system. This is *app-code* debt → a GitHub issue if the
   founder wants it tracked, not Figma debt.
 
+### View-history Rem avatar render (2026-09-24)
+- [ ] **Rem activity avatar renders dark.** On View history (`413:32`), the Rem rows' avatar
+  (`RemFaceMark` `362:7` idle in a `brand/blue`@0.15 circle) renders as a **dark navy blob**, not the
+  intended small blue face on a light-blue tint (`TaskCommentsSection`: `Circle().fill(accent.opacity(0.15))`
+  + `RemFaceMark(tint: accent)`). The `person.fill` "You" avatars are correct. Likely the RemFaceMark
+  default variant's fill/size — fix the instance tint+size (or wrap), then reuse for the task-detail
+  activity avatar too.
+
 ### Login / onboarding brand-icon debt (2026-09-24)
 - [ ] **Google multicolor "G" logo** on the Login "Continue with Google" button (`411:15`) is a **white
   "G" placeholder** — the real brand asset host is network-blocked here (same as Notion/Slack/Reminders).
