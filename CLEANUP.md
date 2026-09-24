@@ -180,11 +180,12 @@ so re-read node positions before moving things.
   content overlaid in the sheet's content area (warning copy + "type delete" confirm field + full-width red
   **Delete Account** button). The red destructive button now reads clearly (addresses "looks like nothing").
   (Content is a sibling over the instance's slot since instances can't take new children.)
-- [~] **Cross-cutting: kit sheets — DONE for the confirmation sheets.** Sign Out → kit **Action Sheet**
-  (`412:15`) ✓ and Delete → kit **Inspector sheet** (`412:24`) ✓ (both above). **Remaining:** New Task/Event
-  (`404:5`) + Agenda **Schedule** → kit **Full-height sheet** (`493:3243`). New Task already reads as a full
-  sheet (Cancel/Save nav); to formalize, present it in the kit Full sheet (add its grabber) — and build the
-  "Schedule Tasks" full sheet as a new screen. Lower priority than the confirmations, which are done.
+- [x] **Cross-cutting: kit sheets — DONE.** Sign Out → kit **Action Sheet** (`412:15`) ✓; Delete → kit
+  **Inspector sheet** (`412:24`) ✓; **New Task/Event → kit Full-height sheet** (`Screen/New Task (Full sheet)`
+  `507:115`) ✓ — kit Full Screen sheet (grabber + **X**=cancel + Title + blue **↑**=save) with New Task's form
+  (TypePicker/Title/date/notes) over a dimmed backdrop. NOTE: the kit Full sheet uses X/arrow, not Cancel/Save
+  text — founder can flip to text buttons if preferred. The Agenda **"Schedule Tasks"** full sheet is a
+  separate net-new screen (build when its content is specified).
 - [x] _(orig)_ **Cross-cutting: kit sheets — components identified by founder.** The iOS-26 kit ("iOS and iPadOS 26")
   has **Action Sheet**, **Sheet - Inspector - iPhone** (medium), and **Sheet - Full Screen** (full-height).
   Founder: Rem uses **two sheet types — Inspector + Full-height** — plus the Action Sheet. **Mapping:**
