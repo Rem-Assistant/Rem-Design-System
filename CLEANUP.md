@@ -118,8 +118,13 @@ so re-read node positions before moving things.
 - [x] **Date card de-carded** to match prod: `detailButton` in `TaskEventView.swift` is a plain button (no
   bg, no chevron) — removed the grey card fill/radius + chevron + divider on `404:88`; now a plain clock +
   "Set date, time, repeat" row, both `label/secondary`.
-- [ ] **Wrong chrome**: replace the custom headers with the **iOS 26 kit Navigation Bar** across screens
-  (several screens are using a hand-built header instead of the kit header).
+- [ ] **Wrong chrome — replace custom headers with the iOS-26 kit nav bar.** Kit component identified:
+  **`Toolbar - Top - iPhone` `277:947`** (variants: Default/Compact Large/Large Title/Title 2 Line/2 Line
+  Left; props: `Style`, `Show Subtitle`) — already used on Chat (`277:1004`). Screens still on a hand-built
+  nav: New Task/Event (`404:76` Cancel/title/Save), Delete Account (`412:28`), View history/Task activity
+  (`413:43`), and others. NOTE: the kit toolbar exposes only `Style`/`Show Subtitle` as props — the
+  leading/trailing buttons (Cancel/Save/back) are NOT simple props, so each swap is a per-screen library-
+  instance override job (configure leading/trailing, title, subtitle). Do screen-by-screen and verify each.
 
 ### Activity (View history)
 - [?] **Redesign as a TIMELINE view** — founder will **share a timeline UI** to use; make it its own **base
