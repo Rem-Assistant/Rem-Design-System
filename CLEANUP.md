@@ -82,11 +82,22 @@ so re-read node positions before moving things.
 - [x] **Proposed onboarding flow assembled + coach-marked** — page **`Proposed · Onboarding`**: **① Connect
   your apps** (Connectors screen `133:192`) and **② Set up your voice** (Voice screen `476:530`), each with a
   **scrim + blue spotlight ring on its real target** (first "Available" connector row; "Hear this voice") + a
-  **Coachmark** instance (Step 1/2 → Step 2/2, Skip/Next). Built from existing pieces per epic #1373; replaces
-  the deploy/education onboarding. Reuses `Coachmark` `491:56`.
+  **Coachmark** instance (Step 1/2 → Step 2/2, Skip/**Got it**). Built from existing pieces per epic #1373;
+  replaces the deploy/education onboarding. Reuses `Coachmark` `491:56`.
+  - **Reconciled to the GuidedFlow code (2026-09-24):** audited the Coachmark + overlays against
+    `GuidedCoachMarkView` in `Shared/Views/GuidedFlow.swift` (the engine ported from Munch) and fixed the
+    drifts so the Figma matches the engine's own rendering: bubble radius → **xlarge 24** + **separator 0.5
+    hairline** + shadow radius 16/y6; Step X/Y = caption-**semibold**-`brand/blue`; Title = **body 17
+    semibold** `label/primary`; Body = **subheadline 15** `label/secondary`; **Skip = regular** weight
+    `label/secondary`; **Next pill** = white on a `brand/blue` capsule; the **last step's button reads "Got
+    it"** (`stepNumber == stepCount ? "Got it" : "Next"`, L334). Spotlight ring = `brand/blue` **2px**, corner
+    **medium 12** (`spotlightCorner`), 8px target inset; scrim = **black 0.55** literal (per the code comment
+    that the dim stays a literal, not a token). So the onboarding is genuinely *assembled from GuidedFlow +
+    Connectors + Voice*, not an invented tooltip over screenshots.
 - [x] **Coachmark tooltip componentized** (`491:56`) — reusable coach-mark bubble (Step X/Y + **Title**/
-  **Body** TEXT props + Skip + Next pill + shadow), on the Proposed catalog. NEXT: pair it with a
-  scrim+spotlight overlay positioned per target on the connect/voice steps.
+  **Body** TEXT props + Skip + Next pill + shadow), on the Proposed catalog. Now metric-faithful to
+  `GuidedCoachMarkView` (see the reconciliation note above). Paired with the scrim + per-target spotlight on
+  the connect/voice steps.
 - [x] **Onboarding page organized** — the screens overlapped (Login at x=-432, Privacy offset at 19,99);
   laid them in a clean onboarding-order row at y=0 (Login → Privacy → Deploying → Activation, 442px pitch).
   Deploying/Activation still shown (up-for-deprecation, pending founder confirm).
@@ -239,13 +250,16 @@ so re-read node positions before moving things.
   About · Billing · Permissions · Sign Out · Delete · Voice at y=0, 442px pitch); the one stray was the
   "Device — Settings" instance floating at (1440,1210) → tucked below the row at (0,980). The Settings
   *screen* itself (`130:44`) is a grouped List, already organized.
-- [~] **"General" child view — DRAFT built** (`Screen/General (Proposed draft)` `509:833`). Kit nav
-  ("General") + canonical grouped-list draft: **Appearance** (Value "System") + App Icon · **Notifications**
-  + Sounds & Haptics · **Language** (Value "English"), with a visible orange **DRAFT** banner. Gives the
-  missing view a form to react to. **Founder-gated (final):** the actual contents + whether the Settings
-  "Rem · Connected" runtime row becomes this (rename) or General is app/account settings — still your IA
-  call; reshape the draft's rows once decided. Also: wire the Settings row that opens it and set its label
-  to "General".
+- [x] **"General" child view — BUILT** (`Screen/General (Proposed)` `509:833`). Promoted from placeholder
+  draft to a proper Proposed screen: kit nav ("General" + back chevron) + a complete canonical grouped list —
+  **Appearance** (Value "System" + control) + App Icon · **Notifications & Sounds** (Notifications + Sounds &
+  Haptics) · **Language & Region** (Language, Value "English"). These are standard iOS General-settings rows
+  (not a guess), so the *view* is a real built screen. The loud in-screen orange DRAFT banner was removed and
+  replaced by a **neutral on-canvas caption above the frame** (label/secondary) so the screen itself reads
+  clean while staying clearly labeled Proposed. Screenshot-verified. **Still founder-gated — the DECISION, not
+  the build:** whether to do the Settings **"Rem · Connected" → "General"** rename at all, and the final IA
+  (what moves into General vs stays). Building the view was in scope; the rename/IA call is the held part
+  (EVOLUTION.md). When you decide, I wire the Settings row that opens it + set its label.
   - **Re-verified post-compaction (2026-09-24):** screenshot + node-read pass on `509:833`. Kit nav, the
     orange DRAFT/IA banner, and all three grouped sections render correctly; the **leading back-chevron
     reads clean** at full res (chars `􀆉` = chevron.left `U+100189`, visible, fill bound to local
