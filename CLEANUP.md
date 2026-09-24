@@ -76,6 +76,11 @@ so re-read node positions before moving things.
   deploy/education onboarding with the coach-mark overlay driving users to Connectors + Voice.
   → **Proposal:** build the connect+voice onboarding as **Proposed** screens by assembling GuidedFlow
   coach-mark + Connectors + Voice — since there's no existing screen graph to mirror. Awaiting founder OK.
+- [x] **Voice screen built** (`476:530`, Settings page) — faithful to `SharedVoiceSettingsView.swift`
+  (preview / Spoken responses / Character & speed sliders), on the **kit nav bar**. This is the "set up
+  voice" destination for the onboarding flow.
+- [ ] Build the **Connectors** entry as the "connect apps" onboarding step, then assemble the coach-mark
+  (GuidedFlow) → Connectors → Voice sequence as **Proposed onboarding**.
 - [ ] **Componentize the onboarding screens** (founder: "componentize the screen").
 - [ ] Onboarding page itself still needs the auto-layout organization pass (like the other pages).
 - [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
@@ -125,11 +130,18 @@ so re-read node positions before moving things.
   (`413:43`), and others. NOTE: the kit toolbar exposes only `Style`/`Show Subtitle` as props — the
   leading/trailing buttons (Cancel/Save/back) are NOT simple props, so each swap is a per-screen library-
   instance override job (configure leading/trailing, title, subtitle). Do screen-by-screen and verify each.
+  **RECIPE (proven on the Voice screen `476:530`):** instance the Default variant → set the **Title** text
+  node → set the **Leading** glyph to `chevron.left` AND **rebind its fill to a local variable** (`label/
+  primary`), because the kit glyph fill is bound to a kit-library variable that renders invisible in this
+  file → hide the **Trailing** frame → insert after the status bar with `layoutSizingHorizontal='FILL'` and
+  remove the custom nav. **Done:** Voice `476:530`. **Remaining:** New Task/Event, Delete Account, Task
+  activity, Billing, etc.
 
 ### Activity (View history)
-- [?] **Redesign as a TIMELINE view** — founder will **share a timeline UI** to use; make it its own **base
-  component** we reuse. HOLD the redesign until the reference arrives (this evolves the exec-trace merge
-  from review's earlier pass; `413:32`).
+- [ ] **Redesign as a TIMELINE view — UNBLOCKED (founder: "forget my reference, create your own timeline
+  component, you probably know how").** Build a reusable **Timeline base component** (vertical rail + nodes:
+  status dot/icon per event, connector line between, title + timestamp + optional description) and use it on
+  the Activity screen (`413:32`), scoped per task. Own design; no external reference needed.
 
 ### Settings
 - [?] **Billing & Usage `341:862` — appears already sectioned; confirm the specific gap.** Prod

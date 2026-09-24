@@ -123,6 +123,7 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Connectors | `133:192` | connected / not-connected rows |
 | About | `134:242` | — |
 | Billing & Usage | `341:862` | Free plan — **Plan row = ListRow + Value**, Usage progress rows custom (accepted), SectionHeaders — `BillingSettingsView.swift` |
+| Voice (Settings) | `476:530` | Settings page — **kit nav bar** (`Toolbar - Top - iPhone`, back + "Voice"); grouped list: **Hear-this-voice** preview (fillTertiary disc + blue play.fill + name), **Spoken responses** (waveform ContainedIcon + "Voice"/name + chevron.up.chevron.down, opens chooser sheet), **Character & speed** (Speed/Consistency/Likeness sliders + min/max labels) — `SharedVoiceSettingsView.swift`. First screen using the kit nav bar via the swap recipe. |
 | Permissions | `349:905` | 3 sections — **all rows = ListRow + StatusChevron trailing**, SectionHeader/Footer — `SettingsView.swift` DevicePermissionsView |
 | Agenda | rebuilding | scheduled · empty · loading (jump-to-today, sort modes to add) |
 | Chat | `71:533` | voice-active thread (iOS 26 Toolbar-Top nav, bound, real symbols) ✓ |

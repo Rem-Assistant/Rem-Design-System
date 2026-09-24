@@ -116,6 +116,12 @@ runs JS against the Figma Plugin API; `figma` is the global.
 - Bind per node: `const f=n.fills.map(p=>({...p})); f[0]=figma.variables.setBoundVariableForPaint(
   f[0],'color',v); n.fills=f;`. Look variables up once into a `name→Variable` map via
   `getLocalVariableCollectionsAsync()` + `getVariableByIdAsync`.
+- **Kit-library variable bindings don't resolve in this file — rebind to a LOCAL variable.** When you
+  instance a kit/library component (e.g. `Toolbar - Top - iPhone`) and edit a glyph/text, its fill may be
+  bound to a **library** variable (id like `VariableID:<hash>/8415:22`) that resolves to nothing here, so the
+  glyph renders invisible even though the data looks right (dark literal color). Fix: rebind that fill to the
+  matching LOCAL variable (`label/primary` etc.). Symptom: a configured kit toolbar back-chevron showed as a
+  blank glass circle until its fill was rebound. Screenshot after configuring a kit instance.
 - **Instances DON'T inherit a variable-bound paint's `opacity` — bake the alpha into the variable instead.**
   A tinted fill built as `color@variable` + paint `opacity: 0.2` renders correctly on the MASTER but every
   INSTANCE resets it to solid (opacity 1), and setting the instance's fill opacity as an override does not
