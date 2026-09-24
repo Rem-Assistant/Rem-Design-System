@@ -1,0 +1,36 @@
+{
+  "$comment": "Single machine-readable map: Figma node-id <-> SwiftUI source. Consumed by dev-resources.mjs (attach source links), export-figma.mjs (#2 drift-check), and figma-gen (#3). Keep in lockstep with REGISTRY.md.",
+  "figmaFileKey": "af4yDqCzp57jds9lkFiIaO",
+  "sourceRepo": "Rem-Assistant/RemClaw",
+  "sourceBranch": "staging",
+  "components": [
+    { "name": "ListRow",              "node": "101:18",  "page": "Rows & Controls", "source": "Shared/Views/Settings/SharedSettingsView.swift" },
+    { "name": "ContainedIcon",        "node": "110:54",  "page": "Rows & Controls", "source": "Shared/Views/Settings/SharedSettingsIcon.swift" },
+    { "name": "Switch",               "node": "110:50",  "page": "Rows & Controls", "source": "Shared/Views/SharedSettingsView.swift" },
+    { "name": "TaskEventRow",         "node": "46:21",   "page": "Tasks & Agenda",  "source": "Rem/Sources/Components/TaskEventRowView.swift" },
+    { "name": "SuggestedTaskRow",     "node": "48:25",   "page": "Tasks & Agenda",  "source": "Shared/Views/Tasks/SuggestedTaskRow.swift" },
+    { "name": "DateNavigationHeader", "node": "43:2",    "page": "Tasks & Agenda",  "source": "Rem/Sources/Screens/AgendaView.swift" },
+    { "name": "Pill",                 "node": "64:14",   "page": "Rows & Controls", "source": "Rem/Sources/Components/TaskEventRowView.swift" },
+    { "name": "MessageBubble",        "node": "50:7",    "page": "Chat",            "source": "Shared/Views/Chat/ChatMessageViews.swift" },
+    { "name": "RemComposerBar",       "node": "53:2",    "page": "Chat",            "source": "Shared/Views/Chat/RemComposerBar.swift" },
+    { "name": "VoiceBar",             "node": "160:884", "page": "Chat",            "source": "Shared/Views/Components/MiniPlayerBar.swift" },
+    { "name": "TypingDots",           "node": "17:3",    "page": "Chat",            "source": "Shared/Views/Chat/SharedRemChatView.swift" },
+    { "name": "CalendarEventsCard",   "node": "67:2",    "page": "Cards",           "source": "Shared/Views/Chat/ToolResultCards/CalendarCard.swift" },
+    { "name": "RemindersCard",        "node": "67:481",  "page": "Cards",           "source": "Shared/Views/Chat/ToolResultCards/RemindersCard.swift" },
+    { "name": "ProposalCard",         "node": "54:55",   "page": "Cards",           "source": "Shared/Views/Chat/RemProposalCardView.swift" },
+    { "name": "RemFaceMark",          "node": "362:7",   "page": "Primitives",      "source": "Shared/Views/RemFaceMark.swift" },
+    { "name": "ContentUnavailableView","node": "108:51", "page": "Rows & Controls", "source": "https://developer.apple.com/documentation/swiftui/contentunavailableview" }
+  ],
+  "screens": [
+    { "name": "Agenda",       "node": "181:754", "source": "Rem/Sources/Screens/AgendaView.swift" },
+    { "name": "Agenda-Empty", "node": "140:1613","source": "Rem/Sources/Screens/AgendaView.swift" },
+    { "name": "Chat",         "node": "71:533",  "source": "Shared/Views/Chat/SharedRemChatView.swift" },
+    { "name": "TaskDetail",   "node": "299:2",   "source": "Shared/Views/Tasks/TaskCommentsSection.swift" },
+    { "name": "Settings",     "node": "130:44",  "source": "Shared/Views/Settings/SharedSettingsView.swift" },
+    { "name": "Connectors",   "node": "133:192", "source": "Shared/Views/Settings/SharedComposioConnectionsView.swift" },
+    { "name": "About",        "node": "134:242", "source": "Shared/Views/Settings/SharedAboutView.swift" },
+    { "name": "Inbox",        "node": "206:703", "source": "Rem/Sources/Screens/InboxView.swift" },
+    { "name": "Billing",      "node": "341:862", "source": "Rem/Sources/Settings/BillingSettingsView.swift" },
+    { "name": "Permissions",  "node": "349:905", "source": "Rem/Sources/Settings/SettingsView.swift" }
+  ]
+}

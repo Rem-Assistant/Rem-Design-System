@@ -1,0 +1,65 @@
+// Copy into the RemClaw test target (e.g. RemTests/RemDesignSnapshots.swift) and adapt the
+// sample data to your #Preview fixtures. Renders each canonical component to
+// artifacts/swiftui/<Name>.png so tools/design-sync/compare.mjs can diff it against the Figma export.
+// Names MUST match tools/design-sync/manifest.json.
+//
+// No external dependency — uses SwiftUI's ImageRenderer (iOS 16+).
+
+import XCTest
+import SwiftUI
+@testable import Rem
+
+final class RemDesignSnapshots: XCTestCase {
+
+    /// Where compare.mjs expects the code-side PNGs. Override with SNAPSHOT_OUT_DIR in CI.
+    private var outDir: URL {
+        let base = ProcessInfo.processInfo.environment["SNAPSHOT_OUT_DIR"] ?? FileManager.default.currentDirectoryPath + "/artifacts/swiftui"
+        let url = URL(fileURLWithPath: base)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    @MainActor
+    private func snapshot(_ name: String, scale: CGFloat = 2, @ViewBuilder _ view: () -> some View) throws {
+        let renderer = ImageRenderer(content: view().padding(8).background(Color(.systemBackground)))
+        renderer.scale = scale
+        guard let ui = renderer.uiImage, let png = ui.pngData() else {
+            return XCTFail("could not render \(name)")
+        }
+        try png.write(to: outDir.appendingPathComponent("\(name).png"))
+    }
+
+    // One test per manifest entry. Feed each the same representative state the Figma component shows.
+    @MainActor func testTaskEventRow() throws {
+        try snapshot("TaskEventRow") {
+            // reuse your #Preview fixture (e.g. PreviewTaskStore) — a scheduled task with a list badge
+            TaskEventRowView(task: .previewScheduledTask, calendarColor: nil, calendarName: nil)
+                .frame(width: 360)
+        }
+    }
+
+    @MainActor func testRemComposerBar() throws {
+        try snapshot("RemComposerBar") {
+            // the task-detail configuration: leading/trailing empty, doorway placeholder
+            TaskCommentComposer.previewDoorway.frame(width: 360)
+        }
+    }
+
+    @MainActor func testProposalCard() throws {
+        try snapshot("ProposalCard") { RemProposalCardView.previewPending.frame(width: 320) }
+    }
+
+    @MainActor func testRemindersCard() throws {
+        try snapshot("RemindersCard") { RemindersCard.preview.frame(width: 300) }
+    }
+
+    @MainActor func testCalendarEventsCard() throws {
+        try snapshot("CalendarEventsCard") { CalendarCard.preview.frame(width: 300) }
+    }
+
+    @MainActor func testRemFaceMark() throws {
+        try snapshot("RemFaceMark") { RemFaceMark(mode: .idle, size: 96) }
+    }
+
+    // …one per component in manifest.json. Keep names in lockstep.
+}

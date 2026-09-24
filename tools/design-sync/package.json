@@ -1,0 +1,15 @@
+{
+  "name": "rem-design-sync",
+  "private": true,
+  "type": "module",
+  "description": "Code↔design fidelity tooling for the Rem design system (dev-resource links + snapshot drift-check).",
+  "scripts": {
+    "dev-resources": "node dev-resources.mjs",
+    "export-figma": "node export-figma.mjs",
+    "compare": "node compare.mjs artifacts/swiftui artifacts/figma"
+  },
+  "devDependencies": {
+    "pixelmatch": "^6.0.0",
+    "pngjs": "^7.0.0"
+  }
+}

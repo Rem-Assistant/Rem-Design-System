@@ -1,0 +1,57 @@
+# Design ↔ code drift-check (#2). Renders the SwiftUI components, exports the matching Figma
+# components, and fails if they diverge. Template — fill in the marked values.
+name: design-drift
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/design-sync/**'
+  schedule:
+    - cron: '0 7 * * 1' # weekly guardrail
+
+jobs:
+  drift:
+    runs-on: macos-14 # needs Xcode for the SwiftUI ImageRenderer snapshots
+    steps:
+      - name: Checkout design system (this repo)
+        uses: actions/checkout@v4
+
+      - name: Checkout app source
+        uses: actions/checkout@v4
+        with:
+          repository: Rem-Assistant/RemClaw
+          ref: staging
+          path: app
+          token: ${{ secrets.APP_REPO_TOKEN }} # PAT with read access to RemClaw
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: SwiftUI snapshots → artifacts/swiftui
+        working-directory: app
+        env:
+          SNAPSHOT_OUT_DIR: ${{ github.workspace }}/artifacts/swiftui
+        run: |
+          # copy the snapshot test in, then run just it (adjust scheme/destination to the project)
+          cp ../tools/design-sync/snapshots/RemDesignSnapshots.swift.example RemTests/RemDesignSnapshots.swift
+          xcodebuild test \
+            -scheme Rem \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -only-testing:RemTests/RemDesignSnapshots | xcpretty || true
+
+      - name: Figma export → artifacts/figma
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: node tools/design-sync/export-figma.mjs artifacts/figma
+
+      - name: Compare
+        run: |
+          cd tools/design-sync && npm ci
+          cd "$GITHUB_WORKSPACE"
+          node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
+
+      - name: Upload diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: design-diffs, path: artifacts/diff }
