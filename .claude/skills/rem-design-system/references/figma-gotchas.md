@@ -100,6 +100,23 @@ runs JS against the Figma Plugin API; `figma` is the global.
 - Change pages with `await figma.setCurrentPageAsync(page)`. Never
   `loadAllPagesAsync`/`setPluginData`/`createImageAsync` (unsupported).
 
+## Variables / color binding
+
+- **The file already has the token system** — a local **Color** collection (Light/Dark) with
+  `background/primary|secondary|tertiary`, `label/primary|secondary|tertiary`, `separator`,
+  `fill/tertiary`, `button-background`, `pill-background`, `brand/blue`, `system/red|green|…`.
+  "No hardcoded colors" means **binding** hardcoded fills to these, not creating anything. Match by
+  **role/name**, not by RGB — the hardcoded values are often *flattened* approximations of an
+  alpha'd token (e.g. `label/secondary` is `{0.235,0.235,0.263}@0.6`, which renders ~`{0.54}` on
+  white, so a hand-set `{0.56}` grey should bind to `label/secondary`).
+- **`figma.variables.setBoundVariableForPaint(paint,'color',v)` RESETS the paint's `opacity` to 1.**
+  A tinted fill (an 18%-opacity button bg) goes **solid** after binding. Re-apply it: spread the
+  paint, set `fills[0].opacity = <orig>`, reassign `node.fills`. Bind the *color*; keep opacity
+  separate. (Screenshot-verify after binding — this regression is invisible in the return value.)
+- Bind per node: `const f=n.fills.map(p=>({...p})); f[0]=figma.variables.setBoundVariableForPaint(
+  f[0],'color',v); n.fills=f;`. Look variables up once into a `name→Variable` map via
+  `getLocalVariableCollectionsAsync()` + `getVariableByIdAsync`.
+
 ## Screenshots
 
 - Prefer the URL result and download it; the proxy sometimes blocks `figma.com` asset
