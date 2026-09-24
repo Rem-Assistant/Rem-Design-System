@@ -76,6 +76,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Execution trace (screen) — "In progress" pill, title/subtitle/time, MAIN/SUBAGENT sections, step rows (✓/✗ + title + description + chevron), "Working" footer | `431:21` | agent step-timeline / "show your work" surface |
 | RunningTaskBanner — **Tone** = Working / Attention (glass pill: thumbnail + task + status + Stop) | `432:39` | Live-Activity "Browser · Needs you" banner |
 | Connector consent pre-screen (sheet) — logo tile + name + tagline + 3 icon-rows + legal + **gradient Connect** / Cancel | `434:21` | connector consent sheet ("Connect Notion?") |
+| Accessory/MenuValue — value + up/down chevron pull-down (**Value** text prop: Ask / Allow / Deny), on canonical ListRow | `435:22` | per-capability permission menu (Browser perms) |
 
 ## Screens (one generation — device-framed on the Screens page)
 
