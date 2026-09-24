@@ -182,8 +182,11 @@ so re-read node positions before moving things.
 - [ ] **Inbox "+" sheets**: tapping either plus opens a **sheet** experience we need to support (compose/add).
 
 ### Flows
-- [ ] **Navigation map**: consider authoring in **FigJam** then bringing into Figma; and draw it
-  **VERTICALLY**, not horizontally (horizontal won't scale). `420:15`.
+- [ ] **Navigation map — redraw VERTICALLY** (horizontal won't scale). `420:15`. Two paths: (a) **FigJam via
+  `generate_diagram`** (founder's suggestion — native vertical layout + auto-routed connectors) needs the
+  founder's Figma **plan key** (`team::…`/`organization::…`), which the agent doesn't have — provide it and
+  this is a quick win; or (b) a **manual vertical tree** rebuild in the Figma Flows page (indented depth
+  levels + straight connectors). Deferring pending the plan key vs. manual decision.
 
 ### New card types (founder, with screenshots) — BUILT
 - [x] **Code hunt: neither exists.** Confirmed both are net-new (no `PollCard`/`ChoiceCard`, no
