@@ -165,9 +165,10 @@ so re-read node positions before moving things.
   mirror, the one refinement is grouping the button + legal footer as a proper third Section (footer), and
   using the canonical SectionHeader/SectionFooter components. Flagged rather than guessing at "not using
   sections" when the screen is already sectioned.
-- [ ] **Sign Out**: use the **official iOS 26 action/activity sheet** from the kit (not a hand-built dialog).
-  Part of the cross-cutting **kit-sheet swap** (see below) — needs the kit's Sheet/ActionSheet component
-  identified first.
+- [x] **Sign Out → kit Action Sheet** (`412:15`). Founder added the kit sheets to the file (Platform
+  Controls page). Instanced the kit **Action Sheet** (`493:1771`), set Title "Sign out of Rem?" + description,
+  Action 1 = "Sign Out" (Destructive), Action 2 = "Cancel", hid the rest; widened to iPhone full-width and
+  placed over a dimmed Settings backdrop. Replaced the hand-built dialog.
 - [x/?] **Delete Account button** — the button `412:36` already renders as a proper **solid-red destructive
   button** (white label). "Looks like nothing" most likely refers to its **disabled** state (prod disables it
   until you type "delete"), which the current specimen doesn't show. Proposed: add an enabled/disabled state
