@@ -57,6 +57,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Pill | Pill | `64:14` | — | ✓ canonical |
 | DeviceFrame/iPhone (bezel + Screen slot + HomeIndicator) | Screens | `128:46` | presentation-only | ✓ canonical |
 | HomeIndicator (bottom safe-area handle) | Platform Controls | `333:102` | system safe-area overlay | ✓ canonical |
+| GuidedFlow (coach-mark overlay) — dimmed scrim + spotlight + Step X/Y tooltip (Skip / Next) | Platform Controls | `442:113` | `GuidedFlow.swift` (spotlight coach-mark engine; replaces the deprecated onboarding screens) | ✓ canonical |
 | RemFaceMark (brand face; **Mode** = idle / thinking) | Primitives | `362:7` | `RemFaceMark.swift` (CustomFaceShape) | ✓ canonical |
 | Navigation Bar | imported | `d29957…` | iOS 26 kit (Apple) | kit |
 | Status Bar / Toolbar | imported | — | iOS 26 kit (Apple) | kit |
