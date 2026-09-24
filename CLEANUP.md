@@ -179,7 +179,10 @@ so re-read node positions before moving things.
   (Action Sheet, Sheet-Inspector, Sheet-Full) into the file** (the Assets panel "Insert instance" button) and
   the agent will reuse + configure them for the swaps; or OK an iOS-18 kit fallback. Do NOT hand-build sheet
   look-alikes (drift — the anti-drift rule says reuse the canonical/kit component).
-- [ ] **Settings page**: organize with a layout (stop things flying around).
+- [x] **Settings page tidied** — the settings screens were already in a clean row (Settings · Connectors ·
+  About · Billing · Permissions · Sign Out · Delete · Voice at y=0, 442px pitch); the one stray was the
+  "Device — Settings" instance floating at (1440,1210) → tucked below the row at (0,980). The Settings
+  *screen* itself (`130:44`) is a grouped List, already organized.
 - [ ] **Build the "General" child view** — we renamed Settings "Rem" → **General**; the child screen isn't
   built. (This unblocks the earlier founder-gated rename.)
 - [x] **Share / Feedback / Report OS experience** — built an **iOS share-sheet (activity view) specimen**
