@@ -157,7 +157,13 @@ so re-read node positions before moving things.
   the rail-less exec-trace body. Resolves the dashed-rail debt (uses a solid rail — dashed is optional later).
 
 ### Settings
-- [?] **Billing & Usage `341:862` — appears already sectioned; confirm the specific gap.** Prod
+- [x] **Billing & Usage `341:862` — now uses the canonical Section pattern.** Founder clarified: only
+  SectionHeader was componentized; the grouped cards were plain frames and the legal footer plain text.
+  Fixed: named/styled the two grouped cards as **ListGroup** (bg/primary, radius 10, clip) and replaced the
+  plain legal-footer text with the **SectionFooter** component (`161:70`, "Terms of Service and Privacy
+  Policy"). Now SectionHeader + ListGroup + SectionFooter throughout. (Usage progress rows stay custom —
+  accepted.)
+- [~] _(superseded)_ earlier note: Billing "appears already sectioned; confirm the gap." Prod
   (`BillingSettingsView.swift`) is a `List` of 3 `Section`s: **Current Plan** (Plan row), **Usage** (Today +
   This Month progress rows), and a third section holding the primary button with the **Terms/Privacy legal
   footer as the Section footer**. The current Figma already shows Current Plan + Usage headers with grouped
