@@ -61,6 +61,17 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Navigation Bar | imported | `d29957…` | iOS 26 kit (Apple) | kit |
 | Status Bar / Toolbar | imported | — | iOS 26 kit (Apple) | kit |
 
+## Proposed (NOT-yet-shipped — Muse-informed agentic surfaces)
+
+> These live on the **`Proposed · Agent surfaces`** page and are **design proposals**, not built from
+> shipping code — never mix them with the canonical (as-built) components above. They graduate up when
+> the code ships them. IA/placement (Agent hub, Wallet home, Settings→General) + deprecation debates
+> remain **open** for the founder (see `EVOLUTION.md`).
+
+| Proposed component | Node | Muse pattern |
+|---|---|---|
+| AgentStatusPill — **Tone** = Neutral / Attention · **Status** text prop (Working / Generating PDF / Reviewing guidance / Needs approval / Needs you) | `427:21` | glass status pill under the agent avatar |
+
 ## Screens (one generation — device-framed on the Screens page)
 
 > **Navigation map** lives on the `Flows` page (`420:15`): a static screen-graph (labeled boxes by nav
