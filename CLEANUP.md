@@ -45,6 +45,97 @@ screens are in the wrong page (I saw task edit in the cover page)."*
 > `VariableID:2:14` is **not** white — binding white-on-accent text to it turned it blue-on-blue; the
 > `label/on-accent` always-white token below is still genuinely needed.)
 
+## Founder review 5 — 2026-09-24 (big audit: onboarding, org, agenda, voice, settings, sheets, flows)
+
+Large voice-transcribed audit. Captured in full so nothing is lost. Legend: [x] done this pass ·
+[ ] queued · [?] needs founder input or something the founder will share. **The founder is actively
+editing the file concurrently** (e.g. moved the ListRow master to a "Specs ListRow" area at x≈5118),
+so re-read node positions before moving things.
+
+### Page organization (auto-layout) — continued from review 4
+- [x] **Cards** page → auto-layout column (header+component sections).
+- [x] **Chat** page → auto-layout column.
+- [x] **Tasks & Agenda** page → auto-layout column + a "Task badges" second column.
+- [x] **Rows & Controls** — organized the two loose clusters: **Controls** column (`457:2`, Switch /
+  Chevron+None / ContentUnavailable+Error+Loading / SectionHeader+Footer / Toast — removes the ~5000px
+  gap) and **Templates & accessories** column (`457:8`). **Left untouched (per founder):** the two spec
+  frames — "Specs" `222:137` and "Redlines — ListRow 197:283" `203:153` — plus the ListRow master/showcase
+  (`190:100` now "Specs ListRow", `188:2`, instances `197:283`/`222:126`), whose boundary with the redline
+  spec is ambiguous. [ ] **Confirm:** should the ListRow master + its two instances + ListRowLabel be
+  pulled into a "Rows" auto-layout column too, or are they part of the spec/redline showcase to leave?
+
+### Onboarding (investigated in code — see below)
+- [?] **Founder's "connect your apps + set up voice" onboarding flow is NOT wired in code** on any branch
+  (only `main`-equiv + `staging`, identical onboarding). What EXISTS: (1) the **GuidedFlow** coach-mark
+  engine, ported from the founder's **Munch** portfolio app (`Shared/Views/GuidedFlow.swift`) — engine
+  only, deliberately not wired; its DEBUG demo steps are literally "Connect a source" / "Turn on
+  notifications"; (2) **Connectors** settings screen (`SharedComposioConnectionsView.swift`) = the
+  "connect apps" surface; (3) **Voice** settings screen (`SharedVoiceSettingsView.swift`, nav "Voice":
+  hear-this-voice preview + Spoken-responses voice picker sheet + Character/speed sliders) = the "set up
+  voice" surface. Plan (epic #1373 + `component-architecture-opportunities.md` §3): replace the
+  deploy/education onboarding with the coach-mark overlay driving users to Connectors + Voice.
+  → **Proposal:** build the connect+voice onboarding as **Proposed** screens by assembling GuidedFlow
+  coach-mark + Connectors + Voice — since there's no existing screen graph to mirror. Awaiting founder OK.
+- [ ] **Componentize the onboarding screens** (founder: "componentize the screen").
+- [ ] Onboarding page itself still needs the auto-layout organization pass (like the other pages).
+- [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
+
+### Agenda / Tasks & Agenda components
+- [ ] **DateNavigationHeader**: keep top/bottom padding (founder reconsidered — leave it). The left/right
+  arrows lost their **rectangles** — restore "three rectangles beside each arrow" (verify against prod what
+  these are — likely tap-target rects or a day-strip; inspect `SharedAgendaView.swift`).
+- [ ] **"Add New" → make it a component (it's a button).** In prod it's **two buttons**: "Add new" **and**
+  a **Schedule** button (for things needing scheduling); **Schedule opens a sheet.**
+- [ ] **Sheets: use the iOS 26 kit Sheet component** for all sheet interfaces ("all those views are already
+  declared there").
+- [ ] Agenda screen: organize more neatly.
+- [?] **Remove the unused section on the Agenda page** — founder says one section is unused; **which one?**
+  (don't guess-delete — confirm).
+
+### Chat
+- [?] **Remove the unused section on the Chat page** — one section unused; **which one?** (confirm before delete).
+- [ ] **VoiceBar button opacity bug**: the red and black buttons are missing their opacity treatment
+  (rendering solid). Fix the fills on `VoiceBar` `160:884` (mic = black@opacity, end-call = red@opacity).
+- [?] **Home-indicator overlap in the device frame**: the home indicator is included but the VoiceBar
+  overlaps it — no space reserved. **Recommendation:** group the screen content + home indicator into a
+  vertical auto-layout so they stack (home indicator sits below, gets a themed color from a global token) —
+  mirrors real safe-area layout. Alternative the founder offered: just add bottom padding to the VoiceBar.
+  → Going with the auto-layout/safe-area approach unless founder prefers padding.
+
+### Task & Events
+- [ ] **New Task or Event**: arrange with **auto layout**.
+- [ ] **Date card**: remove the **card-like UI** wrapping the date — not what's in prod (`TaskEventView.swift`).
+- [ ] **Wrong chrome**: replace the custom headers with the **iOS 26 kit Navigation Bar** across screens
+  (several screens are using a hand-built header instead of the kit header).
+
+### Activity (View history)
+- [?] **Redesign as a TIMELINE view** — founder will **share a timeline UI** to use; make it its own **base
+  component** we reuse. HOLD the redesign until the reference arrives (this evolves the exec-trace merge
+  from review's earlier pass; `413:32`).
+
+### Settings
+- [ ] **Billing & Usage `341:862`**: use **Sections** (grouped list), not custom rows.
+- [ ] **Sign Out**: use the **official iOS 26 action/activity sheet** from the kit (not a hand-built dialog).
+- [ ] **Delete Account**: use an **iOS 26 kit sheet**; the destructive **button "looks like nothing"** — fix it.
+- [ ] **Settings page**: organize with a layout (stop things flying around).
+- [ ] **Build the "General" child view** — we renamed Settings "Rem" → **General**; the child screen isn't
+  built. (This unblocks the earlier founder-gated rename.)
+- [ ] **Share / Send Feedback / Report**: show the **OS experiences** these open — share sheet / activity
+  view — as their own specimens.
+
+### Inbox
+- [ ] **Inbox "+" sheets**: tapping either plus opens a **sheet** experience we need to support (compose/add).
+
+### Flows
+- [ ] **Navigation map**: consider authoring in **FigJam** then bringing into Figma; and draw it
+  **VERTICALLY**, not horizontally (horizontal won't scale). `420:15`.
+
+### New card types (founder, with screenshots) — hunt in progress
+- [?] **Poll / priority card** (in-chat: question + selectable option rows w/ right-side status labels +
+  "None of these") and **Message-send / draft card** (in-chat: provider logo e.g. Gmail + To/Subject/body
+  + Send). Checking whether components exist in code ("None of these" string not found → poll card likely
+  net-new). If they don't exist → build as **Proposed** components. Awaiting the code-hunt result.
+
 ## Founder review 3 — 2026-09-24 (screens/components deep pass)
 
 - [x] **Avatar was orphaned on the Cover page** → moved to **Rows & Controls** (founder couldn't find it;
