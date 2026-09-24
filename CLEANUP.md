@@ -311,16 +311,15 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   remaining "event type" from the Muse-audit list.
 
 ### View-history Rem avatar render (2026-09-24)
-- [~] **Rem activity avatar — RemFaceMark renders as a dark blob.** On View history (`413:32`), the Rem
-  rows' avatar should be a small blue face on `brand/blue`@0.15 (`TaskCommentsSection`:
-  `Circle().fill(accent.opacity(0.15))` + `RemFaceMark(tint: accent)`). **Fixed:** the circle bg opacity
-  (was solid from the `bindFill` one-step opacity bug; now 0.15) and the `person.fill` "You" avatars are
-  correct. **Still broken:** the `RemFaceMark` `362:7` shape renders **dark** — recoloring its child
-  VECTOR fills to brand/blue did NOT change it, so the dark shape is the component's **own frame/blob
-  fill**, not a child vector. Needs a focused RemFaceMark-component fix (expose a tint / fix the default
-  fill), then reuse for the task-detail activity avatar. **NB the inline `bindFill` helper used across the
-  new screens has the one-step opacity-reset bug — any tinted (<1 opacity) fill went solid** (grabbers
-  @0.5, inactive pager dots @0.4); use the two-step re-apply pattern in future builds.
+- [x] **RemFaceMark master fixed (was a black square).** Root cause: the `RemFaceMark` component **frame
+  had a `label/primary` (black) fill** and the face-blob vector was unfilled — so it rendered as a black
+  squircle. Fixed both variants (`361:7`/`362:2`): frame → transparent, blob → `brand/blue`, eyes+smile →
+  white. Now renders a brand-blue face with white features; **all RemFaceMark uses across the file inherit
+  this.** View-history avatar circle opacity also fixed (was solid from the bindFill bug); eyes reset to
+  white on those instances. Remaining nit: at 17px the `#0C50FF` face reads dark-but-blue (faithful to the
+  brand tint). **NB the inline `bindFill` helper had a one-step opacity-reset bug — tinted (<1 opacity)
+  fills went solid** (grabbers @0.5, inactive pager dots @0.4); use the two-step re-apply pattern (as the
+  badges/avatars now do) in future builds.
 
 ### Login / onboarding brand-icon debt (2026-09-24)
 - [ ] **Google multicolor "G" logo** on the Login "Continue with Google" button (`411:15`) is a **white
