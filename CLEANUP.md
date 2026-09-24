@@ -5,6 +5,21 @@ pass/PR. Guiding principles: **code is the source of truth (screenshots can be s
 **everything is a component property/variant**; **one canonical per concept (no duplicates across
 pages)**.
 
+## Row decision — adopt the iOS 26 `Row` (canonical), retire custom `ListRow`
+- The official iOS 26 **`Row`** (`5587f1ebded12290ac2731cef9d68f98a4a0ac61`, set; `Height`=Regular/Tall)
+  is rich + authentic: `Title`/`Subtitle`, `Show Image` (leading), configurable trailing
+  (`Show Drill-in` chevron, `Show Checkmark`, `Detail Text`, `Show Symbol`, `Button Label`, `Type`),
+  built-in `_Separator` — all kit-colored + real SF Symbols. **Verified** (screenshot).
+  **Adopt it as the canonical row; retire local custom `ListRow` (101:18).**
+- [ ] Re-instance screens' rows on the iOS 26 `Row` (Phase 2). Configure trailing per use
+  (nav row = Show Drill-in only; toggle row = add iOS 26 **Switch** in trailing; etc.).
+- [ ] **Two color collections** to reconcile: kit `Row` binds to the iOS 26 library's *System Colors*;
+  our custom components bind to the local **Color** collection (same values, different source).
+  Decide whether to align local Color → reference the library collection, or keep both (values match).
+- Related iOS 26 pieces to adopt: `Section Title` (`216bce9b…`), `Header` (`e86f40bf…`),
+  `Grouped Table Footer` (`19a81fe0…`), `Row with Swipe Actions` (`974d4aee…`), `Row - Button`
+  (`7b9ac5d3…`), `List` (`326aef2f…`).
+
 ## iOS 18 → iOS 26 kit re-base (HIGH — core fidelity)
 Kit components were imported from the **iOS 18** library (nav `d299571689…`, Row
 `8bb9d297eb…`). The **official "iOS and iPadOS 26"** library is subscribed to the file AND
