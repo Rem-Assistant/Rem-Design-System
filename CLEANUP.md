@@ -10,6 +10,41 @@
 > not captioned in the community file). IDEAL: the real app fetches brand logos from
 > `logos.composio.dev/api/<toolkit>` (remote SVGs) — embed those for exact fidelity in a later pass.
 
+## Founder review 4 — 2026-09-24 (file organization / auto-layout pass)
+
+Founder: *"A lot of your screens feel disorderly — you're not organizing them in autolayout. Also some
+screens are in the wrong page (I saw task edit in the cover page)."*
+
+- [x] **New Task or Event `404:5` was on the Cover page** → moved to **Task & Events** (`356:4`), lined up
+  in the screen row after Task detail `299:2` and View history `413:32`.
+- [x] **Three accessory components were loose on Cover** (PermissionStatusBadge `383:14`, StatusChevron
+  `383:15`, Accessory/Value `389:5`) → moved to **Rows & Controls** (`297:6`) where the other accessories live.
+- [x] **Cover page was empty after the moves** → added a proper cover card `452:2` (brand-blue bound to
+  `brand/blue`, white title + 85% subtitle "iOS 26 · Figma source of truth for the SwiftUI app").
+- [x] **Proposed · Agent surfaces page was a hand-placed scatter with overlaps** (RunningTaskBanner sat on
+  top of ApprovalGate; MenuValue + Browser-permissions specimen overlapped ApprovalGate's bottom;
+  ContentUnavailable floated). → Rebuilt as an **auto-layout catalog** `449:56`: a **Components** wrap-grid
+  (AgentStatusPill, ActionCard, ApprovalGate, RunningTaskBanner, per-capability permission menu,
+  ContentUnavailableView+CTA — each in a captioned cell) + a **Screens** row (Execution trace, Connector
+  consent, Browser takeover). No overlaps; consistent gaps.
+- [x] **Primitives page had frames at negative/random x** (page-headers at x=−209/48/409…, Button at −282,
+  Pill at −568). → Tidied into an auto-layout column `451:2` (Button, Pill, ContainedIcon, RemFaceMark, each
+  with its header) + a labeled **"Superseded — specimens consolidated"** group `451:8` for the 3 orphaned
+  headers.
+- [ ] **Primitives orphaned headers — decide keep-as-doc vs delete.** Three page-headers (Text `65:26`,
+  Surface `8:12`, Card→Section `11:11`) have no specimen on the page — their primitives were consolidated
+  (Text → Foundations/Typography; Surface → dropped; Card → Section on Rows & Controls). Parked in the
+  Superseded group with a note for provenance; founder to decide whether to delete them.
+
+> **GOTCHA (recorded for future work): `figma.variables.getVariableByIdAsync` needs the FULL id
+> `VariableID:2:13`, not the short `2:13`.** Passing the short form returns **null**, and
+> `setBoundVariableForPaint(paint, 'color', null)` silently leaves the paint's **literal** color (black)
+> — no throw, no rollback, so the fill renders black/unbound while the call "succeeds". Symptom this pass:
+> the cover and 14 catalog captions came out literal black until rebound with the prefixed ids. Always use
+> `getLocalVariablesAsync('COLOR')` to confirm the real id, or pass `VariableID:x:y`. (Also: `brand/blue-on-fill`
+> `VariableID:2:14` is **not** white — binding white-on-accent text to it turned it blue-on-blue; the
+> `label/on-accent` always-white token below is still genuinely needed.)
+
 ## Founder review 3 — 2026-09-24 (screens/components deep pass)
 
 - [x] **Avatar was orphaned on the Cover page** → moved to **Rows & Controls** (founder couldn't find it;

@@ -14,6 +14,25 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
    `SectionHeader`/`SectionFooter`, etc. The name is the code-connect.
 4. **New concept?** Add the row here *and* on the Figma Component Index in the same change.
 
+## File organization (auto-layout pass — 2026-09-24)
+
+Founder feedback: pages felt disorderly (no auto-layout) and some screens were on the wrong page.
+Fixed:
+- **Cover** (`0:1`): cleared of stray components; added a cover card `452:2` (brand-blue, title + subtitle).
+- **New Task or Event `404:5`** moved off Cover → **Task & Events** (`356:4`), lined up with Task detail
+  `299:2` and Task activity `413:32`.
+- **Accessories** PermissionStatusBadge `383:14`, StatusChevron `383:15`, Accessory/Value `389:5` moved off
+  Cover → **Rows & Controls** (matching the Page column below — they were physically stranded on Cover).
+- **Proposed · Agent surfaces** (`427:15`): rebuilt as an auto-layout catalog under root `449:56` —
+  a **Components** wrap-grid (captioned cells) + a **Screens** row. No more overlaps.
+- **Primitives** (`297:191`): tidied into an auto-layout column `451:2` (Button, Pill, ContainedIcon,
+  RemFaceMark) + a labeled **Superseded** group `451:8` (orphaned Text/Surface/Card headers).
+
+> _Residual drift (logged, not blocking):_ a few Page-column values below still name a home a component
+> hasn't physically been moved to (e.g. ContainedIcon `110:54` reads "Rows & Controls" but lives on
+> Primitives; Avatar's "ContainedIcon" page no longer exists). Reconcile the Page column to physical pages
+> in a later housekeeping pass.
+
 ## Canonical components
 
 | Component | Page | Node | SwiftUI source | Status |

@@ -116,6 +116,15 @@ runs JS against the Figma Plugin API; `figma` is the global.
 - Bind per node: `const f=n.fills.map(p=>({...p})); f[0]=figma.variables.setBoundVariableForPaint(
   f[0],'color',v); n.fills=f;`. Look variables up once into a `name→Variable` map via
   `getLocalVariableCollectionsAsync()` + `getVariableByIdAsync`.
+- **`getVariableByIdAsync` needs the FULL id `VariableID:2:13`, not the short `2:13`.** The short form
+  returns **null**, and `setBoundVariableForPaint(paint,'color',null)` then silently leaves the paint's
+  **literal** color — no throw, no rollback, so the call "succeeds" but the fill renders black/unbound.
+  This is invisible in the return value; screenshot-verify. Safest: resolve by **name** from
+  `getLocalVariablesAsync('COLOR')` (each `.id` is already the prefixed form) rather than hardcoding ids.
+  The Color collection's ids are `VariableID:2:3`…`2:21` — e.g. `brand/blue = VariableID:2:13`,
+  `label/primary = 2:6`, `label/secondary = 2:7`. Note **`brand/blue-on-fill` (`2:14`) is NOT white** —
+  it's a blue-family token; there is no always-white `label/on-accent` token yet, so white-on-accent text
+  must stay literal white for now (logged in CLEANUP).
 
 ## Screenshots
 
