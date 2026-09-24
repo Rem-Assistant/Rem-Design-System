@@ -10,6 +10,35 @@
 > not captioned in the community file). IDEAL: the real app fetches brand logos from
 > `logos.composio.dev/api/<toolkit>` (remote SVGs) — embed those for exact fidelity in a later pass.
 
+## Founder review 3 — 2026-09-24 (screens/components deep pass)
+
+- [x] **Avatar was orphaned on the Cover page** → moved to **Rows & Controls** (founder couldn't find it;
+  the old ContainedIcon page is gone). Add it to the Component Index.
+- [x] **ListRow separator** — CONFIRMED it's the iOS-26 source: bound to the local `separator` variable
+  = `{60,60,67}@0.29` (`UIColor.separator`). Lightened the weight **1px → 0.5px** (true hairline) since
+  it read too heavy; color unchanged.
+- [x] **RemFaceMark on Task detail** — now contained in the app's avatar treatment: a `brand/blue @0.15`
+  **circle** with the face at 60% tinted `brand/blue` (matches `TaskCommentsSection.avatar`,
+  `avatarSize=28`). Reads blobby at 1× (tiny) but faithful; on retina the eyes/smile resolve.
+- [ ] **Permissions + Billing use custom rows, not canonical ListRow / SectionHeader / SectionFooter.**
+  Rebuild both on ListRow + the Section components (grouped list).
+- [ ] **Settings first row (Account) is a custom "Profile" card → should be a ListRow** (Avatar leading +
+  name/email as the ListRowLabel title/subtitle).
+- [ ] **Connectors is the OLD screen.** The shipping `SharedComposioConnectionsView` pattern: row =
+  brand logo + `displayName` + **status subtitle** ("Connected • Active" / "Not connected") + a
+  **chevron** (opens the connect/disconnect sheet) — NOT a "Connect" button + chevron mix. Also: use
+  real **Sections** (the "CONNECTED APPS" header is spaced too far from the rows), and show the **fuller
+  Composio list** (gmail, googlecalendar, googledrive, googledocs, googlesheets, github, slack, discord,
+  whatsapp, telegram, notion, linear, todoist, asana). Real brand logos come from `logos.composio.dev`
+  (SVG) — **network-blocked here (403)**; only `google-icon` is a local asset, so use the app's
+  SF-Symbol fallbacks in the file and fetch real logos in CI (see design-drift issue).
+- [ ] **Button is under-spec.** Only the small bordered "Connect" accessory exists. The app also uses a
+  **rectangular filled prominent** button (sign-in) and a **modifier style** (`remPrimaryActionButton`,
+  `RemSettingsCTAButtonStyle`). Add these as Button variants/styles.
+- [ ] **Inbox/Connectors section label far from screens** — content-organization nit (the ⑤-section
+  label sits well above the frames). NOTE: founder confirmed the Inbox "layout collapse" and the About
+  "blocked view" were **Figma render-cache artifacts** (fixed on page refresh), not real bugs.
+
 Debt found while building. **Do not fix inline** — note it here and defer to a focused cleanup
 pass/PR. Guiding principles: **code is the source of truth (screenshots can be stale)**;
 **everything is a component property/variant**; **one canonical per concept (no duplicates across
