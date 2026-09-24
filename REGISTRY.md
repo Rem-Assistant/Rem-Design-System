@@ -104,6 +104,7 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Permissions | `349:905` | 3 sections — **all rows = ListRow + StatusChevron trailing**, SectionHeader/Footer — `SettingsView.swift` DevicePermissionsView |
 | Agenda | rebuilding | scheduled · empty · loading (jump-to-today, sort modes to add) |
 | Chat | `71:533` | voice-active thread (iOS 26 Toolbar-Top nav, bound, real symbols) ✓ |
+| Chat Sessions (as-built tab) | `438:15` | Large Title + search + session rows (name + preview + timestamp via ListRow + Value) — `ChatHistoryView`. The main/side-chat *redesign* is a separate Proposed item (founder-gated). |
 | Task detail | `299:2` | root — iOS 26 nav (back+Task), title/date/meta, Last-activity card, notes, composer; bound + real symbols ✓ (page: **Task & Events**) |
 | New Task or Event | `404:5` | create mode — Cancel/Save nav, **New Task / New Event** segmented picker, Title + dashed-circle status indicator, "Set date, time, repeat" card, notes — `TaskEventView` (isNewTask) |
 | Privacy — "Privacy by design" | `410:16` | Onboarding page — hero (lock.shield.fill on brand tile), title/body, Terms/Privacy consent rows, **Button/Primary CTA** "Accept and Continue" + legal footer — `AIDataSharingConsentView` |
