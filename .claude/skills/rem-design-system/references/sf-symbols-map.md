@@ -42,7 +42,21 @@ name length (glyph fixed-left, caption grows rightward). Anchor with a known ans
 | `square.and.arrow.up` | `U+100202` | `bell.fill` | `U+1002DA` |
 | `camera.fill` | `U+10031F` | `externaldrive.fill` | `U+100903` |
 | `number` | `U+100183` | `xmark.octagon.fill` | `U+10048A` |
-| `clock.badge.exclamationmark.fill` | `U+100E77` | | |
+| `clock.badge.exclamationmark.fill` | `U+100E77` | `lock.shield.fill` | `U+10079A` |
+| `text.document` (= `doc.text`) | `U+10023F` | `shield` | `U+100666` |
+| `eye.fill` | `U+1002EE` | `eye` | `U+1002ED` |
+| `server.rack` | `U+1031B3` | `lock.iphone` | `U+100F13` |
+| `gearshape.fill` | `U+10094F` | `gearshape` | `U+10094E` |
+| `checkmark.seal.fill` | `U+1001FB` | `flag.fill` | `U+100DB8` |
+| `hand.thumbsup.fill` | `U+100280` | `arrow.right` | `U+10012B` |
+| `circle` | `U+100000` | | |
+
+**Batch 2 (2026-09-24, anchored on `chevron.right → 10018a`).** `lock.shield.fill`, `text.document`,
+`shield` are **screen-verified** (rendered on the Privacy screen `410:16`). The rest are pairing-sourced
+and not yet individually screenshot-checked — screenshot before shipping in a prominent spot.
+**`doc.text` was renamed `text.document`** in current SF Symbols (same glyph `U+10023F`) — the community
+file only indexes the new name. **`apple.logo` is NOT in the community file** (nor `doc.*` short names) —
+source it via the icon-request fallback (a Mac's SF Pro), or try the legacy Apple PUA `U+F8FF`.
 
 **Caption-naming gotcha:** the community file labels captions with the **full descriptive** SF
 Symbols name, not the SwiftUI shorthand — `mic.fill` is captioned **`microphone.fill`** (`microphone`,
