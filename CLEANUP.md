@@ -107,10 +107,15 @@ their **codebase source** (path) so reviewers can find them.
   drop from REGISTRY/Index.
 - [ ] **Surface / Card** — founder questions both; a surface is already expressed by foundation
   color/background styles. Lean **remove Surface**, *maybe* keep **Card**. Confirm scope before cutting.
-- [ ] **ErrorBanner** — founder doesn't know where it's used. **Grep the app** for its real usage
-  (name + file); if unused, remove. Add the source path to its description either way.
-- [ ] **Descriptions → code links.** Every component description should name its codebase source
-  (e.g. `SharedInboxView.swift`), not just prose. Backfill across the set.
+- [x] **ErrorBanner — answered: it IS used.** No shared `ErrorBanner` component in code; it's a
+  private `errorBanner(_:)` view duplicated inline in 4 files — `SharedRemChatView` (3849),
+  `RemConversationView` (86), `TaskCommentThreadView` (178), `TaskCommentsSection` (357) — shown on a
+  send/post **failure** in chat + task comments. Recommend **keep** (and the app should extract it into
+  a shared component). Description now points at these usages.
+- [x] **Descriptions → code links (first pass).** Backfilled `node.description` with source paths for
+  13 canonical components (ListRow, TaskEventRow, SuggestedTaskRow, MessageBubble, RemComposerBar,
+  VoiceBar, CalendarEventsCard, RemindersCard, ProposalCard, DateNavigationHeader, TypingDots,
+  ErrorBanner, ContentUnavailableView). Remaining components: backfill in a follow-up.
 
 ### Component fidelity bugs (do these — verifiable vs code)
 - [x] **VoiceBar button backgrounds fixed** (all 6 states verified). Bugs were: (1) button-bg
