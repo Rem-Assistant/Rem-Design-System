@@ -79,9 +79,10 @@ Re-base every kit usage to iOS 26:
   pages (Primitives · Rows & Controls · Chat · Tasks & Agenda · Cards) + Platform Controls, under
   the real `COMPONENTS` divider. Each stacked component-under-page-header, verified no overlap.
   File down from ~33 → 15 pages. Specs live per domain page (no separate Specs section).
-- [ ] **Per-screen pages** (Phase 2): split the single `Screens` page into one page per screen
-  (Agenda/Chat/Task detail/Settings/Inbox/Connectors/About) under the `SCREENS` divider as screens
-  are built/re-verified.
+- [x] **Per-screen pages DONE** — split the single `Screens` page into one page per screen under the
+  `SCREENS` divider: Agenda · Chat · Task detail · Settings · Connectors · About · Inbox · Billing ·
+  Permissions · Device Kit. Old `Screens` page + empty ② Settings section removed. Cross-page instance
+  refs (DeviceFrame master → Device Kit page) verified intact.
 
 ## Components still needed
 - [ ] **RemFaceMark** — Task detail's activity avatar is a placeholder (brand-blue tint circle +
@@ -170,9 +171,9 @@ their **codebase source** (path) so reviewers can find them.
   NOTE: Figma ties `isPageDivider` to the name — a real divider **can't carry a custom label** (setting
   one reverts it to a regular page), so section identity now comes from the content pages after each
   divider. Verified the page order.
-- [ ] **Sections don't contain their screens.** The Figma SECTIONs (③ Agenda, ⑤ Inbox, …) don't
-  actually enclose the screen frames (and Billing/Permissions are loose on the Screens page), so the
-  section labels are useless. Move each screen inside its section (feeds the per-screen-pages split).
+- [x] **Sections/screens resolved** by the per-screen-page split above — each screen (with its device
+  frame + states) now lives on its own dedicated page, so the loose-frames / sections-don't-enclose
+  problem is moot.
 - [ ] **Arrangement is scattered** — "things are all over the place, I have to hunt for the right
   screen." Impose a clean, findable layout before adding more.
 - [x] **Home indicator adopted.** Built canonical **HomeIndicator** (`333:102`, Platform Controls):
