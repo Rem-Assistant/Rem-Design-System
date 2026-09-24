@@ -88,8 +88,9 @@ Re-base every kit usage to iOS 26:
 - [x] **RemFaceMark built** (`361:7`, Primitives) — the real Rem brand face (scalloped `CustomFaceShape`
   blob outline + 2 bar eyes + `RemSmileShape` smile), parsed from `Shared/Views/RemFaceMark.swift`'s
   SVG path via `createNodeFromSvg`, ink bound to `labelPrimary`. Swapped into **Task detail**'s activity
-  avatar (was a drawn placeholder). Verified. FOLLOW-UP: `.thinking` mode variant (self-drawing outline)
-  + reuse in the chat thinking-indicator / empty-state face.
+  avatar (was a drawn placeholder). Verified. **`.thinking` mode added** — RemFaceMark is now a set
+  (`362:7`) with `Mode` = idle (outline + eyes + smile) / thinking (outline only, heavier stroke — the
+  self-drawing signature, static). FOLLOW-UP: reuse the mark in the chat thinking-indicator / empty-state.
 
 ## Icons
 - [ ] `mic.fill` — no caption in the community SF Symbols file; source via the icon-request frame
@@ -155,8 +156,12 @@ their **codebase source** (path) so reviewers can find them.
   (unfiled → faithful). Verified component + Agenda + Inbox (no regression; fixed a 2-line-title
   collision by hiding pills on Inbox). **Pills now a proper `Pills` BOOLEAN component property**
   (default true; both variants' Pills frames bound to it; Inbox rows set `Pills=false` via the prop
-  instead of a per-instance hide) — verified. FOLLOW-UP: a leading-state variant (Time / Schedule /
-  Clock) so the Inbox `calendar.badge.plus` affordance isn't a per-instance text override.
+  instead of a per-instance hide) — verified. **Leading-state variant added**: `Leading` = Time /
+  Schedule (calendar.badge.plus) / Clock (task only; events are always Time). Inbox rows now use the
+  canonical **Leading=Schedule** variant instead of a per-instance glyph override. All 4 variants
+  verified. MINOR: the `Pills` boolean binding didn't clone cleanly onto the Schedule/Clock variants,
+  so Inbox pills are hidden by a direct `visible=false` (works); re-bind Pills on those two variants
+  in a later pass.
 - [~] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug.
   **Agenda rows FIXED** (`182:2/15/28` were `counterAxisSizingMode=FIXED` h100 → set to hug; now 64/64/58;
   spacing verified). **Task detail** still pending — the frame named "action" + dates/meta (founder

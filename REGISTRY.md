@@ -23,7 +23,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
 | SectionFooter | ListRow | `161:70` | `Section { } footer: { Text }` | ✓ canonical |
-| TaskEventRow (task/event) — Row descendant: Leading · Content(status+title+**Pills**) · trailing=list chevron | Tasks & Agenda | `46:21` | `TaskEventRowView.swift` (taskContent) | ✓ canonical |
+| TaskEventRow (task/event) — Row descendant; props **Kind**, **Leading** (Time/Schedule/Clock), **Pills** (bool) | Tasks & Agenda | `46:21` | `TaskEventRowView.swift` (taskContent) | ✓ canonical |
 | SuggestedTaskRow (add/move) | SuggestedTaskRow | `48:25` | `SuggestedTaskRow.swift` | ✓ canonical |
 | Button (accessory) | Button | `110:47` | `Button(.borderedProminent)` | ✓ canonical |
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
@@ -49,7 +49,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Pill | Pill | `64:14` | — | ✓ canonical |
 | DeviceFrame/iPhone (bezel + Screen slot + HomeIndicator) | Screens | `128:46` | presentation-only | ✓ canonical |
 | HomeIndicator (bottom safe-area handle) | Platform Controls | `333:102` | system safe-area overlay | ✓ canonical |
-| RemFaceMark (brand face: blob outline + eyes + smile) | Primitives | `361:7` | `RemFaceMark.swift` (CustomFaceShape) | ✓ canonical |
+| RemFaceMark (brand face; **Mode** = idle / thinking) | Primitives | `362:7` | `RemFaceMark.swift` (CustomFaceShape) | ✓ canonical |
 | Navigation Bar | imported | `d29957…` | iOS 26 kit (Apple) | kit |
 | Status Bar / Toolbar | imported | — | iOS 26 kit (Apple) | kit |
 
