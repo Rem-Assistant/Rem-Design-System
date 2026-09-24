@@ -1,12 +1,11 @@
 # Design System — Cleanup Log (deferred)
 
-> **TOP PRIORITY next component fix — ContainedIcon renders blank.** Confirmed by screenshot: the
-> Settings + Connectors screens show **colored rounded squares with NO SF Symbol** (blue/grey/green/
-> orange squares, no glyph). `ContainedIcon` (`110:54`) is a bare colored square; it never got its
-> symbols. Fix: bake a centered white SF-Pro glyph into the master + expose a `Symbol` TEXT prop (and
-> keep the per-instance bg color), then set each Settings/Connectors/Permissions row's glyph. This also
-> unblocks the Permissions screen. Needs each row's SF Symbol from `SettingsView.swift` + a few more
-> sourced glyphs.
+> **ContainedIcon blank-glyph — FIXED.** `ContainedIcon` (`110:54`) now bakes a centered white SF-Pro
+> glyph exposed as a `Symbol` TEXT prop (bg color still per-instance). Settings re-glyphed from
+> `SharedSettingsView.swift`: Rem=brain.head.profile, Billing=creditcard.fill, Permissions=hand.raised.fill,
+> About=info.circle.fill, Share=square.and.arrow.up, Feedback=envelope.fill, Bug=exclamationmark.triangle.fill.
+> Verified. **REMAINING:** Connectors rows now show the default `info.circle` glyph — they need
+> **connector brand logos** (Gmail/Slack/etc. images, not SF Symbols) — separate asset-embed task.
 
 Debt found while building. **Do not fix inline** — note it here and defer to a focused cleanup
 pass/PR. Guiding principles: **code is the source of truth (screenshots can be stale)**;

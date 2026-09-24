@@ -28,7 +28,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Button (accessory) | Button | `110:47` | `Button(.borderedProminent)` | ✓ canonical |
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
-| ContainedIcon | ContainedIcon | `110:54` | `SettingsIcon` | ✓ canonical |
+| ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
 | MessageBubble (user/assistant) | MessageBubble | `50:7` | `ChatMessageViews.swift` | ✓ canonical |
 | RemComposerBar | RemComposerBar | `53:2` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) | ✓ canonical |
