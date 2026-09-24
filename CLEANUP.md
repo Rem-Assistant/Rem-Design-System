@@ -81,9 +81,13 @@ so re-read node positions before moving things.
 - [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
 
 ### Agenda / Tasks & Agenda components
-- [ ] **DateNavigationHeader**: keep top/bottom padding (founder reconsidered — leave it). The left/right
-  arrows lost their **rectangles** — restore "three rectangles beside each arrow" (verify against prod what
-  these are — likely tap-target rects or a day-strip; inspect `SharedAgendaView.swift`).
+- [?] **DateNavigationHeader arrows — NEEDS FOUNDER CLARIFICATION.** Founder: the arrows "had rectangles
+  before … three rectangles beside each arrow." But prod (`SharedAgendaView.swift` `SharedDateNavigationHeader`,
+  lines 223–247) renders the arrows as **plain `chevron.left`/`chevron.right` buttons (`.buttonStyle(.plain)`,
+  size 14 semibold) with NO rectangle background** and no day-strip. So "three rectangles" can't be matched to
+  shipping code — need the founder to point at what they mean (a tap-target bg? a loading skeleton? a week
+  day-strip?). Padding: founder said leave top/bottom. Separately, minor drift to reconcile: the Figma DateNav
+  `43:2` shows an extra **calendar glyph** next to the date that prod doesn't have. Not guessing — logged.
 - [ ] **"Add New" → make it a component (it's a button).** In prod it's **two buttons**: "Add new" **and**
   a **Schedule** button (for things needing scheduling); **Schedule opens a sheet.**
 - [ ] **Sheets: use the iOS 26 kit Sheet component** for all sheet interfaces ("all those views are already
@@ -123,7 +127,14 @@ so re-read node positions before moving things.
   from review's earlier pass; `413:32`).
 
 ### Settings
-- [ ] **Billing & Usage `341:862`**: use **Sections** (grouped list), not custom rows.
+- [?] **Billing & Usage `341:862` — appears already sectioned; confirm the specific gap.** Prod
+  (`BillingSettingsView.swift`) is a `List` of 3 `Section`s: **Current Plan** (Plan row), **Usage** (Today +
+  This Month progress rows), and a third section holding the primary button with the **Terms/Privacy legal
+  footer as the Section footer**. The current Figma already shows Current Plan + Usage headers with grouped
+  cards, the Upgrade button, and the legal footer — so it's largely sectioned. If the founder wants an exact
+  mirror, the one refinement is grouping the button + legal footer as a proper third Section (footer), and
+  using the canonical SectionHeader/SectionFooter components. Flagged rather than guessing at "not using
+  sections" when the screen is already sectioned.
 - [ ] **Sign Out**: use the **official iOS 26 action/activity sheet** from the kit (not a hand-built dialog).
 - [ ] **Delete Account**: use an **iOS 26 kit sheet**; the destructive **button "looks like nothing"** — fix it.
 - [ ] **Settings page**: organize with a layout (stop things flying around).
