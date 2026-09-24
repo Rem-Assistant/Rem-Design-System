@@ -24,7 +24,13 @@
   Rebuild both on ListRow + the Section components (grouped list).
 - [ ] **Settings first row (Account) is a custom "Profile" card → should be a ListRow** (Avatar leading +
   name/email as the ListRowLabel title/subtitle).
-- [ ] **Connectors is the OLD screen.** The shipping `SharedComposioConnectionsView` pattern: row =
+- [x] **Connectors rebuilt to the shipping pattern** (`133:192`): **Connected / Available** grouped
+  sections; each row = ContainedIcon glyph + `displayName` + **status subtitle** ("Connected • Active" /
+  "Connected • Paused" / "Not connected") + **chevron** (all on canonical ListRow); tight header→card
+  spacing (6px). Fuller list (Gmail, Google Calendar, Notion, Slack, Google Drive, Linear, Todoist).
+  Real brand logos remain a follow-up — `logos.composio.dev` is network-blocked here (403); SF-Symbol
+  fallbacks in place, fetch logos in CI. Original note kept below.
+- [~] **Connectors — real logos (follow-up).** The shipping `SharedComposioConnectionsView` pattern: row =
   brand logo + `displayName` + **status subtitle** ("Connected • Active" / "Not connected") + a
   **chevron** (opens the connect/disconnect sheet) — NOT a "Connect" button + chevron mix. Also: use
   real **Sections** (the "CONNECTED APPS" header is spaced too far from the rows), and show the **fuller
