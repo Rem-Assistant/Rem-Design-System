@@ -345,15 +345,18 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   showed the static "Continue". Re-bound both variants' text to `Label#377:0` (`408:15`/`408:17`); the
   tiers now honor the Label component property.
 
-### Button emphasis tier — token follow-ups (2026-09-24, Muse audit)
-- [ ] **`on-accent` label token missing.** The new **Primary Blue** / **Primary Gradient** tiers use
-  **raw white** text (a blue/gradient fill is the same in light+dark, so `background/primary` — which
-  inverts to black in dark — is wrong here). Add an `label/on-accent` (always-white) token to the
-  color collection + `RemButtonTokenSet`, then rebind these two tiers' text to it.
-- [ ] **Gradient stops not variable-bound.** Primary Gradient's stops use the **resolved RGB** of
-  `brand/blue` → `system/purple` (Figma variable-binding on gradient stops is limited via the plugin).
-  When the `RemButtonTokenSet` lands, express the gradient as two bound token stops so a token change
-  reskins it. Visually correct + token-derived today; just not live-bound.
+### Button reworked to Type · Tier (2026-09-24) — gradient removed
+- [x] **Gradient removed** (founder: "we don't need Muse's gradient"). Button restructured to the
+  **Type {Rectangular/Pill/Text} × Tier {Black/Secondary/Blue/Destructive}** model, destructive matching
+  SwiftUI (`Rect·Destructive` = `.borderedProminent .red`, `Text·Destructive` = `.plain .destructive`).
+  The 3 instances that used the gradient (Allow / Connect / Take control) were repointed to `Rect·Blue`.
+  The gradient-stop-binding debt is void.
+- [ ] **`label/on-accent` token still needed.** `Rect·Blue` and `Rect·Destructive` use **raw white** text
+  (a blue/red fill is the same in light+dark, so `background/primary` — which inverts — is wrong). Add a
+  `label/on-accent` (always-white) token + `RemButtonTokenSet`, then bind these tiers' text to it.
+- [ ] **Adopt GuidedFlow coach-mark overlay** (`GuidedFlow.swift`) as a canonical component — spotlight
+  scrim + cutout + Step X/Y tooltip (Skip/Next). Replaces the deprecated activation/deploy onboarding
+  screens; documented in RemClaw `docs/architecture/component-architecture-opportunities.md` §3.
 
 ## Done (kept for trail)
 - [x] DateNavigationHeader: real `calendar` glyph, brand blue `#0C50FF`, H-padding removed.
