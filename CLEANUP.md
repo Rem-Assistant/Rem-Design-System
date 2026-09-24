@@ -175,11 +175,11 @@ so re-read node positions before moving things.
   Controls page). Instanced the kit **Action Sheet** (`493:1771`), set Title "Sign out of Rem?" + description,
   Action 1 = "Sign Out" (Destructive), Action 2 = "Cancel", hid the rest; widened to iPhone full-width and
   placed over a dimmed Settings backdrop. Replaced the hand-built dialog.
-- [x/?] **Delete Account button** — the button `412:36` already renders as a proper **solid-red destructive
-  button** (white label). "Looks like nothing" most likely refers to its **disabled** state (prod disables it
-  until you type "delete"), which the current specimen doesn't show. Proposed: add an enabled/disabled state
-  pair rather than restyle the enabled one. Confirm with founder. The **kit-sheet** part is the cross-cutting
-  item below.
+- [x] **Delete Account → kit Inspector sheet** (`412:24`). Instanced the kit **Sheet - Inspector - iPhone**
+  (`493:3196`): Title "Delete Account", submit-arrow hidden; over a dimmed Settings backdrop, with the delete
+  content overlaid in the sheet's content area (warning copy + "type delete" confirm field + full-width red
+  **Delete Account** button). The red destructive button now reads clearly (addresses "looks like nothing").
+  (Content is a sibling over the instance's slot since instances can't take new children.)
 - [ ] **Cross-cutting: kit sheets — components identified by founder.** The iOS-26 kit ("iOS and iPadOS 26")
   has **Action Sheet**, **Sheet - Inspector - iPhone** (medium), and **Sheet - Full Screen** (full-height).
   Founder: Rem uses **two sheet types — Inspector + Full-height** — plus the Action Sheet. **Mapping:**
