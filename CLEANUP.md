@@ -136,12 +136,12 @@ their **codebase source** (path) so reviewers can find them.
 - [x] **RemindersCard icon fixed** — drawn vectors → the real branded **AppleRemindersLogo** image
   (`Rem/Assets.xcassets/AppleRemindersLogo.imageset/Apple_Reminders_Logo.png`), embedded via
   `figma.createImage` (the `upload_assets` host `mcp.figma.com` is **network-blocked** here — 403 CONNECT).
-  Verified. NOTE: header copy shows "Reminders · 3" but code is **"3 reminders"** (`Text("\(count) reminder(s)")`) —
-  minor copy drift, fix in a text pass. Same pattern to check on CalendarCard headerText.
+  Verified. Header copy **fixed** → "3 reminders" (matches `Text("\(count) reminder(s)")`).
 - [x] **ProposalCard header icon fixed** — drawn vectors → real `checklist` glyph (`U+100DFE`),
   `.subheadline` 15pt, **brandBlue** (per `RemProposalCardView.header`), across all 4 states
-  (pending/succeeded/failed/stale). Verified pending. NOTE: the per-state **terminal/status** footer
-  icons (checkmark.circle.fill / exclamationmark / stale) are still drawn — swap in a follow-up.
+  (pending/succeeded/failed/stale). **Footer status icons also fixed**: succeeded=checkmark.circle.fill
+  (green), failed=xmark.octagon.fill (red), stale=clock.badge.exclamationmark.fill (orange) — real
+  glyphs, bound tints, per `RemProposalCardView.terminalIcon/terminalTint`. All 4 states verified.
 - [x] **Glyphs sourced + verified** (added to sf-symbols-map): `checklist`=`U+100DFE`,
   `calendar.badge.clock`=`U+1009DE`, `arrow.uturn.backward`=`U+100C4D`. (Glyph-filter gotcha: PUA
   codepoints > U+FFFF are **surrogate pairs** — filter on `[...ch].length===1`, not `ch.length===1`,
