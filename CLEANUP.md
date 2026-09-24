@@ -138,10 +138,11 @@ so re-read node positions before moving things.
   activity, Billing, etc.
 
 ### Activity (View history)
-- [ ] **Redesign as a TIMELINE view — UNBLOCKED (founder: "forget my reference, create your own timeline
-  component, you probably know how").** Build a reusable **Timeline base component** (vertical rail + nodes:
-  status dot/icon per event, connector line between, title + timestamp + optional description) and use it on
-  the Activity screen (`413:32`), scoped per task. Own design; no external reference needed.
+- [x] **TIMELINE view — DONE.** Built a reusable **`Timeline` base component `482:56`** (status node —
+  green ✓ / red ✗ / blue in-progress — on a **connecting rail** + title + right-aligned timestamp + secondary
+  description; tail node has no connector) and wired it into the **Activity screen `413:32`** under the task
+  header. Own design per founder ("create your own"). On the Proposed catalog as a captioned cell; supersedes
+  the rail-less exec-trace body. Resolves the dashed-rail debt (uses a solid rail — dashed is optional later).
 
 ### Settings
 - [?] **Billing & Usage `341:862` — appears already sectioned; confirm the specific gap.** Prod
