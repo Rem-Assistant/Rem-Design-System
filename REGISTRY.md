@@ -31,7 +31,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | ContainedIcon | ContainedIcon | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
 | MessageBubble (user/assistant) | MessageBubble | `50:7` | `ChatMessageViews.swift` | ✓ canonical |
-| ComposerBar | ComposerBar | `53:2` | `SharedRemChatView.swift` | ✓ canonical |
+| RemComposerBar | RemComposerBar | `53:2` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) | ✓ canonical |
 | ConversationView | ConversationView | `71:35` | folds into Chat screen | consolidating |
 | VoiceBar (MiniPlayerBar, 6 states) | Screens ⑤ | `160:884` | `MiniPlayerBar.swift` | ✓ canonical |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
