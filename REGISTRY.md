@@ -74,6 +74,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | ActionCard — **State** = Active / Completed (agent-initiated input: icon tile + title + subtitle + CTA → "Added") | `428:37` | inline "Secure Store" action card |
 | ApprovalGate — in-chat permission prompt: icon + heading + body + Details JSON block + **Allow (gradient/Commit) / Always allow / Deny** | `429:20` | in-chat approval card ("Allow Arlo to …?") |
 | Execution trace (screen) — "In progress" pill, title/subtitle/time, MAIN/SUBAGENT sections, step rows (✓/✗ + title + description + chevron), "Working" footer | `431:21` | agent step-timeline / "show your work" surface |
+| RunningTaskBanner — **Tone** = Working / Attention (glass pill: thumbnail + task + status + Stop) | `432:39` | Live-Activity "Browser · Needs you" banner |
 
 ## Screens (one generation — device-framed on the Screens page)
 
