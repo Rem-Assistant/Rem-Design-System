@@ -18,7 +18,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 
 | Component | Page | Node | SwiftUI source | Status |
 |---|---|---|---|---|
-| **Row (iOS 26 kit)** — Title/Subtitle/Image/trailing (drill-in/checkmark/detail/symbol/button)/Height | Rows & Controls | lib `5587f1eb…` | `SharedSettingsView.swift` insetGrouped rows | ✓ canonical (adopted iOS 26; custom `ListRow` 101:18 **retired**) |
+| ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) — swappable leading (ContainedIcon/Avatar), re-based to iOS 26 metrics + variables | Rows & Controls | `101:18` | `SharedSettingsView.swift` insetGrouped rows | ✓ canonical (kept — kit Row leading isn't swappable to ContainedIcon) |
 | ListRowLabel (default Content: Title/Subtitle) | ListRow | `188:2` | the row's text block | ✓ canonical |
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |

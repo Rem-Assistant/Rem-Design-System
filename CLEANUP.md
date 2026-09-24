@@ -5,20 +5,22 @@ pass/PR. Guiding principles: **code is the source of truth (screenshots can be s
 **everything is a component property/variant**; **one canonical per concept (no duplicates across
 pages)**.
 
-## Row decision — adopt the iOS 26 `Row` (canonical), retire custom `ListRow`
-- The official iOS 26 **`Row`** (`5587f1ebded12290ac2731cef9d68f98a4a0ac61`, set; `Height`=Regular/Tall)
-  is rich + authentic: `Title`/`Subtitle`, `Show Image` (leading), configurable trailing
-  (`Show Drill-in` chevron, `Show Checkmark`, `Detail Text`, `Show Symbol`, `Button Label`, `Type`),
-  built-in `_Separator` — all kit-colored + real SF Symbols. **Verified** (screenshot).
-  **Adopt it as the canonical row; retire local custom `ListRow` (101:18).**
-- [ ] Re-instance screens' rows on the iOS 26 `Row` (Phase 2). Configure trailing per use
-  (nav row = Show Drill-in only; toggle row = add iOS 26 **Switch** in trailing; etc.).
-- [ ] **Two color collections** to reconcile: kit `Row` binds to the iOS 26 library's *System Colors*;
-  our custom components bind to the local **Color** collection (same values, different source).
-  Decide whether to align local Color → reference the library collection, or keep both (values match).
-- Related iOS 26 pieces to adopt: `Section Title` (`216bce9b…`), `Header` (`e86f40bf…`),
-  `Grouped Table Footer` (`19a81fe0…`), `Row with Swipe Actions` (`974d4aee…`), `Row - Button`
-  (`7b9ac5d3…`), `List` (`326aef2f…`).
+## Row decision — KEEP custom `ListRow` (swappable leading), re-base to iOS 26 *(reversed)*
+- **The kit Row can't take our `ContainedIcon` leading.** The iOS 26 `Row`
+  (`5587f1ebded12290ac2731cef9d68f98a4a0ac61`) has **no instance-swap props**; its leading is a
+  nested `Image` instance (`Type` = Fill/Circular/Rounded/Symbol) — image fills or a plain symbol,
+  never our colored-square `ContainedIcon` component, and nested mains can't be swapped without an
+  exposed swap prop. Settings rows need `ContainedIcon` (branded, variable-bound), so **adopting the
+  kit Row wholesale is rejected.** (Founder caught this before build — good.)
+- **Decision:** keep our custom **`ListRow`** (`101:18`) with its swappable slots (Leading
+  Accessory = ContainedIcon/Avatar/Symbol/None · Content = ListRowLabel · Trailing Accessory =
+  Chevron/Switch/Button/None), and **re-base it to iOS 26**: match the kit Row's metrics
+  (Regular ~52 / Tall), bind fills to the local **Color** variables, use real SF Symbols. "Built on
+  the iOS 26 Row" = its metrics/tokens/look, while keeping the swappable leading the app requires.
+- [ ] Re-base `ListRow`: iOS 26 metrics + bind colors (bg→`background/primary`, hairline→`separator`,
+  labels→`label/*`) + real chevron/switch symbols. Then screens re-verify on it.
+- Standalone kit pieces still worth using where there's no swappable-leading need: `Section Title`
+  (`216bce9b…`), `Header` (`e86f40bf…`), `Grouped Table Footer` (`19a81fe0…`).
 
 ## iOS 18 → iOS 26 kit re-base (HIGH — core fidelity)
 Kit components were imported from the **iOS 18** library (nav `d299571689…`, Row
