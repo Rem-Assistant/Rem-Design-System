@@ -20,14 +20,15 @@ pages)**.
 - [ ] **Audit duplicate components across pages.** Confirm single-canonical; fold any dupes.
 - [ ] **REGISTRY.md sync:** `ComposerBar` → `RemComposerBar` (renamed in Figma).
 
-## Nav — decision needed
-- [ ] **Kit nav trailing can't take our glyphs.** The kit `NavigationBar` trailing button slot
-  expects an **Apple SF-Symbol component** (empty → dashed placeholder); we render SF Symbols as
-  SF Pro text glyphs, so the slot stays empty. Chat nav is now the kit component (title +
-  transparent bg via `Show Background=false`) with `Show Trailing=false` for now (no ⋯).
-  Decide: (a) import Apple's SF Symbol components for kit slots, or (b) build a thin
-  **`RemNavigationBar`** wrapper with leading/title/trailing slots that take OUR components/glyphs
-  + bg/hairline-as-`Scrolled`-state. Recommend (b). Standardize all screens on the outcome.
+## Nav — RESOLVED (standardize on the kit nav)
+- [x] **Kit nav trailing DOES take our glyphs.** (Earlier "needs an Apple symbol component" was
+  wrong.) The kit `NavigationBar` trailing/leading button has a **`Symbol#…` TEXT property** — set
+  it to the SF Pro glyph directly (ellipsis `U+100360`). Config the kit nav via its props: `Title`
+  (text), `Show Leading/Trailing`, the buttons' `Symbol` text, and `Show Background`
+  (transparent-vs-material). **No `RemNavigationBar` wrapper needed** — standardize every screen on
+  the kit nav; retire hand-built `nav` frames.
+- [ ] Minor: Chat nav ⋯ renders blue (kit default tint); `06-chat` shows it in a grey circle
+  button. Polish the trailing button style/color to match if we want exact parity.
 - [ ] **Home indicator absent.** DeviceFrame bezel (`128:46`) has none; the iOS 26 kit omits it
   (system overlay). Decide whether to add a simple home-indicator bar to the bezel (would overlay
   bottom bars like the voice bar, as on-device) or leave it kit-faithful.

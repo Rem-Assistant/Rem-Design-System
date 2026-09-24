@@ -82,6 +82,14 @@ runs JS against the Figma Plugin API; `figma` is the global.
   Navigation Bar - iPhone (Compact) `d299571689380910c1e8194200965152c2717993` (Style variant:
   Default/Large + Show Search/Leading/Trailing/Title props); iOS 18 Row set
   `8bb9d297eb2882c75b4d23eb7c90eea45f000f6d` (Height=Regular **44** / Tall **60**).
+- **Configure the kit Navigation Bar — don't hand-build a `nav` frame.** Props: `Title` (TEXT),
+  `Show Leading/Trailing/Search/Prompt` (BOOL), `Show Background` (BOOL — transparent scroll-edge
+  vs. material; this is the "inherit page bg" control), `Style` (Default/Large). Each leading/
+  trailing **button exposes a `Symbol#…` TEXT property** — set it to the **SF Pro glyph**
+  (`String.fromCodePoint`, e.g. ellipsis `U+100360`) to render any SF Symbol; it does **not**
+  need an Apple symbol *component* (an earlier belief that it did was wrong). The nav bundles its
+  own status bar (~98pt tall incl. status), so remove the separate status-bar instance when you
+  adopt it. `setProperties` on the nested button instance sets its `Symbol#…`.
 - `combineAsVariants([comps], parent)` builds a variant set; name members `Prop=Value`.
 - **Annotations:** `node.annotations = [{label, properties:[{type:"height"},{type:"padding"},
   {type:"itemSpacing"}, …]}]` shows labels **and measurement values** in Dev Mode (not in a
