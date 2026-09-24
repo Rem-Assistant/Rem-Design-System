@@ -79,12 +79,11 @@ so re-read node positions before moving things.
 - [x] **Voice screen built** (`476:530`, Settings page) — faithful to `SharedVoiceSettingsView.swift`
   (preview / Spoken responses / Character & speed sliders), on the **kit nav bar**. This is the "set up
   voice" destination for the onboarding flow.
-- [x] **Proposed onboarding flow assembled** — new page **`Proposed · Onboarding`** lays out the sequence:
-  ① GuidedFlow coach-mark (relabeled "Step 1 of 2 · Connect your apps") → ② **Connectors** screen `133:192`
-  (real connector rows) → ③ **Voice** screen `476:530`. Built from the existing pieces per epic #1373;
-  replaces the deploy/education onboarding. NEXT refinement: reposition the coach-mark spotlight onto each
-  step's real target (currently the demo position) for a true overlay, and componentize the coach-mark's
-  Step/Skip/Next as a reusable Coachmark component.
+- [x] **Proposed onboarding flow assembled + coach-marked** — page **`Proposed · Onboarding`**: **① Connect
+  your apps** (Connectors screen `133:192`) and **② Set up your voice** (Voice screen `476:530`), each with a
+  **scrim + blue spotlight ring on its real target** (first "Available" connector row; "Hear this voice") + a
+  **Coachmark** instance (Step 1/2 → Step 2/2, Skip/Next). Built from existing pieces per epic #1373; replaces
+  the deploy/education onboarding. Reuses `Coachmark` `491:56`.
 - [x] **Coachmark tooltip componentized** (`491:56`) — reusable coach-mark bubble (Step X/Y + **Title**/
   **Body** TEXT props + Skip + Next pill + shadow), on the Proposed catalog. NEXT: pair it with a
   scrim+spotlight overlay positioned per target on the connect/voice steps.
