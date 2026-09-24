@@ -106,7 +106,10 @@ so re-read node positions before moving things.
   as part of the kit-sheet swap below.
 - [ ] **Sheets: use the iOS 26 kit Sheet component** for all sheet interfaces ("all those views are already
   declared there").
-- [ ] Agenda screen: organize more neatly.
+- [x] **Agenda screen** (`181:754`) — already clean/organized (DateNav → Brief → Sort → Overdue → To Do →
+  Add/Schedule → Suggestions, all in an auto-layout Content). Swapped its plain "+ Add New" for the
+  **AgendaAddSchedule** component `490:22` (Add New | Schedule + count). Remaining Agenda item: DateNav arrows
+  ("three rectangles") — founder clarification.
 - [?] **Remove the unused section on the Agenda page** — founder says one section is unused; **which one?**
   (don't guess-delete — confirm).
 
