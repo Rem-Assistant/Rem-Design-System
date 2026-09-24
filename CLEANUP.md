@@ -211,8 +211,13 @@ so re-read node positions before moving things.
   About · Billing · Permissions · Sign Out · Delete · Voice at y=0, 442px pitch); the one stray was the
   "Device — Settings" instance floating at (1440,1210) → tucked below the row at (0,980). The Settings
   *screen* itself (`130:44`) is a grouped List, already organized.
-- [ ] **Build the "General" child view** — we renamed Settings "Rem" → **General**; the child screen isn't
-  built. (This unblocks the earlier founder-gated rename.)
+- [~] **"General" child view — DRAFT built** (`Screen/General (Proposed draft)` `509:833`). Kit nav
+  ("General") + canonical grouped-list draft: **Appearance** (Value "System") + App Icon · **Notifications**
+  + Sounds & Haptics · **Language** (Value "English"), with a visible orange **DRAFT** banner. Gives the
+  missing view a form to react to. **Founder-gated (final):** the actual contents + whether the Settings
+  "Rem · Connected" runtime row becomes this (rename) or General is app/account settings — still your IA
+  call; reshape the draft's rows once decided. Also: wire the Settings row that opens it and set its label
+  to "General".
 - [x] **Share / Feedback / Report OS experience** — built an **iOS share-sheet (activity view) specimen**
   `494:56` (grabber + item preview + app-icon row Messages/Mail/Notes/More + actions Copy / Add to Reading
   List / Save to Files) on the Proposed catalog, representing what Share/Feedback/Report open. (Feedback also
