@@ -175,8 +175,10 @@ so re-read node positions before moving things.
 - [ ] **Settings page**: organize with a layout (stop things flying around).
 - [ ] **Build the "General" child view** — we renamed Settings "Rem" → **General**; the child screen isn't
   built. (This unblocks the earlier founder-gated rename.)
-- [ ] **Share / Send Feedback / Report**: show the **OS experiences** these open — share sheet / activity
-  view — as their own specimens.
+- [x] **Share / Feedback / Report OS experience** — built an **iOS share-sheet (activity view) specimen**
+  `494:56` (grabber + item preview + app-icon row Messages/Mail/Notes/More + actions Copy / Add to Reading
+  List / Save to Files) on the Proposed catalog, representing what Share/Feedback/Report open. (Feedback also
+  opens a Mail composer — can add a compose specimen if wanted.)
 
 ### Inbox
 - [ ] **Inbox "+" sheets**: tapping either plus opens a **sheet** experience we need to support (compose/add).
