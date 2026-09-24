@@ -240,3 +240,13 @@ screen** under the SCREENS divider; Section-in-use specimen (header + rows + foo
 **Deferred (logged in CLEANUP.md, need founder/network/app-repo):** connector *brand* logos (remote
 SVGs; SF fallbacks in place) · SwiftUI list-style variants (open design Q) · TaskEventRow leading-state
 variant · RemFaceMark `.thinking` mode · global page-bg variable · app dead-code deprecation (verified PR).
+
+### TaskEventRow spacing/clipping fixes — 2026-09-24 (founder-caught)
+- **Title-row clipping**: the row's Title Row was FIXED height 32 while a 2-line title is 44 → it
+  overflowed and collided with the pills. Set the Title Row to **hug height**
+  (`counterAxisSizingMode='AUTO'`) so 2-line titles push the pills down cleanly. Verified on Agenda.
+- **Leading badge gap**: the unscheduled `calendar.badge.plus` / `clock` glyph was left-aligned in the
+  64pt column; code centers it (`.frame(maxWidth:.infinity, alignment:.center)`). Set the Schedule/Clock
+  leading `primaryAxisAlignItems='CENTER'` → glyph centered, gap matches the app. (Time stays left, as
+  code left-aligns the HH:MM.)
+- **Spacing tokens**: Content title↔pills spacing 6→**8** (`sm`); Pills spacing 6→**4** (`xs`).
