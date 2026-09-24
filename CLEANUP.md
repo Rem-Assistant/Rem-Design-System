@@ -168,10 +168,17 @@ so re-read node positions before moving things.
   until you type "delete"), which the current specimen doesn't show. Proposed: add an enabled/disabled state
   pair rather than restyle the enabled one. Confirm with founder. The **kit-sheet** part is the cross-cutting
   item below.
-- [ ] **Cross-cutting: kit sheets.** Founder wants all sheet interfaces (Sign out, Delete, Inbox "+",
-  Agenda Schedule, voice/connector sheets) to use the **iOS 26 kit Sheet** components ("already declared
-  there") instead of hand-built sheet frames. First step: locate the kit Sheet/ActionSheet component in the
-  iOS-26 library, then swap. Not yet started.
+- [ ] **Cross-cutting: kit sheets — components identified by founder.** The iOS-26 kit ("iOS and iPadOS 26")
+  has **Action Sheet**, **Sheet - Inspector - iPhone** (medium), and **Sheet - Full Screen** (full-height).
+  Founder: Rem uses **two sheet types — Inspector + Full-height** — plus the Action Sheet. **Mapping:**
+  Sign Out → **Action Sheet** (destructive "Sign Out" + Cancel; Action Sheet props: Title, Description,
+  Action N {Mode, Type=Destructive/Secondary, Text}); Delete Account → **Inspector sheet** (X · Title · blue
+  action button + confirm content); New Task/Event (Inbox "+") + Agenda **Schedule** → **Full-height sheet**.
+  **BLOCKER:** `search_design_system` won't surface the iOS-26 kit's sheet keys (only iOS 15/17/18 versions),
+  and the plugin can't instance a library component without its key. → **Founder: insert one instance of each
+  (Action Sheet, Sheet-Inspector, Sheet-Full) into the file** (the Assets panel "Insert instance" button) and
+  the agent will reuse + configure them for the swaps; or OK an iOS-18 kit fallback. Do NOT hand-build sheet
+  look-alikes (drift — the anti-drift rule says reuse the canonical/kit component).
 - [ ] **Settings page**: organize with a layout (stop things flying around).
 - [ ] **Build the "General" child view** — we renamed Settings "Rem" → **General**; the child screen isn't
   built. (This unblocks the earlier founder-gated rename.)
@@ -181,7 +188,10 @@ so re-read node positions before moving things.
   opens a Mail composer — can add a compose specimen if wanted.)
 
 ### Inbox
-- [ ] **Inbox "+" sheets**: tapping either plus opens a **sheet** experience we need to support (compose/add).
+- [x] **Inbox "+" sheet = New Task or Event `404:5`** — both plus buttons (header + toolbar) call
+  `onCreateTask()` (`SharedInboxView.swift` L33/L74), which presents the **New Task or Event** create screen
+  as a sheet. Screen already built (`404:5`, de-carded + auto-layout). Founder: Rem uses **two kit sheet
+  types — an Inspector (medium) and a Full-height sheet** — New Task/compose is the **Full-height** one.
 
 ### Flows
 - [ ] **Navigation map — redraw VERTICALLY** (horizontal won't scale). `420:15`. Two paths: (a) **FigJam via
