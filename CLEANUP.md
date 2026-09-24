@@ -87,7 +87,9 @@ so re-read node positions before moving things.
 - [x] **Coachmark tooltip componentized** (`491:56`) — reusable coach-mark bubble (Step X/Y + **Title**/
   **Body** TEXT props + Skip + Next pill + shadow), on the Proposed catalog. NEXT: pair it with a
   scrim+spotlight overlay positioned per target on the connect/voice steps.
-- [ ] Onboarding page itself still needs the auto-layout organization pass (like the other pages).
+- [x] **Onboarding page organized** — the screens overlapped (Login at x=-432, Privacy offset at 19,99);
+  laid them in a clean onboarding-order row at y=0 (Login → Privacy → Deploying → Activation, 442px pitch).
+  Deploying/Activation still shown (up-for-deprecation, pending founder confirm).
 - [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
 
 ### Agenda / Tasks & Agenda components
