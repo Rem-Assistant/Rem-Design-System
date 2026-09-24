@@ -115,10 +115,27 @@ so re-read node positions before moving things.
   **AgendaAddSchedule** component `490:22` (Add New | Schedule + count). Remaining Agenda item: DateNav arrows
   ("three rectangles") — founder clarification.
 - [?] **Remove the unused section on the Agenda page** — founder says one section is unused; **which one?**
-  (don't guess-delete — confirm).
+  (don't guess-delete — confirm). **Full inventory (enumerated 2026-09-24) so you can name it:** the
+  `Tasks & Agenda components` column (`456:14`) has exactly **3 sections** — ① **TaskEventRow** `456:15`
+  (task/event, 4 variants → `TaskEventRowView.swift`), ② **SuggestedTaskRow** `456:16` (add/move →
+  `SuggestedTaskRow.swift`), ③ **DateNavigationHeader** `456:17` (→ `SharedAgendaView.swift`). Off to the
+  side: a **Task badges** frame `456:18` (RunStatus/Deemphasis/Overdue/Priority) and the loose
+  **AgendaAddSchedule** symbol `490:22` at (900,1600). **All three column sections map to live shipping
+  code**, so none is an obvious orphan from the design side — which is why I'm not guessing. Point at one
+  (by name/number) and I delete it. The loose `AgendaAddSchedule` is newly built + wired (not unused); it
+  could be tucked into the column as a 4th section if you want it catalogued there.
 
 ### Chat
 - [?] **Remove the unused section on the Chat page** — one section unused; **which one?** (confirm before delete).
+  **Full inventory (enumerated 2026-09-24):** the `Chat components` column (`456:6`) has **7 sections** —
+  ① **MessageBubble** `456:7` (→ `ChatMessageViews.swift`), ② **ComposerBar** `456:8`
+  (→ `SharedRemChatView.swift`), ③ **VoiceBar** `456:9` (6 states → `MiniPlayerBar.swift`),
+  ④ **TypingDots** `456:10` (→ `SharedChatTypingDots`), ⑤ **ThinkingBlock** `456:11`
+  (collapsed/expanded), ⑥ **ToolResultCard** `456:12` (generic tool-result card, `62:2`),
+  ⑦ **ContextualMessage** `456:13` (5 tones). **Best-guess candidate (hypothesis, NOT a decision):**
+  **⑥ ToolResultCard** `456:12` — it's the *generic* result card, and EVOLUTION.md logs your open debate
+  to deprecate the Calendar/Reminders tool-result cards ("could probably be solved by text"). If that's
+  the one, confirm and I delete `456:12`. Otherwise name the section — no guess-delete.
 - [x] **VoiceBar button opacity bug — FIXED (root cause was a Figma limitation).** The mic/end-call button
   backgrounds are `color.opacity(0.2)` (`MiniPlayerBar.swift`). The master rendered the 0.2 tint fine, but
   **Figma does not propagate a variable-bound paint's opacity into instances** — every VoiceBar instance
@@ -218,6 +235,12 @@ so re-read node positions before moving things.
   "Rem · Connected" runtime row becomes this (rename) or General is app/account settings — still your IA
   call; reshape the draft's rows once decided. Also: wire the Settings row that opens it and set its label
   to "General".
+  - **Re-verified post-compaction (2026-09-24):** screenshot + node-read pass on `509:833`. Kit nav, the
+    orange DRAFT/IA banner, and all three grouped sections render correctly; the **leading back-chevron
+    reads clean** at full res (chars `􀆉` = chevron.left `U+100189`, visible, fill bound to local
+    `label/primary` `VariableID:2:6`, on a `background/secondary` `2:4` backdrop). No defect — the earlier
+    thumbnail just under-rendered the thin glyph. `Screen/New Task (Full sheet)` `507:115` also re-verified
+    clean (grabber · X · "New Task or Event" · blue ↑ · segmented picker · form).
 - [x] **Share / Feedback / Report OS experience** — built an **iOS share-sheet (activity view) specimen**
   `494:56` (grabber + item preview + app-icon row Messages/Mail/Notes/More + actions Copy / Add to Reading
   List / Save to Files) on the Proposed catalog, representing what Share/Feedback/Report open. (Feedback also
