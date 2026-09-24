@@ -72,4 +72,5 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Permissions | `349:905` | 3 sections — **all rows = ListRow + StatusChevron trailing**, SectionHeader/Footer — `SettingsView.swift` DevicePermissionsView |
 | Agenda | rebuilding | scheduled · empty · loading (jump-to-today, sort modes to add) |
 | Chat | `71:533` | voice-active thread (iOS 26 Toolbar-Top nav, bound, real symbols) ✓ |
-| Task detail | `299:2` | root — iOS 26 nav (back+Task), title/date/meta, Last-activity card, notes, composer; bound + real symbols ✓ |
+| Task detail | `299:2` | root — iOS 26 nav (back+Task), title/date/meta, Last-activity card, notes, composer; bound + real symbols ✓ (page: **Task & Events**) |
+| New Task or Event | `404:5` | create mode — Cancel/Save nav, **New Task / New Event** segmented picker, Title + dashed-circle status indicator, "Set date, time, repeat" card, notes — `TaskEventView` (isNewTask) |
