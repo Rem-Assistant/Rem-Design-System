@@ -40,7 +40,8 @@ name length (glyph fixed-left, caption grows rightward). Anchor with a known ans
 | `creditcard.fill` | `U+100370` | `hand.raised.fill` | `U+10027C` |
 | `info.circle.fill` | `U+100175` | `envelope.fill` | `U+100356` |
 | `square.and.arrow.up` | `U+100202` | `bell.fill` | `U+1002DA` |
-| `camera.fill` | `U+10031F` | | |
+| `camera.fill` | `U+10031F` | `externaldrive.fill` | `U+100903` |
+| `number` | `U+100183` | | |
 
 **Caption-naming gotcha:** the community file labels captions with the **full descriptive** SF
 Symbols name, not the SwiftUI shorthand — `mic.fill` is captioned **`microphone.fill`** (`microphone`,

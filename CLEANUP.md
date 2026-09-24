@@ -4,8 +4,11 @@
 > glyph exposed as a `Symbol` TEXT prop (bg color still per-instance). Settings re-glyphed from
 > `SharedSettingsView.swift`: Rem=brain.head.profile, Billing=creditcard.fill, Permissions=hand.raised.fill,
 > About=info.circle.fill, Share=square.and.arrow.up, Feedback=envelope.fill, Bug=exclamationmark.triangle.fill.
-> Verified. **REMAINING:** Connectors rows now show the default `info.circle` glyph — they need
-> **connector brand logos** (Gmail/Slack/etc. images, not SF Symbols) — separate asset-embed task.
+> Verified. **Connectors re-glyphed** with the app's own SF-Symbol fallbacks
+> (`SharedComposioConnectionsView.iconName`): Gmail=envelope.fill, Google Calendar=calendar, Google
+> Drive=externaldrive.fill, Slack=number, Notion=list.bullet (approx — app fallback is `note.text`,
+> not captioned in the community file). IDEAL: the real app fetches brand logos from
+> `logos.composio.dev/api/<toolkit>` (remote SVGs) — embed those for exact fidelity in a later pass.
 
 Debt found while building. **Do not fix inline** — note it here and defer to a focused cleanup
 pass/PR. Guiding principles: **code is the source of truth (screenshots can be stale)**;
