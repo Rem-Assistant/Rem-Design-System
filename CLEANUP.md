@@ -136,8 +136,14 @@ their **codebase source** (path) so reviewers can find them.
   `calendar.badge.clock`=`U+1009DE`, `arrow.uturn.backward`=`U+100C4D`. (Glyph-filter gotcha: PUA
   codepoints > U+FFFF are **surrogate pairs** — filter on `[...ch].length===1`, not `ch.length===1`,
   or the lookup finds zero glyphs.)
-- [ ] **TaskEventRow pills missing.** task + event variants support pills (list badge, duration,
-  overdue) per `TaskEventRowView.taskContent`. Add a pills row (as a variant/optional slot).
+- [x] **TaskEventRow reworked (3-slot Row model + pills).** Both variants restructured to
+  **Leading · Content · (trailing = list-level chevron)**; Content is now a VStack of a title row
+  (status + title) + a **Pills row** (canonical Pill: `list` badge for tasks, `dot` calendar badge for
+  events). Agenda instances show pills (filed); Inbox instances have the Pills row hidden per-instance
+  (unfiled → faithful). Verified component + Agenda + Inbox (no regression; fixed a 2-line-title
+  collision by hiding pills on Inbox). FOLLOW-UP: promote Pills visibility to a proper **boolean
+  component property** ("Show Pills") instead of per-instance hide; and a leading-state variant
+  (Time / Schedule / Clock) so the Inbox affordance isn't a per-instance text override.
 - [~] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug.
   **Agenda rows FIXED** (`182:2/15/28` were `counterAxisSizingMode=FIXED` h100 → set to hug; now 64/64/58;
   spacing verified). **Task detail** still pending — the frame named "action" + dates/meta (founder

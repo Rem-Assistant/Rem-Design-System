@@ -23,7 +23,7 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
 | SectionFooter | ListRow | `161:70` | `Section { } footer: { Text }` | ✓ canonical |
-| TaskEventRow (task/event) | TaskEventRow | `46:21` | `TaskEventRowView.swift` | ✓ canonical |
+| TaskEventRow (task/event) — Row descendant: Leading · Content(status+title+**Pills**) · trailing=list chevron | Tasks & Agenda | `46:21` | `TaskEventRowView.swift` (taskContent) | ✓ canonical |
 | SuggestedTaskRow (add/move) | SuggestedTaskRow | `48:25` | `SuggestedTaskRow.swift` | ✓ canonical |
 | Button (accessory) | Button | `110:47` | `Button(.borderedProminent)` | ✓ canonical |
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
