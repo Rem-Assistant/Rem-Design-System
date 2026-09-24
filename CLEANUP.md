@@ -98,8 +98,10 @@ so re-read node positions before moving things.
   shipping code — need the founder to point at what they mean (a tap-target bg? a loading skeleton? a week
   day-strip?). Padding: founder said leave top/bottom. Separately, minor drift to reconcile: the Figma DateNav
   `43:2` shows an extra **calendar glyph** next to the date that prod doesn't have. Not guessing — logged.
-- [ ] **"Add New" → make it a component (it's a button).** In prod it's **two buttons**: "Add new" **and**
-  a **Schedule** button (for things needing scheduling); **Schedule opens a sheet.**
+- [x] **"Add New" → component built (`AgendaAddSchedule` `490:22`).** Matches prod
+  (`AgendaView.swift` ~L895): **Add New** (plus) · divider · **Schedule** (calendar.badge.clock + unscheduled
+  count badge), 17pt semibold `label/secondary`. Schedule opens a "Schedule Tasks" sheet — build that sheet
+  as part of the kit-sheet swap below.
 - [ ] **Sheets: use the iOS 26 kit Sheet component** for all sheet interfaces ("all those views are already
   declared there").
 - [ ] Agenda screen: organize more neatly.
