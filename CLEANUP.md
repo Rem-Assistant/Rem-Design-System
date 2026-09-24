@@ -85,8 +85,9 @@ so re-read node positions before moving things.
   replaces the deploy/education onboarding. NEXT refinement: reposition the coach-mark spotlight onto each
   step's real target (currently the demo position) for a true overlay, and componentize the coach-mark's
   Step/Skip/Next as a reusable Coachmark component.
-- [ ] **Componentize the onboarding screens** (founder: "componentize the screen") — extract the Coachmark
-  overlay (scrim + spotlight + Step/Skip/Next tooltip) as a reusable component.
+- [x] **Coachmark tooltip componentized** (`491:56`) — reusable coach-mark bubble (Step X/Y + **Title**/
+  **Body** TEXT props + Skip + Next pill + shadow), on the Proposed catalog. NEXT: pair it with a
+  scrim+spotlight overlay positioned per target on the connect/voice steps.
 - [ ] Onboarding page itself still needs the auto-layout organization pass (like the other pages).
 - [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
 
