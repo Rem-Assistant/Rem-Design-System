@@ -5,6 +5,20 @@ pass/PR. Guiding principles: **code is the source of truth (screenshots can be s
 **everything is a component property/variant**; **one canonical per concept (no duplicates across
 pages)**.
 
+## iOS 18 → iOS 26 kit re-base (HIGH — core fidelity)
+Kit components were imported from the **iOS 18** library (nav `d299571689…`, Row
+`8bb9d297eb…`). The **official "iOS and iPadOS 26"** library is subscribed to the file AND
+importable by key (confirmed: imported iOS 26 `Status bar - iPhone` live). **Do not publish a
+copy** of iOS 26 — the live subscription tracks Apple's updates; a copy is a fork that drifts.
+Re-base every kit usage to iOS 26:
+- [ ] **Nav → `Toolbar - Top - iPhone`** (`e68d32a867ed6d4d8620f1614cd2d4b9d544b92d`, a set;
+  `Style` = Default / Compact Large / Large Title / Title 2 Line / Title 2 Line Left — use
+  **Default** for inline). Rebuild Chat (`256:35`) + Settings/Connectors/About navs on it; retire
+  the iOS 18 `Navigation Bar`. (In iOS 26 the nav bar *is* the Toolbar-Top, as the founder noted.)
+- [ ] **Row / List → the iOS 26 Row/List** (find key in the iOS 26 library); rebuild `ListRow`
+  on it (currently on the iOS 18 Row set).
+- [ ] Audit any other iOS 18 imports (controls, bezel) and move to iOS 26.
+
 ## Figma
 - [ ] **Nav reconciliation (drift).** File mixes two nav approaches: hand-built `nav` frames
   (e.g. Chat `71:544` — transparent + baked hairline) and the imported kit `NavigationBar`
