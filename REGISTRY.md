@@ -99,6 +99,8 @@ Fixed:
 | Accessory/MenuValue — value + up/down chevron pull-down (**Value** text prop: Ask / Allow / Deny), on canonical ListRow | `435:22` | per-capability permission menu (Browser perms) |
 | ContentUnavailableView + CTA — empty state with an action slot (icon + title + subtitle + **Button/Standard-blue**) | `436:67` | "No info saved → Add login info" |
 | Browser takeover (screen) — dark chrome (title/subtitle/X) + embedded browser + coachmark + **Take control (gradient) / Stop the task** | `437:68` | human-in-the-loop browser takeover |
+| PollCard (in-chat) — question header + selectable option rows (title wraps + right-aligned status label: "On your list" / "New") + "None of these" row; container = proposal-card style (backgroundSecondary, radius 16, white option pills) | `458:56` | founder screenshot — in-chat priority/choice card. **Net-new (not in code** — closest is `RemProposalCardView`, a single Approve/Dismiss proposal; protocol has a non-UI `PollParams`). |
+| MessageDraftCard (in-chat) — provider header (logo tile + name) + To/Subject/body fields + full-width **Send** (blue) | `458:69` | founder screenshot — agent-drafted message-send card. **Net-new (not in code** — reuse `RemRemoteLogoView` provider logos + proposal-card shell). Logo = neutral tile placeholder (brand-logo debt). |
 
 ## Screens (one generation — device-framed on the Screens page)
 

@@ -130,11 +130,15 @@ so re-read node positions before moving things.
 - [ ] **Navigation map**: consider authoring in **FigJam** then bringing into Figma; and draw it
   **VERTICALLY**, not horizontally (horizontal won't scale). `420:15`.
 
-### New card types (founder, with screenshots) — hunt in progress
-- [?] **Poll / priority card** (in-chat: question + selectable option rows w/ right-side status labels +
-  "None of these") and **Message-send / draft card** (in-chat: provider logo e.g. Gmail + To/Subject/body
-  + Send). Checking whether components exist in code ("None of these" string not found → poll card likely
-  net-new). If they don't exist → build as **Proposed** components. Awaiting the code-hunt result.
+### New card types (founder, with screenshots) — BUILT
+- [x] **Code hunt: neither exists.** Confirmed both are net-new (no `PollCard`/`ChoiceCard`, no
+  `DraftCard`/`ComposeCard`; "None of these" not in code). Closest existing: `RemProposalCardView`
+  (single Approve/Dismiss), `PollParams` (non-UI outbound-poll payload), `RemRemoteLogoView` (provider logos).
+- [x] **PollCard** `458:56` — question header + option rows (title wraps, right-aligned status "On your
+  list"/"New") + "None of these"; on the Proposed page catalog. Matches the founder screenshot.
+- [x] **MessageDraftCard** `458:69` — provider header (tile + Gmail) + To/Subject/body + full-width Send;
+  on the Proposed catalog. Logo is a neutral-tile placeholder (brand-logo fetch debt applies).
+- [ ] When wired in code later, both graduate Proposed → Foundation; fetch the real Gmail/Slack brand logo.
 
 ## Founder review 3 — 2026-09-24 (screens/components deep pass)
 
