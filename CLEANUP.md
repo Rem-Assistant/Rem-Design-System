@@ -1,5 +1,13 @@
 # Design System — Cleanup Log (deferred)
 
+> **TOP PRIORITY next component fix — ContainedIcon renders blank.** Confirmed by screenshot: the
+> Settings + Connectors screens show **colored rounded squares with NO SF Symbol** (blue/grey/green/
+> orange squares, no glyph). `ContainedIcon` (`110:54`) is a bare colored square; it never got its
+> symbols. Fix: bake a centered white SF-Pro glyph into the master + expose a `Symbol` TEXT prop (and
+> keep the per-instance bg color), then set each Settings/Connectors/Permissions row's glyph. This also
+> unblocks the Permissions screen. Needs each row's SF Symbol from `SettingsView.swift` + a few more
+> sourced glyphs.
+
 Debt found while building. **Do not fix inline** — note it here and defer to a focused cleanup
 pass/PR. Guiding principles: **code is the source of truth (screenshots can be stale)**;
 **everything is a component property/variant**; **one canonical per concept (no duplicates across
@@ -192,7 +200,14 @@ their **codebase source** (path) so reviewers can find them.
   REMAINING: **Permissions** (`DevicePermissionsView` in `Rem/Sources/Settings/SettingsView.swift:400`):
   inset-grouped ContainedIcon rows — Notifications (bell.fill/red), Calendar, Reminders
   (AppleRemindersLogo/purple), Microphone (mic.fill/orange), Speech Recognition (waveform/indigo),
-  Camera (camera.fill/gray); 3 sections with footers. Needs `bell.fill` + `camera.fill` glyphs sourced.
+  Camera (camera.fill/gray); 3 sections with footers. Glyphs sourced + verified-in-method:
+  `bell.fill`=`U+1002DA`, `camera.fill`=`U+10031F` (add to sf-symbols-map on use).
+  **BLOCKED ON:** `ContainedIcon` (`110:54`) is currently just a **colored rounded square with NO
+  glyph** — its instances carry only a bound bg color (e.g. Settings leading = `var:2:15`), no symbol
+  child, and the master has no children/props. So the whole Settings-icon family shows blank colored
+  squares. Fix ContainedIcon first (bake a centered SF-Pro glyph + expose a `Symbol` text prop and a
+  bg-color prop), THEN build Permissions (and re-do the Settings/Connectors leading glyphs). Filed as
+  the top of the next component pass.
 - [x] **Inbox nav actions removed** — header now title-only ("Inbox" Large Title), Leading/Trailing
   control frames hidden, matching `InboxHeader` (title-only). Populated list = TaskEventRow rows with
   `calendar.badge.plus` unscheduled leading. **Inbox-Loading intentionally NOT built** (founder cut).
