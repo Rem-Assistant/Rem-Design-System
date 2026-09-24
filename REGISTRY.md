@@ -79,3 +79,4 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Sign Out — confirmation | `412:15` | Settings page — iOS action sheet: message + red "Sign Out" + separate "Cancel" — `SharedSettingsView` confirmationDialog |
 | Delete Account — sheet | `412:24` | Settings page — `.medium` sheet: Cancel/title nav, warning copy, "type delete" confirm field, red destructive button — `SharedDeleteAccountSheet` |
 | View history — Activity | `413:32` | Task & Events page — back+"Activity" nav, alternating Rem/You activity rows (avatar + author + time + body, separators) — `TaskActivityHistoryView` (Rem avatar render debt logged) |
+| Onboarding — Start Using Rem | `414:15` | Onboarding page — post-setup activation (page 1/3): message.badge.waveform.fill hero, "Start in chat" copy, pager dots, Button/Primary "Start Using Rem" — `PostSetupActivationView` |
