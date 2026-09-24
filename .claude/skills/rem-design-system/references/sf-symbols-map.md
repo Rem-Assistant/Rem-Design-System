@@ -35,6 +35,8 @@ name length (glyph fixed-left, caption grows rightward). Anchor with a known ans
 | `arrow.turn.up.right` | `U+100139` | `speaker.wave.2.fill` | `U+1002A7` |
 | `speaker.wave.2` | `U+1002A6` | `mic.fill` | `U+1002B1` |
 | `mic.slash.fill` | `U+1002B3` | `phone.down.fill` | `U+100347` |
+| `checklist` | `U+100DFE` | `calendar.badge.clock` | `U+1009DE` |
+| `arrow.uturn.backward` | `U+100C4D` | `calendar.badge.plus` | `U+10024A` |
 
 **Caption-naming gotcha:** the community file labels captions with the **full descriptive** SF
 Symbols name, not the SwiftUI shorthand — `mic.fill` is captioned **`microphone.fill`** (`microphone`,

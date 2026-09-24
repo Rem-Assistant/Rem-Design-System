@@ -124,9 +124,14 @@ their **codebase source** (path) so reviewers can find them.
   `figma.createImage` (the `upload_assets` host `mcp.figma.com` is **network-blocked** here — 403 CONNECT).
   Verified. NOTE: header copy shows "Reminders · 3" but code is **"3 reminders"** (`Text("\(count) reminder(s)")`) —
   minor copy drift, fix in a text pass. Same pattern to check on CalendarCard headerText.
-- [ ] **ProposalCard icon** — main icon is `checklist` (`RemProposalCardView` L61, `.subheadline`);
-  drawn vectors still there. Needs the `checklist` PUA codepoint (not yet in sf-symbols-map) — source
-  via the community-file lookup, then swap.
+- [x] **ProposalCard header icon fixed** — drawn vectors → real `checklist` glyph (`U+100DFE`),
+  `.subheadline` 15pt, **brandBlue** (per `RemProposalCardView.header`), across all 4 states
+  (pending/succeeded/failed/stale). Verified pending. NOTE: the per-state **terminal/status** footer
+  icons (checkmark.circle.fill / exclamationmark / stale) are still drawn — swap in a follow-up.
+- [x] **Glyphs sourced + verified** (added to sf-symbols-map): `checklist`=`U+100DFE`,
+  `calendar.badge.clock`=`U+1009DE`, `arrow.uturn.backward`=`U+100C4D`. (Glyph-filter gotcha: PUA
+  codepoints > U+FFFF are **surrogate pairs** — filter on `[...ch].length===1`, not `ch.length===1`,
+  or the lookup finds zero glyphs.)
 - [ ] **TaskEventRow pills missing.** task + event variants support pills (list badge, duration,
   overdue) per `TaskEventRowView.taskContent`. Add a pills row (as a variant/optional slot).
 - [~] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug.
@@ -158,8 +163,10 @@ their **codebase source** (path) so reviewers can find them.
   (needs `arrow.uturn.backward` glyph) as the not-today state.
 - [x] **DateNavigationHeader** — removed stray `- - -` rectangles (`208:4/208:18`) from the master's
   side frames; app has chevron-only sides. Cleans all agenda instances.
-- [ ] **Task detail composer is the wrong one.** It uses a "composer doc"-style field; must use the
-  canonical **RemComposerBar** (`53:2`) — the one we are keeping, not the one slated for deprecation.
+- [x] **Task detail composer fixed** — was a hand-built field; now an instance of the canonical
+  **RemComposerBar** (`53:2`) with `leading` + `trailing-speak` hidden and placeholder "Continue in
+  chat…", exactly matching `TaskCommentComposer` (leading/trailing = EmptyView, doorway placeholder).
+  Verified. Also hugged the Task-detail `activity` (→112) and `action` (→14) frames off fixed-100.
 - [ ] **List styles.** SwiftUI has many list styles (plain/inset/grouped/insetGrouped/sidebar).
   Open question how the system represents them component-side (founder may share docs). `Section`
   should also be shown **in combination with a real list** (header + rows + footer), not header/footer
