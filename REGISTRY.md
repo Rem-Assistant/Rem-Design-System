@@ -76,3 +76,5 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | New Task or Event | `404:5` | create mode — Cancel/Save nav, **New Task / New Event** segmented picker, Title + dashed-circle status indicator, "Set date, time, repeat" card, notes — `TaskEventView` (isNewTask) |
 | Privacy — "Privacy by design" | `410:16` | Onboarding page — hero (lock.shield.fill on brand tile), title/body, Terms/Privacy consent rows, **Button/Primary CTA** "Accept and Continue" + legal footer — `AIDataSharingConsentView` |
 | Login — Sign in | `411:15` | Onboarding page — Rem logo + "Rem" + tagline, two **SignInButtons** (neutral/black filled): Continue with Google (placeholder G) / Apple (apple.logo U+F8FF), legal footer — `OnboardingFlow.signInContent` |
+| Sign Out — confirmation | `412:15` | Settings page — iOS action sheet: message + red "Sign Out" + separate "Cancel" — `SharedSettingsView` confirmationDialog |
+| Delete Account — sheet | `412:24` | Settings page — `.medium` sheet: Cancel/title nav, warning copy, "type delete" confirm field, red destructive button — `SharedDeleteAccountSheet` |
