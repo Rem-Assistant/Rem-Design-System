@@ -85,10 +85,11 @@ Re-base every kit usage to iOS 26:
   refs (DeviceFrame master → Device Kit page) verified intact.
 
 ## Components still needed
-- [ ] **RemFaceMark** — Task detail's activity avatar is a placeholder (brand-blue tint circle +
-  drawn eyes/smile). The app uses `RemFaceMark` (the Rem brand face, `.idle`/`.thinking` modes,
-  tinted). Build a canonical `RemFaceMark` component and swap it into Task detail + the empty-state
-  face + the voice-bar/thinking marks.
+- [x] **RemFaceMark built** (`361:7`, Primitives) — the real Rem brand face (scalloped `CustomFaceShape`
+  blob outline + 2 bar eyes + `RemSmileShape` smile), parsed from `Shared/Views/RemFaceMark.swift`'s
+  SVG path via `createNodeFromSvg`, ink bound to `labelPrimary`. Swapped into **Task detail**'s activity
+  avatar (was a drawn placeholder). Verified. FOLLOW-UP: `.thinking` mode variant (self-drawing outline)
+  + reuse in the chat thinking-indicator / empty-state face.
 
 ## Icons
 - [ ] `mic.fill` — no caption in the community SF Symbols file; source via the icon-request frame
