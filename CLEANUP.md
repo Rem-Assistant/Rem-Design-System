@@ -302,6 +302,14 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   candidate: unify Billing on the Rem button system. This is *app-code* debt → a GitHub issue if the
   founder wants it tracked, not Figma debt.
 
+### Login / onboarding brand-icon debt (2026-09-24)
+- [ ] **Google multicolor "G" logo** on the Login "Continue with Google" button (`411:15`) is a **white
+  "G" placeholder** — the real brand asset host is network-blocked here (same as Notion/Slack/Reminders).
+  Fetch + embed in CI. Apple side is exact (apple.logo = `U+F8FF`).
+- [ ] **SignInButton should graduate to a Button variant.** The two sign-in buttons are composed frames
+  (neutral/black fill + icon + label), faithful to `SignInButton.swift`, but per the code-arch doc they
+  should become a **Button "SignIn" variant with an icon slot** (RemButton). Until then they're screen-local.
+
 ### Button emphasis tier — token follow-ups (2026-09-24, Muse audit)
 - [ ] **`on-accent` label token missing.** The new **Primary Blue** / **Primary Gradient** tiers use
   **raw white** text (a blue/gradient fill is the same in light+dark, so `background/primary` — which

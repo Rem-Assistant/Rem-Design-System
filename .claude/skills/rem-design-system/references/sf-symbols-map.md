@@ -55,8 +55,10 @@ name length (glyph fixed-left, caption grows rightward). Anchor with a known ans
 `shield` are **screen-verified** (rendered on the Privacy screen `410:16`). The rest are pairing-sourced
 and not yet individually screenshot-checked — screenshot before shipping in a prominent spot.
 **`doc.text` was renamed `text.document`** in current SF Symbols (same glyph `U+10023F`) — the community
-file only indexes the new name. **`apple.logo` is NOT in the community file** (nor `doc.*` short names) —
-source it via the icon-request fallback (a Mac's SF Pro), or try the legacy Apple PUA `U+F8FF`.
+file only indexes the new name. **`apple.logo` = `U+F8FF`** (the legacy Apple PUA char) — **verified**
+rendering correctly in SF Pro on the Login screen `411:15`; it is not in the community file under
+`apple.logo`/`applelogo`, so use `U+F8FF` directly. (`doc.*` short names are also absent — use the
+`text.*`/`document.*` long forms.)
 
 **Caption-naming gotcha:** the community file labels captions with the **full descriptive** SF
 Symbols name, not the SwiftUI shorthand — `mic.fill` is captioned **`microphone.fill`** (`microphone`,
