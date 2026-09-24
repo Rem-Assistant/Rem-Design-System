@@ -152,9 +152,10 @@ their **codebase source** (path) so reviewers can find them.
   (status + title) + a **Pills row** (canonical Pill: `list` badge for tasks, `dot` calendar badge for
   events). Agenda instances show pills (filed); Inbox instances have the Pills row hidden per-instance
   (unfiled → faithful). Verified component + Agenda + Inbox (no regression; fixed a 2-line-title
-  collision by hiding pills on Inbox). FOLLOW-UP: promote Pills visibility to a proper **boolean
-  component property** ("Show Pills") instead of per-instance hide; and a leading-state variant
-  (Time / Schedule / Clock) so the Inbox affordance isn't a per-instance text override.
+  collision by hiding pills on Inbox). **Pills now a proper `Pills` BOOLEAN component property**
+  (default true; both variants' Pills frames bound to it; Inbox rows set `Pills=false` via the prop
+  instead of a per-instance hide) — verified. FOLLOW-UP: a leading-state variant (Time / Schedule /
+  Clock) so the Inbox `calendar.badge.plus` affordance isn't a per-instance text override.
 - [~] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug.
   **Agenda rows FIXED** (`182:2/15/28` were `counterAxisSizingMode=FIXED` h100 → set to hug; now 64/64/58;
   spacing verified). **Task detail** still pending — the frame named "action" + dates/meta (founder
@@ -179,8 +180,9 @@ their **codebase source** (path) so reviewers can find them.
 - [x] **Home indicator adopted.** Built canonical **HomeIndicator** (`333:102`, Platform Controls):
   transparent band + 144×5 labelPrimary pill, added to the **DeviceFrame master** (`128:46`) so every
   device-framed screen shows it. Transparent band = bg inherits whatever's docked behind it. Verified
-  on Device — Inbox. FOLLOW-UP (per-screen bg sync): on **Chat**, extend the voice bar's bg down to the
-  bottom edge so the indicator sits over the voice-bar material (not white); same for any docked bar.
+  on Device — Inbox and Device — Agenda. **Chat bg-sync verified OK**: the VoiceBar sits at y=816–874
+  (reaches the screen bottom edge), so the transparent home-indicator band already inherits the
+  voice-bar material — no white gap, nothing to fix. Same holds for any docked bar that reaches y=874.
 - [x] **Agenda no-state rebuilt** from the real `AgendaNullStateView`: was a `◔` emoji + wrong copy;
   now real `calendar.badge.plus` (64pt), "No agenda yet" (title1Bold), "Create a new task or schedule
   existing ones" (body), "+ Add New" button. Verified. (Schedule button — only shows when
