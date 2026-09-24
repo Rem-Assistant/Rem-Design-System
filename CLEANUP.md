@@ -105,11 +105,21 @@ so re-read node positions before moving things.
   `43:2` shows an extra **calendar glyph** next to the date that prod doesn't have. Not guessing — logged.
 - [x] **"Add New" → component built (`AgendaAddSchedule` `490:22`).** Matches prod
   (`AgendaView.swift` ~L895): **Add New** (plus) · divider · **Schedule** (calendar.badge.clock + unscheduled
-  count badge), 17pt semibold `label/secondary`. Schedule opens a "Schedule Tasks" sheet — build that sheet
-  as part of the kit-sheet swap below.
+  count badge), 17pt semibold `label/secondary`. Schedule opens the **"Schedule Tasks" sheet — now BUILT**
+  (`514:272`, see below).
 - [x] **Sheets: use the iOS 26 kit Sheet component** — DONE. Sign Out → Action Sheet, Delete → Inspector,
-  New Task/Event → Full-height sheet (see the kit-sheet item). Agenda "Schedule Tasks" sheet is the one
-  net-new sheet left (build when its content is specified).
+  New Task/Event → Full-height sheet (see the kit-sheet item). **Agenda "Schedule Tasks" sheet — BUILT**
+  (`Screen/Schedule Tasks (Full sheet)` `514:272`, Agenda page). This was NOT founder-gated after all — its
+  contents are fully code-specified (`TaskSelectorSheet` in `AgendaView.swift` L1030–1158, presented at
+  `.presentationDetents([.medium,.large])` from the Schedule action L453). Built faithfully on the kit
+  **Full-Screen sheet** (grabber · **X**=Cancel · "Schedule Tasks" title · submit-arrow hidden, since
+  scheduling happens via the action bar, not a nav submit): **segmented All · Inbox · Overdue** (the
+  `TaskFilter` enum L991, "All" selected) → **inset-grouped task list** (rows = title + status subtitle +
+  trailing selection circle: `checkmark.circle.fill` brand-blue when selected `U+100063` / stroked ring when
+  not, matching `TaskEventRowView(hideLeftIndicator:true)` + the `circle`/`checkmark.circle.fill` toggle
+  L1069) → **action bar** (blue **Add to Today** with `clock` `U+10042B` / grey **Plan** with `calendar`
+  `U+100249`, the two buttons from `actionBar` L1124–1155). All fills bound to Color variables; SF Symbols
+  via the file symbol font; placeholder task data only. Screenshot-verified.
 - [x] **Agenda screen** (`181:754`) — already clean/organized (DateNav → Brief → Sort → Overdue → To Do →
   Add/Schedule → Suggestions, all in an auto-layout Content). Swapped its plain "+ Add New" for the
   **AgendaAddSchedule** component `490:22` (Add New | Schedule + count). Remaining Agenda item: DateNav arrows
@@ -211,8 +221,9 @@ so re-read node positions before moving things.
   **Inspector sheet** (`412:24`) ✓; **New Task/Event → kit Full-height sheet** (`Screen/New Task (Full sheet)`
   `507:115`) ✓ — kit Full Screen sheet (grabber + **X**=cancel + Title + blue **↑**=save) with New Task's form
   (TypePicker/Title/date/notes) over a dimmed backdrop. NOTE: the kit Full sheet uses X/arrow, not Cancel/Save
-  text — founder can flip to text buttons if preferred. The Agenda **"Schedule Tasks"** full sheet is a
-  separate net-new screen (build when its content is specified).
+  text — founder can flip to text buttons if preferred. The Agenda **"Schedule Tasks"** full sheet is now
+  **BUILT** too (`514:272`) — its content was code-specified all along (`TaskSelectorSheet`), so it wasn't a
+  founder-gated item; see the Agenda section for the full breakdown.
 - [x] _(orig)_ **Cross-cutting: kit sheets — components identified by founder.** The iOS-26 kit ("iOS and iPadOS 26")
   has **Action Sheet**, **Sheet - Inspector - iPhone** (medium), and **Sheet - Full Screen** (full-height).
   Founder: Rem uses **two sheet types — Inspector + Full-height** — plus the Action Sheet. **Mapping:**
