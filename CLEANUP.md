@@ -196,17 +196,11 @@ their **codebase source** (path) so reviewers can find them.
   **About DONE** (`134:242`) — added the missing **hero** (real Rem AppIcon embedded via createImage +
   "Rem" + "Turn your thoughts into actions"), reordered to Hero → Legal → Version, and hugged the
   Version card off fixed-100. Matches `SharedAboutView` iOS. Verified.
-  REMAINING: **Permissions** (`DevicePermissionsView` in `Rem/Sources/Settings/SettingsView.swift:400`):
-  inset-grouped ContainedIcon rows — Notifications (bell.fill/red), Calendar, Reminders
-  (AppleRemindersLogo/purple), Microphone (mic.fill/orange), Speech Recognition (waveform/indigo),
-  Camera (camera.fill/gray); 3 sections with footers. Glyphs sourced + verified-in-method:
-  `bell.fill`=`U+1002DA`, `camera.fill`=`U+10031F` (add to sf-symbols-map on use).
-  **BLOCKED ON:** `ContainedIcon` (`110:54`) is currently just a **colored rounded square with NO
-  glyph** — its instances carry only a bound bg color (e.g. Settings leading = `var:2:15`), no symbol
-  child, and the master has no children/props. So the whole Settings-icon family shows blank colored
-  squares. Fix ContainedIcon first (bake a centered SF-Pro glyph + expose a `Symbol` text prop and a
-  bg-color prop), THEN build Permissions (and re-do the Settings/Connectors leading glyphs). Filed as
-  the top of the next component pass.
+  **Permissions DONE** (`349:905`): 3 grouped sections (Notifications / Device Data / Media & Voice)
+  with footers; ContainedIcon rows — Notifications (bell.fill/red), Calendar (calendar/red), Reminders
+  (real AppleRemindersLogo image), Microphone (mic.fill/orange), Speech Recognition (waveform/indigo),
+  Camera (camera.fill/gray). Verified. **All 3 Settings sub-screens built (Billing · About · Permissions),
+  and the ContainedIcon blank-glyph blocker is fixed (see top of file).**
 - [x] **Inbox nav actions removed** — header now title-only ("Inbox" Large Title), Leading/Trailing
   control frames hidden, matching `InboxHeader` (title-only). Populated list = TaskEventRow rows with
   `calendar.badge.plus` unscheduled leading. **Inbox-Loading intentionally NOT built** (founder cut).
