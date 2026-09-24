@@ -92,6 +92,66 @@ Re-base every kit usage to iOS 26:
   focused PR with build + test. (Confirmed already: there is **no** legacy `ComposerBar` — only
   `RemComposerBar` — so that one is just the Figma rename above.)
 
+## Founder review — 2026-09-24 (catch-all; fidelity-first, screens paused)
+
+Standing redirect from this review: **component fidelity before more screens.** Founder does not
+trust state fidelity — **do not build speculative states** (Inbox-Loading explicitly cut; Agenda
+loading to be deleted). Verify every state against the **running app**, not just code, before
+building it. Main intent restated: (1) **code-sync** so the file is true to the app *today*;
+(2) design is cheap — a faithful design lets an agent execute faster. Link component descriptions to
+their **codebase source** (path) so reviewers can find them.
+
+### Primitives / set membership (decide — some are removals)
+- [ ] **Text primitive** — founder: "why do we need Text at all, we already have text styles."
+  Lean **remove** `Text` (65:26); the type ramp lives in the local text styles. Confirm, then delete +
+  drop from REGISTRY/Index.
+- [ ] **Surface / Card** — founder questions both; a surface is already expressed by foundation
+  color/background styles. Lean **remove Surface**, *maybe* keep **Card**. Confirm scope before cutting.
+- [ ] **ErrorBanner** — founder doesn't know where it's used. **Grep the app** for its real usage
+  (name + file); if unused, remove. Add the source path to its description either way.
+- [ ] **Descriptions → code links.** Every component description should name its codebase source
+  (e.g. `SharedInboxView.swift`), not just prose. Backfill across the set.
+
+### Component fidelity bugs (do these — verifiable vs code)
+- [ ] **VoiceBar button backgrounds wrong on non-Listening variants.** Listening is fine; the other
+  states (Connecting/Speaking/Muted/Reading/Closing) have the wrong button bg (the
+  `setBoundVariableForPaint` opacity-reset regression, still present on those). Re-apply per state.
+- [ ] **TaskEventRow pills missing.** task + event variants support pills (list badge, duration,
+  overdue) per `TaskEventRowView.taskContent`. Add a pills row (as a variant/optional slot).
+- [ ] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug — founder saw it
+  on **Task detail** (dates/meta, and a frame literally named "action" still unfixed) and on
+  **Agenda TaskEventRows**. Sweep every screen/component for FIXED-100 frames → set hug
+  (`primaryAxisSizingMode='AUTO'`).
+- [ ] **Card icons wrong.** CalendarEventsCard, RemindersCard, **ProposalCard** icons don't match
+  fidelity — replace drawn/placeholder icons with the real SF Symbols the app uses.
+- [ ] **Row hierarchy idea.** TaskEventRow is conceptually a **Row** with re-slotted
+  leading/content/trailing (leading = time/schedule/clock, content = status+title, trailing = pills).
+  Consider modeling it as a descendant of the base Row rather than a parallel component.
+
+### Screens (paused — fidelity + arrangement first)
+- [ ] **Sections don't contain their screens.** The Figma SECTIONs (③ Agenda, ⑤ Inbox, …) don't
+  actually enclose the screen frames, so the section labels are useless. Move each screen inside its
+  section (and this feeds the per-screen-pages split).
+- [ ] **Arrangement is scattered** — "things are all over the place, I have to hunt for the right
+  screen." Impose a clean, findable layout before adding more.
+- [ ] **Home indicator + safe area.** Adopt the bottom home-indicator/safe-area in the device frame;
+  its background must **sync to whatever sits at the bottom** (e.g. the voice bar's bg on Chat).
+- [ ] **Agenda no-state is wrong** — build it from the **actual app** behavior, not a guess. **Delete
+  Screen/Agenda-Loading** (140:1643).
+- [ ] **Agenda bottom toolbar wrong across all** agenda screens — and it should **not** use glass
+  buttons. Fix to match the app.
+- [ ] **Task detail composer is the wrong one.** It uses a "composer doc"-style field; must use the
+  canonical **RemComposerBar** (`53:2`) — the one we are keeping, not the one slated for deprecation.
+- [ ] **List styles.** SwiftUI has many list styles (plain/inset/grouped/insetGrouped/sidebar).
+  Open question how the system represents them component-side (founder may share docs). `Section`
+  should also be shown **in combination with a real list** (header + rows + footer), not header/footer
+  alone.
+- [ ] **Settings sub-screens** (Billing & Usage, Permissions, About detail) — candidate builds for
+  code-sync fidelity; low priority, confirm appetite.
+- [x] **Inbox nav actions removed** — header now title-only ("Inbox" Large Title), Leading/Trailing
+  control frames hidden, matching `InboxHeader` (title-only). Populated list = TaskEventRow rows with
+  `calendar.badge.plus` unscheduled leading. **Inbox-Loading intentionally NOT built** (founder cut).
+
 ## Done (kept for trail)
 - [x] DateNavigationHeader: real `calendar` glyph, brand blue `#0C50FF`, H-padding removed.
 - [x] Agenda + SuggestedTaskRow: drawn icons → real SF Symbols; toolbar overflow fixed.
