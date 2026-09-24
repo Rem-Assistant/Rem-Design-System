@@ -180,7 +180,12 @@ so re-read node positions before moving things.
   content overlaid in the sheet's content area (warning copy + "type delete" confirm field + full-width red
   **Delete Account** button). The red destructive button now reads clearly (addresses "looks like nothing").
   (Content is a sibling over the instance's slot since instances can't take new children.)
-- [ ] **Cross-cutting: kit sheets — components identified by founder.** The iOS-26 kit ("iOS and iPadOS 26")
+- [~] **Cross-cutting: kit sheets — DONE for the confirmation sheets.** Sign Out → kit **Action Sheet**
+  (`412:15`) ✓ and Delete → kit **Inspector sheet** (`412:24`) ✓ (both above). **Remaining:** New Task/Event
+  (`404:5`) + Agenda **Schedule** → kit **Full-height sheet** (`493:3243`). New Task already reads as a full
+  sheet (Cancel/Save nav); to formalize, present it in the kit Full sheet (add its grabber) — and build the
+  "Schedule Tasks" full sheet as a new screen. Lower priority than the confirmations, which are done.
+- [x] _(orig)_ **Cross-cutting: kit sheets — components identified by founder.** The iOS-26 kit ("iOS and iPadOS 26")
   has **Action Sheet**, **Sheet - Inspector - iPhone** (medium), and **Sheet - Full Screen** (full-height).
   Founder: Rem uses **two sheet types — Inspector + Full-height** — plus the Action Sheet. **Mapping:**
   Sign Out → **Action Sheet** (destructive "Sign Out" + Cancel; Action Sheet props: Title, Description,
