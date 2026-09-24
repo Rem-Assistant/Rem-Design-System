@@ -33,7 +33,13 @@ name length (glyph fixed-left, caption grows rightward). Anchor with a known ans
 | `person.fill` | `U+10026A` | `stop.fill` | `U+1006F7` |
 | `play.fill` | `U+100284` | `brain.head.profile` | `U+100BCF` |
 | `arrow.turn.up.right` | `U+100139` | `speaker.wave.2.fill` | `U+1002A7` |
-| `speaker.wave.2` | `U+1002A6` | | |
+| `speaker.wave.2` | `U+1002A6` | `mic.fill` | `U+1002B1` |
+| `mic.slash.fill` | `U+1002B3` | `phone.down.fill` | `U+100347` |
+
+**Caption-naming gotcha:** the community file labels captions with the **full descriptive** SF
+Symbols name, not the SwiftUI shorthand — `mic.fill` is captioned **`microphone.fill`** (`microphone`,
+`microphone.slash.fill`, `microphone.circle.fill` also exist). If a SwiftUI name (`mic…`, etc.)
+returns `no-caption`, try the long form before assuming it's absent.
 
 `arrow.turn.up.right` (SuggestedTaskRow "Move") and `speaker.wave.2.fill` (Agenda brief read-aloud)
 were sourced from the row-component / brief SwiftUI. `circle` resolves to `U+100000` but is left out
