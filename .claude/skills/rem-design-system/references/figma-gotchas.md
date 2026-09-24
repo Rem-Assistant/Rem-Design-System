@@ -122,6 +122,11 @@ runs JS against the Figma Plugin API; `figma` is the global.
   glyph renders invisible even though the data looks right (dark literal color). Fix: rebind that fill to the
   matching LOCAL variable (`label/primary` etc.). Symptom: a configured kit toolbar back-chevron showed as a
   blank glass circle until its fill was rebound. Screenshot after configuring a kit instance.
+- **Kit "glass" buttons need a non-white backdrop.** The kit toolbar's leading/trailing buttons have a
+  frosted **Glass Effect** layer that tints toward the backdrop; on a **white** screen it washes the glyph
+  out (the back chevron disappears), on a **grouped-grey** backdrop (`background/secondary`) the glyph reads
+  fine. Give a pushed screen that uses the kit nav bar a `background/secondary` fill (also the iOS-correct
+  grouped-screen background) rather than white — proven on the Voice + Activity screens.
 - **Instances DON'T inherit a variable-bound paint's `opacity` — bake the alpha into the variable instead.**
   A tinted fill built as `color@variable` + paint `opacity: 0.2` renders correctly on the MASTER but every
   INSTANCE resets it to solid (opacity 1), and setting the instance's fill opacity as an override does not
