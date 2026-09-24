@@ -110,8 +110,10 @@ so re-read node positions before moving things.
   safe-area inset to other device-framed screens whose content runs to y874.)
 
 ### Task & Events
-- [ ] **New Task or Event**: arrange with **auto layout**.
-- [ ] **Date card**: remove the **card-like UI** wrapping the date — not what's in prod (`TaskEventView.swift`).
+- [x] **New Task or Event**: Content is now a vertical auto-layout form (12/16 padding, 16 gap).
+- [x] **Date card de-carded** to match prod: `detailButton` in `TaskEventView.swift` is a plain button (no
+  bg, no chevron) — removed the grey card fill/radius + chevron + divider on `404:88`; now a plain clock +
+  "Set date, time, repeat" row, both `label/secondary`.
 - [ ] **Wrong chrome**: replace the custom headers with the **iOS 26 kit Navigation Bar** across screens
   (several screens are using a hand-built header instead of the kit header).
 
