@@ -302,6 +302,16 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
   candidate: unify Billing on the Rem button system. This is *app-code* debt → a GitHub issue if the
   founder wants it tracked, not Figma debt.
 
+### Button emphasis tier — token follow-ups (2026-09-24, Muse audit)
+- [ ] **`on-accent` label token missing.** The new **Primary Blue** / **Primary Gradient** tiers use
+  **raw white** text (a blue/gradient fill is the same in light+dark, so `background/primary` — which
+  inverts to black in dark — is wrong here). Add an `label/on-accent` (always-white) token to the
+  color collection + `RemButtonTokenSet`, then rebind these two tiers' text to it.
+- [ ] **Gradient stops not variable-bound.** Primary Gradient's stops use the **resolved RGB** of
+  `brand/blue` → `system/purple` (Figma variable-binding on gradient stops is limited via the plugin).
+  When the `RemButtonTokenSet` lands, express the gradient as two bound token stops so a token change
+  reskins it. Visually correct + token-derived today; just not live-bound.
+
 ## Done (kept for trail)
 - [x] DateNavigationHeader: real `calendar` glyph, brand blue `#0C50FF`, H-padding removed.
 - [x] Agenda + SuggestedTaskRow: drawn icons → real SF Symbols; toolbar overflow fixed.
