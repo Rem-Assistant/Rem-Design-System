@@ -151,6 +151,16 @@ AgentStatusPill `427:21`, ActionCard `428:37`, ApprovalGate `429:20`, Execution 
 RunningTaskBanner `432:39`, Connector consent pre-screen `434:21`, MenuValue permission accessory
 `435:22`, ContentUnavailableView+CTA `436:67`, Browser takeover `437:68`.
 
+**Execution trace → View history: MERGED (founder-approved, "you have my nod", 2026-09-24).** Rem is
+task-centric, so the "show your work" step timeline is scoped **per task** and merged with the task's
+activity surface rather than kept as a separate agent-wide screen. **View history `413:32`** is now the
+product surface: a pushed screen (back+"Activity" nav, task header with title/subtitle/timestamp and
+**no modal pill/X**) carrying the MAIN/SUBAGENT step timeline (status icon ✓/✗ + bold title + gray
+description + chevron) and the "Working" footer — replacing the old one-comment-deep Rem/You list.
+Entered from the task detail; the agent avatar also routes here. The standalone `431:21` stays on the
+Proposed page as the **pattern reference / modal variant** (in-chat / avatar-opened execution trace),
+not a second product surface.
+
 **Remaining — founder-gated:**
 - **Chats tab** (main orchestrator + side chats). Founder is still deciding the model ("haven't thought
   this through … could study Muse's pattern"); the as-built version also needs a `ChatHistoryView.swift`

@@ -333,9 +333,10 @@ Driven off "convert the remaining custom rows to ListRow" + the login-button con
 - [ ] **Always-dark chrome token.** The Browser takeover (`437:68`) uses **raw dark RGB** for its top/
   bottom chrome (a takeover surface is always dark, but `label/primary`/`background` invert with mode).
   Add an `surface/always-dark` (+ on-dark label) token and bind the chrome to it. Same for the coachmark.
-- [ ] **Execution trace dashed rail.** The step timeline (`431:21`) has status icons + steps but not the
-  **dashed vertical rail** connecting them (Muse's timeline connector). Add a per-step dashed line segment
-  in the leading column (or a LINE node with `dashPattern`) — decorative, deferred.
+- [ ] **Execution trace dashed rail.** The step timeline (`431:21` reference specimen **and its merged
+  product surface, View history `413:32`**) has status icons + steps but not the **dashed vertical rail**
+  connecting them (Muse's timeline connector). Add a per-step dashed line segment in the leading column
+  (or a LINE node with `dashPattern`) — decorative, deferred. Apply to both nodes when done.
 - [ ] **ApprovalGate / ActionCard connector logos** use a neutral tile + glyph, not the real brand logo
   (Notion, etc.) — network-blocked; fetch in CI (same as the other brand-logo debt).
 
