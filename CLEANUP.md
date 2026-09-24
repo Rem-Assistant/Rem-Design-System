@@ -113,9 +113,20 @@ their **codebase source** (path) so reviewers can find them.
   (e.g. `SharedInboxView.swift`), not just prose. Backfill across the set.
 
 ### Component fidelity bugs (do these — verifiable vs code)
-- [ ] **VoiceBar button backgrounds wrong on non-Listening variants.** Listening is fine; the other
-  states (Connecting/Speaking/Muted/Reading/Closing) have the wrong button bg (the
-  `setBoundVariableForPaint` opacity-reset regression, still present on those). Re-apply per state.
+- [x] **VoiceBar button backgrounds fixed** (all 6 states verified). Bugs were: (1) button-bg
+  circles at opacity 1 on Speaking/Muted/Reading → set to **0.2** per `MiniPlayerBar` (`color.opacity(0.2)`);
+  (2) **Muted** mic glyph was `labelPrimary` but muted mic color = **`.red`** → rebound red;
+  (3) **Reading** stop icon was `phone.down.fill` but reading uses **`stop.fill`** (`U+1006F7`) → fixed.
+- [x] **CalendarEventsCard icon fixed** — drawn vectors → real `calendar` glyph (`U+100249`),
+  `.subheadline` 15pt, **systemRed** (per `CalendarCard.headerView`). Verified.
+- [x] **RemindersCard icon fixed** — drawn vectors → the real branded **AppleRemindersLogo** image
+  (`Rem/Assets.xcassets/AppleRemindersLogo.imageset/Apple_Reminders_Logo.png`), embedded via
+  `figma.createImage` (the `upload_assets` host `mcp.figma.com` is **network-blocked** here — 403 CONNECT).
+  Verified. NOTE: header copy shows "Reminders · 3" but code is **"3 reminders"** (`Text("\(count) reminder(s)")`) —
+  minor copy drift, fix in a text pass. Same pattern to check on CalendarCard headerText.
+- [ ] **ProposalCard icon** — main icon is `checklist` (`RemProposalCardView` L61, `.subheadline`);
+  drawn vectors still there. Needs the `checklist` PUA codepoint (not yet in sf-symbols-map) — source
+  via the community-file lookup, then swap.
 - [ ] **TaskEventRow pills missing.** task + event variants support pills (list badge, duration,
   overdue) per `TaskEventRowView.taskContent`. Add a pills row (as a variant/optional slot).
 - [ ] **Height-100 layout bug.** Frames default to fixed height 100 instead of hug — founder saw it
