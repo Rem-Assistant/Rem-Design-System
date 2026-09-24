@@ -25,11 +25,15 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 | SectionFooter | ListRow | `161:70` | `Section { } footer: { Text }` | ✓ canonical |
 | TaskEventRow (task/event) — Row descendant; props **Kind**, **Leading** (Time/Schedule/Clock), **Pills** (bool) | Tasks & Agenda | `46:21` | `TaskEventRowView.swift` (taskContent) | ✓ canonical |
 | SuggestedTaskRow (add/move) | SuggestedTaskRow | `48:25` | `SuggestedTaskRow.swift` | ✓ canonical |
-| Button (accessory) | Button | `110:47` | `Button(.borderedProminent)` | ✓ canonical |
+| Button — **Style** = Primary (filled `.label`, the login/onboarding CTA) / CTA (accent text-only) / Connect (capsule pill) / Destructive (red text) | Primitives | `377:8` | `RemSettingsCTAButtonStyle.swift` — `RemPrimaryActionButtonStyle` (Primary), `RemSettingsCTAButtonStyle` (CTA/Destructive), `RemRowConnectCTA` (Connect) | ✓ canonical |
+| PermissionStatusBadge — **Status** = Enabled / Denied / Limited / Not Set (dot + label) | Rows & Controls | `383:14` | `PermissionUtils.swift` `PermissionStatusBadge` | ✓ canonical |
+| StatusChevron (trailing accessory: badge + chevron) | Rows & Controls | `383:15` | permission-row trailing (`SettingsView.swift`) | ✓ canonical |
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
 | ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
+| Accessory/Value (right-aligned detail text; **Value** text prop) | Rows & Controls | `389:5` | title+value settings rows (e.g. Billing "Plan · Free") | ✓ canonical |
+| Avatar (leading; 29 default, 44 in profile row) | ContainedIcon | `185:2` | `SharedSettingsView.swift` `profileRow` fallbackAvatar | ✓ canonical |
 | MessageBubble (user/assistant) | MessageBubble | `50:7` | `ChatMessageViews.swift` | ✓ canonical |
 | RemComposerBar | RemComposerBar | `53:2` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) | ✓ canonical |
 | ConversationView | ConversationView | `71:35` | folds into Chat screen | consolidating |
@@ -61,11 +65,11 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 
 | Screen | Node | States |
 |---|---|---|
-| Settings | `130:44` | root |
+| Settings | `130:44` | root — **profile row = ListRow** (Avatar leading + name/email), rest ListRow |
 | Connectors | `133:192` | connected / not-connected rows |
 | About | `134:242` | — |
-| Billing & Usage | `341:862` | Free plan (Upgrade CTA); Current Plan + Usage progress bars — `BillingSettingsView.swift` |
-| Permissions | `349:905` | 3 sections (Notifications · Device Data · Media & Voice) w/ footers — `SettingsView.swift` DevicePermissionsView |
+| Billing & Usage | `341:862` | Free plan — **Plan row = ListRow + Value**, Usage progress rows custom (accepted), SectionHeaders — `BillingSettingsView.swift` |
+| Permissions | `349:905` | 3 sections — **all rows = ListRow + StatusChevron trailing**, SectionHeader/Footer — `SettingsView.swift` DevicePermissionsView |
 | Agenda | rebuilding | scheduled · empty · loading (jump-to-today, sort modes to add) |
 | Chat | `71:533` | voice-active thread (iOS 26 Toolbar-Top nav, bound, real symbols) ✓ |
 | Task detail | `299:2` | root — iOS 26 nav (back+Task), title/date/meta, Last-activity card, notes, composer; bound + real symbols ✓ |

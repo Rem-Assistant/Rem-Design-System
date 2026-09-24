@@ -262,6 +262,46 @@ their **codebase source** (path) so reviewers can find them.
   control frames hidden, matching `InboxHeader` (title-only). Populated list = TaskEventRow rows with
   `calendar.badge.plus` unscheduled leading. **Inbox-Loading intentionally NOT built** (founder cut).
 
+## Founder review 4 / code-sync — 2026-09-24 (rows → canonical ListRow)
+
+Driven off "convert the remaining custom rows to ListRow" + the login-button confirmation.
+
+- [x] **Button rebuilt to the real Rem taxonomy** (`377:8`). Was Accessory/Prominent(blue)/Bordered —
+  none matched shipping code. Now **Style = Primary / CTA / Connect / Destructive**, variable-bound:
+  - **Primary** = filled `.label` (black in light / white in dark), `.systemBackground` text, radius 10
+    — this is `RemPrimaryActionButtonStyle`, the **login / onboarding / consent CTA** (its own doc
+    comment: "mirrors the sign-in button style"). This is the black button the founder asked about.
+  - **CTA** = accent text-only (`RemSettingsCTAButtonStyle` .primary) · **Destructive** = red text-only
+    (.destructive) · **Connect** = `fillTertiary` capsule + brand-blue text (`RemRowConnectCTA`).
+  Verified (screenshot + property read: `2:6`/`2:3` Primary, `2:13` CTA/Connect, `2:17` Destructive).
+- [x] **Permissions rebuilt on canonical ListRow** (`349:905`). All 6 rows are now `ListRow` instances
+  (ContainedIcon leading glyph+color · title · **StatusChevron** trailing = badge + chevron), both
+  sections use **SectionHeader/SectionFooter** components. Fixed a footer clip (hug to 2 lines).
+  New canonical components: **PermissionStatusBadge** (`383:14`, Status Enabled/Denied/Limited/Not Set,
+  from `PermissionUtils.swift`) and **StatusChevron** (`383:15`). Verified.
+- [x] **Billing Plan row → ListRow** (`341:862`). Plan is now a `ListRow` (Leading off · title "Plan" ·
+  **Accessory/Value** `389:5` trailing = "Free"); both headers use `SectionHeader`. Usage progress
+  rows stay custom (accepted — inherently non-row). Verified.
+- [x] **Settings Account/Profile → ListRow** (`130:44`). The custom `ProfileRow` is now a `ListRow`
+  (Avatar leading @44 · bold name · email subtitle · no trailing). Also fixed the section header
+  "YOUR AGENT RUNTIME" → "Your agent runtime" (title-case, via SectionHeader; source is title-case). Verified.
+- [x] **Component Index synced** (`166:2`): Button row fixed (`110:47`→`377:8`), stale **Text** and
+  **Surface/Card** rows retired (both deleted per founder decisions), added **RemFaceMark /
+  PermissionStatusBadge / StatusChevron / Accessory/Value**, corrected Avatar's page → Rows & Controls.
+
+### New minor debt (log-don't-fix)
+- [ ] **Reminders leading regressed to a glyph.** The Permissions ListRow rebuild cleared the old card,
+  which held the **real Apple Reminders logo image** (`createImage`); the new row uses a purple
+  `list.bullet` ContainedIcon as a stand-in. Restore the bundled `Apple_Reminders_Logo.png` as that
+  row's leading (bundled asset, not network-blocked — feasible now).
+- [ ] **Avatar fallback has no `person.fill`.** The profile ListRow shows a plain gray circle; shipping
+  `fallbackAvatar` is a gray circle + `person.fill` (20pt, secondary). Add the glyph to the Avatar
+  master (need a verified `person.fill` codepoint — not yet in sf-symbols-map.md, so not guessed).
+- [ ] **Billing CTAs use stock SwiftUI buttons** (`.bordered` / `.borderedProminent`), not Rem's
+  `RemPrimaryActionButtonStyle`. Faithful in Figma (blue-filled), but a **RemClaw code-consistency**
+  candidate: unify Billing on the Rem button system. This is *app-code* debt → a GitHub issue if the
+  founder wants it tracked, not Figma debt.
+
 ## Done (kept for trail)
 - [x] DateNavigationHeader: real `calendar` glyph, brand blue `#0C50FF`, H-padding removed.
 - [x] Agenda + SuggestedTaskRow: drawn icons → real SF Symbols; toolbar overflow fixed.
