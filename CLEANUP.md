@@ -184,8 +184,12 @@ their **codebase source** (path) so reviewers can find them.
   Open question how the system represents them component-side (founder may share docs). `Section`
   should also be shown **in combination with a real list** (header + rows + footer), not header/footer
   alone.
-- [ ] **Settings sub-screens** (Billing & Usage, Permissions, About detail) — candidate builds for
-  code-sync fidelity; low priority, confirm appetite.
+- [~] **Settings sub-screens** (founder: build them). **Billing & Usage DONE** (`341:862`, Free-plan
+  Upgrade CTA, Current Plan + Usage progress bars; from `BillingSettingsView.swift`; verified).
+  REMAINING: **Permissions** (iOS source: locate — `PermissionUtils.swift` is utils, the screen may be
+  a Settings section/onboarding view; find the real iOS permissions screen before building) and
+  **About** (already at `134:242` — verify against `SharedAboutView.swift`, likely just needs a fidelity
+  pass rather than a fresh build).
 - [x] **Inbox nav actions removed** — header now title-only ("Inbox" Large Title), Leading/Trailing
   control frames hidden, matching `InboxHeader` (title-only). Populated list = TaskEventRow rows with
   `calendar.badge.plus` unscheduled leading. **Inbox-Loading intentionally NOT built** (founder cut).

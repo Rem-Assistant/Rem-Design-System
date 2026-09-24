@@ -63,6 +63,7 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | Settings | `130:44` | root |
 | Connectors | `133:192` | connected / not-connected rows |
 | About | `134:242` | — |
+| Billing & Usage | `341:862` | Free plan (Upgrade CTA); Current Plan + Usage progress bars — `BillingSettingsView.swift` |
 | Agenda | rebuilding | scheduled · empty · loading (jump-to-today, sort modes to add) |
 | Chat | `71:533` | voice-active thread (iOS 26 Toolbar-Top nav, bound, real symbols) ✓ |
 | Task detail | `299:2` | root — iOS 26 nav (back+Task), title/date/meta, Last-activity card, notes, composer; bound + real symbols ✓ |
