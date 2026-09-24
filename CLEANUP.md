@@ -94,13 +94,20 @@ so re-read node positions before moving things.
 
 ### Chat
 - [?] **Remove the unused section on the Chat page** — one section unused; **which one?** (confirm before delete).
-- [ ] **VoiceBar button opacity bug**: the red and black buttons are missing their opacity treatment
-  (rendering solid). Fix the fills on `VoiceBar` `160:884` (mic = black@opacity, end-call = red@opacity).
-- [?] **Home-indicator overlap in the device frame**: the home indicator is included but the VoiceBar
-  overlaps it — no space reserved. **Recommendation:** group the screen content + home indicator into a
-  vertical auto-layout so they stack (home indicator sits below, gets a themed color from a global token) —
-  mirrors real safe-area layout. Alternative the founder offered: just add bottom padding to the VoiceBar.
-  → Going with the auto-layout/safe-area approach unless founder prefers padding.
+- [x] **VoiceBar button opacity bug — FIXED (root cause was a Figma limitation).** The mic/end-call button
+  backgrounds are `color.opacity(0.2)` (`MiniPlayerBar.swift`). The master rendered the 0.2 tint fine, but
+  **Figma does not propagate a variable-bound paint's opacity into instances** — every VoiceBar instance
+  reset it to solid, and instance-level opacity overrides on a bound paint don't render either. Fix: created
+  two **adaptive low-alpha tint variables** with the alpha baked into the variable VALUE (`fill/label-tint`
+  `471:2` = label/primary @ 0.2 light / white @ 0.2 dark; `fill/red-tint` `471:3` = system/red @ 0.2 both
+  modes) and bound the master button bgs to them at **paint opacity 1** — which DOES inherit into instances.
+  Replaced the corrupt Chat-screen instance with a fresh one; renders tinted. (Reusable pattern for any
+  tinted-fill component; recorded in figma-gotchas.)
+- [x] **Home-indicator overlap — FIXED (safe-area approach).** The DeviceFrame draws its HomeIndicator at
+  screen-local y840–874, but `Screen/Chat 71:533` had the VoiceBar flush to 874. Reserved the bottom 34px
+  safe area: shrank Conversation to end 678, moved composer-dock → 678 and VoiceBar → 782 (ends 840). The
+  device's home indicator now sits in the reserved zone, clear of the voice bar. (Apply the same bottom
+  safe-area inset to other device-framed screens whose content runs to y874.)
 
 ### Task & Events
 - [ ] **New Task or Event**: arrange with **auto layout**.

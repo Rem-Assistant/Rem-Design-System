@@ -116,6 +116,14 @@ runs JS against the Figma Plugin API; `figma` is the global.
 - Bind per node: `const f=n.fills.map(p=>({...p})); f[0]=figma.variables.setBoundVariableForPaint(
   f[0],'color',v); n.fills=f;`. Look variables up once into a `name→Variable` map via
   `getLocalVariableCollectionsAsync()` + `getVariableByIdAsync`.
+- **Instances DON'T inherit a variable-bound paint's `opacity` — bake the alpha into the variable instead.**
+  A tinted fill built as `color@variable` + paint `opacity: 0.2` renders correctly on the MASTER but every
+  INSTANCE resets it to solid (opacity 1), and setting the instance's fill opacity as an override does not
+  render either. This bit the VoiceBar mic/end-call buttons (`color.opacity(0.2)` → solid in every screen
+  instance). Fix: make a COLOR variable whose VALUE carries the alpha (e.g. `fill/label-tint` = black `a:0.2`
+  light / white `a:0.2` dark; `fill/red-tint` = system-red `a:0.2`), bind the fill to it at **paint opacity 1**
+  — that inherits into instances cleanly. Then re-instance any already-corrupt instance so it picks up the
+  master (an existing instance keeps its bad override). Screenshot an INSTANCE (not just the master) to verify.
 - **`getVariableByIdAsync` needs the FULL id `VariableID:2:13`, not the short `2:13`.** The short form
   returns **null**, and `setBoundVariableForPaint(paint,'color',null)` then silently leaves the paint's
   **literal** color — no throw, no rollback, so the call "succeeds" but the fill renders black/unbound.
