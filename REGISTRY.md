@@ -63,6 +63,10 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
 
 ## Screens (one generation — device-framed on the Screens page)
 
+> **Navigation map** lives on the `Flows` page (`420:15`): a static screen-graph (labeled boxes by nav
+> depth + SVG arrow connectors) — Launch→onboarding→Main hub→tabs, task + settings branches. Mirrors the
+> code nav graph (`ContentView` routing). v1 static; live prototype wiring is a follow-up.
+>
 > **Settings-domain screens are consolidated on one `Settings` page** (Settings · Connectors · About ·
 > Billing · Permissions + Sign Out / Delete Account states, laid out in a row) — the separate
 > Connectors/About/Billing/Permissions pages were removed (founder: "group all the settings screens on
