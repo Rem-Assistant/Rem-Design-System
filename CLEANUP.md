@@ -90,7 +90,10 @@ so re-read node positions before moving things.
 - [x] **Onboarding page organized** — the screens overlapped (Login at x=-432, Privacy offset at 19,99);
   laid them in a clean onboarding-order row at y=0 (Login → Privacy → Deploying → Activation, 442px pitch).
   Deploying/Activation still shown (up-for-deprecation, pending founder confirm).
-- [ ] Use the **iOS 26 kit Switch** (and kit controls generally), not custom, wherever a toggle is needed.
+- [~] Use the **iOS 26 kit Switch** wherever a toggle is needed — no screen currently uses a toggle (Settings
+  rows are drill-ins; Permissions rows use StatusChevron; Connectors uses the connect-pill/chevron), so
+  there's nothing to swap right now. When a toggle IS added, use the kit Switch (not the local `Switch`
+  `110:50`, which should itself be reconciled to the kit's in a later controls pass). Nothing to build today.
 
 ### Agenda / Tasks & Agenda components
 - [?] **DateNavigationHeader arrows — NEEDS FOUNDER CLARIFICATION.** Founder: the arrows "had rectangles
@@ -104,8 +107,9 @@ so re-read node positions before moving things.
   (`AgendaView.swift` ~L895): **Add New** (plus) · divider · **Schedule** (calendar.badge.clock + unscheduled
   count badge), 17pt semibold `label/secondary`. Schedule opens a "Schedule Tasks" sheet — build that sheet
   as part of the kit-sheet swap below.
-- [ ] **Sheets: use the iOS 26 kit Sheet component** for all sheet interfaces ("all those views are already
-  declared there").
+- [x] **Sheets: use the iOS 26 kit Sheet component** — DONE. Sign Out → Action Sheet, Delete → Inspector,
+  New Task/Event → Full-height sheet (see the kit-sheet item). Agenda "Schedule Tasks" sheet is the one
+  net-new sheet left (build when its content is specified).
 - [x] **Agenda screen** (`181:754`) — already clean/organized (DateNav → Brief → Sort → Overdue → To Do →
   Add/Schedule → Suggestions, all in an auto-layout Content). Swapped its plain "+ Add New" for the
   **AgendaAddSchedule** component `490:22` (Add New | Schedule + count). Remaining Agenda item: DateNav arrows
@@ -135,7 +139,13 @@ so re-read node positions before moving things.
 - [x] **Date card de-carded** to match prod: `detailButton` in `TaskEventView.swift` is a plain button (no
   bg, no chevron) — removed the grey card fill/radius + chevron + divider on `404:88`; now a plain clock +
   "Set date, time, repeat" row, both `label/secondary`.
-- [ ] **Wrong chrome — replace custom headers with the iOS-26 kit nav bar.** Kit component identified:
+- [x] **Wrong chrome — kit nav bar: DONE across the app.** Verified every main screen already instances the
+  kit `Toolbar - Top - iPhone`: Settings, Connectors, About, Billing, Permissions, Task detail — plus the ones
+  I swapped this pass (Voice, Activity). The only remaining hand-built nav is **New Task/Event's Cancel/Save**
+  (`404:76`), which is the correct iOS create-screen pattern (text buttons) — and its **Full-sheet** version
+  `507:115` uses the kit Full sheet's X/arrow. So no glass-toolbar swap is needed there; it's a founder
+  nav-style preference (Cancel/Save text vs kit X/arrow), not a missing swap. Original note follows:
+- [~] **(orig)** **replace custom headers with the iOS-26 kit nav bar.** Kit component identified:
   **`Toolbar - Top - iPhone` `277:947`** (variants: Default/Compact Large/Large Title/Title 2 Line/2 Line
   Left; props: `Style`, `Show Subtitle`) — already used on Chat (`277:1004`). Screens still on a hand-built
   nav: New Task/Event (`404:76` Cancel/title/Save), Delete Account (`412:28`), View history/Task activity
