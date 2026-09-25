@@ -119,3 +119,42 @@ Templates         Onboarding, Agenda, Inbox, TaskDetail+Inspector, Chat, ChatHis
 Each Template and Component gets explicit **State variants** (the founder: "screens can have states too")
 and a **Code Connect** `.figma.swift` mapping. Start with `DailyBriefCard` (already stateful) as the
 reference implementation.
+
+---
+
+## Consolidation opportunities (founder-identified 2026-09-25, confirmed in code)
+These are the highest-value cleanups for the code-first pass — they're why the app "feels confusing."
+
+### 1. "Shared" that isn't shared (false-reuse naming)
+- `SharedAgendaView` (+ `SharedDateNavigationHeader`, plain chevrons) is used **only by Mac**
+  (`RemMac/…/MainWindow.swift:93`). **iOS forked its own** `AgendaView` (+ `DateNavigationHeader`,
+  the packed dashes) at `Rem/ContentView.swift:1072`. So "Shared Agenda" is really the *Mac* Agenda,
+  and the two have diverged — the `Shared` prefix lies.
+- **Fix:** treat the **iOS `AgendaView` as canonical** (it's the primary product surface the founder
+  validates) and either genuinely unify (one Agenda generic over the platform protocol, one DateNav)
+  or rename the Mac-only fork honestly. **Audit every `Shared*` view for this smell:** a `Shared*` with
+  a platform sibling that's actually the one used is false sharing. (The protocol-oriented pattern in
+  `CLAUDE.md` is the intended cure; Agenda/DateNav slipped out of it.)
+
+### 2. Multiple chat views — pick ONE canonical
+- **Shipping:** `SharedRemChatView` (iOS `RemChatView.swift:96`, Mac `MacChatWindow.swift:60`).
+- **Caller-less:** `RemChatUI.ChatView` / `RemGatewayChatView` — **0 instantiations**; the cleaner
+  package chat is not wired in. Aspirational/dead as a screen.
+- **Decision for the agent:** either adopt the RemChatUI package as the real chat (migrate
+  `SharedRemChatView`'s logic onto it — it's the componentized one the design system wants) **or**
+  deprecate the unused package chat. Don't keep both. Verify which RemChatUI *sub-components*
+  (e.g. `RemChatComposer`) are used before deleting — the top-level `ChatView` is unused, but pieces
+  may be.
+
+### 3. Card / banner / notice proliferation → collapse into `ContextualMessage`
+`RemContextualMessage` already has the right shape (icon + title/subtitle + **Actions** slot) and 8 call
+sites. These duplicate it and should become **instances** (tone + actions), not bespoke components:
+- `ChatConnectionRecoveryCard` (`Shared/Views/Chat/ChatConnectionLoadingView.swift:78`)
+- `GatewayDisconnectedBanner` (`Rem/Sources/Components/GatewayDisconnectedBanner.swift`)
+- `ChatNoticeCard` / `ChatNoticeBanner`
+- `FirstUseHintCard` (`Rem/ContentView.swift:55`)
+- `CalendarPermissionRow` (`Rem/Sources/Settings/SettingsView.swift:405`) — permission-request shape
+- the pairing/calendar recovery cards (already migrated in Figma to ContextualMessage instances)
+
+→ **One notice component, N instances.** This is the single biggest component-count reduction
+available, and it's exactly the "cards vs contextual message" consolidation the founder called out.
