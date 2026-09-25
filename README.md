@@ -23,6 +23,36 @@ the adaptive reference, web uses an approximate hex). Every usage rule lives onc
 doc's front-matter) and renders twice: as prose do's/don'ts for people and as an adherence rule for
 agents. See [`SPEC.md`](SPEC.md) for the full reasoning and the open decisions still needing input.
 
+## Code Connect (scaffolded, DORMANT — needs an Org/Enterprise plan)
+
+Code Connect files are authored and co-located with their components (e.g.
+[`Sources/RemDesignSystem/Buttons/RemButton.figma.swift`](Sources/RemDesignSystem/Buttons/RemButton.figma.swift)),
+and `figma.config.json` points the CLI at `Sources/**/*.figma.swift`. Each `.figma.swift` references
+the **real Swift types** (so a rename shows the drift) but is **excluded from the SPM target** (see
+[`Package.swift`](Package.swift)) — the shipping library never links `github.com/figma/code-connect`.
+
+**They cannot be published on the current Figma plan.** Verified via the API: using Code Connect
+requires a **Full or Dev seat on an Organization or Enterprise plan**. This account has Full seats
+but only on **Starter/Pro** teams (Pro is *not* enough — the gate is Org/Enterprise). So publishing
+and reading kit Code Connect are blocked until the design-system file lives on an Org/Enterprise team.
+
+**What this does NOT block:** the core loop. Authoring components in Swift and projecting them into
+Figma via generate-library works on the current plan and is the source of truth. Code Connect is the
+*return trip* (Figma→code returns the real component) plus a drift guard (`figma connect check`) — a
+later enhancement, not a dependency.
+
+**To activate later** (once on a qualifying plan, with the `figma` CLI + `FIGMA_ACCESS_TOKEN`):
+
+```bash
+figma connect check      # validate mappings against the Figma nodes (drift guard)
+figma connect publish    # push the bindings into Figma Dev Mode
+```
+
+⚠️ The `figma.config.json` schema was written without running the CLI (no CLI/token here). Legacy
+per-framework parsers are unmaintained as of 2026-08-17; the future is `.figma.ts` templates
+(`npx figma connect migrate`). `.figma.swift` still works and is the only Swift-native form — verify
+the config against current `figma connect` docs on first run.
+
 ## Related, existing docs
 
 - `docs/UX-NATIVE-ALIGNMENT.md`, `docs/IOS_MAC_PARITY.md`, `docs/VISUAL_QA.md` — adjacent UI docs.
