@@ -191,9 +191,14 @@ well (Fluent, Material) share the token layer and the *meaning* of each componen
 
 **Android is in scope** (active client: `Rem-Assistant/Rem#3`). The token layer is generated for
 Compose too — `tokens.json → RemTokens.kt` alongside `DesignTokens.swift` — so the Android client
-consumes the **same** tokens (light + dark) instead of a hand-rolled theme. Per the model above,
-Compose **components are still authored natively** (Material containers, not iOS chrome); only the
-token layer is shared. The clean token contract is exactly what makes this cheap instead of a rewrite.
+consumes the **same** tokens (light + dark) instead of a hand-rolled theme. And the design system
+delivers **component code for both platforms** — SwiftUI (iOS) **and** Jetpack Compose (Android) —
+bound to those tokens; it is **not tokens-only**. The **form still diverges** to each platform's
+native idiom (Material containers on Android, not iOS chrome); what's shared is the tokens and each
+component's intent, not the chrome.
+
+**Platform roadmap:** iOS + Android now; **iPadOS** later (scaled from the iOS design); **Mac** follows
+iPadOS (Mac ≈ the iPad design), so there is no separate Mac design track.
 
 ---
 
@@ -265,9 +270,6 @@ component docs are written and it's worth polishing as a portfolio piece.
 - Fluent/Carbon-scale governance, versioning policy, or contribution process.
 - Making the design system the product's competitive moat.
 - Flattening Apple system colors to static hex on device.
-- Auto-generating component *code* on any platform. Only the **token layer** is generated — now
-  Swift, CSS, **and Compose** (`RemTokens.kt`); components are authored natively per platform
-  (SwiftUI · Compose · React), consuming the generated tokens.
 
 ---
 
