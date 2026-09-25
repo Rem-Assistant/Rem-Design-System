@@ -1,6 +1,42 @@
 # Reconciliation map — Figma ⇄ canonical code
 
+## ⚠ FOUNDER CORRECTION (2026-09-25) — RemUI is STALE; anchor to code-with-callers
+The founder reversed the premise the `/goal` was built on. Verified against the tree, not assumed:
+- `docs/prototypes/RemUI` is the founder's own package (commit `290dc8b5`, samuelalake, 2026-09-24,
+  imported from a local unpushed `/Volumes/.../RemUI`) — **but a stale snapshot**. Its README even
+  claims RemUI is canonical and shipping onboarding is stale; the founder now says the opposite.
+- **Nothing in RemUI compiles or has a caller.** `ValuePropOnboardingView` ("How Rem Works"),
+  `PermissionsOnboardingView`, `HomeLandingView` appear ONLY under `docs/prototypes/` — 0 refs in
+  `Rem/`, `Shared/`, `RemMac/`. The live `InboxView` (`Rem/Sources/Screens/InboxView.swift`,
+  caller `ContentView:1123`) is a different view that only shares the name.
+- New rule: **reconcile Figma to code that has callers and ships** (a sharper "code is source of
+  truth"). RemUI drops from reconciliation target → **non-binding inspiration** (mine clean
+  components, then retire). Approved this session: move a *presentational package* into this repo
+  built from the **shipping** views + Code Connect; RemUI content does not move.
+
+### 🔴 OPEN RULING (blocks track 1 rework) — mirror-today vs aspiration
+"Code-with-callers" and the `/goal`'s retire-list **conflict on onboarding**. The real shipping flow
+(`OnboardingFlow.swift`, caller `ContentView:46`) is `signIn → dataSharingConsent → deploying →
+postSetupActivation`:
+- The **deploy / "personal server" screen is ALIVE** (has a caller) — but `/goal` + RemUI said retire
+  it. I retired `415:15`. Under code-with-callers that retire was wrong.
+- **"How Rem Works" + Permissions value-prop screens are DEAD** (no callers) — but `/goal` said build
+  them. I built `545:40` + `551:49` from stale RemUI.
+> Ruling needed: does Figma mirror **today's shipping code** (un-retire deploy `415:15`; demote
+> `545:40`/`551:49` to a "Proposed — no callers" lane) or **the aspirational future** (deploy really
+> is going away → land that in code first, then Figma follows)? Recommendation: mirror
+> code-with-callers; aspirational screens land in code (or a dated decision) first, then design
+> follows via Code Connect — otherwise Figma re-drifts from the app. **To-correct on ruling:**
+> un-retire/keep `415:15`, re-label `545:40`/`551:49`, re-verify every retire (incl. `414:15`)
+> against callers.
+
+Track 2 (ContextualMessage/DateNav) and track 3 (chat scenarios) are grounded in `Shared/Views/**` +
+`RemChatUI` — all code-with-callers — so they stand under the corrected rule.
+
+---
+
 ## ⚠ CRUX DECISION (founder) — RemUI is systematically simpler than the shipping app
+_(superseded by the FOUNDER CORRECTION above — kept for the reasoning trail)_
 Every core screen shows it: RemUI Home/Inbox/etc. are **cleaner, simpler** than what ships. Two readings:
 - **(A) Simplify toward RemUI** — RemUI is the target; make the app cleaner (match RemUI everywhere; the
   richer shipping bits are what we're *removing*). The goal text ("build/update Figma to **match RemUi**")
@@ -81,4 +117,8 @@ Developer pill `535:33`, pairing/calendar ContextualMessage `537:31`/`537:41`, *
 (ActionLifecycle Working/Worked timeline, waking skeleton, unreachable card), **Browser takeover (controlling)
 `562:31`** — the paired field-control state: focused input on the surface (blue outline) + control-bar field
 editor (fillTertiary field + return glyph) + "You have the controls" + full-width black "Give control back to
-Rem". Pending: DeviceStatus card, AssistantMarkdown code/table.
+Rem", **AssistantMarkdown — code + table `566:31`** (`AssistantMarkdownRenderer.swift`: bold heading + `swift`
+code block + real 1px-grid GFM table From/Subject/Time), **Device status card `566:68`/`566:78`**
+(`ToolResultCardView.DeviceStatusCard`: battery glyph + tinted status pills + storage line; healthy + stressed).
+**Track 3 chat scenarios: complete.** Known gap: the Figma file has no SF Mono/Menlo face, so the code block
+renders proportional (grey container + indentation still read as code) — install SF Mono in Figma to close it.
