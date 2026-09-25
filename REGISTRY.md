@@ -64,7 +64,8 @@ Fixed:
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
-| ContextualMessage | ContextualMessage | `73:39` | — | ✓ canonical |
+| ContextualMessage | ContextualMessage | `73:39` | boolean **`Actions`** + swappable **ButtonGroup** footer (`576:31`); true instances: pairing `577:2` (warning, Review/Reset), calendar `577:31` (info, Enable) | ✓ canonical — models `RemContextualMessage` icon + title/subtitle + `actions()` slot |
+| ButtonGroup | ButtonGroup | `576:31` | HStack of pill buttons (fill/tertiary, label semibold); swapped into ContextualMessage's Actions slot | ✓ |
 | Toast | Toast | `72:24` | — | ✓ canonical |
 | CalendarEventsCard | CalendarEventsCard | `67:2` | — | ✓ canonical |
 | RemindersCard | RemindersCard | `67:481` | — | ✓ canonical |
