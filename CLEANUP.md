@@ -94,6 +94,18 @@ VoiceBar, TypingDots, ThinkingBlock, ToolResultCard (generic), ContextualMessage
   (pairingRequired / unauthorized / unreachable / connecting — `ChatConnectionPresentation`).
 - [ ] **ChatTimeSeparator** ("Today 2:30 PM" day/time divider).
 
+### More gaps found from a live app screenshot (2026-09-25)
+- [x] **Developer mode pill** `535:33` — dark pill + orange ⚠ + "Developer mode" (shown when serving). Built.
+- [x] **"Finish connecting this device" pairing card** `535:36` — person.badge.key + Review/Reset (the
+  `runtimePairingRecoveryCard` / `ChatConnectionRecoveryCard` pairingRequired state). Built.
+- [ ] **Agenda "No agenda yet" empty state** — big calendar-badge-plus icon + "No agenda yet" + "Create a new
+  task or schedule existing ones" + Add New | Schedule(8) + **Suggestions** (SuggestedTaskRow `48:25`, Move/Add,
+  dashed border, "From ✉︎" source, ✕) + "See more". Assemble as an Agenda screen state.
+- [ ] **Main tab bar** — ☰ menu · center blue chat/voice FAB (message + waveform) · + . Global chrome.
+- Lesson (founder): I keep missing global/app-chrome + state components (dev pill, pairing card, tab bar)
+  because they live outside the per-screen view files. Sweep the app's ROOT/shell views + connection states,
+  not just the feature views.
+
 **Build order (this pass):** ① BrowserLiveCard ✓ ② Add-to-Chat sheet ✓ → ③ composer control row + attachment
 strip → ④ Browser takeover sheet → ⑤ empty state + interrupted + banners → ⑥ ActionLifecycle + confirmation/
 device/error cards → ⑦ connection/skeleton/time-separator → ⑧ AssistantMarkdown (code/table). Self-verify each;
@@ -196,17 +208,14 @@ so re-read node positions before moving things.
   `110:50`, which should itself be reconciled to the kit's in a later controls pass). Nothing to build today.
 
 ### Agenda / Tasks & Agenda components
-- [~] **DateNavigationHeader "three rectangles/lines" — INTERPRETED + BUILT for confirmation (2026-09-25).**
-  Founder re-clarified: the header box had "three rectangles / lines beside each other" that existed once and
-  got removed. Prod (`SharedDateNavigationHeader`) is just `‹ relativeDateLabel / date ›` (plain chevrons, no
-  rectangles, no calendar glyph) — so "three rectangles" isn't in current code and I can't reverse-engineer the
-  removed version. **Decision (best literal match):** a **3-box stepper** `[‹] [ Today · Aug 13 2026 ] [›]` —
-  three rounded rects beside each other, arrows in the side boxes, date in the center; **calendar glyph dropped**
-  (matches code). Built as `DateNav (stepper)` `530:25` in `Agenda scenarios (proposed)` `530:22` on the Tasks &
-  Agenda page — a proposed variant beside the live master `43:2`, NOT mutating the master. If "three lines"
-  actually meant a **week day-strip** or a **list/view icon** (`line.3.horizontal`), founder drops the ref and I
-  swap. The current master `43:2` still carries the stray **calendar glyph** (`213:2`) — remove it once the
-  stepper direction is confirmed.
+- [x] **DateNavigationHeader "three lines" — RESOLVED from an app screenshot (2026-09-25).** The "three
+  rectangles/lines beside each arrow" are **three short grey dashes flanking each side**: `‹ - - - 📅 Today /
+  Sep 24 2026 - - - ›`. And the **calendar glyph is CORRECT** (it's in the app — I was wrong to consider it
+  drift). Fixed the master `43:2` directly: it's a HORIZONTAL auto-layout, so I inserted a **left dash-group**
+  (3 dashes) after the chevron and a **right dash-group** before the trailing chevron, each `layoutGrow=1` so
+  the chevrons sit at the edges and the calendar/date block centers — matches the app exactly. Dashes =
+  20×3 rounded rects bound to `label/tertiary`. Screenshot-verified against the app. My earlier 3-box stepper
+  was wrong and has been removed.
 - [x] **Jump to Today pill — BUILT** (`Jump to Today` `530:34`). The Agenda's floating capsule shown when
   viewing a non-today date (`AgendaView.swift:109` `jumpToTodayButton`, bottom safe-area inset): `arrow.uturn.backward`
   + "Jump to Today", subheadline semibold, ultraThinMaterial capsule + shadow, minHeight 44. Was a real un-designed
