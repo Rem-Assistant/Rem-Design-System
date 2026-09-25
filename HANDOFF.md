@@ -41,9 +41,9 @@ no caller in `Rem/`, `Shared/`, `RemMac/`, it is not a reconciliation target.
    they deprecate with the runtime migration but the gateway is **still the production adapter today**
    — removing them from Figma now makes it stop matching shipping code. Retire-now (mirror-future) vs
    hold-for-migration-slice is a timing call.
-3. **Tool-call cards:** founder says up for deprecation and "they look ugly / out of system." Either
-   `@deprecated` + remove callers (for the gateway/device-coupled ones the migration removes) or
-   restyle survivors to tokens. Needs the founder's deprecate-vs-restyle split.
+3. **Tool-call cards:** **Do NOT deprecate yet (founder, 2026-09-25).** They look out-of-system today;
+   the path is **restyle to tokens**, not deletion. Keep all callers. Revisit deprecation only if/when
+   the runtime migration actually removes the underlying tool.
 
 ## Runtime migration context (critical)
 `docs/rebuild/07-REM-RUNTIME-MIGRATION.md`: OpenClaw→Rem **de-brand is done** (OpenClawKit →
