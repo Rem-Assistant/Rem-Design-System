@@ -78,5 +78,7 @@ improve it. Confirm.
 Built: BrowserLiveCard `524:31`, Add-to-Chat sheet `525:2`, Composer states `527:2`, prompt/status `528:2`,
 Developer pill `535:33`, pairing/calendar ContextualMessage `537:31`/`537:41`, **BottomToolbar tab bar `552:33`**,
 **Browser takeover (live) `556:31`**, **Result cards `557:31`**, **Run activity + connection/skeleton `558:31`**
-(ActionLifecycle Working/Worked timeline, waking skeleton, unreachable card). Pending: DeviceStatus card,
-browser-takeover *controlling* state (field editor), AssistantMarkdown code/table.
+(ActionLifecycle Working/Worked timeline, waking skeleton, unreachable card), **Browser takeover (controlling)
+`562:31`** — the paired field-control state: focused input on the surface (blue outline) + control-bar field
+editor (fillTertiary field + return glyph) + "You have the controls" + full-width black "Give control back to
+Rem". Pending: DeviceStatus card, AssistantMarkdown code/table.
