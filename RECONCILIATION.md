@@ -37,10 +37,10 @@ shipping-canonical, fold RemUI's clean components in — until told otherwise.
 | `OnboardingView` (container) | — | it's a paged `TabView` of Initial→ValueProp→Permissions, **not a separate screen** | ✓ n/a — the 3 screens above ARE the flow (page-dots implied) |
 | `HomeLandingView` | Agenda `181:754` (shipping) | **RemUI Home is a simpler *prototype* than the shipping Agenda** — see divergences below | ? founder call which is canonical; **BottomToolbar tab bar built** `552:33` |
 | `InboxView` | `Screen/Inbox` `206:703` | header + tray empty state **aligned** (identical copy); **rows diverge** (RemUI `InboxTaskCard` = circle + title + CategoryBadge, cleaner; existing = shipping `SharedTaskRow` style) | ~ align rows to RemUI once the crux (below) is decided |
-| `HistoryView` | `Activity` `413:32`? | not compared | pending |
-| `SettingsView` | Settings `130:44` | not compared | pending |
-| `TaskEventView` | `New Task` `404:5` | not compared | pending |
-| `TaskInspectorSheet` | kit sheets | not compared | pending |
+| `HistoryView` | **Chat Sessions** `438:15` | RemUI History = a *placeholder* ("Chat history"); shipping `ChatHistoryView` = the real sessions list `438:15` | (B) ✓ `438:15` canonical; RemUI is its empty-state placeholder |
+| `SettingsView` | Settings `130:44` | RemUI = simpler proto (3 sections: **General / Date & Time / Integrations**); shipping = fuller grouped list | (B) ✓ `130:44` canonical; RemUI's grouping is an **IA idea → founder** |
+| `TaskEventView` | Task detail `299:2` · New Task `404:5` | RemUI (title circle + Badges/DateInfo/AlertRepeat/Notes; editable "Set date, time, repeat" + bell Alert) ≈ shipping | (B) ✓ existing screens canonical; close match |
+| `TaskInspectorSheet` | kit Inspector sheet `493:3199` | RemUI = date/alert/duration inspector (Alert/Duration rows + Cancel/Done) | (B) ~ map to kit Inspector sheet; build if a distinct one is wanted |
 
 ### Retired (confirmed-dead per RemUI README — "do NOT resurrect")
 | Dead flow | Figma node | Action |
