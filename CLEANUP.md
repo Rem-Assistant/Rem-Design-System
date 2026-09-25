@@ -188,13 +188,21 @@ so re-read node positions before moving things.
   `110:50`, which should itself be reconciled to the kit's in a later controls pass). Nothing to build today.
 
 ### Agenda / Tasks & Agenda components
-- [?] **DateNavigationHeader arrows — NEEDS FOUNDER CLARIFICATION.** Founder: the arrows "had rectangles
-  before … three rectangles beside each arrow." But prod (`SharedAgendaView.swift` `SharedDateNavigationHeader`,
-  lines 223–247) renders the arrows as **plain `chevron.left`/`chevron.right` buttons (`.buttonStyle(.plain)`,
-  size 14 semibold) with NO rectangle background** and no day-strip. So "three rectangles" can't be matched to
-  shipping code — need the founder to point at what they mean (a tap-target bg? a loading skeleton? a week
-  day-strip?). Padding: founder said leave top/bottom. Separately, minor drift to reconcile: the Figma DateNav
-  `43:2` shows an extra **calendar glyph** next to the date that prod doesn't have. Not guessing — logged.
+- [~] **DateNavigationHeader "three rectangles/lines" — INTERPRETED + BUILT for confirmation (2026-09-25).**
+  Founder re-clarified: the header box had "three rectangles / lines beside each other" that existed once and
+  got removed. Prod (`SharedDateNavigationHeader`) is just `‹ relativeDateLabel / date ›` (plain chevrons, no
+  rectangles, no calendar glyph) — so "three rectangles" isn't in current code and I can't reverse-engineer the
+  removed version. **Decision (best literal match):** a **3-box stepper** `[‹] [ Today · Aug 13 2026 ] [›]` —
+  three rounded rects beside each other, arrows in the side boxes, date in the center; **calendar glyph dropped**
+  (matches code). Built as `DateNav (stepper)` `530:25` in `Agenda scenarios (proposed)` `530:22` on the Tasks &
+  Agenda page — a proposed variant beside the live master `43:2`, NOT mutating the master. If "three lines"
+  actually meant a **week day-strip** or a **list/view icon** (`line.3.horizontal`), founder drops the ref and I
+  swap. The current master `43:2` still carries the stray **calendar glyph** (`213:2`) — remove it once the
+  stepper direction is confirmed.
+- [x] **Jump to Today pill — BUILT** (`Jump to Today` `530:34`). The Agenda's floating capsule shown when
+  viewing a non-today date (`AgendaView.swift:109` `jumpToTodayButton`, bottom safe-area inset): `arrow.uturn.backward`
+  + "Jump to Today", subheadline semibold, ultraThinMaterial capsule + shadow, minHeight 44. Was a real un-designed
+  Agenda scenario. Verified.
 - [x] **"Add New" → component built (`AgendaAddSchedule` `490:22`).** Matches prod
   (`AgendaView.swift` ~L895): **Add New** (plus) · divider · **Schedule** (calendar.badge.clock + unscheduled
   count badge), 17pt semibold `label/secondary`. Schedule opens the **"Schedule Tasks" sheet — now BUILT**
@@ -331,16 +339,17 @@ so re-read node positions before moving things.
   About · Billing · Permissions · Sign Out · Delete · Voice at y=0, 442px pitch); the one stray was the
   "Device — Settings" instance floating at (1440,1210) → tucked below the row at (0,980). The Settings
   *screen* itself (`130:44`) is a grouped List, already organized.
-- [x] **"General" child view — BUILT** (`Screen/General (Proposed)` `509:833`). Promoted from placeholder
-  draft to a proper Proposed screen: kit nav ("General" + back chevron) + a complete canonical grouped list —
-  **Appearance** (Value "System" + control) + App Icon · **Notifications & Sounds** (Notifications + Sounds &
-  Haptics) · **Language & Region** (Language, Value "English"). These are standard iOS General-settings rows
-  (not a guess), so the *view* is a real built screen. The loud in-screen orange DRAFT banner was removed and
-  replaced by a **neutral on-canvas caption above the frame** (label/secondary) so the screen itself reads
-  clean while staying clearly labeled Proposed. Screenshot-verified. **Still founder-gated — the DECISION, not
-  the build:** whether to do the Settings **"Rem · Connected" → "General"** rename at all, and the final IA
-  (what moves into General vs stays). Building the view was in scope; the rename/IA call is the held part
-  (EVOLUTION.md). When you decide, I wire the Settings row that opens it + set its label.
+- [x] **"General" child view — CORRECTED + REBUILT** (`Screen/General (Proposed)` `509:833`). Founder reframed
+  it (2026-09-25): *"forget I said General. If you tapped the Settings **Rem · Connected** row and went to a new
+  view, what's in it? Create that, rename its nav TITLE + the entry row to 'General'."* Answer from code: that row
+  is a `NavigationLink` → **`SharedRemGatewayHomeView`** → **`SharedGatewayDetailView`** (today titled "Agent
+  settings") — the **agent-runtime hub**. My earlier Appearance/App-Icon/Language draft was the WRONG view;
+  replaced it. New General = grouped hub faithful to `SharedGatewayDetailView`: **Gateway** (Connection · 🟢
+  Connected) · **Connectivity** (Paired Devices ②, Connectors, Cloud browser, Backup, Skills, Daily Check-in +
+  footer) · **Memory & Keys** (Memory, Models · Automatic) · **Experience** (Voice · Aria). Nav title "General";
+  on-canvas caption records the entry-row rename. Screenshot-verified. **Founder-defined, not gated.** To wire:
+  rename the Settings `SharedRemGatewayHomeView` entry row ("Rem" / "Your agent runtime") + the detail view's
+  title to "General."
   - **Re-verified post-compaction (2026-09-24):** screenshot + node-read pass on `509:833`. Kit nav, the
     orange DRAFT/IA banner, and all three grouped sections render correctly; the **leading back-chevron
     reads clean** at full res (chars `􀆉` = chevron.left `U+100189`, visible, fill bound to local
