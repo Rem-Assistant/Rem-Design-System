@@ -69,7 +69,10 @@ improve it. Confirm.
 | Item | Figma node | Status |
 |---|---|---|
 | DateNav "three dashes" packed to iOS `DateNavigationHeader` code | `43:2` | ✓ |
-| ContextualMessage unifies pairing + calendar-access (needs actions swap-slot on `73:39`; place in Agenda) | `73:39` · `537:31` · `537:41` | ~ |
+| ContextualMessage unifies pairing + calendar-access | `537:31` · `537:41` | ✓ both built in RemContextualMessage form |
+| ContextualMessage state placed at top of Agenda | Agenda `181:754` · banner `554:336` | ✓ pairing banner inserted after status bar / before DateNav, w/ Review-Reset actions |
+| ContextualMessage component `73:39` actions-footer slot | `73:39` | ~ pending (5 tone symbols need an actions swap-slot) |
+| CODE: `runtimePairingRecoveryCard` → adopt `RemContextualMessage` | `SharedRemChatView` L3083 | ? logged for code side |
 
 ## Chat scenarios (track 3) — see CLEANUP "Founder review 6" for the full list
 Built: BrowserLiveCard `524:31`, Add-to-Chat sheet `525:2`, Composer states `527:2`, prompt/status `528:2`,
