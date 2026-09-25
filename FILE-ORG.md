@@ -1,8 +1,14 @@
 # Figma file organization — current state + proposed structure
 
 > Rem Figma file `af4yDqCzp57jds9lkFiIaO`. Founder flagged 2026-09-25: "figma file organization is
-> still the piece that's unclear." This maps what's there and proposes a clean structure. Page moves
-> touch IA → **founder-gated; propose, don't execute** until greenlit.
+> still the piece that's unclear." **✅ EXECUTED 2026-09-25 (founder greenlit "Yes — reorganize").**
+> The banded structure below is now live: `Cover · Guide · —FOUNDATIONS— · —COMPONENTS— (Components,
+> Primitives, Rows & Controls, Cards, Chat components, Tasks & Agenda) · —SCREENS— (Onboarding,
+> Agenda, Inbox, Chat, Task & Events, Settings) · —PATTERNS— (Chat Scenarios, Flows) · —PROPOSED— ·
+> —KIT— (Platform Controls, Device Kit) · —ARCHIVE— (Retired)`. The 3 chat pages are disambiguated
+> (Chat components / Chat / Chat Scenarios), the 2 dead flows moved to **Retired**, empty Utilities
+> deleted. Remaining (content-level, follow-up): gather the scattered "Proposed" frames onto the one
+> Proposed band; repurpose Guide's contents.
 
 ## Current pages (25, in order) — and the problems
 

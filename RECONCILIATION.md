@@ -43,6 +43,24 @@ Views pattern); Android is a parallel Compose implementation of the same Figma/t
 `tokens.json` as the single source is the prerequisite; do it before broad screen build-out if Android
 is near-term.
 
+### Gateway runtime migration (2026-09-25, founder Q: "still provision a gateway?")
+Answer from the migration contract `RemClaw:docs/rebuild/07-REM-RUNTIME-MIGRATION.md`: the **OpenClaw→Rem
+de-brand is done** (OpenClawKit → in-repo `Packages/RemKit`, 129 types renamed), but the **gateway
+runtime is NOT removed yet** — *"OpenClaw remains the production adapter until… direct evidence."*
+Today only **signal-relevance** runs gateway-free on `rem_shared`; *"the general assignment still returns
+the OpenClaw adapter."* So per-user gateways **are still provisioned today.** The committed target
+**eliminates** provisioning (shared multi-tenant Rem runtime; *"will not ask a person to deploy, choose,
+pair, wake, update, or repair a gateway"*), with two **open** slices: *Product cleanup* ("Onboarding and
+Settings contain no gateway… surfaces") and *Infrastructure retirement*.
+- **Design implication:** Figma may mirror the **no-deploy** future now (it's the contract, not a guess) —
+  deploy screen stays **Retired**; onboarding target = `Proposed · Onboarding` (Connect apps → Set up
+  voice). The **code** removal from `OnboardingFlow.swift` is a staged migration slice gated on feature
+  parity — **do not rip it out ahead of that slice.**
+- **Watch-list:** gateway-oriented Settings surfaces are on the same deprecation path — incl. the
+  **"General / agent-runtime hub"** (`509:833`, `SharedGatewayDetailView`) and any pairing/deploy/wake
+  Settings rows. Reconcile these against the migration, not against today's gateway code, once *Product
+  cleanup* lands. Flagged, not yet changed.
+
 Track 2 (ContextualMessage/DateNav) and track 3 (chat scenarios) are grounded in `Shared/Views/**` +
 `RemChatUI` — all code-with-callers — so they stand under the corrected rule.
 
@@ -85,7 +103,7 @@ shipping-canonical, fold RemUI's clean components in — until told otherwise.
 | `PermissionsOnboardingView` | `Screen/Onboarding — Permissions` `551:49` | was missing | ✓ **built** — Voice Capture/Smart Scheduling/Stay focused `PermissionView`s (icon + title/desc + fillTertiary blue enable button) + black Continue |
 | `OnboardingView` (container) | — | it's a paged `TabView` of Initial→ValueProp→Permissions, **not a separate screen** | ✓ n/a — the 3 screens above ARE the flow (page-dots implied) |
 | `HomeLandingView` | Agenda `181:754` (shipping) | **RemUI Home is a simpler *prototype* than the shipping Agenda** — see divergences below | ? founder call which is canonical; **BottomToolbar tab bar built** `552:33` |
-| `InboxView` | `Screen/Inbox` `206:703` | crux settled → rows follow **shipping `SharedTaskRow`**, not RemUI. The `TaskEventRow` **set `46:21` has an invented `Leading` axis** (`Time`/`Schedule`/`Clock`, glyphs calendar.badge.plus `U+10024A` + clock `U+10042B`) with **no basis in `SharedTaskRow`** (whose real axes are `showTimeIndicator`/`isEvent`/`isCompleted`+pills). Inbox instances point at **`Leading=Schedule`** (→ the stray calendar-badge-plus); Inbox is `showTimeIndicator:false` ⇒ **no leading column**, just **solid `circle` `U+100000`** + title (**headline**) + pills. The status circle is drawn as a **dashed VECTOR**, not the solid symbol. | 🔶 **founder call (taxonomy):** retire the invented `Leading=Schedule`/`Clock` variants (smells like the Figma-only "compose→schedule" the goal says not to invent) + add `Leading=None`, then repoint Inbox to it; solidify the status circle. **Shared with Agenda** — re-flows both. |
+| `InboxView` | `Screen/Inbox` `206:703` | crux settled → rows follow **shipping `SharedTaskRow`**, not RemUI. The `TaskEventRow` **set `46:21` has an invented `Leading` axis** (`Time`/`Schedule`/`Clock`, glyphs calendar.badge.plus `U+10024A` + clock `U+10042B`) with **no basis in `SharedTaskRow`** (whose real axes are `showTimeIndicator`/`isEvent`/`isCompleted`+pills). Inbox instances point at **`Leading=Schedule`** (→ the stray calendar-badge-plus); Inbox is `showTimeIndicator:false` ⇒ **no leading column**, just **solid `circle`** + title (**headline**) + pills. The status circle was drawn as a **dashed VECTOR**. | ✓ **done (founder: "match code")** — set `46:21` reduced to a clean `Kind × Leading` matrix: retired the invented `Leading=Schedule`/`Clock` variants, added `Kind=task/event, Leading=None` (`574:2`/`574:15`), repointed all 5 Inbox instances to `Leading=None`, cleared the circle's dash. Inbox rows now render **solid circle + headline title** (verified). |
 | `HistoryView` | **Chat Sessions** `438:15` | RemUI History = a *placeholder* ("Chat history"); shipping `ChatHistoryView` = the real sessions list `438:15` | (B) ✓ `438:15` canonical; RemUI is its empty-state placeholder |
 | `SettingsView` | Settings `130:44` | RemUI = simpler proto (3 sections: **General / Date & Time / Integrations**); shipping = fuller grouped list | (B) ✓ `130:44` canonical; RemUI's grouping is an **IA idea → founder** |
 | `TaskEventView` | Task detail `299:2` · New Task `404:5` | RemUI (title circle + Badges/DateInfo/AlertRepeat/Notes; editable "Set date, time, repeat" + bell Alert) ≈ shipping | (B) ✓ existing screens canonical; close match |
