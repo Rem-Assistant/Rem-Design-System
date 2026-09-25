@@ -170,3 +170,45 @@ not a second product surface.
   step (still in code)? — held.
 
 _Seeded 2026-09-24 from the Muse audit (15 screenshots) + founder direction._
+
+## Design-first rebuild + system reconciliation (2026-09-25 founder direction)
+
+Founder: *"the entire UI is being replaced now… design is cheap, I can align with design now… I really do care
+about Code Connect — I want design to drive the app."* This is the pivot to **design-first**. Before net-new
+building, we must reconcile the **multiple overlapping UI systems** that currently exist:
+
+1. **TWO chat implementations in code.**
+   - **`Shared/Views/Chat/SharedRemChatView.swift`** — the shipping app chat (~5,000 lines, monolithic; composer,
+     attachments, browser, banners, empty state all as *private* view-builders).
+   - **`Packages/RemKit/Sources/RemChatUI/`** — the **"Rem UI" package** (`RemGatewayChatView`, `RemChatComposer`,
+     `ChatMessageBubble`, `ToolCallCard`/`ToolResultCard`, `ChatTypingIndicatorBubble`,
+     `ChatStreamingAssistantBubble`, `ChatSessionsSheet`, `ChatMarkdownRenderer`, **`ChatTheme.swift`**). A cleaner,
+     already-extracted component set — this is where "the screens the founder was looking for" live.
+   - **Reconcile:** decide the canonical chat surface. `RemChatUI` is the better-factored one (named components +
+     a `ChatTheme`); the monolith has the richer shipping features. The design system should mirror the WINNER and
+     drive its rebuild. (Note: "Rem UI" needs no new repo — it already lives inside the **RemClaw** repo.)
+
+2. **BrowserLiveCard overlap.** The shipping `BrowserLiveCard`/`SharedBrowserLiveSheet` (code-real, Foundation)
+   **overlaps the Muse-derived Proposed "Browser takeover" `437:68`.** Keep the **code-real** one as the source of
+   truth; the Muse `437:68` becomes reference/inspiration, not a second surface. (Same "never blur as-built with
+   Proposed" rule.)
+
+3. **Separate design-system repo + Code Connect.** Founder wants ONE canonical design source that the app consumes,
+   with **Code Connect** binding Figma components → code so **design drives the app**. `rem-design-system` (this
+   repo) is the natural home. Direction: (a) make the Figma file the canonical UI vocabulary; (b) Code Connect maps
+   each component → its `RemChatUI`/app struct; (c) the app imports from the reconciled package. This is the
+   "design is cheap, align now" bet.
+
+4. **Astryx composer (founder loves it).** ASTRYX's composer wraps the input in a **surrounding background/backdrop
+   container** and folds **attachments inline** — a clean, contained composer style (React). Adopt-candidate: bring
+   the "surrounded" backdrop treatment into the Rem composer (which today is a single `.ultraThinMaterial` glass
+   pill). Open Q the founder raised: how it shows **errors + attachments simultaneously**. Prototype it in the
+   Proposed track and compare to the current glass pill before committing.
+
+5. **Glass:** the app IS glass on iOS 26 (`.ultraThinMaterial` on composer/contextual/toast/jump-to-today pill),
+   with the BrowserLiveCard the deliberate solid exception. Design-system components must reflect this (glass where
+   the code is glass).
+
+6. **Size variants principle (founder).** Components (device/"page" frame, RemFaceMark, sheets, cards) should ship in
+   **multiple sizes** as variants so a size can be picked per scenario (e.g. small device thumbnails for flow maps,
+   RemFaceMark 72 for empty-state vs 28 for avatars) — not one fixed size. Build size variants as we componentize.

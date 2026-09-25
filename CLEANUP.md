@@ -27,9 +27,17 @@ VoiceBar, TypingDots, ThinkingBlock, ToolResultCard (generic), ContextualMessage
   **Composing** (attachments strip = Cloud-browser chip + image chip; `arrow.up` on brand-blue) · **Sending**
   (`stop.fill` on **system-red** = abort). Speak = brand-blue pill (waveform); model chip "Auto ⌄". Verified.
   `RemComposerBar` shell L20 (ultraThinMaterial pill, grows 1→5 lines, edge-fade when scrolling).
-- [x] **"+" Add to Chat sheet** (`addToChatSheet` L4135) — **BUILT** `Screen/Add to Chat (sheet)` `525:2`.
-  Camera/Photos/Files attach boxes (brand-blue icon over caption, `.height(340)` medium sheet) + **Cloud
-  browser** row + **Thinking** row (Off/Low/Medium/High menu). Real SF Symbols, bound colors. Verified.
+- [x] **"+" Add to Chat sheet** (`addToChatSheet` L4135) — **BUILT on the iOS-26 kit Inspector (medium) sheet**
+  `Screen/Add to Chat (sheet)` `525:2` (kit `Sheet - Inspector - iPhone` `493:3199` clone — grabber · X ·
+  "Add to Chat" · submit-arrow hidden). Camera/Photos/Files attach boxes + **Cloud browser** row + **Thinking**
+  row in the content slot. Founder feedback (2026-09-25): the first build hand-built the sheet chrome — **RULE:
+  always reuse the kit sheet, never hand-build sheet chrome.** Rebuilt. Verified.
+- **GLASS audit (founder asked "are we using glass?"):** YES on iOS 26 — `.ultraThinMaterial` (Liquid Glass) on
+  the **composer pill** (`RemComposerBar` L84), **RemContextualMessage** (L71), **RemToast** (L128), the
+  **jump-to-today pill** (`AgendaView` L120), and a chat circle button (L5244). **Deliberate exception: the
+  BrowserLiveCard is SOLID** `backgroundSecondary` (code comment: opaque so the transcript doesn't read through)
+  — so my solid card is correct, but **my Composer `527:2` used a solid `fill/tertiary` and should be a glass
+  (`.ultraThinMaterial`) pill** — fidelity fix queued.
 - [ ] **Attachments strip** — removable **image chips** (56pt thumb + `xmark.circle.fill`, `attachmentChip` L4523)
   and the **Cloud-browser chip** (globe pill + ✕, `browserCapabilityChip` L4276), shown above the pill.
 - [ ] **In-message attachment** (`attachmentBadge` L3470) — inline image (tap → `FullScreenImageViewer`) or
