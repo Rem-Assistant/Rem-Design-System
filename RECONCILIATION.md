@@ -18,9 +18,9 @@
 |---|---|---|---|
 | `InitialOnboardingView` (sign-in) | `Screen/Login` `411:15` | logo was a plain rect | ~ **network glyph added** on the blue square (LogoView); buttons still to reconcile to `SecondaryButton` style |
 | `ValuePropOnboardingView` ("How Rem Works", 3 steps) | `Screen/Onboarding — How Rem Works` `545:40` | was missing | ✓ **built** — header + Capture/Schedule/Start `StepView`s (plus.circle.fill/calendar.circle.fill/clock.fill, systemBlue) + black `PrimaryButton` "Continue →" |
-| `PermissionsOnboardingView` | — (missing) | not built | pending |
-| `OnboardingView` (final) | — (missing) | not built | pending |
-| `HomeLandingView` | — | not compared | pending |
+| `PermissionsOnboardingView` | `Screen/Onboarding — Permissions` `551:49` | was missing | ✓ **built** — Voice Capture/Smart Scheduling/Stay focused `PermissionView`s (icon + title/desc + fillTertiary blue enable button) + black Continue |
+| `OnboardingView` (container) | — | it's a paged `TabView` of Initial→ValueProp→Permissions, **not a separate screen** | ✓ n/a — the 3 screens above ARE the flow (page-dots implied) |
+| `HomeLandingView` | — | not compared | next |
 | `InboxView` | `Screen/Inbox` (existing) | not compared | pending |
 | `HistoryView` | `Activity` `413:32`? | not compared | pending |
 | `SettingsView` | Settings `130:44` | not compared | pending |
