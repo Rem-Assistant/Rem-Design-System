@@ -1,5 +1,20 @@
 # Reconciliation map — Figma ⇄ canonical code
 
+## ⚠ CRUX DECISION (founder) — RemUI is systematically simpler than the shipping app
+Every core screen shows it: RemUI Home/Inbox/etc. are **cleaner, simpler** than what ships. Two readings:
+- **(A) Simplify toward RemUI** — RemUI is the target; make the app cleaner (match RemUI everywhere; the
+  richer shipping bits are what we're *removing*). The goal text ("build/update Figma to **match RemUi**")
+  reads this way.
+- **(B) Keep the richer shipping app** — RemUI is inspiration; the shipping app (which the founder validated
+  via screenshot: DateNav dashes, "No agenda yet" + Suggestions) is canonical; fold RemUI's clean components in.
+The founder has verbally overridden toward (B) once (DateNav **dashes**, kept in `43:2`). **This one answer sets
+how every remaining core screen reconciles.** Onboarding was unambiguous (RemUI = the new flow) and is done;
+the tension is only on the core app screens (Home, Inbox, Settings, TaskEvent). Default assumed: **(B)** —
+shipping-canonical, fold RemUI's clean components in — until told otherwise.
+
+---
+
+
 > Goal (2026-09-25): make the Rem Figma design system the faithful single source of truth by
 > reconciling it to the app's canonical code. **Canonical sources:** the founder-authored **RemUI**
 > prototype (`RemClaw:docs/prototypes/RemUI`, branch `claude/rem-ui-prototype-reference`) for
@@ -21,7 +36,7 @@
 | `PermissionsOnboardingView` | `Screen/Onboarding — Permissions` `551:49` | was missing | ✓ **built** — Voice Capture/Smart Scheduling/Stay focused `PermissionView`s (icon + title/desc + fillTertiary blue enable button) + black Continue |
 | `OnboardingView` (container) | — | it's a paged `TabView` of Initial→ValueProp→Permissions, **not a separate screen** | ✓ n/a — the 3 screens above ARE the flow (page-dots implied) |
 | `HomeLandingView` | Agenda `181:754` (shipping) | **RemUI Home is a simpler *prototype* than the shipping Agenda** — see divergences below | ? founder call which is canonical; **BottomToolbar tab bar built** `552:33` |
-| `InboxView` | `Screen/Inbox` (existing) | not compared | pending |
+| `InboxView` | `Screen/Inbox` `206:703` | header + tray empty state **aligned** (identical copy); **rows diverge** (RemUI `InboxTaskCard` = circle + title + CategoryBadge, cleaner; existing = shipping `SharedTaskRow` style) | ~ align rows to RemUI once the crux (below) is decided |
 | `HistoryView` | `Activity` `413:32`? | not compared | pending |
 | `SettingsView` | Settings `130:44` | not compared | pending |
 | `TaskEventView` | `New Task` `404:5` | not compared | pending |
