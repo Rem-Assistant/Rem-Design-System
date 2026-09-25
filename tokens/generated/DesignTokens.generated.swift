@@ -10,62 +10,62 @@ import AppKit
 public enum DesignTokens {
     public enum Color {
         #if os(iOS)
-        public static let backgroundPrimary = Color(.systemBackground)
+        public static let backgroundPrimary = SwiftUI.Color(.systemBackground)
         #else
-        public static let backgroundPrimary = Color(nsColor: .windowBackgroundColor)
+        public static let backgroundPrimary = SwiftUI.Color(nsColor: .windowBackgroundColor)
         #endif
         #if os(iOS)
-        public static let backgroundSecondary = Color(.secondarySystemBackground)
+        public static let backgroundSecondary = SwiftUI.Color(.secondarySystemBackground)
         #else
-        public static let backgroundSecondary = Color(nsColor: .controlBackgroundColor)
+        public static let backgroundSecondary = SwiftUI.Color(nsColor: .controlBackgroundColor)
         #endif
         #if os(iOS)
-        public static let backgroundTertiary = Color(.tertiarySystemBackground)
+        public static let backgroundTertiary = SwiftUI.Color(.tertiarySystemBackground)
         #else
-        public static let backgroundTertiary = Color(nsColor: .textBackgroundColor)
+        public static let backgroundTertiary = SwiftUI.Color(nsColor: .textBackgroundColor)
         #endif
         #if os(iOS)
-        public static let labelPrimary = Color(.label)
+        public static let labelPrimary = SwiftUI.Color(.label)
         #else
-        public static let labelPrimary = Color(nsColor: .labelColor)
+        public static let labelPrimary = SwiftUI.Color(nsColor: .labelColor)
         #endif
         #if os(iOS)
-        public static let labelSecondary = Color(.secondaryLabel)
+        public static let labelSecondary = SwiftUI.Color(.secondaryLabel)
         #else
-        public static let labelSecondary = Color(nsColor: .secondaryLabelColor)
+        public static let labelSecondary = SwiftUI.Color(nsColor: .secondaryLabelColor)
         #endif
         #if os(iOS)
-        public static let labelTertiary = Color(.tertiaryLabel)
+        public static let labelTertiary = SwiftUI.Color(.tertiaryLabel)
         #else
-        public static let labelTertiary = Color(nsColor: .tertiaryLabelColor)
+        public static let labelTertiary = SwiftUI.Color(nsColor: .tertiaryLabelColor)
         #endif
         #if os(iOS)
-        public static let separator = Color(.separator)
+        public static let separator = SwiftUI.Color(.separator)
         #else
-        public static let separator = Color(nsColor: .separatorColor)
+        public static let separator = SwiftUI.Color(nsColor: .separatorColor)
         #endif
         #if os(iOS)
-        public static let fillTertiary = Color(.tertiarySystemFill)
+        public static let fillTertiary = SwiftUI.Color(.tertiarySystemFill)
         #else
-        public static let fillTertiary = Color(nsColor: .quaternaryLabelColor)
+        public static let fillTertiary = SwiftUI.Color(nsColor: .quaternaryLabelColor)
         #endif
         #if os(iOS)
-        public static let buttonBackground = Color(.label)
+        public static let buttonBackground = SwiftUI.Color(.label)
         #else
-        public static let buttonBackground = Color(nsColor: .labelColor)
+        public static let buttonBackground = SwiftUI.Color(nsColor: .labelColor)
         #endif
         #if os(iOS)
-        public static let pillBackground = Color(.secondarySystemBackground)
+        public static let pillBackground = SwiftUI.Color(.secondarySystemBackground)
         #else
-        public static let pillBackground = Color(nsColor: .quaternaryLabelColor).opacity(0.3)
+        public static let pillBackground = SwiftUI.Color(nsColor: .quaternaryLabelColor).opacity(0.3)
         #endif
-        public static let systemBlue = Color.blue
-        public static let systemGreen = Color.green
-        public static let systemRed = Color.red
-        public static let systemYellow = Color.yellow
-        public static let systemOrange = Color.orange
-        public static let systemIndigo = Color.indigo
-        public static let systemPurple = Color.purple
+        public static let systemBlue = SwiftUI.Color.blue
+        public static let systemGreen = SwiftUI.Color.green
+        public static let systemRed = SwiftUI.Color.red
+        public static let systemYellow = SwiftUI.Color.yellow
+        public static let systemOrange = SwiftUI.Color.orange
+        public static let systemIndigo = SwiftUI.Color.indigo
+        public static let systemPurple = SwiftUI.Color.purple
         public static let brandBlue = SwiftUI.Color(red: 12/255, green: 80/255, blue: 255/255)
         public static let brandBlueOnFill: SwiftUI.Color = {
         #if os(iOS)
