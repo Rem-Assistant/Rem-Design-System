@@ -68,13 +68,13 @@ struct RemButtonTokenSet {
             switch variant {
             case .rectBlue:
                 background = DesignTokens.Color.brandBlue
-                foreground = .white
+                foreground = DesignTokens.Color.labelOnColor
             case .rectSecondary:
                 background = DesignTokens.Color.fillTertiary
                 foreground = DesignTokens.Color.labelPrimary
             case .rectDestructive:
                 background = DesignTokens.Color.systemRed
-                foreground = .white
+                foreground = DesignTokens.Color.labelOnColor
             default: // rectBlack
                 background = DesignTokens.Color.buttonBackground
                 foreground = DesignTokens.Color.backgroundPrimary

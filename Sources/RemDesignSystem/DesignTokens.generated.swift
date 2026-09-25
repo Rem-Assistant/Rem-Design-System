@@ -39,6 +39,7 @@ public enum DesignTokens {
         #else
         public static let labelTertiary = SwiftUI.Color(nsColor: .tertiaryLabelColor)
         #endif
+        public static let labelOnColor = SwiftUI.Color(red: 255/255, green: 255/255, blue: 255/255)
         #if os(iOS)
         public static let separator = SwiftUI.Color(.separator)
         #else
