@@ -14,21 +14,34 @@ The founder reversed the premise the `/goal` was built on. Verified against the 
   components, then retire). Approved this session: move a *presentational package* into this repo
   built from the **shipping** views + Code Connect; RemUI content does not move.
 
-### 🔴 OPEN RULING (blocks track 1 rework) — mirror-today vs aspiration
-"Code-with-callers" and the `/goal`'s retire-list **conflict on onboarding**. The real shipping flow
-(`OnboardingFlow.swift`, caller `ContentView:46`) is `signIn → dataSharingConsent → deploying →
-postSetupActivation`:
-- The **deploy / "personal server" screen is ALIVE** (has a caller) — but `/goal` + RemUI said retire
-  it. I retired `415:15`. Under code-with-callers that retire was wrong.
-- **"How Rem Works" + Permissions value-prop screens are DEAD** (no callers) — but `/goal` said build
-  them. I built `545:40` + `551:49` from stale RemUI.
-> Ruling needed: does Figma mirror **today's shipping code** (un-retire deploy `415:15`; demote
-> `545:40`/`551:49` to a "Proposed — no callers" lane) or **the aspirational future** (deploy really
-> is going away → land that in code first, then Figma follows)? Recommendation: mirror
-> code-with-callers; aspirational screens land in code (or a dated decision) first, then design
-> follows via Code Connect — otherwise Figma re-drifts from the app. **To-correct on ruling:**
-> un-retire/keep `415:15`, re-label `545:40`/`551:49`, re-verify every retire (incl. `414:15`)
-> against callers.
+### 🟢 RULING (2026-09-25, founder) — mirror where we're taking it; design AND code move together
+Founder ruling: **"mirror where I am taking it… you'd have to design AND code, not one or the other."**
+Figma reflects the *intended* onboarding, and that intent lands in **both** the design and
+`OnboardingFlow.swift` — never design-only depicting a flow the binary lacks (that's the drift we're
+killing). Practically:
+- **Deploy / "personal server" screen → removed from onboarding** in design AND code. It is alive today
+  (`OnboardingFlow.deploying`, caller `ContentView:46`), so removal is a real product change, not a
+  relabel. `415:15` stays retired (correct after all); the code change is the load-bearing part.
+- **How Rem Works `545:40` + Permissions `551:49` → promoted** from "stale prototype" to the *target*
+  onboarding — but they must be **coded** into `OnboardingFlow.swift`, not left as dead Figma.
+- 🔶 **Open load-bearing Q (founder):** the deploy step is where the per-user gateway is provisioned. If
+  it leaves onboarding, provisioning must move (background / post-sign-in / lazy on first agent use).
+  Confirm that before ripping the step out. Note the existing `Proposed · Onboarding` page (`488:2`)
+  already sketches a Muse-informed "Connect apps → Set up voice" first-run over the real Connectors +
+  Voice surfaces — that is the likely target shape.
+- **Principle now:** aspirational screens co-evolve design+code via Code Connect; "code-with-callers"
+  still governs which of TWO *existing* implementations wins, and still demotes never-coded Figma-only
+  flows (e.g. compose→wake/schedule) until built in both.
+
+### Platform reach (2026-09-25, founder) — design system as the cross-platform source
+Founder: the system is **HIG-based today, may deviate later; it can be an Android source; Compose can
+mirror the same views.** Agreed — the cross-platform source is the **design layer (Figma + tokens)**,
+not SwiftUI (Apple-only). Path: `tokens.json` → Style Dictionary → SwiftUI theme **and** Compose theme;
+keep views presentational + token-driven so both platforms consume one spec; Code Connect can map
+Figma → RemUI (SwiftUI) and Figma → Compose. iPad→macOS stays one SwiftUI codebase (today's Shared/
+Views pattern); Android is a parallel Compose implementation of the same Figma/token spec. Standing up
+`tokens.json` as the single source is the prerequisite; do it before broad screen build-out if Android
+is near-term.
 
 Track 2 (ContextualMessage/DateNav) and track 3 (chat scenarios) are grounded in `Shared/Views/**` +
 `RemChatUI` — all code-with-callers — so they stand under the corrected rule.
