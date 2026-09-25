@@ -18,7 +18,7 @@ import { dirname, join } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = join(HERE, "..", "tokens", "tokens.json");
-const OUT_SWIFT = join(HERE, "..", "tokens", "generated", "DesignTokens.generated.swift");
+const OUT_SWIFT = join(HERE, "..", "Sources", "RemDesignSystem", "DesignTokens.generated.swift");
 const OUT_CSS = join(HERE, "..", "tokens", "generated", "tokens.generated.css");
 
 const T = JSON.parse(readFileSync(SRC, "utf8"));

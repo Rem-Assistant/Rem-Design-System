@@ -1,2 +1,5 @@
 node_modules/
 site/
+
+# Swift package build artifacts
+.build/
