@@ -71,7 +71,7 @@ improve it. Confirm.
 | DateNav "three dashes" packed to iOS `DateNavigationHeader` code | `43:2` | ✓ |
 | ContextualMessage unifies pairing + calendar-access | `537:31` · `537:41` | ✓ both built in RemContextualMessage form |
 | ContextualMessage state placed at top of Agenda | Agenda `181:754` · banner `554:336` | ✓ pairing banner inserted after status bar / before DateNav, w/ Review-Reset actions |
-| ContextualMessage component `73:39` actions-footer slot | `73:39` | ~ pending (5 tone symbols need an actions swap-slot) |
+| ContextualMessage component `73:39` actions-footer slot | `73:39` · example `560:6` | ~ **actions footer documented** as a labeled example beside the set (`73:39` is a COMPONENT_SET, variant-only); the true "Actions" variant/swap-prop on the set is a bounded follow-up. Actionable form is built (`537:31/41`) + placed in Agenda |
 | CODE: `runtimePairingRecoveryCard` → adopt `RemContextualMessage` | `SharedRemChatView` L3083 | ? logged for code side |
 
 ## Chat scenarios (track 3) — see CLEANUP "Founder review 6" for the full list
