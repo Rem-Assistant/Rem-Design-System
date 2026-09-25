@@ -22,10 +22,11 @@ VoiceBar, TypingDots, ThinkingBlock, ToolResultCard (generic), ContextualMessage
 (`524:2`) holds the builds.
 
 ### Composer & input (partial today — only the pill shell)
-- [ ] **Full composer control row** `[+] · model picker · field · [Speak] [send]` (`SharedRemChatView.composerBar`
-  L3913). Send button has TWO states: idle **`arrow.up`** on brand-blue (or label/tertiary disabled) vs
-  in-progress **`stop.fill`** on **system-red** (abort). Speak = brand-blue "Speak" pill (waveform) / muted when
-  no quota. `RemComposerBar` shell L20 (ultraThinMaterial pill, grows 1→5 lines, edge-fade when scrolling).
+- [x] **Full composer control row** `[+] · model picker · field · [Speak] [send]` (`SharedRemChatView.composerBar`
+  L3913) — **BUILT** `Composer (states)` `527:2`: **Idle** ("Ask anything", `arrow.up` disabled grey) ·
+  **Composing** (attachments strip = Cloud-browser chip + image chip; `arrow.up` on brand-blue) · **Sending**
+  (`stop.fill` on **system-red** = abort). Speak = brand-blue pill (waveform); model chip "Auto ⌄". Verified.
+  `RemComposerBar` shell L20 (ultraThinMaterial pill, grows 1→5 lines, edge-fade when scrolling).
 - [x] **"+" Add to Chat sheet** (`addToChatSheet` L4135) — **BUILT** `Screen/Add to Chat (sheet)` `525:2`.
   Camera/Photos/Files attach boxes (brand-blue icon over caption, `.height(340)` medium sheet) + **Cloud
   browser** row + **Thinking** row (Off/Low/Medium/High menu). Real SF Symbols, bound colors. Verified.
