@@ -74,13 +74,12 @@ all belonging on the **Cards** page:
 
 | Family | Cases | Card component | Status |
 |---|---|---|---|
-| Calendar | events / add / update / delete | ListCard (events) + ConfirmationCard (add/update/delete) | ListCard **todo** · Confirmation ✓ `557:31` |
-| Reminders | list / add / update / delete | ListCard (list) + ConfirmationCard | ListCard **todo** · Confirmation ✓ |
+| Calendar | events / add / update / delete | CalendarEventsCard + ConfirmationCard | ✓ `570:31` · Confirmation ✓ `557:31` |
+| Reminders | list / add / update / delete | RemindersCard + ConfirmationCard | ✓ `570:59` · Confirmation ✓ |
 | Tasks | create / update / delete | ConfirmationCard | ✓ `557:31` |
-| Device | status / info | DeviceStatusCard · DeviceInfoCard | Status ✓ `566:68` · Info **todo** |
+| Device | status / info | DeviceStatusCard · DeviceInfoCard | Status ✓ `566:68` · Info ✓ `570:86` |
 | Notify | success | ConfirmationCard | ✓ |
 | Error / Unknown | error / unknown | ErrorResultCard · collapsed "Tool result" | ✓ `557:31` |
 
-Gaps to finish the chat tool-call set: **ListCard** (calendar-events + reminders lists) and
-**DeviceInfoCard**. Both are code-with-callers (`ToolResultCardView`, rendered at
-`SharedRemChatView.swift:2720`).
+**All 16 `ParsedToolResult` cases now have built card components.** (Reminders logo is an orange-tile
+placeholder — the only brand-asset debt.)
