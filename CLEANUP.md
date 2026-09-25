@@ -10,6 +10,85 @@
 > not captioned in the community file). IDEAL: the real app fetches brand logos from
 > `logos.composio.dev/api/<toolkit>` (remote SVGs) — embed those for exact fidelity in a later pass.
 
+## Founder review 6 — 2026-09-25 (Chat scenario fidelity pass — the un-designed chat states)
+
+Founder: *"the chat right now is a DS screen. We've nailed down the basic of chat… but not yet the
+other things — sending a prompt, permissions, browser use, attachment (the + button). You're making
+it my job to find the gaps; I expect you to be smart enough to know what they are."* Correct. Did a
+full code-grounded fidelity sweep of the **Chat surface** (`Shared/Views/Chat/**`, `Shared/Views/Browser/**`,
+`SharedRemChatView.swift`). What the DS **had** (Chat page `297:2`): MessageBubble, ComposerBar (shell only),
+VoiceBar, TypingDots, ThinkingBlock, ToolResultCard (generic), ContextualMessage. Everything below is
+**code-real and was NOT designed** — Foundation, mirrors shipping SwiftUI. New page **`Chat · Scenarios`**
+(`524:2`) holds the builds.
+
+### Composer & input (partial today — only the pill shell)
+- [ ] **Full composer control row** `[+] · model picker · field · [Speak] [send]` (`SharedRemChatView.composerBar`
+  L3913). Send button has TWO states: idle **`arrow.up`** on brand-blue (or label/tertiary disabled) vs
+  in-progress **`stop.fill`** on **system-red** (abort). Speak = brand-blue "Speak" pill (waveform) / muted when
+  no quota. `RemComposerBar` shell L20 (ultraThinMaterial pill, grows 1→5 lines, edge-fade when scrolling).
+- [x] **"+" Add to Chat sheet** (`addToChatSheet` L4135) — **BUILT** `Screen/Add to Chat (sheet)` `525:2`.
+  Camera/Photos/Files attach boxes (brand-blue icon over caption, `.height(340)` medium sheet) + **Cloud
+  browser** row + **Thinking** row (Off/Low/Medium/High menu). Real SF Symbols, bound colors. Verified.
+- [ ] **Attachments strip** — removable **image chips** (56pt thumb + `xmark.circle.fill`, `attachmentChip` L4523)
+  and the **Cloud-browser chip** (globe pill + ✕, `browserCapabilityChip` L4276), shown above the pill.
+- [ ] **In-message attachment** (`attachmentBadge` L3470) — inline image (tap → `FullScreenImageViewer`) or
+  paperclip + filename. Plus the user-bubble **meta line** ("Transcribed" • "Cloud browser", L3624).
+- [ ] **Model picker menu** (composer, L4037): Automatic + provider submenus + Manage models.
+
+### Browser use (the founder's headline — granular, field-level, NOT whole-computer)
+- [x] **In-chat BrowserLiveCard** (`BrowserLiveView.swift:142`) — **BUILT** variant set `BrowserLiveCard` `524:31`:
+  **Opening** ("Opening browser…") · **Active** ("Session active · tap to watch or take over") · **Ended**
+  ("Session ended · tap to review"). 56×40 preview + labels on background/secondary. Verified.
+- [ ] **Browser takeover sheet** (`SharedBrowserLiveSheet` L215) — the real granular control, HIGH priority:
+  address bar (lock/https + host-emphasised/path-dimmed spoof guard + **Live** badge) · live frame with a
+  **RemoteCursor** (tap=click, drag=scroll) · **control bar** (take-control ⇄ give-back CTA) · **field editor**
+  (native TextField / SecureField / `<select>` menu mirroring the tapped remote input — "Tap a field on the
+  page to edit it here"). States: **live / waking** ("Waking Rem's browser…") **/ disconnected** (frozen +
+  Try again) **/ ended** (frozen). This is what the founder means by "allow clicking on certain inputs."
+
+### Prompt / stream / status states
+- [ ] **Empty state + starter prompts** (`emptyStateBody` L2229): RemFaceMark(idle) + "Start a conversation" +
+  tappable `FirstChatPrompt` rows.
+- [ ] **Interrupted → Retry card** (`interruptedTurnCard` L1791): yellow "Response interrupted / Rem didn't
+  finish replying." + **Retry**.
+- [ ] **Streaming bubble** (L4879, `<think>`-split) + **typingIndicator** (RemFaceMark.thinking + "Thinking…").
+- [ ] **errorBanner** (yellow, dismissable, `humanizedChatError`) + **quotaExceededBanner** (red "Daily limit
+  reached").
+- [ ] **Voice transcription placeholder** (transcribing/transcribed bubble, L1836).
+
+### Run activity / "show your work" (Muse-adjacent, already partly in Proposed Timeline)
+- [ ] **ActionLifecycleDisclosure** (`ActionLifecycleCard.swift:683`): collapsible tool/thought timeline —
+  live **"Working"** / historical **"Worked for Xs"**, **"Thought for Xs"**, per-row status icon + detail.
+  (The Proposed `Timeline` `482:56` is the reference; this is the shipping in-chat version.)
+- [ ] **Thinking group block** ("Thinking · N steps", collapse chrome).
+
+### Tool-result cards (have generic + calendar + reminders; MISSING)
+- [ ] **ConfirmationCard** ("Event Created" / "Reminder Set" / "Task Created" / "Notification Sent",
+  `CalendarCard.swift:483`) · **DeviceStatusCard** (battery/thermal/low-power/storage) · DeviceInfoCard ·
+  **ErrorResultCard** (collapsible "Error") · FallbackResultCard (raw "Tool result").
+- [ ] **AssistantMarkdownView** (`AssistantMarkdownRenderer.swift:330`): **code blocks** (language label,
+  bounded scroll, mono), **GFM tables**, **inline images**, scheme-allowlisted links. Big rendering surface.
+
+### Permissions / approval (in-stream)
+- [ ] **RemProposalCardView** (`RemProposalCardView.swift:10`) — inline `tasks.update` approval: header +
+  action sentence + **Approve / Dismiss** (pending) → terminal (.succeeded/.failed/.dismissed/.stale). The
+  Cards-page `ProposalCard` `54:55` is the same shape — verify parity, then bring into the Chat scenarios.
+- [ ] **runtimePairingRecoveryCard** (L3083): "Rem needs permission to use your machine." + **Approve Rem
+  Agent** (inline machine-permission ask).
+- Note: there is **no** generic per-tool "Allow / Deny / Always allow" card — tools auto-approve at connect
+  time. The two above + the browser take-control handshake ARE the permission surface. (Confirms EVOLUTION's
+  Muse "approval gate" is Proposed, not shipped.)
+
+### Loading / connection / dividers
+- [ ] **ChatWakingSkeleton** (shimmer mock bubbles) · **ChatConnectionRecoveryCard / LoadingView**
+  (pairingRequired / unauthorized / unreachable / connecting — `ChatConnectionPresentation`).
+- [ ] **ChatTimeSeparator** ("Today 2:30 PM" day/time divider).
+
+**Build order (this pass):** ① BrowserLiveCard ✓ ② Add-to-Chat sheet ✓ → ③ composer control row + attachment
+strip → ④ Browser takeover sheet → ⑤ empty state + interrupted + banners → ⑥ ActionLifecycle + confirmation/
+device/error cards → ⑦ connection/skeleton/time-separator → ⑧ AssistantMarkdown (code/table). Self-verify each;
+graduate into the Chat catalog once componentized. **Not founder-gated** — all code-specified.
+
 ## Founder review 4 — 2026-09-24 (file organization / auto-layout pass)
 
 Founder: *"A lot of your screens feel disorderly — you're not organizing them in autolayout. Also some

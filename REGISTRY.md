@@ -134,6 +134,16 @@ Sections. Legacy standalone templates (old AgendaView/ChatScreen/InboxView/Setti
 | New Task or Event | `404:5` | create mode — Cancel/Save nav, **New Task / New Event** segmented picker, Title + dashed-circle status indicator, "Set date, time, repeat" card, notes — `TaskEventView` (isNewTask) |
 | New Task or Event — kit Full sheet | `507:115` | Settings page — kit **Full-Screen sheet** (grabber · **X** · title · blue **↑**=save) wrapping the New Task form — the Inbox/Agenda "+" full-height sheet variant |
 | Schedule Tasks — kit Full sheet | `514:272` | Agenda page — kit **Full-Screen sheet** (grabber · **X**=Cancel · "Schedule Tasks" · submit-arrow hidden): segmented **All/Inbox/Overdue** → inset-grouped task list with selection circles (`checkmark.circle.fill` / ring) → action bar **Add to Today** (clock) + **Plan** (calendar). Opened by the AgendaAddSchedule "Schedule" action. Backing view `TaskSelectorSheet` (`AgendaView.swift` L1030–1158). Bound colors + real symbols ✓ |
+| Add to Chat sheet | `525:2` | **Chat · Scenarios** page — the composer **"+"** medium sheet: Camera/Photos/Files attach boxes + **Cloud browser** row + **Thinking** (Off/Low/Medium/High). `addToChatSheet` (`SharedRemChatView.swift` L4135). Real SF Symbols, bound colors ✓ |
+
+### Chat · Scenarios (code-real chat states — `Chat · Scenarios` page `524:2`, in progress)
+The scenario layer of chat (composer +/attachments, cloud-browser use, permission asks, prompt/stream states,
+empty state) — see CLEANUP "Founder review 6" for the full gap list + build order.
+
+| Component | Node | Notes |
+|-----------|------|-------|
+| BrowserLiveCard | `524:31` | In-chat cloud-browser card, variant set **State=Opening/Active/Ended** — 56×40 preview + "Rem's browser session" + status. `BrowserLiveView.swift:142`. ✓ |
+| Add to Chat sheet | `525:2` | (also in Screens above) the composer "+" attachment/thinking sheet. ✓ |
 | Privacy — "Privacy by design" | `410:16` | Onboarding page — hero (lock.shield.fill on brand tile), title/body, **Terms/Privacy rows in a grey grouped section**, **Button/Rect·Black CTA** "Accept and Continue" + legal footer — `AIDataSharingConsentView` |
 | Login — Sign in | `411:15` | Onboarding page — Rem logo + "Rem" + tagline, two **SignInButtons** (neutral/black filled): Continue with Google (placeholder G) / Apple (apple.logo U+F8FF), legal footer — `OnboardingFlow.signInContent` |
 | Sign Out — confirmation | `412:15` | Settings page — iOS action sheet: message + red "Sign Out" + separate "Cancel" — `SharedSettingsView` confirmationDialog |
