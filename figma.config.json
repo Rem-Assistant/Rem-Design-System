@@ -1,0 +1,6 @@
+{
+  "codeConnect": {
+    "parser": "swift",
+    "include": ["Sources/**/*.figma.swift"]
+  }
+}

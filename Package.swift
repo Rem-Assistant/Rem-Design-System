@@ -15,6 +15,12 @@ let package = Package(
         .library(name: "RemDesignSystem", targets: ["RemDesignSystem"]),
     ],
     targets: [
-        .target(name: "RemDesignSystem"),
+        .target(
+            name: "RemDesignSystem",
+            // Code Connect files are co-located with their components but excluded from the
+            // build so the shipping library never links the Figma Code Connect package.
+            // The `figma connect` CLI reads them directly; `figma connect check` validates drift.
+            exclude: ["Buttons/RemButton.figma.swift"]
+        ),
     ]
 )
