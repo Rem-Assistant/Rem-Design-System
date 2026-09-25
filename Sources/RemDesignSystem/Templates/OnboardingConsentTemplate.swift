@@ -89,7 +89,7 @@ public struct OnboardingConsentTemplate: View {
                     subtitle: item.subtitle,
                     action: item.action,
                     leading: { ContainedIcon(item.symbol, fill: .subtle) },
-                    trailing: { Chevron() }
+                    trailing: { DisclosureChevron() }  // Button-based sheet opener (not a List/NavigationLink)
                 )
             }
         }
