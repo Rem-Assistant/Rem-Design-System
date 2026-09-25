@@ -151,6 +151,7 @@ empty state) — see CLEANUP "Founder review 6" for the full gap list + build or
 | Prompt & status states | `528:2` | Empty state (face + "Start a conversation" + starter prompts) · Interrupted→Retry (orange) · error banner (reconnecting) · quota banner (red). `emptyStateBody`/`interruptedTurnCard`/`errorBanner`/`quotaExceededBanner`. ✓ |
 | Browser takeover (live) | `556:31` | `SharedBrowserLiveSheet` live state — grabber · Done/"Rem's browser"/End nav · address bar (lock + host/path + Live badge) · live surface (page + **RemoteCursor**) · "Rem is driving" + Take control. The field-level browser control. ✓ |
 | BottomToolbar (tab bar) | `552:33` | RemUI main tab bar: ☰ · mic FAB · +. ✓ |
+| Result cards | `557:31` | In-chat tool-result cards: **ConfirmationCard** (Event Created/Reminder Set/Task Created — icon+title+subtitle, fillTertiary) + collapsed **ErrorResultCard** (warning + "Error" + chevron). `ConfirmationCard`/`ErrorResultCard`. ✓ |
 | Add to Chat sheet | `525:2` | (also in Screens above) the composer "+" attachment/thinking sheet. ✓ |
 | Privacy — "Privacy by design" | `410:16` | Onboarding page — hero (lock.shield.fill on brand tile), title/body, **Terms/Privacy rows in a grey grouped section**, **Button/Rect·Black CTA** "Accept and Continue" + legal footer — `AIDataSharingConsentView` |
 | Login — Sign in | `411:15` | Onboarding page — Rem logo + "Rem" + tagline, two **SignInButtons** (neutral/black filled): Continue with Google (placeholder G) / Apple (apple.logo U+F8FF), legal footer — `OnboardingFlow.signInContent` |

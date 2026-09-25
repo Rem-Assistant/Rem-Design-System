@@ -77,5 +77,5 @@ improve it. Confirm.
 ## Chat scenarios (track 3) — see CLEANUP "Founder review 6" for the full list
 Built: BrowserLiveCard `524:31`, Add-to-Chat sheet `525:2`, Composer states `527:2`, prompt/status `528:2`,
 Developer pill `535:33`, pairing/calendar ContextualMessage `537:31`/`537:41`, **BottomToolbar tab bar `552:33`**,
-**Browser takeover (live) `556:31`**. Pending: result cards (Confirmation/DeviceStatus/Error), action-lifecycle
-"Working" timeline, connection/skeleton states, browser-takeover *controlling* state (field editor).
+**Browser takeover (live) `556:31`**, **Result cards `557:31`** (Confirmation + Error). Pending: DeviceStatus card,
+action-lifecycle "Working" timeline, connection/skeleton states, browser-takeover *controlling* state (field editor).
