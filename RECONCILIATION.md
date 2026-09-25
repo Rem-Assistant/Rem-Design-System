@@ -20,7 +20,7 @@
 | `ValuePropOnboardingView` ("How Rem Works", 3 steps) | `Screen/Onboarding — How Rem Works` `545:40` | was missing | ✓ **built** — header + Capture/Schedule/Start `StepView`s (plus.circle.fill/calendar.circle.fill/clock.fill, systemBlue) + black `PrimaryButton` "Continue →" |
 | `PermissionsOnboardingView` | `Screen/Onboarding — Permissions` `551:49` | was missing | ✓ **built** — Voice Capture/Smart Scheduling/Stay focused `PermissionView`s (icon + title/desc + fillTertiary blue enable button) + black Continue |
 | `OnboardingView` (container) | — | it's a paged `TabView` of Initial→ValueProp→Permissions, **not a separate screen** | ✓ n/a — the 3 screens above ARE the flow (page-dots implied) |
-| `HomeLandingView` | — | not compared | next |
+| `HomeLandingView` | Agenda `181:754` (shipping) | **RemUI Home is a simpler *prototype* than the shipping Agenda** — see divergences below | ? founder call which is canonical; **BottomToolbar tab bar built** `552:33` |
 | `InboxView` | `Screen/Inbox` (existing) | not compared | pending |
 | `HistoryView` | `Activity` `413:32`? | not compared | pending |
 | `SettingsView` | Settings `130:44` | not compared | pending |
@@ -37,6 +37,18 @@
 | Screen | Figma node | Note |
 |---|---|---|
 | Privacy — "Privacy by design" | `410:16` | RemUI flow is Initial → ValueProp → Permissions → Onboarding; no Privacy screen. Keep as a legal sub-screen or retire? — founder call. |
+
+## Prototype ⇄ shipping divergences (founder call — RemUI is simpler than the shipped app)
+The RemUI prototype and the shipping app disagree on the Home/Agenda surface. Which is canonical?
+| Element | RemUI prototype | Shipping app (founder validated via screenshot) |
+|---|---|---|
+| DateNav | plain chevrons, no dashes | **three dashes packed by each chevron** (`AgendaView.swift:643`) — kept `43:2` per founder |
+| Empty state | "No tasks scheduled" (icon + 2 lines) | "No agenda yet" + Add New/Schedule + **Suggestions** + See more (richer) |
+| Bottom FAB | `mic.fill` (voice) | chat/voice bubble (message + waveform) |
+| Schedule rows | `TaskCard` (TimeLabel + Category/Duration badges + FreeTimeCard) | `TaskEventRow` |
+→ **Recommendation:** treat the shipping app as canonical for Agenda (founder validated it, it's richer), and
+fold RemUI's clean components (TimeLabel, CategoryBadge, DurationBadge, FreeTimeCard, BottomToolbar) in where they
+improve it. Confirm.
 
 ## Reconciled drift (track 2)
 | Item | Figma node | Status |
