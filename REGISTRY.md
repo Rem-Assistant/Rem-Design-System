@@ -144,6 +144,7 @@ empty state) — see CLEANUP "Founder review 6" for the full gap list + build or
 |-----------|------|-------|
 | BrowserLiveCard | `524:31` | In-chat cloud-browser card, variant set **State=Opening/Active/Ended** — 56×40 preview + "Rem's browser session" + status. `BrowserLiveView.swift:142`. ✓ |
 | Composer (states) | `527:2` | Full composer `[+] · model · field · [Speak] [send]` in 3 states: Idle / Composing (+ attachments strip: Cloud-browser + image chip) / Sending (red `stop.fill` abort). `SharedRemChatView.composerBar` L3913. ✓ |
+| Prompt & status states | `528:2` | Empty state (face + "Start a conversation" + starter prompts) · Interrupted→Retry (orange) · error banner (reconnecting) · quota banner (red). `emptyStateBody`/`interruptedTurnCard`/`errorBanner`/`quotaExceededBanner`. ✓ |
 | Add to Chat sheet | `525:2` | (also in Screens above) the composer "+" attachment/thinking sheet. ✓ |
 | Privacy — "Privacy by design" | `410:16` | Onboarding page — hero (lock.shield.fill on brand tile), title/body, **Terms/Privacy rows in a grey grouped section**, **Button/Rect·Black CTA** "Accept and Continue" + legal footer — `AIDataSharingConsentView` |
 | Login — Sign in | `411:15` | Onboarding page — Rem logo + "Rem" + tagline, two **SignInButtons** (neutral/black filled): Continue with Google (placeholder G) / Apple (apple.logo U+F8FF), legal footer — `OnboardingFlow.signInContent` |

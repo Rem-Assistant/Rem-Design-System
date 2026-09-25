@@ -48,13 +48,14 @@ VoiceBar, TypingDots, ThinkingBlock, ToolResultCard (generic), ContextualMessage
   Try again) **/ ended** (frozen). This is what the founder means by "allow clicking on certain inputs."
 
 ### Prompt / stream / status states
-- [ ] **Empty state + starter prompts** (`emptyStateBody` L2229): RemFaceMark(idle) + "Start a conversation" +
-  tappable `FirstChatPrompt` rows.
-- [ ] **Interrupted → Retry card** (`interruptedTurnCard` L1791): yellow "Response interrupted / Rem didn't
-  finish replying." + **Retry**.
+- [x] **Empty state + starter prompts** (`emptyStateBody` L2229) — **BUILT** in `Prompt & status states` `528:2`:
+  face mark + "Start a conversation" + subtitle + 3 tappable `FirstChatPrompt` rows. (Face is a placeholder —
+  swap for the real `RemFaceMark` component when it's instanced into scenarios.) Verified.
+- [x] **Interrupted → Retry card** (`interruptedTurnCard` L1791) — **BUILT** `528:2`: orange-tint card,
+  ⚠ + "Response interrupted / Rem didn't finish replying." + blue **Retry**. Verified.
 - [ ] **Streaming bubble** (L4879, `<think>`-split) + **typingIndicator** (RemFaceMark.thinking + "Thinking…").
-- [ ] **errorBanner** (yellow, dismissable, `humanizedChatError`) + **quotaExceededBanner** (red "Daily limit
-  reached").
+- [x] **errorBanner** + **quotaExceededBanner** — **BUILT** `528:2`: orange dismissable "Reconnecting to your
+  gateway…" + red "Daily limit reached. Tap to upgrade." Verified.
 - [ ] **Voice transcription placeholder** (transcribing/transcribed bubble, L1836).
 
 ### Run activity / "show your work" (Muse-adjacent, already partly in Proposed Timeline)
