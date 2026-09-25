@@ -208,14 +208,26 @@ so re-read node positions before moving things.
   `110:50`, which should itself be reconciled to the kit's in a later controls pass). Nothing to build today.
 
 ### Agenda / Tasks & Agenda components
-- [x] **DateNavigationHeader "three lines" — RESOLVED from an app screenshot (2026-09-25).** The "three
-  rectangles/lines beside each arrow" are **three short grey dashes flanking each side**: `‹ - - - 📅 Today /
-  Sep 24 2026 - - - ›`. And the **calendar glyph is CORRECT** (it's in the app — I was wrong to consider it
-  drift). Fixed the master `43:2` directly: it's a HORIZONTAL auto-layout, so I inserted a **left dash-group**
-  (3 dashes) after the chevron and a **right dash-group** before the trailing chevron, each `layoutGrow=1` so
-  the chevrons sit at the edges and the calendar/date block centers — matches the app exactly. Dashes =
-  20×3 rounded rects bound to `label/tertiary`. Screenshot-verified against the app. My earlier 3-box stepper
-  was wrong and has been removed.
+- [x] **DateNavigationHeader "three lines" — RESOLVED, code-faithful (2026-09-25).** MISS ROOT CAUSE: there are
+  **two** date-nav views — `SharedDateNavigationHeader` (`SharedAgendaView.swift:212`, Mac/shared, plain
+  chevrons) and the **iOS `DateNavigationHeader` (`AgendaView.swift:643`)**, which the app actually uses and
+  which **draws the three dashes in code** (I'd only read the shared one — hence "can't see the code"). The iOS
+  spec: each side = `HStack(spacing:3){ chevron (22 bold) · 3× RoundedRectangle(corner 2, 10×4) }`, colored
+  `label/secondary` at **opacity 0.5**, packed next to the chevron; `Spacer(minLength: 8)` pushes the units to
+  the edges; center = calendar (22 bold brand/blue, today only) + relative label (22 bold) / date (13 bold
+  secondary). Fixed master `43:2` to exactly this: left unit (chevron+3 dashes packed) · space-between · date ·
+  right unit (3 dashes+chevron), dashes 10×4 `label/secondary` @ 0.5. **Calendar glyph kept (it IS in the app).**
+  Screenshot-verified against the app. (Lesson: check BOTH the iOS and shared view when a component has a
+  platform split.)
+- [~] **ContextualMessage reconciliation (founder, 2026-09-25).** The "Finish connecting this device" pairing
+  card and the **calendar-access** prompt are BOTH the canonical **`RemContextualMessage`** (`RemContextualMessage.swift`:
+  icon-accent · title (subheadline semibold) · subtitle (caption1) · **actions footer** · `.ultraThinMaterial`
+  glass · radius `xlarge` 24). Rebuilt both in that form (`537:31` pairing, `537:41` calendar-access) replacing
+  the bespoke card. **Still to reconcile:** (a) FIGMA — extend the `ContextualMessage` component `73:39` with an
+  **actions footer slot** so these are true instances (today its 5 tones have no action row); (b) CODE — the app's
+  bespoke `runtimePairingRecoveryCard` (`SharedRemChatView` L3083) should adopt `RemContextualMessage` like
+  `ChatConnectionLoadingView`/`GatewayDisconnectedBanner` already do; (c) **place this ContextualMessage state at
+  the top of the Agenda view** (screenshot shows it there).
 - [x] **Jump to Today pill — BUILT** (`Jump to Today` `530:34`). The Agenda's floating capsule shown when
   viewing a non-today date (`AgendaView.swift:109` `jumpToTodayButton`, bottom safe-area inset): `arrow.uturn.backward`
   + "Jump to Today", subheadline semibold, ultraThinMaterial capsule + shadow, minHeight 44. Was a real un-designed
