@@ -1,10 +1,12 @@
 import SwiftUI
 
 /// A rounded, filled square holding an SF Symbol — the settings / hero icon primitive.
-/// Figma canonical: **ContainedIcon** (`110:54`). Two fills:
+/// **Token-driven** via `ContainedIconTokenSet` (the same pattern as `RemButton`): this view is
+/// thin and reads every value from the token set for `(fill, size)`. Figma canonical:
+/// **ContainedIcon** `110:54` / variant set `614:8` (Fill × Size). SF Symbols render natively via
+/// `Image(systemName:)`. Two fills:
 /// - `.tint(color)` — solid color square + on-color (white) glyph (hero, colored settings icons).
-/// - `.subtle` — translucent `fill/tertiary` square + `label/secondary` glyph (inline list-row leading).
-/// All colors come from `DesignTokens`; SF Symbols render natively via `Image(systemName:)`.
+/// - `.subtle` — translucent `fill/tertiary` square + `label/secondary` glyph (inline row leading).
 public struct ContainedIcon: View {
     public enum Fill: Sendable {
         case tint(Color)
@@ -13,53 +15,37 @@ public struct ContainedIcon: View {
 
     let symbol: String
     var fill: Fill
-    var size: CGFloat
-    var cornerRadius: CGFloat
+    var size: ContainedIconSize
     var glyphWeight: Font.Weight
 
     public init(
         _ symbol: String,
         fill: Fill = .subtle,
-        size: CGFloat = 38,
-        cornerRadius: CGFloat = DesignTokens.CornerRadius.small,
+        size: ContainedIconSize = .small,
         glyphWeight: Font.Weight = .semibold
     ) {
         self.symbol = symbol
         self.fill = fill
         self.size = size
-        self.cornerRadius = cornerRadius
         self.glyphWeight = glyphWeight
     }
 
     public var body: some View {
+        let tokens = ContainedIconTokenSet(fill: fill, size: size)
         Image(systemName: symbol)
-            .font(.system(size: size * 0.46, weight: glyphWeight))
-            .foregroundStyle(foreground)
-            .frame(width: size, height: size)
-            .background(background, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-    }
-
-    private var background: Color {
-        switch fill {
-        case .tint(let color): return color
-        case .subtle: return DesignTokens.Color.fillTertiary
-        }
-    }
-
-    private var foreground: Color {
-        switch fill {
-        case .tint: return DesignTokens.Color.labelOnColor
-        case .subtle: return DesignTokens.Color.labelSecondary
-        }
+            .font(.system(size: tokens.glyphPointSize, weight: glyphWeight))
+            .foregroundStyle(tokens.foreground)
+            .frame(width: tokens.dimension, height: tokens.dimension)
+            .background(tokens.background, in: RoundedRectangle(cornerRadius: tokens.cornerRadius, style: .continuous))
     }
 }
 
 #if DEBUG
 #Preview("ContainedIcon") {
     HStack(spacing: 16) {
-        ContainedIcon("lock.shield.fill", fill: .tint(DesignTokens.Color.brandBlue), size: 64, cornerRadius: 18)
-        ContainedIcon("doc.text", fill: .subtle, size: 38)
-        ContainedIcon("shield", fill: .subtle, size: 38)
+        ContainedIcon("lock.shield.fill", fill: .tint(DesignTokens.Color.brandBlue), size: .large)
+        ContainedIcon("doc.text", fill: .subtle)
+        ContainedIcon("shield", fill: .subtle)
     }
     .padding()
 }

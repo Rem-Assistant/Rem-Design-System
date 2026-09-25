@@ -63,7 +63,7 @@ public struct OnboardingConsentTemplate: View {
 
     private var hero: some View {
         VStack(spacing: DesignTokens.Spacing.md) {
-            ContainedIcon(heroSymbol, fill: .tint(DesignTokens.Color.brandBlue), size: 64, cornerRadius: 18)
+            ContainedIcon(heroSymbol, fill: .tint(DesignTokens.Color.brandBlue), size: .large)
             VStack(spacing: DesignTokens.Spacing.sm) {
                 Text(title)
                     .font(DesignTokens.Typography.title1.weight(.semibold))
