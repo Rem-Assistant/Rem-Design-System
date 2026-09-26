@@ -20,6 +20,7 @@ const ORDER = [
   "TaskEventRow", "SuggestedTaskRow", "ProposalCard", "DateNavigationHeader",
   "CalendarEventsCard", "RemindersCard",
   "AgendaView", "InboxView", "SettingsView", "ChatScreen", "ConversationView",
+  "OnboardingSequencer",
 ];
 
 const PROPS = JSON.parse(readFileSync(join(ROOT, "agent", "props.json"), "utf8"));

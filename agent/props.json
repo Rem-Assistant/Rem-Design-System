@@ -118,6 +118,12 @@
     "InboxView": { "kind": "screen-template", "props": { "width": { "type": "number" } } },
     "SettingsView": { "kind": "screen-template", "props": { "width": { "type": "number" } } },
     "ConversationView": { "kind": "screen-template", "props": { "width": { "type": "number" } } },
-    "ChatScreen": { "kind": "screen-template", "props": { "width": { "type": "number" }, "height": { "type": "number" } } }
+    "ChatScreen": { "kind": "screen-template", "props": { "width": { "type": "number" }, "height": { "type": "number" } } },
+    "OnboardingSequencer": { "kind": "screen-template", "props": {
+      "steps": { "type": "data", "required": true, "desc": "Ordered step slots: Sign-in → Consent → (#12 middle steps); no deploy slot" },
+      "showProgress": { "type": "bool", "default": true, "desc": "Show the step progress indicator (Extend)" },
+      "signInState": { "type": "enum", "enum": ["returning", "new", "checking", "error", "recovery"], "default": "returning", "desc": "Sign-in step state, mapped from the host's real auth" },
+      "onComplete": { "type": "action", "desc": "Fires when the last step advances" }
+    } }
   }
 }
