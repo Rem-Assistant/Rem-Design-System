@@ -33,17 +33,23 @@ jobs:
       - name: List schemes (debug)
         run: xcodebuild -list || true
       - name: Render on iOS Simulator (light + dark)
-        env:
-          SNAPSHOT_OUT_DIR: ${{ github.workspace }}/artifacts/swiftui
         run: |
           set -eo pipefail
+          rm -rf "$RUNNER_TEMP/RenderSnapshots.xcresult"
           xcodebuild test \
             -scheme RemDesignSystem \
             -destination 'platform=iOS Simulator,name=iPhone 15' \
             -only-testing:RenderSnapshotTests \
             -resultBundlePath "$RUNNER_TEMP/RenderSnapshots.xcresult" \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tail -80
-      - run: ls -la artifacts/swiftui
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tail -60
+      - name: Extract PNGs from the xcresult
+        run: |
+          set -eo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          mkdir -p artifacts/swiftui "$RUNNER_TEMP/xc-attach"
+          xcparse attachments "$RUNNER_TEMP/RenderSnapshots.xcresult" "$RUNNER_TEMP/xc-attach"
+          find "$RUNNER_TEMP/xc-attach" -name '*.png' -exec cp {} artifacts/swiftui/ \;
+          echo "=== extracted ===" && ls -la artifacts/swiftui
       - uses: actions/upload-artifact@v4
         with:
           name: swiftui-screenshots

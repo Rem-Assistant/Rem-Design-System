@@ -22,21 +22,13 @@ private func chevron() -> some View {
 @MainActor
 final class RenderSnapshots: XCTestCase {
 
-    private var outDir: URL {
-        let base = ProcessInfo.processInfo.environment["SNAPSHOT_OUT_DIR"]
-            ?? FileManager.default.currentDirectoryPath + "/artifacts/swiftui"
-        let url = URL(fileURLWithPath: base)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
-    }
-
-    func testRenderAll() throws {
+    func testRenderAll() {
         for dark in [false, true] {
             let suffix = dark ? "dark" : "light"
-            try render("RemButton-\(suffix)", width: 300, height: nil, dark: dark) { buttonGallery }
-            try render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
-            try render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
-            try render("Consent-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen }
+            render("RemButton-\(suffix)", width: 300, height: nil, dark: dark) { buttonGallery }
+            render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
+            render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
+            render("Consent-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen }
         }
     }
 
@@ -104,7 +96,7 @@ final class RenderSnapshots: XCTestCase {
     // MARK: - iOS hosting-controller snapshot
 
     private func render(_ name: String, width: CGFloat, height: CGFloat?, dark: Bool,
-                        @ViewBuilder _ content: () -> some View) throws {
+                        @ViewBuilder _ content: () -> some View) {
         let root = content()
             .frame(width: width)
             .environment(\.colorScheme, dark ? .dark : .light)
@@ -129,12 +121,18 @@ final class RenderSnapshots: XCTestCase {
         let format = UIGraphicsImageRendererFormat.default()
         format.scale = 2
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { _ in
-            host.view.drawHierarchy(in: CGRect(origin: .zero, size: size), afterScreenUpdates: true)
+        let image = renderer.image { ctx in
+            // Render the layer tree directly — avoids the headless "render server returned error"
+            // that drawHierarchy(afterScreenUpdates:) hits in a logic-test simulator.
+            host.view.layer.render(in: ctx.cgContext)
         }
-        guard let png = image.pngData() else { return XCTFail("could not encode \(name)") }
-        try png.write(to: outDir.appendingPathComponent("\(name).png"))
-        print("wrote \(name).png (\(Int(size.width))x\(Int(size.height)))")
+
+        // The SNAPSHOT_OUT_DIR env doesn't cross into the simulator process, so instead of writing
+        // to disk we attach the PNG to the test result; the workflow extracts it from the .xcresult.
+        let attachment = XCTAttachment(image: image)
+        attachment.name = "\(name).png"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 }
 #endif
