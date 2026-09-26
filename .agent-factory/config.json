@@ -75,7 +75,7 @@
     "status_context": "agent-factory/integration",
     "environment": "development",
     "mode": "pull_request_merge_ref",
-    "automatic_promotion": true
+    "automatic_promotion": false
   },
   "gate": {
     "context": "agent-factory",
