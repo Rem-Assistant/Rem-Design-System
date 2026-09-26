@@ -30,8 +30,19 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Render components (light + dark)
-        run: swift run RenderGallery "$GITHUB_WORKSPACE/artifacts/swiftui"
+      - name: List schemes (debug)
+        run: xcodebuild -list || true
+      - name: Render on iOS Simulator (light + dark)
+        env:
+          SNAPSHOT_OUT_DIR: ${{ github.workspace }}/artifacts/swiftui
+        run: |
+          set -eo pipefail
+          xcodebuild test \
+            -scheme RemDesignSystem \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -only-testing:RenderSnapshotTests \
+            -resultBundlePath "$RUNNER_TEMP/RenderSnapshots.xcresult" \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tail -80
       - run: ls -la artifacts/swiftui
       - uses: actions/upload-artifact@v4
         with:

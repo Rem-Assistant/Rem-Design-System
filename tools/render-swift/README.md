@@ -1,18 +1,22 @@
-# render-swift — SwiftUI screenshot evidence
+# render-swift — SwiftUI screenshot evidence (iOS Simulator)
 
-A tiny macOS executable that renders each shipped SwiftUI component to a PNG (light + dark) so the
-built design system is **visible** — no simulator, no running app.
+Renders each shipped SwiftUI component/screen to a PNG (light + dark) so the built design system is
+**visible** — on a real **iOS Simulator**, so the colors are true iOS (`.systemBackground` is white
+on iOS, grey on macOS) and `ScrollView`/`List` content renders faithfully.
 
-- Declared as the `RenderGallery` executable **target in the repo-root `Package.swift`** (depends on
-  the `RemDesignSystem` library target by name), so it renders the *real* components. It is not part
-  of the library product, so library consumers never build it.
-- Uses SwiftUI `ImageRenderer`; dark mode is driven by both `\.colorScheme` and the current drawing
-  `NSAppearance` (the tokens resolve to `NSColor` on macOS).
+- `Tests/RenderSnapshotTests/RenderSnapshots.swift` is an XCTest that snapshots a real
+  `UIHostingController` hierarchy with `drawHierarchy(afterScreenUpdates:)` and writes PNGs to
+  `SNAPSHOT_OUT_DIR`. It's declared as a test target in the repo-root `Package.swift` and depends on
+  the `RemDesignSystem` library. The file is `#if canImport(UIKit)`-guarded, so `swift test` on
+  macOS compiles it to an empty target.
 
 ```bash
-# from the repo root, on macOS:
-swift run RenderGallery ./out        # writes ./out/<Component>-{light,dark}.png
+# on macOS with Xcode, from the repo root:
+SNAPSHOT_OUT_DIR="$PWD/artifacts/swiftui" xcodebuild test \
+  -scheme RemDesignSystem \
+  -destination 'platform=iOS Simulator,name=iPhone 15' \
+  -only-testing:RenderSnapshotTests
 ```
 
 Run in CI by `.github/workflows/screenshots.yml` (job `swiftui`), which uploads the PNGs and posts
-them to the PR alongside the Compose (Android) renders.
+them next to the Compose (Android) renders in a side-by-side table on the PR.

@@ -25,15 +25,15 @@ let package = Package(
                 "Primitives/ContainedIcon.figma.swift",
             ]
         ),
-        // macOS-only screenshot-evidence renderer. NOT part of the `RemDesignSystem` library
-        // product, so library consumers never build it (only `swift build`/`swift run` in THIS
-        // package does). Kept a target here rather than a separate package so it depends on
-        // `RemDesignSystem` by target name — a path-dependency's identity is its directory
-        // basename, which differs by case across machines. Run: `swift run RenderGallery <out>`.
-        .executableTarget(
-            name: "RenderGallery",
+        // Screenshot-evidence snapshots. Run on an iOS Simulator via `xcodebuild test` so the
+        // render uses real iOS UIColor semantics (`.systemBackground` is white on iOS, grey on
+        // macOS) and captures ScrollView/List content that `ImageRenderer` cannot. The file is
+        // UIKit-guarded, so `swift test` on macOS compiles it to an empty target. Writes PNGs to
+        // SNAPSHOT_OUT_DIR. NOT part of the library product — consumers never build it.
+        .testTarget(
+            name: "RenderSnapshotTests",
             dependencies: ["RemDesignSystem"],
-            path: "tools/render-swift/Sources/RenderGallery"
+            path: "tools/render-swift/Tests/RenderSnapshotTests"
         ),
     ]
 )
