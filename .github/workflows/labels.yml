@@ -1,0 +1,27 @@
+name: factory-labels
+
+# One-shot setup: create the Agent Factory labels the Steward expects.
+# `agent-factory init` scaffolds config + caller workflows but NOT labels. The Steward
+# adds the `ready` label when it qualifies an issue, which fails hard if the label does
+# not exist ("'ready' not found"), blocking every dispatch. This creates them once.
+# Runs on the Actions tab (Run workflow) and self-runs when this file lands on main.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/labels.yml"]
+permissions:
+  issues: write
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Factory labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh label create "ready"         --repo "$REPO" --color 0e8a16 --description "Qualified for the Factory Builder" --force
+          gh label create "agent:builder" --repo "$REPO" --color 1d76db --description "Dispatched to the Builder"          --force
+          gh label create "agent:steward" --repo "$REPO" --color 5319e7 --description "Steward should (re)triage"          --force
+          gh label create "agent:retry"   --repo "$REPO" --color fbca04 --description "Retry the Builder"                  --force
