@@ -19,6 +19,24 @@ private struct Gallery {
     let view: AnyView
 }
 
+// The 7 Figma `Style` variants, by intent name (matches RemButton.figma.swift). A named type,
+// not a tuple, because SwiftUI `ForEach` needs an `Identifiable`/`id:` and Swift has no key paths
+// to tuple elements.
+private struct ButtonVariantRow: Identifiable {
+    let id: String
+    let variant: RemButtonVariant
+}
+
+private let buttonVariants: [ButtonVariantRow] = [
+    .init(id: "Rect · Black", variant: .rectBlack),
+    .init(id: "Rect · Blue", variant: .rectBlue),
+    .init(id: "Rect · Secondary", variant: .rectSecondary),
+    .init(id: "Rect · Destructive", variant: .rectDestructive),
+    .init(id: "Text · Accent", variant: .textAccent),
+    .init(id: "Text · Destructive", variant: .textDestructive),
+    .init(id: "Pill · Secondary", variant: .pillSecondary),
+]
+
 @MainActor
 private func chevron() -> some View {
     Image(systemName: "chevron.right")
@@ -28,20 +46,9 @@ private func chevron() -> some View {
 
 @MainActor
 private func galleries() -> [Gallery] {
-    // The 7 Figma `Style` variants, by intent name (matches RemButton.figma.swift).
-    let variants: [(String, RemButtonVariant)] = [
-        ("Rect · Black", .rectBlack),
-        ("Rect · Blue", .rectBlue),
-        ("Rect · Secondary", .rectSecondary),
-        ("Rect · Destructive", .rectDestructive),
-        ("Text · Accent", .textAccent),
-        ("Text · Destructive", .textDestructive),
-        ("Pill · Secondary", .pillSecondary),
-    ]
-
     let buttons = VStack(spacing: 14) {
-        ForEach(Array(variants.enumerated()), id: \.offset) { item in
-            Button(item.element.0) {}.remButton(item.element.1)
+        ForEach(buttonVariants) { row in
+            Button(row.id) {}.remButton(row.variant)
         }
         Button("Disabled") {}.remButton(.rectBlack).disabled(true)
     }
@@ -89,7 +96,7 @@ private func galleries() -> [Gallery] {
 }
 
 @main
-private enum RenderGallery {
+enum RenderGallery {
     @MainActor
     static func main() {
         _ = NSApplication.shared  // some AppKit-backed rendering wants a shared app instance
