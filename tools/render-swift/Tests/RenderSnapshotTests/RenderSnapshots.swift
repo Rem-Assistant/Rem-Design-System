@@ -4,6 +4,14 @@ import SwiftUI
 import UIKit
 import RemDesignSystem
 
+// File-scope so the ListRow trailing closures don't capture `self` (escaping closures in a class
+// require explicit self otherwise).
+@MainActor private func chevron() -> some View {
+    Image(systemName: "chevron.right")
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundStyle(DesignTokens.Color.labelTertiary)
+}
+
 // Faithful iOS screenshot evidence. Runs on an iOS Simulator (via `xcodebuild test`) so the tokens
 // resolve to real iOS UIColor semantics — `.systemBackground` is WHITE on iOS (it is grey on macOS,
 // which is why the earlier macOS `ImageRenderer` renders looked inverted). Snapshots a real
