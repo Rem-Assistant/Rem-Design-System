@@ -79,7 +79,7 @@ Fixed:
 | HomeIndicator (bottom safe-area handle) | Platform Controls | `333:102` | system safe-area overlay | ✓ canonical |
 | GuidedFlow (coach-mark overlay) — dimmed scrim + spotlight + Step X/Y tooltip (Skip / Next) | Platform Controls | `442:113` | `GuidedFlow.swift` (spotlight coach-mark engine; replaces the deprecated onboarding screens) | ✓ canonical |
 | OnboardingSequencer (shell) — ordered flow: back + progress + Continue/Skip over a shared step scaffold; hosts the reproduced **Sign-in** (`411:15`) + **Consent** (`410:16`) steps and exposes ordered slots for the #12 middle steps. **No deploy/provisioning slot.** | Onboarding | `411:15` / `410:16` (Flows page for the shell path) | `OnboardingFlow.swift` (deploy step dropped from the path) · Compose `compose/RemDesignSystem/onboarding/` (`OnboardingSequencer.kt`, `OnboardingScaffold.kt`, `SignInStep.kt`, `ConsentStep.kt`, `Onboarding.figma.kt`) | ✓ canonical (Compose siblings added — issue #11) |
-| RemFaceMark (brand face; **Mode** = idle / thinking) | Primitives | `362:7` | `RemFaceMark.swift` (CustomFaceShape) | ✓ canonical |
+| RemFaceMark (brand face; **Mode** = idle / thinking) | Primitives | `362:7` | `Sources/RemDesignSystem/Brand/RemFaceMark.swift` (extracted from remclaw `Shared/Views/RemFaceMark.swift` / `CustomFaceShape`) · Compose twin `compose/RemDesignSystem/brand/RemFaceMark.kt` · Code Connect `RemFaceMark.figma.swift`/`.figma.kt` | ✓ canonical (shared iOS + Android; replaced Android `Icons.Filled.Face` stand-in) |
 | Navigation Bar | imported | `d29957…` | iOS 26 kit (Apple) | kit |
 | Status Bar / Toolbar | imported | — | iOS 26 kit (Apple) | kit |
 

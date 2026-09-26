@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+# Assemble rendered PNGs (downloaded artifacts) and post them to the PR as an inline image table.
+# Images are pushed to a dedicated `design-evidence` branch and referenced by raw URL (GitHub
+# comments can't host uploaded images programmatically — a branch + raw URL is the standard path).
+set -uo pipefail
+
+PRN="${PR_NUMBER:?PR_NUMBER required}"
+REPO="${GITHUB_REPOSITORY:?}"
+BRANCH="design-evidence"
+DEST="pr-${PRN}"
+SWIFT_DL="$GITHUB_WORKSPACE/dl/swiftui-screenshots"
+COMPOSE_DL="$GITHUB_WORKSPACE/dl/compose-screenshots"
+SHA_SHORT="${GITHUB_SHA:0:7}"
+
+echo "swiftui pngs: $(ls "$SWIFT_DL"/*.png 2>/dev/null | wc -l | tr -d ' ')"
+echo "compose pngs: $(ls "$COMPOSE_DL"/*.png 2>/dev/null | wc -l | tr -d ' ')"
+
+# --- push PNGs to the evidence branch, in an isolated working dir ---
+EVID="${RUNNER_TEMP}/evid"
+rm -rf "$EVID"; mkdir -p "$EVID"; cd "$EVID"
+git init -q
+git config user.name "github-actions[bot]"
+git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+if git fetch -q --depth=1 origin "$BRANCH" 2>/dev/null; then
+  git checkout -q -B "$BRANCH" FETCH_HEAD
+else
+  git checkout -q --orphan "$BRANCH"
+  git rm -rfq . 2>/dev/null || true
+fi
+copy_images () {
+  rm -rf "$DEST"; mkdir -p "$DEST/swiftui" "$DEST/compose"
+  cp "$SWIFT_DL"/*.png "$DEST/swiftui/" 2>/dev/null || true
+  cp "$COMPOSE_DL"/*.png "$DEST/compose/" 2>/dev/null || true
+}
+
+# Push with re-sync on rejection: a concurrent run pushing to the shared design-evidence branch
+# moves the tip, so a plain retry of the same push is rejected forever. On each failure, re-fetch
+# the branch, re-apply this PR's pr-<N> subtree onto the moved tip, and retry. PUSH_OK gates the
+# comment so a failed upload never posts a table of broken (404) images.
+PUSH_OK=0
+copy_images
+git add -A
+if git diff --cached --quiet; then
+  echo "no evidence changes to push"; PUSH_OK=1
+else
+  git commit -qm "screenshots for PR #${PRN} @ ${SHA_SHORT}"
+  for i in 1 2 3 4; do
+    if git push -q origin "$BRANCH"; then PUSH_OK=1; break; fi
+    echo "push rejected (attempt $i) — re-syncing onto the moved tip"; sleep $((2**i))
+    git fetch -q origin "$BRANCH" || true
+    git checkout -q -B "$BRANCH" FETCH_HEAD 2>/dev/null || git checkout -q --orphan "$BRANCH"
+    copy_images
+    git add -A
+    git commit -qm "screenshots for PR #${PRN} @ ${SHA_SHORT}" 2>/dev/null || true
+  done
+fi
+[ "$PUSH_OK" = 1 ] || echo "::warning::evidence push failed after retries; the comment will note images are pending"
+
+RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${DEST}"
+BODY="${RUNNER_TEMP}/body.md"
+
+{
+  echo "<!-- design-evidence -->"
+  echo "## 📸 Rendered screenshots — \`${SHA_SHORT}\`"
+  echo
+  echo "Auto-rendered from the design-system source — **iOS and Android side by side**. iOS on an **iOS Simulator** (iPhone 15, 2× — real UIColor semantics), Android via **Paparazzi** (Pixel 6), both on a macOS runner."
+  echo
+} > "$BODY"
+
+# Pair iOS (SwiftUI) and Android (Compose) renders in ONE table, keyed by a normalized name so the
+# same screen/component sits in a single row with a column per platform. Compose filenames carry
+# Paparazzi's FQCN+method prefix (com.rem.designsystem_EvidenceSnapshots_<method>_) — stripped here
+# so the label reads cleanly on both sides.
+emit_paired_table () {
+  declare -A IOS ANDROID
+  local f b k stripped
+  for f in "$SWIFT_DL"/*.png; do
+    [ -e "$f" ] || continue
+    b=$(basename "$f")
+    k=$(printf '%s' "${b%.png}" | tr '[:upper:]' '[:lower:]')
+    IOS["$k"]="$b"
+  done
+  for f in "$COMPOSE_DL"/*.png; do
+    [ -e "$f" ] || continue
+    b=$(basename "$f")
+    stripped=$(printf '%s' "${b%.png}" | sed -E 's/^com\.rem\.designsystem_EvidenceSnapshots_[^_]*_//')
+    k=$(printf '%s' "$stripped" | tr '[:upper:]' '[:lower:]')
+    ANDROID["$k"]="$b"
+  done
+  local keys
+  keys=$(printf '%s\n' "${!IOS[@]}" "${!ANDROID[@]}" | sort -u)
+  if [ -z "$keys" ]; then
+    echo "_No images this run — the render jobs produced no output (see the checks tab)._" >> "$BODY"
+    echo >> "$BODY"
+    return
+  fi
+  echo "| Screen / component · state | iOS · SwiftUI | Android · Compose |" >> "$BODY"
+  echo "|---|:--:|:--:|" >> "$BODY"
+  local label ios_cell and_cell
+  while IFS= read -r k; do
+    [ -z "$k" ] && continue
+    label=$(printf '%s' "$k" | sed -E 's/-([^-]+)$/ · \1/; s/-/ /g')
+    if [ -n "${IOS[$k]:-}" ]; then ios_cell="<img src=\"$RAW/swiftui/${IOS[$k]}\" width=\"230\">"; else ios_cell="—"; fi
+    if [ -n "${ANDROID[$k]:-}" ]; then and_cell="<img src=\"$RAW/compose/${ANDROID[$k]}\" width=\"230\">"; else and_cell="—"; fi
+    echo "| \`$label\` | $ios_cell | $and_cell |" >> "$BODY"
+  done <<< "$keys"
+  echo >> "$BODY"
+}
+
+if [ "$PUSH_OK" = 1 ]; then
+  emit_paired_table
+else
+  {
+    echo "> ⚠️ **Images pending** — the evidence-branch push was rejected after retries, so the inline"
+    echo "> table is omitted rather than shown broken. The renders are available as this run's"
+    echo "> **artifacts** (Checks tab → this workflow → Artifacts)."
+    echo
+  } >> "$BODY"
+fi
+
+{
+  echo
+  echo "---"
+  echo "_Generated by [Claude Code](https://claude.ai/code)_"
+} >> "$BODY"
+
+# --- find-or-update the marker comment so re-runs don't spam ---
+CID=$(gh api "repos/${REPO}/issues/${PRN}/comments" --paginate \
+  --jq '[.[] | select(.body | contains("<!-- design-evidence -->"))][0].id' 2>/dev/null)
+if [ -n "$CID" ] && [ "$CID" != "null" ]; then
+  gh api -X PATCH "repos/${REPO}/issues/comments/${CID}" -F body=@"$BODY" >/dev/null && echo "updated comment $CID"
+else
+  gh api -X POST "repos/${REPO}/issues/${PRN}/comments" -F body=@"$BODY" >/dev/null && echo "created comment"
+fi

@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,9 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import com.rem.designsystem.primitives.ContainedIcon
-import com.rem.designsystem.primitives.ContainedIconFill
-import com.rem.designsystem.primitives.ContainedIconSize
+import androidx.compose.ui.unit.dp
+import com.rem.designsystem.brand.RemFaceMark
+import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -72,7 +70,6 @@ fun signInStep(
     onRetry: () -> Unit = {},
     appleMark: ImageVector = RemBrandGlyphs.AppleLogo,
     googleMark: ImageVector? = null,
-    brandMark: ImageVector = Icons.Filled.Face,
     id: String = "signIn",
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     val primary: OnboardingAction
@@ -156,11 +153,12 @@ fun signInStep(
         // the render runner).
         Spacer(Modifier.height(RemSpacing.xxxl))
         Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-            ContainedIcon(
-                icon = brandMark,
-                fill = ContainedIconFill.Tint(RemColors.current.brandBlue),
-                size = ContainedIconSize.Large,
-                contentDescription = "Rem",
+            // Brand lockup mark: the real, canonical Rem face (shared with iOS) — not a generic
+            // Material "face" glyph. Tinted brand-blue, matching the SwiftUI sign-in lockup.
+            RemFaceMark(
+                mode = RemFaceMarkMode.Idle,
+                tint = RemColors.current.brandBlue,
+                size = 56.dp,
             )
             Spacer(Modifier.height(RemSpacing.md))
             Text(

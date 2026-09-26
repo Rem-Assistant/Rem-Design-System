@@ -23,7 +23,18 @@ let package = Package(
             exclude: [
                 "Buttons/RemButton.figma.swift",
                 "Primitives/ContainedIcon.figma.swift",
+                "Brand/RemFaceMark.figma.swift",
             ]
+        ),
+        // Screenshot-evidence snapshots. Run on an iOS Simulator via `xcodebuild test` so the
+        // render uses real iOS UIColor semantics (`.systemBackground` is white on iOS, grey on
+        // macOS) and captures ScrollView/List content that `ImageRenderer` cannot. The file is
+        // UIKit-guarded, so `swift test` on macOS compiles it to an empty target. Writes PNGs to
+        // SNAPSHOT_OUT_DIR. NOT part of the library product — consumers never build it.
+        .testTarget(
+            name: "RenderSnapshotTests",
+            dependencies: ["RemDesignSystem"],
+            path: "tools/render-swift/Tests/RenderSnapshotTests"
         ),
     ]
 )
