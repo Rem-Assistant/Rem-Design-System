@@ -4,7 +4,8 @@ group: general
 kind: screen-template
 mirrors: OnboardingFlow.swift (signIn → dataSharingConsent → …) — the native first-run sequencer
 status: draft
-composed_of: [ContainedIcon, Button, ListRow]
+composed_of: [ContainedIcon]
+pending_native: [Button, ListRow]
 rules:
   - id: no-deploy-step
     do: "Compose the path from the ordered step slots you pass (Sign-in → Consent → the middle steps)."
@@ -19,8 +20,8 @@ rules:
     dont: "Fake-advance from the button or hard-code a signed-in state in the component."
     enforced_by: "prose-only (the step is state-driven; the host owns auth + advancement)"
   - id: token-bound
-    do: "Bind every visual to the generated tokens (RemTokens / DesignTokens) and reuse the canonical components (ContainedIcon, Button, ListRow)."
-    dont: "Introduce call-site literals or fork the sign-in / consent components."
+    do: "Bind every visual to the generated tokens (RemTokens / DesignTokens) and reuse the canonical ContainedIcon for hero + row leadings. The CTA button and the consent legal rows are hand-rolled natively (no Compose Button / ListRow primitive exists yet) — keep them token-bound too."
+    dont: "Introduce call-site literals, or claim canonical Button / ListRow reuse the Compose surface does not perform."
     enforced_by: "SwiftLint ds_* rules (Swift) + oxlint no-raw-hex (web); prose for Compose until a lint lands"
 ---
 
@@ -45,14 +46,22 @@ additional ordered slots from issue #12.
 ## Anatomy
 Shared chrome (the `OnboardingScaffold`): a **back** chevron (hidden on the first step) + an **Extend**
 progress indicator → a centered **hero** (`ContainedIcon`), **title**, **subtitle** → a scrollable
-**content** slot → a bottom-pinned **CTA bar** (primary `Button` + optional secondary Skip / link) with
+**content** slot → a bottom-pinned **CTA bar** (a primary button + optional secondary Skip / link —
+hand-rolled today, not the canonical `Button`; see *Composed of*) with
 an optional **legal footer**. Each step supplies its own content and CTA labels; the sequencer supplies
 order, progress, and navigation.
 
 ## Composed of
-[`ContainedIcon`](ContainedIcon.md) (hero + row leading) · [`Button`](Button.md) (CTAs) ·
-[`ListRow`](ListRow.md) (consent legal rows). Steps: **Sign-in** (`SignInState` = returning / new /
-checking / error / recovery) and **Consent** ("Privacy by design").
+**Reused (canonical):** [`ContainedIcon`](ContainedIcon.md) (hero + consent-row leading).
+
+**Pending native (hand-rolled, not reused):** the CTA button and the consent legal rows are
+**not** instances of the canonical [`Button`](Button.md) / [`ListRow`](ListRow.md) — no Compose
+primitive exists for either yet, so the shipped surface hand-rolls them token-bound
+(`OnboardingActionButton` in `OnboardingScaffold.kt`; `ConsentLegalRow` in `ConsentStep.kt`) and
+flags them for extraction. Treat both as forked-pending-native, not as a canonical reuse.
+
+Steps: **Sign-in** (`SignInState` = returning / new / checking / error / recovery) and **Consent**
+("Privacy by design").
 
 ## Variants & states
 | Region | Values |
@@ -68,7 +77,7 @@ checking / error / recovery) and **Consent** ("Privacy by design").
 | Compose the path from the ordered slots you pass. | Reintroduce a deploy/provisioning step. |
 | Keep sign-in + consent copy/treatment 1:1 with the reference. | Reword consent copy or restyle the Apple button. |
 | Drive sign-in from real auth via `SignInState`. | Fake-advance from the button or mock a signed-in state. |
-| Bind visuals to tokens; reuse canonical components. | Add call-site literals or fork sign-in/consent. |
+| Bind visuals to tokens; reuse canonical `ContainedIcon`. | Add call-site literals, or claim `Button`/`ListRow` reuse the Compose surface hand-rolls. |
 
 ## Accessibility
 - Back and every CTA carry button semantics + an accessibility label; the hero glyph is decorative.

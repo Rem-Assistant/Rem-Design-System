@@ -58,6 +58,7 @@ for (const name of ORDER) {
     mirrors: scalar(fm, "mirrors"),
     status: scalar(fm, "status") || "draft",
     composedOf: list(scalar(fm, "composed_of")),
+    pendingNative: list(scalar(fm, "pending_native")),
     replaces: p.replaces,
     extends: p.extends,
     props: p.props || {},

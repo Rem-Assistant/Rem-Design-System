@@ -1050,7 +1050,9 @@
       "mirrors": "OnboardingFlow.swift (signIn → dataSharingConsent → …) — the native first-run sequencer",
       "status": "draft",
       "composedOf": [
-        "ContainedIcon",
+        "ContainedIcon"
+      ],
+      "pendingNative": [
         "Button",
         "ListRow"
       ],
@@ -1103,8 +1105,8 @@
         },
         {
           "id": "token-bound",
-          "do": "Bind every visual to the generated tokens (RemTokens / DesignTokens) and reuse the canonical components (ContainedIcon, Button, ListRow).",
-          "dont": "Introduce call-site literals or fork the sign-in / consent components.",
+          "do": "Bind every visual to the generated tokens (RemTokens / DesignTokens) and reuse the canonical ContainedIcon for hero + row leadings. The CTA button and the consent legal rows are hand-rolled natively (no Compose Button / ListRow primitive exists yet) — keep them token-bound too.",
+          "dont": "Introduce call-site literals, or claim canonical Button / ListRow reuse the Compose surface does not perform.",
           "enforced_by": "SwiftLint ds_* rules (Swift) + oxlint no-raw-hex (web); prose for Compose until a lint lands"
         }
       ]
