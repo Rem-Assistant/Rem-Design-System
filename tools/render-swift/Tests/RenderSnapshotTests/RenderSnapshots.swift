@@ -6,7 +6,7 @@ import RemDesignSystem
 
 // File-scope so the ListRow trailing closures don't capture `self` (escaping closures in a class
 // require explicit self otherwise).
-@MainActor private func chevron() -> some View {
+private func chevron() -> some View {
     Image(systemName: "chevron.right")
         .font(.system(size: 14, weight: .semibold))
         .foregroundStyle(DesignTokens.Color.labelTertiary)
@@ -41,12 +41,6 @@ final class RenderSnapshots: XCTestCase {
     }
 
     // MARK: - Galleries (mirror each component's #Preview)
-
-    private func chevron() -> some View {
-        Image(systemName: "chevron.right")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(DesignTokens.Color.labelTertiary)
-    }
 
     @ViewBuilder private var buttonGallery: some View {
         let variants: [(String, RemButtonVariant)] = [
