@@ -1,0 +1,28 @@
+name: agent-steward
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  steward:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'ready' || github.event.label.name == 'agent:steward' || github.event.label.name == 'agent:retry'
+    uses: samuelalake/agent-factory/.github/workflows/steward.yml@9fd45842a57d26b184725f0f73d119f398eebd7a
+    with:
+      issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
+      factory_ref: 9fd45842a57d26b184725f0f73d119f398eebd7a
+    secrets:
+      AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
+      AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
+      MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
