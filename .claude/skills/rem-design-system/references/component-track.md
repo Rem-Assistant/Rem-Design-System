@@ -49,6 +49,25 @@ master** so the page stays in sync automatically.
 Keep the sub-component masters (e.g. `ListRowLabel`, `Avatar`) **out of the doc frame** (they
 overlap it) — park them below, or on their own page per the one-component-per-page rule.
 
+## Deliver: Code Connect + Figma sync (required — never skip)
+
+A component is **not delivered** until design and code are bound and in sync. This is the step
+most easily forgotten in a delivery, so it is explicit here and belongs in every packet's
+delivery contract:
+
+- **Code Connect binding.** Every new or changed component ships its Code Connect files —
+  `*.figma.swift` (and `*.figma.kt` on the Compose side) — mapping the Figma node to the shipped
+  source. They're excluded from the build target; the `figma connect` CLI reads them.
+- **Publish the Figma frame from code.** Regenerate/refresh the component's Figma master + doc
+  page so **Figma follows the code**, never the reverse — this system is code-first. Publishing
+  is plan-gated.
+- **Tokens, not literals.** Any styleable value that isn't already a token goes through
+  `tokens.json` + the generator, never a call-site literal.
+
+If a delivery changes a component's shape but adds or updates **no** Code Connect binding, it is
+incomplete. (This guard exists because a packet once omitted it — the obligation is structural
+now, not a thing to remember.)
+
 ## Finish
 
 Add/refresh the component's row in `REGISTRY.md` and the Figma Component Index. Verify each
