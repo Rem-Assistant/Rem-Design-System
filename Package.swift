@@ -25,5 +25,15 @@ let package = Package(
                 "Primitives/ContainedIcon.figma.swift",
             ]
         ),
+        // macOS-only screenshot-evidence renderer. NOT part of the `RemDesignSystem` library
+        // product, so library consumers never build it (only `swift build`/`swift run` in THIS
+        // package does). Kept a target here rather than a separate package so it depends on
+        // `RemDesignSystem` by target name — a path-dependency's identity is its directory
+        // basename, which differs by case across machines. Run: `swift run RenderGallery <out>`.
+        .executableTarget(
+            name: "RenderGallery",
+            dependencies: ["RemDesignSystem"],
+            path: "tools/render-swift/Sources/RenderGallery"
+        ),
     ]
 )

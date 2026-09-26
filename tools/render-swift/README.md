@@ -3,13 +3,14 @@
 A tiny macOS executable that renders each shipped SwiftUI component to a PNG (light + dark) so the
 built design system is **visible** — no simulator, no running app.
 
-- Depends on the shippable `RemDesignSystem` package via a path dependency (`../..`), so it renders
-  the *real* components, not copies.
+- Declared as the `RenderGallery` executable **target in the repo-root `Package.swift`** (depends on
+  the `RemDesignSystem` library target by name), so it renders the *real* components. It is not part
+  of the library product, so library consumers never build it.
 - Uses SwiftUI `ImageRenderer`; dark mode is driven by both `\.colorScheme` and the current drawing
   `NSAppearance` (the tokens resolve to `NSColor` on macOS).
 
 ```bash
-# from this directory, on macOS:
+# from the repo root, on macOS:
 swift run RenderGallery ./out        # writes ./out/<Component>-{light,dark}.png
 ```
 

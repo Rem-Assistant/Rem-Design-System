@@ -31,9 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Render components (light + dark)
-        run: |
-          cd tools/render-swift
-          swift run RenderGallery "$GITHUB_WORKSPACE/artifacts/swiftui"
+        run: swift run RenderGallery "$GITHUB_WORKSPACE/artifacts/swiftui"
       - run: ls -la artifacts/swiftui
       - uses: actions/upload-artifact@v4
         with:
@@ -50,7 +48,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
+      # macos-14 runners ship the Android SDK pre-installed (ANDROID_HOME set); the
+      # android-actions/setup-android action fails trying to install the obsolete "tools"
+      # package, so we rely on the pre-installed SDK instead.
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
