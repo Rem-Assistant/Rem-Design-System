@@ -22,6 +22,20 @@ form diverges.
     `com.figma.code.connect`); dormant-but-ready. Its exact DSL is flagged to verify on the Android
     runner (Compose Code Connect is newer than SwiftUI's).
   This is the pattern every extracted Compose component follows.
+- **`compose/RemDesignSystem/onboarding/*.kt`** — the **onboarding sequencer** (issue #11): the
+  Compose sibling of `OnboardingFlow.swift` (deploy step dropped from the path).
+  - `OnboardingSequencer.kt` — the ordered-flow driver (progress + Continue/Skip forward/back, ordered
+    step slots; the #12 middle steps plug in as more slots). No deploy/provisioning slot.
+  - `OnboardingScaffold.kt` — the shared step chrome (back · hero `ContainedIcon` · title/subtitle ·
+    scrollable content · bottom CTA bar + legal footer), all token-bound.
+  - `SignInStep.kt` — the reproduced sign-in step, state-driven by real auth (`SignInState` =
+    returning / new / checking / error / recovery); Sign-in-with-Apple treatment per the reference.
+  - `ConsentStep.kt` — the reproduced "Privacy by design" consent step (copy verbatim from the
+    reference frame).
+  - `Onboarding.figma.kt` — Code Connect for the sign-in (`411:15`) + consent (`410:16`) masters,
+    **excluded from the build** (dormant-but-ready), same as `ContainedIcon.figma.kt`.
+  Reproduce fidelity is verified on the render runners against `tasks/refs/onboarding/01-sign-in.png`
+  and `02-consent.png` (this repo has no Android/iOS toolchain — the reference-vs-evidence split).
 
 ## Status / verify
 Generator output is verified here (Node). **Compose compilation is not** — this repo has no Android
