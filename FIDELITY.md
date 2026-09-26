@@ -42,8 +42,15 @@ deploy code itself is retired later with the runtime migration (out of scope her
   recovery); the host maps its real auth to these and advances only on success. checking = disabled
   spinner CTA; error/recovery are an **Extend** treatment (no reference frame) reusing a token-bound
   inline message — flagged for founder confirmation.
-- **Token-bound + canonical reuse:** every visual binds to `RemTokens`; the hero + consent-row leading
-  icons reuse the canonical `ContainedIcon` (anti-drift Rule 0). Flagged metric debts (centralized, not
+- **Token-bound + canonical reuse — honest `composed_of`:** every visual binds to `RemTokens`, and the
+  hero + consent-row leading icons reuse the canonical `ContainedIcon` (anti-drift Rule 0). That is the
+  **only** canonical reuse this surface performs. The CTA button (`OnboardingActionButton` in
+  `OnboardingScaffold.kt`) and the consent legal rows (`ConsentLegalRow` in `ConsentStep.kt`) are
+  **hand-rolled, not instances of the canonical `Button` / `ListRow`** — no Compose primitive exists for
+  either yet, so both are **forked-pending-native and flagged for extraction** (the same flag
+  `OnboardingSupport.kt` already carries for the button now covers the row too). The manifest reflects
+  this: `composedOf: [ContainedIcon]`, `pendingNative: [Button, ListRow]`; `OnboardingSequencer.md`
+  no longer claims Button/ListRow reuse. Flagged metric debts (centralized, not
   call-site literals): onboarding hero may want a dedicated size token (reuses `ContainedIcon` Large
   today); disabled-CTA alpha and the progress-dot sizes have no token yet; iOS glyphs (`doc.text`,
   `shield`, `lock.shield.fill`, Apple/Google marks) diverge to Material vectors / overridable params

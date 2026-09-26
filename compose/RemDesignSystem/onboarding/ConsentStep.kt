@@ -101,6 +101,13 @@ fun consentStep(
     }
 }
 
+/**
+ * A single consent legal row (leading icon · title + subtitle · trailing chevron). This is a **bespoke,
+ * hand-rolled row** — there is no Compose `ListRow` primitive in this design-system module yet, so
+ * (like the CTA button flagged in `OnboardingSupport.kt`) it composes the row natively with token-bound
+ * metrics rather than forking a canonical component. Flagged for extraction; until a `ListRow` primitive
+ * lands, the manifest records this as `pendingNative`, not a canonical reuse.
+ */
 @Composable
 private fun ConsentLegalRow(
     icon: ImageVector,
