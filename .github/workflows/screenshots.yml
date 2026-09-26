@@ -1,0 +1,85 @@
+name: screenshots
+
+# Renders the design system to PNGs so the built output is VISIBLE — SwiftUI via ImageRenderer,
+# Compose via Paparazzi (both JVM/native, NO simulator/emulator), on one macOS runner OS. The two
+# render jobs are independent so one platform failing still posts the other; the evidence job
+# assembles whatever rendered and posts an image table to the PR.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "Sources/**"
+      - "compose/**"
+      - "tokens/generated/**"
+      - "tools/render-swift/**"
+      - ".github/workflows/screenshots.yml"
+      - ".github/scripts/post-evidence.sh"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swiftui:
+    name: Render SwiftUI (iOS)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render components (light + dark)
+        run: |
+          cd tools/render-swift
+          swift run RenderGallery "$GITHUB_WORKSPACE/artifacts/swiftui"
+      - run: ls -la artifacts/swiftui
+      - uses: actions/upload-artifact@v4
+        with:
+          name: swiftui-screenshots
+          path: artifacts/swiftui/*.png
+          if-no-files-found: error
+
+  compose:
+    name: Render Compose (Android)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Render components (Paparazzi record)
+        working-directory: compose
+        run: gradle :RemDesignSystem:recordPaparazziDebug --stacktrace --no-daemon
+      - name: Collect PNGs
+        run: |
+          mkdir -p artifacts/compose
+          find compose -path '*/snapshots/images/*.png' -print -exec cp {} artifacts/compose/ \;
+      - run: ls -la artifacts/compose
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compose-screenshots
+          path: artifacts/compose/*.png
+          if-no-files-found: error
+
+  evidence:
+    name: Post screenshots to PR
+    needs: [swiftui, compose]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dl
+      - name: Assemble + comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/post-evidence.sh

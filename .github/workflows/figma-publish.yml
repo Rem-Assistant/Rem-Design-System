@@ -1,0 +1,39 @@
+name: figma-publish
+
+# Publishes Code Connect so the SwiftUI source appears in Figma Dev Mode ("Figma follows code").
+# Reads the *.figma.swift bindings via figma.config.json. Needs the FIGMA_TOKEN secret (a Figma
+# personal access token with Code Connect write + File content read scopes).
+#
+# Manual by default (dispatch), and on main when a binding or the config changes.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Sources/**/*.figma.swift"
+      - "figma.config.json"
+      - ".github/workflows/figma-publish.yml"
+
+jobs:
+  code-connect:
+    name: Publish Code Connect
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Figma Code Connect CLI
+        run: npm install -g @figma/code-connect
+      - name: Show what will publish
+        run: figma connect check || true
+      - name: Publish Code Connect (SwiftUI → Figma Dev Mode)
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: |
+          if [ -z "${FIGMA_ACCESS_TOKEN}" ]; then
+            echo "::error::FIGMA_TOKEN secret is not set on this repo/org."
+            exit 1
+          fi
+          figma connect publish
