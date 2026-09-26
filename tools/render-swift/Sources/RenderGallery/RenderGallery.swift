@@ -116,7 +116,7 @@ enum RenderGallery {
     }
 
     @MainActor
-    static func render(_ gallery: Gallery, dark: Bool, outDir: String) -> Bool {
+    private static func render(_ gallery: Gallery, dark: Bool, outDir: String) -> Bool {
         let content = gallery.view
             .frame(width: gallery.width, height: gallery.height)
             .padding(24)
