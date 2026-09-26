@@ -23,6 +23,7 @@ let package = Package(
             exclude: [
                 "Buttons/RemButton.figma.swift",
                 "Primitives/ContainedIcon.figma.swift",
+                "Brand/RemFaceMark.figma.swift",
             ]
         ),
         // Screenshot-evidence snapshots. Run on an iOS Simulator via `xcodebuild test` so the

@@ -1,7 +1,10 @@
 package com.rem.designsystem
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -12,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
+import com.rem.designsystem.brand.RemFaceMark
+import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.onboarding.OnboardingSequencer
 import com.rem.designsystem.onboarding.SignInState
 import com.rem.designsystem.onboarding.consentStep
@@ -57,6 +62,26 @@ class EvidenceSnapshots {
                 size = ContainedIconSize.Large,
             )
             ContainedIcon(Icons.Filled.Settings, fill = ContainedIconFill.Subtle)
+        }
+    }
+
+    @Test
+    fun remFaceMark() {
+        shot("RemFaceMark-light") { RemTheme { faceMark() } }
+        shot("RemFaceMark-dark") { RemTheme(darkTheme = true) { faceMark() } }
+    }
+
+    // The canonical Rem face mark — the same scalloped blob + eyes + smile as the SwiftUI
+    // `RemFaceMark` (idle resting frame), brandBlue on the primary background.
+    @Composable
+    private fun faceMark() {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(RemColors.current.backgroundPrimary),
+            contentAlignment = Alignment.Center,
+        ) {
+            RemFaceMark(mode = RemFaceMarkMode.Idle, tint = RemColors.current.brandBlue, size = 96.dp)
         }
     }
 

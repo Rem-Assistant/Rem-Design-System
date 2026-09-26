@@ -27,6 +27,7 @@ final class RenderSnapshots: XCTestCase {
             let suffix = dark ? "dark" : "light"
             render("RemButton-\(suffix)", width: 300, height: nil, dark: dark) { buttonGallery }
             render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
+            render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
             render("Consent-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen }
         }
@@ -48,6 +49,16 @@ final class RenderSnapshots: XCTestCase {
             Button("Disabled") {}.remButton(.rectBlack).disabled(true)
         }
         .padding(24)
+    }
+
+    // The canonical Rem face mark — the real branded scalloped blob + eyes + smile (idle resting
+    // frame), shared with the Compose `RemFaceMark`. brandBlue on the primary background, matching the
+    // app's brand identity (not a generic system "face" glyph).
+    @ViewBuilder private var faceMark: some View {
+        RemFaceMark(mode: .idle, tint: DesignTokens.Color.brandBlue, size: 96)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+            .background(DesignTokens.Color.backgroundPrimary)
     }
 
     @ViewBuilder private var iconRow: some View {
