@@ -1,0 +1,19 @@
+{
+  "$doc": [
+    "Rem Design System — process-skill sync manifest. The tokens.json of skill vendoring.",
+    "Single source of truth for the process skills this repo vendors from the shared library.",
+    "Mirrors the tokens contract: skills.json --sync-skills.mjs--> .claude/skills/<skill>/, drift-checked in CI (.github/workflows/skills.yml), exactly as tokens.json --generate-tokens.mjs--> generated/ is checked by tokens.yml.",
+    "WHY VENDORED, NOT HAND-COPIED: this repo is the Agent Factory harness. The Factory's catalog_skills(root, skill_dirs) reads skill dirs off disk from the consumer checkout — it does not install skills. So the skills must physically live here as committed files. Claude Code reads the same .claude/skills/ dir, so one copy serves both consumers and all skills there are cataloged together (fits max_skills=3: rem-design-system + product-design-delivery + verified-delivery).",
+    "HOW TO UPDATE: bump source.pin to a new source commit, run `node tools/sync-skills.mjs`, commit the refreshed .claude/skills/<skill> trees. Never hand-edit the vendored files — CI (--check) fails on drift.",
+    "FACTORY-SIDE (out of this repo): Agent Factory's skill_dirs must include .claude/skills/ so it catalogs these alongside rem-design-system."
+  ],
+  "source": {
+    "repo": "https://github.com/samuelalake/agent-skills",
+    "pin": "8f0ae6c7a74e60353db71e75687a2a4d2c23eb1f"
+  },
+  "dest": ".claude/skills",
+  "skills": [
+    "product-design-delivery",
+    "verified-delivery"
+  ]
+}

@@ -1,0 +1,49 @@
+name: skills
+
+# Drift guard for the vendored process skills: the .claude/skills/<skill> copies must match the
+# source repo (skills.json .source.repo) at the pinned commit (skills.json .source.pin). Sibling of
+# the tokens drift guard (.github/workflows/tokens.yml) — same generate/--check shape, but the source
+# is another repo, so this checks it out at the pin and runs sync-skills.mjs --check against it.
+# See skills.json "$doc" and tools/sync-skills.mjs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills.json"
+      - "tools/sync-skills.mjs"
+      - ".claude/skills/**"
+      - ".github/workflows/skills.yml"
+  pull_request:
+    paths:
+      - "skills.json"
+      - "tools/sync-skills.mjs"
+      - ".claude/skills/**"
+      - ".github/workflows/skills.yml"
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout harness repo
+        uses: actions/checkout@v4
+
+      - name: Read pinned source commit from skills.json
+        id: pin
+        run: |
+          echo "repo=$(jq -r .source.repo skills.json | sed 's#https://github.com/##')" >> "$GITHUB_OUTPUT"
+          echo "pin=$(jq -r .source.pin skills.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout skills source at the pin
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pin.outputs.repo }}
+          ref: ${{ steps.pin.outputs.pin }}
+          path: _skills-src
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Vendored skills in sync with the pinned source
+        run: node tools/sync-skills.mjs --check --from _skills-src
