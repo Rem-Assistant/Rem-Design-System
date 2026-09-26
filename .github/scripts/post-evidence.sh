@@ -64,7 +64,7 @@ BODY="${RUNNER_TEMP}/body.md"
   echo "<!-- design-evidence -->"
   echo "## 📸 Rendered screenshots — \`${SHA_SHORT}\`"
   echo
-  echo "Auto-rendered from the design-system source — **no simulator/emulator** — **iOS and Android side by side**. SwiftUI via \`ImageRenderer\` (2×), Compose via Paparazzi (Pixel 6), both on a macOS runner."
+  echo "Auto-rendered from the design-system source — **iOS and Android side by side**. iOS on an **iOS Simulator** (iPhone 15, 2× — real UIColor semantics), Android via **Paparazzi** (Pixel 6), both on a macOS runner."
   echo
 } > "$BODY"
 

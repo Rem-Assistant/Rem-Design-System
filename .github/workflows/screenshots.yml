@@ -48,7 +48,12 @@ jobs:
           brew install xcparse || brew install chargepoint/xcparse/xcparse
           mkdir -p artifacts/swiftui "$RUNNER_TEMP/xc-attach"
           xcparse attachments "$RUNNER_TEMP/RenderSnapshots.xcresult" "$RUNNER_TEMP/xc-attach"
-          find "$RUNNER_TEMP/xc-attach" -name '*.png' -exec cp {} artifacts/swiftui/ \;
+          # xcparse names files "<attachmentName>_<n>_<UUID>.png"; our attachment names have no
+          # underscores, so strip from the first underscore to recover "Consent-light.png" etc.
+          # (so they pair with the Android keys in the side-by-side table).
+          find "$RUNNER_TEMP/xc-attach" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f"); cp "$f" "artifacts/swiftui/${b%%_*}.png"
+          done
           echo "=== extracted ===" && ls -la artifacts/swiftui
       - uses: actions/upload-artifact@v4
         with:
