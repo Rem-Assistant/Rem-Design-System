@@ -129,7 +129,7 @@ private func galleries() -> [Gallery] {
         Gallery(name: "RemButton", width: 300, height: nil, view: AnyView(buttons)),
         Gallery(name: "ContainedIcon", width: 260, height: nil, view: AnyView(icons)),
         Gallery(name: "ListRow", width: 380, height: nil, view: AnyView(rows)),
-        Gallery(name: "OnboardingConsent", width: 402, height: 874, view: AnyView(consentScreen())),
+        Gallery(name: "Consent", width: 402, height: 874, view: AnyView(consentScreen())),
     ]
 }
 
@@ -142,15 +142,18 @@ enum RenderGallery {
         try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
 
         var failures = 0
+        var successes = 0
         for gallery in galleries() {
-            for dark in [false, true] where !render(gallery, dark: dark, outDir: outDir) {
-                failures += 1
+            for dark in [false, true] {
+                if render(gallery, dark: dark, outDir: outDir) { successes += 1 } else { failures += 1 }
             }
         }
         if failures > 0 {
-            FileHandle.standardError.write(Data("render: \(failures) image(s) failed\n".utf8))
-            exit(1)
+            FileHandle.standardError.write(Data("render: \(failures) image(s) failed, \(successes) succeeded\n".utf8))
         }
+        // Only fail the job if NOTHING rendered — a partial failure still uploads the images that
+        // did render, rather than discarding the whole platform's output.
+        if successes == 0 { exit(1) }
     }
 
     @MainActor

@@ -64,31 +64,52 @@ BODY="${RUNNER_TEMP}/body.md"
   echo "<!-- design-evidence -->"
   echo "## 📸 Rendered screenshots — \`${SHA_SHORT}\`"
   echo
-  echo "Auto-rendered from the design-system source — **no simulator/emulator**. SwiftUI via \`ImageRenderer\`, Compose via Paparazzi, both on a macOS runner."
+  echo "Auto-rendered from the design-system source — **no simulator/emulator** — **iOS and Android side by side**. SwiftUI via \`ImageRenderer\` (2×), Compose via Paparazzi (Pixel 6), both on a macOS runner."
   echo
 } > "$BODY"
 
-emit_table () {
-  local label="$1"; local dir="$2"; local url="$3"
-  local files; files=$(cd "$dir" 2>/dev/null && ls *.png 2>/dev/null | sort)
-  echo "### $label" >> "$BODY"
-  if [ -z "$files" ]; then
-    echo "_No images this run — the render job did not produce output (see the checks tab)._" >> "$BODY"
+# Pair iOS (SwiftUI) and Android (Compose) renders in ONE table, keyed by a normalized name so the
+# same screen/component sits in a single row with a column per platform. Compose filenames carry
+# Paparazzi's FQCN+method prefix (com.rem.designsystem_EvidenceSnapshots_<method>_) — stripped here
+# so the label reads cleanly on both sides.
+emit_paired_table () {
+  declare -A IOS ANDROID
+  local f b k stripped
+  for f in "$SWIFT_DL"/*.png; do
+    [ -e "$f" ] || continue
+    b=$(basename "$f")
+    k=$(printf '%s' "${b%.png}" | tr '[:upper:]' '[:lower:]')
+    IOS["$k"]="$b"
+  done
+  for f in "$COMPOSE_DL"/*.png; do
+    [ -e "$f" ] || continue
+    b=$(basename "$f")
+    stripped=$(printf '%s' "${b%.png}" | sed -E 's/^com\.rem\.designsystem_EvidenceSnapshots_[^_]*_//')
+    k=$(printf '%s' "$stripped" | tr '[:upper:]' '[:lower:]')
+    ANDROID["$k"]="$b"
+  done
+  local keys
+  keys=$(printf '%s\n' "${!IOS[@]}" "${!ANDROID[@]}" | sort -u)
+  if [ -z "$keys" ]; then
+    echo "_No images this run — the render jobs produced no output (see the checks tab)._" >> "$BODY"
     echo >> "$BODY"
     return
   fi
-  echo "| Component / state | Render |" >> "$BODY"
-  echo "|---|---|" >> "$BODY"
-  while IFS= read -r f; do
-    [ -z "$f" ] && continue
-    echo "| \`${f%.png}\` | <img src=\"${url}/${f}\" width=\"260\"> |" >> "$BODY"
-  done <<< "$files"
+  echo "| Screen / component · state | iOS · SwiftUI | Android · Compose |" >> "$BODY"
+  echo "|---|:--:|:--:|" >> "$BODY"
+  local label ios_cell and_cell
+  while IFS= read -r k; do
+    [ -z "$k" ] && continue
+    label=$(printf '%s' "$k" | sed -E 's/-([^-]+)$/ · \1/; s/-/ /g')
+    if [ -n "${IOS[$k]:-}" ]; then ios_cell="<img src=\"$RAW/swiftui/${IOS[$k]}\" width=\"230\">"; else ios_cell="—"; fi
+    if [ -n "${ANDROID[$k]:-}" ]; then and_cell="<img src=\"$RAW/compose/${ANDROID[$k]}\" width=\"230\">"; else and_cell="—"; fi
+    echo "| \`$label\` | $ios_cell | $and_cell |" >> "$BODY"
+  done <<< "$keys"
   echo >> "$BODY"
 }
 
 if [ "$PUSH_OK" = 1 ]; then
-  emit_table "SwiftUI (iOS)" "$SWIFT_DL" "$RAW/swiftui"
-  emit_table "Compose (Android)" "$COMPOSE_DL" "$RAW/compose"
+  emit_paired_table
 else
   {
     echo "> ⚠️ **Images pending** — the evidence-branch push was rejected after retries, so the inline"
