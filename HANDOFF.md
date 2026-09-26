@@ -108,3 +108,29 @@ code is authored/cleaned once, Code Connect binds it, and the Figma library is g
 The reconciliation work already done is not wasted: it validated the correct targets, found the real
 drift (TaskEventRow, DailyBriefCard emoji/title), and produced the component inventory the code-first
 library should contain.
+
+## Skills wiring (Option B — done this session)
+
+The design system repo is the Agent Factory harness. The Factory does **not** install skills — its
+`catalog_skills(root, skill_dirs)` reads skill dirs off disk from the consumer checkout and inlines up
+to `max_skills` (3) into the Builder/Reviewer prompt. So the two process skills must physically live
+in this checkout. They are **vendored, never hand-copied**, on the same contract as tokens:
+
+- `skills.json` — manifest: source repo (`samuelalake/agent-skills`), pinned commit, dest, skill list.
+  This is the "one source" — not agent-factory (project-steward + human-writing only), not swami.
+- `tools/sync-skills.mjs` — `--from <src>` copies the pinned skills into `.claude/skills/`;
+  `--check` is the CI drift guard (content + exec-bit + extra-file + pin-mismatch).
+- `.github/workflows/skills.yml` — checks the source out at the pin and runs `--check` (sibling of
+  `tokens.yml`).
+- Vendored copies: `.claude/skills/product-design-delivery/`, `.claude/skills/verified-delivery/`
+  (see `.claude/skills/SYNCED.md`).
+
+**Location decision (founder, this session):** `.claude/skills/` is the canonical skill home. One
+physical copy serves both consumers — Claude Code reads `.claude/skills/` natively; Agent Factory
+reads the same dir. All three skills there (`rem-design-system` + the two vendored) catalog together
+and fit `max_skills = 3`.
+
+### ⚠️ Still needed — factory-side, out of this repo
+Agent Factory's `skill_dirs` must include `.claude/skills/` (its defaults are `skills/` / `skill/`).
+Until that config lands, the Factory will not catalog the vendored skills even though they exist here.
+This is the only remaining step to close Option B.

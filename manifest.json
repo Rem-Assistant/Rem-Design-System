@@ -3,7 +3,7 @@
   "$version": "0.1.0",
   "tokens": "tokens/tokens.json",
   "tokenVersion": "0.1.0-seed",
-  "count": 25,
+  "count": 26,
   "components": {
     "Text": {
       "group": "general",
@@ -1042,6 +1042,72 @@
           "do": "Use this as the canonical conversation composition: user + assistant turns, a reasoning disclosure, a tool-result card, an inline proposal, and the composer.",
           "dont": "Improvise a different arrangement of chat elements.",
           "enforced_by": "prose-only (screen template)"
+        }
+      ]
+    },
+    "OnboardingSequencer": {
+      "kind": "screen-template",
+      "mirrors": "OnboardingFlow.swift (signIn → dataSharingConsent → …) — the native first-run sequencer",
+      "status": "draft",
+      "composedOf": [
+        "ContainedIcon"
+      ],
+      "pendingNative": [
+        "Button",
+        "ListRow"
+      ],
+      "props": {
+        "steps": {
+          "type": "data",
+          "required": true,
+          "desc": "Ordered step slots: Sign-in → Consent → (#12 middle steps); no deploy slot"
+        },
+        "showProgress": {
+          "type": "bool",
+          "default": true,
+          "desc": "Show the step progress indicator (Extend)"
+        },
+        "signInState": {
+          "type": "enum",
+          "enum": [
+            "returning",
+            "new",
+            "checking",
+            "error",
+            "recovery"
+          ],
+          "default": "returning",
+          "desc": "Sign-in step state, mapped from the host's real auth"
+        },
+        "onComplete": {
+          "type": "action",
+          "desc": "Fires when the last step advances"
+        }
+      },
+      "rules": [
+        {
+          "id": "no-deploy-step",
+          "do": "Compose the path from the ordered step slots you pass (Sign-in → Consent → the middle steps).",
+          "dont": "Reintroduce a deploy/provisioning step anywhere in the sequence — the runtime migration removes it.",
+          "enforced_by": "prose-only (the sequencer injects no steps of its own; the path is exactly its `steps`)"
+        },
+        {
+          "id": "reproduce-signin-consent",
+          "do": "Keep the sign-in and consent copy + Sign-in-with-Apple treatment exactly as the authoritative reference (`tasks/refs/onboarding/01-sign-in.png`, `02-consent.png`).",
+          "dont": "Reword consent copy, restyle the Apple button, or invent a visual treatment for the reproduced steps.",
+          "enforced_by": "prose-only (Reproduce mode — fidelity is verified against the reference frame)"
+        },
+        {
+          "id": "real-auth-no-mock",
+          "do": "Drive sign-in from the host's real auth by mapping it to `SignInState` (returning / new / checking / error / recovery); advance only on success.",
+          "dont": "Fake-advance from the button or hard-code a signed-in state in the component.",
+          "enforced_by": "prose-only (the step is state-driven; the host owns auth + advancement)"
+        },
+        {
+          "id": "token-bound",
+          "do": "Bind every visual to the generated tokens (RemTokens / DesignTokens) and reuse the canonical ContainedIcon for hero + row leadings. The CTA button and the consent legal rows are hand-rolled natively (no Compose Button / ListRow primitive exists yet) — keep them token-bound too.",
+          "dont": "Introduce call-site literals, or claim canonical Button / ListRow reuse the Compose surface does not perform.",
+          "enforced_by": "SwiftLint ds_* rules (Swift) + oxlint no-raw-hex (web); prose for Compose until a lint lands"
         }
       ]
     }

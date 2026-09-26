@@ -60,3 +60,36 @@ Linux — no Xcode). Steps:
    rule), then merge.
 
 Until step 5 passes on a Mac, keep the generated Swift here in `tokens/generated/`, not in the app.
+
+# Skill sync
+
+`skills.json` is the single source of truth for the process skills this repo vendors from
+`samuelalake/agent-skills`. Same shape as the token pipeline: a data manifest → a `--check`-able
+Node script → committed outputs (`.claude/skills/<skill>/`), guarded in CI. Nothing under the
+vendored skill dirs is edited by hand.
+
+## Usage
+
+```bash
+node tools/sync-skills.mjs --from <src>           # copy the pinned skills into .claude/skills/
+node tools/sync-skills.mjs --from <src> --check   # CI drift guard: exit 1 if the copies drift
+```
+
+`<src>` is a local checkout of `skills.json` `.source.repo`; its git HEAD must equal `.source.pin`
+(the script asserts this, so local and CI land byte-identical trees). No dependencies — plain Node.
+The script does **no network I/O**: this container's git proxy is scoped to the Rem repos, so the
+source is fetched *outside* the script — locally from a sibling checkout at the pin, in CI by
+`actions/checkout` at the pin (see `.github/workflows/skills.yml`).
+
+## Why vendored, not installed
+
+This repo is the Agent Factory harness. The Factory's `catalog_skills(root, skill_dirs)` reads skill
+dirs off disk from the checkout — it does not install skills. So the skills must live here as
+committed files. `.claude/skills/` is the shared home: Claude Code reads it natively, and Agent
+Factory reads it once `.claude/skills/` is added to its `skill_dirs` (a **factory-side** config
+change, out of this repo). See `.claude/skills/SYNCED.md`.
+
+## Updating
+
+Bump `skills.json` `.source.pin` (after landing the change upstream), run the sync, commit the
+refreshed `.claude/skills/<skill>` trees. CI (`.github/workflows/skills.yml`) fails on drift.

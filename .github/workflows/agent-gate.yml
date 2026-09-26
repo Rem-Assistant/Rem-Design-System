@@ -1,0 +1,24 @@
+name: agent-gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number
+        required: true
+        type: string
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  statuses: write
+jobs:
+  gate:
+    uses: samuelalake/agent-factory/.github/workflows/gate.yml@a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+    with:
+      pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
+      factory_ref: a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+    secrets: inherit

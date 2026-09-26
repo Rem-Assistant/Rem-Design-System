@@ -23,6 +23,49 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Onboarding sequencer + sign-in/consent reproduction — 2026-09-26 (issue #11)
+
+Built the native **onboarding sequencer shell** (order · progress · Continue/Skip forward+back) and the
+two **reproduced steps** hosted in it, as the Compose siblings of `OnboardingFlow.swift`
+(`compose/RemDesignSystem/onboarding/`). **No deploy/provisioning slot** is present in the path (the
+sequencer injects no steps of its own — the path is exactly the ordered slots the host passes); the
+deploy code itself is retired later with the runtime migration (out of scope here).
+
+- **Reproduce grounds (authoritative reference):** the founder onboarding reference frames committed at
+  `tasks/refs/onboarding/01-sign-in.png` (sign-in, returning state) and `02-consent.png` (consent),
+  plus the app sources they cite (`OnboardingFlow.signInContent`, `AIDataSharingConsentView`) and the
+  Figma masters Login `411:15` / Privacy `410:16`. Consent copy is transcribed **verbatim** into
+  `ConsentStep.kt` (title/subtitle, both legal-row titles + subtitles, CTA, footer). Sign-in reproduces
+  the left-aligned brand lockup, the "Continue as <name>" Sign-in-with-Apple returning treatment, and
+  "Sign in with a different account".
+- **Real auth, no mock:** sign-in is state-driven (`SignInState` = returning / new / checking / error /
+  recovery); the host maps its real auth to these and advances only on success. checking = disabled
+  spinner CTA; error/recovery are an **Extend** treatment (no reference frame) reusing a token-bound
+  inline message — flagged for founder confirmation.
+- **Token-bound + canonical reuse — honest `composed_of`:** every visual binds to `RemTokens`, and the
+  hero + consent-row leading icons reuse the canonical `ContainedIcon` (anti-drift Rule 0). That is the
+  **only** canonical reuse this surface performs. The CTA button (`OnboardingActionButton` in
+  `OnboardingScaffold.kt`) and the consent legal rows (`ConsentLegalRow` in `ConsentStep.kt`) are
+  **hand-rolled, not instances of the canonical `Button` / `ListRow`** — no Compose primitive exists for
+  either yet, so both are **forked-pending-native and flagged for extraction** (the same flag
+  `OnboardingSupport.kt` already carries for the button now covers the row too). The manifest reflects
+  this: `composedOf: [ContainedIcon]`, `pendingNative: [Button, ListRow]`; `OnboardingSequencer.md`
+  no longer claims Button/ListRow reuse. Flagged metric debts (centralized, not
+  call-site literals): onboarding hero may want a dedicated size token (reuses `ContainedIcon` Large
+  today); disabled-CTA alpha and the progress-dot sizes have no token yet; iOS glyphs (`doc.text`,
+  `shield`, `lock.shield.fill`, Apple/Google marks) diverge to Material vectors / overridable params
+  (brand-asset debt), per the repo convention.
+- **Progress indicator is Extend:** the reference frames show no progress affordance; a quiet
+  token-bound step-dots indicator was added as part of the Extend shell and flagged for founder
+  confirmation of style/placement.
+
+**Not verified in this checkout (reference-vs-evidence split):** Compose compilation, and the iOS +
+Android light+dark render evidence for each sign-in state + consent, are the render runners' job
+(`visual-verify` / the Android runner) — this repo has no iOS/Android/Figma toolchain. The clean-slate
+drive + screenshot diff against `01-sign-in.png` / `02-consent.png` is the Verify stage's gate.
+
+---
+
 ## iOS 26 foundation + variable-binding pass — 2026-09-24
 
 Re-based onto the **official iOS 26** library and bound colors to the local **Color** variables

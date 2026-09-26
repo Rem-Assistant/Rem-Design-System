@@ -1,0 +1,44 @@
+name: agent-review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to review again
+        required: true
+        type: string
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  issues: write
+  pull-requests: write
+  statuses: write
+jobs:
+  review:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.fork == false
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+    with:
+      pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
+      factory_ref: a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+      reviewer_app_id: ${{ vars.AGENT_FACTORY_REVIEWER_APP_ID }}
+      steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      AGENT_FACTORY_REVIEWER_APP_ID: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_ID }}
+      AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY }}
+      AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
+      AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
+  integration:
+    needs: review
+    uses: samuelalake/agent-factory/.github/workflows/integration.yml@a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+    with:
+      pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
+      factory_ref: a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+      timeout_seconds: 1800
+      steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
+    secrets:
+      AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
+      AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
