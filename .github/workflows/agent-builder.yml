@@ -1,0 +1,26 @@
+name: agent-builder
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  builder:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@d58b93bb716478e8772fb505c8a7277fa8b6eac8
+    with:
+      issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
+      factory_ref: d58b93bb716478e8772fb505c8a7277fa8b6eac8
+      runner: ubuntu-latest
+      base_ref: main
+      gemini_cli_version: 0.55.1
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
+      AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}

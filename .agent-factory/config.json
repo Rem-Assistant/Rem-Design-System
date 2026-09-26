@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "project": {
+    "name": "rem-design-system",
+    "context_files": [
+      "README.md",
+      "SPEC.md"
+    ],
+    "skill_dirs": [
+      ".claude/skills"
+    ],
+    "max_skills": 3
+  },
+  "steward": {
+    "marker": "<!-- steward:agent-factory -->",
+    "app_login": "agent-factory-steward[bot]",
+    "trusted_operator_logins": [
+      "samuelalake"
+    ],
+    "ready_labels": [
+      "ready"
+    ],
+    "dispatch_label": "agent:builder",
+    "retry_label": "agent:retry",
+    "provider": "claude-code",
+    "model": "claude-opus-4-8",
+    "fallback_provider": null,
+    "fallback_model": null,
+    "arbitration_provider": "claude-code",
+    "arbitration_model": "claude-opus-4-8",
+    "arbitration_visual_evidence": false,
+    "arbitration_fallback_provider": null,
+    "arbitration_fallback_model": null,
+    "arbitration_fallback_visual_evidence": false,
+    "max_subtasks": 3
+  },
+  "builder": {
+    "marker": "<!-- builder:agent-factory -->",
+    "app_login": "agent-factory-builder[bot]",
+    "provider": "claude-code",
+    "harness": "claude-code",
+    "model": "claude-opus-4-8",
+    "cli_version": "0.55.1",
+    "timeout_seconds": 1800,
+    "branch_prefix": "agent-factory/issue-",
+    "base_branch": "main",
+    "runner": "ubuntu-latest",
+    "fallback_provider": null,
+    "fallback_model": null,
+    "max_model_requests": 40,
+    "max_output_tokens": 4096,
+    "max_revision_attempts": 3,
+    "visual_revision_context": false,
+    "fallback_visual_revision_context": false,
+    "max_model_cost_usd": 3.0,
+    "input_cost_per_million": 0.0,
+    "output_cost_per_million": 0.0
+  },
+  "review": {
+    "marker": "<!-- reviewer:agent-factory -->",
+    "failure_marker": "<!-- reviewer:agent-factory-failure -->",
+    "app_login": "agent-factory-reviewer[bot]",
+    "required": true,
+    "max_diff_bytes": 200000,
+    "provider": "claude-code",
+    "model": "claude-opus-4-8",
+    "fallback_provider": null,
+    "fallback_model": null,
+    "visual_evidence": false,
+    "fallback_visual_evidence": false,
+    "visual_evidence_paths": []
+  },
+  "integration": {
+    "marker": "<!-- steward:agent-factory-integration -->",
+    "status_context": "agent-factory/integration",
+    "environment": "development",
+    "mode": "pull_request_merge_ref",
+    "automatic_promotion": true
+  },
+  "gate": {
+    "context": "agent-factory",
+    "required_checks": [],
+    "allow_followup_issues": true
+  }
+}
