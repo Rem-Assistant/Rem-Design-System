@@ -44,6 +44,56 @@ private func chevron() -> some View {
         .foregroundStyle(DesignTokens.Color.labelTertiary)
 }
 
+// The onboarding consent SCREEN, composed WITHOUT the shipping template's `ScrollView`.
+// SwiftUI's `ImageRenderer` cannot rasterize `ScrollView`/`List` content (it captures an empty
+// viewport), so the screen is re-composed scroll-free from the SAME real design-system components
+// (`ContainedIcon`, `ListRow`, `RemButton`) for the screenshot. Only the screen scaffold is
+// re-created here; the atomic components are the shipped ones. Mirrors `OnboardingConsentTemplate`.
+@MainActor
+private func consentScreen() -> some View {
+    let message = "Rem uses your data to answer requests and run approved actions through your personal cloud gateway. You can review or delete your account data in Settings."
+    let footnote = "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy."
+    return VStack(spacing: DesignTokens.Spacing.lg) {
+        Spacer().frame(height: DesignTokens.Spacing.xxl)
+        VStack(spacing: DesignTokens.Spacing.md) {
+            ContainedIcon("lock.shield.fill", fill: .tint(DesignTokens.Color.brandBlue), size: .large)
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                Text("Privacy by design")
+                    .font(DesignTokens.Typography.title1.weight(.semibold))
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+                Text(message)
+                    .font(DesignTokens.Typography.body)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        VStack(spacing: 0) {
+            ListRow("Terms of Service",
+                    subtitle: "How Rem accounts, subscriptions, and approved actions work.",
+                    leading: { ContainedIcon("doc.text", fill: .subtle) },
+                    trailing: { chevron() })
+            Divider().padding(.leading, 60)
+            ListRow("Privacy Policy",
+                    subtitle: "What Rem, your gateway, and AI or voice providers process.",
+                    leading: { ContainedIcon("shield", fill: .subtle) },
+                    trailing: { chevron() })
+        }
+        .background(DesignTokens.Color.backgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+        Spacer()
+        VStack(spacing: DesignTokens.Spacing.md) {
+            Button("Accept and Continue") {}.remPrimaryActionButton()
+            Text(footnote)
+                .font(DesignTokens.Typography.caption1)
+                .foregroundStyle(DesignTokens.Color.labelSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    .padding(DesignTokens.Spacing.lg)
+}
+
 @MainActor
 private func galleries() -> [Gallery] {
     let buttons = VStack(spacing: 14) {
@@ -75,23 +125,11 @@ private func galleries() -> [Gallery] {
     .background(DesignTokens.Color.backgroundSecondary)
     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
 
-    let consent = OnboardingConsentTemplate(
-        message: "Rem uses your data to answer requests and run approved actions through your personal cloud gateway. You can review or delete your account data in Settings.",
-        legalItems: [
-            .init(symbol: "doc.text", title: "Terms of Service",
-                  subtitle: "How Rem accounts, subscriptions, and approved actions work.", action: {}),
-            .init(symbol: "shield", title: "Privacy Policy",
-                  subtitle: "What Rem, your gateway, and AI or voice providers process.", action: {}),
-        ],
-        footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
-        onPrimary: {}
-    )
-
     return [
         Gallery(name: "RemButton", width: 300, height: nil, view: AnyView(buttons)),
         Gallery(name: "ContainedIcon", width: 260, height: nil, view: AnyView(icons)),
         Gallery(name: "ListRow", width: 380, height: nil, view: AnyView(rows)),
-        Gallery(name: "OnboardingConsent", width: 402, height: 874, view: AnyView(consent)),
+        Gallery(name: "OnboardingConsent", width: 402, height: 874, view: AnyView(consentScreen())),
     ]
 }
 

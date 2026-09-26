@@ -28,16 +28,34 @@ else
   git checkout -q --orphan "$BRANCH"
   git rm -rfq . 2>/dev/null || true
 fi
-rm -rf "$DEST"; mkdir -p "$DEST/swiftui" "$DEST/compose"
-cp "$SWIFT_DL"/*.png "$DEST/swiftui/" 2>/dev/null || true
-cp "$COMPOSE_DL"/*.png "$DEST/compose/" 2>/dev/null || true
+copy_images () {
+  rm -rf "$DEST"; mkdir -p "$DEST/swiftui" "$DEST/compose"
+  cp "$SWIFT_DL"/*.png "$DEST/swiftui/" 2>/dev/null || true
+  cp "$COMPOSE_DL"/*.png "$DEST/compose/" 2>/dev/null || true
+}
+
+# Push with re-sync on rejection: a concurrent run pushing to the shared design-evidence branch
+# moves the tip, so a plain retry of the same push is rejected forever. On each failure, re-fetch
+# the branch, re-apply this PR's pr-<N> subtree onto the moved tip, and retry. PUSH_OK gates the
+# comment so a failed upload never posts a table of broken (404) images.
+PUSH_OK=0
+copy_images
 git add -A
 if git diff --cached --quiet; then
-  echo "no evidence changes to push"
+  echo "no evidence changes to push"; PUSH_OK=1
 else
   git commit -qm "screenshots for PR #${PRN} @ ${SHA_SHORT}"
-  for i in 1 2 3; do git push -q origin "$BRANCH" && break || sleep $((2**i)); done
+  for i in 1 2 3 4; do
+    if git push -q origin "$BRANCH"; then PUSH_OK=1; break; fi
+    echo "push rejected (attempt $i) — re-syncing onto the moved tip"; sleep $((2**i))
+    git fetch -q origin "$BRANCH" || true
+    git checkout -q -B "$BRANCH" FETCH_HEAD 2>/dev/null || git checkout -q --orphan "$BRANCH"
+    copy_images
+    git add -A
+    git commit -qm "screenshots for PR #${PRN} @ ${SHA_SHORT}" 2>/dev/null || true
+  done
 fi
+[ "$PUSH_OK" = 1 ] || echo "::warning::evidence push failed after retries; the comment will note images are pending"
 
 RAW="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${DEST}"
 BODY="${RUNNER_TEMP}/body.md"
@@ -68,8 +86,17 @@ emit_table () {
   echo >> "$BODY"
 }
 
-emit_table "SwiftUI (iOS)" "$SWIFT_DL" "$RAW/swiftui"
-emit_table "Compose (Android)" "$COMPOSE_DL" "$RAW/compose"
+if [ "$PUSH_OK" = 1 ]; then
+  emit_table "SwiftUI (iOS)" "$SWIFT_DL" "$RAW/swiftui"
+  emit_table "Compose (Android)" "$COMPOSE_DL" "$RAW/compose"
+else
+  {
+    echo "> ⚠️ **Images pending** — the evidence-branch push was rejected after retries, so the inline"
+    echo "> table is omitted rather than shown broken. The renders are available as this run's"
+    echo "> **artifacts** (Checks tab → this workflow → Artifacts)."
+    echo
+  } >> "$BODY"
+fi
 
 {
   echo
