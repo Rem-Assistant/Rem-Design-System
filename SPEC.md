@@ -189,9 +189,16 @@ well (Fluent, Material) share the token layer and the *meaning* of each componen
   home; the web rendering must not silently become the reference. Where the web preview diverges
   from the shipping SwiftUI, the SwiftUI wins.
 
-**Android is out of scope now** and aspirational. The reason to get the token layer right anyway is
-that a clean token contract is exactly what makes a future Android target cheap instead of a
-rewrite.
+**Android is in scope** (active client: `Rem-Assistant/Rem#3`). The token layer is generated for
+Compose too — `tokens.json → RemTokens.kt` alongside `DesignTokens.swift` — so the Android client
+consumes the **same** tokens (light + dark) instead of a hand-rolled theme. And the design system
+delivers **component code for both platforms** — SwiftUI (iOS) **and** Jetpack Compose (Android) —
+bound to those tokens; it is **not tokens-only**. The **form still diverges** to each platform's
+native idiom (Material containers on Android, not iOS chrome); what's shared is the tokens and each
+component's intent, not the chrome.
+
+**Platform roadmap:** iOS + Android now; **iPadOS** later (scaled from the iOS design); **Mac** follows
+iPadOS (Mac ≈ the iPad design), so there is no separate Mac design track.
 
 ---
 
@@ -261,10 +268,8 @@ component docs are written and it's worth polishing as a portfolio piece.
 ## 9. Non-goals
 
 - Fluent/Carbon-scale governance, versioning policy, or contribution process.
-- Android support **now** (the token layer keeps it cheap **later**).
 - Making the design system the product's competitive moat.
 - Flattening Apple system colors to static hex on device.
-- Generating component *code* (only tokens are generated; components are authored per platform).
 
 ---
 
