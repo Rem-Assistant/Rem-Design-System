@@ -1,3 +1,6 @@
 node_modules/
 site/
 _skills-src/
+
+# Swift package build artifacts
+.build/

@@ -18,7 +18,7 @@ import { dirname, join } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = join(HERE, "..", "tokens", "tokens.json");
-const OUT_SWIFT = join(HERE, "..", "tokens", "generated", "DesignTokens.generated.swift");
+const OUT_SWIFT = join(HERE, "..", "Sources", "RemDesignSystem", "DesignTokens.generated.swift");
 const OUT_CSS = join(HERE, "..", "tokens", "generated", "tokens.generated.css");
 const OUT_KT = join(HERE, "..", "tokens", "generated", "RemTokens.kt");
 
@@ -83,6 +83,7 @@ function buildSwift() {
   colorLines.push(swiftColorDecl("labelPrimary", c.label.primary));
   colorLines.push(swiftColorDecl("labelSecondary", c.label.secondary));
   colorLines.push(swiftColorDecl("labelTertiary", c.label.tertiary));
+  colorLines.push(swiftColorDecl("labelOnColor", c.label.onColor));
   colorLines.push(swiftColorDecl("separator", c.separator));
   colorLines.push(swiftColorDecl("fillTertiary", c.fill.tertiary));
   colorLines.push(swiftColorDecl("buttonBackground", c.buttonBackground));
@@ -152,6 +153,7 @@ function cssColorVars(light) {
   push("label-primary", c.label.primary);
   push("label-secondary", c.label.secondary);
   push("label-tertiary", c.label.tertiary);
+  push("label-on-color", c.label.onColor);
   push("separator", c.separator);
   push("fill-tertiary", c.fill.tertiary);
   push("button-background", c.buttonBackground);
