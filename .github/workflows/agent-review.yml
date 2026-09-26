@@ -18,28 +18,22 @@ permissions:
 jobs:
   review:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.fork == false
-    uses: samuelalake/agent-factory/.github/workflows/review.yml@9fd45842a57d26b184725f0f73d119f398eebd7a
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@d58b93bb716478e8772fb505c8a7277fa8b6eac8
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: 9fd45842a57d26b184725f0f73d119f398eebd7a
+      factory_ref: d58b93bb716478e8772fb505c8a7277fa8b6eac8
     secrets:
-      MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       AGENT_FACTORY_REVIEWER_APP_ID: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_ID }}
       AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY }}
       AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
       AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
   integration:
     needs: review
-    uses: samuelalake/agent-factory/.github/workflows/integration.yml@9fd45842a57d26b184725f0f73d119f398eebd7a
+    uses: samuelalake/agent-factory/.github/workflows/integration.yml@d58b93bb716478e8772fb505c8a7277fa8b6eac8
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: 9fd45842a57d26b184725f0f73d119f398eebd7a
+      factory_ref: d58b93bb716478e8772fb505c8a7277fa8b6eac8
       timeout_seconds: 1800
     secrets:
       AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
