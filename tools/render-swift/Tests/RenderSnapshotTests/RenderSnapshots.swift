@@ -93,7 +93,9 @@ final class RenderSnapshots: XCTestCase {
     // The REAL onboarding consent template (with its ScrollView) — rendered faithfully now.
     private var consentScreen: some View {
         OnboardingConsentTemplate(
-            message: "Rem uses your data to answer requests and run approved actions through your personal cloud gateway. You can review or delete your account data in Settings.",
+            // Canonical consent copy (authority: Compose `ConsentStep.kt`), kept identical on both
+            // platforms so the side-by-side evidence compares the same screen.
+            message: "Rem uses your data to answer you and act on the things you ask. You can review or delete it anytime in Settings.",
             legalItems: [
                 .init(symbol: "doc.text", title: "Terms of Service",
                       subtitle: "How Rem accounts, subscriptions, and approved actions work.", action: {}),

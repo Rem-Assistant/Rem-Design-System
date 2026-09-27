@@ -7,8 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,19 +50,31 @@ class EvidenceSnapshots {
         shot("ContainedIcon-dark") { RemTheme(darkTheme = true) { iconRow() } }
     }
 
+    // Mirrors the iOS ContainedIcon gallery glyph-for-glyph so the side-by-side table is a true
+    // comparison: Security (≈ lock.shield.fill, tinted+large), Description (≈ doc.text, subtle),
+    // Shield (≈ shield, subtle) — on the primary background so the "light" shot is white, not the
+    // Paparazzi default (which otherwise made the subtle tile vanish on dark).
     @Composable
     private fun iconRow() {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp),
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(RemColors.current.backgroundPrimary),
+            contentAlignment = Alignment.Center,
         ) {
-            ContainedIcon(
-                Icons.Filled.Lock,
-                fill = ContainedIconFill.Tint(RemColors.current.brandBlue),
-                size = ContainedIconSize.Large,
-            )
-            ContainedIcon(Icons.Filled.Settings, fill = ContainedIconFill.Subtle)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(16.dp),
+            ) {
+                ContainedIcon(
+                    Icons.Filled.Security,
+                    fill = ContainedIconFill.Tint(RemColors.current.brandBlue),
+                    size = ContainedIconSize.Large,
+                )
+                ContainedIcon(Icons.Filled.Description, fill = ContainedIconFill.Subtle)
+                ContainedIcon(Icons.Filled.Shield, fill = ContainedIconFill.Subtle)
+            }
         }
     }
 
