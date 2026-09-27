@@ -15,10 +15,11 @@ private func chevron() -> some View {
 // Faithful iOS screenshot evidence. Runs on an iOS Simulator (via `xcodebuild test`) so the tokens
 // resolve to real iOS UIColor semantics — `.systemBackground` is WHITE on iOS (it is grey on macOS,
 // which is why the earlier macOS `ImageRenderer` renders looked inverted). Snapshots a real
-// `UIHostingController` view hierarchy with `drawHierarchy(afterScreenUpdates:)`, which captures
+// `UIHostingController` view hierarchy with `host.view.layer.render(in:)`, which captures
 // `ScrollView`/`List` content that `ImageRenderer` cannot — so the ACTUAL `OnboardingConsentTemplate`
-// renders faithfully (no scroll-free re-composition). PNGs go to SNAPSHOT_OUT_DIR for the evidence
-// pipeline.
+// renders faithfully (no scroll-free re-composition). Each PNG is emitted as an `XCTAttachment` and
+// extracted from the `.xcresult` afterwards (an env var like SNAPSHOT_OUT_DIR does not cross into the
+// simulator process, so the test does not write to disk itself).
 @MainActor
 final class RenderSnapshots: XCTestCase {
 

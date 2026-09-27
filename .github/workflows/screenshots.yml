@@ -1,7 +1,8 @@
 name: screenshots
 
-# Renders the design system to PNGs so the built output is VISIBLE — SwiftUI via ImageRenderer,
-# Compose via Paparazzi (both JVM/native, NO simulator/emulator), on one macOS runner OS. The two
+# Renders the design system to PNGs so the built output is VISIBLE — SwiftUI on an iOS Simulator via
+# `xcodebuild test` (UIHostingController + layer.render, for true iOS UIColor semantics and
+# ScrollView/List capture), Compose via Paparazzi (JVM, no emulator), on one macOS runner OS. The two
 # render jobs are independent so one platform failing still posts the other; the evidence job
 # assembles whatever rendered and posts an image table to the PR.
 
