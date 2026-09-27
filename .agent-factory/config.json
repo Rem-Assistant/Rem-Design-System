@@ -64,17 +64,11 @@
     "max_diff_bytes": 200000,
     "provider": "claude-code",
     "model": "claude-opus-4-8",
-    "fallback_provider": "openrouter",
-    "fallback_model": "openai/gpt-5.4-mini",
+    "fallback_provider": null,
+    "fallback_model": null,
     "visual_evidence": false,
-    "fallback_visual_evidence": true,
-    "visual_evidence_paths": [
-      "Sources/**",
-      "compose/**",
-      "tokens/generated/**"
-    ],
-    "require_builder_delivery": true,
-    "delivery_wait_seconds": 1800
+    "fallback_visual_evidence": false,
+    "visual_evidence_paths": []
   },
   "integration": {
     "marker": "<!-- steward:agent-factory-integration -->",
