@@ -24,7 +24,12 @@ let package = Package(
                 "Buttons/RemButton.figma.swift",
                 "Primitives/ContainedIcon.figma.swift",
                 "Brand/RemFaceMark.figma.swift",
-            ]
+            ],
+            // Brand raster assets that have no faithful vector source — the real app-icon bloom
+            // (transferred verbatim from the shipping app's AppIcon), loaded via `Bundle.module`
+            // by `RemAppIcon`. Processed into a compiled asset catalog so `UIImage(named:in:)`
+            // resolves it on the render simulator.
+            resources: [.process("Resources")]
         ),
         // Screenshot-evidence snapshots. Run on an iOS Simulator via `xcodebuild test` so the
         // render uses real iOS UIColor semantics (`.systemBackground` is white on iOS, grey on

@@ -217,6 +217,12 @@ data class OnboardingAction(
     val enabled: Boolean = true,
     val loading: Boolean = false,
     val leadingIcon: ImageVector? = null,
+    /**
+     * Whether the [leadingIcon] is recolored to the label color. Monochrome provider marks (Apple)
+     * tint to the inverted label; a multicolor mark (the Google "G") must stay `false` so it renders
+     * at its own four colors.
+     */
+    val tintLeadingIcon: Boolean = true,
 )
 
 enum class OnboardingActionStyle {
@@ -266,7 +272,8 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
                         Icon(
                             imageVector = action.leadingIcon,
                             contentDescription = null,
-                            tint = labelColor,
+                            // Color.Unspecified keeps a multicolor mark (Google "G") at its own colors.
+                            tint = if (action.tintLeadingIcon) labelColor else Color.Unspecified,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.width(RemSpacing.sm))

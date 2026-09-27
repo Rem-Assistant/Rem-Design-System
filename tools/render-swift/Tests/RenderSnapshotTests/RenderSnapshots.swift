@@ -32,6 +32,19 @@ final class RenderSnapshots: XCTestCase {
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
             render("Consent-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen }
         }
+        // Sign-in states, keyed to pair with the Compose `SignIn-*` shots in the side-by-side table.
+        render("SignIn-returning-light", width: 393, height: 852, dark: false) {
+            OnboardingSignInTemplate(state: .returning(accountName: "Sam"), onPrimary: {})
+        }
+        render("SignIn-new-light", width: 393, height: 852, dark: false) {
+            OnboardingSignInTemplate(state: .new, onPrimary: {})
+        }
+        render("SignIn-error-dark", width: 393, height: 852, dark: true) {
+            OnboardingSignInTemplate(
+                state: .error(message: "We couldn't sign you in. Check your connection and try again."),
+                onPrimary: {}
+            )
+        }
     }
 
     // MARK: - Galleries (mirror each component's #Preview)
