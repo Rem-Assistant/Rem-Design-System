@@ -131,6 +131,15 @@ registered Figma/code pairs at the PR head. CI passes those six exact basenames 
 `compare.mjs --require`, then publishes `artifacts/design-drift-report.json` in the job summary and
 as a downloadable workflow artifact. Missing or unmatched required states fail closed.
 
+**Approved drift calibration (2026-09-28):** `pixelmatch --threshold=0.3` with
+`--maxDiffRatio=0.10`. The per-pixel threshold is a YIQ color-distance tolerance, not permission for
+30% of the screen to differ. The changed-area ceiling is 10%; the approved hosted six-state baseline
+measured 6.55%–9.38%, so the ceiling sits 0.62 percentage points above the highest approved state.
+The exact state ratios, Figma nodes, and source run are committed in
+`tools/design-sync/baselines/consent-2026-09-28.json`. These values are part of this contract; changing
+either requires a fresh six-state baseline plus founder and Reviewer approval. The pixel gate catches
+material drift while Reviewer still owns the paired visual decision.
+
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
 amendment on the issue. **Status:** drafted from the reference frame + onboarding packet; the paired
 render is the proof the founder spot-checks. Build behind the live visual-parity gate.

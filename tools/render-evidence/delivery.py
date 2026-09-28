@@ -37,11 +37,14 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
         lines += ["**Render workflow did not pass.** Builder must repair its failing checks.", ""]
     lines += ["| Screen / component · state | iOS · SwiftUI | Android · Compose |", "|---|:---:|:---:|"]
     attachments = []
-    # Required screen states come first, followed by regression/component evidence.
-    for key in sorted(pairs, key=lambda key: (key not in required, key)):
+    # A contract-scoped delivery is deliberately narrow: Reviewer sees exactly the required states
+    # for the changed screen, while the full renderer may still exercise regression/component
+    # snapshots in CI. Unscoped changes retain the complete gallery as a useful fallback.
+    delivery_keys = sorted(required) if required else sorted(pairs)
+    for key in delivery_keys:
         cells = []
         for platform in ("swiftui", "compose"):
-            path = pairs[key].get(platform)
+            path = pairs.get(key, {}).get(platform)
             if path:
                 cells.append(f"![{platform} {key}]({path})")
                 attachments.append(path)
