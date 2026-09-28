@@ -135,7 +135,7 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       [rows, 'INSTANCE', hierarchy.rows, 'row collection'],
       [rowsSlot, 'SLOT', hierarchy.rowsSlot, 'section rows slot'],
       [section, 'INSTANCE', hierarchy.section, 'section'],
-      [sectionsSlot, 'SLOT', hierarchy.sections, 'sections slot'],
+      [sectionsSlot, 'SLOT', hierarchy.sectionsSlot, 'sections slot'],
       [sections, 'INSTANCE', hierarchy.sections, 'section collection'],
       [mobileFlow, 'INSTANCE', 'Mobile Flow', 'mobile flow'],
       [document, 'INSTANCE', expectedDocument.name, 'documentation shell'],

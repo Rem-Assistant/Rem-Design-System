@@ -76,7 +76,7 @@ const flow = {
     children: [{
       id: 'mobile-flow', type: 'INSTANCE', name: 'Mobile Flow', children: [{
         id: 'placeholder-sections', type: 'INSTANCE', name: contract.flow.hierarchy.sections, children: [{
-          id: 'sections-slot', type: 'SLOT', name: contract.flow.hierarchy.sections, children: [{
+          id: 'sections-slot', type: 'SLOT', name: contract.flow.hierarchy.sectionsSlot, children: [{
             id: 'placeholder-section', type: 'INSTANCE', name: contract.flow.hierarchy.section, children: [{
               id: 'section-rows-slot', type: 'SLOT', name: contract.flow.hierarchy.rowsSlot, children: [{
                 id: 'placeholder-rows', type: 'INSTANCE', name: contract.flow.hierarchy.rows, children: [{
