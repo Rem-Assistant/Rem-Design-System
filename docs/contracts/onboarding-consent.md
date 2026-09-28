@@ -71,7 +71,19 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 - **Adaptable:** per-platform safe-area handling; the exact hero-badge size; the native sheet
   presentation idiom (iOS page sheet ↔ Android modal/full sheet).
 - **Excluded:** other onboarding screens (own contracts); the legal copy body (owned by
-  `LegalDocumentView`); Figma authoring; the sequencer chrome itself.
+  `LegalDocumentView`); the sequencer chrome itself.
+
+## Figma delivery (required)
+
+A finished consent PR includes the editable screen and legal-sheet flow in the existing Rem file.
+It covers default light, default dark, error dark, loading, Terms light, and Privacy light; reuses
+canonical components and shared variables; and keeps the Terms / Privacy interactions working in
+Present mode.
+
+The PR delivery record includes direct links to the screen, flow, and reused components, exported
+Figma renders for the required states, and a reused/new component ledger. Existing frame links alone
+do not establish that the designs were updated or verified. Missing authoring access is a Steward
+capability blocker, not permission to omit Figma.
 
 ## Parity acceptance (what the visual gate diffs)
 

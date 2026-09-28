@@ -168,7 +168,7 @@ public struct OnboardingConsentTemplate: View {
 #if DEBUG
 #Preview("OnboardingConsentTemplate") {
     OnboardingConsentTemplate(
-        message: "Rem uses your data to answer requests and run approved actions through your personal cloud gateway. You can review or delete your account data in Settings.",
+        message: "Rem uses your data to answer you and act on the things you ask. You can review or delete it anytime in Settings.",
         legalItems: [
             .init(symbol: "doc.text", title: "Terms of Service",
                   subtitle: "How Rem accounts, subscriptions, and approved actions work.", action: {}),
