@@ -31,11 +31,15 @@ const screenComponents = {
   id: contract.screenComponents.id,
   type: contract.screenComponents.type,
   name: contract.screenComponents.name,
-  children: contract.screenComponents.screens.map((entry) => ({ ...entry, children: [] })),
+  children: contract.screenComponents.screens.map(({ width, height, ...entry }) => ({
+    ...entry,
+    absoluteBoundingBox: { x: 0, y: 0, width, height },
+    children: [],
+  })),
 };
 
 const screenInstance = (entry) => ({
-  id: entry.node,
+  id: `I${entry.node};nested-screen`,
   type: 'INSTANCE',
   name: contract.screenComponents.screens.find(({ id }) => id === entry.componentId).name,
   componentId: entry.componentId,
@@ -141,7 +145,7 @@ const firstScreenSlot = findNode(looseFlow, ({ name }) => name === contract.flow
 firstScreenSlot.children = [{ id: 'legacy-slot', type: 'FRAME', name: 'Device / Screen slot', children: firstScreenSlot.children }];
 const loose = verify(page, looseFlow);
 assert.equal(loose.ok, false);
-assert.match(loose.errors.join('\n'), /placeholder must be INSTANCE Mobile Placeholder/);
+assert.match(loose.errors.join('\n'), /missing from a Screen slot/);
 
 const leftoverFlow = structuredClone(flow);
 const firstPlaceholder = findNode(leftoverFlow, ({ id }) => id === contract.flow.screens[0].placeholder);
@@ -162,11 +166,11 @@ const invalidPrototype = verify(page, flow, nestedPrototype);
 assert.equal(invalidPrototype.ok, false);
 assert.match(invalidPrototype.errors.join('\n'), /direct INSTANCE child of prototype/);
 
-const brokenPrototype = structuredClone(prototype);
-brokenPrototype.children.find(({ id }) => id === '781:596').children = [];
-const missingLinks = verify(page, flow, brokenPrototype);
-assert.equal(missingLinks.ok, false);
-assert.match(missingLinks.errors.join('\n'), /destinations must be/);
+const wrongPrototypeSource = structuredClone(prototype);
+wrongPrototypeSource.children.find(({ id }) => id === '781:596').componentId = 'wrong:component';
+const invalidPrototypeSource = verify(page, flow, wrongPrototypeSource);
+assert.equal(invalidPrototypeSource.ok, false);
+assert.match(invalidPrototypeSource.errors.join('\n'), /direct INSTANCE child of prototype/);
 
 const extraTopLevel = structuredClone(page);
 extraTopLevel.children.push({ id: 'extra:1', type: 'FRAME', name: 'Loose screen' });
@@ -175,7 +179,7 @@ assert.equal(scattered.ok, false);
 assert.match(scattered.errors.join('\n'), /Page top level/);
 
 const wrongScreenSize = structuredClone(screenComponents);
-wrongScreenSize.children[0].width = 428;
+wrongScreenSize.children[0].absoluteBoundingBox.width = 428;
 const invalidScreen = verify(page, flow, prototype, inventory, wrongScreenSize);
 assert.equal(invalidScreen.ok, false);
 assert.match(invalidScreen.errors.join('\n'), /Canonical screen must be/);

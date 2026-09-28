@@ -19,16 +19,6 @@ function colorToHex(color) {
   return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
 }
 
-function actionsFor(reaction) {
-  if (Array.isArray(reaction?.actions)) return reaction.actions;
-  return reaction?.action ? [reaction.action] : [];
-}
-
-function reactionInventory(root) {
-  return [...walk(root).values()].flatMap(({ node }) =>
-    (node.reactions || []).flatMap(actionsFor));
-}
-
 export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument) {
   const errors = [];
   const expectedTop = contract.page.topLevel;
@@ -87,8 +77,11 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
   const screenRootIndex = walk(screenRoot);
   const canonicalScreens = expectedScreenRoot.screens.map((expected) => {
     const match = screenRootIndex.get(expected.id)?.node;
+    const bounds = match?.absoluteBoundingBox;
+    const width = match?.width ?? bounds?.width;
+    const height = match?.height ?? bounds?.height;
     const conforms = Boolean(match && match.type === expected.type && match.name === expected.name &&
-      match.width === expected.width && match.height === expected.height);
+      width === expected.width && height === expected.height);
     if (!conforms) errors.push(`Canonical screen must be ${JSON.stringify(expected)}`);
     return { ...expected, status: conforms ? 'conformant' : 'invalid' };
   });
@@ -118,12 +111,19 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     errors.push(`${hierarchy.steps} must use ${hierarchy.stepSpacing} item spacing; received ${steps?.itemSpacing}`);
   }
 
+  const matchedFlowScreenIds = new Set();
   const screens = contract.flow.screens.map((expected) => {
-    const match = index.get(expected.node);
+    const stableIdMatch = index.get(expected.node);
+    const componentMatch = [...index.values()].find(({ node, ancestors }) =>
+      !matchedFlowScreenIds.has(node.id) && node.type === 'INSTANCE' &&
+      node.componentId === expected.componentId && ancestors[0]?.type === 'SLOT' &&
+      ancestors[0]?.name === hierarchy.screenSlot);
+    const match = stableIdMatch || componentMatch;
     if (!match) {
-      errors.push(`${expected.name} (${expected.node}) is missing from flow ${contract.flow.id}`);
+      errors.push(`${expected.name} (${expected.componentId}) is missing from a ${hierarchy.screenSlot} slot in flow ${contract.flow.id}`);
       return { ...expected, status: 'missing' };
     }
+    matchedFlowScreenIds.add(match.node.id);
 
     const [screenSlot, placeholder, stepSlot, row, rowSlot, rows, rowsSlot, section, sectionsSlot, sections, mobileFlow, document] = match.ancestors;
     const checks = [
@@ -148,8 +148,8 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     if (match.node.type !== 'INSTANCE' || match.node.componentId !== expected.componentId) {
       errors.push(`${expected.name} must be INSTANCE ${expected.node} of canonical screen ${expected.componentId}`);
     }
-    if (placeholder?.id !== expected.placeholder || placeholder?.componentId !== contract.flow.placeholderComponent) {
-      errors.push(`${expected.name} must use Mobile Placeholder ${expected.placeholder} from ${contract.flow.placeholderComponent}`);
+    if (placeholder?.componentId !== contract.flow.placeholderComponent) {
+      errors.push(`${expected.name} must use Mobile Placeholder component ${contract.flow.placeholderComponent}`);
     }
     if ((screenSlot?.children || []).filter(({ visible }) => visible !== false).length !== 1) {
       errors.push(`${expected.name} Screen slot must contain exactly one visible canonical screen instance`);
@@ -162,11 +162,12 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     const conformant = checks.every(([node, requiredType, requiredName]) =>
       node?.type === requiredType && node.name === requiredName) &&
       match.node.type === 'INSTANCE' && match.node.componentId === expected.componentId &&
-      placeholder?.id === expected.placeholder && placeholder?.componentId === contract.flow.placeholderComponent &&
+      placeholder?.componentId === contract.flow.placeholderComponent &&
       forbiddenChildren.length === 0;
 
     return {
       ...expected,
+      resolvedNode: match.node.id,
       status: conformant ? 'conformant' : 'invalid',
       placeholder: placeholder ? { id: placeholder.id, type: placeholder.type, name: placeholder.name, componentId: placeholder.componentId } : null,
       ancestry: match.ancestors.slice(0, 12).map(({ id, type, name }) => ({ id, type, name })),
@@ -178,7 +179,6 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     errors.push(`Prototype root must be ${JSON.stringify(expectedPrototypeRoot)}`);
   }
   const prototypeIndex = walk(prototypeDocument || { id: 'missing-prototype', children: [] });
-  const flowStartIds = new Set((pageDocument.flowStartingPoints || []).map(({ nodeId }) => nodeId));
   const prototypeLabel = prototypeIndex.get(contract.flow.prototype.label.id);
   if (!prototypeLabel || prototypeLabel.node.name !== contract.flow.prototype.label.name || prototypeLabel.ancestors[0]?.id !== expectedPrototypeRoot.id) {
     errors.push(`${contract.flow.prototype.label.name} must be a direct child of prototype ${expectedPrototypeRoot.id}`);
@@ -192,20 +192,7 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     const direct = match.node.type === expected.type && match.node.name === expected.name &&
       match.node.componentId === expected.componentId && match.ancestors[0]?.id === expectedPrototypeRoot.id;
     if (!direct) errors.push(`${expected.name} must be a direct ${expected.type} child of prototype ${expectedPrototypeRoot.id} from ${expected.componentId}`);
-    const hasFlowStart = flowStartIds.has(expected.node);
-    if (hasFlowStart !== expected.flowStart) {
-      errors.push(`${expected.name} flow-start status must be ${expected.flowStart}; received ${hasFlowStart}`);
-    }
-    const actions = reactionInventory(match.node);
-    const destinations = [...new Set(actions.filter(({ type }) => type === 'NODE').map(({ destinationId }) => destinationId))].sort();
-    const expectedDestinations = [...expected.destinations].sort();
-    if (JSON.stringify(destinations) !== JSON.stringify(expectedDestinations)) {
-      errors.push(`${expected.name} destinations must be ${JSON.stringify(expectedDestinations)}; received ${JSON.stringify(destinations)}`);
-    }
-    const backCount = actions.filter(({ type }) => type === 'BACK').length;
-    if (backCount !== expected.backCount) errors.push(`${expected.name} must contain ${expected.backCount} Back actions; received ${backCount}`);
-    const actionConforms = JSON.stringify(destinations) === JSON.stringify(expectedDestinations) && backCount === expected.backCount;
-    return { ...expected, status: direct && hasFlowStart === expected.flowStart && actionConforms ? 'conformant' : 'invalid' };
+    return { ...expected, status: direct ? 'conformant' : 'invalid' };
   });
 
   const canonical = {

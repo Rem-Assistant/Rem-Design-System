@@ -106,6 +106,10 @@ Nested documentation screens cannot be prototype navigation destinations in Figm
 instances. Consent `781:596` links to Terms `781:637` and Privacy `781:690`; both legal sheets return with Back;
 Consent is the one registered Presentation starting point. Accept remains unconnected because the
 old Deploying destination is being deprecated and no replacement step is approved yet.
+The authenticated Figma plugin inspection on 2026-09-28 verified the `Consent flow` starting point,
+both Consent row destinations, and two Back actions on each legal sheet. The public REST file-node
+schema does not return prototype reactions, so CI verifies the three direct canonical prototype
+instances while plugin/Present-mode evidence verifies their interactions.
 
 The consent flow introduces canonical `Section` (`741:311`) on Rows & Controls. It exposes optional
 Header/Footer properties plus an editable Rows slot restricted by preference to `ListRow`; the grouped

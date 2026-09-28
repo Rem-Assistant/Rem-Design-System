@@ -87,6 +87,7 @@
       { "name": "Consent-privacy-light", "node": "777:999", "componentId": "777:392", "placeholder": "777:994", "evidence": true }
     ],
     "prototype": {
+      "interactionVerification": "Figma plugin plus Present mode; the REST file-node schema does not return reactions",
       "root": { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
       "label": { "id": "715:327", "name": "PROTOTYPE FLOWS" },
       "frames": [

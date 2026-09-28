@@ -72,9 +72,11 @@ requires the shared Onboarding page to have one canonical screen-component inven
 documentation/prototype pair. It verifies the attached hierarchy `Mobile Flow Documentation` →
 Sections slot → Rows slot → Steps slot → `Mobile Placeholder` → exact-size Screen slot → canonical
 screen instance. It also checks the four-step placeholder/arrow sequence, each screen's component
-source, the three prototype instances, their destinations/Back actions, and the registered starting
-point. This catches detachment, legacy wrappers, and visually aligned overlay siblings that image
-comparison cannot distinguish.
+source, and the three direct canonical prototype instances. The public REST file-node schema does
+not return prototype reactions, so destinations, Back actions, and the Presentation starting point
+are verified through the authenticated Figma plugin and Present mode instead of being claimed by
+this REST gate. Together these checks catch detachment, legacy wrappers, and visually aligned overlay
+siblings that image comparison cannot distinguish.
 The inventory check also enforces its `#F5F5F5` contrast surface, exact five-component screen set,
 source-backed Rem and Google marks, and canonical `Section` ancestry for Privacy's legal rows.
 The exact-head structure digest and resolved ancestry are uploaded as
