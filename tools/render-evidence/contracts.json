@@ -1,0 +1,10 @@
+{
+  "onboarding-sign-in": {
+    "paths": ["Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift", "compose/RemDesignSystem/onboarding/SignInStep.kt", "tokens/**"],
+    "states": ["signin-returning-light", "signin-new-light", "signin-checking-light", "signin-error-dark", "signin-recovery-light"]
+  },
+  "onboarding-consent": {
+    "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
+    "states": ["consent-default-light", "consent-default-dark", "consent-error-dark", "consent-terms-light", "consent-privacy-light"]
+  }
+}
