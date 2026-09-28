@@ -8,14 +8,23 @@ export function assertPng(bytes, name) {
   }
 }
 
-export function contractReferenceItems(contracts) {
+export function contractReferenceItems(contracts, primaryContract = null) {
   if (!contracts || typeof contracts !== 'object' || Array.isArray(contracts)) {
     throw new Error('contracts must be an object');
   }
   const items = [];
   const names = new Map();
   const nodes = new Map();
-  for (const [contractName, contract] of Object.entries(contracts)) {
+  if (primaryContract !== null && !/^[a-z0-9-]+$/.test(primaryContract)) {
+    throw new Error('invalid primary contract name');
+  }
+  if (primaryContract !== null && !Object.hasOwn(contracts, primaryContract)) {
+    throw new Error(`unknown primary contract: ${primaryContract}`);
+  }
+  const selected = primaryContract === null
+    ? Object.entries(contracts)
+    : [[primaryContract, contracts[primaryContract]]];
+  for (const [contractName, contract] of selected) {
     for (const field of ['references', 'waypoints']) {
       const configured = contract?.[field] ?? {};
       if (!configured || typeof configured !== 'object' || Array.isArray(configured)) {

@@ -15,6 +15,21 @@ test('collects contract screen references and structural waypoints', () => {
   ]);
 });
 
+test('reference-only scope excludes unrelated manifest and contract items', () => {
+  const contracts = {
+    consent: {
+      references: { ready: { name: 'Consent-ready', node: '1:2' } },
+      waypoints: { flow: { name: 'Consent-flow', node: '1:3' } },
+    },
+    unrelated: { references: { old: { name: 'Deleted-legacy', node: '788:3184' } } },
+  };
+  assert.deepEqual(contractReferenceItems(contracts, 'consent'), [
+    { name: 'Consent-ready', node: '1:2' },
+    { name: 'Consent-flow', node: '1:3' },
+  ]);
+  assert.throws(() => contractReferenceItems(contracts, 'missing'), /unknown primary contract/);
+});
+
 test('deduplicates an identical manifest and contract export', () => {
   assert.deepEqual(
     mergeExportItems(

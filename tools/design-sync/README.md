@@ -38,27 +38,38 @@ FIGMA_TOKEN=<pat> node export-figma.mjs artifacts/figma
 # code side (macOS runner): render previews to artifacts/swiftui/<Name>.png
 #   -> see snapshots/RemDesignSnapshots.swift.example (copy into the RemClaw test target)
 # then:
-npm i && node compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
+npm ci && node compare.mjs artifacts/swiftui artifacts/figma \
+  --maxDiffRatio=0.02 \
+  --require=Consent-default-light,Consent-terms-light,Consent-privacy-light \
+  --exclusive-prefix=Consent-
 ```
 
-`--maxDiffRatio` is the fraction of pixels allowed to differ (font hinting / anti-aliasing noise);
-start at `0.02` and tighten. Names must match between the two folders — that's what `manifest.json`
-guarantees.
+`--maxDiffRatio` is the fraction of pixels allowed to differ (font hinting / anti-aliasing noise).
+`--require` makes every named pair mandatory. The optional, reusable `--exclusive-prefix` rejects
+any output in that namespace that is not in the required set, so stale or invented states cannot be
+silently accepted.
 
 For screen delivery, `tools/render-evidence/contracts.json` also declares the canonical Figma node
-for each required state and any optional flow/documentation waypoint. `design-drift.yml` exports
-those nodes at the pull request's exact head and uploads a digest manifest. The privileged
+for each required state and any optional flow/documentation waypoint. `design-drift.yml` associates
+fresh live exports with the pull request's exact head and uploads a digest manifest. The privileged
 `publish-builder-delivery.yml` workflow accepts that artifact only from the matching same-repository
 run, trusted base-branch workflow, PR, head SHA, and run attempt, then verifies the exact file set and
 every digest before adding a **Figma Reference** column.
 
 The secret-bearing export uses `pull_request_target` with read-only permissions and checks out only
-the event's base SHA. It does not check out or execute pull-request code. Required reference nodes and
-waypoints therefore enter the trusted base contract in a separate control-plane change before a
-product PR can consume them; exact-head app renders remain isolated in `screenshots.yml`.
-Although the drift job may export the broader registry for its own comparison, its authenticated
-artifact stages only the selected contract's state references and waypoints. Unrelated component
-exports never reach the delivery formatter.
+the event's base SHA. It never checks out or executes pull-request code. Trusted code fetches exactly
+`manifest.json` and `structure-contract.json` from the PR head through the GitHub Contents API,
+validates their schema, size, node ids, collection bounds, and Figma file key, and treats them only as
+data. The base-branch exporter uses the trusted render-evidence contract and exports only the selected
+contract's references and waypoints. Missing required nodes fail; absent unrelated legacy registry
+nodes do not block a scoped delivery.
+
+The base-branch verifier checks the live Figma document against the fetched head structure contract.
+Its report, the exact head contract, and the exact head manifest are digest-bound into the reference
+artifact. The publisher requires a successful producing run and revalidates those digests plus the
+report's head, file, and completed status. Exact-head SwiftUI/Compose parity remains the responsibility
+of `screenshots.yml` and Reviewer. The scheduled/manual lane retains the older staging-app visual
+comparison as a health check and is not presented as pull-request evidence.
 
 Add one `delivery-scope:<contract-name>` label to a PR when collateral contract edits would otherwise
 make the evidence scope ambiguous. The publisher accepts at most one label and resolves it only

@@ -11,18 +11,23 @@ import { manifest, figma, requireToken } from './lib.mjs';
 import { assertPng, contractReferenceItems, mergeExportItems } from './reference-config.mjs';
 
 requireToken();
-const outDir = process.argv[2] || 'artifacts/figma';
+const positional = process.argv.slice(2).filter((argument) => !argument.startsWith('--'));
+const options = Object.fromEntries(process.argv.slice(2).filter((argument) => argument.startsWith('--')).map((argument) => {
+  const [key, ...rest] = argument.slice(2).split('=');
+  return [key, rest.join('=') || true];
+}));
+const outDir = positional[0] || 'artifacts/figma';
 await mkdir(outDir, { recursive: true });
 
 const contracts = JSON.parse(await readFile(
   new URL('../render-evidence/contracts.json', import.meta.url),
   'utf8',
 ));
-const items = mergeExportItems(
-  manifest.components,
-  manifest.screens,
-  contractReferenceItems(contracts),
-);
+const referenceItems = contractReferenceItems(contracts, options['primary-contract'] || null);
+const referencesOnly = options['references-only'] === true;
+const items = referencesOnly
+  ? referenceItems
+  : mergeExportItems(manifest.components, manifest.screens, referenceItems);
 const ids = items.map((i) => i.node);
 // Figma image export: batch the ids in one call.
 const { images } = await figma(`/images/${manifest.figmaFileKey}?ids=${encodeURIComponent(ids.join(','))}&format=png&scale=2`);
@@ -30,7 +35,11 @@ const { images } = await figma(`/images/${manifest.figmaFileKey}?ids=${encodeURI
 let n = 0;
 for (const item of items) {
   const url = images[item.node];
-  if (!url) { console.warn(`no render for ${item.name} (${item.node})`); continue; }
+  if (!url) {
+    if (referencesOnly) throw new Error(`required Figma reference is unavailable: ${item.name} (${item.node})`);
+    console.warn(`no render for optional registry item ${item.name} (${item.node})`);
+    continue;
+  }
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Figma export failed for ${item.name}: HTTP ${response.status}`);
   const bytes = Buffer.from(await response.arrayBuffer());

@@ -189,9 +189,12 @@ jobs:
           test "$(jq -r .path <<<"$run_meta")" = ".github/workflows/design-drift.yml"
           test "$(jq -r .event <<<"$run_meta")" = "pull_request_target"
           test "$(jq -r .status <<<"$run_meta")" = "completed"
+          test "$(jq -r .conclusion <<<"$run_meta")" = "success"
           test "$(jq -r .head_sha <<<"$run_meta")" = "$BASE_SHA"
           test "$(jq -r .head_repository.full_name <<<"$run_meta")" = "$GITHUB_REPOSITORY"
-          jq -r '.pull_requests[].number' <<<"$run_meta" | grep -Fxq "$PR"
+          # pull_request_target runs use the base commit as head_sha and GitHub may omit the
+          # pull_requests array. The exact PR/head binding is authenticated in the artifact name
+          # and manifest below rather than inferred from that optional run field.
           test "$(jq -r .workflow_run.head_sha <<<"$artifact")" = "$BASE_SHA"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "run_attempt=$run_attempt" >> "$GITHUB_OUTPUT"
@@ -226,7 +229,7 @@ jobs:
             --workflow-sha256 "$TRUSTED_WORKFLOW_SHA" --media-dir reference \
             --figma-file-key "$figma_file_key" --contracts-sha256 "$contracts_sha" \
             --primary-contract "$PRIMARY_CONTRACT" \
-            --require-reference-export
+            --require-reference-export --require-structure-verification
           mkdir -p "$EVIDENCE_ROOT/reference"
           cp "$FIGMA_ROOT"/reference/*.png "$EVIDENCE_ROOT/reference/"
 
