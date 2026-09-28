@@ -5,7 +5,8 @@ name: publish-builder-delivery
 # + review.fallback_visual_evidence). Runs in the privileged `workflow_run` context — it never executes
 # PR code — and mirrors the swami reference publisher's trust binding: same-repo only, head-SHA pinned,
 # the producing workflow's sha256 verified against the base branch, the PR forbidden from modifying that
-# workflow, and every media file digest-checked before it is attached.
+# workflow, and every media file digest-checked before it is attached. Live Figma references come
+# from the matching exact-head design-drift run; this privileged workflow receives no Figma secret.
 
 on:
   workflow_run:
@@ -53,7 +54,7 @@ jobs:
     needs: locate
     if: needs.locate.outputs.present == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       actions: read
       contents: read
@@ -85,6 +86,14 @@ jobs:
           base_ref=$(jq -r .base.ref <<<"$pr_meta")
           base_sha=$(jq -r .base.sha <<<"$pr_meta")
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          mapfile -t scopes < <(jq -r '.labels[].name | select(startswith("delivery-scope:")) | sub("^delivery-scope:"; "")' <<<"$pr_meta")
+          test "${#scopes[@]}" -le 1
+          if [ "${#scopes[@]}" = "1" ]; then
+            [[ "${scopes[0]}" =~ ^[a-z0-9-]+$ ]]
+            echo "primary_contract=${scopes[0]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "primary_contract=" >> "$GITHUB_OUTPUT"
+          fi
           case "$base_ref" in main) ;; *) echo "::error::unsupported evidence base branch: $base_ref"; exit 1 ;; esac
           run_meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
           test "$(jq -r .path <<<"$run_meta")" = ".github/workflows/screenshots.yml"
@@ -97,10 +106,17 @@ jobs:
           # modify that workflow (a control-plane change merges separately before it can produce evidence).
           trusted_workflow_sha=$(gh api --method GET "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/screenshots.yml" -f ref="$base_sha" --jq .content \
             | tr -d '\n' | base64 --decode | shasum -a 256 | awk '{print $1}')
+          trusted_design_workflow_sha=$(gh api --method GET "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/design-drift.yml" -f ref="$base_sha" --jq .content \
+            | tr -d '\n' | base64 --decode | shasum -a 256 | awk '{print $1}')
+          echo "trusted_design_workflow_sha=$trusted_design_workflow_sha" >> "$GITHUB_OUTPUT"
           files=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}/files" --paginate --jq '.[].filename')
           printf '%s\n' "$files" > "$RUNNER_TEMP/evidence-changed-paths.txt"
           if printf '%s\n' "$files" | grep -Fxq ".github/workflows/screenshots.yml"; then
             echo "::error::the evidence-producing workflow changed in this PR; merge that control-plane change separately before publishing Builder evidence"
+            exit 1
+          fi
+          if printf '%s\n' "$files" | grep -Fxq ".github/workflows/design-drift.yml"; then
+            echo "::error::the Figma evidence-producing workflow changed in this PR; merge that control-plane change separately before publishing Builder evidence"
             exit 1
           fi
           python3 - "$PR" "$SHA" "$EVIDENCE_ROOT" "$RUN_ID" "$RUN_ATTEMPT" "$trusted_workflow_sha" <<'PY'
@@ -143,6 +159,81 @@ jobs:
           ref: ${{ steps.validate.outputs.base_sha }}
           path: consumer-delivery
           persist-credentials: false
+
+      - name: Locate exact-head Figma reference evidence
+        id: figma-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          EVIDENCE_ROOT: ${{ runner.temp }}/evidence
+        run: |
+          set -euo pipefail
+          PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
+          match=""
+          for _ in $(seq 1 75); do
+            if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/design-drift.yml/runs?event=pull_request&head_sha=${SHA}&per_page=100"); then
+              sleep 20
+              continue
+            fi
+            match=$(jq -c --arg sha "$SHA" --arg repo "$GITHUB_REPOSITORY" --argjson pr "$PR" '
+              [.workflow_runs[] | select(
+                .head_sha == $sha and
+                .event == "pull_request" and
+                .status == "completed" and
+                .head_repository.full_name == $repo and
+                any(.pull_requests[]?; .number == $pr)
+              )] | sort_by(.run_started_at, .id) | last // empty
+            ' <<<"$runs")
+            if [ -n "$match" ]; then break; fi
+            sleep 20
+          done
+          test -n "$match"
+          run_id=$(jq -r .id <<<"$match")
+          run_attempt=$(jq -r .run_attempt <<<"$match")
+          test "$(jq -r .path <<<"$match")" = ".github/workflows/design-drift.yml"
+          artifact=""
+          for _ in $(seq 1 6); do
+            artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?name=figma-reference-evidence")
+            if [ "$(jq -r .total_count <<<"$artifact")" = "1" ]; then break; fi
+            sleep 5
+          done
+          test "$(jq -r .total_count <<<"$artifact")" = "1"
+          test "$(jq -r '.artifacts[0].expired' <<<"$artifact")" = "false"
+          test "$(jq -r '.artifacts[0].workflow_run.id' <<<"$artifact")" = "$run_id"
+          test "$(jq -r '.artifacts[0].workflow_run.head_sha' <<<"$artifact")" = "$SHA"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "run_attempt=$run_attempt" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact-head Figma reference evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: figma-reference-evidence
+          path: ${{ runner.temp }}/figma-evidence
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.figma-run.outputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Validate and stage authenticated Figma references
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          FIGMA_ROOT: ${{ runner.temp }}/figma-evidence
+          EVIDENCE_ROOT: ${{ runner.temp }}/evidence
+          FIGMA_RUN_ID: ${{ steps.figma-run.outputs.run_id }}
+          FIGMA_RUN_ATTEMPT: ${{ steps.figma-run.outputs.run_attempt }}
+          TRUSTED_WORKFLOW_SHA: ${{ steps.validate.outputs.trusted_design_workflow_sha }}
+        run: |
+          set -euo pipefail
+          PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
+          figma_file_key=$(jq -r .figmaFileKey "$GITHUB_WORKSPACE/consumer-delivery/tools/design-sync/manifest.json")
+          contracts_sha=$(shasum -a 256 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/contracts.json" | awk '{print $1}')
+          python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/artifact.py" \
+            --root "$FIGMA_ROOT" --pr "$PR" --sha "$SHA" \
+            --run-id "$FIGMA_RUN_ID" --run-attempt "$FIGMA_RUN_ATTEMPT" \
+            --workflow-sha256 "$TRUSTED_WORKFLOW_SHA" --media-dir reference \
+            --figma-file-key "$figma_file_key" --contracts-sha256 "$contracts_sha" \
+            --require-reference-export
+          mkdir -p "$EVIDENCE_ROOT/reference"
+          cp "$FIGMA_ROOT"/reference/*.png "$EVIDENCE_ROOT/reference/"
 
       - name: Checkout exact Agent Factory publisher
         uses: actions/checkout@v4
@@ -187,12 +278,19 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           VERIFY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
+          PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
         run: |
           set -euo pipefail
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
+          SCOPE_ARGS=()
+          if [ -n "$PRIMARY_CONTRACT" ]; then
+            SCOPE_ARGS=(--primary-contract "$PRIMARY_CONTRACT")
+          fi
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/delivery.py" \
             --evidence-root "$EVIDENCE_ROOT" --head "$SHA" --conclusion "$VERIFY_CONCLUSION" \
-            --changed-paths "$RUNNER_TEMP/evidence-changed-paths.txt" --output "$RUNNER_TEMP/paired-delivery"
+            --changed-paths "$RUNNER_TEMP/evidence-changed-paths.txt" \
+            "${SCOPE_ARGS[@]}" \
+            --output "$RUNNER_TEMP/paired-delivery"
           overall=$(cat "$RUNNER_TEMP/paired-delivery/status")
           ATTACHMENTS=()
           while IFS= read -r f; do ATTACHMENTS+=(--attach "$f"); done < <(jq -r '.[]' "$RUNNER_TEMP/paired-delivery/attachments.json")

@@ -45,6 +45,19 @@ npm i && node compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
 start at `0.02` and tighten. Names must match between the two folders — that's what `manifest.json`
 guarantees.
 
+For screen delivery, `tools/render-evidence/contracts.json` also declares the canonical Figma node
+for each required state and any optional flow/documentation waypoint. `design-drift.yml` exports
+those nodes at the pull request's exact head and uploads a digest manifest. The privileged
+`publish-builder-delivery.yml` workflow accepts that artifact only from the matching same-repository
+run, trusted base-branch workflow, PR, head SHA, and run attempt, then verifies the exact file set and
+every digest before adding a **Figma Reference** column.
+
+Add one `delivery-scope:<contract-name>` label to a PR when collateral contract edits would otherwise
+make the evidence scope ambiguous. The publisher accepts at most one label and resolves it only
+against the trusted contract registry. A contract can opt into `exclusive_output_prefixes` to reject
+stale or invented outputs in its namespace while allowing unrelated regression snapshots. This keeps
+the mechanism reusable without embedding consent-specific state names in delivery code.
+
 ## 3. Generator (code → Figma)
 
 You already own the primitive layer: `tokens/tokens.json` → Figma variables (Style Dictionary /

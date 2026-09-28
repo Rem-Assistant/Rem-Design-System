@@ -5,6 +5,15 @@
   },
   "onboarding-consent": {
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
-    "states": ["consent-default-light", "consent-terms-light", "consent-privacy-light"]
+    "states": ["consent-default-light", "consent-terms-light", "consent-privacy-light"],
+    "exclusive_output_prefixes": ["consent-"],
+    "references": {
+      "consent-default-light": { "name": "Consent-default-light", "node": "777:248" },
+      "consent-terms-light": { "name": "Consent-terms-light", "node": "777:325" },
+      "consent-privacy-light": { "name": "Consent-privacy-light", "node": "777:392" }
+    },
+    "waypoints": {
+      "consent-flow-documentation": { "name": "Consent-flow-documentation", "node": "777:432" }
+    }
   }
 }

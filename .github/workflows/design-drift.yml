@@ -6,7 +6,14 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'Sources/**'
+      - 'compose/**'
+      - 'tokens/generated/**'
+      - 'docs/contracts/**'
       - 'tools/design-sync/**'
+      - 'tools/render-evidence/**'
+      - 'code-connect/**'
+      - 'figma.*.config.json'
   schedule:
     - cron: '0 7 * * 1' # weekly guardrail
 
@@ -16,6 +23,89 @@ jobs:
     steps:
       - name: Checkout design system (this repo)
         uses: actions/checkout@v4
+        with:
+          # pull_request's default merge ref is not an immutable Builder evidence identity.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Checkout trusted Figma exporter
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted-design-export
+          persist-credentials: false
+
+      - name: Figma export → artifacts/figma
+        id: figma-export
+        continue-on-error: true
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            # Pull-request code supplies declarative node mappings only. The secret-bearing exporter
+            # and HTTP client come from the trusted base SHA and never execute PR JavaScript.
+            cp tools/design-sync/manifest.json trusted-design-export/tools/design-sync/manifest.json
+            node trusted-design-export/tools/design-sync/export-figma.mjs "$GITHUB_WORKSPACE/artifacts/figma"
+          else
+            node tools/design-sync/export-figma.mjs artifacts/figma
+          fi
+
+      - name: Assemble exact-head Figma reference evidence
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          REFERENCE_EXPORT_STATUS: ${{ steps.figma-export.outcome }}
+        run: |
+          set -euo pipefail
+          mkdir -p figma-reference/reference figma-reference/delivery
+          cp artifacts/figma/*.png figma-reference/reference/ 2>/dev/null || true
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          root = Path("figma-reference")
+          trusted_contracts = Path("trusted-design-export/tools/render-evidence/contracts.json")
+          contracts_path = trusted_contracts if trusted_contracts.is_file() else Path("tools/render-evidence/contracts.json")
+          media = {
+              path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in sorted((root / "reference").glob("*.png"))
+          }
+          manifest = json.loads(Path("tools/design-sync/manifest.json").read_text(encoding="utf-8"))
+          (root / "delivery/manifest.json").write_text(json.dumps({
+              "version": 1,
+              "pr": int(os.environ["PR"]),
+              "sha": os.environ["SHA"],
+              "run_id": int(os.environ["RUN_ID"]),
+              "run_attempt": int(os.environ["RUN_ATTEMPT"]),
+              "workflow_sha256": hashlib.sha256(Path(".github/workflows/design-drift.yml").read_bytes()).hexdigest(),
+              "contracts_sha256": hashlib.sha256(contracts_path.read_bytes()).hexdigest(),
+              "reference_export_status": os.environ["REFERENCE_EXPORT_STATUS"],
+              "figma_file_key": manifest["figmaFileKey"],
+              "media_sha256": media,
+          }, sort_keys=True), encoding="utf-8")
+          PY
+
+      - name: Upload exact-head Figma reference evidence
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: figma-reference-evidence
+          path: figma-reference/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Require Figma reference export
+        if: ${{ github.event_name == 'pull_request' && steps.figma-export.outcome != 'success' }}
+        run: |
+          echo '::error::Figma reference export failed; authenticated reference evidence is unavailable'
+          exit 1
 
       - name: Checkout app source
         uses: actions/checkout@v4
@@ -24,9 +114,6 @@ jobs:
           ref: staging
           path: app
           token: ${{ secrets.APP_REPO_TOKEN }} # PAT with read access to RemClaw
-
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
 
       - name: SwiftUI snapshots → artifacts/swiftui
         working-directory: app
@@ -39,11 +126,6 @@ jobs:
             -scheme Rem \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -only-testing:RemTests/RemDesignSnapshots | xcpretty || true
-
-      - name: Figma export → artifacts/figma
-        env:
-          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
-        run: node tools/design-sync/export-figma.mjs artifacts/figma
 
       - name: Compare
         run: |

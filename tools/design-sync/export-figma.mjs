@@ -6,14 +6,23 @@
 //
 //   FIGMA_TOKEN=... node tools/design-sync/export-figma.mjs [outDir=artifacts/figma]
 //
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { manifest, figma, requireToken } from './lib.mjs';
+import { assertPng, contractReferenceItems, mergeExportItems } from './reference-config.mjs';
 
 requireToken();
 const outDir = process.argv[2] || 'artifacts/figma';
 await mkdir(outDir, { recursive: true });
 
-const items = [...manifest.components, ...manifest.screens];
+const contracts = JSON.parse(await readFile(
+  new URL('../render-evidence/contracts.json', import.meta.url),
+  'utf8',
+));
+const items = mergeExportItems(
+  manifest.components,
+  manifest.screens,
+  contractReferenceItems(contracts),
+);
 const ids = items.map((i) => i.node);
 // Figma image export: batch the ids in one call.
 const { images } = await figma(`/images/${manifest.figmaFileKey}?ids=${encodeURIComponent(ids.join(','))}&format=png&scale=2`);
@@ -22,7 +31,10 @@ let n = 0;
 for (const item of items) {
   const url = images[item.node];
   if (!url) { console.warn(`no render for ${item.name} (${item.node})`); continue; }
-  const bytes = Buffer.from(await (await fetch(url)).arrayBuffer());
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Figma export failed for ${item.name}: HTTP ${response.status}`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  assertPng(bytes, item.name);
   await writeFile(`${outDir}/${item.name}.png`, bytes);
   n++;
 }
