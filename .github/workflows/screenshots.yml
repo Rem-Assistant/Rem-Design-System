@@ -106,3 +106,46 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/post-evidence.sh
+
+      # Typed, head-bound Builder-evidence artifact for the Agent Factory visual-review loop
+      # (consumed by publish-builder-delivery.yml, which validates + publishes it into the Builder
+      # delivery so the Reviewer sees the renders). Additive to the human comment above.
+      - name: Assemble Builder evidence (out/ + manifest)
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          mkdir -p out/swiftui out/compose out/delivery
+          cp dl/swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
+          cp dl/compose-screenshots/*.png out/compose/ 2>/dev/null || true
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          out = Path("out")
+          media = {}
+          for d in ("swiftui", "compose"):
+              for p in sorted((out / d).glob("*.png")):
+                  media[p.relative_to(out).as_posix()] = hashlib.sha256(p.read_bytes()).hexdigest()
+          # workflow_sha256 binds the evidence to the exact producing workflow; the publisher
+          # re-derives it from the base branch and refuses if this PR modified the workflow.
+          Path("out/delivery/manifest.json").write_text(json.dumps({
+              "pr": int(os.environ["PR"]),
+              "sha": os.environ["SHA"],
+              "run_id": int(os.environ["RUN_ID"]),
+              "run_attempt": int(os.environ["RUN_ATTEMPT"]),
+              "workflow_sha256": hashlib.sha256(Path(".github/workflows/screenshots.yml").read_bytes()).hexdigest(),
+              "media_sha256": media,
+          }), encoding="utf-8")
+          print("media:", list(media))
+          PY
+      - name: Upload Builder evidence
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: builder-evidence
+          path: out/
+          if-no-files-found: warn
