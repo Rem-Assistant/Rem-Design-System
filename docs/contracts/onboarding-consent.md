@@ -88,15 +88,31 @@ and keep the Terms / Privacy interactions working in Present mode. Include scree
 component/preview links, exported renders for every required state, and the reused/new
 component ledger in the PR.
 
+The consent composition uses the domain-neutral `Lockup`, `ActionArea`, and `ButtonGroup` masters.
+They were extracted because each owns a stable layout responsibility and has plausible consumers
+beyond this flow; onboarding-specific copy remains on the screen instance. Theme (Light/Dark) and
+Platform (iOS/Android) stay independent. Every full-device consent destination includes the canonical
+`StatusBar` (`785:389`) and `NavigationIndicator` (`793:379`) with Platform switching, while the
+documented composition remains Light for review. iOS and Android share the same product layout;
+Platform changes native chrome, type metrics, and semantic icon sources. On legal destinations, the
+status bar is behind the scrim and sheet rather than drawn above them.
+
 The shared `Onboarding` page (`410:15`) uses a numbered Section pair for this flow:
-`01A · Consent · Documentation` (`695:138`) and `01B · Consent · Prototype` (`731:260`). The
-existing sign-in and privacy masters are organized inside `00 · Canonical screen inventory`
-(`760:21`); later onboarding flows add `02A` / `02B` pairs on the same page. Every documented screen is a child of the corresponding
-`Mobile Placeholder`, replacing the template's slot area rather than nesting inside a slot wrapper
-or aligning as a loose overlay sibling. The required hierarchy is `Placeholder Sections` →
-`Placeholder Section` → `Placeholder Rows` → `Placeholder Flows` → `Mobile Placeholder` → screen.
-The one `Placeholder Flows` row contains Consent → Terms and Consent → Privacy, with arrow vectors
-and the template's 24-point spacing. There is no consent-action or speculative system-state row.
+`01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`). Sign-in
+(`788:3183`), Privacy by design (`788:3184`), and the 402×874 consent Default (`777:248`), Terms
+(`777:325`), and Privacy (`777:392`) masters are consolidated inside
+`00 · Canonical screen components` (`760:21`). Later onboarding flows add `02A` /
+`02B` pairs on the same page. Documentation remains an instance of `Mobile Flow Documentation`
+(`769:282`) and composes nested Sections, Rows, Steps, Mobile Placeholders, and Screens through slots.
+Every documented screen is an instance in the exact 402×874 `Screen` slot; no template layer is
+detached. The one `Steps` slot contains Consent → Terms → Consent → Privacy with reusable arrow
+instances and 24-point spacing. There is no consent-action or speculative system-state row.
+
+Canonical screens use semantic top-level layer names (`StatusBar`, `Body`, `ActionArea`,
+`NavigationIndicator`) and SwiftUI-first structural names (`VStack`, `HStack`, `ZStack`,
+`LazyVStack`, `LazyHStack`). Compose translates those structures to `Column`, `Row`, `Box`,
+`LazyColumn`, and `LazyRow`; it does not require a second layout tree. Auto-layout
+`SPACE_BETWEEN` pins top and bottom regions without empty spacer frames.
 
 Reviewer must inspect the Figma exports and structure against the current iOS/Android
 evidence and this contract. Existing frame links alone do not establish that the designs
@@ -106,7 +122,7 @@ not permission to omit Figma or spend repeated screen-revision attempts.
 ### Figma/code source linkage
 
 `tools/design-sync/manifest.json` is the machine-readable source link for each editable node. The
-Default `609:3` maps to `OnboardingConsentTemplate.swift`; Terms `638:28` and Privacy `638:65` map to
+Default `777:248` maps to `OnboardingConsentTemplate.swift`; Terms `777:325` and Privacy `777:392` map to
 `LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
 Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
 presentation and injects the current legal body; render-only legal prose remains in test fixtures.

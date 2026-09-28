@@ -39,10 +39,13 @@ Before creating **any** component, style, or screen element:
    copy. The worst messes this session came from breaking this (two ListRows, a bespoke
    `DateNav` beside the real `DateNavigationHeader`, a `Card` that should have been
    `Section`).
-3. **Name to match SwiftUI.** The name *is* the code-connect: `Section` (not Card),
-   `ContentUnavailableView` (not EmptyState), `Leading Accessory` / `Content` /
-   `Trailing Accessory`. When you add a concept, add its row to `REGISTRY.md` **and** the
-   Figma Component Index in the same change.
+3. **Name concepts semantically, then structure SwiftUI-first.** Use shared product/component names
+   such as `Section`, `ContentUnavailableView`, `StatusBar`, `Body`, `ActionArea`, and
+   `NavigationIndicator`. Inside those regions, name otherwise-generic layout layers `VStack`,
+   `HStack`, `ZStack`, `LazyVStack`, or `LazyHStack`. Documentation maps those to Compose
+   `Column`, `Row`, `Box`, `LazyColumn`, and `LazyRow`; do not duplicate the canvas hierarchy by
+   platform. When you add a concept, add its row to `REGISTRY.md` **and** the Figma Component Index
+   in the same change.
 
 ## Before the first `use_figma` call
 
@@ -63,26 +66,54 @@ needs. Don't force one onto the other.
   correct component-family page. Full Specs-plugin output is optional follow-up work.
 - **Screen or pattern** (Agenda, Chat, Settings, a flow): follow
   **`references/screen-track.md`** — a full-device (402×874) screen built **native, in
-  auto-layout, on the canonical components**, documented with the file's `Component container`
-  and detached `Mobile Flow (Detach This)` templates. Flow screens replace the slot area as direct
-  children of `Mobile Placeholder`; rows and sections organize real states.
+  auto-layout, on the canonical components**, documented with the file's `Component Documentation`
+  and attached slot-based flow templates. `Mobile Flow Documentation` → `Mobile Flow` → Sections →
+  Rows → Steps → `Mobile Placeholder` → Screen remains an instance chain; replace content through
+  slots and never detach the template. Canonical screen components are instanced into documentation
+  and prototype so one edit updates both.
 
-On the Onboarding page, `00 · Canonical screen inventory` (`760:21`) uses `#F5F5F5` as its
+On the Onboarding page, `00 · Canonical screen components` (`760:21`) uses `#F5F5F5` as its
 canvas contrast surface around white device frames. Canonical Sign-in uses the repository's real
 `RemAppIcon` raster and Google SVG; canonical Privacy uses `Section` (`741:311`) for its legal rows.
 The structure contract rejects placeholder glyphs, hand-built replacements, or a white inventory.
+Consent proves the reusable shape: flow chassis masters live in Device Kit (`769:169` through
+`769:282`); Sign-in, Privacy, and the three consent states are all canonical component roots inside
+the single `00` Section; `ButtonGroup`,
+`Lockup`, and `ActionArea` live in the reusable composition documentation section `773:2`. These
+names are intentionally domain-neutral because the patterns may serve screens beyond onboarding.
+For later flows, instance these masters and populate slots instead of copying the consent frames.
+
+During every screen build, inspect its anatomy for reusable concepts without waiting for founder
+prompting. Extract a concept when it owns one stable responsibility and has either two plausible
+consumers or observed recurrence across flows. Keep one-off composition local when reuse is merely
+hypothetical or the wrapper would own no layout, behavior, semantics, or slot contract. This is the
+portable `design-system-delivery` heuristic applied through Rem's registry and evidence rules.
+
+Do not pause a screen run to cosmetically reorganize every legacy component page. When a Builder
+touches a component family, migrate that family into the canonical master-first / specimen-second
+documentation shape and update its consumers. Steward can schedule unrelated legacy families as
+separate cleanup work after the proving loop is reliable.
 
 ## Foundations (the layers everything binds to)
 
 - **Tokens are the source.** `tokens/tokens.json` generates the Figma variable collections
-  (Color Light/Dark, Spacing, Radius, Typography) plus a **Platform** collection (iOS /
-  Android modes) that swaps values like `font/family` (SF Pro ↔ Roboto). Components bind to
-  variables/styles, never hard-coded values, so a mode switch re-skins the whole file.
-- **Type layer = the copied iOS 26 text styles** (full Apple Dynamic Type ramp, with the
-  line-height + tracking bare size tokens drop). Bind every text node to a style, not a raw
-  size.
-- **Components sit on the iOS 26 kit.** Copy the kit's Row/List/controls in, put Rem's
-  custom components on top, bind to the styles/variables above.
+  (Color Light/Dark, Spacing, Radius, Typography) plus a separate **Platform** collection (iOS /
+  Android modes) that swaps values like `font/family` (SF Pro ↔ Roboto). Theme and Platform are
+  independent axes; changing platform must not force a theme change. Components bind to
+  variables/styles, never hard-coded values, so either axis can switch the whole file.
+- **Type and color foundations should be Rem-owned.** Use the copied iOS 26 kit styles as the source
+  baseline for a later foundations pass, then map their full Dynamic Type metrics and semantic colors
+  into Rem-owned variables/styles. Rem components must not depend on an external kit library at
+  runtime after that mapping. Bind every text node to a Rem style rather than a raw size.
+- **System chrome switches by Platform.** `StatusBar` (`785:389`) and `NavigationIndicator`
+  (`793:379`) expose iOS and Android treatments while retaining dark/light content switching inside
+  each. They sit inside one shared product layout; Platform changes native chrome, type metrics, and
+  semantic icon sources, not the screen hierarchy. Use platform-specific nested icon/text components or
+  verified semantic mappings; do not assume an SF Symbols glyph remains correct after only changing
+  the font family to Material Symbols.
+- **Components may be sourced from the iOS 26 kit, then adopted.** Copy the kit's Row/List/controls
+  as source material, put Rem's custom components on top, and bind both to the Rem-owned
+  styles/variables above.
 
 ## Verification (this is why it's "verified against the app")
 
@@ -99,7 +130,9 @@ The structure contract rejects placeholder glyphs, hand-built replacements, or a
 Update `FIDELITY.md` and `REGISTRY.md`, refresh the Figma Component Index row, and (for app
 changes) let visual-verify run. Commit docs to the design-system repo. Keep the file's page
 list clean: canonical components stay in their documentation containers, screens stay inside
-their documented flows, and empty or scratch pages are removed.
+their documented flows, and empty or scratch pages are removed. Keep a `Guide` page only if it is a
+concise entry point for file structure, modes, source mapping, and operating rules; once that content
+is canonical elsewhere, migrate any unique guidance and delete the redundant page.
 
 ## Reference files
 

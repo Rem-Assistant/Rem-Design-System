@@ -13,9 +13,12 @@ Follow `SHAPE-OF-A-TASK.md`, `FILE-ORG.md`, and the repository's `rem-design-sys
   `af4yDqCzp57jds9lkFiIaO`. Use canonical component instances, shared variables, and text styles.
 - Preserve each platform's intentional native treatment while matching the approved
   arrangement, copy, emphasis, glyph meaning, and FILL. Document the platform/mode of each frame.
+  Treat Theme (Light/Dark) and Platform (iOS/Android) as independent axes rather than detached
+  combined variants.
 - Update the consent flow and its legal-sheet interactions so Present works. Reuse the
   existing flow instead of creating another disconnected generation.
-- For added or changed components, deliver master/variants and a Preview tile; update
+- For added or changed components, use the reusable `Component Documentation`: deliver the canonical
+  master/variant set first and its lightweight overview second; update
   `REGISTRY.md`, the Figma Component Index, and `FIDELITY.md` with actual verification results.
   The annotated Anatomy/full specification remains the separate manual step already
   excluded by `SHAPE-OF-A-TASK.md`.
@@ -49,9 +52,10 @@ repairing the screen is not proof that this handoff works autonomously.
 
 Consent #30 uses an authenticated Codex Builder runtime for the canvas write while Steward keeps
 the durable task, source commit, result, review, and recovery record. The existing Rem file is
-updated in place on the shared `Onboarding` page (`410:15`). `00 · Canonical screen inventory`
-(`760:21`) contains the existing sign-in/privacy masters; `01A · Consent · Documentation`
-(`695:138`) and `01B · Consent · Prototype` (`731:260`) are the consent pair. Later flows add
+updated in place on the shared `Onboarding` page (`410:15`). `00 · Canonical screen components`
+(`760:21`) contains Sign-in, Privacy by design, and the three consent screen masters;
+`01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`) are the
+consent pair. Later flows add
 `02A` / `02B` pairs on the same page rather than creating more onboarding pages.
 
 The inventory Section uses `#F5F5F5` so its white device frames remain legible on the canvas.
@@ -61,22 +65,45 @@ of canonical `Section` (`741:311`), not a hand-built grouped frame. These are st
 requirements, so a later Builder run that restores the white inventory, placeholder marks, or loose
 privacy rows fails before review.
 
-The Builder must preserve the template hierarchy: `Placeholder Sections` → `Placeholder Section`
-→ `Placeholder Rows` → one or more `Placeholder Flows` rows → `Mobile Placeholder` → screen. The
-screen directly replaces the slot area inside each placeholder; nesting it in a leftover slot wrapper
-or pixel-aligning a loose screen above the placeholder is invalid even when the canvas looks correct.
-Consent `609:3`, Terms `638:28`, the Privacy branch consent frame `695:585`, and Privacy `638:65`
-follow that rule in one sequential `Placeholder Flows` row. Current shipping code has no
+The Builder must preserve the attached-instance hierarchy: `Mobile Flow Documentation` → `Mobile Flow`
+→ `Placeholder Sections` → `Sections` slot → `Placeholder Section` → `Rows` slot → `Placeholder Rows`
+→ `Rows` slot → `Placeholder Flows` → `Steps` slot → `Mobile Placeholder` → `Screen` slot → canonical
+screen instance. `Mobile Flow Documentation` (`769:282`), `Mobile Placeholder` (`769:169`), and the
+intermediate slot components are masters on Device Kit. No layer in this chain requires detachment.
+The screen replaces the exact 402×874 slot area; a leftover wrapper or loose overlay is invalid even
+when the canvas looks correct. Canonical Default `777:248`, Terms `777:325`, and Privacy `777:392`
+are instanced in documentation and prototype. Current shipping code has no
 consent-local loading or submit-failure state, so the previous speculative state row was removed.
 
-Sequential rows retain arrow vectors with the template's 24-point gap. On component-family pages,
-`Component container` (`663:2270`) is a vertical auto-layout documentation surface: the canonical
+Sequential steps retain `Flow Arrow` instances with the template's 24-point gap. On component-family pages,
+`Component Documentation` (`663:2270`) is a vertical auto-layout documentation surface: the canonical
 component or variant set first, the lightweight overview panel second. Full Specs-plugin output
 is optional follow-up material rather than a Builder fidelity target.
 
+Reusable composition lives in documentation section `773:2`: `ButtonGroup` (`773:17`) provides
+Vertical and Horizontal variants with an Actions slot; `Lockup` (`773:22`) exposes Visual, Title,
+and Body; `ActionArea` (`773:28`) exposes a Button Group slot plus Footnote and Show Footnote
+properties. Their names are domain-neutral because the patterns may be reused outside onboarding.
+The canonical master or variant set appears first and the lightweight overview follows, using the
+shared `Component Documentation` rather than a one-off wrapper.
+
+Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
+when it has one stable responsibility and either two plausible consumers or observed recurrence
+across flows. A one-off wrapper with no owned layout, behavior, semantics, or slot contract stays
+local. This lets Builder discover reusable lockups and action areas without requiring the Director
+to name each one, while keeping speculative abstractions out of the library.
+
+Theme and Platform are orthogonal. Canonical `StatusBar` (`785:389`) and
+`NavigationIndicator` (`793:379`) switch between iOS and Android treatments while each treatment
+still supports dark/light content. Both platforms keep the same product layout. Platform switching
+may change native chrome, type metrics, and the nested semantic icon source; an unverified
+font-family swap is not sufficient for icon parity. Legal sheets cover the status bar and scrim while
+the navigation indicator remains at the bottom of the device surface. The later foundations pass will map the iOS 26 kit's type and color source styles into
+Rem-owned variables/styles so the finished library does not depend on the external kit at runtime.
+
 Nested documentation screens cannot be prototype navigation destinations in Figma. The separate
-`01B · Consent · Prototype` therefore owns a labeled strip of top-level 402×874 frames sourced
-from the documented screens. Consent links to Terms and Privacy; both legal sheets return with Back;
+`01B · Consent · Prototype` therefore owns a labeled strip of top-level 402×874 canonical screen
+instances. Consent `781:596` links to Terms `781:637` and Privacy `781:690`; both legal sheets return with Back;
 Consent is the one registered Presentation starting point. Accept remains unconnected because the
 old Deploying destination is being deprecated and no replacement step is approved yet.
 
@@ -95,6 +122,12 @@ authoring. Code Connect and Dev Resources remain separate delivery concerns: Cod
 Figma components to code examples, while a Dev Resource may link any relevant implementation or
 documentation. Neither substitutes for an editable canvas update.
 
+Parserless SwiftUI and Compose templates for the three canonical consent screen components are
+committed under `code-connect/`. The live Code Connect discovery endpoint currently reports that the
+connected Figma account needs a Dev or Full seat on an Organization or Enterprise plan, so those
+templates cannot be published from this session. `manifest.json`, component descriptions, and the
+templates preserve the exact source mapping until that account-level capability is available.
+
 Figma supports native canvas writes through its remote MCP server in supported clients, including
 Codex. It requires a Full seat, file edit access, and an authenticated connection on that Builder
 runtime:
@@ -104,3 +137,7 @@ runtime:
 
 The PR still needs exact-head Figma exports, a structure/property record, and Reviewer approval.
 A successful canvas edit alone is not complete delivery.
+
+Keep a `Guide` page only if it remains a concise entry point for file organization, Theme/Platform
+modes, source mappings, and operating rules. If those instructions are canonical in the repo and
+Component Index, migrate any unique content and delete the redundant page.

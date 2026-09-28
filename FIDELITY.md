@@ -30,9 +30,12 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   Accept remains without a prototype destination because Deploying is being deprecated and no
   replacement onboarding step is approved.
 - The existing `Onboarding` page now holds every current onboarding artifact in named Sections:
-  canonical screen inventory `00` (`760:21`), consent documentation `01A` (`695:138`), and consent
-  prototype `01B` (`731:260`). Nested documentation screens remain editable; prototype frames are
-  direct section children. Later flows add their own `02A` / `02B` pairs on this page.
+  canonical screen components `00` (`760:21`), consent documentation `01A` (`777:432`), and consent
+  prototype `01B` (`731:260`). Sign-in, Privacy by design, and all three consent masters are
+  consolidated in `00`. Documentation is
+  an attached `Mobile Flow Documentation` instance with nested Sections, Rows, Steps, Placeholder,
+  and Screen slots. Prototype screens are direct canonical instances and Consent is a registered flow
+  starting point. Later flows add their own `02A` / `02B` pairs on this page.
 - Added canonical `Section` (`741:311`) with optional Header/Footer and an editable Rows slot whose
   preferred value is `ListRow`. The grouped surface uses `backgroundSecondary` + 24pt radius with no
   outer stroke. Consent uses Section instances in its documented and prototype frames.
@@ -41,10 +44,28 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   continue to use `SwiftUI.Section`; both implementations translate the same Figma concept. Swift
   package compilation passes locally; Android compilation remains a hosted-run check because this
   checkout has no Gradle wrapper/toolchain.
-- Component documentation now uses the lightweight `Component container` pattern: canonical master
+- Component documentation now uses the lightweight `Component Documentation` pattern: canonical master
   first and a compact overview second, both nested in one auto-layout block inside `Rows & Sections ·
   Component documentation` (`741:309`). Full Specs-plugin output is preserved separately and is not
   the Builder fidelity bar; obsolete loose Section templates were removed from `Accessories`.
+- Added reusable composition masters on Components: `ButtonGroup` (`773:17`, Vertical /
+  Horizontal with Actions slot), `Lockup` (`773:22`), and `ActionArea` (`773:28`). Their names are
+  domain-neutral so the same anatomy can serve later non-onboarding screens.
+  The three canonical screen masters (`777:248`, `777:325`, `777:392`) are reused by both documentation
+  and prototype, so changing a screen no longer requires synchronizing detached copies.
+- The extraction rule is now explicit for Builder: propose a component when a region has one stable
+  responsibility plus two plausible consumers or cross-flow recurrence, while leaving one-off
+  wrappers local. Theme (Light/Dark) and Platform (iOS/Android) remain independent axes; Status Bar
+  uses platform switching and retains theme switching within each platform treatment.
+- Added canonical `StatusBar` (`785:389`) and `NavigationIndicator` (`793:379`) component sets with
+  iOS/Android Platform and dark/light content options. Every canonical onboarding screen includes
+  both; legal sheets render above the status bar. The product layout remains shared across platforms.
+- Canonical screen layers now use semantic regions first (`StatusBar`, `Body`, `ActionArea`,
+  `NavigationIndicator`) and SwiftUI-first structural names (`VStack`, `HStack`, `ZStack`). Compose
+  maps them to `Column`, `Row`, and `Box`. Empty spacer frames were removed in favor of semantic
+  groups using auto-layout `SPACE_BETWEEN`.
+- Foundations follow-up will map the iOS 26 kit's source color and type styles into Rem-owned
+  variables/styles. The kit is a source reference, not a runtime dependency of the finished library.
 
 ---
 

@@ -68,15 +68,24 @@ failed before comparison started. The always-run finalizer creates that last for
 failures cannot silently remove the diagnostic artifact.
 
 The same run executes `verify-figma-structure.mjs`. Its committed `structure-contract.json`
-requires the shared Onboarding page to have the canonical inventory plus a consent documentation/prototype pair and the exact editable hierarchy
-`Placeholder Sections` → `Placeholder Section` → `Placeholder Rows` → `Placeholder Flows` →
-`Mobile Placeholder` → screen. It also checks that all four documented journey frames share one
-sequential row and the three prototype frames are direct children of `01B · Consent · Prototype`. This catches
-legacy slot wrappers and visually aligned overlay siblings that image comparison cannot distinguish.
-The inventory check also enforces its `#F5F5F5` contrast surface, exact Sign-in/Privacy screen set,
+requires the shared Onboarding page to have one canonical screen-component inventory and a
+documentation/prototype pair. It verifies the attached hierarchy `Mobile Flow Documentation` →
+Sections slot → Rows slot → Steps slot → `Mobile Placeholder` → exact-size Screen slot → canonical
+screen instance. It also checks the four-step placeholder/arrow sequence, each screen's component
+source, the three prototype instances, their destinations/Back actions, and the registered starting
+point. This catches detachment, legacy wrappers, and visually aligned overlay siblings that image
+comparison cannot distinguish.
+The inventory check also enforces its `#F5F5F5` contrast surface, exact five-component screen set,
 source-backed Rem and Google marks, and canonical `Section` ancestry for Privacy's legal rows.
 The exact-head structure digest and resolved ancestry are uploaded as
 `artifacts/figma-structure-report.json` beside the drift report.
+
+The human authoring contract complements these structural checks: every touched component uses the
+reusable `Component Documentation` with canonical master/variants first and lightweight overview second;
+Builder extracts a pattern only when it has a stable responsibility plus two plausible consumers or
+cross-flow recurrence. Theme (Light/Dark) and Platform (iOS/Android) are independent axes, including
+for Status Bar. The structure verifier should gain explicit assertions for these properties when the
+corresponding foundation nodes and variable collections are canonicalized.
 
 ## 3. Generator (code → Figma)
 
