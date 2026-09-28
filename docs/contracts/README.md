@@ -16,8 +16,9 @@ can't drift on placement, order, emphasis, or icon choice.
 ## How a contract is used
 
 1. **Design** writes/approves the contract (this folder). It is platform-neutral.
-2. **Builder** implements it on each platform — identical arrangement, real components/tokens.
-3. **Reviewer (visual gate)** diffs the paired render against the contract's *Parity
+2. **Builder** implements it on each platform and updates the editable Figma screen, states,
+   and flow — identical arrangement, real components/tokens. See [Figma delivery](../figma-delivery.md).
+3. **Reviewer (visual gate)** compares Figma and the paired platform renders against the contract's *Parity
    acceptance* list: arrangement, order, emphasis, icons + FILL. Drift is the Reviewer's
    to catch, not the founder's.
 

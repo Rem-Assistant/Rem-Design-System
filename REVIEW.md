@@ -50,3 +50,21 @@ rule is violated. A build/runtime finding must identify a concrete failing path 
 prove behavior, but do not claim that a rendered path cannot compile without contrary evidence.
 Record genuine uncertainty as a verification gap and name the missing proof. Never invent a
 mismatch, accept a stale image, or ask the founder to perform the paired comparison.
+
+## Figma delivery gate (blocking for screen delivery)
+
+A screen-delivery PR also delivers the editable Figma screen, required states, and flow per
+`SHAPE-OF-A-TASK.md` and `docs/figma-delivery.md`. For consent, the founder's 2026-09-28
+scope clarification explicitly supersedes its former Figma exclusion.
+
+Require direct node links, the component ledger, a recorded Figma revision (or canonical
+structure digest when a revision is unavailable), and exported evidence associated with
+the current implementation. Inspect the exports alongside both platforms and verify
+component reuse, variable bindings, state coverage, and the flow's interactions. Bare
+links, Code Connect files, screenshots pasted onto the canvas, and a prose claim that
+Figma was updated are not proof. Missing or stale Figma evidence blocks approval.
+
+Name the exact missing proof or observed mismatch. If the authoring/export connection is
+unavailable, report a capability blocker for Steward; do not prescribe speculative UI
+changes or repeatedly spend Builder revisions on an inaccessible tool. Factory-only
+or documentation-only changes do not require screen exports unless they change a screen.

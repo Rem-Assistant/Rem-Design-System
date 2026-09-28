@@ -86,8 +86,9 @@ proves it shipped right.**
 
 ```
 Issue (pre-coding summary: upstream pattern · user outcome · in/out of scope)
-  → Builder builds code + iOS/Android render evidence
-  → Reviewer judges diff + visual evidence          ← the gate that catches fidelity
+  → Builder builds code + editable Figma screen/states/flow
+  → Verify captures current iOS/Android renders + Figma exports/structure
+  → Reviewer judges diff + Figma + both platform renders
   → Steward integrates (policy passes)
   → Director approves / spot-checks
 ```
@@ -125,7 +126,8 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 | 2 | Builder lacked failing CI diagnostics | Factory maintainer | bounded exact-head diagnostic handoff prepared |
 | 3 | Delivery went stale during fresh renders; two competing evidence surfaces | Steward workflows + publisher | bounded waiting, paired canonical delivery, and re-review update prepared |
 | 4 | Contract and icon registry were linked but absent from Reviewer briefing | Consumer configuration | explicit context added; live review pending |
-| 5 | Additional screens and Figma expansion | Steward after proving this loop | deferred until consent demonstrates reliable recovery |
+| 5 | Consent Figma authoring and verification | Builder + Reviewer, coordinated by Steward | required in this milestone; authenticated hosted authoring connection is not configured |
+| 6 | Additional screens | Steward after proving the complete consent loop | deferred |
 
 ---
 
@@ -133,7 +135,7 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 
 **Rem's core surfaces ship through the Factory, machine-verified — the Director approves, doesn't QA.**
 
-- **Proving milestone (do first):** consent #30 goes issue → Builder → paired render → Reviewer →
+- **Proving milestone (do first):** consent #30 goes issue → Builder (code + Figma) → platform renders + Figma evidence → Reviewer →
   automated correction (where needed) → green Steward integration → Director approval.
   No manual feature repairs or stale-evidence bypasses count as proof. Three consecutive
   screens meeting this standard are the later scaling checkpoint.
@@ -143,3 +145,10 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 - **The metric that matters — first-pass fidelity:** % of Factory-built views that merge without you
   filing a visual correction. Baseline not measured. The loop is ready to scale when it is
   consistently high and you're spot-checking, not driving.
+
+### Figma scope clarification — 2026-09-28
+
+The Director explicitly requires Figma changes as part of a finished screen PR. Consent
+is the proving case for that complete delivery. Earlier notes deferring Figma do not
+apply to consent. This does not authorize additional screens or change product decisions.
+See `docs/figma-delivery.md` for the acceptance contract and current execution gap.

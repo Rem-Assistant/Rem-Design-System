@@ -75,15 +75,22 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 
 ## Figma delivery (required)
 
-A finished consent PR includes the editable screen and legal-sheet flow in the existing Rem file.
-It covers default light, default dark, error dark, loading, Terms light, and Privacy light; reuses
-canonical components and shared variables; and keeps the Terms / Privacy interactions working in
-Present mode.
+The founder clarified on 2026-09-28 that Figma is part of a finished screen PR. This
+supersedes the earlier Figma exclusion; the approved arrangement and product rules above
+are unchanged. Follow [Figma delivery](../figma-delivery.md) and `SHAPE-OF-A-TASK.md`.
 
-The PR delivery record includes direct links to the screen, flow, and reused components, exported
-Figma renders for the required states, and a reused/new component ledger. Existing frame links alone
-do not establish that the designs were updated or verified. Missing authoring access is a Steward
-capability blocker, not permission to omit Figma.
+Update the editable consent screen and legal-sheet flow in the existing Rem file. Cover
+`Consent-default-light`, `Consent-default-dark`, `Consent-error-dark`,
+`Consent-loading-light`, `Consent-terms-light`, and `Consent-privacy-light`, including
+each platform's intentional native presentation. Reuse canonical components and shared
+variables, and keep the Terms / Privacy interactions working in Present mode. Include
+screen, flow, component/preview links, exported renders for every required state, and the
+reused/new component ledger in the PR.
+
+Reviewer must inspect the Figma exports and structure against the current iOS/Android
+evidence and this contract. Existing frame links alone do not establish that the designs
+were updated or verified. Missing authoring access is a Steward capability blocker,
+not permission to omit Figma or spend repeated screen-revision attempts.
 
 ## Parity acceptance (what the visual gate diffs)
 
