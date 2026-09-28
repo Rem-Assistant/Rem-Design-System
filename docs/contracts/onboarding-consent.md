@@ -108,7 +108,9 @@ The shared `Onboarding` page (`410:15`) uses a numbered Section pair for this fl
 (`769:282`) and composes nested Sections, Rows, Steps, Mobile Placeholders, and Screens through slots.
 Every documented screen is an instance in the exact 402×874 `Screen` slot; no template layer is
 detached. The one `Steps` slot contains Consent → Terms → Consent → Privacy with reusable arrow
-instances and 24-point spacing. There is no consent-action or speculative system-state row.
+instances and 24-point spacing. The second Consent instance is an approved branch-return navigation
+waypoint between the Terms and Privacy paths; it reuses the Default master and is excluded from the
+required evidence-state set. There is no consent-action or speculative system-state row.
 
 Canonical screens use semantic top-level layer names (`StatusBar`, `Body`, `ActionArea`,
 `NavigationIndicator`) and SwiftUI-first structural names (`VStack`, `HStack`, `ZStack`,
@@ -135,6 +137,10 @@ Default `777:248` maps to `OnboardingConsentTemplate.swift`; Terms `777:325` and
 Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
 presentation and injects the current legal body; render-only legal prose remains in test fixtures.
 The Figma sheet nodes mirror that owned chrome and use representative body copy only for layout.
+`ConsentInteractionTests` invokes the same legal-row open and Done-dismiss endpoints used by the
+production views. Present mode verifies the Terms/Privacy destinations and Back actions; the paired
+renders verify the resulting sheet chrome. These three proofs are required together because a static
+render alone cannot establish presentation or dismissal behavior.
 
 ## Parity acceptance (what the visual gate diffs)
 

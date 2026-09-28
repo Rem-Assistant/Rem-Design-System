@@ -28,9 +28,10 @@ agents. See [`SPEC.md`](SPEC.md) for the full reasoning and the open decisions s
 New Code Connect work uses parserless `.figma.ts` templates, following Figma's current guidance.
 `Section` has separate SwiftUI and Compose templates under `code-connect/`, selected by
 `figma.swiftui.config.json` and `figma.compose.config.json`. The Figma `Rows` Slot is read dynamically,
-so Dev Mode can render nested connected rows instead of hardcoding examples. Older components still
-have legacy `.figma.swift` / `.figma.kt` parser files; those remain excluded from shipping targets and
-are a migration backlog rather than the pattern for new work.
+so Dev Mode can render nested connected rows instead of hardcoding examples. Parserless
+`code-connect/*.figma.ts` templates are the only Code Connect authoring and validation path. Any
+co-located `.figma.swift` / `.figma.kt` files are archived implementation examples: shipping targets
+exclude them and Code Connect configs do not parse, publish, or migrate them.
 
 **They cannot be published on the current Figma plan.** Verified via the API: using Code Connect
 requires a **Full or Dev seat on an Organization or Enterprise plan**. This account has Full seats
@@ -53,7 +54,6 @@ npx figma connect publish --config figma.compose.config.json
 
 The publish commands remain blocked until the file lives on an Organization or Enterprise plan with
 a Dev or Full seat. The parserless templates can still be reviewed and parsed locally in the meantime.
-Use `npx figma connect migrate` for the older native parser files when that backlog is scheduled.
 
 ## Related, existing docs
 
