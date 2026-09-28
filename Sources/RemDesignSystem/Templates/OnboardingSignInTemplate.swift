@@ -12,8 +12,9 @@ import SwiftUI
 /// buttons directly beneath it. The mark is the **app icon**, not ``RemFaceMark`` — the sign-in lockup
 /// has always used the app icon (verified against the reference frame).
 ///
-/// The Compose sibling is `signInStep` (`compose/RemDesignSystem/onboarding/SignInStep.kt`); the two
-/// render the same states so the side-by-side evidence compares the same screen.
+/// The Compose sibling is `OnboardingSignInScreen` (`compose/RemDesignSystem/onboarding/SignInStep.kt`);
+/// the two render the same states — one block centered in the safe area, never bottom-pinned — so the
+/// side-by-side evidence compares the same screen. Built to `docs/contracts/onboarding-sign-in.md`.
 public struct OnboardingSignInTemplate: View {
     /// The sign-in state, driven by the host's real auth. Mirrors the Compose `SignInState`.
     public enum State {
@@ -82,6 +83,7 @@ public struct OnboardingSignInTemplate: View {
                 if case .recovery(let message) = state { notice(message) }
             }
             .padding(DesignTokens.Spacing.md)
+            .frame(maxWidth: 560)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -115,7 +117,10 @@ public struct OnboardingSignInTemplate: View {
                 differentAccountLink
 
             case .recovery:
-                signInButton(title: "Sign in with a different account", action: onUseDifferentAccount)
+                // Emphasis rule: "Sign in with a different account" is *always* a quiet labelSecondary
+                // text link — never filled — so recovery offers two text links (no filled provider
+                // action to emphasize), with "Try again" the accent link.
+                differentAccountLink
                 Button("Try again", action: onRetry)
                     .font(DesignTokens.Typography.body)
                     .foregroundStyle(DesignTokens.Color.systemBlue)
@@ -175,18 +180,26 @@ public struct OnboardingSignInTemplate: View {
     }
 
     /// Inline error/recovery notice — mirrors the Compose `SignInNotice` (systemRed at 12% on a
-    /// rounded surface) so the paired evidence reads as the same treatment on both platforms.
+    /// rounded surface) so the paired evidence reads as the same treatment on both platforms. The
+    /// leading glyph resolves through the icon registry by meaning + FILL: `exclamationmark.triangle.fill`
+    /// (`error`, FILL 1) — the Android side renders the Material Symbols `error` glyph at FILL 1.
     private func notice(_ message: String) -> some View {
-        Text(message)
-            .font(DesignTokens.Typography.subheadline)
-            .foregroundStyle(DesignTokens.Color.labelPrimary)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(DesignTokens.Spacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
-                    .fill(DesignTokens.Color.systemRed.opacity(0.12))
-            )
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.sm) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignTokens.Color.systemRed)
+            Text(message)
+                .font(DesignTokens.Typography.caption1)
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
+                .fill(DesignTokens.Color.systemRed.opacity(0.12))
+        )
     }
 }
 
@@ -197,11 +210,20 @@ public struct OnboardingSignInTemplate: View {
 #Preview("Sign-in · new") {
     OnboardingSignInTemplate(state: .new, onPrimary: {})
 }
+#Preview("Sign-in · checking") {
+    OnboardingSignInTemplate(state: .checking, onPrimary: {})
+}
 #Preview("Sign-in · error") {
     OnboardingSignInTemplate(
         state: .error(message: "We couldn't sign you in. Check your connection and try again."),
         onPrimary: {}
     )
     .preferredColorScheme(.dark)
+}
+#Preview("Sign-in · recovery") {
+    OnboardingSignInTemplate(
+        state: .recovery(message: "Your session expired. Sign in again to pick up where you left off."),
+        onPrimary: {}
+    )
 }
 #endif

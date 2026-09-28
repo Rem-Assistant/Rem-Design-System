@@ -23,6 +23,39 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Sign-in screen — centered, paired iOS + Android per contract — 2026-09-28 (issue #27)
+
+Re-scoped the onboarding **sign-in** screen to conform to `docs/contracts/onboarding-sign-in.md` on
+**both** platforms — the first per-screen re-scope of the flow (parent #10) and the first Builder PR
+the visual-parity gate polices. Authority: the contract (founder-approved 2026-09-28) + `signInContent`
+/ `SignInButton` / `OnboardingLogoView` + `tasks/refs/onboarding/01-sign-in.png`.
+
+- **Arrangement fix (the #21 drift):** sign-in is now its **own centered screen** on both platforms —
+  one block centered in the safe area (equal space above/below, **never** bottom-pinned), contents
+  left-aligned, ≤560. Android previously hosted sign-in in `OnboardingScaffold`'s bottom-pinned CTA
+  bar; it now renders the standalone `OnboardingSignInScreen` (sibling of the SwiftUI
+  `OnboardingSignInTemplate`). `signInStep(...)` wraps it as the sequencer's entry.
+- **Emphasis:** "Sign in with a different account" is a quiet `labelSecondary` text link in **every**
+  state on both platforms (recovery no longer fills it — the contract's emphasis invariant wins over
+  the state-table's "Primary" column, and the parity checklist lists it explicitly). Provider order
+  Google→Apple in `new` (fixed on Android, was Apple→Google).
+- **Notice card:** error/recovery notice sits directly **below** the action group (was above, in the
+  Android lockup), `systemRed` @ 12% on a `medium`-radius surface, `caption1` message + a leading
+  warning glyph resolved through the icon registry by meaning **and FILL**: iOS
+  `exclamationmark.triangle.fill`, Android Material Symbols `error`, both **FILL 1**.
+- **Material Symbols on Android (registry resolves):** added the Apache-2.0 Material Symbols variable
+  font (`src/main/res/font/material_symbols_outlined.ttf`, subset to `error`/U+E000 with `fontTools`,
+  FILL axis preserved) + `icons/RemMaterialSymbols.kt`, bound via `FontVariation` FILL — **not** the
+  always-filled legacy `Icons.Filled.*` (registry rule 2).
+- **Render evidence (gate input):** all five contract state keys now render on both platforms —
+  `SignIn-returning-light`, `SignIn-new-light`, `SignIn-checking-light`, `SignIn-error-dark`,
+  `SignIn-recovery-light` — via `RenderSnapshotTests` (iOS) and `EvidenceSnapshots` (Compose/Paparazzi),
+  paired by `screenshots.yml`. `checking` + `recovery` cases were added on both sides.
+- **Not verifiable in-repo:** no iOS/Android toolchain here (the reference-vs-evidence split) — the
+  paired render on the runners is the parity proof the gate diffs.
+
+---
+
 ## Onboarding sequencer + sign-in/consent reproduction — 2026-09-26 (issue #11)
 
 Built the native **onboarding sequencer shell** (order · progress · Continue/Skip forward+back) and the
