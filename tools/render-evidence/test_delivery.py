@@ -24,6 +24,8 @@ class PairedDeliveryTests(unittest.TestCase):
     def test_each_required_state_publishes_adjacent_platforms(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); self.fixtures(root)
+            for platform in ("swiftui", "compose"):
+                (root / platform / "signin-returning-light.png").write_bytes(b"regression")
             status, body, attachments = delivery.prepare(root, "a" * 40, "success", [CONSENT], CONTRACTS)
             self.assertEqual(status, "ready")
             state_count = len(CONTRACTS["onboarding-consent"]["states"])
@@ -33,6 +35,19 @@ class PairedDeliveryTests(unittest.TestCase):
                 row = next(line for line in body.splitlines() if line.startswith(f"| `{key}`"))
                 self.assertIn(f"![swiftui {key}]", row)
                 self.assertIn(f"![compose {key}]", row)
+            self.assertNotIn("signin-returning-light", body)
+
+    def test_unscoped_delivery_keeps_complete_gallery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); self.fixtures(root)
+            for platform in ("swiftui", "compose"):
+                (root / platform / "component-light.png").write_bytes(b"fixture")
+            status, body, attachments = delivery.prepare(
+                root, "a" * 40, "success", ["README.md"], CONTRACTS,
+            )
+            self.assertEqual(status, "ready")
+            self.assertIn("component-light", body)
+            self.assertEqual(len(attachments), len(CONTRACTS["onboarding-consent"]["states"]) * 2 + 2)
 
     def test_missing_android_state_fails_even_when_workflow_succeeded(self):
         with tempfile.TemporaryDirectory() as tmp:
