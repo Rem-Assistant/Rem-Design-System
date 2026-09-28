@@ -138,8 +138,8 @@ fun OnboardingSignInScreen(
 
             // Notice card (error / recovery only) — directly below the action group, systemRed @ 12%.
             when (state) {
-                is SignInState.Error -> SignInNotice(state.message)
-                is SignInState.Recovery -> SignInNotice(state.message)
+                is SignInState.Error -> SignInErrorNotice(state)
+                is SignInState.Recovery -> SignInRecoveryNotice(state)
                 else -> Unit
             }
         }
@@ -278,13 +278,20 @@ private fun SignInTextLink(label: String, onClick: () -> Unit, accent: Boolean) 
 }
 
 /**
- * Inline error/recovery notice — directly below the action group. Delegates to the shared
- * [OnboardingNotice] so sign-in and the scaffold's consent notice are the exact same treatment
- * (systemRed at 12%, the Material Symbols `error` glyph at FILL 1) and diff clean across platforms.
+ * Sign-in auth failure notice. The typed wrapper keeps this state independent from recovery and
+ * from consent's retryable submission error even though all three reuse the same visual primitive.
  */
 @Composable
-private fun SignInNotice(message: String, modifier: Modifier = Modifier) =
-    OnboardingNotice(message = message, modifier = modifier)
+private fun SignInErrorNotice(state: SignInState.Error, modifier: Modifier = Modifier) =
+    OnboardingNotice(message = state.message, modifier = modifier)
+
+/**
+ * Sign-in recovery notice. Recovery remains its own state with its own action branch and quiet
+ * different-account escape; this wrapper prevents it from collapsing into auth error or consent.
+ */
+@Composable
+private fun SignInRecoveryNotice(state: SignInState.Recovery, modifier: Modifier = Modifier) =
+    OnboardingNotice(message = state.message, modifier = modifier)
 
 /**
  * The sign-in **step** for the [OnboardingSequencer] — a thin wrapper that renders the standalone
