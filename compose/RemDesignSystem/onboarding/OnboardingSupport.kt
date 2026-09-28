@@ -75,8 +75,8 @@ internal fun OnboardingNotice(message: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
     ) {
         Text(
-            text = RemMaterialSymbols.Error,
-            fontFamily = RemMaterialSymbols.family(fill = 1f),
+            text = RemMaterialSymbols.ErrorNotice.glyph,
+            fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.ErrorNotice),
             fontSize = 14.sp,
             color = colors.systemRed,
         )

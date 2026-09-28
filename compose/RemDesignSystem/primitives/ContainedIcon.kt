@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.icons.RemMaterialSymbol
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemTheme
 
@@ -57,6 +58,26 @@ fun ContainedIcon(
         )
     }
 }
+
+/**
+ * Registry-safe glyph overload. The semantic symbol owns its verified codepoint and pinned FILL, so
+ * a caller cannot pair a filled glyph with the outline font (or vice versa).
+ */
+@Composable
+fun ContainedIcon(
+    symbol: RemMaterialSymbol,
+    modifier: Modifier = Modifier,
+    fill: ContainedIconFill = ContainedIconFill.Subtle,
+    size: ContainedIconSize = ContainedIconSize.Small,
+    contentDescription: String? = null,
+) = ContainedIcon(
+    glyph = symbol.glyph,
+    glyphFill = symbol.fill,
+    modifier = modifier,
+    fill = fill,
+    size = size,
+    contentDescription = contentDescription,
+)
 
 /**
  * Glyph overload — the same token-driven tile, but the glyph is a **Material Symbols** font glyph

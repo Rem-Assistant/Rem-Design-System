@@ -2,6 +2,7 @@ package com.rem.designsystem
 
 import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.icons.RemMaterialSymbols.SymbolFontFile
+import com.rem.designsystem.icons.RemMaterialSymbol
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -29,18 +30,16 @@ import org.junit.Test
 class RemMaterialSymbolsFillTest {
 
     private data class Row(
-        val name: String,
-        val glyph: String,
-        val fill: Float,
+        val symbol: RemMaterialSymbol,
         val hasFillTwin: Boolean,
     )
 
     private val registry = listOf(
-        Row("shield_lock (consent hero)", RemMaterialSymbols.ShieldLock, 1f, true),
-        Row("error (notice card)", RemMaterialSymbols.Error, 1f, true),
-        Row("shield (privacy row)", RemMaterialSymbols.Shield, 0f, true),
-        Row("description (terms row)", RemMaterialSymbols.Description, 0f, true),
-        Row("chevron_right (disclosure)", RemMaterialSymbols.ChevronRight, 0f, false),
+        Row(RemMaterialSymbols.PrivacyLockShield, true),
+        Row(RemMaterialSymbols.ErrorNotice, true),
+        Row(RemMaterialSymbols.PrivacyPolicy, true),
+        Row(RemMaterialSymbols.TermsDocument, true),
+        Row(RemMaterialSymbols.DisclosureChevron, false),
     )
 
     private val outline by lazy { TrueTypeFont(loadFontBytes("material_symbols_outlined.ttf")) }
@@ -54,33 +53,56 @@ class RemMaterialSymbolsFillTest {
         }
 
         for (row in registry) {
-            val codePoint = row.glyph.codePointAt(0)
+            val symbol = row.symbol
+            val codePoint = symbol.glyph.codePointAt(0)
+            assertEquals("${symbol.glyphName}: contract glyph/codepoint mismatch", symbol.codePoint, codePoint)
             val outlineGlyph = outline.glyphBytes(codePoint)
             val filledGlyph = filled.glyphBytes(codePoint)
 
-            assertTrue("${row.name}: missing outline glyph", outlineGlyph.isNotEmpty())
-            assertTrue("${row.name}: missing filled glyph", filledGlyph.isNotEmpty())
+            assertTrue("${symbol.glyphName}: missing outline glyph", outlineGlyph.isNotEmpty())
+            assertTrue("${symbol.glyphName}: missing filled glyph", filledGlyph.isNotEmpty())
             if (row.hasFillTwin) {
                 assertFalse(
-                    "${row.name}: outline and filled assets point to the same shape",
+                    "${symbol.glyphName}: outline and filled assets point to the same shape",
                     outlineGlyph.contentEquals(filledGlyph),
                 )
             } else {
                 assertArrayEquals(
-                    "${row.name}: non-fillable glyph changed between assets",
+                    "${symbol.glyphName}: non-fillable glyph changed between assets",
                     outlineGlyph,
                     filledGlyph,
                 )
             }
 
-            val expected = if (row.fill >= 0.5f) SymbolFontFile.Filled else SymbolFontFile.Outlined
-            assertEquals("${row.name}: routed to the wrong font", expected, RemMaterialSymbols.fontFileFor(row.fill))
+            val expected = if (symbol.fill >= 0.5f) SymbolFontFile.Filled else SymbolFontFile.Outlined
+            assertEquals(
+                "${symbol.glyphName}: routed to the wrong font",
+                expected,
+                RemMaterialSymbols.fontFileFor(symbol.fill),
+            )
         }
 
         assertNotEquals(
             "filled and outline fonts must be distinct assets",
             outline.bytes.contentHashCode(),
             filled.bytes.contentHashCode(),
+        )
+    }
+
+    @Test
+    fun consentHeroPinsShieldLockUPlusF686ToFilledFont() {
+        val symbol = RemMaterialSymbols.PrivacyLockShield
+
+        assertEquals("privacy / lock-shield", symbol.meaning)
+        assertEquals("shield_lock", symbol.glyphName)
+        assertEquals(0xF686, symbol.codePoint)
+        assertEquals(0xF686, symbol.glyph.codePointAt(0))
+        assertEquals(1f, symbol.fill, 0f)
+        assertEquals(SymbolFontFile.Filled, RemMaterialSymbols.fontFileFor(symbol.fill))
+        assertTrue("filled font is missing shield_lock U+F686", filled.glyphBytes(0xF686).isNotEmpty())
+        assertFalse(
+            "shield_lock U+F686 must use the baked filled shape",
+            outline.glyphBytes(0xF686).contentEquals(filled.glyphBytes(0xF686)),
         )
     }
 

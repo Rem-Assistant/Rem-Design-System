@@ -68,13 +68,12 @@ class EvidenceSnapshots {
                 modifier = Modifier.padding(16.dp),
             ) {
                 ContainedIcon(
-                    glyph = RemMaterialSymbols.ShieldLock,
-                    glyphFill = 1f,
+                    symbol = RemMaterialSymbols.PrivacyLockShield,
                     fill = ContainedIconFill.Tint(RemColors.current.brandBlue),
                     size = ContainedIconSize.Large,
                 )
-                ContainedIcon(glyph = RemMaterialSymbols.Description, glyphFill = 0f, fill = ContainedIconFill.Subtle)
-                ContainedIcon(glyph = RemMaterialSymbols.Shield, glyphFill = 0f, fill = ContainedIconFill.Subtle)
+                ContainedIcon(symbol = RemMaterialSymbols.TermsDocument, fill = ContainedIconFill.Subtle)
+                ContainedIcon(symbol = RemMaterialSymbols.PrivacyPolicy, fill = ContainedIconFill.Subtle)
             }
         }
     }

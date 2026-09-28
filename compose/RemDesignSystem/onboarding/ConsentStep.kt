@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.icons.RemMaterialSymbol
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
@@ -70,8 +71,7 @@ fun consentStep(
         // Hero = shield-lock (`shield_lock`, FILL 1) — the registry consent hero, matching the iOS
         // `lock.shield.fill`. NOT `Security` (a shield-with-check, the near-miss the registry flags).
         hero = OnboardingHero(
-            glyph = RemMaterialSymbols.ShieldLock,
-            glyphFill = 1f,
+            symbol = RemMaterialSymbols.PrivacyLockShield,
             contentDescription = "Privacy",
         ),
         title = "Privacy by design",
@@ -85,14 +85,14 @@ fun consentStep(
         // Canonical grouped Section: backgroundSecondary + xlarge radius, no outer stroke.
         RemSection(modifier = Modifier.fillMaxWidth()) {
             ConsentLegalRow(
-                glyph = RemMaterialSymbols.Description, // doc.text on iOS — FILL 0 (outline)
+                symbol = RemMaterialSymbols.TermsDocument, // doc.text on iOS — FILL 0 (outline)
                 title = "Terms of Service",
                 subtitle = "How Rem accounts, subscriptions, and approved actions work.",
                 onClick = onOpenTerms,
                 showSeparator = true,
             )
             ConsentLegalRow(
-                glyph = RemMaterialSymbols.Shield, // shield on iOS — FILL 0 (outline)
+                symbol = RemMaterialSymbols.PrivacyPolicy, // shield on iOS — FILL 0 (outline)
                 title = "Privacy Policy",
                 subtitle = "What Rem, your gateway, and AI or voice providers process.",
                 onClick = onOpenPrivacy,
@@ -114,7 +114,7 @@ fun consentStep(
  */
 @Composable
 private fun ConsentLegalRow(
-    glyph: String,
+    symbol: RemMaterialSymbol,
     title: String,
     subtitle: String,
     onClick: () -> Unit,
@@ -131,8 +131,7 @@ private fun ConsentLegalRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ContainedIcon(
-                glyph = glyph,
-                glyphFill = 0f,
+                symbol = symbol,
                 fill = ContainedIconFill.Subtle,
                 size = ContainedIconSize.Small,
                 contentDescription = null,
@@ -145,8 +144,8 @@ private fun ConsentLegalRow(
             }
             Spacer(Modifier.width(RemSpacing.sm))
             Text(
-                text = RemMaterialSymbols.ChevronRight,
-                fontFamily = RemMaterialSymbols.family(fill = 0f),
+                text = RemMaterialSymbols.DisclosureChevron.glyph,
+                fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.DisclosureChevron),
                 fontSize = 20.sp,
                 color = colors.labelTertiary,
             )

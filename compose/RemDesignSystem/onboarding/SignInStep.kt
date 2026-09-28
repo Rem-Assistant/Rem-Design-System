@@ -60,6 +60,21 @@ sealed interface SignInState {
     data class Recovery(val message: String) : SignInState
 }
 
+/** The one shared visual/action contract for interrupted authentication states. */
+internal data class SignInInterruptionPresentation(
+    val message: String,
+    val actions: List<Action> = listOf(Action.Retry, Action.DifferentAccount),
+) {
+    internal enum class Action { Retry, DifferentAccount }
+}
+
+/** Error and recovery differ in meaning, but intentionally render the same notice and action order. */
+internal fun SignInState.interruptionPresentation(): SignInInterruptionPresentation? = when (this) {
+    is SignInState.Error -> SignInInterruptionPresentation(message)
+    is SignInState.Recovery -> SignInInterruptionPresentation(message)
+    else -> null
+}
+
 /**
  * The **onboarding sign-in screen** (Compose sibling of the SwiftUI `OnboardingSignInTemplate`), built
  * to `docs/contracts/onboarding-sign-in.md`. Authority: shipping `OnboardingFlow.signInContent` /
@@ -91,6 +106,7 @@ fun OnboardingSignInScreen(
     googleMark: ImageVector? = RemBrandGlyphs.GoogleG,
 ) {
     val colors = RemColors.current
+    val interruption = state.interruptionPresentation()
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -127,6 +143,7 @@ fun OnboardingSignInScreen(
 
             SignInActions(
                 state = state,
+                interruption = interruption,
                 onContinue = onContinue,
                 onUseDifferentAccount = onUseDifferentAccount,
                 onUseGoogle = onUseGoogle,
@@ -136,12 +153,8 @@ fun OnboardingSignInScreen(
                 googleMark = googleMark,
             )
 
-            // Notice card (error / recovery only) — directly below the action group, systemRed @ 12%.
-            when (state) {
-                is SignInState.Error -> SignInErrorNotice(state)
-                is SignInState.Recovery -> SignInRecoveryNotice(state)
-                else -> Unit
-            }
+            // One notice renderer for both interrupted states, directly below the shared actions.
+            if (interruption != null) SignInInterruptionNotice(interruption)
         }
     }
 }
@@ -150,6 +163,7 @@ fun OnboardingSignInScreen(
 @Composable
 private fun SignInActions(
     state: SignInState,
+    interruption: SignInInterruptionPresentation?,
     onContinue: () -> Unit,
     onUseDifferentAccount: () -> Unit,
     onUseGoogle: () -> Unit,
@@ -186,19 +200,28 @@ private fun SignInActions(
                 SignInButton("Signing in…", onClick = {}, enabled = false, loading = true)
             }
 
-            is SignInState.Error -> {
-                // "Try again": no leading icon, centered label.
-                SignInButton("Try again", onClick = onRetry)
-                DifferentAccountLink(onUseDifferentAccount)
-            }
+            is SignInState.Error, is SignInState.Recovery -> SignInInterruptionActions(
+                presentation = requireNotNull(interruption),
+                onRetry = onRetry,
+                onUseDifferentAccount = onUseDifferentAccount,
+            )
+        }
+    }
+}
 
-            is SignInState.Recovery -> {
-                // Recovery is a re-auth path, so "Try again" is the filled primary action — like the
-                // error state. "Sign in with a different account" stays the quiet labelSecondary link
-                // (emphasis rule: it is *never* filled or emphasized, in any state).
+/** Shared ordered actions for both Error and Recovery. */
+@Composable
+private fun SignInInterruptionActions(
+    presentation: SignInInterruptionPresentation,
+    onRetry: () -> Unit,
+    onUseDifferentAccount: () -> Unit,
+) {
+    for (action in presentation.actions) {
+        when (action) {
+            SignInInterruptionPresentation.Action.Retry ->
                 SignInButton("Try again", onClick = onRetry)
+            SignInInterruptionPresentation.Action.DifferentAccount ->
                 DifferentAccountLink(onUseDifferentAccount)
-            }
         }
     }
 }
@@ -277,21 +300,12 @@ private fun SignInTextLink(label: String, onClick: () -> Unit, accent: Boolean) 
     }
 }
 
-/**
- * Sign-in auth failure notice. The typed wrapper keeps this state independent from recovery and
- * from consent's retryable submission error even though all three reuse the same visual primitive.
- */
+/** One notice renderer shared by Error and Recovery; the state meaning remains in the presentation. */
 @Composable
-private fun SignInErrorNotice(state: SignInState.Error, modifier: Modifier = Modifier) =
-    OnboardingNotice(message = state.message, modifier = modifier)
-
-/**
- * Sign-in recovery notice. Recovery remains its own state with its own action branch and quiet
- * different-account escape; this wrapper prevents it from collapsing into auth error or consent.
- */
-@Composable
-private fun SignInRecoveryNotice(state: SignInState.Recovery, modifier: Modifier = Modifier) =
-    OnboardingNotice(message = state.message, modifier = modifier)
+private fun SignInInterruptionNotice(
+    presentation: SignInInterruptionPresentation,
+    modifier: Modifier = Modifier,
+) = OnboardingNotice(message = presentation.message, modifier = modifier)
 
 /**
  * The sign-in **step** for the [OnboardingSequencer] — a thin wrapper that renders the standalone

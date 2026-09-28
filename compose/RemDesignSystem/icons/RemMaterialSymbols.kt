@@ -5,6 +5,27 @@ import androidx.compose.ui.text.font.FontFamily
 import com.rem.designsystem.R
 
 /**
+ * One verified row from the cross-platform icon registry.
+ *
+ * [glyphName], [codePoint], and [fill] are deliberately inseparable: callers select a semantic
+ * symbol instead of independently choosing a character and font file. That makes a filled registry
+ * row such as privacy / lock-shield impossible to accidentally render from the outline asset.
+ */
+class RemMaterialSymbol internal constructor(
+    val meaning: String,
+    val glyphName: String,
+    val codePoint: Int,
+    val fill: Float,
+) {
+    init {
+        require(Character.isValidCodePoint(codePoint)) { "invalid Material Symbols codepoint: $codePoint" }
+        require(fill == 0f || fill == 1f) { "registry FILL must be pinned to 0 or 1" }
+    }
+
+    val glyph: String = String(Character.toChars(codePoint))
+}
+
+/**
  * **Material Symbols** — the Android half of `docs/contracts/icon-registry.md`. Icons are *font
  * glyphs* on both platforms (SF Symbols on iOS, Material Symbols here), never SVG components, so a row
  * is matched by **meaning + FILL + weight** and can never drift into "whatever Material icon looks
@@ -32,8 +53,8 @@ import com.rem.designsystem.R
  * needed to render the correct fill on ANY renderer — the fill is a value, which is exactly what the
  * parity gate diffs. See `tools/material-symbols/subset.py`.
  *
- * Render a glyph as a `Text` node:
- * `Text(RemMaterialSymbols.ShieldLock, fontFamily = RemMaterialSymbols.family(fill = 1f))`.
+ * Render a registry symbol as a `Text` node:
+ * `Text(symbol.glyph, fontFamily = RemMaterialSymbols.family(symbol))`.
  *
  * **Proven, not asserted.** That the two files actually carry the correct baked fill — every registry
  * codepoint present (no tofu) and the filled file's fill-twin glyphs genuinely more-inked than the
@@ -68,34 +89,62 @@ object RemMaterialSymbols {
         return FontFamily(Font(resId = resId))
     }
 
+    /** The baked static font family pinned by a semantic registry row. */
+    fun family(symbol: RemMaterialSymbol): FontFamily = family(fill = symbol.fill)
+
     /**
      * `shield_lock` — meaning "privacy / lock-shield", the consent hero. FILL **1** (pairs with the iOS
      * `lock.shield.fill` per the registry). NOT `security` (a shield-*check*, a different glyph the
      * registry flags as a near-miss). Codepoint U+F686 in Material Symbols.
      */
-    const val ShieldLock: String = ""
+    val PrivacyLockShield = RemMaterialSymbol(
+        meaning = "privacy / lock-shield",
+        glyphName = "shield_lock",
+        codePoint = 0xF686,
+        fill = 1f,
+    )
 
     /**
      * `shield` — meaning "privacy policy", the legal row leading glyph. FILL **0** (outline; pairs with
      * the iOS `shield`). Codepoint U+E9E0.
      */
-    const val Shield: String = ""
+    val PrivacyPolicy = RemMaterialSymbol(
+        meaning = "privacy policy",
+        glyphName = "shield",
+        codePoint = 0xE9E0,
+        fill = 0f,
+    )
 
     /**
      * `description` — meaning "terms / document", the legal row leading glyph. FILL **0** (outline;
      * pairs with the iOS `doc.text`). Codepoint U+E873.
      */
-    const val Description: String = ""
+    val TermsDocument = RemMaterialSymbol(
+        meaning = "terms / document",
+        glyphName = "description",
+        codePoint = 0xE873,
+        fill = 0f,
+    )
 
     /**
      * `chevron_right` — meaning "disclosure chevron", the list-row trailing accessory. FILL **0**
      * (outline; pairs with the iOS `chevron.right`). Codepoint U+E5CC.
      */
-    const val ChevronRight: String = ""
+    val DisclosureChevron = RemMaterialSymbol(
+        meaning = "disclosure chevron",
+        glyphName = "chevron_right",
+        codePoint = 0xE5CC,
+        fill = 0f,
+    )
 
     /**
      * `error` — meaning "error / warning", the notice-card glyph. FILL **1** (pairs with the iOS
      * `exclamationmark.triangle.fill` per the registry). Codepoint U+E000 in Material Symbols.
      */
-    const val Error: String = ""
+    val ErrorNotice = RemMaterialSymbol(
+        meaning = "error / warning",
+        glyphName = "error",
+        codePoint = 0xE000,
+        fill = 1f,
+    )
 }

@@ -40,6 +40,7 @@ import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTypography
+import com.rem.designsystem.icons.RemMaterialSymbol
 
 /**
  * The **shared onboarding chrome** — the reusable layout every sequencer step renders into. It is the
@@ -132,10 +133,9 @@ fun OnboardingScaffold(
                 // A glyph hero (consent's shield-lock) renders the Material Symbols font glyph at its
                 // registry FILL — never a legacy `Icons.Filled.*` — so its FILL matches the iOS SF
                 // Symbol. A vector hero (other steps) still uses the ImageVector overload.
-                if (hero.glyph != null) {
+                if (hero.symbol != null) {
                     ContainedIcon(
-                        glyph = hero.glyph,
-                        glyphFill = hero.glyphFill,
+                        symbol = hero.symbol,
                         fill = heroTint,
                         size = ContainedIconSize.Large,
                         contentDescription = hero.contentDescription,
@@ -228,15 +228,14 @@ enum class OnboardingBackground {
 /**
  * The brand squircle hero: a glyph on the brand-blue (or overridden) [ContainedIcon] tile.
  *
- * Two glyph sources: [glyph] is a **Material Symbols** font glyph (from `RemMaterialSymbols`) rendered
- * at [glyphFill] — the registry-faithful path (consent's shield-lock at FILL 1), which is how a hero's
- * FILL matches its iOS SF Symbol. [icon] is a Material [ImageVector] for steps that don't (yet) have a
- * registry row. Prefer [glyph]; when both are set [glyph] wins.
+ * Two glyph sources: [symbol] is a verified semantic Material Symbols registry row whose codepoint
+ * and FILL are pinned together (consent's `shield_lock`, U+F686, FILL 1). [icon] is a Material
+ * [ImageVector] for steps that don't (yet) have a registry row. Prefer [symbol]; when both are set
+ * [symbol] wins.
  */
 data class OnboardingHero(
     val icon: ImageVector? = null,
-    val glyph: String? = null,
-    val glyphFill: Float = 1f,
+    val symbol: RemMaterialSymbol? = null,
     val tint: Color? = null,
     val contentDescription: String? = null,
 )
