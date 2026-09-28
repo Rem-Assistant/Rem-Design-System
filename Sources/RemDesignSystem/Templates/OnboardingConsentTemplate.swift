@@ -9,7 +9,9 @@ public struct OnboardingConsentTemplate: View {
     public enum State {
         case idle
         case loading
-        case error(message: String)
+        /// A failed consent submission that can be retried through the original accept action.
+        /// Terminal, authorization, and recovery failures require distinct states.
+        case retryableError(message: String)
     }
 
     /// A tappable legal/disclosure row (Terms, Privacy, …).
@@ -112,7 +114,7 @@ public struct OnboardingConsentTemplate: View {
     /// scaffold's bottom bar so the paired render diffs clean.
     private var bottomBar: some View {
         VStack(spacing: DesignTokens.Spacing.md) {
-            if case let .error(message) = state { notice(message) }
+            if case let .retryableError(message) = state { notice(message) }
             Button(action: onPrimary) {
                 if case .loading = state {
                     ProgressView().tint(DesignTokens.Color.backgroundPrimary)
@@ -136,7 +138,7 @@ public struct OnboardingConsentTemplate: View {
     }
 
     private var primaryTitle: String {
-        if case .error = state { return "Try again" }
+        if case .retryableError = state { return "Try again" }
         return "Accept and Continue"
     }
 

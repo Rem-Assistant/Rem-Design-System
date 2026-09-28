@@ -53,12 +53,13 @@ import com.rem.designsystem.tokens.RemTypography
  * The two rows open the legal documents ([onOpenTerms]/[onOpenPrivacy] — page sheets on the host);
  * [onAccept] persists consent and the host advances the sequencer. [state] is the single source for
  * the primary action and notice: Loading shows the spinner, while Error carries the notice and flips
- * the CTA to "Try again". Those values cannot drift apart at a call site.
+ * the CTA to "Try again". The error variant is explicitly retryable; terminal or authorization
+ * failures require a separate state. Those values cannot drift apart at a call site.
  */
 sealed interface ConsentState {
     data object Idle : ConsentState
     data object Loading : ConsentState
-    data class Error(val message: String) : ConsentState
+    data class RetryableError(val message: String) : ConsentState
 }
 
 fun consentStep(
@@ -70,7 +71,7 @@ fun consentStep(
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     OnboardingScaffold(
         primary = OnboardingAction(
-            label = if (state is ConsentState.Error) "Try again" else "Accept and Continue",
+            label = if (state is ConsentState.RetryableError) "Try again" else "Accept and Continue",
             onClick = onAccept,
             style = OnboardingActionStyle.Primary,
             loading = state is ConsentState.Loading,
@@ -89,7 +90,7 @@ fun consentStep(
         legalFooter = "By tapping \"Accept and Continue,\" you agree to our Terms of Service and Privacy Policy.",
         bottomBarState = when (state) {
             ConsentState.Idle, ConsentState.Loading -> OnboardingBottomBarState.Standard
-            is ConsentState.Error -> OnboardingBottomBarState.Error(state.message)
+            is ConsentState.RetryableError -> OnboardingBottomBarState.Error(state.message)
         },
         background = OnboardingBackground.Primary,
         progress = scope.progress,
@@ -219,7 +220,7 @@ private fun ConsentErrorPreview() {
                 signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
                 consentStep(
                     onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {},
-                    state = ConsentState.Error(
+                    state = ConsentState.RetryableError(
                         "We couldn't save your choice. Check your connection and try again.",
                     ),
                 ),

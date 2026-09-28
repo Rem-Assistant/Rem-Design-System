@@ -21,8 +21,6 @@ import com.rem.designsystem.onboarding.OnboardingSequencer
 import com.rem.designsystem.onboarding.OnboardingSignInScreen
 import com.rem.designsystem.onboarding.SignInState
 import com.rem.designsystem.onboarding.consentStep
-import com.rem.designsystem.onboarding.previewPrivacySections
-import com.rem.designsystem.onboarding.previewTermsSections
 import com.rem.designsystem.onboarding.rememberOnboardingSequencerState
 import com.rem.designsystem.onboarding.signInStep
 import com.rem.designsystem.primitives.ContainedIcon
@@ -163,7 +161,7 @@ class EvidenceSnapshots {
     fun consentError() = shot("Consent-error-dark") {
         RemTheme(darkTheme = true) {
             consentScreen(
-                state = ConsentState.Error(
+                state = ConsentState.RetryableError(
                     "We couldn't save your choice. Check your connection and try again.",
                 ),
             )

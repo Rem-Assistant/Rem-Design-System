@@ -37,9 +37,11 @@ import com.rem.designsystem.R
  *
  * **Proven, not asserted.** That the two files actually carry the correct baked fill — every registry
  * codepoint present (no tofu) and the filled file's fill-twin glyphs genuinely more-inked than the
- * outline file's — is verified by an executable rasterization check (`RemMaterialSymbolsFillTest`,
- * which rasterizes each glyph from both files and fails on a fill mismatch), so the claim above is a
- * gate, not a comment. See `docs/contracts/icon-registry.md` rule 1.
+ * outline file's — is verified by `RemMaterialSymbolsFillTest`. In addition,
+ * `verifyMaterialSymbolResources` is a `preBuild` dependency: every Android assembly fails before
+ * resource packaging unless both files are present, fully static, GSUB-free, distinct, and contain
+ * every registry codepoint. A missing or drifted asset therefore cannot silently render tofu in a
+ * shipped AAR. See `docs/contracts/icon-registry.md` rule 1.
  */
 object RemMaterialSymbols {
     /** Which baked static font file a requested FILL routes to. Two files, one per fill bucket. */

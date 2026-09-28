@@ -44,7 +44,7 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 | **terms sheet** | `LegalDocumentView` for Terms as a page sheet (`.sheet` + inline nav title); Back dismisses | — |
 | **privacy sheet** | `LegalDocumentView` for Privacy as a page sheet; Back dismisses | — |
 | **loading** | after accept: CTA shows spinner, disabled, 40% opacity, non-interactive (matches sign-in `checking`) | — |
-| **error** | notice card directly **above** the CTA | "Try again" |
+| **retryable error** | failed consent submission; notice card directly **above** the CTA | "Try again" |
 
 **Notice card:** `Color.systemRed` @ 12% fill, radius `medium`, leading warning icon
 (`exclamationmark.triangle.fill` / `error`, FILL 1) + `Typography.caption1` message.
@@ -60,6 +60,9 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 - **Consent hero is the shield-lock** (`lock.shield.fill` / `shield_lock`, FILL 1) — not a
   shield-check (`Security`), not a plain shield.
 - **Row icons are outline (FILL 0)** on both platforms: `doc.text` / `description`, `shield` / `shield`.
+- **The error state is retryable by construction.** It represents a failed consent submission and
+  always keeps the notice, "Try again" CTA, and original accept action together. A terminal,
+  authorization, or recovery state must be modeled separately; it must not reuse this state.
 
 ## System use
 
@@ -102,12 +105,15 @@ The paired render passes when iOS and Android match on **all** of:
       + same copy + trailing chevrons
 - [ ] CTA "Accept and Continue" bottom-pinned, full-width filled, same treatment on both
 - [ ] Footnote present below the CTA, same copy + role
+- [ ] Loading CTA shows a spinner, is disabled, and renders at 40% opacity on both
 - [ ] Error notice (when present) directly above the CTA on both
 - [ ] Icons match the registry glyph **and FILL** on both
 
 **Evidence:** `screenshots.yml` paired table — `Consent-default-light`, `Consent-default-dark`,
-`Consent-error-dark`, plus the two sheets `Consent-terms-light`, `Consent-privacy-light` — iOS ⟷
-Android side by side.
+`Consent-loading-light`, `Consent-error-dark`, plus the two sheets `Consent-terms-light`,
+`Consent-privacy-light` — iOS ⟷ Android side by side. The PR's Figma table must contain a current
+export and editable node link for the same six states; the design-drift run must compare all six
+registered Figma/code pairs at the PR head.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
 amendment on the issue. **Status:** drafted from the reference frame + onboarding packet; the paired

@@ -41,10 +41,18 @@ FIGMA_TOKEN=<pat> node export-figma.mjs artifacts/figma
 npm ci && node compare.mjs artifacts/swiftui artifacts/figma --threshold=0.3 --maxDiffRatio=0.10
 ```
 
-`--threshold` absorbs renderer color and anti-aliasing differences; `--maxDiffRatio` limits the
-remaining changed area. The checked-in values cover the approved consent baseline while still
-failing on meaningful layout drift. At least one basename must match between the two folders or the
-comparison fails; `manifest.json` supplies those paired names.
+`--threshold` is pixelmatch's per-pixel YIQ color-distance tolerance, not a percentage of the screen;
+`0.3` absorbs the known CoreAnimation-versus-Figma font rasterization, shadow, and semantic-color
+differences. `--maxDiffRatio=0.10` is the actual changed-area ceiling. The 2026-09-28 hosted consent
+baseline measured 6.55%–9.38% across all six required states (default light 6.55%, default dark
+6.86%, error dark 7.09%, loading light 9.38%, Privacy 6.83%, Terms 7.20%). This keeps the ceiling just
+above the approved loading baseline while failing a layout change that moves or replaces a material
+region. Reviewer still performs the paired visual decision; this lane is a fail-closed drift
+guardrail, not an automated parity approval. Any threshold change requires a new six-state baseline
+in this document and Reviewer approval.
+
+At least one basename must match between the two folders or the comparison fails;
+`manifest.json` supplies those paired names.
 
 ## 3. Generator (code → Figma)
 

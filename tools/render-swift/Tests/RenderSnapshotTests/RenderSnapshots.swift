@@ -37,14 +37,14 @@ final class RenderSnapshots: XCTestCase {
         }
         // Consent · error (notice above the bottom-pinned CTA, CTA → "Try again"), dark.
         render("Consent-error-dark", width: 393, height: 852, dark: true) {
-            consentScreen(state: .error(message: "We couldn't save your choice. Check your connection and try again."))
+            consentScreen(state: .retryableError(message: "We couldn't save your choice. Check your connection and try again."))
         }
         // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
         render("Consent-terms-light", width: 393, height: 852, dark: false) {
-            LegalDocumentTemplate(title: "Terms of Service", sections: LegalDocumentTemplate.previewTermsSections)
+            LegalDocumentTemplate(title: "Terms of Service", sections: LegalDocumentFixtures.terms)
         }
         render("Consent-privacy-light", width: 393, height: 852, dark: false) {
-            LegalDocumentTemplate(title: "Privacy Policy", sections: LegalDocumentTemplate.previewPrivacySections)
+            LegalDocumentTemplate(title: "Privacy Policy", sections: LegalDocumentFixtures.privacy)
         }
         // Sign-in states, keyed to pair with the Compose `SignIn-*` shots in the side-by-side table.
         render("SignIn-returning-light", width: 393, height: 852, dark: false) {

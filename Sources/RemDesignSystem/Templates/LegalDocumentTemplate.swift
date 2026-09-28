@@ -4,8 +4,8 @@ import SwiftUI
 /// SwiftUI sibling of the Compose `LegalDocumentScreen`, 1:1 with the shipping `LegalDocumentView`
 /// (remclaw). Presentational: an inline nav title + a "Done" dismiss over a scrollable body of
 /// ``Section``s. Per `docs/contracts/onboarding-consent.md` the design system owns the sheet chrome;
-/// the **legal copy body is owned by `LegalDocumentView`** and injected via `sections` — the text here
-/// is representative structure for the paired render, not canonical legal copy.
+/// the **legal copy body is owned by `LegalDocumentView`** and injected via `sections`. This shipping
+/// target contains no sample legal prose; render-only fixture copy lives in `RenderSnapshotTests`.
 public struct LegalDocumentTemplate: View {
     /// One titled block of a legal document.
     public struct Section: Identifiable {
@@ -67,38 +67,3 @@ public struct LegalDocumentTemplate: View {
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
     }
 }
-
-public extension LegalDocumentTemplate {
-    /// Representative Terms sections for previews/render evidence. Real copy is `LegalDocumentView`'s.
-    static var previewTermsSections: [Section] {
-        [
-            .init(heading: "1. Your account",
-                  body: "Rem accounts let you sign in, sync your data, and manage subscriptions across your devices. You are responsible for keeping your sign-in credentials secure."),
-            .init(heading: "2. Subscriptions",
-                  body: "Paid features renew automatically until cancelled. You can review or cancel a subscription in Settings at any time; access continues through the end of the current period."),
-            .init(heading: "3. Approved actions",
-                  body: "When you ask Rem to act on your behalf, it performs only the actions you approve through your personal cloud gateway. You can revoke an approval at any time."),
-        ]
-    }
-
-    /// Representative Privacy sections for previews/render evidence. Real copy is `LegalDocumentView`'s.
-    static var previewPrivacySections: [Section] {
-        [
-            .init(heading: "What we process",
-                  body: "Rem processes the messages, tasks, and connections you give it so it can answer you and act on the things you ask. You can review or delete this data in Settings."),
-            .init(heading: "Your gateway",
-                  body: "Requests route through your personal cloud gateway. Rem stores only what is needed to keep your assistant working across sessions and devices."),
-            .init(heading: "AI and voice providers",
-                  body: "To generate answers, relevant content may be sent to AI or voice providers under agreements that limit their use to serving your request."),
-        ]
-    }
-}
-
-#if DEBUG
-#Preview("Legal · terms") {
-    LegalDocumentTemplate(title: "Terms of Service", sections: LegalDocumentTemplate.previewTermsSections)
-}
-#Preview("Legal · privacy") {
-    LegalDocumentTemplate(title: "Privacy Policy", sections: LegalDocumentTemplate.previewPrivacySections)
-}
-#endif

@@ -19,11 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
-import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
 
 /** One titled block of a legal document. The heading + body are supplied by the host; this module
@@ -36,7 +34,8 @@ data class LegalSection(val heading: String, val body: String)
  * `LegalDocumentView` (remclaw). Presentational: an inline nav title + a "Done" dismiss over a
  * scrollable body of [sections]. Per `docs/contracts/onboarding-consent.md`, the design system owns the
  * sheet chrome; the **legal copy body is owned by `LegalDocumentView`** and injected via [sections] —
- * the text here is representative structure for the paired render, not canonical legal copy.
+ * this shipping source contains no sample legal prose. Render-only fixture copy lives under
+ * `src/test`, outside the packaged Android library.
  */
 @Composable
 fun LegalDocumentScreen(
@@ -97,59 +96,5 @@ fun LegalDocumentScreen(
                 }
             }
         }
-    }
-}
-
-/** Representative Terms sections for previews/render evidence. Real copy is `LegalDocumentView`'s. */
-internal val previewTermsSections = listOf(
-    LegalSection(
-        "1. Your account",
-        "Rem accounts let you sign in, sync your data, and manage subscriptions across your devices. " +
-            "You are responsible for keeping your sign-in credentials secure.",
-    ),
-    LegalSection(
-        "2. Subscriptions",
-        "Paid features renew automatically until cancelled. You can review or cancel a subscription " +
-            "in Settings at any time; access continues through the end of the current period.",
-    ),
-    LegalSection(
-        "3. Approved actions",
-        "When you ask Rem to act on your behalf, it performs only the actions you approve through your " +
-            "personal cloud gateway. You can revoke an approval at any time.",
-    ),
-)
-
-/** Representative Privacy sections for previews/render evidence. Real copy is `LegalDocumentView`'s. */
-internal val previewPrivacySections = listOf(
-    LegalSection(
-        "What we process",
-        "Rem processes the messages, tasks, and connections you give it so it can answer you and act " +
-            "on the things you ask. You can review or delete this data in Settings.",
-    ),
-    LegalSection(
-        "Your gateway",
-        "Requests route through your personal cloud gateway. Rem stores only what is needed to keep " +
-            "your assistant working across sessions and devices.",
-    ),
-    LegalSection(
-        "AI and voice providers",
-        "To generate answers, relevant content may be sent to AI or voice providers under agreements " +
-            "that limit their use to serving your request.",
-    ),
-)
-
-@Preview(name = "Legal · terms (light)", showBackground = true, widthDp = 402, heightDp = 874)
-@Composable
-private fun LegalTermsPreview() {
-    RemTheme {
-        LegalDocumentScreen(title = "Terms of Service", sections = previewTermsSections, onClose = {})
-    }
-}
-
-@Preview(name = "Legal · privacy (light)", showBackground = true, widthDp = 402, heightDp = 874)
-@Composable
-private fun LegalPrivacyPreview() {
-    RemTheme {
-        LegalDocumentScreen(title = "Privacy Policy", sections = previewPrivacySections, onClose = {})
     }
 }
