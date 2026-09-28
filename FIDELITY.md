@@ -53,8 +53,8 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   domain-neutral so the same anatomy can serve later non-onboarding screens.
   The masters live in `Composition components` (`773:2`) as three horizontal documentation
   columns. Each column places the canonical master first and the attached `Component Documentation`
-  instance below it; the template slot contains a specimen instance because an instance cannot own a
-  nested canonical master. Composition roots inherit their parent surface. `ButtonGroup` fills its
+  metadata instance below it. The template has no Component slot and does not repeat the specimen.
+  Composition roots inherit their parent surface. `ButtonGroup` fills its
   parent and both horizontal actions divide that width equally. `Lockup` and `ActionArea` fill their
   parent up to the 560-point onboarding content maximum; Lockup text, the Button Group slot, and the
   wrapping Footnote fill that responsive width in Figma, SwiftUI, and Compose rather than freezing

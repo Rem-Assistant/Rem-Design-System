@@ -63,8 +63,8 @@ needs. Don't force one onto the other.
 - **Component** (Row, Button, Section, MessageBubble, a control, or a reusable composition): follow
   **`references/component-track.md`** — arrange the family as a horizontal auto-layout row of
   vertical columns. Each column puts the canonical component/variant set first and an attached
-  `Component Documentation` instance second; that template's Component slot contains a specimen
-  instance. Full Specs-plugin output is optional follow-up work.
+  `Component Documentation` instance second. The template contains documentation metadata only;
+  it has no Component slot. Full Specs-plugin output is optional follow-up work.
 - **Screen or pattern** (Agenda, Chat, Settings, a flow): follow
   **`references/screen-track.md`** — a full-device (402×874) screen built **native, in
   auto-layout, on the canonical components**, documented with the file's `Component Documentation`

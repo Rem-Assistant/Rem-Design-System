@@ -19,9 +19,8 @@ Follow `SHAPE-OF-A-TASK.md`, `FILE-ORG.md`, and the repository's `rem-design-sys
   existing flow instead of creating another disconnected generation.
 - For added or changed components, use the reusable `Component Documentation`. Arrange component
   families as horizontal auto-layout columns: the canonical master/variant set is first in each
-  column and an attached `Component Documentation` instance follows. The template's Component slot
-  contains a specimen instance because a canonical master cannot be nested inside another instance's
-  slot. Update
+  column and an attached `Component Documentation` instance follows. The template contains metadata
+  only and has no Component slot; the master above it is the sole specimen. Update
   `REGISTRY.md`, the Figma Component Index, and `FIDELITY.md` with actual verification results.
   The annotated Anatomy/full specification remains the separate manual step already
   excluded by `SHAPE-OF-A-TASK.md`.
@@ -80,8 +79,8 @@ consent-local loading or submit-failure state, so the previous speculative state
 
 Sequential steps retain `Flow Arrow` instances with the template's 24-point gap. On component-family
 pages, each documentation column is vertical: the canonical component or variant set first, then an
-attached `Component Documentation` (`663:2270`) instance. Inside that template, the Component slot
-contains an instance of the master and the lightweight overview panel follows. Families are arranged
+attached `Component Documentation` (`663:2270`) instance containing the lightweight overview metadata.
+The template has no Component slot and does not repeat the master. Families are arranged
 in a horizontal auto-layout row for scanning. Full Specs-plugin output is optional follow-up material
 rather than a Builder fidelity target.
 

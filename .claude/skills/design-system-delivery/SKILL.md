@@ -115,13 +115,11 @@ documentation container. Arrange related components as a horizontal auto-layout 
 vertical columns. Each column's scan order is:
 
 1. canonical master or component set;
-2. an attached documentation-template instance whose first slot contains a specimen
-   instance of that master and whose lightweight overview/spec surface follows.
+2. an attached documentation-template instance containing the lightweight overview/spec surface.
 
-The specimen is an instance because a Figma master cannot be moved into a slot inside
-another instance. Keep the actual master directly above the template so it remains the
-editable source. Do not detach the template or invent a bespoke documentation wrapper
-for each component family.
+Keep the actual master directly above the template so it remains the editable source. The
+documentation template does not own or repeat the specimen through a Component slot. Do not detach
+the template or invent a bespoke documentation wrapper for each component family.
 
 Treat a reusable element as a composition component when it assembles primitives and
 owns layout, semantics, behavior, or a slot contract. Keep atomic controls and assets in

@@ -31,13 +31,12 @@ Keep `Component Documentation` (`663:2270`) attached. Arrange related components
 auto-layout row, with one named vertical column per component. Each column's order is:
 
 1. **Canonical master or component set** — first and directly editable.
-2. **Attached documentation instance** — second. Its Component slot contains an instance of that
-   master, followed by the lightweight overview. Remove empty Anatomy/Props/Layout placeholders;
-   the Specs plugin can create those later when requested.
+2. **Attached documentation instance** — second. It contains the lightweight overview metadata and
+   no Component slot. Remove empty Anatomy/Props/Layout placeholders; the Specs plugin can create
+   those later when requested.
 
-The specimen must be an instance because a canonical master cannot be moved into a slot inside an
-instance. The master and attached documentation instance stay in the same column so they move and
-scan as one unit. Put the row on the component's family page inside a clearly named Figma Section.
+The master and attached documentation instance stay in the same column so they move and scan as one
+unit. Put the row on the component's family page inside a clearly named Figma Section.
 Atomic controls belong under Primitives; components that assemble primitives and own layout,
 semantics, behavior, or slots belong under Components/Compositions. Do not scatter masters, previews,
 or generated artifacts as page-level siblings.

@@ -69,11 +69,11 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   documentation replaces them. Place pairs on a non-overlapping grid and verify bounds. The
   structure contract lists the exact allowed top-level nodes.
 
-- **Components page:** use `Component Documentation` (`663:2270`) for every new or changed canonical
-  component, editing that reusable container when its slot contract needs to improve. Arrange the
-  family as a horizontal auto-layout row of vertical columns. Each column places the canonical
-  master/variant set first and an attached `Component Documentation` instance below; its Component
-  slot contains a specimen instance. A canonical master cannot live inside an instance slot. Remove
+- **Component-family pages:** use `Component Documentation` (`663:2270`) for every new or changed
+  canonical component. Arrange the family as a horizontal auto-layout row of vertical columns. Each
+  column places the canonical master/variant set first and an attached `Component Documentation`
+  instance below. The documentation instance contains metadata only and never repeats the specimen
+  through a Component slot. Remove
   empty Anatomy/Props/Layout placeholders; the Specs plugin can add those later. Documentation
   chrome uses Light semantic surfaces and text by default; switch it only when the documentation is
   explicitly demonstrating another theme.
