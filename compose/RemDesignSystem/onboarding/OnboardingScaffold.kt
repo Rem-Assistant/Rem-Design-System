@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.primitives.ContainedIcon
@@ -160,7 +161,10 @@ fun OnboardingScaffold(
             if (title != null) {
                 Text(
                     text = title,
-                    style = RemTypography.largeTitle.copy(fontWeight = RemTypography.title1Bold.fontWeight),
+                    // largeTitle **semibold** — matches iOS `largeTitle.weight(.semibold)`, the contract's
+                    // "largeTitle semibold", and the sibling sign-in Compose title. (Was Bold, which read
+                    // heavier than the iOS render.)
+                    style = RemTypography.largeTitle.copy(fontWeight = FontWeight.SemiBold),
                     color = colors.labelPrimary,
                     textAlign = TextAlign.Center,
                 )

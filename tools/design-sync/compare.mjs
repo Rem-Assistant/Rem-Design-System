@@ -35,29 +35,47 @@ function loadResized(path, w, h) {
   return out;
 }
 
-let failed = 0, checked = 0, skipped = 0;
+let failed = 0, checked = 0, skipped = 0, errored = 0;
 const results = [];
-for (const f of readdirSync(figmaDir).filter((f) => f.endsWith('.png'))) {
-  const name = basename(f, '.png');
-  const swiftPath = join(swiftDir, f);
-  if (!existsSync(swiftPath)) { console.warn(`⚠ no SwiftUI snapshot for ${name} — skipping`); skipped++; continue; }
-  const a = PNG.sync.read(readFileSync(swiftPath));
-  const b = loadResized(join(figmaDir, f), a.width, a.height);
-  const diff = new PNG({ width: a.width, height: a.height });
-  const px = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold });
-  const ratio = px / (a.width * a.height);
-  checked++;
-  const passed = ratio <= maxDiffRatio;
-  results.push({ name, diffRatio: ratio, passed });
-  if (ratio > maxDiffRatio) {
-    failed++;
-    writeFileSync(join(outDir, `${name}.diff.png`), PNG.sync.write(diff));
-    console.log(`✗ ${name}: ${(ratio * 100).toFixed(2)}% differ (> ${(maxDiffRatio*100)}%) → ${outDir}/${name}.diff.png`);
-  } else {
-    console.log(`✓ ${name}: ${(ratio * 100).toFixed(2)}% differ`);
+// A fatal (usually a corrupt/unreadable PNG or a missing dir) must NOT skip the report: the
+// workflow gates the summary/artifact upload on the report existing, so a crash here would
+// silently erase the evidence trail for a screen-delivery gate. We therefore ALWAYS emit the
+// report (see the finally-style write below), tagging the run `error` so CI reads a missing
+// comparison as unambiguous rather than "clean".
+let fatal = null;
+try {
+  for (const f of readdirSync(figmaDir).filter((f) => f.endsWith('.png'))) {
+    const name = basename(f, '.png');
+    const swiftPath = join(swiftDir, f);
+    if (!existsSync(swiftPath)) { console.warn(`⚠ no SwiftUI snapshot for ${name} — skipping`); skipped++; continue; }
+    try {
+      const a = PNG.sync.read(readFileSync(swiftPath));
+      const b = loadResized(join(figmaDir, f), a.width, a.height);
+      const diff = new PNG({ width: a.width, height: a.height });
+      const px = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold });
+      const ratio = px / (a.width * a.height);
+      checked++;
+      const passed = ratio <= maxDiffRatio;
+      results.push({ name, diffRatio: ratio, passed });
+      if (ratio > maxDiffRatio) {
+        failed++;
+        writeFileSync(join(outDir, `${name}.diff.png`), PNG.sync.write(diff));
+        console.log(`✗ ${name}: ${(ratio * 100).toFixed(2)}% differ (> ${(maxDiffRatio*100)}%) → ${outDir}/${name}.diff.png`);
+      } else {
+        console.log(`✓ ${name}: ${(ratio * 100).toFixed(2)}% differ`);
+      }
+    } catch (err) {
+      // One bad pair is a comparison failure for that state, not a reason to lose the whole report.
+      errored++;
+      results.push({ name, diffRatio: null, passed: false, error: String(err?.message ?? err) });
+      console.error(`✗ ${name}: comparison error — ${err?.message ?? err}`);
+    }
   }
+} catch (err) {
+  fatal = String(err?.message ?? err);
+  console.error(`✗ fatal: ${fatal}`);
 }
-const compared = new Set(results.map((result) => result.name));
+const compared = new Set(results.filter((result) => result.diffRatio !== null).map((result) => result.name));
 const missingRequired = required.filter((name) => !compared.has(name));
 for (const name of missingRequired) console.error(`✗ required pair not compared: ${name}`);
 
@@ -71,10 +89,12 @@ const report = {
   checked,
   failed,
   skipped,
+  errored,
+  fatal,
   results: results.sort((a, b) => a.name.localeCompare(b.name)),
 };
 writeFileSync('artifacts/design-drift-report.json', `${JSON.stringify(report, null, 2)}\n`);
 
-console.log(`\n${checked} checked · ${failed} drifted · ${skipped} unmatched · ${missingRequired.length} required missing`);
+console.log(`\n${checked} checked · ${failed} drifted · ${skipped} unmatched · ${errored} errored · ${missingRequired.length} required missing`);
 if (checked === 0) console.error('✗ No registered Figma/code pairs were compared.');
-process.exit(failed > 0 || checked === 0 || missingRequired.length > 0 ? 1 : 0);
+process.exit(fatal !== null || failed > 0 || errored > 0 || checked === 0 || missingRequired.length > 0 ? 1 : 0);
