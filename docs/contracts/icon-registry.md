@@ -16,6 +16,7 @@ never by "whatever Material icon looks close." One text layer per platform; no S
 | privacy / lock-shield | `lock.shield.fill` | `shield_lock` | **1** | consent hero |
 | privacy policy | `shield` | `shield` | **0** | legal row |
 | terms / document | `doc.text` | `description` | **0** | legal row |
+| disclosure chevron | `chevron.right` | `chevron_right` | **0** | list-row accessory |
 | error / warning | `exclamationmark.triangle.fill` | `error` | **1** | notice card |
 
 **Brand marks are assets, not registry glyphs** (they have no font twin):
