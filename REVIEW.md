@@ -25,6 +25,13 @@ acceptance* list, specifically:
 State parity findings as *"iOS shows X, Android shows Y; the contract says Z"*, referencing the two
 crops, so the fix is unambiguous.
 
+## No contract, no pass
+
+A screen-affecting change with **no contract in `docs/contracts/`** to diff against is *itself* a
+**blocking** finding. Without a contract the comparison degrades to eyeballing — the exact drift the
+gate exists to stop — so the change must land (or reference) its `docs/contracts/` entry, including
+the icon-registry rows it relies on, before it can pass.
+
 ## The founder does not hand-diff screens
 
 If the reviewer cannot see the renders for a screen-affecting change (no paired evidence), that is
