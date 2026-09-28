@@ -29,7 +29,7 @@ group using `Spacing.md` between members:
 | **new** | `Continue with Google` · leading Google "G" **(untinted)** → then `Continue with Apple` · leading Apple mark | legal footnote (`Typography.caption1`, `labelSecondary`, centered) | — |
 | **checking** | `Signing in…` · leading spinner, disabled, 40% opacity, non-interactive | — | — |
 | **error** | `Try again` (no leading icon, centered label) | "Sign in with a different account" — quiet text link | notice below buttons |
-| **recovery** | `Sign in with a different account` | `Try again` — accent text link (`Color.systemBlue`) | notice below buttons |
+| **recovery** | `Try again` (no leading icon, centered label) — re-auth is the primary action | "Sign in with a different account" — quiet text link | notice below buttons |
 
 **Notice card:** `Color.systemRed` @ 12% fill, radius `medium`, leading warning icon (registry:
 `exclamationmark.triangle.fill` / `error`, FILL 1) + `Typography.caption1` message.
@@ -41,7 +41,17 @@ group using `Spacing.md` between members:
 - **Notice placement:** the error/recovery notice card sits *directly below the action group*,
   never up in the lockup.
 - **Provider order:** Google, then Apple (matches the shipping app).
+- **Legal footnote:** shown in the `new` state only (the account-creation moment) — *not* in
+  returning / checking / error / recovery. `Typography.caption1`, `labelSecondary`, centered.
 - **Vertical placement:** the block is centered, not bottom-pinned — on both platforms.
+
+> **Amendment 2026-09-28 (#27) — founder-confirmed.** An earlier draft of the states table listed
+> "Sign in with a different account" as recovery's *filled primary*, which directly contradicted the
+> emphasis rule above (and issue #27's acceptance criterion that different-account is *always* a quiet
+> link). Resolved in favour of the emphasis rule — the invariant #27 exists to enforce: recovery's
+> filled primary is **"Try again"** (re-auth), matching the error state, and "Sign in with a different
+> account" stays the quiet link. **Confirmed by the founder 2026-09-28** ("proceed with your
+> recommendations"); the paired render is the spot-check, not a Builder-only decision.
 
 ## System use
 

@@ -28,8 +28,18 @@ form diverges.
     step slots; the #12 middle steps plug in as more slots). No deploy/provisioning slot.
   - `OnboardingScaffold.kt` — the shared step chrome (back · hero `ContainedIcon` · title/subtitle ·
     scrollable content · bottom CTA bar + legal footer), all token-bound.
-  - `SignInStep.kt` — the reproduced sign-in step, state-driven by real auth (`SignInState` =
-    returning / new / checking / error / recovery); Sign-in-with-Apple treatment per the reference.
+  - `SignInStep.kt` — the **sign-in screen** (`OnboardingSignInScreen`), built to
+    `docs/contracts/onboarding-sign-in.md`: its **own centered screen** (one block centered in the
+    safe area, left-aligned, ≤560dp — **not** the scaffold's bottom-pinned CTA bar), state-driven by
+    real auth (`SignInState` = returning / new / checking / error / recovery). The paired
+    iOS⟷Android render (`SignIn-*` keys in `screenshots.yml`) is what the visual-parity gate diffs.
+    `signInStep(...)` wraps it as the sequencer's entry step.
+  - `icons/RemMaterialSymbols.kt` + `src/main/res/font/material_symbols_outlined.ttf` — the Android
+    half of `docs/contracts/icon-registry.md`: the **Material Symbols variable font** with its FILL
+    axis (0 outline / 1 filled), bound via `FontVariation` so a filled iOS symbol never drifts to an
+    Android outline. NOT the always-filled legacy `Icons.Filled.*`. The `.ttf` is the Apache-2.0
+    Google font (`@material-symbols/font-400`, variable-FILL), subset to the registry glyphs (`error`,
+    U+E000) with `fontTools` to keep the binary tiny while preserving the FILL axis.
   - `ConsentStep.kt` — the reproduced "Privacy by design" consent step (copy verbatim from the
     reference frame).
   - `Onboarding.figma.kt` — Code Connect for the sign-in (`411:15`) + consent (`410:16`) masters,

@@ -39,9 +39,18 @@ final class RenderSnapshots: XCTestCase {
         render("SignIn-new-light", width: 393, height: 852, dark: false) {
             OnboardingSignInTemplate(state: .new, onPrimary: {})
         }
+        render("SignIn-checking-light", width: 393, height: 852, dark: false) {
+            OnboardingSignInTemplate(state: .checking, onPrimary: {})
+        }
         render("SignIn-error-dark", width: 393, height: 852, dark: true) {
             OnboardingSignInTemplate(
                 state: .error(message: "We couldn't sign you in. Check your connection and try again."),
+                onPrimary: {}
+            )
+        }
+        render("SignIn-recovery-light", width: 393, height: 852, dark: false) {
+            OnboardingSignInTemplate(
+                state: .recovery(message: "Your session expired. Sign in again to pick up where you left off."),
                 onPrimary: {}
             )
         }

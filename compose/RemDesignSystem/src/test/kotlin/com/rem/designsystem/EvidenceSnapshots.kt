@@ -19,6 +19,7 @@ import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.onboarding.OnboardingSequencer
+import com.rem.designsystem.onboarding.OnboardingSignInScreen
 import com.rem.designsystem.onboarding.SignInState
 import com.rem.designsystem.onboarding.consentStep
 import com.rem.designsystem.onboarding.rememberOnboardingSequencerState
@@ -98,17 +99,15 @@ class EvidenceSnapshots {
         }
     }
 
+    // Sign-in renders its own centered screen (OnboardingSignInScreen) — NOT the sequencer scaffold's
+    // bottom-pinned CTA bar — so the paired iOS⟷Android render diffs the same arrangement.
     @Test
     fun signInReturning() = shot("SignIn-returning-light") {
         RemTheme {
-            OnboardingSequencer(
-                steps = listOf(
-                    signInStep(
-                        state = SignInState.Returning(accountName = "Sam"),
-                        onContinue = {},
-                        onUseDifferentAccount = {},
-                    ),
-                ),
+            OnboardingSignInScreen(
+                state = SignInState.Returning(accountName = "Sam"),
+                onContinue = {},
+                onUseDifferentAccount = {},
             )
         }
     }
@@ -116,25 +115,35 @@ class EvidenceSnapshots {
     @Test
     fun signInNew() = shot("SignIn-new-light") {
         RemTheme {
-            OnboardingSequencer(
-                steps = listOf(
-                    signInStep(state = SignInState.New, onContinue = {}, onUseDifferentAccount = {}),
-                ),
-            )
+            OnboardingSignInScreen(state = SignInState.New, onContinue = {}, onUseDifferentAccount = {})
+        }
+    }
+
+    @Test
+    fun signInChecking() = shot("SignIn-checking-light") {
+        RemTheme {
+            OnboardingSignInScreen(state = SignInState.Checking, onContinue = {}, onUseDifferentAccount = {})
         }
     }
 
     @Test
     fun signInError() = shot("SignIn-error-dark") {
         RemTheme(darkTheme = true) {
-            OnboardingSequencer(
-                steps = listOf(
-                    signInStep(
-                        state = SignInState.Error("We couldn't sign you in. Check your connection and try again."),
-                        onContinue = {},
-                        onUseDifferentAccount = {},
-                    ),
-                ),
+            OnboardingSignInScreen(
+                state = SignInState.Error("We couldn't sign you in. Check your connection and try again."),
+                onContinue = {},
+                onUseDifferentAccount = {},
+            )
+        }
+    }
+
+    @Test
+    fun signInRecovery() = shot("SignIn-recovery-light") {
+        RemTheme {
+            OnboardingSignInScreen(
+                state = SignInState.Recovery("Your session expired. Sign in again to pick up where you left off."),
+                onContinue = {},
+                onUseDifferentAccount = {},
             )
         }
     }
