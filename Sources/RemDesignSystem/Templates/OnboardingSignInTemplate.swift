@@ -26,7 +26,8 @@ public struct OnboardingSignInTemplate: View {
         case checking
         /// Auth failed. Shows the inline error notice + "Try again" and the different-account escape.
         case error(message: String)
-        /// Account-recovery path (credential revoked / needs re-auth). Different-account is primary.
+        /// Account-recovery path (credential revoked / needs re-auth). Primary = "Try again" (re-auth);
+        /// "Sign in with a different account" stays the quiet escape (emphasis rule — never filled).
         case recovery(message: String)
     }
 
@@ -117,14 +118,11 @@ public struct OnboardingSignInTemplate: View {
                 differentAccountLink
 
             case .recovery:
-                // Emphasis rule: "Sign in with a different account" is *always* a quiet labelSecondary
-                // text link — never filled — so recovery offers two text links (no filled provider
-                // action to emphasize), with "Try again" the accent link.
+                // Recovery is a re-auth path, so "Try again" is the filled primary action — like the
+                // error state. "Sign in with a different account" stays the quiet labelSecondary link
+                // (emphasis rule: it is *never* filled or emphasized, in any state).
+                signInButton(title: "Try again", action: onRetry)
                 differentAccountLink
-                Button("Try again", action: onRetry)
-                    .font(DesignTokens.Typography.body)
-                    .foregroundStyle(DesignTokens.Color.systemBlue)
-                    .frame(maxWidth: .infinity)
             }
         }
     }

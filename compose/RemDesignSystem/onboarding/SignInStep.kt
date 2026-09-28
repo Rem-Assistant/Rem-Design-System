@@ -55,7 +55,10 @@ sealed interface SignInState {
     /** Auth failed. Shows the error notice + "Try again" and the different-account escape. */
     data class Error(val message: String) : SignInState
 
-    /** Account-recovery path (e.g. credential revoked / needs re-auth). */
+    /**
+     * Account-recovery path (e.g. credential revoked / needs re-auth). Primary = "Try again" (re-auth);
+     * "Sign in with a different account" stays the quiet escape (emphasis rule — never filled).
+     */
     data class Recovery(val message: String) : SignInState
 }
 
@@ -192,11 +195,11 @@ private fun SignInActions(
             }
 
             is SignInState.Recovery -> {
-                // Emphasis rule: "Sign in with a different account" is *always* a quiet labelSecondary
-                // text link — never filled — so recovery offers two text links (no filled provider
-                // action to emphasize), with "Try again" the accent link.
+                // Recovery is a re-auth path, so "Try again" is the filled primary action — like the
+                // error state. "Sign in with a different account" stays the quiet labelSecondary link
+                // (emphasis rule: it is *never* filled or emphasized, in any state).
+                SignInButton("Try again", onClick = onRetry)
                 DifferentAccountLink(onUseDifferentAccount)
-                SignInTextLink("Try again", onClick = onRetry, accent = true)
             }
         }
     }

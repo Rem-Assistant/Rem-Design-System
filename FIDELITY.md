@@ -36,9 +36,13 @@ the visual-parity gate polices. Authority: the contract (founder-approved 2026-0
   bar; it now renders the standalone `OnboardingSignInScreen` (sibling of the SwiftUI
   `OnboardingSignInTemplate`). `signInStep(...)` wraps it as the sequencer's entry.
 - **Emphasis:** "Sign in with a different account" is a quiet `labelSecondary` text link in **every**
-  state on both platforms (recovery no longer fills it — the contract's emphasis invariant wins over
-  the state-table's "Primary" column, and the parity checklist lists it explicitly). Provider order
-  Google→Apple in `new` (fixed on Android, was Apple→Google).
+  state on both platforms — never filled. This resolves an internal contradiction in the contract: its
+  state-table originally listed different-account as recovery's *filled primary*, which violated the
+  contract's own emphasis rule (and #27's acceptance criterion). Resolved in favour of the emphasis
+  invariant (the drift #27 exists to kill): **recovery's filled primary is "Try again"** (re-auth, like
+  the error state) and different-account stays the quiet link. Recorded as a bounded amendment in the
+  contract, escalated to Steward/founder. Provider order Google→Apple in `new` (fixed on Android, was
+  Apple→Google).
 - **Notice card:** error/recovery notice sits directly **below** the action group (was above, in the
   Android lockup), `systemRed` @ 12% on a `medium`-radius surface, `caption1` message + a leading
   warning glyph resolved through the icon registry by meaning **and FILL**: iOS
