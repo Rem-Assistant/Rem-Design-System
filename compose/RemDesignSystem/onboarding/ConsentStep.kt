@@ -44,8 +44,11 @@ import com.rem.designsystem.tokens.RemTypography
  *  - primary:  "Accept and Continue" (or "Try again" in the error state)
  *  - footer:   By tapping "Accept and Continue," you agree to our Terms of Service and Privacy Policy.
  *
- * **Icons resolve through the Material Symbols variable font at their registry FILL** (icon-registry
- * rule 2 — never legacy `Icons.Filled.*`, which is always-filled and can't honour an outline row).
+ * **Icons resolve through the canonical `ContainedIcon` primitive and the static Material Symbols
+ * font selected for their registry FILL** (icon-registry rule 2 — never legacy `Icons.Filled.*`,
+ * which is always-filled and can't honour an outline row). SwiftUI uses the paired SF Symbol through
+ * its `ContainedIcon`; the platform-native backends intentionally share the semantic registry row,
+ * FILL, size, color, and render contract rather than a font implementation.
  * This is the drift fix: the hero is `shield_lock` at **FILL 1** (pairs with iOS `lock.shield.fill` —
  * NOT `Security`, a shield-*check*), and the two legal rows + their chevrons are outline (**FILL 0**),
  * matching the iOS SF Symbols glyph-for-glyph.

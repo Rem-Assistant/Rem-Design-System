@@ -26,6 +26,7 @@ jobs:
           rm -rf "$RUNNER_TEMP/DesignDriftSnapshots.xcresult"
           xcodebuild test \
             -scheme RemDesignSystem \
+            -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15' \
             -only-testing:RenderSnapshotTests \
             -resultBundlePath "$RUNNER_TEMP/DesignDriftSnapshots.xcresult" \
