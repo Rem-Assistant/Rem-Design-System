@@ -60,6 +60,8 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 - **Do not invent consent-local loading or error states.** Current shipping code advances immediately
   after acceptance. The old Deploying screen is being deprecated, so the prototype intentionally
   leaves Accept without a fabricated destination until the replacement onboarding step is defined.
+- **Dark mode is a variable-mode review, not a second authored frame.** The Director approved one
+  light documentation set; reviewers switch the shared color mode in Figma when checking dark.
 
 ## System use
 
@@ -161,5 +163,5 @@ before merge. Changing either threshold still requires a fresh baseline plus fou
 approval. The pixel gate catches material drift while Reviewer owns the paired visual decision.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
-amendment on the issue. **Status:** drafted from the reference frame + onboarding packet; the paired
-render is the proof the founder spot-checks. Build behind the live visual-parity gate.
+amendment on the issue. **Status:** state/evidence scope amended by the founder on 2026-09-28; the
+paired render is the proof the founder spot-checks. Build behind the live visual-parity gate.
