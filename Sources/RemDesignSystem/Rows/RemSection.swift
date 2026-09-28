@@ -115,23 +115,30 @@ private struct RemSectionPreviewRow: Identifiable {
     let symbol: String
 }
 
-#Preview("RemSection") {
-    let rows = [
+private struct RemSectionPreview: View {
+    private let rows = [
         RemSectionPreviewRow(id: "account", title: "Account", subtitle: "avery@example.com", symbol: "person.fill"),
         RemSectionPreviewRow(id: "privacy", title: "Privacy", subtitle: "Manage your data", symbol: "shield"),
     ]
 
-    RemSection(
-        header: "Section Header",
-        footer: "Explanatory footer text that describes this section.",
-        rows: rows
-    ) { row in
-        ListRow(row.title, subtitle: row.subtitle, leading: {
-            ContainedIcon(row.symbol, fill: .subtle)
-        }, trailing: {
-            Image(systemName: "chevron.right")
-        })
+    var body: some View {
+        RemSection(
+            header: "Section Header",
+            footer: "Explanatory footer text that describes this section.",
+            rows: rows,
+            row: { row in
+                ListRow(row.title, subtitle: row.subtitle, leading: {
+                    ContainedIcon(row.symbol, fill: .subtle)
+                }, trailing: {
+                    Image(systemName: "chevron.right")
+                })
+            }
+        )
+        .padding()
     }
-    .padding()
+}
+
+#Preview("RemSection") {
+    RemSectionPreview()
 }
 #endif
