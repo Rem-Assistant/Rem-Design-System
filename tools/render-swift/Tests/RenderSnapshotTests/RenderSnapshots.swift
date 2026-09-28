@@ -30,7 +30,18 @@ final class RenderSnapshots: XCTestCase {
             render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
             render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
-            render("Consent-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen }
+            render("Consent-default-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen() }
+        }
+        // Consent · error (notice above the bottom-pinned CTA, CTA → "Try again"), dark.
+        render("Consent-error-dark", width: 393, height: 852, dark: true) {
+            consentScreen(error: "We couldn't save your choice. Check your connection and try again.")
+        }
+        // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
+        render("Consent-terms-light", width: 393, height: 852, dark: false) {
+            LegalDocumentTemplate(title: "Terms of Service", sections: LegalDocumentTemplate.previewTermsSections)
+        }
+        render("Consent-privacy-light", width: 393, height: 852, dark: false) {
+            LegalDocumentTemplate(title: "Privacy Policy", sections: LegalDocumentTemplate.previewPrivacySections)
         }
         // Sign-in states, keyed to pair with the Compose `SignIn-*` shots in the side-by-side table.
         render("SignIn-returning-light", width: 393, height: 852, dark: false) {
@@ -113,7 +124,7 @@ final class RenderSnapshots: XCTestCase {
     }
 
     // The REAL onboarding consent template (with its ScrollView) — rendered faithfully now.
-    private var consentScreen: some View {
+    private func consentScreen(error: String? = nil) -> some View {
         OnboardingConsentTemplate(
             // Canonical consent copy (authority: Compose `ConsentStep.kt`), kept identical on both
             // platforms so the side-by-side evidence compares the same screen.
@@ -125,6 +136,7 @@ final class RenderSnapshots: XCTestCase {
                       subtitle: "What Rem, your gateway, and AI or voice providers process.", action: {}),
             ],
             footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
+            errorMessage: error,
             onPrimary: {}
         )
     }

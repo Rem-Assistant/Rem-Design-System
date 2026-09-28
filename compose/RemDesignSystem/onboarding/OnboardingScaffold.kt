@@ -62,6 +62,8 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
+    /** An error notice card rendered directly **above** the bottom-pinned CTA (e.g. consent's error). */
+    notice: String? = null,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
@@ -120,16 +122,31 @@ fun OnboardingScaffold(
         ) {
             Spacer(Modifier.height(RemSpacing.xxl))
             if (hero != null) {
-                ContainedIcon(
-                    icon = hero.icon,
-                    fill = ContainedIconFill.Tint(hero.tint ?: colors.brandBlue),
-                    // The onboarding hero is the large brand squircle in every reference frame. It
-                    // reuses the canonical ContainedIcon (anti-drift Rule 0) at its Large size (64dp).
-                    // The reference hero reads slightly larger (~88pt); logged as a metric-reconcile
-                    // item (a dedicated `hero` size token) rather than forking a bespoke tile here.
-                    size = ContainedIconSize.Large,
-                    contentDescription = hero.contentDescription,
-                )
+                val heroTint = ContainedIconFill.Tint(hero.tint ?: colors.brandBlue)
+                // The onboarding hero is the large brand squircle in every reference frame. It reuses
+                // the canonical ContainedIcon (anti-drift Rule 0) at its Large size (64dp). The
+                // reference hero reads slightly larger (~88pt); logged as a metric-reconcile item (a
+                // dedicated `hero` size token) rather than forking a bespoke tile here.
+                //
+                // A glyph hero (consent's shield-lock) renders the Material Symbols font glyph at its
+                // registry FILL — never a legacy `Icons.Filled.*` — so its FILL matches the iOS SF
+                // Symbol. A vector hero (other steps) still uses the ImageVector overload.
+                if (hero.glyph != null) {
+                    ContainedIcon(
+                        glyph = hero.glyph,
+                        glyphFill = hero.glyphFill,
+                        fill = heroTint,
+                        size = ContainedIconSize.Large,
+                        contentDescription = hero.contentDescription,
+                    )
+                } else if (hero.icon != null) {
+                    ContainedIcon(
+                        icon = hero.icon,
+                        fill = heroTint,
+                        size = ContainedIconSize.Large,
+                        contentDescription = hero.contentDescription,
+                    )
+                }
                 Spacer(Modifier.height(RemSpacing.lg))
             }
             if (title != null) {
@@ -154,29 +171,36 @@ fun OnboardingScaffold(
             Spacer(Modifier.height(RemSpacing.xl))
         }
 
-        // Bottom CTA region — legal footer (consent/sign-in) above the primary button, secondary
-        // (Skip / "Sign in with a different account") below it. Pinned; does not scroll.
+        // Bottom CTA region — pinned; does not scroll. Order top→bottom matches the contract: the
+        // error notice (when present) sits directly ABOVE the CTA; the legal footnote sits BELOW it
+        // (contrast the earlier footer-above-button arrangement — the footnote reads as consent's
+        // legal fine print under the button, matching iOS + `docs/contracts/onboarding-consent.md`).
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = RemSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (legalFooter != null) {
-                Text(
-                    text = legalFooter,
-                    style = RemTypography.footnote,
-                    color = colors.labelTertiary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = RemSpacing.sm, vertical = RemSpacing.md),
-                )
+            if (notice != null) {
+                OnboardingNotice(notice)
+                Spacer(Modifier.height(RemSpacing.md))
             }
             OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
             if (secondary != null) {
                 Spacer(Modifier.height(RemSpacing.sm))
                 OnboardingActionButton(action = secondary, modifier = Modifier.fillMaxWidth())
+            }
+            if (legalFooter != null) {
+                // caption1 + labelSecondary, matching iOS + the contract's footnote role.
+                Text(
+                    text = legalFooter,
+                    style = RemTypography.caption1,
+                    color = colors.labelSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = RemSpacing.sm, vertical = RemSpacing.md),
+                )
             }
         }
     }
@@ -198,9 +222,18 @@ enum class OnboardingBackground {
     }
 }
 
-/** The brand squircle hero: a glyph on the brand-blue (or overridden) [ContainedIcon] tile. */
+/**
+ * The brand squircle hero: a glyph on the brand-blue (or overridden) [ContainedIcon] tile.
+ *
+ * Two glyph sources: [glyph] is a **Material Symbols** font glyph (from `RemMaterialSymbols`) rendered
+ * at [glyphFill] — the registry-faithful path (consent's shield-lock at FILL 1), which is how a hero's
+ * FILL matches its iOS SF Symbol. [icon] is a Material [ImageVector] for steps that don't (yet) have a
+ * registry row. Prefer [glyph]; when both are set [glyph] wins.
+ */
 data class OnboardingHero(
-    val icon: ImageVector,
+    val icon: ImageVector? = null,
+    val glyph: String? = null,
+    val glyphFill: Float = 1f,
     val tint: Color? = null,
     val contentDescription: String? = null,
 )
@@ -253,7 +286,9 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             Box(
                 modifier = modifier
                     .heightIn(min = 50.dp)
-                    .clip(RoundedCornerShape(RemRadius.large))
+                    // `medium` radius — matches the iOS primary `RemButton` (rectBlack) + sign-in's
+                    // `SignInButton`, so the paired CTA reads as the same treatment on both platforms.
+                    .clip(RoundedCornerShape(RemRadius.medium))
                     .background(containerColor)
                     .alpha(if (interactive) 1f else RemOnboardingMetrics.disabledAlpha)
                     .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)

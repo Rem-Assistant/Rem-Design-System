@@ -28,9 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rem.designsystem.brand.RemAppIcon
-import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -280,32 +278,13 @@ private fun SignInTextLink(label: String, onClick: () -> Unit, accent: Boolean) 
 }
 
 /**
- * Inline error/recovery notice — the Extend treatment reused across the sign-in error + recovery
- * states, directly below the action group. Token-bound (systemRed at 12% on a `medium`-radius
- * surface); the leading glyph resolves through the icon registry by meaning + FILL: the Material
- * Symbols `error` glyph at **FILL 1** (pairs with the iOS `exclamationmark.triangle.fill`).
+ * Inline error/recovery notice — directly below the action group. Delegates to the shared
+ * [OnboardingNotice] so sign-in and the scaffold's consent notice are the exact same treatment
+ * (systemRed at 12%, the Material Symbols `error` glyph at FILL 1) and diff clean across platforms.
  */
 @Composable
-private fun SignInNotice(message: String, modifier: Modifier = Modifier) {
-    val colors = RemColors.current
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(RemRadius.medium))
-            .background(colors.systemRed.copy(alpha = 0.12f))
-            .padding(RemSpacing.md),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
-    ) {
-        Text(
-            text = RemMaterialSymbols.Error,
-            fontFamily = RemMaterialSymbols.family(fill = 1f),
-            fontSize = 14.sp,
-            color = colors.systemRed,
-        )
-        Text(text = message, style = RemTypography.caption1, color = colors.labelPrimary)
-    }
-}
+private fun SignInNotice(message: String, modifier: Modifier = Modifier) =
+    OnboardingNotice(message = message, modifier = modifier)
 
 /**
  * The sign-in **step** for the [OnboardingSequencer] — a thin wrapper that renders the standalone

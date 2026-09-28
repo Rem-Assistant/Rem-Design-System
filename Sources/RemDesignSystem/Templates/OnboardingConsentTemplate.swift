@@ -24,6 +24,8 @@ public struct OnboardingConsentTemplate: View {
     var legalItems: [LegalItem]
     var primaryTitle: String
     var footnote: String
+    var isAccepting: Bool
+    var errorMessage: String?
     var onPrimary: () -> Void
 
     public init(
@@ -33,6 +35,8 @@ public struct OnboardingConsentTemplate: View {
         legalItems: [LegalItem],
         primaryTitle: String = "Accept and Continue",
         footnote: String,
+        isAccepting: Bool = false,
+        errorMessage: String? = nil,
         onPrimary: @escaping () -> Void
     ) {
         self.heroSymbol = heroSymbol
@@ -41,6 +45,8 @@ public struct OnboardingConsentTemplate: View {
         self.legalItems = legalItems
         self.primaryTitle = primaryTitle
         self.footnote = footnote
+        self.isAccepting = isAccepting
+        self.errorMessage = errorMessage
         self.onPrimary = onPrimary
     }
 
@@ -66,7 +72,7 @@ public struct OnboardingConsentTemplate: View {
             ContainedIcon(heroSymbol, fill: .tint(DesignTokens.Color.brandBlue), size: .large)
             VStack(spacing: DesignTokens.Spacing.sm) {
                 Text(title)
-                    .font(DesignTokens.Typography.title1.weight(.semibold))
+                    .font(DesignTokens.Typography.largeTitle.weight(.semibold))
                     .foregroundStyle(DesignTokens.Color.labelPrimary)
                     .multilineTextAlignment(.center)
                 Text(message)
@@ -94,17 +100,29 @@ public struct OnboardingConsentTemplate: View {
             }
         }
         .background(DesignTokens.Color.backgroundSecondary)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
                 .stroke(DesignTokens.Color.separator.opacity(0.35), lineWidth: 1)
         }
     }
 
+    /// Bottom-pinned region — error notice (when present) directly ABOVE the CTA, the primary CTA, then
+    /// the legal footnote BELOW it. Matches `docs/contracts/onboarding-consent.md` and the Compose
+    /// scaffold's bottom bar so the paired render diffs clean.
     private var bottomBar: some View {
         VStack(spacing: DesignTokens.Spacing.md) {
-            Button(primaryTitle, action: onPrimary)
-                .remPrimaryActionButton()
+            if let errorMessage { notice(errorMessage) }
+            Button(action: onPrimary) {
+                if isAccepting {
+                    ProgressView().tint(DesignTokens.Color.backgroundPrimary)
+                } else {
+                    Text(errorMessage != nil ? "Try again" : primaryTitle)
+                }
+            }
+            .remPrimaryActionButton()
+            .disabled(isAccepting)
+            .opacity(isAccepting ? 0.4 : 1)
             Text(footnote)
                 .font(DesignTokens.Typography.caption1)
                 .foregroundStyle(DesignTokens.Color.labelSecondary)
@@ -115,6 +133,28 @@ public struct OnboardingConsentTemplate: View {
         .padding(.top, DesignTokens.Spacing.sm)
         .padding(.bottom, DesignTokens.Spacing.md)
         .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    /// Inline error notice — mirrors the Compose `OnboardingNotice` (systemRed at 12% on a
+    /// `medium`-radius surface). Leading glyph resolves through the icon registry by meaning + FILL:
+    /// `exclamationmark.triangle.fill` (`error`, FILL 1).
+    private func notice(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.sm) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignTokens.Color.systemRed)
+            Text(message)
+                .font(DesignTokens.Typography.caption1)
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
+                .fill(DesignTokens.Color.systemRed.opacity(0.12))
+        )
     }
 }
 
