@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,9 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import com.rem.designsystem.primitives.ContainedIcon
-import com.rem.designsystem.primitives.ContainedIconFill
-import com.rem.designsystem.primitives.ContainedIconSize
+import androidx.compose.ui.unit.dp
+import com.rem.designsystem.brand.RemAppIcon
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -71,8 +68,7 @@ fun signInStep(
     onUseGoogle: () -> Unit = {},
     onRetry: () -> Unit = {},
     appleMark: ImageVector = RemBrandGlyphs.AppleLogo,
-    googleMark: ImageVector? = null,
-    brandMark: ImageVector = Icons.Filled.Face,
+    googleMark: ImageVector? = RemBrandGlyphs.GoogleG,
     id: String = "signIn",
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     val primary: OnboardingAction
@@ -98,13 +94,15 @@ fun signInStep(
                 style = OnboardingActionStyle.Primary,
                 leadingIcon = appleMark,
             )
-            // Second provider button — brand asset supplied by the host (googleMark); placeholder-less
-            // when absent, per the repo's brand-asset-debt convention.
+            // Second provider button — the canonical multicolor Google "G" (RemBrandGlyphs.GoogleG)
+            // by default; a host may override or pass null. Rendered untinted so the mark keeps its
+            // four brand colors on the filled button.
             secondary = OnboardingAction(
                 label = "Continue with Google",
                 onClick = onUseGoogle,
                 style = OnboardingActionStyle.Primary,
                 leadingIcon = googleMark,
+                tintLeadingIcon = false,
             )
         }
         SignInState.Checking -> {
@@ -156,12 +154,10 @@ fun signInStep(
         // the render runner).
         Spacer(Modifier.height(RemSpacing.xxxl))
         Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-            ContainedIcon(
-                icon = brandMark,
-                fill = ContainedIconFill.Tint(RemColors.current.brandBlue),
-                size = ContainedIconSize.Large,
-                contentDescription = "Rem",
-            )
+            // Brand lockup mark: the **app icon** (blue squircle + white bloom), shared with iOS —
+            // NOT the face mark. The sign-in lockup uses the app icon, per the founder reference
+            // `tasks/refs/onboarding/01-sign-in.png` and the shipping `OnboardingLogoView`.
+            RemAppIcon(size = 40.dp)
             Spacer(Modifier.height(RemSpacing.md))
             Text(
                 text = "Rem",

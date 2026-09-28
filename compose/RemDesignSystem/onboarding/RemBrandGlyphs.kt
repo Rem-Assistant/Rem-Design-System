@@ -33,7 +33,51 @@ object RemBrandGlyphs {
             )
         }.build()
     }
+
+    /**
+     * The multicolor **Google "G"** provider mark on a 16×16 viewport — the real vendor asset,
+     * transferred verbatim (the four path segments + brand colors) from the shipping app's
+     * `google-icon` SVG (`rem-assistant/remclaw` `Rem/Assets.xcassets/google-icon.imageset`). Each
+     * segment carries its own `SolidColor`, so it must be rendered **untinted** (`Icon` with
+     * `Color.Unspecified`, or `Image`) to keep its four colors. This is the SwiftUI [RemGoogleGlyph]'s
+     * Compose sibling — the earlier `null` default left the Google button with no mark ("Google icon
+     * not transferring"); it is now the canonical default.
+     */
+    val GoogleG: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "GoogleG",
+            defaultWidth = 16.dp,
+            defaultHeight = 16.dp,
+            viewportWidth = 16f,
+            viewportHeight = 16f,
+        ).apply {
+            addPath(PathParser().parsePathString(GOOGLE_BLUE).toNodes(), fill = SolidColor(Color(0xFF4285F4)))
+            addPath(PathParser().parsePathString(GOOGLE_GREEN).toNodes(), fill = SolidColor(Color(0xFF34A853)))
+            addPath(PathParser().parsePathString(GOOGLE_YELLOW).toNodes(), fill = SolidColor(Color(0xFFFBBC05)))
+            addPath(PathParser().parsePathString(GOOGLE_RED).toNodes(), fill = SolidColor(Color(0xFFEB4335)))
+        }.build()
+    }
 }
+
+// Google "G" path segments (16 viewport), verbatim from the vendor SVG. The near-zero `-4.57764e-05`
+// origin coordinates in the red segment are written as `0` here — visually identical and free of any
+// scientific-notation parsing ambiguity.
+private const val GOOGLE_BLUE =
+    "M15.8094 8.14968C15.8094 7.49416 15.7562 7.01581 15.6411 6.51975H8.15576V9.47841H12.5495C12.4609 " +
+        "10.2137 11.9826 11.321 10.9195 12.065L10.9046 12.1641L13.2714 13.9976L13.4353 14.0139C14.9412 " +
+        "12.6231 15.8094 10.5769 15.8094 8.14968Z"
+private const val GOOGLE_GREEN =
+    "M8.15558 15.945C10.3081 15.945 12.1152 15.2363 13.4352 14.0138L10.9194 12.065C10.2461 12.5345 " +
+        "9.34258 12.8622 8.15558 12.8622C6.04731 12.8622 4.25794 11.4715 3.62007 9.54923L3.52658 " +
+        "9.55717L1.06563 11.4617L1.03345 11.5512C2.34447 14.1555 5.03742 15.945 8.15558 15.945Z"
+private const val GOOGLE_YELLOW =
+    "M3.62036 9.54927C3.45205 9.05321 3.35465 8.52167 3.35465 7.97248C3.35465 7.42323 3.45205 6.89175 " +
+        "3.6115 6.39569L3.60704 6.29004L1.11526 4.35489L1.03373 4.39367C0.493395 5.4744 0.18335 6.68802 " +
+        "0.18335 7.97248C0.18335 9.25694 0.493395 10.4705 1.03373 11.5512L3.62036 9.54927Z"
+private const val GOOGLE_RED =
+    "M8.15558 3.08264C9.65262 3.08264 10.6625 3.7293 11.2383 4.26969L13.4883 2.07281C12.1064 0.788351 " +
+        "10.3081 0 8.15558 0C5.03742 0 2.34447 1.78933 1.03345 4.39366L3.61122 6.39568C4.25794 4.47342 " +
+        "6.04731 3.08264 8.15558 3.08264Z"
 
 // Recognizable Apple logo silhouette (24 viewport). Monochrome; recolored per button via `tint`.
 private const val APPLE_LOGO_PATH =

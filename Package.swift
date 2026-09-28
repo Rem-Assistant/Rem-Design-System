@@ -23,7 +23,24 @@ let package = Package(
             exclude: [
                 "Buttons/RemButton.figma.swift",
                 "Primitives/ContainedIcon.figma.swift",
-            ]
+                "Brand/RemFaceMark.figma.swift",
+            ],
+            // Brand raster assets that have no faithful vector source — the real app-icon bloom
+            // (transferred verbatim from the shipping app's AppIcon), loaded via `Bundle.module`
+            // by `RemAppIcon`. Processed into a compiled asset catalog so `UIImage(named:in:)`
+            // resolves it on the render simulator.
+            resources: [.process("Resources")]
+        ),
+        // Screenshot-evidence snapshots. Run on an iOS Simulator via `xcodebuild test` so the
+        // render uses real iOS UIColor semantics (`.systemBackground` is white on iOS, grey on
+        // macOS) and `layer.render(in:)` captures ScrollView/List content that `ImageRenderer`
+        // cannot. The file is UIKit-guarded, so `swift test` on macOS compiles it to an empty
+        // target. PNGs are emitted as XCTAttachments and extracted from the .xcresult (SNAPSHOT_OUT_DIR
+        // does not cross into the simulator process). NOT part of the library product — consumers never build it.
+        .testTarget(
+            name: "RenderSnapshotTests",
+            dependencies: ["RemDesignSystem"],
+            path: "tools/render-swift/Tests/RenderSnapshotTests"
         ),
     ]
 )

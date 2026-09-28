@@ -1,0 +1,47 @@
+name: figma-publish
+
+# Code Connect: bind the SwiftUI source to the Figma nodes so code shows in Figma Dev Mode.
+#
+# DORMANT by design. Per this repo's README, `figma connect publish` requires a Full/Dev seat on an
+# Organization/Enterprise Figma plan; this account is Starter/Pro, so publish is BLOCKED regardless
+# of FIGMA_TOKEN being set. This workflow is therefore MANUAL-ONLY (no push trigger) so it can never
+# auto-fail red on main. `figma connect check` runs as a non-side-effecting validation; the actual
+# publish is gated behind an explicit opt-in input, ready for when the file moves to an Org/Enterprise
+# team.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_publish:
+        description: "Also run 'figma connect publish' (needs the Figma file on an Org/Enterprise plan — see README)"
+        type: boolean
+        default: false
+
+jobs:
+  code-connect:
+    name: Code Connect (check, opt-in publish)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Figma Code Connect CLI
+        run: npm install -g @figma/code-connect
+      - name: Guard — token present
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: |
+          if [ -z "${FIGMA_ACCESS_TOKEN}" ]; then
+            echo "::error::FIGMA_TOKEN secret is not set on this repo/org."
+            exit 1
+          fi
+      - name: Validate bindings (figma connect check)
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: figma connect check
+      - name: Publish Code Connect (opt-in)
+        if: ${{ inputs.run_publish }}
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: figma connect publish

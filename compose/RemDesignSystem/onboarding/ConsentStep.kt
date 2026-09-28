@@ -13,8 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,8 +56,9 @@ fun consentStep(
     onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit,
     accepting: Boolean = false,
-    termsIcon: ImageVector = Icons.Filled.Info,
-    privacyIcon: ImageVector = Icons.Filled.Lock,
+    // Match the iOS template's SF Symbols: Terms = doc.text (Description), Privacy = shield (Shield).
+    termsIcon: ImageVector = Icons.Filled.Description,
+    privacyIcon: ImageVector = Icons.Filled.Shield,
     id: String = "consent",
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     OnboardingScaffold(
@@ -67,7 +69,8 @@ fun consentStep(
             loading = accepting,
             enabled = !accepting,
         ),
-        hero = OnboardingHero(icon = Icons.Filled.Lock, contentDescription = "Privacy"),
+        // Hero = shield-with-lock, matching the iOS `lock.shield.fill` hero (not a plain lock).
+        hero = OnboardingHero(icon = Icons.Filled.Security, contentDescription = "Privacy"),
         title = "Privacy by design",
         subtitle = "Rem uses your data to answer you and act on the things you ask. " +
             "You can review or delete it anytime in Settings.",
