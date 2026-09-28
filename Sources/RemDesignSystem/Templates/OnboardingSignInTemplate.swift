@@ -162,7 +162,12 @@ public struct OnboardingSignInTemplate: View {
     }
 
     private var differentAccountLink: some View {
+        // `.buttonStyle(.plain)` pins this to a quiet `labelSecondary` link in every state — without it
+        // the automatic button style would tint the label with the ambient accent color, which is the
+        // exact "different account gets emphasized on one platform" drift #27 exists to kill. Matches
+        // the Compose `DifferentAccountLink` (a plain, untinted `labelSecondary` text link).
         Button("Sign in with a different account", action: onUseDifferentAccount)
+            .buttonStyle(.plain)
             .font(DesignTokens.Typography.body)
             .foregroundStyle(DesignTokens.Color.labelSecondary)
             .frame(maxWidth: .infinity)

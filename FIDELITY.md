@@ -57,6 +57,18 @@ the visual-parity gate polices. Authority: the contract (founder-approved 2026-0
   paired by `screenshots.yml`. `checking` + `recovery` cases were added on both sides.
 - **Not verifiable in-repo:** no iOS/Android toolchain here (the reference-vs-evidence split) — the
   paired render on the runners is the parity proof the gate diffs.
+- **Quiet-link hardening (parity):** the iOS "Sign in with a different account" link now sets
+  `.buttonStyle(.plain)` so the automatic button style can't tint its label with the ambient accent
+  colour — pinning it to a quiet `labelSecondary` link in *every* state, matching the Compose
+  `DifferentAccountLink` (a plain, untinted `labelSecondary` text link). This closes the last way the
+  emphasis rule #27 exists to enforce could have drifted between the two platforms.
+- **Current-head render evidence:** the canonical Builder delivery is head-bound
+  (`publish-builder-delivery.yml` pins it to the SHA `screenshots.yml` rendered), and `screenshots.yml`
+  only triggers on render-source paths (`Sources/**`, `compose/**`, `tokens/generated/**`). A prior
+  docs-only contract amendment moved HEAD past the last render, so the delivery read as *stale* against
+  HEAD even though the rendered output was unchanged. This pass re-anchors the evidence: the source
+  change above puts a render-source commit at HEAD, so `screenshots.yml` re-renders both platforms and
+  the delivery is re-pinned to the current head for the parity gate to diff.
 
 ---
 
