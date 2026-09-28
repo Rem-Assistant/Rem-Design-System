@@ -35,7 +35,11 @@ fun RemSection(
                 text = header.uppercase(),
                 style = RemTypography.footnote,
                 color = colors.labelSecondary,
-                modifier = Modifier.padding(horizontal = RemSpacing.md, bottom = RemSpacing.xs),
+                modifier = Modifier.padding(
+                    start = RemSpacing.md,
+                    end = RemSpacing.md,
+                    bottom = RemSpacing.xs,
+                ),
             )
         }
         Column(
@@ -50,7 +54,11 @@ fun RemSection(
                 text = footer,
                 style = RemTypography.footnote,
                 color = colors.labelSecondary,
-                modifier = Modifier.padding(horizontal = RemSpacing.md, top = RemSpacing.xs),
+                modifier = Modifier.padding(
+                    start = RemSpacing.md,
+                    top = RemSpacing.xs,
+                    end = RemSpacing.md,
+                ),
             )
         }
     }
