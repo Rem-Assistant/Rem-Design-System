@@ -1,11 +1,7 @@
-@file:OptIn(ExperimentalTextApi::class)
-
 package com.rem.designsystem.icons
 
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation
 import com.rem.designsystem.R
 
 /**
@@ -14,43 +10,40 @@ import com.rem.designsystem.R
  * is matched by **meaning + FILL + weight** and can never drift into "whatever Material icon looks
  * close."
  *
- * This binds the **Material Symbols variable font** (subset by `tools/material-symbols/subset.py` from
- * the Apache-2.0 Google variable font to only the glyphs the registry needs) with its **FILL axis**
- * (0 = outline, 1 = filled). That FILL axis is what kills the "iOS filled / Android outline" drift the
- * visual gate exists to catch: a registry row that is FILL 1 on iOS renders at FILL 1 here — a value,
- * not a guess. This is deliberately **not** `androidx.compose.material.icons.Icons.Filled.*`: the
- * legacy Material Icons set is always-filled and has no FILL axis, so it cannot honour an outline row
+ * This binds the **Material Symbols** glyphs (subset from the Apache-2.0 Google font by
+ * `tools/material-symbols/subset.py` to only the glyphs the registry needs) as two **static** font
+ * files, one per FILL: an outline file (FILL 0 — the legal rows + chevron) and a filled file
+ * (FILL 1 — the shield-lock hero + error notice). [family] routes a glyph to the file whose fill
+ * matches. That FILL split is what kills the "iOS filled / Android outline" drift the visual gate
+ * exists to catch: a registry row that is FILL 1 on iOS renders from the filled file here — a value,
+ * not a guess.
+ *
+ * This is deliberately **not** `androidx.compose.material.icons.Icons.Filled.*`: the legacy Material
+ * Icons set is always-filled and has no FILL notion, so it cannot honour an outline row
  * (registry rule 2).
+ *
+ * **Why two static files, not one variable font.** In Material Symbols the FILL axis does not
+ * interpolate an outline — it *substitutes* a different glyph (`shield` → `shield.fill`) via an
+ * OpenType feature. A variable font kept at an axis default would therefore render the right fill
+ * only if the runtime honours variation coords AND applies that feature — which the render runner
+ * (Paparazzi / LayoutLib) does not reliably do. So `subset.py` bakes the result: each file is a
+ * plain static font whose **`cmap → glyph` already points at the correct fill shape** (the filled
+ * file's cmap maps straight to the `.fill` glyphs). No `FontVariation` setting and no GSUB feature is
+ * needed to render the correct fill on ANY renderer — the fill is a value, which is exactly what the
+ * parity gate diffs. See `tools/material-symbols/subset.py`.
  *
  * Render a glyph as a `Text` node:
  * `Text(RemMaterialSymbols.ShieldLock, fontFamily = RemMaterialSymbols.family(fill = 1f))`.
- *
- * **Two font files, one per baked FILL default.** The FILL axis is retained in both, so
- * `FontVariation.Setting("FILL", …)` still applies where the renderer honours it (real Android). But
- * the render runner (Paparazzi / LayoutLib) does not reliably honour font variation settings, so
- * [family] routes to the file whose *baked default* already matches the requested fill: outline rows
- * come from a FILL-0 file, filled rows (the shield-lock hero, the error notice) from a FILL-1 file.
- * That makes the fill correct on ANY renderer — the fill is a value, not a hope the renderer varies —
- * which is exactly what the parity gate diffs. See `tools/material-symbols/subset.py`.
- *
- * `FontVariation.Setting(name, value)` (the custom-axis constructor) is `@ExperimentalTextApi`, so this
- * file opts in at the top; the FILL axis it drives is a stable OpenType variation.
  */
 object RemMaterialSymbols {
     /**
-     * The Material Symbols family at a given FILL (0f outline … 1f filled). Picks the font file whose
-     * baked default matches (so the fill is correct even on a renderer that ignores variation), and
-     * still applies the FILL variation so a renderer that honours it lands on the exact axis value.
-     * Threshold at the axis midpoint: `fill >= 0.5f` → the filled subset, else the outline subset.
+     * The Material Symbols family at a given FILL (0f outline … 1f filled). Picks the static font file
+     * whose baked glyphs match — outline below the axis midpoint, filled at/above it — so the fill is
+     * correct on any renderer without relying on variation settings. Threshold: `fill >= 0.5f`.
      */
     fun family(fill: Float): FontFamily {
         val resId = if (fill >= 0.5f) R.font.material_symbols_filled else R.font.material_symbols_outlined
-        return FontFamily(
-            Font(
-                resId = resId,
-                variationSettings = FontVariation.Settings(FontVariation.Setting("FILL", fill)),
-            ),
-        )
+        return FontFamily(Font(resId = resId))
     }
 
     /**

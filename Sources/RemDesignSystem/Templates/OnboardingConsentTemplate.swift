@@ -117,7 +117,14 @@ public struct OnboardingConsentTemplate: View {
                 if isAccepting {
                     ProgressView().tint(DesignTokens.Color.backgroundPrimary)
                 } else {
-                    Text(errorMessage != nil ? "Try again" : primaryTitle)
+                    // Label is rendered verbatim from `primaryTitle` — the wording is chosen by the
+                    // caller from the *action* state (idle → "Accept and Continue", retry → "Try
+                    // again"), NOT derived here from `errorMessage != nil`. That keeps the notice
+                    // (an independent input) decoupled from the CTA wording, so a host can surface an
+                    // error and still keep the standard call to action if it wants. Mirrors the
+                    // Compose scaffold, which renders `primary.label` verbatim while `consentStep`
+                    // decides the wording.
+                    Text(primaryTitle)
                 }
             }
             .remPrimaryActionButton()

@@ -175,10 +175,16 @@ fun OnboardingScaffold(
         // error notice (when present) sits directly ABOVE the CTA; the legal footnote sits BELOW it
         // (contrast the earlier footer-above-button arrangement — the footnote reads as consent's
         // legal fine print under the button, matching iOS + `docs/contracts/onboarding-consent.md`).
+        //
+        // Spacing mirrors the iOS `OnboardingConsentTemplate` bottom bar EXACTLY so the paired render
+        // has the same density in every state: top `sm`, `md` between each element (notice→CTA and
+        // CTA→footnote), and `md` below the footnote. The gaps are only inserted between the elements
+        // that are actually present, so the no-error / no-footer states stay compact — there is no
+        // reserved empty notice slot and no extra bottom padding beyond the iOS `md`.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = RemSpacing.lg),
+                .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (notice != null) {
@@ -191,6 +197,7 @@ fun OnboardingScaffold(
                 OnboardingActionButton(action = secondary, modifier = Modifier.fillMaxWidth())
             }
             if (legalFooter != null) {
+                Spacer(Modifier.height(RemSpacing.md))
                 // caption1 + labelSecondary, matching iOS + the contract's footnote role.
                 Text(
                     text = legalFooter,
@@ -199,7 +206,7 @@ fun OnboardingScaffold(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = RemSpacing.sm, vertical = RemSpacing.md),
+                        .padding(horizontal = RemSpacing.sm),
                 )
             }
         }

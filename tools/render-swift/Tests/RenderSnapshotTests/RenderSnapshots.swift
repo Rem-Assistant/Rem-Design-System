@@ -135,6 +135,10 @@ final class RenderSnapshots: XCTestCase {
                 .init(symbol: "shield", title: "Privacy Policy",
                       subtitle: "What Rem, your gateway, and AI or voice providers process.", action: {}),
             ],
+            // The caller chooses the CTA wording from the action state, mirroring the Compose
+            // `consentStep` factory: idle → "Accept and Continue", retry (error present) → "Try again".
+            // The template renders this verbatim; `errorMessage` independently drives the notice.
+            primaryTitle: error == nil ? "Accept and Continue" : "Try again",
             footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
             errorMessage: error,
             onPrimary: {}
