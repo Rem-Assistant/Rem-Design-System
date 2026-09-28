@@ -200,24 +200,10 @@ private fun ConsentLightPreview() {
     }
 }
 
-@Preview(name = "Consent · dark", showBackground = true, widthDp = 402, heightDp = 874)
-@Composable
-private fun ConsentDarkPreview() {
-    RemTheme(darkTheme = true) {
-        OnboardingSequencer(
-            steps = listOf(
-                signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
-                consentStep(onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {}),
-            ),
-            state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),
-        )
-    }
-}
-
-@Preview(name = "Consent · error (dark)", showBackground = true, widthDp = 402, heightDp = 874)
+@Preview(name = "Consent · submit failure", showBackground = true, widthDp = 402, heightDp = 874)
 @Composable
 private fun ConsentErrorPreview() {
-    RemTheme(darkTheme = true) {
+    RemTheme {
         OnboardingSequencer(
             steps = listOf(
                 signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),

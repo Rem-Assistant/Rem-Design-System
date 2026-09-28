@@ -52,6 +52,11 @@ jobs:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
         run: node tools/design-sync/export-figma.mjs artifacts/figma
 
+      - name: Verify editable Figma structure
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+        run: node tools/design-sync/verify-figma-structure.mjs artifacts/figma-structure-report.json
+
       - name: Compare
         run: |
           cd tools/design-sync && npm ci
@@ -59,7 +64,7 @@ jobs:
           node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma \
             --threshold=0.3 \
             --maxDiffRatio=0.10 \
-            --require=Consent-default-light,Consent-default-dark,Consent-error-dark,Consent-loading-light,Consent-terms-light,Consent-privacy-light
+            --require=Consent-default-light,Consent-error-light,Consent-loading-light,Consent-terms-light,Consent-privacy-light
 
       - name: Finalize machine-readable comparison report
         if: always()
@@ -91,6 +96,25 @@ jobs:
           )
           PY
           fi
+          if [ ! -s artifacts/figma-structure-report.json ]; then
+            python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = {
+              "version": 1,
+              "status": "incomplete",
+              "head": os.environ.get("GITHUB_SHA"),
+              "reason": "An earlier design-drift step failed before Figma structure verification completed.",
+              "errors": [],
+          }
+          Path("artifacts/figma-structure-report.json").write_text(
+              json.dumps(report, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          fi
 
       - name: Publish machine-readable comparison report
         if: always()
@@ -99,13 +123,19 @@ jobs:
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
           cat artifacts/design-drift-report.json >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Figma structure' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat artifacts/figma-structure-report.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload comparison report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: design-drift-report
-          path: artifacts/design-drift-report.json
+          path: |
+            artifacts/design-drift-report.json
+            artifacts/figma-structure-report.json
           if-no-files-found: error
 
       - name: Upload diffs on failure

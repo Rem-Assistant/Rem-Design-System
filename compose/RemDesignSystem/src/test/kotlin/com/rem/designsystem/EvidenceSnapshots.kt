@@ -152,14 +152,13 @@ class EvidenceSnapshots {
     @Test
     fun consent() {
         shot("Consent-default-light") { RemTheme { consentScreen() } }
-        shot("Consent-default-dark") { RemTheme(darkTheme = true) { consentScreen() } }
         shot("Consent-loading-light") { RemTheme { consentScreen(state = ConsentState.Loading) } }
     }
 
-    // Consent · error — notice above the bottom-pinned CTA, CTA flips to "Try again".
+    // Consent · submit failure, light — notice above the CTA, which flips to "Try again".
     @Test
-    fun consentError() = shot("Consent-error-dark") {
-        RemTheme(darkTheme = true) {
+    fun consentError() = shot("Consent-error-light") {
+        RemTheme {
             consentScreen(
                 state = ConsentState.RetryableError(
                     "We couldn't save your choice. Check your connection and try again.",

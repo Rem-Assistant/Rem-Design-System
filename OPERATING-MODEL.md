@@ -126,7 +126,7 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 | 2 | Builder lacked failing CI diagnostics | Factory maintainer | bounded exact-head diagnostic handoff prepared |
 | 3 | Delivery went stale during fresh renders; two competing evidence surfaces | Steward workflows + publisher | bounded waiting, paired canonical delivery, and re-review update prepared |
 | 4 | Contract and icon registry were linked but absent from Reviewer briefing | Consumer configuration | explicit context added; live review pending |
-| 5 | Consent Figma authoring and verification | Builder + Reviewer, coordinated by Steward | required in this milestone; authenticated hosted authoring connection is not configured |
+| 5 | Consent Figma authoring and verification | Builder + Reviewer, coordinated by Steward | canvas authored by the authenticated Codex Builder; exact-head structure/export review pending |
 | 6 | Additional screens | Steward after proving the complete consent loop | deferred |
 
 ---
@@ -151,4 +151,4 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 The Director explicitly requires Figma changes as part of a finished screen PR. Consent
 is the proving case for that complete delivery. Earlier notes deferring Figma do not
 apply to consent. This does not authorize additional screens or change product decisions.
-See `docs/figma-delivery.md` for the acceptance contract and current execution gap.
+See `docs/figma-delivery.md` for the acceptance contract and current proving status.

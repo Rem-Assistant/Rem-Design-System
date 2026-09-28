@@ -36,7 +36,10 @@ byproduct when the screen needs them; we don't ship lone components.
    The annotated **Anatomy** and full spec are the **founder's manual plugin step, not the agent's** —
    a task ships the component and a preview, not the anatomy. The screen built per **`screen-track`**
    on its own page (`FILE-ORG` SCREENS band); its **flow** on the Flows page, wired so Present works.
-   Registered in `REGISTRY.md` + the Figma Component Index.
+   In a Mobile Flow, the rendered screen is a child of the Mobile Placeholder's named
+   `Device / Screen slot`; a loose frame aligned above an empty placeholder is invalid. Registered in
+   `REGISTRY.md` + the Figma Component Index, with Code Connect mappings for supported canonical
+   components and screens.
 3. **Evidence in the PR (the delivery record).** `visual-verify` renders the screen on **iOS and
    Android** (light + dark) and publishes the screenshots into the PR. Screenshots prove states;
    recordings prove transitions. A green build or a bare link is never proof by itself.

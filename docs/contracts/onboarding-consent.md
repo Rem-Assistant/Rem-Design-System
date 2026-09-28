@@ -88,12 +88,24 @@ supersedes the earlier Figma exclusion; the approved arrangement and product rul
 are unchanged. Follow [Figma delivery](../figma-delivery.md) and `SHAPE-OF-A-TASK.md`.
 
 Update the editable consent screen and legal-sheet flow in the existing Rem file. Cover
-`Consent-default-light`, `Consent-default-dark`, `Consent-error-dark`,
-`Consent-loading-light`, `Consent-terms-light`, and `Consent-privacy-light`, including
-each platform's intentional native presentation. Reuse canonical components and shared
-variables, and keep the Terms / Privacy interactions working in Present mode. Include
-screen, flow, component/preview links, exported renders for every required state, and the
-reused/new component ledger in the PR.
+`Consent-default-light`, `Consent-error-light`, `Consent-loading-light`,
+`Consent-terms-light`, and `Consent-privacy-light`, including each platform's intentional
+native presentation. The Director clarified on 2026-09-28 that separate dark frames are
+redundant: the documented nodes stay in light mode and reviewers can switch the shared
+color-variable mode from the right panel. Reuse canonical components and shared variables,
+and keep the Terms / Privacy interactions working in Present mode. Include screen, flow,
+component/preview links, exported renders for every required state, and the reused/new
+component ledger in the PR.
+
+The page is organized with the existing `Mobile Flow (Detach This)` template in section `695:138`.
+It is the page's only top-level section. Every rendered screen is a child of the corresponding
+`Mobile Placeholder` frame's `Device / Screen slot`; screens must never be aligned as loose overlay
+siblings. The main row contains the two legal branches. A second row uses the same placeholders for
+the light loading and submit-failure system states. There is no separate consent-action showcase.
+
+The retry notice is a state of the consent action after Accept, not another step in the privacy
+flow. It remains adjacent to the retry CTA in its full-screen Mobile Placeholder, while the primary
+flow contains only Consent, Terms, and Privacy destinations.
 
 Reviewer must inspect the Figma exports and structure against the current iOS/Android
 evidence and this contract. Existing frame links alone do not establish that the designs
@@ -103,8 +115,9 @@ not permission to omit Figma or spend repeated screen-revision attempts.
 ### Figma/code source linkage
 
 `tools/design-sync/manifest.json` is the machine-readable source link for each editable node. The
-default, dark, error, and loading nodes map to `OnboardingConsentTemplate.swift`; Terms `638:28` and
-Privacy `638:65` map to `LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
+default `609:3`, loading `700:109`, and submit-failure `700:147` nodes map to
+`OnboardingConsentTemplate.swift`; Terms `638:28` and Privacy `638:65` map to
+`LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
 Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
 presentation and injects the current legal body; render-only legal prose remains in test fixtures.
 The Figma sheet nodes mirror that owned chrome and use representative body copy only for layout.
@@ -123,22 +136,20 @@ The paired render passes when iOS and Android match on **all** of:
 - [ ] Error notice (when present) directly above the CTA on both
 - [ ] Icons match the registry glyph **and FILL** on both
 
-**Evidence:** `screenshots.yml` paired table — `Consent-default-light`, `Consent-default-dark`,
-`Consent-loading-light`, `Consent-error-dark`, plus the two sheets `Consent-terms-light`,
+**Evidence:** `screenshots.yml` paired table — `Consent-default-light`,
+`Consent-loading-light`, `Consent-error-light`, plus the two sheets `Consent-terms-light`,
 `Consent-privacy-light` — iOS ⟷ Android side by side. The PR's Figma table must contain a current
-export and editable node link for the same six states; the design-drift run must compare all six
-registered Figma/code pairs at the PR head. CI passes those six exact basenames through
+export and editable node link for the same five states; the design-drift run must compare all five
+registered Figma/code pairs at the PR head. CI passes those five exact basenames through
 `compare.mjs --require`, then publishes `artifacts/design-drift-report.json` in the job summary and
 as a downloadable workflow artifact. Missing or unmatched required states fail closed.
 
 **Approved drift calibration (2026-09-28):** `pixelmatch --threshold=0.3` with
 `--maxDiffRatio=0.10`. The per-pixel threshold is a YIQ color-distance tolerance, not permission for
-30% of the screen to differ. The changed-area ceiling is 10%; the approved hosted six-state baseline
-measured 6.55%–9.38%, so the ceiling sits 0.62 percentage points above the highest approved state.
-The exact state ratios, Figma nodes, and source run are committed in
-`tools/design-sync/baselines/consent-2026-09-28.json`. These values are part of this contract; changing
-either requires a fresh six-state baseline plus founder and Reviewer approval. The pixel gate catches
-material drift while Reviewer still owns the paired visual decision.
+30% of the screen to differ. The changed-area ceiling remains 10%; a current five-state hosted run
+must replace the retired dark-frame baseline in `tools/design-sync/baselines/consent-2026-09-28.json`
+before merge. Changing either threshold still requires a fresh baseline plus founder and Reviewer
+approval. The pixel gate catches material drift while Reviewer owns the paired visual decision.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
 amendment on the issue. **Status:** drafted from the reference frame + onboarding packet; the paired

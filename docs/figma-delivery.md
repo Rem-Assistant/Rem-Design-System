@@ -45,27 +45,32 @@ approval. A worker may execute on an authenticated machine, but its task, source
 result, and recovery state must remain in the Factory record. A maintainer manually
 repairing the screen is not proof that this handoff works autonomously.
 
-## Verified execution gap (2026-09-28)
+## Consent proving-case delivery (2026-09-28)
 
-The connected Codex Figma tool can read the target file. Inspection found the existing
-Onboarding page (`410:15`) and consent flow page (`609:2`), with consent (`609:3`), Terms
-(`638:28`), and Privacy (`638:65`) frames. These are starting references, not verified
-current-head deliverables; the required state set has not been proven complete.
+Consent #30 uses an authenticated Codex Builder runtime for the canvas write while Steward keeps
+the durable task, source commit, result, review, and recovery record. The existing Rem file is
+updated in place: page `609:2` is `Onboarding · Consent`, and its only top-level section is the
+detached `Mobile Flow (Detach This)` template at `695:138`.
 
-The hosted Factory Builder currently exposes repository tools only and has no configured
-Figma authoring connection. `figma-publish.yml` is a manual Code Connect workflow, not a
-canvas authoring worker. `design-drift.yml` is a template and is not proof of this gate.
+The Builder must preserve the template hierarchy. Each flow step is a `Mobile Placeholder` whose
+rendered screen is nested in its `Device / Screen slot`; pixel-aligning a loose screen above an
+empty phone frame is invalid even when the canvas looks correct. Consent `609:3`, Terms `638:28`,
+the Privacy branch consent frame `695:585`, Privacy `638:65`, loading `700:109`, and submit failure
+`700:147` now follow that rule. Loading and submit failure use a second row of Mobile Placeholders
+inside the same flow section. The separate consent-action component section was removed.
 
-Figma supports native canvas writes through its remote MCP server in supported clients,
-including Claude Code and Codex. It requires a Full seat, file edit access, and an
-authenticated connection on the worker. The connection in a maintainer's chat is not
-automatically available to a GitHub runner:
+The hosted GitHub runner remains the repository, export, and comparison worker. Its `FIGMA_TOKEN`
+is consumed only by the current-head export/drift job; a token does not provide interactive canvas
+authoring. Code Connect and Dev Resources remain separate delivery concerns: Code Connect maps
+Figma components to code examples, while a Dev Resource may link any relevant implementation or
+documentation. Neither substitutes for an editable canvas update.
+
+Figma supports native canvas writes through its remote MCP server in supported clients, including
+Codex. It requires a Full seat, file edit access, and an authenticated connection on that Builder
+runtime:
 
 - https://developers.figma.com/docs/figma-mcp-server/write-to-canvas/
 - https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/
 
-The remaining implementation must connect such a worker to Steward's durable task/result
-handoff and publish independently verifiable Figma evidence. Until then, report a named
-capability blocker; do not omit Figma, call the screen finished, or spend repeated screen
-revision attempts expecting repository-only tools to edit Figma. No Figma update or
-autonomous Figma handoff is claimed by this document.
+The PR still needs exact-head Figma exports, a structure/property record, and Reviewer approval.
+A successful canvas edit alone is not complete delivery.

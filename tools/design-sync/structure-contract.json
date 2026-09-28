@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "page": {
+    "id": "609:2",
+    "name": "Onboarding · Consent",
+    "topLevel": [
+      { "id": "695:138", "type": "SECTION", "name": "01 · Consent flow" }
+    ]
+  },
+  "flow": {
+    "id": "695:138",
+    "templateSource": "672:2524",
+    "screenSlotName": "Device / Screen slot",
+    "placeholderNamePrefix": "Mobile Placeholder",
+    "screens": [
+      { "name": "Consent-default-light", "node": "609:3" },
+      { "name": "Consent-loading-light", "node": "700:109" },
+      { "name": "Consent-error-light", "node": "700:147" },
+      { "name": "Consent-terms-light", "node": "638:28" },
+      { "name": "Consent-privacy-light", "node": "638:65" }
+    ]
+  }
+}

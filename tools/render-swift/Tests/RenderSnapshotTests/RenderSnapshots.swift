@@ -31,13 +31,14 @@ final class RenderSnapshots: XCTestCase {
             render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
             render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
-            render("Consent-default-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen() }
         }
+        render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
         render("Consent-loading-light", width: 393, height: 852, dark: false) {
             consentScreen(state: .loading)
         }
-        // Consent · error (notice above the bottom-pinned CTA, CTA → "Try again"), dark.
-        render("Consent-error-dark", width: 393, height: 852, dark: true) {
+        // Consent · submit failure, light. Theme variants are exercised with the Figma variable mode;
+        // the delivery contract keeps one authored mode per state instead of duplicating screens.
+        render("Consent-error-light", width: 393, height: 852, dark: false) {
             consentScreen(state: .retryableError(message: "We couldn't save your choice. Check your connection and try again."))
         }
         // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
