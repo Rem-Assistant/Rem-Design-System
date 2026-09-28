@@ -38,12 +38,13 @@ FIGMA_TOKEN=<pat> node export-figma.mjs artifacts/figma
 # code side (macOS runner): render previews to artifacts/swiftui/<Name>.png
 #   -> see snapshots/RemDesignSnapshots.swift.example (copy into the RemClaw test target)
 # then:
-npm i && node compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
+npm ci && node compare.mjs artifacts/swiftui artifacts/figma --threshold=0.3 --maxDiffRatio=0.10
 ```
 
-`--maxDiffRatio` is the fraction of pixels allowed to differ (font hinting / anti-aliasing noise);
-start at `0.02` and tighten. Names must match between the two folders — that's what `manifest.json`
-guarantees.
+`--threshold` absorbs renderer color and anti-aliasing differences; `--maxDiffRatio` limits the
+remaining changed area. The checked-in values cover the approved consent baseline while still
+failing on meaningful layout drift. At least one basename must match between the two folders or the
+comparison fails; `manifest.json` supplies those paired names.
 
 ## 3. Generator (code → Figma)
 

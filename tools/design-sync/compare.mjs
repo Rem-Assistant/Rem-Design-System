@@ -54,4 +54,5 @@ for (const f of readdirSync(figmaDir).filter((f) => f.endsWith('.png'))) {
   }
 }
 console.log(`\n${checked} checked · ${failed} drifted · ${skipped} unmatched`);
-process.exit(failed > 0 ? 1 : 0);
+if (checked === 0) console.error('✗ No registered Figma/code pairs were compared.');
+process.exit(failed > 0 || checked === 0 ? 1 : 0);

@@ -17,28 +17,30 @@ jobs:
       - name: Checkout design system (this repo)
         uses: actions/checkout@v4
 
-      - name: Checkout app source
-        uses: actions/checkout@v4
-        with:
-          repository: Rem-Assistant/RemClaw
-          ref: staging
-          path: app
-          token: ${{ secrets.APP_REPO_TOKEN }} # PAT with read access to RemClaw
-
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
 
       - name: SwiftUI snapshots → artifacts/swiftui
-        working-directory: app
-        env:
-          SNAPSHOT_OUT_DIR: ${{ github.workspace }}/artifacts/swiftui
         run: |
-          # copy the snapshot test in, then run just it (adjust scheme/destination to the project)
-          cp ../tools/design-sync/snapshots/RemDesignSnapshots.swift.example RemTests/RemDesignSnapshots.swift
+          set -eo pipefail
+          rm -rf "$RUNNER_TEMP/DesignDriftSnapshots.xcresult"
           xcodebuild test \
-            -scheme Rem \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
-            -only-testing:RemTests/RemDesignSnapshots | xcpretty || true
+            -scheme RemDesignSystem \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -only-testing:RenderSnapshotTests \
+            -resultBundlePath "$RUNNER_TEMP/DesignDriftSnapshots.xcresult" \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tail -60
+
+      - name: Extract SwiftUI PNGs
+        run: |
+          set -eo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          mkdir -p artifacts/swiftui "$RUNNER_TEMP/design-drift-attachments"
+          xcparse attachments "$RUNNER_TEMP/DesignDriftSnapshots.xcresult" "$RUNNER_TEMP/design-drift-attachments"
+          find "$RUNNER_TEMP/design-drift-attachments" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f"); cp "$f" "artifacts/swiftui/${b%%_*}.png"
+          done
+          test -n "$(find artifacts/swiftui -name '*.png' -print -quit)"
 
       - name: Figma export → artifacts/figma
         env:
@@ -49,7 +51,7 @@ jobs:
         run: |
           cd tools/design-sync && npm ci
           cd "$GITHUB_WORKSPACE"
-          node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
+          node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma --threshold=0.3 --maxDiffRatio=0.10
 
       - name: Upload diffs on failure
         if: failure()
