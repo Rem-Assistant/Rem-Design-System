@@ -1,0 +1,122 @@
+{
+  "version": 11,
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "page": {
+    "id": "410:15",
+    "name": "Onboarding",
+    "topLevel": [
+      { "id": "760:21", "type": "SECTION", "name": "00 · Canonical screen components" },
+      { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
+      { "id": "777:432", "type": "SECTION", "name": "01A · Consent · Documentation" }
+    ]
+  },
+  "inventory": {
+    "id": "760:21",
+    "type": "SECTION",
+    "name": "00 · Canonical screen components",
+    "fill": "#F5F5F5",
+    "screens": [
+      { "id": "788:3183", "type": "COMPONENT", "name": "Screen/Sign in" },
+      { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default" },
+      { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms" },
+      { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy" }
+    ],
+    "assets": {
+      "remAppIcon": {
+        "id": "411:28",
+        "type": "RECTANGLE",
+        "name": "RemAppIcon · Source raster",
+        "imageFill": true
+      },
+      "googleGlyph": {
+        "id": "765:237",
+        "type": "FRAME",
+        "name": "RemGoogleGlyph · Source SVG",
+        "minimumVectorCount": 4
+      }
+    },
+    "canonicalInstances": [
+      {
+        "id": "777:241",
+        "type": "INSTANCE",
+        "name": "Section · Legal",
+        "componentId": "741:311"
+      }
+    ],
+    "forbiddenNodeIds": ["410:32", "411:32", "538:40"]
+  },
+  "screenComponents": {
+    "id": "760:21",
+    "type": "SECTION",
+    "name": "00 · Canonical screen components",
+    "screens": [
+      { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default", "width": 402, "height": 874 },
+      { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms", "width": 402, "height": 874 },
+      { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy", "width": 402, "height": 874 }
+    ]
+  },
+  "componentQuality": {
+    "dimensions": ["typography", "semanticColor", "layout", "reuse", "taxonomy"],
+    "components": [
+      {
+        "id": "377:8",
+        "type": "COMPONENT_SET",
+        "name": "Button",
+        "category": "Primitives",
+        "checks": {
+          "textStyleBindings": [
+            { "id": "110:46", "name": "label" },
+            { "id": "377:3", "name": "Approve" },
+            { "id": "377:6", "name": "Connect" },
+            { "id": "381:3", "name": "Remove" },
+            { "id": "408:16", "name": "label" },
+            { "id": "439:16", "name": "label" },
+            { "id": "439:18", "name": "label" }
+          ]
+        }
+      }
+    ]
+  },
+  "flow": {
+    "id": "777:432",
+    "templateSource": "769:282",
+    "placeholderComponent": "769:169",
+    "documentInstance": {
+      "id": "777:433",
+      "type": "INSTANCE",
+      "name": "Mobile Flow Documentation",
+      "componentId": "769:282"
+    },
+    "hierarchy": {
+      "sections": "Placeholder Sections",
+      "sectionsSlot": "Sections",
+      "section": "Placeholder Section",
+      "rows": "Placeholder Rows",
+      "rowsSlot": "Rows",
+      "row": "Placeholder Flows",
+      "steps": "Steps",
+      "placeholder": "Mobile Placeholder",
+      "screenSlot": "Screen",
+      "arrow": "Flow Arrow",
+      "forbiddenPlaceholderChildren": ["Device / Screen slot"],
+      "stepSpacing": 24,
+      "stepSequence": ["Mobile Placeholder", "Flow Arrow", "Mobile Placeholder", "Flow Arrow", "Mobile Placeholder", "Flow Arrow", "Mobile Placeholder"]
+    },
+    "screens": [
+      { "name": "Consent-default-light", "node": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:807;769:174;777:806", "componentId": "777:248", "placeholder": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:807", "role": "evidence-state", "evidence": true },
+      { "name": "Consent-terms-light", "node": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:903;769:174;777:902", "componentId": "777:325", "placeholder": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:903", "role": "evidence-state", "evidence": true },
+      { "name": "Consent-default-light-privacy-branch", "node": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:960;769:174;777:959", "componentId": "777:248", "placeholder": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:960", "role": "branch-return-navigation-waypoint", "navigationTarget": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:1054;769:174;777:1053", "evidence": false },
+      { "name": "Consent-privacy-light", "node": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:1054;769:174;777:1053", "componentId": "777:392", "placeholder": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:1054", "role": "evidence-state", "evidence": true }
+    ],
+    "prototype": {
+      "interactionVerification": "Figma plugin plus Present mode; the REST file-node schema does not return reactions",
+      "root": { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
+      "label": { "id": "715:327", "name": "PROTOTYPE FLOWS" },
+      "frames": [
+        { "name": "Prototype · Consent", "node": "781:596", "type": "INSTANCE", "componentId": "777:248", "flowStart": true, "destinations": ["781:637", "781:690"], "backCount": 0 },
+        { "name": "Prototype · Terms", "node": "781:637", "type": "INSTANCE", "componentId": "777:325", "flowStart": false, "destinations": [], "backCount": 2 },
+        { "name": "Prototype · Privacy", "node": "781:690", "type": "INSTANCE", "componentId": "777:392", "flowStart": false, "destinations": [], "backCount": 2 }
+      ]
+    }
+  }
+}

@@ -1,57 +1,237 @@
-# Design ↔ code drift-check (#2). Renders the SwiftUI components, exports the matching Figma
-# components, and fails if they diverge. Template — fill in the marked values.
+# Authenticated Figma reference and structure evidence. On pull requests, the workflow and every
+# executable file come from the trusted base commit. Only two bounded JSON data files are fetched
+# from the exact PR head. Exact-head SwiftUI/Compose renders stay in screenshots.yml.
 name: design-drift
 
 on:
   workflow_dispatch:
-  pull_request:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
+      - 'Sources/**'
+      - 'compose/**'
+      - 'tokens/generated/**'
+      - 'docs/contracts/**'
       - 'tools/design-sync/**'
+      - 'tools/render-evidence/**'
+      - 'code-connect/**'
+      - 'figma.*.config.json'
   schedule:
-    - cron: '0 7 * * 1' # weekly guardrail
+    - cron: '0 7 * * 1'
+
+permissions:
+  contents: read
 
 jobs:
   drift:
-    runs-on: macos-14 # needs Xcode for the SwiftUI ImageRenderer snapshots
+    runs-on: macos-14
     steps:
-      - name: Checkout design system (this repo)
+      - name: Checkout trusted control plane
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
 
-      - name: Checkout app source
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Select explicit delivery scope
+        id: scope
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          event = json.loads(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8").read())
+          scopes = [
+              label["name"].removeprefix("delivery-scope:")
+              for label in event["pull_request"].get("labels", [])
+              if label.get("name", "").startswith("delivery-scope:")
+          ]
+          if len(scopes) > 1:
+              raise SystemExit("at most one delivery-scope label is allowed")
+          primary = scopes[0] if scopes else ""
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"primary_contract={primary}\n")
+          PY
+
+      - name: Fetch and validate exact-head declarative contract data
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          node tools/design-sync/fetch-head-data.mjs \
+            --api-url="$GITHUB_API_URL" \
+            --repo="$HEAD_REPOSITORY" \
+            --sha="$HEAD_SHA" \
+            --destination="$RUNNER_TEMP/head-data"
+
+      - name: Export Figma evidence
+        id: figma-export
+        if: ${{ github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '' }}
+        continue-on-error: true
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
+            args=(--references-only)
+            if [ -n "$PRIMARY_CONTRACT" ]; then args+=(--primary-contract="$PRIMARY_CONTRACT"); fi
+            node tools/design-sync/export-figma.mjs artifacts/figma "${args[@]}"
+          else
+            node tools/design-sync/export-figma.mjs artifacts/figma
+          fi
+
+      - name: Verify live editable Figma structure
+        id: structure
+        if: ${{ github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '' }}
+        continue-on-error: true
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          file_key=$(jq -r .figmaFileKey tools/design-sync/manifest.json)
+          contract=tools/design-sync/structure-contract.json
+          if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
+            contract="$RUNNER_TEMP/head-data/structure-contract.json"
+          fi
+          node tools/design-sync/verify-figma-structure.mjs \
+            --output=artifacts/figma-structure-report.json \
+            --contract="$contract" \
+            --expected-file-key="$file_key" \
+            --head="$HEAD_SHA"
+
+      - name: Preserve structure diagnostics
+        if: ${{ always() && (github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '') }}
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          STRUCTURE_OUTCOME: ${{ steps.structure.outcome }}
+        run: |
+          if [ ! -s artifacts/figma-structure-report.json ]; then
+            mkdir -p artifacts
+            python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path("artifacts/figma-structure-report.json").write_text(json.dumps({
+              "version": 1,
+              "status": "error",
+              "head": os.environ["HEAD_SHA"],
+              "errors": ["Structure verification stopped before a report could be written."],
+              "workflowOutcome": os.environ["STRUCTURE_OUTCOME"],
+          }, indent=2) + "\n", encoding="utf-8")
+          PY
+          fi
+
+      - name: Assemble exact-head Figma reference evidence
+        if: ${{ always() && github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          REFERENCE_EXPORT_STATUS: ${{ steps.figma-export.outcome }}
+          STRUCTURE_VERIFICATION_STATUS: ${{ steps.structure.outcome }}
+          PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
+        run: |
+          set -euo pipefail
+          SCOPE_ARGS=()
+          if [ -n "$PRIMARY_CONTRACT" ]; then SCOPE_ARGS=(--primary-contract "$PRIMARY_CONTRACT"); fi
+          mkdir -p figma-reference/delivery figma-reference/structure
+          python3 tools/render-evidence/stage_references.py \
+            --source artifacts/figma --destination figma-reference/reference \
+            --contracts tools/render-evidence/contracts.json "${SCOPE_ARGS[@]}"
+          cp artifacts/figma-structure-report.json figma-reference/structure/report.json
+          cp "$RUNNER_TEMP/head-data/structure-contract.json" figma-reference/structure/contract.json
+          cp "$RUNNER_TEMP/head-data/manifest.json" figma-reference/structure/manifest.json
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          root = Path("figma-reference")
+          contracts_path = Path("tools/render-evidence/contracts.json")
+          head_contract = root / "structure/contract.json"
+          head_manifest = root / "structure/manifest.json"
+          structure_report = root / "structure/report.json"
+          media = {
+              path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in sorted((root / "reference").glob("*.png"))
+          }
+          manifest = json.loads(Path("tools/design-sync/manifest.json").read_text(encoding="utf-8"))
+          (root / "delivery/manifest.json").write_text(json.dumps({
+              "version": 1,
+              "pr": int(os.environ["PR"]),
+              "sha": os.environ["SHA"],
+              "run_id": int(os.environ["RUN_ID"]),
+              "run_attempt": int(os.environ["RUN_ATTEMPT"]),
+              "workflow_sha256": hashlib.sha256(Path(".github/workflows/design-drift.yml").read_bytes()).hexdigest(),
+              "contracts_sha256": hashlib.sha256(contracts_path.read_bytes()).hexdigest(),
+              "candidate_manifest_sha256": hashlib.sha256(head_manifest.read_bytes()).hexdigest(),
+              "structure_contract_sha256": hashlib.sha256(head_contract.read_bytes()).hexdigest(),
+              "structure_report_sha256": hashlib.sha256(structure_report.read_bytes()).hexdigest(),
+              "reference_export_status": os.environ["REFERENCE_EXPORT_STATUS"],
+              "structure_verification_status": os.environ["STRUCTURE_VERIFICATION_STATUS"],
+              "primary_contract": os.environ.get("PRIMARY_CONTRACT") or None,
+              "figma_file_key": manifest["figmaFileKey"],
+              "media_sha256": media,
+          }, sort_keys=True), encoding="utf-8")
+          PY
+
+      - name: Upload exact-head Figma reference evidence
+        if: ${{ always() && github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: figma-reference-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: figma-reference/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Require authenticated Figma evidence
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && (steps.figma-export.outcome != 'success' || steps.structure.outcome != 'success') }}
+        run: |
+          echo '::error::Figma reference export and structure verification must both succeed'
+          exit 1
+
+      # Scheduled/manual drift remains a legacy staging-app health check. It is intentionally not
+      # presented as exact-head PR evidence.
+      - name: Checkout app source for legacy drift check
+        if: ${{ github.event_name != 'pull_request_target' }}
         uses: actions/checkout@v4
         with:
           repository: Rem-Assistant/RemClaw
           ref: staging
           path: app
-          token: ${{ secrets.APP_REPO_TOKEN }} # PAT with read access to RemClaw
+          token: ${{ secrets.APP_REPO_TOKEN }}
 
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-
-      - name: SwiftUI snapshots → artifacts/swiftui
+      - name: SwiftUI snapshots for legacy drift check
+        if: ${{ github.event_name != 'pull_request_target' }}
         working-directory: app
         env:
           SNAPSHOT_OUT_DIR: ${{ github.workspace }}/artifacts/swiftui
         run: |
-          # copy the snapshot test in, then run just it (adjust scheme/destination to the project)
           cp ../tools/design-sync/snapshots/RemDesignSnapshots.swift.example RemTests/RemDesignSnapshots.swift
           xcodebuild test \
             -scheme Rem \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -only-testing:RemTests/RemDesignSnapshots | xcpretty || true
 
-      - name: Figma export → artifacts/figma
-        env:
-          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
-        run: node tools/design-sync/export-figma.mjs artifacts/figma
-
-      - name: Compare
+      - name: Compare legacy staging-app snapshots
+        if: ${{ github.event_name != 'pull_request_target' }}
         run: |
           cd tools/design-sync && npm ci
           cd "$GITHUB_WORKSPACE"
           node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
 
-      - name: Upload diffs on failure
-        if: failure()
+      - name: Upload scheduled/manual diagnostics
+        if: ${{ always() && github.event_name != 'pull_request_target' }}
         uses: actions/upload-artifact@v4
-        with: { name: design-diffs, path: artifacts/diff }
+        with:
+          name: design-drift-report
+          path: |
+            artifacts/design-drift-report.json
+            artifacts/figma-structure-report.json
+            artifacts/diff/
+          if-no-files-found: warn
