@@ -22,9 +22,20 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     if not pairs:
         raise ValueError("No rendered evidence")
     required = set()
-    for contract in contracts.values():
-        if any(fnmatch.fnmatchcase(path, pattern) for path in changed for pattern in contract["paths"]):
-            required.update(contract["states"])
+    # When a PR edits a named screen contract, that declaration is the delivery scope.
+    # Collateral implementation changes may match another screen's broad path rules, but
+    # they should remain regression coverage rather than expanding the review table.
+    explicit_contracts = {
+        name for name in contracts
+        if f"docs/contracts/{name}.md" in changed
+    }
+    if explicit_contracts:
+        for name in explicit_contracts:
+            required.update(contracts[name]["states"])
+    else:
+        for contract in contracts.values():
+            if any(fnmatch.fnmatchcase(path, pattern) for path in changed for pattern in contract["paths"]):
+                required.update(contract["states"])
     missing = [f"{key} / {platform}" for key in sorted(required)
                for platform in ("swiftui", "compose") if platform not in pairs.get(key, {})]
     status = "ready" if conclusion == "success" and not missing else "failed"
