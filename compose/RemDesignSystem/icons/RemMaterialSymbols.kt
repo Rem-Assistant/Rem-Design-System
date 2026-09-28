@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalTextApi::class)
+
 package com.rem.designsystem.icons
 
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
@@ -19,6 +22,9 @@ import com.rem.designsystem.R
  * Icons set is always-filled and has no FILL axis, so it cannot honour an outline row (registry rule 2).
  *
  * Render a glyph as a `Text` node: `Text(RemMaterialSymbols.Error, fontFamily = RemMaterialSymbols.family(fill = 1f))`.
+ *
+ * `FontVariation.Setting(name, value)` (the custom-axis constructor) is `@ExperimentalTextApi`, so this
+ * file opts in at the top; the FILL axis it drives is a stable OpenType variation the runner honours.
  */
 object RemMaterialSymbols {
     /**
@@ -39,5 +45,5 @@ object RemMaterialSymbols {
      * `error` — meaning "error / warning", the notice-card glyph. FILL **1** (pairs with the iOS
      * `exclamationmark.triangle.fill` per the registry). Codepoint U+E000 in Material Symbols.
      */
-    const val Error: String = "\uE000"
+    const val Error: String = ""
 }
