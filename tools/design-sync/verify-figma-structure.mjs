@@ -26,6 +26,18 @@ export function verifyStructure(contract, pageDocument, flowDocument) {
   }
 
   const index = walk(flowDocument);
+  const hierarchy = contract.flow.hierarchy;
+  const rowsNodes = [...index.values()]
+    .filter(({ node }) => node.name === hierarchy.rows && node.type === 'FRAME');
+  if (rowsNodes.length !== 1) {
+    errors.push(`Flow must contain exactly one ${hierarchy.rows}; received ${rowsNodes.length}`);
+  }
+  const rowNodes = (rowsNodes[0]?.node.children || [])
+    .filter((node) => node.name === hierarchy.row && node.type === 'FRAME' && node.visible !== false);
+  if (rowNodes.length !== hierarchy.rowCount) {
+    errors.push(`${hierarchy.rows} must contain ${hierarchy.rowCount} visible ${hierarchy.row} rows; received ${rowNodes.length}`);
+  }
+
   const screens = contract.flow.screens.map((expected) => {
     const match = index.get(expected.node);
     if (!match) {
@@ -33,21 +45,39 @@ export function verifyStructure(contract, pageDocument, flowDocument) {
       return { ...expected, status: 'missing' };
     }
 
-    const slot = match.ancestors[0];
-    const placeholder = match.ancestors[1];
-    if (!slot || slot.name !== contract.flow.screenSlotName) {
-      errors.push(`${expected.name} must be a direct child of ${contract.flow.screenSlotName}`);
+    const [placeholder, row, rows, section, sections] = match.ancestors;
+    const checks = [
+      [placeholder, hierarchy.placeholder, 'direct parent'],
+      [row, hierarchy.row, 'row'],
+      [rows, hierarchy.rows, 'row collection'],
+      [section, hierarchy.section, 'section'],
+      [sections, hierarchy.sections, 'section collection'],
+    ];
+    for (const [node, requiredName, relationship] of checks) {
+      if (!node || node.type !== 'FRAME' || node.name !== requiredName) {
+        errors.push(`${expected.name} ${relationship} must be FRAME ${requiredName}`);
+      }
     }
-    if (!placeholder || !placeholder.name.startsWith(contract.flow.placeholderNamePrefix)) {
-      errors.push(`${expected.name} must be inside a ${contract.flow.placeholderNamePrefix}`);
+    const forbiddenChildren = (placeholder?.children || [])
+      .filter(({ name }) => hierarchy.forbiddenPlaceholderChildren.includes(name));
+    if (forbiddenChildren.length) {
+      errors.push(`${expected.name} placeholder contains forbidden legacy children: ${forbiddenChildren.map(({ name }) => name).join(', ')}`);
     }
+    const expectedRow = rowNodes[expected.row];
+    if (!expectedRow || row?.id !== expectedRow.id) {
+      errors.push(`${expected.name} must be in ${hierarchy.row} row ${expected.row + 1}`);
+    }
+
+    const conformant = checks.every(([node, requiredName]) =>
+      node?.type === 'FRAME' && node.name === requiredName) &&
+      row?.id === expectedRow?.id && forbiddenChildren.length === 0;
 
     return {
       ...expected,
-      status: slot?.name === contract.flow.screenSlotName &&
-        placeholder?.name.startsWith(contract.flow.placeholderNamePrefix) ? 'nested' : 'invalid',
-      slot: slot ? { id: slot.id, type: slot.type, name: slot.name } : null,
+      status: conformant ? 'conformant' : 'invalid',
       placeholder: placeholder ? { id: placeholder.id, type: placeholder.type, name: placeholder.name } : null,
+      row: row ? { id: row.id, type: row.type, name: row.name, index: rowNodes.findIndex(({ id }) => id === row.id) } : null,
+      ancestry: match.ancestors.slice(0, 5).map(({ id, type, name }) => ({ id, type, name })),
     };
   });
 
@@ -72,7 +102,7 @@ async function main() {
 
     const result = verifyStructure(contract, pageDocument, flowDocument);
     report = {
-      version: 1,
+      version: contract.version,
       status: result.ok ? 'completed' : 'failed',
       head: process.env.GITHUB_SHA || null,
       capturedAt: new Date().toISOString(),

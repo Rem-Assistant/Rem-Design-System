@@ -67,10 +67,12 @@ failed before comparison started. The always-run finalizer creates that last for
 failures cannot silently remove the diagnostic artifact.
 
 The same run executes `verify-figma-structure.mjs`. Its committed `structure-contract.json`
-requires the consent page to have one top-level flow section and every registered screen to be a
-direct child of a `Device / Screen slot` inside a `Mobile Placeholder`. This catches visually aligned
-overlay siblings that image comparison cannot distinguish. The exact-head structure digest and
-resolved ancestry are uploaded as `artifacts/figma-structure-report.json` beside the drift report.
+requires the consent page to have one top-level flow section and the exact editable hierarchy
+`Placeholder Sections` → `Placeholder Section` → `Placeholder Rows` → `Placeholder Flows` →
+`Mobile Placeholder` → screen. It also checks which of the two rows owns each screen. This catches
+legacy slot wrappers and visually aligned overlay siblings that image comparison cannot distinguish.
+The exact-head structure digest and resolved ancestry are uploaded as
+`artifacts/figma-structure-report.json` beside the drift report.
 
 ## 3. Generator (code → Figma)
 

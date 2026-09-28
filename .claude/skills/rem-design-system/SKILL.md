@@ -58,8 +58,9 @@ needs. Don't force one onto the other.
   with instance-swap slots for every configurable region.
 - **Screen or pattern** (Agenda, Chat, Settings, a flow): follow
   **`references/screen-track.md`** — a full-device (402×874) screen built **native, in
-  auto-layout, on the canonical components**, dropped into the real Apple device bezel via
-  its Screen slot, organized in labeled Sections with all real states.
+  auto-layout, on the canonical components**, documented with the file's `Component container`
+  and detached `Mobile Flow (Detach This)` templates. Flow screens replace the slot area as direct
+  children of `Mobile Placeholder`; rows and sections organize real states.
 
 ## Foundations (the layers everything binds to)
 
@@ -87,8 +88,8 @@ needs. Don't force one onto the other.
 
 Update `FIDELITY.md` and `REGISTRY.md`, refresh the Figma Component Index row, and (for app
 changes) let visual-verify run. Commit docs to the design-system repo. Keep the file's page
-list clean — one component per page, screens on the Screens page in Sections, no empty or
-scratch pages.
+list clean: canonical components stay in their documentation containers, screens stay inside
+their documented flows, and empty or scratch pages are removed.
 
 ## Reference files
 

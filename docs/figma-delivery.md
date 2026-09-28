@@ -52,12 +52,14 @@ the durable task, source commit, result, review, and recovery record. The existi
 updated in place: page `609:2` is `Onboarding · Consent`, and its only top-level section is the
 detached `Mobile Flow (Detach This)` template at `695:138`.
 
-The Builder must preserve the template hierarchy. Each flow step is a `Mobile Placeholder` whose
-rendered screen is nested in its `Device / Screen slot`; pixel-aligning a loose screen above an
-empty phone frame is invalid even when the canvas looks correct. Consent `609:3`, Terms `638:28`,
-the Privacy branch consent frame `695:585`, Privacy `638:65`, loading `700:109`, and submit failure
-`700:147` now follow that rule. Loading and submit failure use a second row of Mobile Placeholders
-inside the same flow section. The separate consent-action component section was removed.
+The Builder must preserve the template hierarchy: `Placeholder Sections` → `Placeholder Section`
+→ `Placeholder Rows` → one or more `Placeholder Flows` rows → `Mobile Placeholder` → screen. The
+screen directly replaces the slot area inside each placeholder; nesting it in a leftover slot wrapper
+or pixel-aligning a loose screen above the placeholder is invalid even when the canvas looks correct.
+Consent `609:3`, Terms `638:28`, the Privacy branch consent frame `695:585`, Privacy `638:65`, loading
+`700:109`, and submit failure `700:147` now follow that rule. Loading and submit failure use a second
+`Placeholder Flows` row inside the same flow section. The separate consent-action component section
+was removed.
 
 The hosted GitHub runner remains the repository, export, and comparison worker. Its `FIGMA_TOKEN`
 is consumed only by the current-head export/drift job; a token does not provide interactive canvas

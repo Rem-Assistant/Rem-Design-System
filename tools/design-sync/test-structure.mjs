@@ -9,13 +9,27 @@ const placeholder = (entry) => ({
   id: `placeholder-${entry.node}`,
   type: 'FRAME',
   name: 'Mobile Placeholder',
-  children: [{ id: `slot-${entry.node}`, type: 'FRAME', name: 'Device / Screen slot', children: [screen(entry)] }],
+  children: [screen(entry)],
 });
+const rows = [0, 1].map((row) => ({
+  id: `row-${row}`,
+  type: 'FRAME',
+  name: 'Placeholder Flows',
+  children: contract.flow.screens.filter((entry) => entry.row === row).map(placeholder),
+}));
 const flow = {
   id: contract.flow.id,
   type: 'SECTION',
   name: '01 · Consent flow',
-  children: contract.flow.screens.map(placeholder),
+  children: [{
+    id: 'mobile-flow', type: 'FRAME', name: 'Mobile Flow', children: [{
+      id: 'placeholder-sections', type: 'FRAME', name: 'Placeholder Sections', children: [{
+        id: 'placeholder-section', type: 'FRAME', name: 'Placeholder Section', children: [{
+          id: 'placeholder-rows', type: 'FRAME', name: 'Placeholder Rows', children: rows,
+        }],
+      }],
+    }],
+  }],
 };
 const page = {
   id: contract.page.id,
@@ -26,14 +40,29 @@ const page = {
 
 const passing = verifyStructure(contract, page, flow);
 assert.equal(passing.ok, true);
-assert.equal(passing.canonical.screens.every((entry) => entry.status === 'nested'), true);
+assert.equal(passing.canonical.screens.every((entry) => entry.status === 'conformant'), true);
 assert.match(passing.digest, /^[a-f0-9]{64}$/);
 
 const looseFlow = structuredClone(flow);
-looseFlow.children[0] = screen(contract.flow.screens[0]);
+const firstPlaceholder = looseFlow.children[0].children[0].children[0].children[0].children[0].children[0];
+firstPlaceholder.children = [{ id: 'legacy-slot', type: 'FRAME', name: 'Device / Screen slot', children: firstPlaceholder.children }];
 const failing = verifyStructure(contract, page, looseFlow);
 assert.equal(failing.ok, false);
-assert.match(failing.errors.join('\n'), /direct child of Device \/ Screen slot/);
+assert.match(failing.errors.join('\n'), /direct parent must be FRAME Mobile Placeholder/);
+
+const leftoverSlotFlow = structuredClone(flow);
+const leftoverPlaceholder = leftoverSlotFlow.children[0].children[0].children[0].children[0].children[0].children[0];
+leftoverPlaceholder.children.push({ id: 'empty-legacy-slot', type: 'FRAME', name: 'Device / Screen slot', children: [] });
+const leftoverSlot = verifyStructure(contract, page, leftoverSlotFlow);
+assert.equal(leftoverSlot.ok, false);
+assert.match(leftoverSlot.errors.join('\n'), /contains forbidden legacy children/);
+
+const wrongRowFlow = structuredClone(flow);
+const flowRows = wrongRowFlow.children[0].children[0].children[0].children[0].children;
+flowRows[1].children.push(flowRows[0].children.shift());
+const wrongRow = verifyStructure(contract, page, wrongRowFlow);
+assert.equal(wrongRow.ok, false);
+assert.match(wrongRow.errors.join('\n'), /must be in Placeholder Flows row 1/);
 
 const extraTopLevel = structuredClone(page);
 extraTopLevel.children.push({ id: 'extra:1', type: 'FRAME', name: 'Loose screen' });

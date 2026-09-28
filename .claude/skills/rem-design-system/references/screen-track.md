@@ -45,21 +45,27 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   `detachInstance()`/clone it and convert to auto-layout — don't ship absolute positioning
   (it can't reflow and it's why the first Agenda had to be rebuilt native).
 
-## House it in the real device bezel
+## Use the file's documentation templates
 
-- `DeviceFrame/iPhone` (`128:46`) = the **real Apple iPhone 16 Pro bezel** wrapping a
-  402×874 **Screen instance-swap slot**. Drop a screen in by setting the `Screen` property to
-  the screen's node id. All screens are the same size, so swapping is size-safe (no nested
-  resize needed).
-
-## Organize on the Screens page (Fluent-style)
-
-- One **Screens** page, split into labeled **Sections** (Figma `createSection`), one per
-  screen family: hero bezel + the state screens in a row + the source `Screen/*` components.
-  Tighten each section to hug its contents; stack sections with a gap.
-- **One generation only.** When a native screen supersedes a legacy template, delete the
-  legacy master and its now-empty page. Migrate anything still pointing at retired masters
-  first (drop refs → delete). The whole point is to not leave two generations drifting.
+- **Components:** use `Component container` (`663:2270`) for every new or changed canonical
+  component. Keep the component and its preview/spec inside that container rather than placing
+  loose masters around the canvas.
+- **Flows:** detach `Mobile Flow (Detach This)` (`672:2524`) on the screen family's flow page.
+  Keep the overview and the documented screens inside the detached flow. Do not add loose screen
+  frames as siblings of the flow.
+- **Flow hierarchy:** `Placeholder Sections` → `Placeholder Section` → `Placeholder Rows` →
+  one or more `Placeholder Flows` rows → `Mobile Placeholder` → screen. The 402×874 screen is a
+  direct child of `Mobile Placeholder` and replaces the old device/slot area. Do not retain an
+  empty slot wrapper and do not nest the screen inside one.
+- Put the primary journey in one `Placeholder Flows` row. Add a second row for system-state
+  variants such as loading or submit failure. Add another `Placeholder Section` only when the
+  flow needs a distinct titled group.
+- Author one light-mode screen and rely on the shared variable mode for dark appearance unless a
+  contract explicitly requires a separate dark composition.
+- `DeviceFrame/iPhone` (`128:46`) remains available when a standalone bezel preview is useful;
+  it does not replace the Mobile Flow documentation hierarchy.
+- **One generation only.** When a native screen supersedes a legacy template, delete the legacy
+  master and its now-empty page. Migrate anything still pointing at retired masters first.
 
 ## Finish
 

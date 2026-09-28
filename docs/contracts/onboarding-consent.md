@@ -99,9 +99,11 @@ component ledger in the PR.
 
 The page is organized with the existing `Mobile Flow (Detach This)` template in section `695:138`.
 It is the page's only top-level section. Every rendered screen is a child of the corresponding
-`Mobile Placeholder` frame's `Device / Screen slot`; screens must never be aligned as loose overlay
-siblings. The main row contains the two legal branches. A second row uses the same placeholders for
-the light loading and submit-failure system states. There is no separate consent-action showcase.
+`Mobile Placeholder`, replacing the template's slot area rather than nesting inside a slot wrapper
+or aligning as a loose overlay sibling. The required hierarchy is `Placeholder Sections` →
+`Placeholder Section` → `Placeholder Rows` → `Placeholder Flows` → `Mobile Placeholder` → screen.
+The main row contains the two legal branches. A second `Placeholder Flows` row contains the light
+loading and submit-failure system states. There is no separate consent-action showcase.
 
 The retry notice is a state of the consent action after Accept, not another step in the privacy
 flow. It remains adjacent to the retry CTA in its full-screen Mobile Placeholder, while the primary
