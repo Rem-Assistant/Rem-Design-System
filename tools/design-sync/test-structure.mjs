@@ -38,6 +38,18 @@ const screenComponents = {
   })),
 };
 
+const componentAudit = {
+  id: contract.componentAudit.id,
+  type: contract.componentAudit.type,
+  name: contract.componentAudit.name,
+  children: contract.componentAudit.textStyleBindings.map((entry) => ({
+    ...entry,
+    type: 'TEXT',
+    styles: { text: `style-${entry.id}` },
+    children: [],
+  })),
+};
+
 const screenInstance = (entry) => ({
   id: `I${entry.node};nested-screen`,
   type: 'INSTANCE',
@@ -123,8 +135,8 @@ const page = {
     .map((entry) => ({ nodeId: entry.node, name: 'Consent flow' })),
 };
 
-const verify = (pageValue = page, flowValue = flow, prototypeValue = prototype, inventoryValue = inventory, screenValue = screenComponents) =>
-  verifyStructure(contract, pageValue, flowValue, prototypeValue, inventoryValue, screenValue);
+const verify = (pageValue = page, flowValue = flow, prototypeValue = prototype, inventoryValue = inventory, screenValue = screenComponents, componentValue = componentAudit) =>
+  verifyStructure(contract, pageValue, flowValue, prototypeValue, inventoryValue, screenValue, componentValue);
 const findNode = (root, predicate) => {
   if (predicate(root)) return root;
   for (const child of root.children || []) {
@@ -206,5 +218,11 @@ delete loosePrivacySection.children[1].children[0].componentId;
 const invalidPrivacySection = verify(page, flow, prototype, loosePrivacySection);
 assert.equal(invalidPrivacySection.ok, false);
 assert.match(invalidPrivacySection.errors.join('\n'), /canonical component 741:311/);
+
+const unboundButton = structuredClone(componentAudit);
+delete unboundButton.children[0].styles.text;
+const invalidButtonStyle = verify(page, flow, prototype, inventory, screenComponents, unboundButton);
+assert.equal(invalidButtonStyle.ok, false);
+assert.match(invalidButtonStyle.errors.join('\n'), /must bind a local text style/);
 
 console.log('Figma structure verifier tests passed');

@@ -79,6 +79,8 @@ this REST gate. Together these checks catch detachment, legacy wrappers, and vis
 siblings that image comparison cannot distinguish.
 The inventory check also enforces its `#F5F5F5` contrast surface, exact five-component screen set,
 source-backed Rem and Google marks, and canonical `Section` ancestry for Privacy's legal rows.
+The component audit also fetches canonical Button (`377:8`) and fails if any of its seven labels loses
+its local text-style binding. This turns a common visual-review miss into an exact-head gate.
 The exact-head structure digest and resolved ancestry are uploaded as
 `artifacts/figma-structure-report.json` beside the drift report.
 

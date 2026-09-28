@@ -80,9 +80,10 @@ The structure contract rejects placeholder glyphs, hand-built replacements, or a
 Consent proves the reusable shape: flow chassis masters live in Device Kit (`769:169` through
 `769:282`); Sign-in, Privacy, and the three consent states are all canonical component roots inside
 the single `00` Section; `ButtonGroup`,
-`Lockup`, and `ActionArea` live in the reusable composition documentation section `773:2`. These
+`Lockup`, and `ActionArea` live in `Composition components` (`773:2`) on the dedicated
+`Compositions` page (`826:482`). The `Components` page remains the Component Index only. These
 names are intentionally domain-neutral because the patterns may serve screens beyond onboarding.
-They compose primitives and therefore live under Components rather than Primitives. Their roots
+They compose primitives and therefore live on Compositions rather than Primitives. Their roots
 inherit the parent surface. `ButtonGroup` fills its parent, and horizontal actions fill equally.
 `Lockup` and `ActionArea` fill their parent up to the shared 560-point onboarding content cap;
 Lockup text, the Button Group slot, and the wrapping Footnote fill that responsive width while the
@@ -97,8 +98,10 @@ portable `design-system-delivery` heuristic applied through Rem's registry and e
 
 Do not pause a screen run to cosmetically reorganize every legacy component page. When a Builder
 touches a component family, migrate that family into the canonical master-first / specimen-second
-documentation shape and update its consumers. Steward can schedule unrelated legacy families as
-separate cleanup work after the proving loop is reliable.
+documentation shape and update its consumers. Do not bulk-delete legacy components: keep them as
+migration evidence until their consumers point at the replacement, then move superseded masters to
+Retired and remove only proven duplicates. Steward can schedule unrelated legacy families as separate
+cleanup work after the proving loop is reliable.
 
 ## Foundations (the layers everything binds to)
 
@@ -111,6 +114,9 @@ separate cleanup work after the proving loop is reliable.
   baseline for a later foundations pass, then map their full Dynamic Type metrics and semantic colors
   into Rem-owned variables/styles. Rem components must not depend on an external kit library at
   runtime after that mapping. Bind every text node to a Rem style rather than a raw size.
+- **Foundations remains the visible token/style reference.** Keep the Foundations page and update it
+  when a local variable or style is added. The empty Guide page is removed because its durable rules
+  live in the repository contracts and Component Index.
 - **System chrome switches by Platform.** `StatusBar` (`785:389`) and `NavigationIndicator`
   (`793:379`) expose iOS and Android treatments while retaining dark/light content switching inside
   each. They sit inside one shared product layout; Platform changes native chrome, type metrics, and
@@ -139,6 +145,11 @@ list clean: canonical components stay in their documentation containers, screens
 their documented flows, and empty or scratch pages are removed. Keep a `Guide` page only if it is a
 concise entry point for file structure, modes, source mapping, and operating rules; once that content
 is canonical elsewhere, migrate any unique guidance and delete the redundant page.
+
+Run a master-level binding audit on every touched or consumed family. For canonical Button (`377:8`),
+filled rectangle labels bind `Body/Bold`, text actions bind `Body/Emphasized`, and pill actions bind
+`Subheadline/Emphasized`. `tools/design-sync/verify-figma-structure.mjs` fails when any canonical
+Button label loses its text-style binding.
 
 ## Reference files
 

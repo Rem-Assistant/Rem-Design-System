@@ -85,7 +85,8 @@ contains an instance of the master and the lightweight overview panel follows. F
 in a horizontal auto-layout row for scanning. Full Specs-plugin output is optional follow-up material
 rather than a Builder fidelity target.
 
-Reusable composition lives in `Components · Compositions` (`773:2`): `ButtonGroup` (`773:17`) provides
+Reusable composition lives in `Composition components` (`773:2`) on the dedicated Compositions page
+(`826:482`); the Components page remains the index. `ButtonGroup` (`773:17`) provides
 Vertical and Horizontal variants with an Actions slot; `Lockup` (`773:22`) exposes Visual, Title,
 and Body; `ActionArea` (`773:28`) exposes a Button Group slot plus Footnote and Show Footnote
 properties. Their names are domain-neutral because the patterns may be reused outside onboarding.
@@ -97,6 +98,13 @@ by the SwiftUI onboarding layout. Lockup text, the Button Group slot, and the wr
 that width while fixed visuals keep their intrinsic size; the screen owns the horizontal inset. The
 three master-first documentation columns sit in `HStack/Component Documentation`; each uses the
 shared template rather than a one-off wrapper.
+
+Do not delete old component pages in bulk. Migrate one touched family at a time, update its consumers
+to the canonical instance, then move proven duplicates to Retired. Every touched or consumed family
+receives a master-level binding audit: text uses local styles, semantic colors use variables/styles,
+layout uses auto layout and fill/hug, and screens use instances. The canonical Button labels are
+machine-checked for text-style bindings. Foundations remains the visible token/style reference; the
+empty Guide page was removed because its operating rules already live in the repository and index.
 
 Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
 when it has one stable responsibility and either two plausible consumers or observed recurrence

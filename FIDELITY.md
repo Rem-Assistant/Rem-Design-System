@@ -48,10 +48,10 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   first and a compact overview second, both nested in one auto-layout block inside `Rows & Sections ·
   Component documentation` (`741:309`). Full Specs-plugin output is preserved separately and is not
   the Builder fidelity bar; obsolete loose Section templates were removed from `Accessories`.
-- Added reusable composition masters on Components: `ButtonGroup` (`773:17`, Vertical /
+- Added reusable composition masters on the dedicated Compositions page (`826:482`): `ButtonGroup` (`773:17`, Vertical /
   Horizontal with Actions slot), `Lockup` (`773:22`), and `ActionArea` (`773:28`). Their names are
   domain-neutral so the same anatomy can serve later non-onboarding screens.
-  The masters live in `Components · Compositions` (`773:2`) as three horizontal documentation
+  The masters live in `Composition components` (`773:2`) as three horizontal documentation
   columns. Each column places the canonical master first and the attached `Component Documentation`
   instance below it; the template slot contains a specimen instance because an instance cannot own a
   nested canonical master. Composition roots inherit their parent surface. `ButtonGroup` fills its
@@ -59,6 +59,10 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   parent up to the 560-point onboarding content maximum; Lockup text, the Button Group slot, and the
   wrapping Footnote fill that responsive width in Figma, SwiftUI, and Compose rather than freezing
   the reference iPhone's 354-point content width. The screen owns its horizontal inset.
+  The Components page now remains the Component Index only. The empty Guide page was removed;
+  Foundations remains the visible reference for Rem-owned colors, typography, spacing, radius, and icons.
+  Canonical Button labels now bind local styles (`Body/Bold`, `Body/Emphasized`, or
+  `Subheadline/Emphasized`), and the live structure gate checks that none become unbound.
   The three canonical screen masters (`777:248`, `777:325`, `777:392`) are reused by both documentation
   and prototype, so changing a screen no longer requires synchronizing detached copies.
 - The extraction rule is now explicit for Builder: propose a component when a region has one stable

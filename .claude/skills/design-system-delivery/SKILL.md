@@ -129,6 +129,10 @@ the primitive layer. Composition roots inherit the surface on which they are pla
 owning a background is part of their contract. In a horizontal action group, equal-priority
 actions fill the available width equally rather than sizing from their labels.
 
+Keep the component index as an index. Put aggregate composition masters and their documentation on
+a dedicated Compositions page; put indivisible controls and assets on Primitives. The page boundary
+should communicate abstraction level without making the index itself another component canvas.
+
 Do not turn the width of one reference device into a fixed reusable-component width. When code or
 the product layout defines a content cap, make the composition fill its parent up to that maximum;
 make internal slots and wrapping text fill the composition. Keep fixed widths for genuinely fixed
@@ -171,8 +175,11 @@ A system change is complete when:
 - platform implementations preserve the agreed intent and native conventions;
 - Code Connect or an equivalent source mapping names the exact code owner;
 - the registry and human documentation are updated;
+- every changed or consumed canonical family passes a binding audit at its master: text layers use
+  local text styles, semantic colors use variables/styles, related children use auto layout, flexible
+  content uses fill/hug rather than spacer frames, and screens consume instances rather than copies;
 - a machine contract verifies page/section hierarchy, component ancestry, required
-  states, prototype roots, and starting points;
+  states, critical style bindings, prototype roots, and starting points;
 - current rendered evidence is reviewed against the editable Figma states.
 
 Keep exploratory proposals visibly separate from canonical as-built work. Promote
