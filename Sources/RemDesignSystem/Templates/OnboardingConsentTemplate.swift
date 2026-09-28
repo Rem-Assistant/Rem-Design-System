@@ -16,6 +16,11 @@ public struct OnboardingConsentTemplate: View {
         public init(symbol: String, title: String, subtitle: String, action: @escaping () -> Void) {
             self.symbol = symbol; self.title = title; self.subtitle = subtitle; self.action = action
         }
+
+        /// The single action endpoint used by the production row and interaction tests.
+        func open() {
+            action()
+        }
     }
 
     var heroSymbol: String
@@ -76,19 +81,14 @@ public struct OnboardingConsentTemplate: View {
     }
 
     private var legalCard: some View {
-        RemSection {
-            ForEach(Array(legalItems.enumerated()), id: \.element.id) { index, item in
-                if index > 0 {
-                    Divider().padding(.leading, 60)
-                }
-                ListRow(
-                    item.title,
-                    subtitle: item.subtitle,
-                    action: item.action,
-                    leading: { ContainedIcon(item.symbol, fill: .subtle) },
-                    trailing: { DisclosureChevron() }  // Button-based sheet opener (not a List/NavigationLink)
-                )
-            }
+        RemSection(rows: legalItems) { item in
+            ListRow(
+                item.title,
+                subtitle: item.subtitle,
+                action: item.open,
+                leading: { ContainedIcon(item.symbol, fill: .subtle) },
+                trailing: { DisclosureChevron() }  // Button-based sheet opener (not a List/NavigationLink)
+            )
         }
     }
 

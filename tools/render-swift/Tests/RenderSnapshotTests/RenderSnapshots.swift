@@ -35,10 +35,18 @@ final class RenderSnapshots: XCTestCase {
         render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
         // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
         render("Consent-terms-light", width: 393, height: 852, dark: false) {
-            LegalDocumentTemplate(title: "Terms of Service", sections: LegalDocumentFixtures.terms)
+            LegalDocumentTemplate(
+                title: "Terms of Service",
+                sections: LegalDocumentFixtures.terms,
+                onClose: {}
+            )
         }
         render("Consent-privacy-light", width: 393, height: 852, dark: false) {
-            LegalDocumentTemplate(title: "Privacy Policy", sections: LegalDocumentFixtures.privacy)
+            LegalDocumentTemplate(
+                title: "Privacy Policy",
+                sections: LegalDocumentFixtures.privacy,
+                onClose: {}
+            )
         }
         // Sign-in states, keyed to pair with the Compose `SignIn-*` shots in the side-by-side table.
         render("SignIn-returning-light", width: 393, height: 852, dark: false) {

@@ -22,10 +22,15 @@ public struct LegalDocumentTemplate: View {
     var sections: [Section]
     var onClose: () -> Void
 
-    public init(title: String, sections: [Section], onClose: @escaping () -> Void = {}) {
+    public init(title: String, sections: [Section], onClose: @escaping () -> Void) {
         self.title = title
         self.sections = sections
         self.onClose = onClose
+    }
+
+    /// The single dismiss endpoint used by the production Done button and interaction tests.
+    func dismiss() {
+        onClose()
     }
 
     public var body: some View {
@@ -37,7 +42,7 @@ public struct LegalDocumentTemplate: View {
                     .foregroundStyle(DesignTokens.Color.labelPrimary)
                 HStack {
                     Spacer(minLength: 0)
-                    Button("Done", action: onClose)
+                    Button("Done", action: dismiss)
                         .font(DesignTokens.Typography.body)
                         .foregroundStyle(DesignTokens.Color.systemBlue)
                         .frame(minWidth: 44, minHeight: 44)
