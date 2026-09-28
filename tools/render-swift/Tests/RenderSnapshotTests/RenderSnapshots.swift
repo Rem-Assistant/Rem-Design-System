@@ -19,7 +19,8 @@ private func chevron() -> some View {
 // `ScrollView`/`List` content that `ImageRenderer` cannot — so the ACTUAL `OnboardingConsentTemplate`
 // renders faithfully (no scroll-free re-composition). Each PNG is emitted as an `XCTAttachment` and
 // extracted from the `.xcresult` afterwards (an env var like SNAPSHOT_OUT_DIR does not cross into the
-// simulator process, so the test does not write to disk itself).
+// simulator process, so the test does not write to disk itself). Consent attachment names are also
+// the required keys in `tools/design-sync/manifest.json` and the machine-readable drift report.
 @MainActor
 final class RenderSnapshots: XCTestCase {
 

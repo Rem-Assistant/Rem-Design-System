@@ -24,10 +24,14 @@ jobs:
         run: |
           set -eo pipefail
           rm -rf "$RUNNER_TEMP/DesignDriftSnapshots.xcresult"
+          rm -rf "$RUNNER_TEMP/DesignDriftDerivedData"
+          SIMULATOR_UDID="$(xcrun simctl list devices available -j | python3 -c 'import json, sys; devices=json.load(sys.stdin)["devices"]; print(next(device["udid"] for runtime in devices.values() for device in runtime if device["name"] == "iPhone 15" and device.get("isAvailable", False)))')"
+          xcrun simctl boot "$SIMULATOR_UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
           xcodebuild test \
             -scheme RemDesignSystem \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/DesignDriftDerivedData" \
             -only-testing:RenderSnapshotTests \
             -resultBundlePath "$RUNNER_TEMP/DesignDriftSnapshots.xcresult" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tail -60
