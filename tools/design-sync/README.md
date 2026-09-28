@@ -83,9 +83,9 @@ requires the shared Onboarding page to have one canonical screen-component inven
 documentation/prototype pair. It verifies the attached hierarchy `Mobile Flow Documentation` →
 Sections slot → Rows slot → Steps slot → `Mobile Placeholder` → exact-size Screen slot → canonical
 screen instance. It also checks the four-step placeholder/arrow sequence, each screen's component
-source by its exact contracted node id, and the three direct canonical prototype instances. The
-duplicate Default node `777:917` is a branch-return/navigation waypoint between Terms and Privacy;
-it targets `777:999` and is explicitly excluded from evidence-state counts and exports. The public
+source by its exact Figma REST instance id, and the three direct canonical prototype instances. The
+duplicate Default instance is a branch-return/navigation waypoint between Terms and Privacy; it
+targets the following Privacy instance and is explicitly excluded from evidence-state counts and exports. The public
 REST file-node schema does
 not return prototype reactions, so destinations, Back actions, and the Presentation starting point
 are verified through the authenticated Figma plugin and Present mode instead of being claimed by

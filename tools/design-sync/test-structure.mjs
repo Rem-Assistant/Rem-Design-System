@@ -166,10 +166,13 @@ const exactFirstScreen = findNode(substitutedFlowScreen, ({ id }) => id === cont
 exactFirstScreen.id = 'replacement-with-same-component';
 const invalidSubstitutedFlowScreen = verify(page, substitutedFlowScreen);
 assert.equal(invalidSubstitutedFlowScreen.ok, false);
-assert.match(invalidSubstitutedFlowScreen.errors.join('\n'), /exact contracted node 777:764 is missing/);
+assert.ok(
+  invalidSubstitutedFlowScreen.errors.some((error) =>
+    error.includes(`exact contracted node ${contract.flow.screens[0].node} is missing`)),
+);
 
 const invalidWaypointRoleContract = structuredClone(contract);
-const waypoint = invalidWaypointRoleContract.flow.screens.find(({ node }) => node === '777:917');
+const waypoint = invalidWaypointRoleContract.flow.screens.find(({ role }) => role === 'branch-return-navigation-waypoint');
 waypoint.evidence = true;
 const invalidWaypointRole = verifyStructure(
   invalidWaypointRoleContract,
@@ -184,7 +187,9 @@ assert.equal(invalidWaypointRole.ok, false);
 assert.match(invalidWaypointRole.errors.join('\n'), /branch-return navigation waypoint must not be evidence/);
 
 const invalidWaypointTargetContract = structuredClone(contract);
-invalidWaypointTargetContract.flow.screens.find(({ node }) => node === '777:917').navigationTarget = '777:848';
+invalidWaypointTargetContract.flow.screens.find(
+  ({ role }) => role === 'branch-return-navigation-waypoint',
+).navigationTarget = invalidWaypointTargetContract.flow.screens[0].node;
 const invalidWaypointTarget = verifyStructure(
   invalidWaypointTargetContract,
   page,
