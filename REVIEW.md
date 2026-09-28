@@ -37,3 +37,16 @@ the icon-registry rows it relies on, before it can pass.
 If the reviewer cannot see the renders for a screen-affecting change (no paired evidence), that is
 itself a **blocking** finding — the change cannot be judged for parity, so it does not pass. The gate
 does the diffing; the founder only spot-checks.
+
+## Evidence-specific findings
+
+Read the approved screen contract and icon registry supplied in the repository briefing.
+For each required state, compare the labeled SwiftUI and Compose images from the same
+current-head delivery. A missing platform or state is a coverage blocker, never a parity pass.
+
+A visual finding must say which state shows what on iOS, what on Android, and which contract
+rule is violated. A build/runtime finding must identify a concrete failing path or diagnostic;
+“could fail” and “mismatch risk” alone are not observed defects. Successful rendering does not
+prove behavior, but do not claim that a rendered path cannot compile without contrary evidence.
+Record genuine uncertainty as a verification gap and name the missing proof. Never invent a
+mismatch, accept a stale image, or ask the founder to perform the paired comparison.

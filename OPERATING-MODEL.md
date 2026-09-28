@@ -59,10 +59,10 @@ Worked examples:
 | Role | Who | Owns | Does NOT |
 |---|---|---|---|
 | **Director** | You (Samuel) | Direction, taste calls flagged to you, final approve, spot-checks | QA every render; drive each PR |
-| **Orchestrator** | This Claude session | Shape issues, close system gaps, drive PRs to green, run/repair verification, keep this map current | Build features or arrange Figma by hand |
+| **Orchestrator / Steward** | `agent-factory-steward[bot]` + Factory workflows | Shape and dispatch issues, own durable work state, route build/review failures, arbitrate evidence, and authorize landing after gates pass | Delegate routine QA to the Director; bypass failing gates |
 | **Builder** | `agent-factory-builder[bot]` | Implement code (+ Figma) from an issue; produce render **evidence** | Decide product/IA; approve or merge |
 | **Reviewer** | `agent-factory-reviewer[bot]` | Judge the diff **and the render** (once visual evidence is on) | — |
-| **Steward** | `agent-factory-steward[bot]` | Integration policy, landing authorization | Merge without gates passing |
+| **Factory maintainer** | Codex / Claude development sessions | Repair reusable Factory machinery and consumer wiring; prove fixes through the loop | Become the permanent driver of each screen |
 
 The correction that produced this table: **Figma/feature building is the Builder's lane, not the
 Orchestrator's.** The Orchestrator sets the machine up and keeps it honest.
@@ -103,11 +103,17 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
   catch the bugs.
 - **The bike:** the **Reviewer** sees the renders. Mechanism (Agent Factory): the Builder publishes a
   head-bound **delivery** of runner-produced renders; the Reviewer fetches them and judges fidelity.
-- **State:** the five `visual_evidence` flags in `.agent-factory/config.json` were **off** (that's why
-  the facemark-vs-app-icon bug passed review). Config now enabled + **validated against the pinned
-  Factory ref**. Remaining: a render→delivery pipeline (`verify` + `publish-builder-delivery`),
-  mirroring swami's hardened publisher, in the "deliver renders for Reviewer judgment" model (no
-  SSIM gate). **Gate #1 — nothing else fans out until this catches things.**
+- **State:** the render and authenticated delivery pipeline exists. The previous Factory
+  silently supplied only its first six images to Reviewer, which could exclude Android.
+  The recovery update removes that truncation, supplies the approved contracts to agents,
+  publishes one paired current-head table, and enables visual feedback for review,
+  revision, and arbitration. **These changes require live validation after adoption;
+  configuration and unit tests alone do not prove the loop.**
+- **Delivery ownership:** the trusted publisher updates the PR's canonical Delivery section
+  after each render. A new delivery triggers review; stale/missing evidence waits within
+  the configured deadline and remains blocking if no valid replacement arrives.
+- **Final authority:** `automatic_promotion: false` retains Director sign-off. Steward must
+  bring the current head to a green, evidence-backed decision; no force-merge past a red gate.
 
 ---
 
@@ -115,11 +121,11 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 
 | # | Gap | Owner | Status |
 |---|---|---|---|
-| 1 | Reviewer can't see renders → fidelity bugs pass | Orchestrator | config validated; delivery pipeline in progress |
-| 2 | Layers implicit → "system vs use case" confusion; "where does X go" unanswerable | Orchestrator + product-design | this doc starts it; rename patterns toward shape |
-| 3 | Only onboarding is filed; the rest of the app isn't tracked | Orchestrator files / Builder builds | pending **gate #1** (don't mass-build blind) |
-| 4 | Two live fidelity bugs: sign-in shows the **app icon** not the face; **Google icon** must transfer from RemClaw | Builder | identified — the **first test** the loop must catch |
-| 5 | Onboarding modeled as a monolith, not named patterns | Orchestrator + product-design | task #38 |
+| 1 | Reviewer silently received six images, potentially excluding Android | Factory maintainer | fix prepared; live validation pending |
+| 2 | Builder lacked failing CI diagnostics | Factory maintainer | bounded exact-head diagnostic handoff prepared |
+| 3 | Delivery went stale during fresh renders; two competing evidence surfaces | Steward workflows + publisher | bounded waiting, paired canonical delivery, and re-review update prepared |
+| 4 | Contract and icon registry were linked but absent from Reviewer briefing | Consumer configuration | explicit context added; live review pending |
+| 5 | Additional screens and Figma expansion | Steward after proving this loop | deferred until consent demonstrates reliable recovery |
 
 ---
 
@@ -127,12 +133,13 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
 
 **Rem's core surfaces ship through the Factory, machine-verified — the Director approves, doesn't QA.**
 
-- **Proving milestone (do first):** the sign-in fidelity fix goes issue → Builder → **the Reviewer
-  catches the app-icon/Google-icon miss from the render** → merges, and you never eyeball it. One
-  view through the full loop = wheels off, proven.
+- **Proving milestone (do first):** consent #30 goes issue → Builder → paired render → Reviewer →
+  automated correction (where needed) → green Steward integration → Director approval.
+  No manual feature repairs or stale-evidence bypasses count as proof. Three consecutive
+  screens meeting this standard are the later scaling checkpoint.
 - **Coverage:** every core surface (onboarding steps, chat + states, agenda, settings/automations,
   task detail) exists as a **pattern in code + iOS/Android render + Figma page + Code Connect**,
   each an issue, burned down.
 - **The metric that matters — first-pass fidelity:** % of Factory-built views that merge without you
-  filing a visual correction. Today ≈ 0 (you catch everything). Wheels are off when it's
+  filing a visual correction. Baseline not measured. The loop is ready to scale when it is
   consistently high and you're spot-checking, not driving.
