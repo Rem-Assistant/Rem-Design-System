@@ -102,7 +102,9 @@ Do not delete old component pages in bulk. Migrate one touched family at a time,
 to the canonical instance, then move proven duplicates to Retired. Every touched or consumed family
 receives a master-level binding audit: text uses local styles, semantic colors use variables/styles,
 layout uses auto layout and fill/hug, and screens use instances. The canonical Button labels are
-machine-checked for text-style bindings. Foundations remains the visible token/style reference; the
+the first machine-checked typography fixture in a data-driven component-quality audit. Every touched
+family uses the same scorecard: typography, semantic color, responsive layout, canonical reuse, and
+taxonomy placement. Foundations remains the visible token/style reference; the
 empty Guide page was removed because its operating rules already live in the repository and index.
 
 Use top-level canvas Sections to organize each component-family page, with auto-layout inside each
@@ -116,6 +118,11 @@ when it has one stable responsibility and either two plausible consumers or obse
 across flows. A one-off wrapper with no owned layout, behavior, semantics, or slot contract stays
 local. This lets Builder discover reusable lockups and action areas without requiring the Director
 to name each one, while keeping speculative abstractions out of the library.
+
+Before any write, Builder re-reads the live canonical Figma node and its current parent, properties,
+variables, auto-layout, and instances. The repository records durable intent and project identifiers;
+it does not freeze changeable template anatomy. Designer edits in the canonical file update the Rem
+adapter and registry on the next touched delivery.
 
 Theme and Platform are orthogonal. Canonical `StatusBar` (`785:389`) and
 `NavigationIndicator` (`793:379`) switch between iOS and Android treatments while each treatment

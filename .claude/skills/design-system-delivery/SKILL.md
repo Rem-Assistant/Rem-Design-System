@@ -121,6 +121,25 @@ Keep the actual master directly above the template so it remains the editable so
 documentation template does not own or repeat the specimen through a Component slot. Do not detach
 the template or invent a bespoke documentation wrapper for each component family.
 
+Treat the live Figma library as the source of truth for mutable canvas anatomy. Before changing a
+template or component family, inspect its current canonical node, properties, auto-layout, parent
+Section, variables, and instances. Encode durable intent here—scan order, semantic ownership,
+responsiveness, and verification—while keeping project-specific node ids and current anatomy in the
+adopting system's adapter and registry. When a designer changes the canonical Figma shape, update the
+adapter from that live shape rather than recreating an older shape from prose.
+
+Score every touched component family against the same foundations rubric:
+
+1. typography uses the adopting system's text styles;
+2. fills, strokes, spacing, radius, and effects use semantic variables or styles where applicable;
+3. responsive structure uses auto layout, fill/hug, and explicit caps rather than spacer frames;
+4. consumers use canonical instances and exposed properties/slots rather than detached copies;
+5. taxonomy matches the abstraction level: Foundations, Primitives, Compositions, Templates, or Screens.
+
+Record which dimensions were machine-verified and which need visual review. A regression fixture for
+one component proves that rule for that component; it must not become a Button-specific definition of
+design-system quality. Extend the data-driven audit list whenever a touched family is canonicalized.
+
 Treat a reusable element as a composition component when it assembles primitives and
 owns layout, semantics, behavior, or a slot contract. Keep atomic controls and assets in
 the primitive layer. Composition roots inherit the surface on which they are placed unless

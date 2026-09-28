@@ -151,10 +151,13 @@ their documented flows, and empty or scratch pages are removed. Keep a `Guide` p
 concise entry point for file structure, modes, source mapping, and operating rules; once that content
 is canonical elsewhere, migrate any unique guidance and delete the redundant page.
 
-Run a master-level binding audit on every touched or consumed family. For canonical Button (`377:8`),
-filled rectangle labels bind `Body/Bold`, text actions bind `Body/Emphasized`, and pill actions bind
-`Subheadline/Emphasized`. `tools/design-sync/verify-figma-structure.mjs` fails when any canonical
-Button label loses its text-style binding.
+Re-read the live canonical Figma node before each write; its current anatomy is authoritative, while
+this adapter and `REGISTRY.md` store Rem-specific identifiers and durable intent. Run the same
+component-quality scorecard on every touched or consumed family: typography, semantic color,
+responsive layout, canonical reuse, and taxonomy placement. Canonical Button (`377:8`) is the first
+machine-verified typography fixture: filled labels bind `Body/Bold`, text actions bind
+`Body/Emphasized`, and pills bind `Subheadline/Emphasized`. It is one entry in a data-driven audit,
+not a Button-specific definition of quality.
 
 ## Reference files
 

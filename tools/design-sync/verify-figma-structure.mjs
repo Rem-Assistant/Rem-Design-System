@@ -19,7 +19,7 @@ function colorToHex(color) {
   return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
 }
 
-export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument, componentAuditDocument) {
+export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument, componentQualityDocuments) {
   const errors = [];
   const expectedTop = contract.page.topLevel;
   const actualTop = (pageDocument.children || []).map(({ id, type, name }) => ({ id, type, name }));
@@ -86,18 +86,29 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     return { ...expected, status: conforms ? 'conformant' : 'invalid' };
   });
 
-  const expectedComponentAudit = contract.componentAudit;
-  const componentAudit = componentAuditDocument || { id: 'missing-component-audit', children: [] };
-  if (componentAudit.id !== expectedComponentAudit.id || componentAudit.type !== expectedComponentAudit.type || componentAudit.name !== expectedComponentAudit.name) {
-    errors.push(`Component audit root must be ${JSON.stringify({ id: expectedComponentAudit.id, type: expectedComponentAudit.type, name: expectedComponentAudit.name })}`);
-  }
-  const componentAuditIndex = walk(componentAudit);
-  const textStyleBindings = expectedComponentAudit.textStyleBindings.map((expected) => {
-    const match = componentAuditIndex.get(expected.id)?.node;
-    const styleId = match?.styles?.text || null;
-    const conforms = Boolean(match && match.type === 'TEXT' && match.name === expected.name && styleId);
-    if (!conforms) errors.push(`Canonical Button label ${expected.id} (${expected.name}) must bind a local text style`);
-    return { ...expected, styleId, status: conforms ? 'conformant' : 'invalid' };
+  const componentQuality = contract.componentQuality.components.map((expectedComponent) => {
+    const component = componentQualityDocuments?.[expectedComponent.id] || { id: `missing-${expectedComponent.id}`, children: [] };
+    if (component.id !== expectedComponent.id || component.type !== expectedComponent.type || component.name !== expectedComponent.name) {
+      errors.push(`Component quality root must be ${JSON.stringify({ id: expectedComponent.id, type: expectedComponent.type, name: expectedComponent.name })}`);
+    }
+    const componentIndex = walk(component);
+    const textStyleBindings = (expectedComponent.checks?.textStyleBindings || []).map((expected) => {
+      const match = componentIndex.get(expected.id)?.node;
+      const styleId = match?.styles?.text || null;
+      const conforms = Boolean(match && match.type === 'TEXT' && match.name === expected.name && styleId);
+      if (!conforms) errors.push(`${expectedComponent.name} text ${expected.id} (${expected.name}) must bind a local text style`);
+      return { ...expected, styleId, status: conforms ? 'conformant' : 'invalid' };
+    });
+    const checks = [...textStyleBindings];
+    const passed = checks.filter(({ status }) => status === 'conformant').length;
+    return {
+      id: component.id,
+      name: component.name,
+      category: expectedComponent.category,
+      verifiedDimensions: textStyleBindings.length ? ['typography'] : [],
+      score: { passed, total: checks.length },
+      textStyleBindings,
+    };
   });
 
   if (flowDocument.id !== contract.flow.id) {
@@ -225,10 +236,9 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       canonicalInstances: expectedInventory.canonicalInstances.map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),
     },
     canonicalScreens,
-    componentAudit: {
-      id: componentAudit.id,
-      name: componentAudit.name,
-      textStyleBindings,
+    componentQuality: {
+      dimensions: contract.componentQuality.dimensions,
+      components: componentQuality,
     },
     documentInstance: expectedDocument,
     stepSequence: actualSequence,
@@ -251,18 +261,19 @@ async function main() {
     const pageResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.page.id)}&depth=1`);
     const inventoryResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.inventory.id)}`);
     const screenComponentsResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.screenComponents.id)}`);
-    const componentAuditResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.componentAudit.id)}`);
+    const componentQualityIds = contract.componentQuality.components.map(({ id }) => id);
+    const componentQualityResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(componentQualityIds.join(','))}`);
     const flowResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.id)}`);
     const prototypeResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.prototype.root.id)}`);
     const pageDocument = pageResponse.nodes?.[contract.page.id]?.document;
     const inventoryDocument = inventoryResponse.nodes?.[contract.inventory.id]?.document;
     const screenComponentsDocument = screenComponentsResponse.nodes?.[contract.screenComponents.id]?.document;
-    const componentAuditDocument = componentAuditResponse.nodes?.[contract.componentAudit.id]?.document;
+    const componentQualityDocuments = Object.fromEntries(componentQualityIds.map((id) => [id, componentQualityResponse.nodes?.[id]?.document]));
     const flowDocument = flowResponse.nodes?.[contract.flow.id]?.document;
     const prototypeDocument = prototypeResponse.nodes?.[contract.flow.prototype.root.id]?.document;
-    if (!pageDocument || !inventoryDocument || !screenComponentsDocument || !componentAuditDocument || !flowDocument || !prototypeDocument) throw new Error('Figma did not return the contracted page, inventory, canonical screens, component audit, flow, and prototype nodes');
+    if (!pageDocument || !inventoryDocument || !screenComponentsDocument || componentQualityIds.some((id) => !componentQualityDocuments[id]) || !flowDocument || !prototypeDocument) throw new Error('Figma did not return the contracted page, inventory, canonical screens, component quality roots, flow, and prototype nodes');
 
-    const result = verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument, componentAuditDocument);
+    const result = verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument, componentQualityDocuments);
     report = {
       version: contract.version,
       status: result.ok ? 'completed' : 'failed',

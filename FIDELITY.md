@@ -62,7 +62,9 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   The Components page now remains the Component Index only. The empty Guide page was removed;
   Foundations remains the visible reference for Rem-owned colors, typography, spacing, radius, and icons.
   Canonical Button labels now bind local styles (`Body/Bold`, `Body/Emphasized`, or
-  `Subheadline/Emphasized`), and the live structure gate checks that none become unbound.
+  `Subheadline/Emphasized`). They are the first fixture in a data-driven component-quality audit;
+  the governing rubric scores typography, semantic color, layout, reuse, and taxonomy for every
+  touched family across Foundations, Primitives, Compositions, Templates, and Screens.
   Primitives now precedes Compositions in the page list. Component-family pages use fill-free,
   stroke-free canvas Sections; the shared documentation template owns the variable-bound
   `background/primary` surface instead of borrowing presentation from its canvas Section.

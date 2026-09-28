@@ -38,11 +38,12 @@ const screenComponents = {
   })),
 };
 
-const componentAudit = {
-  id: contract.componentAudit.id,
-  type: contract.componentAudit.type,
-  name: contract.componentAudit.name,
-  children: contract.componentAudit.textStyleBindings.map((entry) => ({
+const expectedComponentQuality = contract.componentQuality.components[0];
+const componentQuality = {
+  id: expectedComponentQuality.id,
+  type: expectedComponentQuality.type,
+  name: expectedComponentQuality.name,
+  children: expectedComponentQuality.checks.textStyleBindings.map((entry) => ({
     ...entry,
     type: 'TEXT',
     styles: { text: `style-${entry.id}` },
@@ -135,8 +136,9 @@ const page = {
     .map((entry) => ({ nodeId: entry.node, name: 'Consent flow' })),
 };
 
-const verify = (pageValue = page, flowValue = flow, prototypeValue = prototype, inventoryValue = inventory, screenValue = screenComponents, componentValue = componentAudit) =>
-  verifyStructure(contract, pageValue, flowValue, prototypeValue, inventoryValue, screenValue, componentValue);
+const componentQualityDocuments = (componentValue = componentQuality) => ({ [expectedComponentQuality.id]: componentValue });
+const verify = (pageValue = page, flowValue = flow, prototypeValue = prototype, inventoryValue = inventory, screenValue = screenComponents, componentValue = componentQuality) =>
+  verifyStructure(contract, pageValue, flowValue, prototypeValue, inventoryValue, screenValue, componentQualityDocuments(componentValue));
 const findNode = (root, predicate) => {
   if (predicate(root)) return root;
   for (const child of root.children || []) {
@@ -219,10 +221,10 @@ const invalidPrivacySection = verify(page, flow, prototype, loosePrivacySection)
 assert.equal(invalidPrivacySection.ok, false);
 assert.match(invalidPrivacySection.errors.join('\n'), /canonical component 741:311/);
 
-const unboundButton = structuredClone(componentAudit);
-delete unboundButton.children[0].styles.text;
-const invalidButtonStyle = verify(page, flow, prototype, inventory, screenComponents, unboundButton);
-assert.equal(invalidButtonStyle.ok, false);
-assert.match(invalidButtonStyle.errors.join('\n'), /must bind a local text style/);
+const unboundComponentText = structuredClone(componentQuality);
+delete unboundComponentText.children[0].styles.text;
+const invalidComponentStyle = verify(page, flow, prototype, inventory, screenComponents, unboundComponentText);
+assert.equal(invalidComponentStyle.ok, false);
+assert.match(invalidComponentStyle.errors.join('\n'), /must bind a local text style/);
 
 console.log('Figma structure verifier tests passed');
