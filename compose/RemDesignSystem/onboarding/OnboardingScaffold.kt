@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -114,6 +115,7 @@ fun OnboardingScaffold(
         // sliders, long consent copy) never clip on small devices; the CTA bar stays pinned below.
         Column(
             modifier = Modifier
+                .widthIn(max = 560.dp)
                 .fillMaxWidth()
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
@@ -179,7 +181,9 @@ fun OnboardingScaffold(
         // has the same density in every state: top `sm`, `md` from CTA to footnote, and `md` below.
         Column(
             modifier = Modifier
+                .widthIn(max = 560.dp)
                 .fillMaxWidth()
+                .align(Alignment.CenterHorizontally)
                 .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

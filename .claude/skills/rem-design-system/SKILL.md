@@ -83,8 +83,11 @@ the single `00` Section; `ButtonGroup`,
 `Lockup`, and `ActionArea` live in the reusable composition documentation section `773:2`. These
 names are intentionally domain-neutral because the patterns may serve screens beyond onboarding.
 They compose primitives and therefore live under Components rather than Primitives. Their roots
-inherit the parent surface; `ButtonGroup` horizontal actions fill equally. For later flows, instance
-these masters and populate slots instead of copying the consent frames.
+inherit the parent surface. `ButtonGroup` fills its parent, and horizontal actions fill equally.
+`Lockup` and `ActionArea` fill their parent up to the shared 560-point onboarding content cap;
+Lockup text, the Button Group slot, and the wrapping Footnote fill that responsive width while the
+Lockup visual keeps its intrinsic size. Screen composition owns the horizontal inset. For later
+flows, instance these masters and populate slots instead of copying the consent frames.
 
 During every screen build, inspect its anatomy for reusable concepts without waiting for founder
 prompting. Extract a concept when it owns one stable responsibility and has either two plausible

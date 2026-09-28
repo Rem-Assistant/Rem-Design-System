@@ -91,9 +91,12 @@ and Body; `ActionArea` (`773:28`) exposes a Button Group slot plus Footnote and 
 properties. Their names are domain-neutral because the patterns may be reused outside onboarding.
 They are composition components rather than primitives because they assemble primitives while owning
 layout and slot contracts. Their roots have no presentation fill and inherit the surface on which they
-are placed. Horizontal ButtonGroup actions fill the available width equally. The three master-first
-documentation columns sit in `HStack/Component Documentation`; each uses the shared template rather
-than a one-off wrapper.
+are placed. `ButtonGroup` fills its parent, with horizontal actions dividing the available width
+equally. `Lockup` and `ActionArea` fill their parent up to the 560-point content maximum already used
+by the SwiftUI onboarding layout. Lockup text, the Button Group slot, and the wrapping Footnote fill
+that width while fixed visuals keep their intrinsic size; the screen owns the horizontal inset. The
+three master-first documentation columns sit in `HStack/Component Documentation`; each uses the
+shared template rather than a one-off wrapper.
 
 Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
 when it has one stable responsibility and either two plausible consumers or observed recurrence

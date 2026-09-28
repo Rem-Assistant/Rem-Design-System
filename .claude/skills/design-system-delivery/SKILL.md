@@ -129,6 +129,12 @@ the primitive layer. Composition roots inherit the surface on which they are pla
 owning a background is part of their contract. In a horizontal action group, equal-priority
 actions fill the available width equally rather than sizing from their labels.
 
+Do not turn the width of one reference device into a fixed reusable-component width. When code or
+the product layout defines a content cap, make the composition fill its parent up to that maximum;
+make internal slots and wrapping text fill the composition. Keep fixed widths for genuinely fixed
+assets or device slots. Derive the maximum from the shipping implementation or an approved layout
+contract rather than inventing one from the current canvas.
+
 Keep full generated Specs-plugin output optional and separate. It can be created
 after a runner batch; its visual depth is not a delivery gate for the component.
 

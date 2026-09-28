@@ -54,8 +54,11 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   The masters live in `Components · Compositions` (`773:2`) as three horizontal documentation
   columns. Each column places the canonical master first and the attached `Component Documentation`
   instance below it; the template slot contains a specimen instance because an instance cannot own a
-  nested canonical master. Composition roots inherit their parent surface, and both actions in the
-  horizontal ButtonGroup fill the available width equally.
+  nested canonical master. Composition roots inherit their parent surface. `ButtonGroup` fills its
+  parent and both horizontal actions divide that width equally. `Lockup` and `ActionArea` fill their
+  parent up to the 560-point onboarding content maximum; Lockup text, the Button Group slot, and the
+  wrapping Footnote fill that responsive width in Figma, SwiftUI, and Compose rather than freezing
+  the reference iPhone's 354-point content width. The screen owns its horizontal inset.
   The three canonical screen masters (`777:248`, `777:325`, `777:392`) are reused by both documentation
   and prototype, so changing a screen no longer requires synchronizing detached copies.
 - The extraction rule is now explicit for Builder: propose a component when a region has one stable

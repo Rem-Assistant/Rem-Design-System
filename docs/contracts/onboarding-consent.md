@@ -114,6 +114,12 @@ Canonical screens use semantic top-level layer names (`StatusBar`, `Body`, `Acti
 `LazyColumn`, and `LazyRow`; it does not require a second layout tree. Auto-layout
 `SPACE_BETWEEN` pins top and bottom regions without empty spacer frames.
 
+Reusable compositions are responsive rather than fixed to the 354-point content width of the
+reference iPhone. Figma, SwiftUI, and Compose make `Lockup` and `ActionArea` fill the available
+parent width up to 560 points. Lockup text, the Button Group, and the wrapping Footnote fill that
+capped region; fixed visuals keep their intrinsic size. The surrounding screen owns its horizontal
+inset and background.
+
 Reviewer must inspect the Figma exports and structure against the current iOS/Android
 evidence and this contract. Existing frame links alone do not establish that the designs
 were updated or verified. Missing authoring access is a Steward capability blocker,

@@ -95,20 +95,24 @@ public struct OnboardingConsentTemplate: View {
     /// Bottom-pinned region — primary CTA followed by legal footnote. Consent acceptance advances
     /// immediately in the shipping flow; there is no consent-local loading or error state.
     private var bottomBar: some View {
-        VStack(spacing: DesignTokens.Spacing.md) {
-            Button(action: onPrimary) {
-                Text("Accept and Continue")
+        VStack(spacing: 0) {
+            VStack(spacing: DesignTokens.Spacing.md) {
+                Button(action: onPrimary) {
+                    Text("Accept and Continue")
+                }
+                .remPrimaryActionButton()
+                Text(footnote)
+                    .font(DesignTokens.Typography.caption1)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .remPrimaryActionButton()
-            Text(footnote)
-                .font(DesignTokens.Typography.caption1)
-                .foregroundStyle(DesignTokens.Color.labelSecondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.top, DesignTokens.Spacing.sm)
+            .padding(.bottom, DesignTokens.Spacing.md)
+            .frame(maxWidth: 560)
         }
-        .padding(.horizontal, DesignTokens.Spacing.lg)
-        .padding(.top, DesignTokens.Spacing.sm)
-        .padding(.bottom, DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity)
         .background(DesignTokens.Color.backgroundPrimary)
     }
 }
