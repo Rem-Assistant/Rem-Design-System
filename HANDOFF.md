@@ -5,8 +5,9 @@ _Written 2026-09-25. Read this first, then `RECONCILIATION.md` (the screen-by-sc
 
 ## TL;DR — direction decided
 **Go code-first.** Stop reconciling Figma to code by hand (design→code). Instead: clean the shipping
-SwiftUI into a Fluent-organized, token-driven **presentational library**, annotate with **Code Connect**
-(`.figma.swift`), then **generate the Figma library from the code**. Figma becomes a bound projection,
+SwiftUI into a Fluent-organized, token-driven **presentational library**, annotate with current
+parserless **Code Connect** templates (`.figma.ts`), then **generate the Figma library from the code**.
+Figma becomes a bound projection,
 not a hand-maintained twin. Proof this is right: `Rem/Sources/Components/DailyBriefCard.swift` already
 has the right stateful component (Read latest brief → Stop → Read again → Retry); the emoji + oversized
 "Wednesday Evening" title the founder flagged exist **only in the hand-built Figma**, not in code. That
@@ -59,9 +60,9 @@ explicit state variants) → patterns/templates**. Screens/templates get state v
 (loading/empty/populated/error/reading). `tokens.json` (Style Dictionary) is the shared spine →
 SwiftUI theme + Figma variables (+ Compose later — SwiftUI is Apple-only; Android is a parallel Compose
 implementation of the same token/Figma spec, not shared SwiftUI). Code Connect doc:
-https://developers.figma.com/docs/code-connect/swiftui/ — the mechanism is a `<Component>.figma.swift`
-connection file mapping the Figma node URL ↔ the SwiftUI view + prop/variant values, published to Dev
-Mode via `figma connect publish`.
+https://developers.figma.com/docs/code-connect/template-files/ — current mappings use `.figma.ts`
+templates, with one config/label per platform language, and publish to Dev Mode via
+`figma connect publish`.
 
 ## Immediate code fixes the founder called out (fix in CODE, then regenerate Figma)
 - `DailyBriefCard`: it's the brief entry point; formalize its states (Read/Stop/Read again/Retry) as a

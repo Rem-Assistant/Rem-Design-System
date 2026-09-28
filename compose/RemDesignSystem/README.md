@@ -22,6 +22,9 @@ form diverges.
     `com.figma.code.connect`); dormant-but-ready. Its exact DSL is flagged to verify on the Android
     runner (Compose Code Connect is newer than SwiftUI's).
   This is the pattern every extracted Compose component follows.
+- **`compose/RemDesignSystem/rows/RemSection.kt`** — canonical grouped Section (`741:311`): optional
+  header/footer plus an open rows slot, `backgroundSecondary`, xlarge radius, and no outer stroke.
+  Its current parserless mapping lives at `code-connect/compose/Section.figma.ts`.
 - **`compose/RemDesignSystem/onboarding/*.kt`** — the **onboarding sequencer** (issue #11): the
   Compose sibling of `OnboardingFlow.swift` (deploy step dropped from the path).
   - `OnboardingSequencer.kt` — the ordered-flow driver (progress + Continue/Skip forward/back, ordered

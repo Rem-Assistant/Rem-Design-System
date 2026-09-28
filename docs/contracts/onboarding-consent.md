@@ -22,8 +22,8 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 3. **Body** — "Rem uses your data to answer you and act on the things you ask. You can review or delete
    it anytime in Settings." — `Typography.body`, `Color.labelSecondary`, centered, `Spacing.xs` below
    the title, max content width 560.
-4. **Legal list** — an inset **grouped card** (`Color.secondarySystemGroupedBackground`, radius
-   `medium`), full width, `Spacing.lg` below the body, two tappable rows split by an inset divider:
+4. **Legal list** — an inset **grouped Section** (`Color.secondarySystemGroupedBackground`, radius
+   `xlarge` / 24, no outer stroke), full width, `Spacing.lg` below the body, two tappable rows split by an inset divider:
    - **Terms of Service** — leading `doc.text` in a rounded neutral tile; title `Typography.bodyBold`
      `labelPrimary`; subtitle "How Rem accounts, subscriptions, and approved actions work."
      (`Typography.caption1`, `labelSecondary`); trailing `chevron.right` (`labelTertiary`).
@@ -43,19 +43,11 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 | **default** | lockup + legal list + footnote | "Accept and Continue" (enabled) |
 | **terms sheet** | `LegalDocumentView` for Terms as a page sheet (`.sheet` + inline nav title); Back dismisses | — |
 | **privacy sheet** | `LegalDocumentView` for Privacy as a page sheet; Back dismisses | — |
-| **loading** | after accept: CTA shows spinner, disabled, 40% opacity, non-interactive (matches sign-in `checking`) | — |
-| **retryable error** | failed consent submission; notice card directly **above** the CTA | "Try again" |
-
-**Notice card:** `Color.systemRed` @ 12% fill, radius `medium`, leading warning icon
-(`exclamationmark.triangle.fill` / `error`, FILL 1) + `Typography.caption1` message.
 
 ## Rules (the decisions that are easy to drift on — stated once)
 
 - **Bottom-pinned CTA:** this step uses the sequencer's bottom-pinned CTA bar. Contrast sign-in
   (centered, no bottom bar). The two screens differ on purpose; each is identical *across platforms*.
-- **Notice sits adjacent to the primary action, on the side that keeps both on-screen:** *below*
-  centered buttons (sign-in), *above* a bottom-pinned CTA (consent). Same principle, placement follows
-  the CTA. (Promote to the format if a third screen repeats it.)
 - **Legal rows open page sheets** — never push a nav screen; 1:1 with `LegalDocumentView`.
 - **Consent hero is the shield-lock** (`lock.shield.fill` / `shield_lock`, FILL 1) — not a
   shield-check (`Security`), not a plain shield.
@@ -65,13 +57,13 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
   Symbols codepoint and FILL through its static outlined/filled fonts inside the same design-system
   primitive. This backend difference is approved and hidden behind `ContainedIcon`. The registry row,
   FILL value, size, color, and paired current-head renders are the cross-platform contract.
-- **The error state is retryable by construction.** It represents a failed consent submission and
-  always keeps the notice, "Try again" CTA, and original accept action together. A terminal,
-  authorization, or recovery state must be modeled separately; it must not reuse this state.
+- **Do not invent consent-local loading or error states.** Current shipping code advances immediately
+  after acceptance. The old Deploying screen is being deprecated, so the prototype intentionally
+  leaves Accept without a fabricated destination until the replacement onboarding step is defined.
 
 ## System use
 
-- **Reuse:** `OnboardingScaffold` (bottom-pinned CTA bar), the grouped `ListRow` treatment, page
+- **Reuse:** `OnboardingScaffold` (bottom-pinned CTA bar), `RemSection` + `ListRow`, page
   sheets + nav (`LegalDocumentView`), the primary `RemButton`, the app-icon-style contained-icon
   treatment for the hero, tokens.
 - **Exact:** the top-lockup order, the two legal rows (icons + copy + chevrons, in order), the
@@ -88,8 +80,7 @@ supersedes the earlier Figma exclusion; the approved arrangement and product rul
 are unchanged. Follow [Figma delivery](../figma-delivery.md) and `SHAPE-OF-A-TASK.md`.
 
 Update the editable consent screen and legal-sheet flow in the existing Rem file. Cover
-`Consent-default-light`, `Consent-error-light`, `Consent-loading-light`,
-`Consent-terms-light`, and `Consent-privacy-light`, including each platform's intentional
+`Consent-default-light`, `Consent-terms-light`, and `Consent-privacy-light`, including each platform's intentional
 native presentation. The Director clarified on 2026-09-28 that separate dark frames are
 redundant: the documented nodes stay in light mode and reviewers can switch the shared
 color-variable mode from the right panel. Reuse canonical components and shared variables,
@@ -97,17 +88,15 @@ and keep the Terms / Privacy interactions working in Present mode. Include scree
 component/preview links, exported renders for every required state, and the reused/new
 component ledger in the PR.
 
-The page is organized with the existing `Mobile Flow (Detach This)` template in section `695:138`.
-It is the page's only top-level section. Every rendered screen is a child of the corresponding
+The shared `Onboarding` page (`410:15`) uses a numbered Section pair for this flow:
+`01A · Consent · Documentation` (`695:138`) and `01B · Consent · Prototype` (`731:260`). The
+existing sign-in and privacy masters are organized inside `00 · Canonical screen inventory`
+(`760:21`); later onboarding flows add `02A` / `02B` pairs on the same page. Every documented screen is a child of the corresponding
 `Mobile Placeholder`, replacing the template's slot area rather than nesting inside a slot wrapper
 or aligning as a loose overlay sibling. The required hierarchy is `Placeholder Sections` →
 `Placeholder Section` → `Placeholder Rows` → `Placeholder Flows` → `Mobile Placeholder` → screen.
-The main row contains the two legal branches. A second `Placeholder Flows` row contains the light
-loading and submit-failure system states. There is no separate consent-action showcase.
-
-The retry notice is a state of the consent action after Accept, not another step in the privacy
-flow. It remains adjacent to the retry CTA in its full-screen Mobile Placeholder, while the primary
-flow contains only Consent, Terms, and Privacy destinations.
+The one `Placeholder Flows` row contains Consent → Terms and Consent → Privacy, with arrow vectors
+and the template's 24-point spacing. There is no consent-action or speculative system-state row.
 
 Reviewer must inspect the Figma exports and structure against the current iOS/Android
 evidence and this contract. Existing frame links alone do not establish that the designs
@@ -117,8 +106,7 @@ not permission to omit Figma or spend repeated screen-revision attempts.
 ### Figma/code source linkage
 
 `tools/design-sync/manifest.json` is the machine-readable source link for each editable node. The
-default `609:3`, loading `700:109`, and submit-failure `700:147` nodes map to
-`OnboardingConsentTemplate.swift`; Terms `638:28` and Privacy `638:65` map to
+Default `609:3` maps to `OnboardingConsentTemplate.swift`; Terms `638:28` and Privacy `638:65` map to
 `LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
 Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
 presentation and injects the current legal body; render-only legal prose remains in test fixtures.
@@ -134,22 +122,19 @@ The paired render passes when iOS and Android match on **all** of:
       + same copy + trailing chevrons
 - [ ] CTA "Accept and Continue" bottom-pinned, full-width filled, same treatment on both
 - [ ] Footnote present below the CTA, same copy + role
-- [ ] Loading CTA shows a spinner, is disabled, and renders at 40% opacity on both
-- [ ] Error notice (when present) directly above the CTA on both
 - [ ] Icons match the registry glyph **and FILL** on both
 
-**Evidence:** `screenshots.yml` paired table — `Consent-default-light`,
-`Consent-loading-light`, `Consent-error-light`, plus the two sheets `Consent-terms-light`,
-`Consent-privacy-light` — iOS ⟷ Android side by side. The PR's Figma table must contain a current
-export and editable node link for the same five states; the design-drift run must compare all five
-registered Figma/code pairs at the PR head. CI passes those five exact basenames through
+**Evidence:** `screenshots.yml` paired table — `Consent-default-light` plus the two sheets
+`Consent-terms-light` and `Consent-privacy-light` — iOS ⟷ Android side by side. The PR's Figma table must contain a current
+export and editable node link for the same three destinations; the design-drift run must compare all three
+registered Figma/code pairs at the PR head. CI passes those three exact basenames through
 `compare.mjs --require`, then publishes `artifacts/design-drift-report.json` in the job summary and
 as a downloadable workflow artifact. Missing or unmatched required states fail closed.
 
 **Approved drift calibration (2026-09-28):** `pixelmatch --threshold=0.3` with
 `--maxDiffRatio=0.10`. The per-pixel threshold is a YIQ color-distance tolerance, not permission for
-30% of the screen to differ. The changed-area ceiling remains 10%; a current five-state hosted run
-must replace the retired dark-frame baseline in `tools/design-sync/baselines/consent-2026-09-28.json`
+30% of the screen to differ. The changed-area ceiling remains 10%; a current three-destination hosted run
+must replace the superseded baseline in `tools/design-sync/baselines/consent-2026-09-28.json`
 before merge. Changing either threshold still requires a fresh baseline plus founder and Reviewer
 approval. The pixel gate catches material drift while Reviewer owns the paired visual decision.
 

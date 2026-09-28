@@ -7,6 +7,11 @@ on:
   pull_request:
     paths:
       - 'tools/design-sync/**'
+      - 'code-connect/**'
+      - 'figma.*.config.json'
+      - 'tsconfig.code-connect.json'
+      - 'package.json'
+      - 'package-lock.json'
   schedule:
     - cron: '0 7 * * 1' # weekly guardrail
 
@@ -19,6 +24,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
+
+      - name: Validate Code Connect templates
+        run: |
+          npm ci
+          npm run check-code-connect
 
       - name: SwiftUI snapshots → artifacts/swiftui
         run: |
@@ -64,7 +74,7 @@ jobs:
           node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma \
             --threshold=0.3 \
             --maxDiffRatio=0.10 \
-            --require=Consent-default-light,Consent-error-light,Consent-loading-light,Consent-terms-light,Consent-privacy-light
+            --require=Consent-default-light,Consent-terms-light,Consent-privacy-light
 
       - name: Finalize machine-readable comparison report
         if: always()

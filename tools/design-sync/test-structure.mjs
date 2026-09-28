@@ -11,13 +11,11 @@ const placeholder = (entry) => ({
   name: 'Mobile Placeholder',
   children: [screen(entry)],
 });
-const rows = [0, 1].map((row) => {
+const rows = Array.from({ length: contract.flow.hierarchy.rowCount }, (_, row) => {
   const placeholders = contract.flow.screens.filter((entry) => entry.row === row).map(placeholder);
-  const children = row === 0
-    ? placeholders.flatMap((entry, index) => index === placeholders.length - 1
-      ? [entry]
-      : [entry, { id: `arrow-${index}`, type: 'VECTOR', name: `Vector ${index + 2}`, visible: true }])
-    : placeholders;
+  const children = placeholders.flatMap((entry, index) => index === placeholders.length - 1
+    ? [entry]
+    : [entry, { id: `arrow-${row}-${index}`, type: 'VECTOR', name: `Vector ${index + 2}`, visible: true }]);
   return {
     id: `row-${row}`,
     type: 'FRAME',
@@ -29,7 +27,7 @@ const rows = [0, 1].map((row) => {
 const flow = {
   id: contract.flow.id,
   type: 'SECTION',
-  name: '01 · Consent flow',
+  name: '01A · Consent · Documentation',
   children: [{
     id: 'mobile-flow', type: 'FRAME', name: 'Mobile Flow', children: [{
       id: 'placeholder-sections', type: 'FRAME', name: 'Placeholder Sections', children: [{
@@ -38,9 +36,14 @@ const flow = {
         }],
       }],
     }],
-  },
-  { ...contract.flow.prototype.label, type: 'TEXT' },
-  ...contract.flow.prototype.frames.map((entry) => ({ id: entry.node, type: 'FRAME', name: entry.name, children: [] }))],
+  }],
+};
+const prototype = {
+  ...contract.flow.prototype.root,
+  children: [
+    { ...contract.flow.prototype.label, type: 'TEXT' },
+    ...contract.flow.prototype.frames.map((entry) => ({ id: entry.node, type: 'FRAME', name: entry.name, children: [] })),
+  ],
 };
 const page = {
   id: contract.page.id,
@@ -52,7 +55,7 @@ const page = {
     .map((entry) => ({ nodeId: entry.node, name: 'Consent flow' })),
 };
 
-const passing = verifyStructure(contract, page, flow);
+const passing = verifyStructure(contract, page, flow, prototype);
 assert.equal(passing.ok, true);
 assert.equal(passing.canonical.screens.every((entry) => entry.status === 'conformant'), true);
 assert.match(passing.digest, /^[a-f0-9]{64}$/);
@@ -60,33 +63,32 @@ assert.match(passing.digest, /^[a-f0-9]{64}$/);
 const looseFlow = structuredClone(flow);
 const firstPlaceholder = looseFlow.children[0].children[0].children[0].children[0].children[0].children[0];
 firstPlaceholder.children = [{ id: 'legacy-slot', type: 'FRAME', name: 'Device / Screen slot', children: firstPlaceholder.children }];
-const failing = verifyStructure(contract, page, looseFlow);
+const failing = verifyStructure(contract, page, looseFlow, prototype);
 assert.equal(failing.ok, false);
 assert.match(failing.errors.join('\n'), /direct parent must be FRAME Mobile Placeholder/);
 
 const leftoverSlotFlow = structuredClone(flow);
 const leftoverPlaceholder = leftoverSlotFlow.children[0].children[0].children[0].children[0].children[0].children[0];
 leftoverPlaceholder.children.push({ id: 'empty-legacy-slot', type: 'FRAME', name: 'Device / Screen slot', children: [] });
-const leftoverSlot = verifyStructure(contract, page, leftoverSlotFlow);
+const leftoverSlot = verifyStructure(contract, page, leftoverSlotFlow, prototype);
 assert.equal(leftoverSlot.ok, false);
 assert.match(leftoverSlot.errors.join('\n'), /contains forbidden legacy children/);
 
-const wrongRowFlow = structuredClone(flow);
-const flowRows = wrongRowFlow.children[0].children[0].children[0].children[0].children;
-flowRows[1].children.push(flowRows[0].children.shift());
-const wrongRow = verifyStructure(contract, page, wrongRowFlow);
-assert.equal(wrongRow.ok, false);
-assert.match(wrongRow.errors.join('\n'), /must be in Placeholder Flows row 1/);
-
 const wrongSpacingFlow = structuredClone(flow);
-wrongSpacingFlow.children[0].children[0].children[0].children[0].children[1].itemSpacing = 24;
-const wrongSpacing = verifyStructure(contract, page, wrongSpacingFlow);
+wrongSpacingFlow.children[0].children[0].children[0].children[0].children[0].itemSpacing = 200;
+const wrongSpacing = verifyStructure(contract, page, wrongSpacingFlow, prototype);
 assert.equal(wrongSpacing.ok, false);
-assert.match(wrongSpacing.errors.join('\n'), /row 2 must use 200 item spacing/);
+assert.match(wrongSpacing.errors.join('\n'), /row 1 must use 24 item spacing/);
+
+const nestedPrototype = structuredClone(prototype);
+nestedPrototype.children = [{ id: 'wrapper', type: 'FRAME', name: 'Wrapper', children: nestedPrototype.children }];
+const invalidPrototype = verifyStructure(contract, page, flow, nestedPrototype);
+assert.equal(invalidPrototype.ok, false);
+assert.match(invalidPrototype.errors.join('\n'), /direct child of prototype/);
 
 const extraTopLevel = structuredClone(page);
 extraTopLevel.children.push({ id: 'extra:1', type: 'FRAME', name: 'Loose screen' });
-const scattered = verifyStructure(contract, extraTopLevel, flow);
+const scattered = verifyStructure(contract, extraTopLevel, flow, prototype);
 assert.equal(scattered.ok, false);
 assert.match(scattered.errors.join('\n'), /Page top level/);
 

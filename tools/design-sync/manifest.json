@@ -5,6 +5,7 @@
   "sourceBranch": "staging",
   "components": [
     { "name": "ListRow",              "node": "101:18",  "page": "Rows & Controls", "source": "Shared/Views/Settings/SharedSettingsView.swift" },
+    { "name": "Section",              "node": "741:311", "page": "Rows & Controls", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Rows/RemSection.swift" },
     { "name": "ContainedIcon",        "node": "110:54",  "page": "Rows & Controls", "source": "Shared/Views/Settings/SharedSettingsIcon.swift" },
     { "name": "Switch",               "node": "110:50",  "page": "Rows & Controls", "source": "Shared/Views/SharedSettingsView.swift" },
     { "name": "TaskEventRow",         "node": "46:21",   "page": "Tasks & Agenda",  "source": "Rem/Sources/Components/TaskEventRowView.swift" },
@@ -32,10 +33,8 @@
     { "name": "Inbox",        "node": "206:703", "source": "Rem/Sources/Screens/InboxView.swift" },
     { "name": "Billing",      "node": "341:862", "source": "Rem/Sources/Settings/BillingSettingsView.swift" },
     { "name": "Permissions",  "node": "349:905", "source": "Rem/Sources/Settings/SettingsView.swift" },
-    { "name": "Consent-default-light", "node": "609:3",  "page": "Onboarding · Consent", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
-    { "name": "Consent-error-light",   "node": "700:147", "page": "Onboarding · Consent", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
-    { "name": "Consent-loading-light", "node": "700:109", "page": "Onboarding · Consent", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
-    { "name": "Consent-terms-light",   "node": "638:28", "page": "Onboarding · Consent", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
-    { "name": "Consent-privacy-light", "node": "638:65", "page": "Onboarding · Consent", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" }
+    { "name": "Consent-default-light", "node": "609:3",  "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
+    { "name": "Consent-terms-light",   "node": "638:28", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
+    { "name": "Consent-privacy-light", "node": "638:65", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" }
   ]
 }

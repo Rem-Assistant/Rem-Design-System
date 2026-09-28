@@ -33,14 +33,6 @@ final class RenderSnapshots: XCTestCase {
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
         }
         render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
-        render("Consent-loading-light", width: 393, height: 852, dark: false) {
-            consentScreen(state: .loading)
-        }
-        // Consent · submit failure, light. Theme variants are exercised with the Figma variable mode;
-        // the delivery contract keeps one authored mode per state instead of duplicating screens.
-        render("Consent-error-light", width: 393, height: 852, dark: false) {
-            consentScreen(state: .retryableError(message: "We couldn't save your choice. Check your connection and try again."))
-        }
         // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
         render("Consent-terms-light", width: 393, height: 852, dark: false) {
             LegalDocumentTemplate(title: "Terms of Service", sections: LegalDocumentFixtures.terms)
@@ -129,7 +121,7 @@ final class RenderSnapshots: XCTestCase {
     }
 
     // The REAL onboarding consent template (with its ScrollView) — rendered faithfully now.
-    private func consentScreen(state: OnboardingConsentTemplate.State = .idle) -> some View {
+    private func consentScreen() -> some View {
         OnboardingConsentTemplate(
             // Canonical consent copy (authority: Compose `ConsentStep.kt`), kept identical on both
             // platforms so the side-by-side evidence compares the same screen.
@@ -141,7 +133,6 @@ final class RenderSnapshots: XCTestCase {
                       subtitle: "What Rem, your gateway, and AI or voice providers process.", action: {}),
             ],
             footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
-            state: state,
             onPrimary: {}
         )
     }

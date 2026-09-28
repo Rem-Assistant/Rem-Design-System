@@ -17,6 +17,7 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     into(layout.buildDirectory.dir("designSystemSrc"))
     from("onboarding")
     from("primitives")
+    from("rows")
     from("brand")
     from("icons")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }

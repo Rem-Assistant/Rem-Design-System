@@ -41,23 +41,24 @@ FIGMA_TOKEN=<pat> node export-figma.mjs artifacts/figma
 npm ci && node compare.mjs artifacts/swiftui artifacts/figma \
   --threshold=0.3 \
   --maxDiffRatio=0.10 \
-  --require=Consent-default-light,Consent-error-light,Consent-loading-light,Consent-terms-light,Consent-privacy-light
+  --require=Consent-default-light,Consent-terms-light,Consent-privacy-light
 ```
 
 `--threshold` is pixelmatch's per-pixel YIQ color-distance tolerance, not a percentage of the screen;
 `0.3` absorbs the known CoreAnimation-versus-Figma font rasterization, shadow, and semantic-color
-differences. `--maxDiffRatio=0.10` is the actual changed-area ceiling. Consent now requires five
-light-mode states; the shared Figma variable mode supplies dark appearance without duplicating
-frames. A fresh hosted run must replace the retired six-state calibration before merge. Reviewer
+differences. `--maxDiffRatio=0.10` is the actual changed-area ceiling. Consent requires three
+light-mode destinations: the consent screen plus Terms and Privacy. The shipping view has no
+consent-local loading/error state, and the shared Figma variable mode supplies dark appearance
+without duplicating frames. A fresh hosted run must replace the superseded calibration before merge. Reviewer
 still performs the paired visual decision; this lane is a fail-closed drift guardrail, not an
-automated parity approval. Any threshold change requires a new five-state baseline in this document
+automated parity approval. Any threshold change requires a new three-state baseline in this document
 and Reviewer approval. The exact approved measurements, Figma node ids, thresholds, and source run
 are also committed in
 [`baselines/consent-2026-09-28.json`](./baselines/consent-2026-09-28.json) so this rationale is
 independently machine-readable.
 
 At least one basename must match between the two folders or the comparison fails;
-`manifest.json` supplies those paired names. CI additionally passes all five consent basenames through
+`manifest.json` supplies those paired names. CI additionally passes all three consent basenames through
 `--require`; a missing code snapshot, Figma export, or comparison fails the job. Every run writes
 `artifacts/design-drift-report.json`, publishes it in the job summary, and uploads it as the
 `design-drift-report` artifact. The report records the exact head, thresholds, required set, missing
@@ -67,9 +68,10 @@ failed before comparison started. The always-run finalizer creates that last for
 failures cannot silently remove the diagnostic artifact.
 
 The same run executes `verify-figma-structure.mjs`. Its committed `structure-contract.json`
-requires the consent page to have one top-level flow section and the exact editable hierarchy
+requires the shared Onboarding page to have the canonical inventory plus a consent documentation/prototype pair and the exact editable hierarchy
 `Placeholder Sections` → `Placeholder Section` → `Placeholder Rows` → `Placeholder Flows` →
-`Mobile Placeholder` → screen. It also checks which of the two rows owns each screen. This catches
+`Mobile Placeholder` → screen. It also checks that all four documented journey frames share one
+sequential row and the three prototype frames are direct children of `01B · Consent · Prototype`. This catches
 legacy slot wrappers and visually aligned overlay siblings that image comparison cannot distinguish.
 The exact-head structure digest and resolved ancestry are uploaded as
 `artifacts/figma-structure-report.json` beside the drift report.

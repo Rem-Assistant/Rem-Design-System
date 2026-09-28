@@ -25,11 +25,12 @@ agents. See [`SPEC.md`](SPEC.md) for the full reasoning and the open decisions s
 
 ## Code Connect (scaffolded, DORMANT — needs an Org/Enterprise plan)
 
-Code Connect files are authored and co-located with their components (e.g.
-[`Sources/RemDesignSystem/Buttons/RemButton.figma.swift`](Sources/RemDesignSystem/Buttons/RemButton.figma.swift)),
-and `figma.config.json` points the CLI at `Sources/**/*.figma.swift`. Each `.figma.swift` references
-the **real Swift types** (so a rename shows the drift) but is **excluded from the SPM target** (see
-[`Package.swift`](Package.swift)) — the shipping library never links `github.com/figma/code-connect`.
+New Code Connect work uses parserless `.figma.ts` templates, following Figma's current guidance.
+`Section` has separate SwiftUI and Compose templates under `code-connect/`, selected by
+`figma.swiftui.config.json` and `figma.compose.config.json`. The Figma `Rows` Slot is read dynamically,
+so Dev Mode can render nested connected rows instead of hardcoding examples. Older components still
+have legacy `.figma.swift` / `.figma.kt` parser files; those remain excluded from shipping targets and
+are a migration backlog rather than the pattern for new work.
 
 **They cannot be published on the current Figma plan.** Verified via the API: using Code Connect
 requires a **Full or Dev seat on an Organization or Enterprise plan**. This account has Full seats
@@ -44,14 +45,15 @@ later enhancement, not a dependency.
 **To activate later** (once on a qualifying plan, with the `figma` CLI + `FIGMA_ACCESS_TOKEN`):
 
 ```bash
-figma connect check      # validate mappings against the Figma nodes (drift guard)
-figma connect publish    # push the bindings into Figma Dev Mode
+npx figma connect parse --config figma.swiftui.config.json
+npx figma connect parse --config figma.compose.config.json
+npx figma connect publish --config figma.swiftui.config.json
+npx figma connect publish --config figma.compose.config.json
 ```
 
-⚠️ The `figma.config.json` schema was written without running the CLI (no CLI/token here). Legacy
-per-framework parsers are unmaintained as of 2026-08-17; the future is `.figma.ts` templates
-(`npx figma connect migrate`). `.figma.swift` still works and is the only Swift-native form — verify
-the config against current `figma connect` docs on first run.
+The publish commands remain blocked until the file lives on an Organization or Enterprise plan with
+a Dev or Full seat. The parserless templates can still be reviewed and parsed locally in the meantime.
+Use `npx figma connect migrate` for the older native parser files when that backlog is scheduled.
 
 ## Related, existing docs
 

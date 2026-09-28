@@ -1,0 +1,7 @@
+{
+  "codeConnect": {
+    "include": ["code-connect/compose/**/*.figma.ts"],
+    "label": "Compose",
+    "language": "kotlin"
+  }
+}

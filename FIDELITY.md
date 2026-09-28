@@ -23,6 +23,31 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Consent flow + component-documentation proving pass — 2026-09-28 (issue #30)
+
+- Current shipping `AIDataSharingConsentView` has no consent-local loading/error state. The speculative
+  Figma frames and paired snapshots were removed; evidence now covers Consent, Terms, and Privacy.
+  Accept remains without a prototype destination because Deploying is being deprecated and no
+  replacement onboarding step is approved.
+- The existing `Onboarding` page now holds every current onboarding artifact in named Sections:
+  canonical screen inventory `00` (`760:21`), consent documentation `01A` (`695:138`), and consent
+  prototype `01B` (`731:260`). Nested documentation screens remain editable; prototype frames are
+  direct section children. Later flows add their own `02A` / `02B` pairs on this page.
+- Added canonical `Section` (`741:311`) with optional Header/Footer and an editable Rows slot whose
+  preferred value is `ListRow`. The grouped surface uses `backgroundSecondary` + 24pt radius with no
+  outer stroke. Consent uses Section instances in its documented and prototype frames.
+- Added a SwiftUI `RemSection` adapter for custom `ScrollView` surfaces and a Compose `RemSection`
+  implementation plus parserless SwiftUI/Compose Code Connect templates. Native SwiftUI `List`/`Form` consumers should
+  continue to use `SwiftUI.Section`; both implementations translate the same Figma concept. Swift
+  package compilation passes locally; Android compilation remains a hosted-run check because this
+  checkout has no Gradle wrapper/toolchain.
+- Component documentation now uses the lightweight `Component container` pattern: canonical master
+  first and a compact overview second, both nested in one auto-layout block inside `Rows & Sections ·
+  Component documentation` (`741:309`). Full Specs-plugin output is preserved separately and is not
+  the Builder fidelity bar; obsolete loose Section templates were removed from `Accessories`.
+
+---
+
 ## Sign-in screen — centered, paired iOS + Android per contract — 2026-09-28 (issue #27)
 
 Re-scoped the onboarding **sign-in** screen to conform to `docs/contracts/onboarding-sign-in.md` on

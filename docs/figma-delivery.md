@@ -49,28 +49,38 @@ repairing the screen is not proof that this handoff works autonomously.
 
 Consent #30 uses an authenticated Codex Builder runtime for the canvas write while Steward keeps
 the durable task, source commit, result, review, and recovery record. The existing Rem file is
-updated in place: page `609:2` is `Onboarding · Consent`, and its only top-level section is the
-detached `Mobile Flow (Detach This)` template at `695:138`.
+updated in place on the shared `Onboarding` page (`410:15`). `00 · Canonical screen inventory`
+(`760:21`) contains the existing sign-in/privacy masters; `01A · Consent · Documentation`
+(`695:138`) and `01B · Consent · Prototype` (`731:260`) are the consent pair. Later flows add
+`02A` / `02B` pairs on the same page rather than creating more onboarding pages.
 
 The Builder must preserve the template hierarchy: `Placeholder Sections` → `Placeholder Section`
 → `Placeholder Rows` → one or more `Placeholder Flows` rows → `Mobile Placeholder` → screen. The
 screen directly replaces the slot area inside each placeholder; nesting it in a leftover slot wrapper
 or pixel-aligning a loose screen above the placeholder is invalid even when the canvas looks correct.
-Consent `609:3`, Terms `638:28`, the Privacy branch consent frame `695:585`, Privacy `638:65`, loading
-`700:109`, and submit failure `700:147` now follow that rule. Loading and submit failure use a second
-`Placeholder Flows` row inside the same flow section. The separate consent-action component section
-was removed.
+Consent `609:3`, Terms `638:28`, the Privacy branch consent frame `695:585`, and Privacy `638:65`
+follow that rule in one sequential `Placeholder Flows` row. Current shipping code has no
+consent-local loading or submit-failure state, so the previous speculative state row was removed.
 
-Sequential rows retain arrow vectors with the template's 24-point gap. Parallel system-state rows
-omit arrows and use 200-point spacing so their screen columns align without implying navigation.
-On the Components page, `Component container` (`663:2270`) is a vertical auto-layout documentation
-surface: component variants first, expandable spec UI second.
+Sequential rows retain arrow vectors with the template's 24-point gap. On component-family pages,
+`Component container` (`663:2270`) is a vertical auto-layout documentation surface: the canonical
+component or variant set first, the lightweight overview panel second. Full Specs-plugin output
+is optional follow-up material rather than a Builder fidelity target.
 
-Nested documentation screens cannot be prototype navigation destinations in Figma. The flow section
-therefore owns a labeled `PROTOTYPE FLOWS` strip of top-level 402×874 frames sourced from the same
-documented states. Consent links to Terms, Privacy, and Loading; both legal sheets return with Back;
-Submit failure retries into Loading. Consent, Loading, and Submit failure are registered Presentation
-starting points. The strip stays inside the one consent section so prototype frames are organized.
+Nested documentation screens cannot be prototype navigation destinations in Figma. The separate
+`01B · Consent · Prototype` therefore owns a labeled strip of top-level 402×874 frames sourced
+from the documented screens. Consent links to Terms and Privacy; both legal sheets return with Back;
+Consent is the one registered Presentation starting point. Accept remains unconnected because the
+old Deploying destination is being deprecated and no replacement step is approved yet.
+
+The consent flow introduces canonical `Section` (`741:311`) on Rows & Controls. It exposes optional
+Header/Footer properties plus an editable Rows slot restricted by preference to `ListRow`; the grouped
+surface uses `backgroundSecondary` and the xlarge radius with no outer stroke. `ListRow` and `Section`
+each use the same canonical documentation container style inside `Rows & Sections · Component
+documentation` (`741:309`). Placeholder Anatomy panels are omitted because the Specs plugin can
+generate them later. Existing long-form ListRow documentation and generated Specs output are
+preserved in a separate reference section, not treated as the Builder's required output. The older
+loose Section template and long-list workaround were removed from `Accessories`.
 
 The hosted GitHub runner remains the repository, export, and comparison worker. Its `FIGMA_TOKEN`
 is consumed only by the current-head export/drift job; a token does not provide interactive canvas

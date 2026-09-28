@@ -13,7 +13,7 @@ function walk(node, ancestors = [], found = new Map()) {
   return found;
 }
 
-export function verifyStructure(contract, pageDocument, flowDocument) {
+export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument) {
   const errors = [];
   const expectedTop = contract.page.topLevel;
   const actualTop = (pageDocument.children || []).map(({ id, type, name }) => ({ id, type, name }));
@@ -95,19 +95,24 @@ export function verifyStructure(contract, pageDocument, flowDocument) {
     };
   });
 
+  const expectedPrototypeRoot = contract.flow.prototype.root;
+  if (!prototypeDocument || prototypeDocument.id !== expectedPrototypeRoot.id || prototypeDocument.type !== expectedPrototypeRoot.type || prototypeDocument.name !== expectedPrototypeRoot.name) {
+    errors.push(`Prototype root must be ${JSON.stringify(expectedPrototypeRoot)}`);
+  }
+  const prototypeIndex = walk(prototypeDocument || { id: 'missing-prototype', children: [] });
   const flowStartIds = new Set((pageDocument.flowStartingPoints || []).map(({ nodeId }) => nodeId));
-  const prototypeLabel = index.get(contract.flow.prototype.label.id);
-  if (!prototypeLabel || prototypeLabel.node.name !== contract.flow.prototype.label.name || prototypeLabel.ancestors[0]?.id !== flowDocument.id) {
-    errors.push(`${contract.flow.prototype.label.name} must be a direct child of flow ${contract.flow.id}`);
+  const prototypeLabel = prototypeIndex.get(contract.flow.prototype.label.id);
+  if (!prototypeLabel || prototypeLabel.node.name !== contract.flow.prototype.label.name || prototypeLabel.ancestors[0]?.id !== expectedPrototypeRoot.id) {
+    errors.push(`${contract.flow.prototype.label.name} must be a direct child of prototype ${expectedPrototypeRoot.id}`);
   }
   const prototype = contract.flow.prototype.frames.map((expected) => {
-    const match = index.get(expected.node);
+    const match = prototypeIndex.get(expected.node);
     if (!match) {
-      errors.push(`${expected.name} (${expected.node}) is missing from flow ${contract.flow.id}`);
+      errors.push(`${expected.name} (${expected.node}) is missing from prototype ${expectedPrototypeRoot.id}`);
       return { ...expected, status: 'missing' };
     }
-    const direct = match.node.type === 'FRAME' && match.node.name === expected.name && match.ancestors[0]?.id === flowDocument.id;
-    if (!direct) errors.push(`${expected.name} must be a direct FRAME child of flow ${contract.flow.id}`);
+    const direct = match.node.type === 'FRAME' && match.node.name === expected.name && match.ancestors[0]?.id === expectedPrototypeRoot.id;
+    if (!direct) errors.push(`${expected.name} must be a direct FRAME child of prototype ${expectedPrototypeRoot.id}`);
     const hasFlowStart = flowStartIds.has(expected.node);
     if (hasFlowStart !== expected.flowStart) {
       errors.push(`${expected.name} flow-start status must be ${expected.flowStart}; received ${hasFlowStart}`);
@@ -122,6 +127,7 @@ export function verifyStructure(contract, pageDocument, flowDocument) {
       topLevel: actualTop,
       flowStartingPoints: pageDocument.flowStartingPoints || [],
     },
+    prototypeRoot: expectedPrototypeRoot,
     screens,
     prototype,
   };
@@ -139,11 +145,13 @@ async function main() {
   try {
     const pageResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.page.id)}&depth=1`);
     const flowResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.id)}`);
+    const prototypeResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.prototype.root.id)}`);
     const pageDocument = pageResponse.nodes?.[contract.page.id]?.document;
     const flowDocument = flowResponse.nodes?.[contract.flow.id]?.document;
-    if (!pageDocument || !flowDocument) throw new Error('Figma did not return the contracted page and flow nodes');
+    const prototypeDocument = prototypeResponse.nodes?.[contract.flow.prototype.root.id]?.document;
+    if (!pageDocument || !flowDocument || !prototypeDocument) throw new Error('Figma did not return the contracted page, flow, and prototype nodes');
 
-    const result = verifyStructure(contract, pageDocument, flowDocument);
+    const result = verifyStructure(contract, pageDocument, flowDocument, prototypeDocument);
     report = {
       version: contract.version,
       status: result.ok ? 'completed' : 'failed',
@@ -152,6 +160,7 @@ async function main() {
       fileKey: contract.fileKey,
       page: contract.page,
       flow: { id: contract.flow.id, templateSource: contract.flow.templateSource },
+      prototype: contract.flow.prototype.root,
       structureDigest: result.digest,
       errors: result.errors,
       structure: result.canonical,

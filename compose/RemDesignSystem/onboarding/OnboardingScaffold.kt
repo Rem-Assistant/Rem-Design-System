@@ -41,15 +41,6 @@ import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTypography
 
 /**
- * Typed bottom-bar state. The only notice-bearing variant carries the consent domain state itself,
- * so callers cannot combine arbitrary notice copy with an unrelated CTA label or action.
- */
-sealed interface OnboardingBottomBarState {
-    data object Standard : OnboardingBottomBarState
-    data class ConsentRetryableError(val state: ConsentState.RetryableError) : OnboardingBottomBarState
-}
-
-/**
  * The **shared onboarding chrome** — the reusable layout every sequencer step renders into. It is the
  * Compose sibling of the SwiftUI onboarding shell (`OnboardingFlow.swift` step scaffold): a back
  * affordance + optional progress + a centered hero/title/subtitle over a scrollable content slot,
@@ -72,7 +63,6 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
-    bottomBarState: OnboardingBottomBarState = OnboardingBottomBarState.Standard,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
@@ -183,29 +173,16 @@ fun OnboardingScaffold(
             Spacer(Modifier.height(RemSpacing.xl))
         }
 
-        // Bottom CTA region — pinned; does not scroll. Order top→bottom matches the contract: the
-        // error notice (when present) sits directly ABOVE the CTA; the legal footnote sits BELOW it
-        // (contrast the earlier footer-above-button arrangement — the footnote reads as consent's
-        // legal fine print under the button, matching iOS + `docs/contracts/onboarding-consent.md`).
+        // Bottom CTA region — pinned; does not scroll. The legal footnote sits below the action.
         //
         // Spacing mirrors the iOS `OnboardingConsentTemplate` bottom bar EXACTLY so the paired render
-        // has the same density in every state: top `sm`, `md` between each element (notice→CTA and
-        // CTA→footnote), and `md` below the footnote. The gaps are only inserted between the elements
-        // that are actually present, so the no-error / no-footer states stay compact — there is no
-        // reserved empty notice slot and no extra bottom padding beyond the iOS `md`.
+        // has the same density in every state: top `sm`, `md` from CTA to footnote, and `md` below.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            when (bottomBarState) {
-                OnboardingBottomBarState.Standard -> Unit
-                is OnboardingBottomBarState.ConsentRetryableError -> {
-                    OnboardingNotice(bottomBarState.state.message)
-                    Spacer(Modifier.height(RemSpacing.md))
-                }
-            }
             OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
             if (secondary != null) {
                 Spacer(Modifier.height(RemSpacing.sm))

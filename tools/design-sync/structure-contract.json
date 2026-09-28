@@ -1,16 +1,19 @@
 {
-  "version": 2,
+  "version": 4,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
-    "id": "609:2",
-    "name": "Onboarding · Consent",
+    "id": "410:15",
+    "name": "Onboarding",
     "topLevel": [
-      { "id": "695:138", "type": "SECTION", "name": "01 · Consent flow" }
+      { "id": "760:21", "type": "SECTION", "name": "00 · Canonical screen inventory" },
+      { "id": "695:138", "type": "SECTION", "name": "01A · Consent · Documentation" },
+      { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" }
     ]
   },
   "flow": {
     "id": "695:138",
     "templateSource": "672:2524",
+    "placeholderComponent": "713:1912",
     "hierarchy": {
       "sections": "Placeholder Sections",
       "section": "Placeholder Section",
@@ -18,25 +21,22 @@
       "row": "Placeholder Flows",
       "placeholder": "Mobile Placeholder",
       "forbiddenPlaceholderChildren": ["Device / Screen slot"],
-      "rowSpacing": [24, 200],
-      "rowCount": 2
+      "rowSpacing": [24],
+      "rowCount": 1
     },
     "screens": [
       { "name": "Consent-default-light", "node": "609:3", "row": 0, "evidence": true },
       { "name": "Consent-terms-light", "node": "638:28", "row": 0, "evidence": true },
       { "name": "Consent-default-light-privacy-branch", "node": "695:585", "row": 0, "evidence": false },
-      { "name": "Consent-privacy-light", "node": "638:65", "row": 0, "evidence": true },
-      { "name": "Consent-loading-light", "node": "700:109", "row": 1, "evidence": true },
-      { "name": "Consent-error-light", "node": "700:147", "row": 1, "evidence": true }
+      { "name": "Consent-privacy-light", "node": "638:65", "row": 0, "evidence": true }
     ],
     "prototype": {
+      "root": { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
       "label": { "id": "715:327", "name": "PROTOTYPE FLOWS" },
       "frames": [
         { "name": "Prototype · Consent", "node": "715:233", "sourceNode": "609:3", "flowStart": true },
         { "name": "Prototype · Terms", "node": "715:245", "sourceNode": "638:28", "flowStart": false },
-        { "name": "Prototype · Privacy", "node": "715:272", "sourceNode": "638:65", "flowStart": false },
-        { "name": "Prototype · Loading", "node": "715:299", "sourceNode": "700:109", "flowStart": true },
-        { "name": "Prototype · Submit failure", "node": "715:312", "sourceNode": "700:147", "flowStart": true }
+        { "name": "Prototype · Privacy", "node": "715:272", "sourceNode": "638:65", "flowStart": false }
       ]
     }
   }

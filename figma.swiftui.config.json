@@ -1,0 +1,7 @@
+{
+  "codeConnect": {
+    "include": ["code-connect/swiftui/**/*.figma.ts"],
+    "label": "SwiftUI",
+    "language": "swift"
+  }
+}

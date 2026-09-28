@@ -16,6 +16,11 @@ description: >-
 
 # Rem design system (Figma)
 
+Use the repo-generic `../design-system-delivery/SKILL.md` for the portable method. This skill is
+the Rem adapter: it supplies Rem's Figma file, node ids, registries, templates, tokens, platform
+sources, and fidelity evidence. Other projects should reuse the generic skill and provide their own
+adapter instead of forking Rem-specific identifiers.
+
 You are building/maintaining a **living** design system in one Figma file
 (`af4yDqCzp57jds9lkFiIaO`) that mirrors the iOS 26 look and is **verified against the
 real SwiftUI app**. The single hardest failure mode is **drift** — creating a second
@@ -52,10 +57,10 @@ Skipping it reliably produces collapsed tiles, tofu glyphs, and rolled-back call
 The pattern that works for an **atomic component** is different from what a **screen**
 needs. Don't force one onto the other.
 
-- **Atomic component** (Row, Button, Card, MessageBubble, a control): follow
-  **`references/component-track.md`** — a documented Fluent-style page (title · anatomy
-  with native annotations · Variants matrices as tile grids), built on the iOS 26 kit
-  with instance-swap slots for every configurable region.
+- **Atomic component** (Row, Button, Section, MessageBubble, a control): follow
+  **`references/component-track.md`** — one canonical component/variant set followed by the
+  lightweight overview panel, both nested in a named auto-layout documentation block on the
+  correct component-family page. Full Specs-plugin output is optional follow-up work.
 - **Screen or pattern** (Agenda, Chat, Settings, a flow): follow
   **`references/screen-track.md`** — a full-device (402×874) screen built **native, in
   auto-layout, on the canonical components**, documented with the file's `Component container`

@@ -15,7 +15,6 @@ import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.icons.RemMaterialSymbols
-import com.rem.designsystem.onboarding.ConsentState
 import com.rem.designsystem.onboarding.LegalDocumentScreen
 import com.rem.designsystem.onboarding.OnboardingSequencer
 import com.rem.designsystem.onboarding.OnboardingSignInScreen
@@ -150,22 +149,7 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun consent() {
-        shot("Consent-default-light") { RemTheme { consentScreen() } }
-        shot("Consent-loading-light") { RemTheme { consentScreen(state = ConsentState.Loading) } }
-    }
-
-    // Consent · submit failure, light — notice above the CTA, which flips to "Try again".
-    @Test
-    fun consentError() = shot("Consent-error-light") {
-        RemTheme {
-            consentScreen(
-                state = ConsentState.RetryableError(
-                    "We couldn't save your choice. Check your connection and try again.",
-                ),
-            )
-        }
-    }
+    fun consent() = shot("Consent-default-light") { RemTheme { consentScreen() } }
 
     // The two legal sheets the consent rows open (1:1 with LegalDocumentView), light.
     @Test
@@ -179,11 +163,11 @@ class EvidenceSnapshots {
     }
 
     @Composable
-    private fun consentScreen(state: ConsentState = ConsentState.Idle) {
+    private fun consentScreen() {
         OnboardingSequencer(
             steps = listOf(
                 signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
-                consentStep(onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {}, state = state),
+                consentStep(onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {}),
             ),
             state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),
         )

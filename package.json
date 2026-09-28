@@ -9,7 +9,11 @@
     "check-tokens": "node tools/generate-tokens.mjs --check",
     "build": "node tools/build-site.mjs",
     "manifest": "node tools/build-manifest.mjs",
-    "check-manifest": "node tools/build-manifest.mjs --check"
+    "check-manifest": "node tools/build-manifest.mjs --check",
+    "check-code-connect:types": "tsc --project tsconfig.code-connect.json",
+    "check-code-connect:swiftui": "figma connect parse --config figma.swiftui.config.json --exit-on-unreadable-files",
+    "check-code-connect:compose": "figma connect parse --config figma.compose.config.json --exit-on-unreadable-files",
+    "check-code-connect": "npm run check-code-connect:types && npm run check-code-connect:swiftui && npm run check-code-connect:compose"
   },
   "repository": {
     "type": "git",
@@ -18,5 +22,8 @@
   "license": "MIT",
   "dependencies": {
     "marked": "^18.0.14"
+  },
+  "devDependencies": {
+    "@figma/code-connect": "^1.4.9"
   }
 }

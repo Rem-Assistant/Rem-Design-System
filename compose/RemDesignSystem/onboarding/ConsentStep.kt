@@ -9,12 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,8 +20,8 @@ import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
+import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.tokens.RemColors
-import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
@@ -41,7 +39,7 @@ import com.rem.designsystem.tokens.RemTypography
  *               delete it anytime in Settings."
  *  - Terms of Service — "How Rem accounts, subscriptions, and approved actions work."
  *  - Privacy Policy   — "What Rem, your gateway, and AI or voice providers process."
- *  - primary:  "Accept and Continue" (or "Try again" in the error state)
+ *  - primary:  "Accept and Continue"
  *  - footer:   By tapping "Accept and Continue," you agree to our Terms of Service and Privacy Policy.
  *
  * **Icons resolve through the canonical `ContainedIcon` primitive and the static Material Symbols
@@ -54,31 +52,20 @@ import com.rem.designsystem.tokens.RemTypography
  * matching the iOS SF Symbols glyph-for-glyph.
  *
  * The two rows open the legal documents ([onOpenTerms]/[onOpenPrivacy] — page sheets on the host);
- * [onAccept] persists consent and the host advances the sequencer. [state] is the single source for
- * the primary action and notice: Loading shows the spinner, while Error carries the notice and flips
- * the CTA to "Try again". The error variant is explicitly retryable; terminal or authorization
- * failures require a separate state. Those values cannot drift apart at a call site.
+ * [onAccept] persists consent and the host advances the sequencer. The shipping consent view has no
+ * consent-local loading or error state, so this step does not invent either one.
  */
-sealed interface ConsentState {
-    data object Idle : ConsentState
-    data object Loading : ConsentState
-    data class RetryableError(val message: String) : ConsentState
-}
-
 fun consentStep(
     onAccept: () -> Unit,
     onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit,
-    state: ConsentState = ConsentState.Idle,
     id: String = "consent",
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     OnboardingScaffold(
         primary = OnboardingAction(
-            label = if (state is ConsentState.RetryableError) "Try again" else "Accept and Continue",
+            label = "Accept and Continue",
             onClick = onAccept,
             style = OnboardingActionStyle.Primary,
-            loading = state is ConsentState.Loading,
-            enabled = state !is ConsentState.Loading,
         ),
         // Hero = shield-lock (`shield_lock`, FILL 1) — the registry consent hero, matching the iOS
         // `lock.shield.fill`. NOT `Security` (a shield-with-check, the near-miss the registry flags).
@@ -91,22 +78,12 @@ fun consentStep(
         subtitle = "Rem uses your data to answer you and act on the things you ask. " +
             "You can review or delete it anytime in Settings.",
         legalFooter = "By tapping \"Accept and Continue,\" you agree to our Terms of Service and Privacy Policy.",
-        bottomBarState = when (state) {
-            ConsentState.Idle, ConsentState.Loading -> OnboardingBottomBarState.Standard
-            is ConsentState.RetryableError -> OnboardingBottomBarState.ConsentRetryableError(state)
-        },
         background = OnboardingBackground.Primary,
         progress = scope.progress,
         onBack = scope.onBack,
     ) {
-        // Grouped card holding the two legal rows — the iOS inset-grouped section, on backgroundSecondary
-        // at `medium` radius (the contract's grouped-card radius, matched to iOS).
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(RemRadius.medium))
-                .background(RemColors.current.backgroundSecondary),
-        ) {
+        // Canonical grouped Section: backgroundSecondary + xlarge radius, no outer stroke.
+        RemSection(modifier = Modifier.fillMaxWidth()) {
             ConsentLegalRow(
                 glyph = RemMaterialSymbols.Description, // doc.text on iOS — FILL 0 (outline)
                 title = "Terms of Service",
@@ -194,25 +171,6 @@ private fun ConsentLightPreview() {
             steps = listOf(
                 signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
                 consentStep(onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {}),
-            ),
-            state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),
-        )
-    }
-}
-
-@Preview(name = "Consent · submit failure", showBackground = true, widthDp = 402, heightDp = 874)
-@Composable
-private fun ConsentErrorPreview() {
-    RemTheme {
-        OnboardingSequencer(
-            steps = listOf(
-                signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
-                consentStep(
-                    onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {},
-                    state = ConsentState.RetryableError(
-                        "We couldn't save your choice. Check your connection and try again.",
-                    ),
-                ),
             ),
             state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),
         )

@@ -47,10 +47,19 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 
 ## Use the file's documentation templates
 
+- **Page scale:** use one page per product domain, not one page per screen or per flow. Onboarding
+  flows belong together on `Onboarding`; Settings flows belong together on `Settings`. Keep reusable
+  components on component-family pages.
+- **Top-level sections:** give each flow a numbered documentation/prototype pair:
+  `01A · <Flow> · Documentation` and `01B · <Flow> · Prototype`, then `02A` / `02B` for the next
+  flow. Keep older canonical screens inside a named inventory/reference Section until their flow
+  documentation replaces them. Place pairs on a non-overlapping grid and verify bounds. The
+  structure contract lists the exact allowed top-level nodes.
+
 - **Components page:** use `Component container` (`663:2270`) for every new or changed canonical
   component. Make the detached container vertical auto-layout: put the component/variant set first,
-  then place the expandable spec UI below it. This makes the page scannable now while preserving the
-  spec surface for future detail. Do not use this container as a Screens-page layout.
+  then place the lightweight overview panel below it. Remove empty Anatomy/Props/Layout placeholders;
+  the Specs plugin can add those later. Do not use this container as a Screens-page layout.
 - **Flows:** detach `Mobile Flow (Detach This)` (`672:2524`) on the screen family's flow page.
   Keep the overview and the documented screens inside the detached flow. Do not add loose screen
   frames as siblings of the flow.
@@ -70,7 +79,7 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   it does not replace the Mobile Flow documentation hierarchy.
 - Figma only accepts different top-level frames as prototype navigation destinations. Keep the
   nested documentation hierarchy, then add a labeled `PROTOTYPE FLOWS` strip of top-level 402×874
-  frames inside the same Figma section. Wire and name its Presentation starting points. Generate
+  frames inside the separate numbered prototype section. Wire and name its Presentation starting points. Generate
   these frames from the documented screen sources and keep their source-node mapping in the
   structure contract so the strip does not become an untracked duplicate.
 - **One generation only.** When a native screen supersedes a legacy template, delete the legacy
