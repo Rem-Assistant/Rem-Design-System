@@ -31,6 +31,12 @@
     { "name": "About",        "node": "134:242", "source": "Shared/Views/Settings/SharedAboutView.swift" },
     { "name": "Inbox",        "node": "206:703", "source": "Rem/Sources/Screens/InboxView.swift" },
     { "name": "Billing",      "node": "341:862", "source": "Rem/Sources/Settings/BillingSettingsView.swift" },
-    { "name": "Permissions",  "node": "349:905", "source": "Rem/Sources/Settings/SettingsView.swift" }
+    { "name": "Permissions",  "node": "349:905", "source": "Rem/Sources/Settings/SettingsView.swift" },
+    { "name": "Consent-default-light", "node": "609:3",   "page": "Onboarding · Consent flow ▸", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
+    { "name": "Consent-default-dark",  "node": "682:75",  "page": "Onboarding · Consent flow ▸", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
+    { "name": "Consent-error-dark",    "node": "682:88",  "page": "Onboarding · Consent flow ▸", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
+    { "name": "Consent-loading-light", "node": "682:125", "page": "Onboarding · Consent flow ▸", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
+    { "name": "Consent-terms-light",   "node": "638:28",  "page": "Onboarding · Consent flow ▸", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
+    { "name": "Consent-privacy-light", "node": "638:65",  "page": "Onboarding · Consent flow ▸", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" }
   ]
 }

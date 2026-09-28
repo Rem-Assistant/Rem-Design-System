@@ -5,6 +5,6 @@
   },
   "onboarding-consent": {
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
-    "states": ["consent-default-light", "consent-default-dark", "consent-error-dark", "consent-terms-light", "consent-privacy-light"]
+    "states": ["consent-default-light", "consent-default-dark", "consent-loading-light", "consent-error-dark", "consent-terms-light", "consent-privacy-light"]
   }
 }

@@ -75,21 +75,46 @@ def load_full(path: str | None) -> str:
     return dest
 
 
-def bake_fill_into_cmap(font: TTFont) -> None:
-    """Rewrite every cmap subtable so a codepoint maps directly to its `.fill` glyph
-    (Material Symbols names the filled variant `<glyph>.fill`), then drop GSUB. After
-    this the filled shape is reached by `cmap → glyph` alone — no feature, no variation
-    — so any renderer draws the fill. Codepoints without a `.fill` twin (chevron_right)
-    are left untouched."""
+def bake_static_cmap(font: TTFont, fill: float) -> None:
+    """Bake every registry codepoint to an explicit static outline or filled glyph.
+
+    Both outputs take this same path. FILL 0 removes a residual `.fill` suffix when the
+    instantiated font exposes one; FILL 1 selects the `.fill` twin when present. GSUB is
+    then removed for both, so neither asset relies on runtime substitution semantics.
+    """
     glyph_set = set(font.getGlyphOrder())
     for table in font["cmap"].tables:
         remapped = {}
         for cp, name in table.cmap.items():
-            fill_name = f"{name}.fill"
-            remapped[cp] = fill_name if fill_name in glyph_set else name
+            outline_name = name.removesuffix(".fill")
+            fill_name = f"{outline_name}.fill"
+            if fill >= 0.5 and fill_name in glyph_set:
+                remapped[cp] = fill_name
+            elif outline_name in glyph_set:
+                remapped[cp] = outline_name
+            else:
+                remapped[cp] = name
         table.cmap = remapped
     if "GSUB" in font:
         del font["GSUB"]
+
+
+def validate_static_font(font: TTFont, spec: dict) -> None:
+    """Fail generation unless the saved asset proves the static-cmap contract."""
+    if "fvar" in font or "GSUB" in font:
+        raise ValueError(f"{spec['name']} is not fully static")
+    cmap = font.getBestCmap()
+    missing = [hex(cp) for cp in GLYPHS.values() if cp not in cmap]
+    if missing:
+        raise ValueError(f"{spec['name']} is missing registry codepoints: {missing}")
+    for glyph_name, codepoint in GLYPHS.items():
+        mapped = cmap[codepoint]
+        has_fill_twin = f"{mapped.removesuffix('.fill')}.fill" in font.getGlyphOrder()
+        if has_fill_twin and (mapped.endswith(".fill") != (spec["fill"] >= 0.5)):
+            raise ValueError(
+                f"{spec['name']} maps {glyph_name} to {mapped}, which does not match "
+                f"FILL {spec['fill']}"
+            )
 
 
 def build(full_path: str, spec: dict) -> None:
@@ -114,17 +139,16 @@ def build(full_path: str, spec: dict) -> None:
         inplace=True,
         updateFontNames=False,
     )
-    if spec["fill"] >= 0.5:
-        # Filled file: bake the fill glyphs into the cmap so no GSUB/variation is needed.
-        bake_fill_into_cmap(font)
-    elif "GSUB" in font:
-        # Outline file needs no substitution; drop any residual GSUB for a clean static font.
-        del font["GSUB"]
+    # Both files go through the same explicit cmap bake and validation path.
+    bake_static_cmap(font, spec["fill"])
     out = OUT_DIR / spec["name"]
     font.save(out)
-    cmap = font.getBestCmap()
+    # Validate the bytes as consumers will load them, rather than trusting the in-memory object.
+    saved = TTFont(out)
+    validate_static_font(saved, spec)
+    cmap = saved.getBestCmap()
     print(f"wrote {out} ({out.stat().st_size} bytes) fill={spec['fill']} "
-          f"variable={'fvar' in font} gsub={'GSUB' in font} "
+          f"variable={'fvar' in saved} gsub={'GSUB' in saved} "
           f"cmap={ {hex(c): cmap[c] for c in sorted(cmap)} }")
 
 

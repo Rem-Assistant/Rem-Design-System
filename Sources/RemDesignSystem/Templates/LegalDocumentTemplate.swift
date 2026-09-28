@@ -30,15 +30,18 @@ public struct LegalDocumentTemplate: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Inline nav bar: title leading, "Done" trailing (dismiss). Mirrors the Compose sheet.
-            HStack {
+            // Inline nav bar: centered title + a 44pt Done affordance, matching the Compose sheet.
+            ZStack {
                 Text(title)
                     .font(DesignTokens.Typography.title1.weight(.semibold))
                     .foregroundStyle(DesignTokens.Color.labelPrimary)
-                Spacer(minLength: DesignTokens.Spacing.sm)
-                Button("Done", action: onClose)
-                    .font(DesignTokens.Typography.body)
-                    .foregroundStyle(DesignTokens.Color.systemBlue)
+                HStack {
+                    Spacer(minLength: 0)
+                    Button("Done", action: onClose)
+                        .font(DesignTokens.Typography.body)
+                        .foregroundStyle(DesignTokens.Color.systemBlue)
+                        .frame(minWidth: 44, minHeight: 44)
+                }
             }
             .padding(.horizontal, DesignTokens.Spacing.lg)
             .frame(height: 56)

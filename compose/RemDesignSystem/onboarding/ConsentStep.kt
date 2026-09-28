@@ -51,25 +51,30 @@ import com.rem.designsystem.tokens.RemTypography
  * matching the iOS SF Symbols glyph-for-glyph.
  *
  * The two rows open the legal documents ([onOpenTerms]/[onOpenPrivacy] — page sheets on the host);
- * [onAccept] persists consent and the host advances the sequencer. [accepting] shows the CTA spinner;
- * [error] (host-supplied, e.g. a failed persist) shows the notice above the CTA and flips it to
- * "Try again".
+ * [onAccept] persists consent and the host advances the sequencer. [state] is the single source for
+ * the primary action and notice: Loading shows the spinner, while Error carries the notice and flips
+ * the CTA to "Try again". Those values cannot drift apart at a call site.
  */
+sealed interface ConsentState {
+    data object Idle : ConsentState
+    data object Loading : ConsentState
+    data class Error(val message: String) : ConsentState
+}
+
 fun consentStep(
     onAccept: () -> Unit,
     onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit,
-    accepting: Boolean = false,
-    error: String? = null,
+    state: ConsentState = ConsentState.Idle,
     id: String = "consent",
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     OnboardingScaffold(
         primary = OnboardingAction(
-            label = if (error != null) "Try again" else "Accept and Continue",
+            label = if (state is ConsentState.Error) "Try again" else "Accept and Continue",
             onClick = onAccept,
             style = OnboardingActionStyle.Primary,
-            loading = accepting,
-            enabled = !accepting,
+            loading = state is ConsentState.Loading,
+            enabled = state !is ConsentState.Loading,
         ),
         // Hero = shield-lock (`shield_lock`, FILL 1) — the registry consent hero, matching the iOS
         // `lock.shield.fill`. NOT `Security` (a shield-with-check, the near-miss the registry flags).
@@ -82,7 +87,10 @@ fun consentStep(
         subtitle = "Rem uses your data to answer you and act on the things you ask. " +
             "You can review or delete it anytime in Settings.",
         legalFooter = "By tapping \"Accept and Continue,\" you agree to our Terms of Service and Privacy Policy.",
-        notice = error,
+        bottomBarState = when (state) {
+            ConsentState.Idle, ConsentState.Loading -> OnboardingBottomBarState.Standard
+            is ConsentState.Error -> OnboardingBottomBarState.Error(state.message)
+        },
         background = OnboardingBackground.Primary,
         progress = scope.progress,
         onBack = scope.onBack,
@@ -211,7 +219,9 @@ private fun ConsentErrorPreview() {
                 signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
                 consentStep(
                     onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {},
-                    error = "We couldn't save your choice. Check your connection and try again.",
+                    state = ConsentState.Error(
+                        "We couldn't save your choice. Check your connection and try again.",
+                    ),
                 ),
             ),
             state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),

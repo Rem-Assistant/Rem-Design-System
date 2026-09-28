@@ -39,6 +39,12 @@ import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTypography
 
+/** Typed bottom-bar state. A notice cannot be passed as an unrelated free-form scaffold string. */
+sealed interface OnboardingBottomBarState {
+    data object Standard : OnboardingBottomBarState
+    data class Error(val message: String) : OnboardingBottomBarState
+}
+
 /**
  * The **shared onboarding chrome** — the reusable layout every sequencer step renders into. It is the
  * Compose sibling of the SwiftUI onboarding shell (`OnboardingFlow.swift` step scaffold): a back
@@ -62,8 +68,7 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
-    /** An error notice card rendered directly **above** the bottom-pinned CTA (e.g. consent's error). */
-    notice: String? = null,
+    bottomBarState: OnboardingBottomBarState = OnboardingBottomBarState.Standard,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
@@ -187,9 +192,12 @@ fun OnboardingScaffold(
                 .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (notice != null) {
-                OnboardingNotice(notice)
-                Spacer(Modifier.height(RemSpacing.md))
+            when (bottomBarState) {
+                OnboardingBottomBarState.Standard -> Unit
+                is OnboardingBottomBarState.Error -> {
+                    OnboardingNotice(bottomBarState.message)
+                    Spacer(Modifier.height(RemSpacing.md))
+                }
             }
             OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
             if (secondary != null) {

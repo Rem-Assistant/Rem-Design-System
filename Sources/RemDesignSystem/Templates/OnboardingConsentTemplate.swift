@@ -6,6 +6,12 @@ import SwiftUI
 /// (`410:16`). Composes design-system components: `ContainedIcon` (hero + row leading), `ListRow`
 /// (legal rows), `RemButton` (primary CTA). iOS-canonical; renders adaptively on iPadOS/macOS.
 public struct OnboardingConsentTemplate: View {
+    public enum State {
+        case idle
+        case loading
+        case error(message: String)
+    }
+
     /// A tappable legal/disclosure row (Terms, Privacy, …).
     public struct LegalItem: Identifiable {
         public let id = UUID()
@@ -22,10 +28,8 @@ public struct OnboardingConsentTemplate: View {
     var title: String
     var message: String
     var legalItems: [LegalItem]
-    var primaryTitle: String
     var footnote: String
-    var isAccepting: Bool
-    var errorMessage: String?
+    var state: State
     var onPrimary: () -> Void
 
     public init(
@@ -33,20 +37,16 @@ public struct OnboardingConsentTemplate: View {
         title: String = "Privacy by design",
         message: String,
         legalItems: [LegalItem],
-        primaryTitle: String = "Accept and Continue",
         footnote: String,
-        isAccepting: Bool = false,
-        errorMessage: String? = nil,
+        state: State = .idle,
         onPrimary: @escaping () -> Void
     ) {
         self.heroSymbol = heroSymbol
         self.title = title
         self.message = message
         self.legalItems = legalItems
-        self.primaryTitle = primaryTitle
         self.footnote = footnote
-        self.isAccepting = isAccepting
-        self.errorMessage = errorMessage
+        self.state = state
         self.onPrimary = onPrimary
     }
 
@@ -112,24 +112,17 @@ public struct OnboardingConsentTemplate: View {
     /// scaffold's bottom bar so the paired render diffs clean.
     private var bottomBar: some View {
         VStack(spacing: DesignTokens.Spacing.md) {
-            if let errorMessage { notice(errorMessage) }
+            if case let .error(message) = state { notice(message) }
             Button(action: onPrimary) {
-                if isAccepting {
+                if case .loading = state {
                     ProgressView().tint(DesignTokens.Color.backgroundPrimary)
                 } else {
-                    // Label is rendered verbatim from `primaryTitle` — the wording is chosen by the
-                    // caller from the *action* state (idle → "Accept and Continue", retry → "Try
-                    // again"), NOT derived here from `errorMessage != nil`. That keeps the notice
-                    // (an independent input) decoupled from the CTA wording, so a host can surface an
-                    // error and still keep the standard call to action if it wants. Mirrors the
-                    // Compose scaffold, which renders `primary.label` verbatim while `consentStep`
-                    // decides the wording.
                     Text(primaryTitle)
                 }
             }
             .remPrimaryActionButton()
-            .disabled(isAccepting)
-            .opacity(isAccepting ? 0.4 : 1)
+            .disabled(isLoading)
+            .opacity(isLoading ? 0.4 : 1)
             Text(footnote)
                 .font(DesignTokens.Typography.caption1)
                 .foregroundStyle(DesignTokens.Color.labelSecondary)
@@ -140,6 +133,16 @@ public struct OnboardingConsentTemplate: View {
         .padding(.top, DesignTokens.Spacing.sm)
         .padding(.bottom, DesignTokens.Spacing.md)
         .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    private var primaryTitle: String {
+        if case .error = state { return "Try again" }
+        return "Accept and Continue"
+    }
+
+    private var isLoading: Bool {
+        if case .loading = state { return true }
+        return false
     }
 
     /// Inline error notice — mirrors the Compose `OnboardingNotice` (systemRed at 12% on a

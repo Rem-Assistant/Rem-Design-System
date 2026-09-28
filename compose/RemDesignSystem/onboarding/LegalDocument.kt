@@ -4,13 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -52,26 +51,29 @@ fun LegalDocumentScreen(
             .fillMaxSize()
             .background(colors.backgroundPrimary),
     ) {
-        // Inline nav bar: title leading, "Done" trailing (dismiss). Mirrors iOS's inline nav title.
-        Row(
+        // Inline nav bar: centered title + a 44dp Done affordance. The explicit tap target keeps the
+        // dismiss action visibly and behaviorally equivalent to the SwiftUI page-sheet chrome.
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = RemSpacing.lg)
                 .height(56.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = title,
                 style = RemTypography.title1.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.labelPrimary,
-                modifier = Modifier.weight(1f),
             )
-            Text(
-                text = "Done",
-                style = RemTypography.body,
-                color = colors.systemBlue,
-                modifier = Modifier.clickableRole(onClick = onClose, label = "Done"),
-            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = RemSpacing.sm)
+                    .size(44.dp)
+                    .clickableRole(onClick = onClose, label = "Done"),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = "Done", style = RemTypography.body, color = colors.systemBlue)
+            }
         }
         Box(
             modifier = Modifier

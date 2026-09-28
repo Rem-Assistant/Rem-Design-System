@@ -26,8 +26,9 @@ class PairedDeliveryTests(unittest.TestCase):
             root = Path(tmp); self.fixtures(root)
             status, body, attachments = delivery.prepare(root, "a" * 40, "success", [CONSENT], CONTRACTS)
             self.assertEqual(status, "ready")
-            self.assertEqual(len(attachments), 10)
-            self.assertEqual([p.parent.name for p in attachments], ["swiftui", "compose"] * 5)
+            state_count = len(CONTRACTS["onboarding-consent"]["states"])
+            self.assertEqual(len(attachments), state_count * 2)
+            self.assertEqual([p.parent.name for p in attachments], ["swiftui", "compose"] * state_count)
             for key in CONTRACTS["onboarding-consent"]["states"]:
                 row = next(line for line in body.splitlines() if line.startswith(f"| `{key}`"))
                 self.assertIn(f"![swiftui {key}]", row)

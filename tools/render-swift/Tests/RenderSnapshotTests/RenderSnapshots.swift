@@ -32,9 +32,12 @@ final class RenderSnapshots: XCTestCase {
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
             render("Consent-default-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen() }
         }
+        render("Consent-loading-light", width: 393, height: 852, dark: false) {
+            consentScreen(state: .loading)
+        }
         // Consent · error (notice above the bottom-pinned CTA, CTA → "Try again"), dark.
         render("Consent-error-dark", width: 393, height: 852, dark: true) {
-            consentScreen(error: "We couldn't save your choice. Check your connection and try again.")
+            consentScreen(state: .error(message: "We couldn't save your choice. Check your connection and try again."))
         }
         // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
         render("Consent-terms-light", width: 393, height: 852, dark: false) {
@@ -124,7 +127,7 @@ final class RenderSnapshots: XCTestCase {
     }
 
     // The REAL onboarding consent template (with its ScrollView) — rendered faithfully now.
-    private func consentScreen(error: String? = nil) -> some View {
+    private func consentScreen(state: OnboardingConsentTemplate.State = .idle) -> some View {
         OnboardingConsentTemplate(
             // Canonical consent copy (authority: Compose `ConsentStep.kt`), kept identical on both
             // platforms so the side-by-side evidence compares the same screen.
@@ -135,12 +138,8 @@ final class RenderSnapshots: XCTestCase {
                 .init(symbol: "shield", title: "Privacy Policy",
                       subtitle: "What Rem, your gateway, and AI or voice providers process.", action: {}),
             ],
-            // The caller chooses the CTA wording from the action state, mirroring the Compose
-            // `consentStep` factory: idle → "Accept and Continue", retry (error present) → "Try again".
-            // The template renders this verbatim; `errorMessage` independently drives the notice.
-            primaryTitle: error == nil ? "Accept and Continue" : "Try again",
             footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
-            errorMessage: error,
+            state: state,
             onPrimary: {}
         )
     }
