@@ -43,23 +43,20 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 | **default** | lockup + legal list + footnote | "Accept and Continue" (enabled) |
 | **terms sheet** | `LegalDocumentView` for Terms as a page sheet (`.sheet` + inline nav title); Back dismisses | — |
 | **privacy sheet** | `LegalDocumentView` for Privacy as a page sheet; Back dismisses | — |
-| **loading** | after accept: CTA shows spinner, disabled, 40% opacity, non-interactive (matches sign-in `checking`) | — |
-| **error** | notice card directly **above** the CTA | "Try again" |
-
-**Notice card:** `Color.systemRed` @ 12% fill, radius `medium`, leading warning icon
-(`exclamationmark.triangle.fill` / `error`, FILL 1) + `Typography.caption1` message.
 
 ## Rules (the decisions that are easy to drift on — stated once)
 
 - **Bottom-pinned CTA:** this step uses the sequencer's bottom-pinned CTA bar. Contrast sign-in
   (centered, no bottom bar). The two screens differ on purpose; each is identical *across platforms*.
-- **Notice sits adjacent to the primary action, on the side that keeps both on-screen:** *below*
-  centered buttons (sign-in), *above* a bottom-pinned CTA (consent). Same principle, placement follows
-  the CTA. (Promote to the format if a third screen repeats it.)
 - **Legal rows open page sheets** — never push a nav screen; 1:1 with `LegalDocumentView`.
 - **Consent hero is the shield-lock** (`lock.shield.fill` / `shield_lock`, FILL 1) — not a
   shield-check (`Security`), not a plain shield.
 - **Row icons are outline (FILL 0)** on both platforms: `doc.text` / `description`, `shield` / `shield`.
+- **Do not invent consent-local loading or error states.** Current shipping code advances immediately
+  after acceptance. The old Deploying screen is being deprecated, so Accept has no fabricated
+  destination until the replacement onboarding step is defined.
+- **Dark mode is a variable-mode review, not a second authored frame.** The Director approved one
+  light documentation set; reviewers switch the shared color mode in Figma when checking dark.
 
 ## System use
 
@@ -80,10 +77,11 @@ supersedes the earlier Figma exclusion; the approved arrangement and product rul
 are unchanged. Follow [Figma delivery](../figma-delivery.md) and `SHAPE-OF-A-TASK.md`.
 
 Update the editable consent screen and legal-sheet flow in the existing Rem file. Cover
-`Consent-default-light`, `Consent-default-dark`, `Consent-error-dark`,
-`Consent-terms-light`, and `Consent-privacy-light`, including each platform's intentional
-native presentation. Reuse canonical components and shared variables. Include screen,
-flow, component/preview links and the reused/new component ledger in the PR.
+`Consent-default-light`, `Consent-terms-light`, and `Consent-privacy-light`, including each
+platform's intentional native presentation. The Director clarified on 2026-09-28 that separate dark
+frames are redundant because reviewers can switch the shared color-variable mode in Figma. Reuse
+canonical components and shared variables. Include screen, flow, component/preview links and the
+reused/new component ledger in the PR.
 
 Reviewer must inspect the Figma exports and structure against the current iOS/Android
 evidence and this contract. Existing frame links alone do not establish that the designs
@@ -100,13 +98,11 @@ The paired render passes when iOS and Android match on **all** of:
       + same copy + trailing chevrons
 - [ ] CTA "Accept and Continue" bottom-pinned, full-width filled, same treatment on both
 - [ ] Footnote present below the CTA, same copy + role
-- [ ] Error notice (when present) directly above the CTA on both
 - [ ] Icons match the registry glyph **and FILL** on both
 
-**Evidence:** `screenshots.yml` paired table — `Consent-default-light`, `Consent-default-dark`,
-`Consent-error-dark`, plus the two sheets `Consent-terms-light`, `Consent-privacy-light` — iOS ⟷
-Android side by side.
+**Evidence:** `screenshots.yml` paired table — `Consent-default-light`, `Consent-terms-light`, and
+`Consent-privacy-light` — iOS ⟷ Android side by side.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
-amendment on the issue. **Status:** drafted from the reference frame + onboarding packet; the paired
-render is the proof the founder spot-checks. Build behind the live visual-parity gate.
+amendment on the issue. **Status:** state/evidence scope amended by the founder on 2026-09-28; the
+paired render is the proof the founder spot-checks. Build behind the live visual-parity gate.
