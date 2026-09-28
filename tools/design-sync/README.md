@@ -52,6 +52,14 @@ those nodes at the pull request's exact head and uploads a digest manifest. The 
 run, trusted base-branch workflow, PR, head SHA, and run attempt, then verifies the exact file set and
 every digest before adding a **Figma Reference** column.
 
+The secret-bearing export uses `pull_request_target` with read-only permissions and checks out only
+the event's base SHA. It does not check out or execute pull-request code. Required reference nodes and
+waypoints therefore enter the trusted base contract in a separate control-plane change before a
+product PR can consume them; exact-head app renders remain isolated in `screenshots.yml`.
+Although the drift job may export the broader registry for its own comparison, its authenticated
+artifact stages only the selected contract's state references and waypoints. Unrelated component
+exports never reach the delivery formatter.
+
 Add one `delivery-scope:<contract-name>` label to a PR when collateral contract edits would otherwise
 make the evidence scope ambiguous. The publisher accepts at most one label and resolves it only
 against the trusted contract registry. A contract can opt into `exclusive_output_prefixes` to reject

@@ -11,6 +11,7 @@ import re
 def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
              workflow_sha256: str, media_dirs: tuple[str, ...],
              figma_file_key: str | None = None, contracts_sha256: str | None = None,
+             primary_contract: str | None = None,
              require_reference_export: bool = False) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("full lowercase head SHA required")
@@ -35,6 +36,8 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
         raise ValueError("Figma evidence names an unexpected file")
     if contracts_sha256 is not None and manifest.get("contracts_sha256") != contracts_sha256:
         raise ValueError("Figma evidence used an unexpected reference contract")
+    if manifest.get("primary_contract") != primary_contract:
+        raise ValueError("Figma evidence used an unexpected primary delivery scope")
     if require_reference_export and manifest.get("reference_export_status") != "success":
         raise ValueError("Figma reference export did not succeed")
 
@@ -51,7 +54,7 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
     allowed = "|".join(re.escape(directory) for directory in media_dirs)
     for relative, expected_digest in media.items():
         if not isinstance(relative, str) or not re.fullmatch(
-            rf"(?:{allowed})/[A-Za-z0-9._-]+\.png", relative
+            rf"(?:{allowed})/[A-Za-z0-9][A-Za-z0-9._ -]*\.png", relative
         ):
             raise ValueError(f"unexpected media path: {relative}")
         if not isinstance(expected_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_digest):
@@ -75,6 +78,7 @@ def main() -> None:
     parser.add_argument("--media-dir", action="append", required=True)
     parser.add_argument("--figma-file-key")
     parser.add_argument("--contracts-sha256")
+    parser.add_argument("--primary-contract", required=True)
     parser.add_argument("--require-reference-export", action="store_true")
     args = parser.parse_args()
     validate(
@@ -87,6 +91,7 @@ def main() -> None:
         media_dirs=tuple(args.media_dir),
         figma_file_key=args.figma_file_key,
         contracts_sha256=args.contracts_sha256,
+        primary_contract=args.primary_contract or None,
         require_reference_export=args.require_reference_export,
     )
 

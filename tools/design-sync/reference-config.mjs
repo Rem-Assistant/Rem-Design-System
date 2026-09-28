@@ -1,4 +1,4 @@
-const SAFE_NAME = /^[A-Za-z0-9._-]+$/;
+const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9._ -]*$/;
 const FIGMA_NODE = /^\d+:\d+$/;
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 

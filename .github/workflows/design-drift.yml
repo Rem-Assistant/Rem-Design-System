@@ -4,7 +4,10 @@ name: design-drift
 
 on:
   workflow_dispatch:
-  pull_request:
+  # Secret-bearing reference exports run from the default-branch workflow. This job never checks
+  # out or executes pull-request code; exact-head SwiftUI/Compose renders stay in screenshots.yml.
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - 'Sources/**'
       - 'compose/**'
@@ -17,6 +20,9 @@ on:
   schedule:
     - cron: '0 7 * * 1' # weekly guardrail
 
+permissions:
+  contents: read
+
 jobs:
   drift:
     runs-on: macos-14 # needs Xcode for the SwiftUI ImageRenderer snapshots
@@ -24,19 +30,30 @@ jobs:
       - name: Checkout design system (this repo)
         uses: actions/checkout@v4
         with:
-          # pull_request's default merge ref is not an immutable Builder evidence identity.
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
 
-      - name: Checkout trusted Figma exporter
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: trusted-design-export
-          persist-credentials: false
+      - name: Select explicit delivery scope
+        id: scope
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          event = json.loads(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8").read())
+          scopes = [
+              label["name"].removeprefix("delivery-scope:")
+              for label in event["pull_request"].get("labels", [])
+              if label.get("name", "").startswith("delivery-scope:")
+          ]
+          if len(scopes) > 1:
+              raise SystemExit("at most one delivery-scope label is allowed")
+          primary = scopes[0] if scopes else ""
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"primary_contract={primary}\n")
+          PY
 
       - name: Figma export → artifacts/figma
         id: figma-export
@@ -45,34 +62,33 @@ jobs:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            # Pull-request code supplies declarative node mappings only. The secret-bearing exporter
-            # and HTTP client come from the trusted base SHA and never execute PR JavaScript.
-            cp tools/design-sync/manifest.json trusted-design-export/tools/design-sync/manifest.json
-            node trusted-design-export/tools/design-sync/export-figma.mjs "$GITHUB_WORKSPACE/artifacts/figma"
-          else
-            node tools/design-sync/export-figma.mjs artifacts/figma
-          fi
+          node tools/design-sync/export-figma.mjs artifacts/figma
 
       - name: Assemble exact-head Figma reference evidence
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        if: ${{ always() && github.event_name == 'pull_request_target' }}
         env:
           PR: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
           REFERENCE_EXPORT_STATUS: ${{ steps.figma-export.outcome }}
+          PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
         run: |
           set -euo pipefail
-          mkdir -p figma-reference/reference figma-reference/delivery
-          cp artifacts/figma/*.png figma-reference/reference/ 2>/dev/null || true
+          SCOPE_ARGS=()
+          if [ -n "$PRIMARY_CONTRACT" ]; then
+            SCOPE_ARGS=(--primary-contract "$PRIMARY_CONTRACT")
+          fi
+          mkdir -p figma-reference/delivery
+          python3 tools/render-evidence/stage_references.py \
+            --source artifacts/figma --destination figma-reference/reference \
+            --contracts tools/render-evidence/contracts.json "${SCOPE_ARGS[@]}"
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
 
           root = Path("figma-reference")
-          trusted_contracts = Path("trusted-design-export/tools/render-evidence/contracts.json")
-          contracts_path = trusted_contracts if trusted_contracts.is_file() else Path("tools/render-evidence/contracts.json")
+          contracts_path = Path("tools/render-evidence/contracts.json")
           media = {
               path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
               for path in sorted((root / "reference").glob("*.png"))
@@ -87,22 +103,23 @@ jobs:
               "workflow_sha256": hashlib.sha256(Path(".github/workflows/design-drift.yml").read_bytes()).hexdigest(),
               "contracts_sha256": hashlib.sha256(contracts_path.read_bytes()).hexdigest(),
               "reference_export_status": os.environ["REFERENCE_EXPORT_STATUS"],
+              "primary_contract": os.environ.get("PRIMARY_CONTRACT") or None,
               "figma_file_key": manifest["figmaFileKey"],
               "media_sha256": media,
           }, sort_keys=True), encoding="utf-8")
           PY
 
       - name: Upload exact-head Figma reference evidence
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        if: ${{ always() && github.event_name == 'pull_request_target' }}
         uses: actions/upload-artifact@v4
         with:
-          name: figma-reference-evidence
+          name: figma-reference-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
           path: figma-reference/
           if-no-files-found: error
           retention-days: 7
 
       - name: Require Figma reference export
-        if: ${{ github.event_name == 'pull_request' && steps.figma-export.outcome != 'success' }}
+        if: ${{ github.event_name == 'pull_request_target' && steps.figma-export.outcome != 'success' }}
         run: |
           echo '::error::Figma reference export failed; authenticated reference evidence is unavailable'
           exit 1

@@ -165,49 +165,42 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.workflow_run.head_sha }}
+          BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
         run: |
           set -euo pipefail
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
-          match=""
+          artifact_name="figma-reference-evidence-${PR}-${SHA}"
+          artifact=""
           for _ in $(seq 1 75); do
-            if ! runs=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/design-drift.yml/runs?event=pull_request&head_sha=${SHA}&per_page=100"); then
+            if ! response=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${artifact_name}&per_page=100"); then
               sleep 20
               continue
             fi
-            match=$(jq -c --arg sha "$SHA" --arg repo "$GITHUB_REPOSITORY" --argjson pr "$PR" '
-              [.workflow_runs[] | select(
-                .head_sha == $sha and
-                .event == "pull_request" and
-                .status == "completed" and
-                .head_repository.full_name == $repo and
-                any(.pull_requests[]?; .number == $pr)
-              )] | sort_by(.run_started_at, .id) | last // empty
-            ' <<<"$runs")
-            if [ -n "$match" ]; then break; fi
+            artifact=$(jq -c '[.artifacts[] | select(.expired == false)] | sort_by(.created_at, .id) | last // empty' <<<"$response")
+            if [ -n "$artifact" ]; then break; fi
             sleep 20
           done
-          test -n "$match"
-          run_id=$(jq -r .id <<<"$match")
-          run_attempt=$(jq -r .run_attempt <<<"$match")
-          test "$(jq -r .path <<<"$match")" = ".github/workflows/design-drift.yml"
-          artifact=""
-          for _ in $(seq 1 6); do
-            artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?name=figma-reference-evidence")
-            if [ "$(jq -r .total_count <<<"$artifact")" = "1" ]; then break; fi
-            sleep 5
-          done
-          test "$(jq -r .total_count <<<"$artifact")" = "1"
-          test "$(jq -r '.artifacts[0].expired' <<<"$artifact")" = "false"
-          test "$(jq -r '.artifacts[0].workflow_run.id' <<<"$artifact")" = "$run_id"
-          test "$(jq -r '.artifacts[0].workflow_run.head_sha' <<<"$artifact")" = "$SHA"
+          test -n "$artifact"
+          test "$(jq -r .name <<<"$artifact")" = "$artifact_name"
+          run_id=$(jq -r .workflow_run.id <<<"$artifact")
+          run_meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+          run_attempt=$(jq -r .run_attempt <<<"$run_meta")
+          test "$(jq -r .path <<<"$run_meta")" = ".github/workflows/design-drift.yml"
+          test "$(jq -r .event <<<"$run_meta")" = "pull_request_target"
+          test "$(jq -r .status <<<"$run_meta")" = "completed"
+          test "$(jq -r .head_sha <<<"$run_meta")" = "$BASE_SHA"
+          test "$(jq -r .head_repository.full_name <<<"$run_meta")" = "$GITHUB_REPOSITORY"
+          jq -r '.pull_requests[].number' <<<"$run_meta" | grep -Fxq "$PR"
+          test "$(jq -r .workflow_run.head_sha <<<"$artifact")" = "$BASE_SHA"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "run_attempt=$run_attempt" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$(jq -r .id <<<"$artifact")" >> "$GITHUB_OUTPUT"
 
       - name: Download exact-head Figma reference evidence
         uses: actions/download-artifact@v4
         with:
-          name: figma-reference-evidence
+          artifact-ids: ${{ steps.figma-run.outputs.artifact_id }}
           path: ${{ runner.temp }}/figma-evidence
           repository: ${{ github.repository }}
           run-id: ${{ steps.figma-run.outputs.run_id }}
@@ -221,6 +214,7 @@ jobs:
           FIGMA_RUN_ID: ${{ steps.figma-run.outputs.run_id }}
           FIGMA_RUN_ATTEMPT: ${{ steps.figma-run.outputs.run_attempt }}
           TRUSTED_WORKFLOW_SHA: ${{ steps.validate.outputs.trusted_design_workflow_sha }}
+          PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
         run: |
           set -euo pipefail
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
@@ -231,6 +225,7 @@ jobs:
             --run-id "$FIGMA_RUN_ID" --run-attempt "$FIGMA_RUN_ATTEMPT" \
             --workflow-sha256 "$TRUSTED_WORKFLOW_SHA" --media-dir reference \
             --figma-file-key "$figma_file_key" --contracts-sha256 "$contracts_sha" \
+            --primary-contract "$PRIMARY_CONTRACT" \
             --require-reference-export
           mkdir -p "$EVIDENCE_ROOT/reference"
           cp "$FIGMA_ROOT"/reference/*.png "$EVIDENCE_ROOT/reference/"

@@ -23,6 +23,7 @@ class ArtifactValidationTests(unittest.TestCase):
             "run_attempt": 2,
             "workflow_sha256": "b" * 64,
             "contracts_sha256": "c" * 64,
+            "primary_contract": "demo",
             "reference_export_status": "success",
             "figma_file_key": "file-key",
             "media_sha256": {
@@ -44,6 +45,7 @@ class ArtifactValidationTests(unittest.TestCase):
             media_dirs=("reference",),
             figma_file_key="file-key",
             contracts_sha256="c" * 64,
+            primary_contract="demo",
             require_reference_export=True,
         )
 
@@ -60,6 +62,7 @@ class ArtifactValidationTests(unittest.TestCase):
             "contracts_sha256": "e" * 64,
             "figma_file_key": "other-file",
             "reference_export_status": "failure",
+            "primary_contract": "other",
         }
         for field, value in mutations.items():
             with self.subTest(field=field), tempfile.TemporaryDirectory() as tmp:
