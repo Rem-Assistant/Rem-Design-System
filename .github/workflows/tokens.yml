@@ -13,6 +13,8 @@ on:
       - "components/**"
       - "manifest.json"
       - "tools/**"
+      - ".agent-factory/**"
+      - "docs/contracts/**"
       - ".github/workflows/tokens.yml"
   pull_request:
     paths:
@@ -21,6 +23,8 @@ on:
       - "components/**"
       - "manifest.json"
       - "tools/**"
+      - ".agent-factory/**"
+      - "docs/contracts/**"
       - ".github/workflows/tokens.yml"
 
 jobs:
@@ -35,3 +39,5 @@ jobs:
         run: node tools/generate-tokens.mjs --check
       - name: manifest.json in sync with props + docs
         run: node tools/build-manifest.mjs --check
+      - name: Paired evidence delivery contract
+        run: python3 -m unittest discover -s tools/render-evidence -p 'test_*.py'

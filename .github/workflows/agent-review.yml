@@ -1,13 +1,16 @@
 name: agent-review
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_dispatch:
     inputs:
       pr:
         description: Pull request number to review again
         required: true
         type: string
+concurrency:
+  group: rem-review-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
 permissions:
   actions: read
   checks: read
@@ -17,11 +20,17 @@ permissions:
   statuses: write
 jobs:
   review:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.fork == false
-    uses: samuelalake/agent-factory/.github/workflows/review.yml@a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.fork == false &&
+      (github.event.action != 'edited' ||
+      (github.actor == 'agent-factory-builder[bot]' && github.event.changes.body &&
+      (contains(github.event.pull_request.body, 'builder-delivery-status:ready') ||
+      contains(github.event.pull_request.body, 'builder-delivery-status:failed')))))
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@ac6974e595408284eb47b8e3a4d9c19a4966b299
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+      factory_ref: ac6974e595408284eb47b8e3a4d9c19a4966b299
       reviewer_app_id: ${{ vars.AGENT_FACTORY_REVIEWER_APP_ID }}
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
@@ -33,10 +42,10 @@ jobs:
       AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
   integration:
     needs: review
-    uses: samuelalake/agent-factory/.github/workflows/integration.yml@a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+    uses: samuelalake/agent-factory/.github/workflows/integration.yml@ac6974e595408284eb47b8e3a4d9c19a4966b299
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: a3e30b0c71df3885d7c122ec6cf0cfcb0694f773
+      factory_ref: ac6974e595408284eb47b8e3a4d9c19a4966b299
       timeout_seconds: 1800
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:

@@ -4,7 +4,7 @@ name: screenshots
 # `xcodebuild test` (UIHostingController + layer.render, for true iOS UIColor semantics and
 # ScrollView/List capture), Compose via Paparazzi (JVM, no emulator), on one macOS runner OS. The two
 # render jobs are independent so one platform failing still posts the other; the evidence job
-# assembles whatever rendered and posts an image table to the PR.
+# assembles whatever rendered for the trusted publisher to validate and publish.
 
 on:
   workflow_dispatch:
@@ -14,12 +14,9 @@ on:
       - "compose/**"
       - "tokens/generated/**"
       - "tools/render-swift/**"
-      - ".github/workflows/screenshots.yml"
-      - ".github/scripts/post-evidence.sh"
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: screenshots-${{ github.ref }}
@@ -92,7 +89,7 @@ jobs:
           if-no-files-found: error
 
   evidence:
-    name: Post screenshots to PR
+    name: Assemble render evidence
     needs: [swiftui, compose]
     if: ${{ always() && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
@@ -101,15 +98,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dl
-      - name: Assemble + comment
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: bash .github/scripts/post-evidence.sh
-
-      # Typed, head-bound Builder-evidence artifact for the Agent Factory visual-review loop
-      # (consumed by publish-builder-delivery.yml, which validates + publishes it into the Builder
-      # delivery so the Reviewer sees the renders). Additive to the human comment above.
+      # The privileged publisher owns the sole canonical paired delivery.
+      # This job only assembles runner artifacts; it cannot write PR comments.
       - name: Assemble Builder evidence (out/ + manifest)
         if: ${{ always() && github.event_name == 'pull_request' }}
         env:

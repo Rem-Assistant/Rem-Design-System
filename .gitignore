@@ -4,3 +4,7 @@ _skills-src/
 
 # Swift package build artifacts
 .build/
+
+# Local Python verification caches
+__pycache__/
+*.pyc
