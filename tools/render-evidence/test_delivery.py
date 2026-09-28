@@ -26,14 +26,17 @@ class PairedDeliveryTests(unittest.TestCase):
             {"consent-flow-documentation": {"name": "Consent-flow-documentation", "node": "777:432"}},
         )
 
-    def fixtures(self, root, missing=None):
+    def fixtures(self, root, missing=None, include_references=True, states=None):
+        states = states or CONTRACTS["onboarding-consent"]["states"]
         for platform in ("swiftui", "compose"):
             (root / platform).mkdir()
-            for key in CONTRACTS["onboarding-consent"]["states"]:
+            for key in states:
                 if (platform, key) == missing:
                     continue
                 name = key if platform == "swiftui" else "com.rem.designsystem_EvidenceSnapshots_consent_" + key
                 (root / platform / (name + ".png")).write_bytes(b"fixture")
+        if not include_references:
+            return
         (root / "reference").mkdir()
         for key in CONTRACTS["onboarding-consent"]["references"]:
             if ("reference", key) != missing:
@@ -47,7 +50,10 @@ class PairedDeliveryTests(unittest.TestCase):
             root = Path(tmp); self.fixtures(root)
             for platform in ("swiftui", "compose"):
                 (root / platform / "signin-returning-light.png").write_bytes(b"regression")
-            status, body, attachments = delivery.prepare(root, "a" * 40, "success", [CONSENT], CONTRACTS)
+            status, body, attachments = delivery.prepare(
+                root, "a" * 40, "success", [CONSENT], CONTRACTS,
+                primary_contract="onboarding-consent",
+            )
             self.assertEqual(status, "ready")
             state_count = len(CONTRACTS["onboarding-consent"]["states"])
             self.assertEqual(len(attachments), state_count * 3 + 1)
@@ -92,7 +98,26 @@ class PairedDeliveryTests(unittest.TestCase):
             )
             self.assertEqual(status, "ready")
             self.assertIn("component-light", body)
-            self.assertEqual(len(attachments), len(CONTRACTS["onboarding-consent"]["states"]) * 3 + 2)
+            self.assertEqual(len(attachments), len(CONTRACTS["onboarding-consent"]["states"]) * 2 + 2)
+
+    def test_unscoped_contract_paths_require_platforms_but_not_figma(self):
+        all_states = sorted({
+            state for contract in CONTRACTS.values() for state in contract["states"]
+        })
+        cases = [
+            ([CONSENT], CONTRACTS["onboarding-consent"]["states"]),
+            (["tokens/generated/semantic.json"], all_states),
+        ]
+        for changed, states in cases:
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp); self.fixtures(root, include_references=False, states=states)
+                status, body, attachments = delivery.prepare(
+                    root, "a" * 40, "success", changed, CONTRACTS,
+                )
+                self.assertEqual(status, "ready")
+                self.assertNotIn("Figma Reference", body)
+                self.assertNotIn("figma-reference", body)
+                self.assertEqual(len(attachments), len(states) * 2)
 
     def test_missing_android_state_fails_even_when_workflow_succeeded(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -149,6 +174,6 @@ class PairedDeliveryTests(unittest.TestCase):
 
     def test_unimplemented_other_screen_does_not_block_unrelated_work(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp); self.fixtures(root)
+            root = Path(tmp); self.fixtures(root, include_references=False)
             status, _, _ = delivery.prepare(root, "a" * 40, "success", [CONSENT], CONTRACTS)
             self.assertEqual(status, "ready")

@@ -28,7 +28,6 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     for platform in ("swiftui", "compose"):
         for key, path in _evidence(root, platform).items():
             pairs.setdefault(key, {})[platform] = path
-    references = _evidence(root, "reference")
     if not pairs:
         raise ValueError("No rendered evidence")
     required = set()
@@ -58,8 +57,12 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
                 required.update(contract["states"])
     missing = [f"{key} / {platform}" for key in sorted(required)
                for platform in ("swiftui", "compose") if platform not in pairs.get(key, {})]
+    # Figma is an explicit contract-level capability. Path inference still determines the required
+    # SwiftUI/Compose states, but it must not make an unscoped delivery depend on a Figma artifact.
+    reference_contracts = selected_contracts if primary_contract is not None else set()
+    references = _evidence(root, "reference") if reference_contracts else {}
     required_references = {
-        key for name in selected_contracts
+        key for name in reference_contracts
         for key in contracts[name].get("references", {})
     }
     undeclared_references = required_references - required
@@ -70,13 +73,13 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     missing += [f"{key} / figma-reference" for key in sorted(required_references)
                 if key not in references]
     waypoint_keys = {
-        key for name in selected_contracts
+        key for name in reference_contracts
         for key in contracts[name].get("waypoints", {})
     }
     missing += [f"{key} / figma-reference" for key in sorted(waypoint_keys)
                 if key not in references]
     prefixes = {
-        prefix for name in selected_contracts
+        prefix for name in reference_contracts
         for prefix in contracts[name].get("exclusive_output_prefixes", [])
     }
     if any(not re.fullmatch(r"[a-z0-9-]+", prefix) for prefix in prefixes):
