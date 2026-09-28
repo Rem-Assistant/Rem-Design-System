@@ -90,7 +90,7 @@ fun consentStep(
         legalFooter = "By tapping \"Accept and Continue,\" you agree to our Terms of Service and Privacy Policy.",
         bottomBarState = when (state) {
             ConsentState.Idle, ConsentState.Loading -> OnboardingBottomBarState.Standard
-            is ConsentState.RetryableError -> OnboardingBottomBarState.Error(state.message)
+            is ConsentState.RetryableError -> OnboardingBottomBarState.ConsentRetryableError(state)
         },
         background = OnboardingBackground.Primary,
         progress = scope.progress,

@@ -16,6 +16,7 @@ const [swiftDir, figmaDir] = process.argv.slice(2).filter((a) => !a.startsWith('
 const opt = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith('--')).map((a) => a.slice(2).split('=')));
 const threshold = Number(opt.threshold ?? 0.1);        // per-pixel color tolerance
 const maxDiffRatio = Number(opt.maxDiffRatio ?? 0.02); // allow 2% differing pixels (font hinting etc.)
+const required = (opt.require ?? '').split(',').map((name) => name.trim()).filter(Boolean);
 if (!swiftDir || !figmaDir) { console.error('usage: compare.mjs <swiftuiDir> <figmaDir>'); process.exit(2); }
 
 const outDir = 'artifacts/diff';
@@ -35,6 +36,7 @@ function loadResized(path, w, h) {
 }
 
 let failed = 0, checked = 0, skipped = 0;
+const results = [];
 for (const f of readdirSync(figmaDir).filter((f) => f.endsWith('.png'))) {
   const name = basename(f, '.png');
   const swiftPath = join(swiftDir, f);
@@ -45,6 +47,8 @@ for (const f of readdirSync(figmaDir).filter((f) => f.endsWith('.png'))) {
   const px = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold });
   const ratio = px / (a.width * a.height);
   checked++;
+  const passed = ratio <= maxDiffRatio;
+  results.push({ name, diffRatio: ratio, passed });
   if (ratio > maxDiffRatio) {
     failed++;
     writeFileSync(join(outDir, `${name}.diff.png`), PNG.sync.write(diff));
@@ -53,6 +57,24 @@ for (const f of readdirSync(figmaDir).filter((f) => f.endsWith('.png'))) {
     console.log(`✓ ${name}: ${(ratio * 100).toFixed(2)}% differ`);
   }
 }
-console.log(`\n${checked} checked · ${failed} drifted · ${skipped} unmatched`);
+const compared = new Set(results.map((result) => result.name));
+const missingRequired = required.filter((name) => !compared.has(name));
+for (const name of missingRequired) console.error(`✗ required pair not compared: ${name}`);
+
+const report = {
+  version: 1,
+  head: process.env.GITHUB_SHA ?? null,
+  threshold,
+  maxDiffRatio,
+  required,
+  missingRequired,
+  checked,
+  failed,
+  skipped,
+  results: results.sort((a, b) => a.name.localeCompare(b.name)),
+};
+writeFileSync('artifacts/design-drift-report.json', `${JSON.stringify(report, null, 2)}\n`);
+
+console.log(`\n${checked} checked · ${failed} drifted · ${skipped} unmatched · ${missingRequired.length} required missing`);
 if (checked === 0) console.error('✗ No registered Figma/code pairs were compared.');
-process.exit(failed > 0 || checked === 0 ? 1 : 0);
+process.exit(failed > 0 || checked === 0 || missingRequired.length > 0 ? 1 : 0);

@@ -51,7 +51,25 @@ jobs:
         run: |
           cd tools/design-sync && npm ci
           cd "$GITHUB_WORKSPACE"
-          node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma --threshold=0.3 --maxDiffRatio=0.10
+          node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma \
+            --threshold=0.3 \
+            --maxDiffRatio=0.10 \
+            --require=Consent-default-light,Consent-default-dark,Consent-error-dark,Consent-loading-light,Consent-terms-light,Consent-privacy-light
+
+      - name: Publish machine-readable comparison report
+        if: always() && hashFiles('artifacts/design-drift-report.json') != ''
+        run: |
+          echo '## Design drift comparison' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat artifacts/design-drift-report.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload comparison report
+        if: always() && hashFiles('artifacts/design-drift-report.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-drift-report
+          path: artifacts/design-drift-report.json
 
       - name: Upload diffs on failure
         if: failure()

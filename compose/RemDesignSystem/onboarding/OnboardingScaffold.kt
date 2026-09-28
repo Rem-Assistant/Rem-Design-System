@@ -39,10 +39,13 @@ import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTypography
 
-/** Typed bottom-bar state. A notice cannot be passed as an unrelated free-form scaffold string. */
+/**
+ * Typed bottom-bar state. The only notice-bearing variant carries the consent domain state itself,
+ * so callers cannot combine arbitrary notice copy with an unrelated CTA label or action.
+ */
 sealed interface OnboardingBottomBarState {
     data object Standard : OnboardingBottomBarState
-    data class Error(val message: String) : OnboardingBottomBarState
+    data class ConsentRetryableError(val state: ConsentState.RetryableError) : OnboardingBottomBarState
 }
 
 /**
@@ -194,8 +197,8 @@ fun OnboardingScaffold(
         ) {
             when (bottomBarState) {
                 OnboardingBottomBarState.Standard -> Unit
-                is OnboardingBottomBarState.Error -> {
-                    OnboardingNotice(bottomBarState.message)
+                is OnboardingBottomBarState.ConsentRetryableError -> {
+                    OnboardingNotice(bottomBarState.state.message)
                     Spacer(Modifier.height(RemSpacing.md))
                 }
             }

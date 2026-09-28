@@ -38,7 +38,10 @@ FIGMA_TOKEN=<pat> node export-figma.mjs artifacts/figma
 # code side (macOS runner): render previews to artifacts/swiftui/<Name>.png
 #   -> see snapshots/RemDesignSnapshots.swift.example (copy into the RemClaw test target)
 # then:
-npm ci && node compare.mjs artifacts/swiftui artifacts/figma --threshold=0.3 --maxDiffRatio=0.10
+npm ci && node compare.mjs artifacts/swiftui artifacts/figma \
+  --threshold=0.3 \
+  --maxDiffRatio=0.10 \
+  --require=Consent-default-light,Consent-default-dark,Consent-error-dark,Consent-loading-light,Consent-terms-light,Consent-privacy-light
 ```
 
 `--threshold` is pixelmatch's per-pixel YIQ color-distance tolerance, not a percentage of the screen;
@@ -49,10 +52,17 @@ baseline measured 6.55%–9.38% across all six required states (default light 6.
 above the approved loading baseline while failing a layout change that moves or replaces a material
 region. Reviewer still performs the paired visual decision; this lane is a fail-closed drift
 guardrail, not an automated parity approval. Any threshold change requires a new six-state baseline
-in this document and Reviewer approval.
+in this document and Reviewer approval. The exact approved measurements, Figma node ids, thresholds,
+and source run are also committed in
+[`baselines/consent-2026-09-28.json`](./baselines/consent-2026-09-28.json) so this rationale is
+independently machine-readable.
 
 At least one basename must match between the two folders or the comparison fails;
-`manifest.json` supplies those paired names.
+`manifest.json` supplies those paired names. CI additionally passes all six consent basenames through
+`--require`; a missing code snapshot, Figma export, or comparison fails the job. Every run writes
+`artifacts/design-drift-report.json`, publishes it in the job summary, and uploads it as the
+`design-drift-report` artifact. The report records the exact head, thresholds, required set, missing
+set, and per-state diff ratio.
 
 ## 3. Generator (code → Figma)
 

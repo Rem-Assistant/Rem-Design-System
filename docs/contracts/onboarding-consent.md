@@ -60,6 +60,11 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 - **Consent hero is the shield-lock** (`lock.shield.fill` / `shield_lock`, FILL 1) — not a
   shield-check (`Security`), not a plain shield.
 - **Row icons are outline (FILL 0)** on both platforms: `doc.text` / `description`, `shield` / `shield`.
+- **Glyph parity is semantic and rendered, while each platform stays native.** SwiftUI resolves the
+  registry mapping through SF Symbols inside `ContainedIcon`; Compose resolves the paired Material
+  Symbols codepoint and FILL through its static outlined/filled fonts inside the same design-system
+  primitive. This backend difference is approved and hidden behind `ContainedIcon`. The registry row,
+  FILL value, size, color, and paired current-head renders are the cross-platform contract.
 - **The error state is retryable by construction.** It represents a failed consent submission and
   always keeps the notice, "Try again" CTA, and original accept action together. A terminal,
   authorization, or recovery state must be modeled separately; it must not reuse this state.
@@ -95,6 +100,15 @@ evidence and this contract. Existing frame links alone do not establish that the
 were updated or verified. Missing authoring access is a Steward capability blocker,
 not permission to omit Figma or spend repeated screen-revision attempts.
 
+### Figma/code source linkage
+
+`tools/design-sync/manifest.json` is the machine-readable source link for each editable node. The
+default, dark, error, and loading nodes map to `OnboardingConsentTemplate.swift`; Terms `638:28` and
+Privacy `638:65` map to `LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
+Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
+presentation and injects the current legal body; render-only legal prose remains in test fixtures.
+The Figma sheet nodes mirror that owned chrome and use representative body copy only for layout.
+
 ## Parity acceptance (what the visual gate diffs)
 
 The paired render passes when iOS and Android match on **all** of:
@@ -113,7 +127,9 @@ The paired render passes when iOS and Android match on **all** of:
 `Consent-loading-light`, `Consent-error-dark`, plus the two sheets `Consent-terms-light`,
 `Consent-privacy-light` — iOS ⟷ Android side by side. The PR's Figma table must contain a current
 export and editable node link for the same six states; the design-drift run must compare all six
-registered Figma/code pairs at the PR head.
+registered Figma/code pairs at the PR head. CI passes those six exact basenames through
+`compare.mjs --require`, then publishes `artifacts/design-drift-report.json` in the job summary and
+as a downloadable workflow artifact. Missing or unmatched required states fail closed.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
 amendment on the issue. **Status:** drafted from the reference frame + onboarding packet; the paired
