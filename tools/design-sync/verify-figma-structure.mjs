@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { figma } from './lib.mjs';
+import { validateStructureContract } from './structure-contract.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -406,13 +407,25 @@ export async function createStructureReport(contract, {
 }
 
 async function main() {
-  const output = resolve(process.argv[2] || 'artifacts/figma-structure-report.json');
-  const contract = JSON.parse(await readFile(resolve(HERE, 'structure-contract.json'), 'utf8'));
+  const positional = process.argv.slice(2).filter((argument) => !argument.startsWith('--'));
+  const options = Object.fromEntries(process.argv.slice(2).filter((argument) => argument.startsWith('--')).map((argument) => {
+    const [key, ...rest] = argument.slice(2).split('=');
+    return [key, rest.join('=')];
+  }));
+  const output = resolve(options.output || positional[0] || 'artifacts/figma-structure-report.json');
+  const contractPath = resolve(options.contract || resolve(HERE, 'structure-contract.json'));
+  const contract = validateStructureContract(
+    JSON.parse(await readFile(contractPath, 'utf8')),
+    { expectedFileKey: options['expected-file-key'] || undefined },
+  );
   await mkdir(dirname(output), { recursive: true });
   const fetchFigma = process.env.FIGMA_TOKEN
     ? figma
     : async () => { throw new Error('FIGMA_TOKEN is not set'); };
-  const report = await createStructureReport(contract, { fetchFigma });
+  const report = await createStructureReport(contract, {
+    fetchFigma,
+    head: options.head || process.env.GITHUB_SHA || null,
+  });
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   if (report.status !== 'completed') throw new Error(report.errors.join('\n'));
   console.log(`Verified Figma structure ${report.structureDigest} → ${output}`);

@@ -4,7 +4,8 @@
 // and fail the process (→ CI red) so design/code divergence is caught automatically —
 // e.g. the "leading badge gap" and "title clipping" bugs would have tripped this.
 //
-//   node tools/design-sync/compare.mjs <swiftuiDir> <figmaDir> [--threshold=0.1] [--maxDiffRatio=0.02]
+//   node tools/design-sync/compare.mjs <swiftuiDir> <figmaDir> [--threshold=0.1]
+//     [--maxDiffRatio=0.02] [--require=NameA,NameB] [--exclusive-prefix=Family-]
 //
 // Deps: pixelmatch, pngjs  (npm i -D pixelmatch pngjs)
 import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -18,6 +19,11 @@ const threshold = Number(opt.threshold ?? 0.1);        // per-pixel color tolera
 const maxDiffRatio = Number(opt.maxDiffRatio ?? 0.02); // allow 2% differing pixels (font hinting etc.)
 const required = (opt.require ?? '').split(',').map((name) => name.trim()).filter(Boolean);
 const requiredSet = new Set(required);
+const exclusivePrefixes = (opt['exclusive-prefix'] ?? '').split(',').map((prefix) => prefix.trim()).filter(Boolean);
+if (exclusivePrefixes.length > 0 && required.length === 0) {
+  console.error('--exclusive-prefix requires an explicit --require set');
+  process.exit(2);
+}
 if (!swiftDir || !figmaDir) { console.error('usage: compare.mjs <swiftuiDir> <figmaDir>'); process.exit(2); }
 
 const outDir = 'artifacts/diff';
@@ -136,6 +142,27 @@ const hardErrors = missingRequired.map((name) => {
   console.error(`✗ HARD ERROR: ${message}`);
   return { code: 'missing-required-evidence', name, missing, message };
 });
+const unexpectedExclusive = [...new Set([...figmaNames, ...swiftNames])]
+  .filter((name) => exclusivePrefixes.some((prefix) => name.startsWith(prefix)) && !requiredSet.has(name))
+  .sort();
+for (const name of unexpectedExclusive) {
+  const present = [];
+  if (figmaNames.has(name)) present.push('figma');
+  if (swiftNames.has(name)) present.push('swiftui');
+  const message = `Unexpected exclusive-family evidence ${name} is present in ${present.join(' + ')}`;
+  hardErrors.push({ code: 'unexpected-exclusive-evidence', name, present, message });
+  results.push({
+    name,
+    status: 'error',
+    diffRatio: null,
+    passed: false,
+    errorCode: 'unexpected-exclusive-evidence',
+    present,
+    hardError: true,
+    error: message,
+  });
+  console.error(`✗ HARD ERROR: ${message}`);
+}
 
 const report = {
   version: 1,
@@ -145,6 +172,8 @@ const report = {
   maxDiffRatio,
   required,
   missingRequired,
+  exclusivePrefixes,
+  unexpectedExclusive,
   hardErrors,
   checked,
   failed,

@@ -25,24 +25,28 @@ try {
   await writeFile(join(figmaDir, 'NeedsSwift.png'), png);
   await writeFile(join(swiftDir, 'NeedsFigma.png'), png);
   await writeFile(join(figmaDir, 'OptionalOnly.png'), png);
+  await writeFile(join(figmaDir, 'Consent-loading-light.png'), png);
 
   const result = spawnSync(process.execPath, [
     fileURLToPath(new URL('./compare.mjs', import.meta.url)),
     swiftDir,
     figmaDir,
     '--require=Matched,NeedsSwift,NeedsFigma',
+    '--exclusive-prefix=Consent-',
   ], { cwd: tempRoot, encoding: 'utf8' });
 
   assert.equal(result.status, 1);
   assert.match(`${result.stdout}\n${result.stderr}`, /HARD ERROR/);
-  assert.match(result.stdout, /2 hard errors/);
+  assert.match(result.stdout, /3 hard errors/);
 
   const report = JSON.parse(await readFile(join(tempRoot, 'artifacts/design-drift-report.json'), 'utf8'));
   assert.equal(report.status, 'error');
   assert.equal(report.checked, 1);
-  assert.equal(report.skipped, 1);
+  assert.equal(report.skipped, 2);
   assert.deepEqual(report.missingRequired, ['NeedsSwift', 'NeedsFigma']);
-  assert.equal(report.hardErrors.length, 2);
+  assert.deepEqual(report.exclusivePrefixes, ['Consent-']);
+  assert.deepEqual(report.unexpectedExclusive, ['Consent-loading-light']);
+  assert.equal(report.hardErrors.length, 3);
   assert.deepEqual(report.hardErrors.find(({ name }) => name === 'NeedsSwift').missing, ['swiftui']);
   assert.deepEqual(report.hardErrors.find(({ name }) => name === 'NeedsFigma').missing, ['figma']);
   for (const name of report.missingRequired) {
