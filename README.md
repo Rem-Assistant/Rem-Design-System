@@ -28,10 +28,10 @@ agents. See [`SPEC.md`](SPEC.md) for the full reasoning and the open decisions s
 New Code Connect work uses parserless `.figma.ts` templates, following Figma's current guidance.
 `Section` has separate SwiftUI and Compose templates under `code-connect/`, selected by
 `figma.swiftui.config.json` and `figma.compose.config.json`. The Figma `Rows` Slot is read dynamically,
-so Dev Mode can render nested connected rows instead of hardcoding examples. Parserless
-`code-connect/*.figma.ts` templates are the only Code Connect authoring and validation path. Any
-co-located `.figma.swift` / `.figma.kt` files are archived implementation examples: shipping targets
-exclude them and Code Connect configs do not parse, publish, or migrate them.
+so Dev Mode can render nested connected rows instead of hardcoding examples. Local authoring and
+validation use the parserless `code-connect/*.figma.ts` templates and `npm run check-code-connect`.
+Any co-located `.figma.swift` / `.figma.kt` files are archived implementation examples: shipping
+targets exclude them and Code Connect configs do not parse or validate them.
 
 **They cannot be published on the current Figma plan.** Verified via the API: using Code Connect
 requires a **Full or Dev seat on an Organization or Enterprise plan**. This account has Full seats
@@ -39,9 +39,10 @@ but only on **Starter/Pro** teams (Pro is *not* enough — the gate is Org/Enter
 and reading kit Code Connect are blocked until the design-system file lives on an Org/Enterprise team.
 
 **What this does NOT block:** the core loop. Authoring components in Swift and projecting them into
-Figma via generate-library works on the current plan and is the source of truth. Code Connect is the
-*return trip* (Figma→code returns the real component) plus a drift guard (`figma connect check`) — a
-later enhancement, not a dependency.
+Figma via generate-library works on the current plan and is the source of truth. Source links,
+Dev Resources, and local parserless validation remain available. Publishing Code Connect mappings,
+and using published mappings for the Figma-to-code return trip and hosted drift checks, remain
+unavailable until the plan requirement above is satisfied.
 
 **To activate later** (once on a qualifying plan, with the `figma` CLI + `FIGMA_ACCESS_TOKEN`):
 
