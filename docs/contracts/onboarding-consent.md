@@ -71,7 +71,24 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 - **Adaptable:** per-platform safe-area handling; the exact hero-badge size; the native sheet
   presentation idiom (iOS page sheet ↔ Android modal/full sheet).
 - **Excluded:** other onboarding screens (own contracts); the legal copy body (owned by
-  `LegalDocumentView`); Figma authoring; the sequencer chrome itself.
+  `LegalDocumentView`); the sequencer chrome itself.
+
+## Figma delivery (required)
+
+The founder clarified on 2026-09-28 that Figma is part of a finished screen PR. This
+supersedes the earlier Figma exclusion; the approved arrangement and product rules above
+are unchanged. Follow [Figma delivery](../figma-delivery.md) and `SHAPE-OF-A-TASK.md`.
+
+Update the editable consent screen and legal-sheet flow in the existing Rem file. Cover
+`Consent-default-light`, `Consent-default-dark`, `Consent-error-dark`,
+`Consent-terms-light`, and `Consent-privacy-light`, including each platform's intentional
+native presentation. Reuse canonical components and shared variables. Include screen,
+flow, component/preview links and the reused/new component ledger in the PR.
+
+Reviewer must inspect the Figma exports and structure against the current iOS/Android
+evidence and this contract. Existing frame links alone do not establish that the designs
+were updated or verified. Missing authoring access is a Steward capability blocker,
+not permission to omit Figma or spend repeated screen-revision attempts.
 
 ## Parity acceptance (what the visual gate diffs)
 

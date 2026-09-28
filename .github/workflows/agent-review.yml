@@ -27,10 +27,10 @@ jobs:
       (github.actor == 'agent-factory-builder[bot]' && github.event.changes.body &&
       (contains(github.event.pull_request.body, 'builder-delivery-status:ready') ||
       contains(github.event.pull_request.body, 'builder-delivery-status:failed')))))
-    uses: samuelalake/agent-factory/.github/workflows/review.yml@ac6974e595408284eb47b8e3a4d9c19a4966b299
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@14a63f46a00b3e9911bc90e805d734c9ca5c4a73
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: ac6974e595408284eb47b8e3a4d9c19a4966b299
+      factory_ref: 14a63f46a00b3e9911bc90e805d734c9ca5c4a73
       reviewer_app_id: ${{ vars.AGENT_FACTORY_REVIEWER_APP_ID }}
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
@@ -42,10 +42,10 @@ jobs:
       AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
   integration:
     needs: review
-    uses: samuelalake/agent-factory/.github/workflows/integration.yml@ac6974e595408284eb47b8e3a4d9c19a4966b299
+    uses: samuelalake/agent-factory/.github/workflows/integration.yml@14a63f46a00b3e9911bc90e805d734c9ca5c4a73
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: ac6974e595408284eb47b8e3a4d9c19a4966b299
+      factory_ref: 14a63f46a00b3e9911bc90e805d734c9ca5c4a73
       timeout_seconds: 1800
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
