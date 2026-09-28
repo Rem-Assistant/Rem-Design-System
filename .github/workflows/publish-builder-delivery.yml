@@ -162,6 +162,7 @@ jobs:
 
       - name: Locate exact-head Figma reference evidence
         id: figma-run
+        if: ${{ steps.validate.outputs.primary_contract != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.workflow_run.head_sha }}
@@ -201,6 +202,7 @@ jobs:
           echo "artifact_id=$(jq -r .id <<<"$artifact")" >> "$GITHUB_OUTPUT"
 
       - name: Download exact-head Figma reference evidence
+        if: ${{ steps.validate.outputs.primary_contract != '' }}
         uses: actions/download-artifact@v4
         with:
           artifact-ids: ${{ steps.figma-run.outputs.artifact_id }}
@@ -210,6 +212,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Validate and stage authenticated Figma references
+        if: ${{ steps.validate.outputs.primary_contract != '' }}
         env:
           SHA: ${{ github.event.workflow_run.head_sha }}
           FIGMA_ROOT: ${{ runner.temp }}/figma-evidence

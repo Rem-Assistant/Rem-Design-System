@@ -55,7 +55,7 @@ jobs:
           PY
 
       - name: Fetch and validate exact-head declarative contract data
-        if: ${{ github.event_name == 'pull_request_target' }}
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
@@ -70,6 +70,7 @@ jobs:
 
       - name: Export Figma evidence
         id: figma-export
+        if: ${{ github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '' }}
         continue-on-error: true
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
@@ -86,6 +87,7 @@ jobs:
 
       - name: Verify live editable Figma structure
         id: structure
+        if: ${{ github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '' }}
         continue-on-error: true
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
@@ -104,7 +106,7 @@ jobs:
             --head="$HEAD_SHA"
 
       - name: Preserve structure diagnostics
-        if: ${{ always() }}
+        if: ${{ always() && (github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '') }}
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           STRUCTURE_OUTCOME: ${{ steps.structure.outcome }}
@@ -125,7 +127,7 @@ jobs:
           fi
 
       - name: Assemble exact-head Figma reference evidence
-        if: ${{ always() && github.event_name == 'pull_request_target' }}
+        if: ${{ always() && github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
         env:
           PR: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
@@ -179,7 +181,7 @@ jobs:
           PY
 
       - name: Upload exact-head Figma reference evidence
-        if: ${{ always() && github.event_name == 'pull_request_target' }}
+        if: ${{ always() && github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: figma-reference-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
@@ -188,7 +190,7 @@ jobs:
           retention-days: 7
 
       - name: Require authenticated Figma evidence
-        if: ${{ github.event_name == 'pull_request_target' && (steps.figma-export.outcome != 'success' || steps.structure.outcome != 'success') }}
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && (steps.figma-export.outcome != 'success' || steps.structure.outcome != 'success') }}
         run: |
           echo '::error::Figma reference export and structure verification must both succeed'
           exit 1

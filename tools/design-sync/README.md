@@ -72,7 +72,9 @@ of `screenshots.yml` and Reviewer. The scheduled/manual lane retains the older s
 comparison as a health check and is not presented as pull-request evidence.
 
 Add one `delivery-scope:<contract-name>` label to a PR when collateral contract edits would otherwise
-make the evidence scope ambiguous. The publisher accepts at most one label and resolves it only
+make the evidence scope ambiguous. The label also explicitly opts that delivery into authenticated
+Figma reference and structure evidence; an unscoped component-only or unrelated screen delivery does
+not wait for the consent artifact. The publisher accepts at most one label and resolves it only
 against the trusted contract registry. A contract can opt into `exclusive_output_prefixes` to reject
 stale or invented outputs in its namespace while allowing unrelated regression snapshots. This keeps
 the mechanism reusable without embedding consent-specific state names in delivery code.
