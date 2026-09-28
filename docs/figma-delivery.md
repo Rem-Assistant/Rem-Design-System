@@ -11,6 +11,9 @@ Follow `SHAPE-OF-A-TASK.md`, `FILE-ORG.md`, and the repository's `rem-design-sys
 
 - Update editable native screens and every required state in the existing Rem file,
   `af4yDqCzp57jds9lkFiIaO`. Use canonical component instances, shared variables, and text styles.
+- For consent, the required authored/evidence destinations are Default, Terms, and Privacy in Light.
+  Dark remains reviewable through the shared color-variable mode; loading and error are not shipping
+  consent-local states and must not be fabricated.
 - Preserve each platform's intentional native treatment while matching the approved
   arrangement, copy, emphasis, glyph meaning, and FILL. Document the platform/mode of each frame.
 - Update the consent flow and its legal-sheet interactions so Present works. Reuse the
