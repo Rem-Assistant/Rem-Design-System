@@ -37,6 +37,23 @@ class PairedDeliveryTests(unittest.TestCase):
                 self.assertIn(f"![compose {key}]", row)
             self.assertNotIn("signin-returning-light", body)
 
+    def test_explicit_contract_ignores_collateral_other_screen_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); self.fixtures(root)
+            changed = [
+                "docs/contracts/onboarding-consent.md",
+                "compose/RemDesignSystem/onboarding/SignInStep.kt",
+            ]
+            status, body, attachments = delivery.prepare(
+                root, "a" * 40, "success", changed, CONTRACTS,
+            )
+            self.assertEqual(status, "ready")
+            self.assertNotIn("signin-", body)
+            self.assertEqual(
+                len(attachments),
+                len(CONTRACTS["onboarding-consent"]["states"]) * 2,
+            )
+
     def test_unscoped_delivery_keeps_complete_gallery(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); self.fixtures(root)
