@@ -74,7 +74,11 @@ class RemMaterialSymbolsFillTest {
                 )
             }
 
-            val expected = if (symbol.fill >= 0.5f) SymbolFontFile.Filled else SymbolFontFile.Outlined
+            val expected = when (symbol.fill) {
+                0f -> SymbolFontFile.Outlined
+                1f -> SymbolFontFile.Filled
+                else -> throw AssertionError("${symbol.glyphName}: registry FILL is not pinned")
+            }
             assertEquals(
                 "${symbol.glyphName}: routed to the wrong font",
                 expected,
@@ -104,6 +108,21 @@ class RemMaterialSymbolsFillTest {
             "shield_lock U+F686 must use the baked filled shape",
             outline.glyphBytes(0xF686).contentEquals(filled.glyphBytes(0xF686)),
         )
+    }
+
+    @Test
+    fun fontRoutingAcceptsOnlyExactPinnedFillValues() {
+        assertEquals(SymbolFontFile.Outlined, RemMaterialSymbols.fontFileFor(0f))
+        assertEquals(SymbolFontFile.Filled, RemMaterialSymbols.fontFileFor(1f))
+
+        for (fill in listOf(-1f, 0.25f, 0.499f, 0.5f, 0.75f, 1.001f, Float.NaN)) {
+            val failure = runCatching { RemMaterialSymbols.fontFileFor(fill) }.exceptionOrNull()
+            assertTrue("FILL $fill must fail closed", failure is IllegalArgumentException)
+            assertTrue(
+                "FILL $fill must explain the pinned values",
+                failure?.message?.contains("exactly 0f or 1f") == true,
+            )
+        }
     }
 
     private class TrueTypeFont(val bytes: ByteArray) {

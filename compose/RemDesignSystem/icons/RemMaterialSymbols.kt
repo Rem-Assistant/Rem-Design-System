@@ -65,21 +65,26 @@ class RemMaterialSymbol internal constructor(
  * shipped AAR. See `docs/contracts/icon-registry.md` rule 1.
  */
 object RemMaterialSymbols {
-    /** Which baked static font file a requested FILL routes to. Two files, one per fill bucket. */
+    /** Which baked static font file a pinned registry FILL routes to. */
     internal enum class SymbolFontFile { Outlined, Filled }
 
     /**
-     * Route a requested FILL (0f outline … 1f filled) to the static font file whose baked glyphs match.
-     * Threshold: `fill >= 0.5f` picks the filled file. Pure and Android-free so the fill-parity test can
-     * bind to the *real* routing rather than a copy of it.
+     * Route an exact registry FILL to the matching static font. Only the pinned values `0f` (outline)
+     * and `1f` (filled) are valid. Material Symbols may expose a continuous axis upstream, but these
+     * packaged fonts are two discrete baked assets; accepting an intermediate value would silently
+     * choose the wrong contract. Pure and Android-free so the fill-parity test binds to real routing.
      */
-    internal fun fontFileFor(fill: Float): SymbolFontFile =
-        if (fill >= 0.5f) SymbolFontFile.Filled else SymbolFontFile.Outlined
+    internal fun fontFileFor(fill: Float): SymbolFontFile = when (fill) {
+        0f -> SymbolFontFile.Outlined
+        1f -> SymbolFontFile.Filled
+        else -> throw IllegalArgumentException(
+            "Material Symbol FILL must be pinned to exactly 0f or 1f; received $fill",
+        )
+    }
 
     /**
-     * The Material Symbols family at a given FILL (0f outline … 1f filled). Picks the static font file
-     * whose baked glyphs match — outline below the axis midpoint, filled at/above it — so the fill is
-     * correct on any renderer without relying on variation settings. Threshold: `fill >= 0.5f`.
+     * The Material Symbols family for an exact pinned FILL (`0f` outline or `1f` filled). Any other
+     * value is rejected rather than rounded to one of the two baked assets.
      */
     fun family(fill: Float): FontFamily {
         val resId = when (fontFileFor(fill)) {
