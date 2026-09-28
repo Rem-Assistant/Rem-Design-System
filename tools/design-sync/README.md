@@ -60,13 +60,10 @@ npm ci && node compare.mjs artifacts/swiftui artifacts/figma \
 differences. `--maxDiffRatio=0.10` is the actual changed-area ceiling. Consent requires three
 light-mode destinations: the consent screen plus Terms and Privacy. The shipping view has no
 consent-local loading/error state, and the shared Figma variable mode supplies dark appearance
-without duplicating frames. A fresh hosted run must replace the superseded calibration before merge. Reviewer
-still performs the paired visual decision; this lane is a fail-closed drift guardrail, not an
-automated parity approval. Any threshold change requires a new three-state baseline in this document
-and Reviewer approval. The exact approved measurements, Figma node ids, thresholds, and source run
-are also committed in
-[`baselines/consent-2026-09-28.json`](./baselines/consent-2026-09-28.json) so this rationale is
-independently machine-readable.
+without duplicating frames. The earlier loading/error calibration is retired and no historical
+consent baseline remains in the active delivery path. Reviewer performs the paired visual decision;
+this lane is a fail-closed completeness guardrail, not an automated parity approval. Establishing a
+future pixel threshold requires a fresh three-destination exact-head run and Reviewer approval.
 
 At least one basename must match between the two folders or the comparison fails;
 `manifest.json` supplies those paired names. CI additionally passes all three consent basenames through

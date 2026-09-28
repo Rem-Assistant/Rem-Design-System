@@ -161,12 +161,10 @@ registered Figma/code pairs at the PR head. CI passes those three exact basename
 `compare.mjs --require`, then publishes `artifacts/design-drift-report.json` in the job summary and
 as a downloadable workflow artifact. Missing or unmatched required states fail closed.
 
-**Approved drift calibration (2026-09-28):** `pixelmatch --threshold=0.3` with
-`--maxDiffRatio=0.10`. The per-pixel threshold is a YIQ color-distance tolerance, not permission for
-30% of the screen to differ. The changed-area ceiling remains 10%; a current three-destination hosted run
-must replace the superseded baseline in `tools/design-sync/baselines/consent-2026-09-28.json`
-before merge. Changing either threshold still requires a fresh baseline plus founder and Reviewer
-approval. The pixel gate catches material drift while Reviewer owns the paired visual decision.
+**Drift calibration:** the earlier loading/error calibration was retired with those speculative
+states. No historical baseline is active for this contract. The exact three-destination evidence set
+must be present and authenticated; Reviewer owns the paired visual decision. Establishing a future
+pixel threshold requires a fresh exact-head baseline plus founder and Reviewer approval.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
 amendment on the issue. **Status:** state/evidence scope amended by the founder on 2026-09-28; the
