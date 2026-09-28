@@ -17,8 +17,11 @@ Follow `SHAPE-OF-A-TASK.md`, `FILE-ORG.md`, and the repository's `rem-design-sys
   combined variants.
 - Update the consent flow and its legal-sheet interactions so Present works. Reuse the
   existing flow instead of creating another disconnected generation.
-- For added or changed components, use the reusable `Component Documentation`: deliver the canonical
-  master/variant set first and its lightweight overview second; update
+- For added or changed components, use the reusable `Component Documentation`. Arrange component
+  families as horizontal auto-layout columns: the canonical master/variant set is first in each
+  column and an attached `Component Documentation` instance follows. The template's Component slot
+  contains a specimen instance because a canonical master cannot be nested inside another instance's
+  slot. Update
   `REGISTRY.md`, the Figma Component Index, and `FIDELITY.md` with actual verification results.
   The annotated Anatomy/full specification remains the separate manual step already
   excluded by `SHAPE-OF-A-TASK.md`.
@@ -75,17 +78,22 @@ when the canvas looks correct. Canonical Default `777:248`, Terms `777:325`, and
 are instanced in documentation and prototype. Current shipping code has no
 consent-local loading or submit-failure state, so the previous speculative state row was removed.
 
-Sequential steps retain `Flow Arrow` instances with the template's 24-point gap. On component-family pages,
-`Component Documentation` (`663:2270`) is a vertical auto-layout documentation surface: the canonical
-component or variant set first, the lightweight overview panel second. Full Specs-plugin output
-is optional follow-up material rather than a Builder fidelity target.
+Sequential steps retain `Flow Arrow` instances with the template's 24-point gap. On component-family
+pages, each documentation column is vertical: the canonical component or variant set first, then an
+attached `Component Documentation` (`663:2270`) instance. Inside that template, the Component slot
+contains an instance of the master and the lightweight overview panel follows. Families are arranged
+in a horizontal auto-layout row for scanning. Full Specs-plugin output is optional follow-up material
+rather than a Builder fidelity target.
 
-Reusable composition lives in documentation section `773:2`: `ButtonGroup` (`773:17`) provides
+Reusable composition lives in `Components · Compositions` (`773:2`): `ButtonGroup` (`773:17`) provides
 Vertical and Horizontal variants with an Actions slot; `Lockup` (`773:22`) exposes Visual, Title,
 and Body; `ActionArea` (`773:28`) exposes a Button Group slot plus Footnote and Show Footnote
 properties. Their names are domain-neutral because the patterns may be reused outside onboarding.
-The canonical master or variant set appears first and the lightweight overview follows, using the
-shared `Component Documentation` rather than a one-off wrapper.
+They are composition components rather than primitives because they assemble primitives while owning
+layout and slot contracts. Their roots have no presentation fill and inherit the surface on which they
+are placed. Horizontal ButtonGroup actions fill the available width equally. The three master-first
+documentation columns sit in `HStack/Component Documentation`; each uses the shared template rather
+than a one-off wrapper.
 
 Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
 when it has one stable responsibility and either two plausible consumers or observed recurrence

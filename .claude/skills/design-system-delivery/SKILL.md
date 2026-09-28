@@ -111,14 +111,23 @@ and a `Rows` slot whose preferred value is `ListRow`. Slots preserve real nested
 instances and allow an arbitrary row count without a variant for every length.
 
 Document each canonical component with the adopting system's reusable component
-documentation container. Its scan order is:
+documentation container. Arrange related components as a horizontal auto-layout row of
+vertical columns. Each column's scan order is:
 
 1. canonical master or component set;
-2. a lightweight overview/spec surface.
+2. an attached documentation-template instance whose first slot contains a specimen
+   instance of that master and whose lightweight overview/spec surface follows.
 
-Keep both inside one named auto-layout block and extend the container with slots
-when that preserves attached masters and specimens. Do not invent a bespoke
-documentation wrapper for each component family.
+The specimen is an instance because a Figma master cannot be moved into a slot inside
+another instance. Keep the actual master directly above the template so it remains the
+editable source. Do not detach the template or invent a bespoke documentation wrapper
+for each component family.
+
+Treat a reusable element as a composition component when it assembles primitives and
+owns layout, semantics, behavior, or a slot contract. Keep atomic controls and assets in
+the primitive layer. Composition roots inherit the surface on which they are placed unless
+owning a background is part of their contract. In a horizontal action group, equal-priority
+actions fill the available width equally rather than sizing from their labels.
 
 Keep full generated Specs-plugin output optional and separate. It can be created
 after a runner batch; its visual depth is not a delivery gate for the component.

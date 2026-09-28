@@ -82,8 +82,11 @@ source-backed Rem and Google marks, and canonical `Section` ancestry for Privacy
 The exact-head structure digest and resolved ancestry are uploaded as
 `artifacts/figma-structure-report.json` beside the drift report.
 
-The human authoring contract complements these structural checks: every touched component uses the
-reusable `Component Documentation` with canonical master/variants first and lightweight overview second;
+The human authoring contract complements these structural checks: every touched component family uses
+horizontal auto-layout documentation columns. Each column places the canonical master/variants first,
+then an attached `Component Documentation` instance whose slot contains a specimen instance and whose
+lightweight overview follows. Composition roots inherit their parent surface unless they explicitly own
+a surface, and equal-priority actions in a horizontal ButtonGroup fill the available width equally.
 Builder extracts a pattern only when it has a stable responsibility plus two plausible consumers or
 cross-flow recurrence. Theme (Light/Dark) and Platform (iOS/Android) are independent axes, including
 for Status Bar. The structure verifier should gain explicit assertions for these properties when the

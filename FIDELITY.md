@@ -51,6 +51,11 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 - Added reusable composition masters on Components: `ButtonGroup` (`773:17`, Vertical /
   Horizontal with Actions slot), `Lockup` (`773:22`), and `ActionArea` (`773:28`). Their names are
   domain-neutral so the same anatomy can serve later non-onboarding screens.
+  The masters live in `Components · Compositions` (`773:2`) as three horizontal documentation
+  columns. Each column places the canonical master first and the attached `Component Documentation`
+  instance below it; the template slot contains a specimen instance because an instance cannot own a
+  nested canonical master. Composition roots inherit their parent surface, and both actions in the
+  horizontal ButtonGroup fill the available width equally.
   The three canonical screen masters (`777:248`, `777:325`, `777:392`) are reused by both documentation
   and prototype, so changing a screen no longer requires synchronizing detached copies.
 - The extraction rule is now explicit for Builder: propose a component when a region has one stable

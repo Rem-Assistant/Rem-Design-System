@@ -60,10 +60,11 @@ Skipping it reliably produces collapsed tiles, tofu glyphs, and rolled-back call
 The pattern that works for an **atomic component** is different from what a **screen**
 needs. Don't force one onto the other.
 
-- **Atomic component** (Row, Button, Section, MessageBubble, a control): follow
-  **`references/component-track.md`** — one canonical component/variant set followed by the
-  lightweight overview panel, both nested in a named auto-layout documentation block on the
-  correct component-family page. Full Specs-plugin output is optional follow-up work.
+- **Component** (Row, Button, Section, MessageBubble, a control, or a reusable composition): follow
+  **`references/component-track.md`** — arrange the family as a horizontal auto-layout row of
+  vertical columns. Each column puts the canonical component/variant set first and an attached
+  `Component Documentation` instance second; that template's Component slot contains a specimen
+  instance. Full Specs-plugin output is optional follow-up work.
 - **Screen or pattern** (Agenda, Chat, Settings, a flow): follow
   **`references/screen-track.md`** — a full-device (402×874) screen built **native, in
   auto-layout, on the canonical components**, documented with the file's `Component Documentation`
@@ -81,7 +82,9 @@ Consent proves the reusable shape: flow chassis masters live in Device Kit (`769
 the single `00` Section; `ButtonGroup`,
 `Lockup`, and `ActionArea` live in the reusable composition documentation section `773:2`. These
 names are intentionally domain-neutral because the patterns may serve screens beyond onboarding.
-For later flows, instance these masters and populate slots instead of copying the consent frames.
+They compose primitives and therefore live under Components rather than Primitives. Their roots
+inherit the parent surface; `ButtonGroup` horizontal actions fill equally. For later flows, instance
+these masters and populate slots instead of copying the consent frames.
 
 During every screen build, inspect its anatomy for reusable concepts without waiting for founder
 prompting. Extract a concept when it owns one stable responsibility and has either two plausible

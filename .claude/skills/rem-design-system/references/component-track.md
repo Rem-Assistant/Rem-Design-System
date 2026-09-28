@@ -1,9 +1,9 @@
-# Component track — canonical master + lightweight documentation block
+# Component track — canonical master + attached documentation
 
-For an **atomic component** (a row, control, section, card, bubble). Goal: one canonical master plus
-a compact block a designer and developer can scan. `Component container` (`663:2270`) is the required
-shape; `ListRow` and `Section` inside `Consent · Component documentation` (`741:309`) are the worked
-examples.
+For a component (an atomic row/control or a composition such as a lockup/action area). Goal: one
+canonical master plus a compact block a designer and developer can scan. `Component Documentation`
+(`663:2270`) is the required template; `ListRow` and `Section` inside `Rows & Sections · Component
+documentation` (`741:309`) are the worked examples.
 
 ## Build the master first (composable, slotted)
 
@@ -27,16 +27,24 @@ examples.
 
 ## Required Builder documentation
 
-Detach `Component container` (`663:2270`) and keep it as one named vertical auto-layout block. Order:
+Keep `Component Documentation` (`663:2270`) attached. Arrange related components in one horizontal
+auto-layout row, with one named vertical column per component. Each column's order is:
 
-1. **Canonical master or component set** — first, never loose elsewhere on the canvas.
-2. **Lightweight overview** — second, using the template's title and preview surface. Remove empty
-   Anatomy/Props/Layout placeholders; the Specs plugin can create those later when requested.
+1. **Canonical master or component set** — first and directly editable.
+2. **Attached documentation instance** — second. Its Component slot contains an instance of that
+   master, followed by the lightweight overview. Remove empty Anatomy/Props/Layout placeholders;
+   the Specs plugin can create those later when requested.
 
-Both children stay nested inside the same block so it moves and scans as one unit. Put the block on
-the component's family page (`Rows & Controls`, `Primitives`, `Cards`, and so on), inside a clearly
-named Figma Section when several components are being delivered together. Do not scatter masters,
-previews, or generated artifacts as page-level siblings.
+The specimen must be an instance because a canonical master cannot be moved into a slot inside an
+instance. The master and attached documentation instance stay in the same column so they move and
+scan as one unit. Put the row on the component's family page inside a clearly named Figma Section.
+Atomic controls belong under Primitives; components that assemble primitives and own layout,
+semantics, behavior, or slots belong under Components/Compositions. Do not scatter masters, previews,
+or generated artifacts as page-level siblings.
+
+Composition roots inherit the surface behind them unless a background is part of the component's
+owned contract. Horizontal groups of equal-priority actions use fill sizing for every action so label
+length does not create unequal widths.
 
 The Builder does **not** need to reproduce an EightShapes Specs export. A human or later browser
 agent may generate full Anatomy/Props/Layout/Data documentation after the runner batch finishes.
