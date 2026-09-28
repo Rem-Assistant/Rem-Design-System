@@ -68,10 +68,10 @@ class PairedDeliveryTests(unittest.TestCase):
 
     def test_missing_android_state_fails_even_when_workflow_succeeded(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp); self.fixtures(root, ("compose", "consent-error-dark"))
+            root = Path(tmp); self.fixtures(root, ("compose", "consent-privacy-light"))
             status, body, _ = delivery.prepare(root, "a" * 40, "success", [CONSENT], CONTRACTS)
             self.assertEqual(status, "failed")
-            self.assertIn("consent-error-dark / compose", body)
+            self.assertIn("consent-privacy-light / compose", body)
 
     def test_failed_compile_never_becomes_ready_with_partial_screenshots(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -82,7 +82,7 @@ class PairedDeliveryTests(unittest.TestCase):
     def test_duplicate_normalized_state_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); self.fixtures(root)
-            (root / "compose/com.rem.designsystem_EvidenceSnapshots_other_consent-error-dark.png").write_bytes(b"fixture")
+            (root / "compose/com.rem.designsystem_EvidenceSnapshots_other_consent-privacy-light.png").write_bytes(b"fixture")
             with self.assertRaisesRegex(ValueError, "Duplicate"):
                 delivery.prepare(root, "a" * 40, "success", [CONSENT], CONTRACTS)
 
