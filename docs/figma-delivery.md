@@ -54,6 +54,13 @@ updated in place on the shared `Onboarding` page (`410:15`). `00 · Canonical sc
 (`695:138`) and `01B · Consent · Prototype` (`731:260`) are the consent pair. Later flows add
 `02A` / `02B` pairs on the same page rather than creating more onboarding pages.
 
+The inventory Section uses `#F5F5F5` so its white device frames remain legible on the canvas.
+Inside those devices, the Sign-in screen uses the actual repository assets (`RemAppIcon` raster and
+the four-color Google SVG), with no placeholder text glyphs. Privacy's legal links are an instance
+of canonical `Section` (`741:311`), not a hand-built grouped frame. These are structure-contract
+requirements, so a later Builder run that restores the white inventory, placeholder marks, or loose
+privacy rows fails before review.
+
 The Builder must preserve the template hierarchy: `Placeholder Sections` → `Placeholder Section`
 → `Placeholder Rows` → one or more `Placeholder Flows` rows → `Mobile Placeholder` → screen. The
 screen directly replaces the slot area inside each placeholder; nesting it in a leftover slot wrapper

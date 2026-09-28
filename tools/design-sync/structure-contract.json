@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -9,6 +9,39 @@
       { "id": "695:138", "type": "SECTION", "name": "01A · Consent · Documentation" },
       { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" }
     ]
+  },
+  "inventory": {
+    "id": "760:21",
+    "type": "SECTION",
+    "name": "00 · Canonical screen inventory",
+    "fill": "#F5F5F5",
+    "screens": [
+      { "id": "411:15", "type": "FRAME", "name": "Screen/Login — Sign in" },
+      { "id": "410:16", "type": "FRAME", "name": "Screen/Privacy — Privacy by design" }
+    ],
+    "assets": {
+      "remAppIcon": {
+        "id": "411:28",
+        "type": "RECTANGLE",
+        "name": "RemAppIcon · Source raster",
+        "imageFill": true
+      },
+      "googleGlyph": {
+        "id": "765:237",
+        "type": "FRAME",
+        "name": "RemGoogleGlyph · Source SVG",
+        "minimumVectorCount": 4
+      }
+    },
+    "canonicalInstances": [
+      {
+        "id": "765:208",
+        "type": "INSTANCE",
+        "name": "Section · Legal",
+        "componentId": "741:311"
+      }
+    ],
+    "forbiddenNodeIds": ["410:32", "411:32", "538:40"]
   },
   "flow": {
     "id": "695:138",

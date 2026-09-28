@@ -67,6 +67,11 @@ needs. Don't force one onto the other.
   and detached `Mobile Flow (Detach This)` templates. Flow screens replace the slot area as direct
   children of `Mobile Placeholder`; rows and sections organize real states.
 
+On the Onboarding page, `00 · Canonical screen inventory` (`760:21`) uses `#F5F5F5` as its
+canvas contrast surface around white device frames. Canonical Sign-in uses the repository's real
+`RemAppIcon` raster and Google SVG; canonical Privacy uses `Section` (`741:311`) for its legal rows.
+The structure contract rejects placeholder glyphs, hand-built replacements, or a white inventory.
+
 ## Foundations (the layers everything binds to)
 
 - **Tokens are the source.** `tokens/tokens.json` generates the Figma variable collections

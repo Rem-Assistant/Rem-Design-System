@@ -13,12 +13,60 @@ function walk(node, ancestors = [], found = new Map()) {
   return found;
 }
 
-export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument) {
+function colorToHex(color) {
+  if (!color) return null;
+  const channel = (value) => Math.round(value * 255).toString(16).padStart(2, '0').toUpperCase();
+  return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
+}
+
+export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument) {
   const errors = [];
   const expectedTop = contract.page.topLevel;
   const actualTop = (pageDocument.children || []).map(({ id, type, name }) => ({ id, type, name }));
   if (JSON.stringify(actualTop) !== JSON.stringify(expectedTop)) {
     errors.push(`Page top level must be ${JSON.stringify(expectedTop)}; received ${JSON.stringify(actualTop)}`);
+  }
+
+  const expectedInventory = contract.inventory;
+  const inventory = inventoryDocument || { id: 'missing-inventory', children: [] };
+  if (inventory.id !== expectedInventory.id || inventory.type !== expectedInventory.type || inventory.name !== expectedInventory.name) {
+    errors.push(`Canonical inventory must be ${JSON.stringify({ id: expectedInventory.id, type: expectedInventory.type, name: expectedInventory.name })}`);
+  }
+  const inventoryFill = (inventory.fills || []).find(({ type, visible }) => type === 'SOLID' && visible !== false);
+  const actualInventoryFill = colorToHex(inventoryFill?.color);
+  if (actualInventoryFill !== expectedInventory.fill) {
+    errors.push(`Canonical inventory fill must be ${expectedInventory.fill}; received ${actualInventoryFill}`);
+  }
+  const inventoryIndex = walk(inventory);
+  const actualInventoryScreens = (inventory.children || []).map(({ id, type, name }) => ({ id, type, name }));
+  if (JSON.stringify(actualInventoryScreens) !== JSON.stringify(expectedInventory.screens)) {
+    errors.push(`Canonical inventory screens must be ${JSON.stringify(expectedInventory.screens)}; received ${JSON.stringify(actualInventoryScreens)}`);
+  }
+  for (const expected of Object.values(expectedInventory.assets)) {
+    const match = inventoryIndex.get(expected.id)?.node;
+    if (!match || match.type !== expected.type || match.name !== expected.name) {
+      errors.push(`Canonical inventory asset must be ${JSON.stringify({ id: expected.id, type: expected.type, name: expected.name })}`);
+      continue;
+    }
+    if (expected.imageFill && !(match.fills || []).some(({ type, visible }) => type === 'IMAGE' && visible !== false)) {
+      errors.push(`${expected.name} must use an IMAGE fill from the source asset`);
+    }
+    if (expected.minimumVectorCount) {
+      const vectorCount = [...walk(match).values()].filter(({ node }) => node.type === 'VECTOR').length;
+      if (vectorCount < expected.minimumVectorCount) {
+        errors.push(`${expected.name} must contain at least ${expected.minimumVectorCount} vector paths; received ${vectorCount}`);
+      }
+    }
+  }
+  for (const expected of expectedInventory.canonicalInstances) {
+    const match = inventoryIndex.get(expected.id)?.node;
+    if (!match || match.type !== expected.type || match.name !== expected.name || match.componentId !== expected.componentId) {
+      errors.push(`${expected.name} must be INSTANCE ${expected.id} of canonical component ${expected.componentId}`);
+    }
+  }
+  const forbiddenInventoryNodes = expectedInventory.forbiddenNodeIds.filter((id) => inventoryIndex.has(id));
+  if (forbiddenInventoryNodes.length) {
+    errors.push(`Canonical inventory contains forbidden placeholder nodes: ${forbiddenInventoryNodes.join(', ')}`);
   }
 
   if (flowDocument.id !== contract.flow.id) {
@@ -127,6 +175,14 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       topLevel: actualTop,
       flowStartingPoints: pageDocument.flowStartingPoints || [],
     },
+    inventory: {
+      id: inventory.id,
+      name: inventory.name,
+      fill: actualInventoryFill,
+      screens: actualInventoryScreens,
+      assets: Object.values(expectedInventory.assets).map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),
+      canonicalInstances: expectedInventory.canonicalInstances.map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),
+    },
     prototypeRoot: expectedPrototypeRoot,
     screens,
     prototype,
@@ -144,14 +200,16 @@ async function main() {
   let report;
   try {
     const pageResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.page.id)}&depth=1`);
+    const inventoryResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.inventory.id)}`);
     const flowResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.id)}`);
     const prototypeResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.prototype.root.id)}`);
     const pageDocument = pageResponse.nodes?.[contract.page.id]?.document;
+    const inventoryDocument = inventoryResponse.nodes?.[contract.inventory.id]?.document;
     const flowDocument = flowResponse.nodes?.[contract.flow.id]?.document;
     const prototypeDocument = prototypeResponse.nodes?.[contract.flow.prototype.root.id]?.document;
-    if (!pageDocument || !flowDocument || !prototypeDocument) throw new Error('Figma did not return the contracted page, flow, and prototype nodes');
+    if (!pageDocument || !inventoryDocument || !flowDocument || !prototypeDocument) throw new Error('Figma did not return the contracted page, inventory, flow, and prototype nodes');
 
-    const result = verifyStructure(contract, pageDocument, flowDocument, prototypeDocument);
+    const result = verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument);
     report = {
       version: contract.version,
       status: result.ok ? 'completed' : 'failed',

@@ -73,6 +73,8 @@ requires the shared Onboarding page to have the canonical inventory plus a conse
 `Mobile Placeholder` → screen. It also checks that all four documented journey frames share one
 sequential row and the three prototype frames are direct children of `01B · Consent · Prototype`. This catches
 legacy slot wrappers and visually aligned overlay siblings that image comparison cannot distinguish.
+The inventory check also enforces its `#F5F5F5` contrast surface, exact Sign-in/Privacy screen set,
+source-backed Rem and Google marks, and canonical `Section` ancestry for Privacy's legal rows.
 The exact-head structure digest and resolved ancestry are uploaded as
 `artifacts/figma-structure-report.json` beside the drift report.
 

@@ -44,6 +44,11 @@ screen, master, or prototype destination may remain a loose page-level sibling.
 Place section pairs on a simple grid and verify their bounds so later additions do
 not overlap.
 
+When white device frames sit inside a screen inventory, use the adopting project's
+neutral canvas contrast surface for the inventory Section so device bounds remain
+scannable. Keep that presentation surface separate from product background tokens;
+the project's adapter owns the exact value.
+
 Documentation uses editable layout templates and canonical component instances.
 Prototype frames are separate top-level destinations sourced from the same states,
 with only real entry points registered as Presentation starting points. Do not
@@ -55,6 +60,11 @@ Search the project registry and Figma file before creating anything. If the
 concept exists as a loose template, hand-built group, or obsolete component,
 migrate its consumers and remove the competing source after the canonical master
 is proven.
+
+Treat icons and brand marks the same way: import the codebase's exact SVG or raster
+asset. Do not substitute a text glyph, emoji, geometric approximation, or a mark
+that belongs to another product role. Record the source path and verify the asset
+node in the machine contract.
 
 Use component properties for fixed options and a Figma Slot for a flexible child
 region. A list `Section`, for example, can expose boolean Header/Footer properties

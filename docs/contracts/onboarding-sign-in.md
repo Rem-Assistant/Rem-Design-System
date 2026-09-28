@@ -64,7 +64,10 @@ group using `Spacing.md` between members:
   notice-below-buttons, the icon registry rows + FILL.
 - **Adaptable:** the exact vertical-centering offset (nudge to match the reference optically);
   per-platform safe-area handling.
-- **Excluded:** other onboarding screens (own contracts); Figma authoring (#40); the sequencer chrome.
+- **Figma:** the canonical Sign-in screen (`411:15`) uses the real `RemAppIcon` raster at `411:28`
+  and the repository's editable Google SVG at `765:237`. Reusable component masters, remaining
+  states, and broader Sign-in Figma authoring stay in #40.
+- **Excluded:** other onboarding screens (own contracts); the sequencer chrome.
 
 ## Parity acceptance (what the visual gate diffs)
 
