@@ -31,7 +31,7 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   replacement onboarding step is approved.
 - The existing `Onboarding` page now holds every current onboarding artifact in named Sections:
   canonical screen components `00` (`760:21`), consent documentation `01A` (`777:432`), and consent
-  prototype `01B` (`731:260`). Sign-in, Privacy by design, and all three consent masters are
+  prototype `01B` (`731:260`). Sign-in and the three consent masters are
   consolidated in `00`. Documentation is
   an attached `Mobile Flow Documentation` instance with nested Sections, Rows, Steps, Placeholder,
   and Screen slots. Prototype screens are direct canonical instances and Consent is a registered flow

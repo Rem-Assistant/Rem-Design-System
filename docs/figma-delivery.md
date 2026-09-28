@@ -58,7 +58,7 @@ repairing the screen is not proof that this handoff works autonomously.
 Consent #30 uses an authenticated Codex Builder runtime for the canvas write while Steward keeps
 the durable task, source commit, result, review, and recovery record. The existing Rem file is
 updated in place on the shared `Onboarding` page (`410:15`). `00 · Canonical screen components`
-(`760:21`) contains Sign-in, Privacy by design, and the three consent screen masters;
+(`760:21`) contains Sign-in and the three consent screen masters;
 `01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`) are the
 consent pair. Later flows add
 `02A` / `02B` pairs on the same page rather than creating more onboarding pages.

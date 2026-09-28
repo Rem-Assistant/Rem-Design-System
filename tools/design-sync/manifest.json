@@ -41,7 +41,6 @@
     { "name": "Billing",      "node": "341:862", "source": "Rem/Sources/Settings/BillingSettingsView.swift" },
     { "name": "Permissions",  "node": "349:905", "source": "Rem/Sources/Settings/SettingsView.swift" },
     { "name": "SignIn-light",  "node": "788:3183", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift" },
-    { "name": "PrivacyByDesign-light", "node": "788:3184", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
     { "name": "Consent-default-light", "node": "777:248", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
     { "name": "Consent-terms-light",   "node": "777:325", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
     { "name": "Consent-privacy-light", "node": "777:392", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" }

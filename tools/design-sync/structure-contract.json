@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -17,7 +17,6 @@
     "fill": "#F5F5F5",
     "screens": [
       { "id": "788:3183", "type": "COMPONENT", "name": "Screen/Sign in" },
-      { "id": "788:3184", "type": "COMPONENT", "name": "Screen/Privacy by design" },
       { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default" },
       { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms" },
       { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy" }

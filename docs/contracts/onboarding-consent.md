@@ -101,8 +101,8 @@ status bar is behind the scrim and sheet rather than drawn above them.
 
 The shared `Onboarding` page (`410:15`) uses a numbered Section pair for this flow:
 `01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`). Sign-in
-(`788:3183`), Privacy by design (`788:3184`), and the 402×874 consent Default (`777:248`), Terms
-(`777:325`), and Privacy (`777:392`) masters are consolidated inside
+(`788:3183`) and the 402×874 consent Default (`777:248`), Terms (`777:325`), and Privacy
+(`777:392`) masters are consolidated inside
 `00 · Canonical screen components` (`760:21`). Later onboarding flows add `02A` /
 `02B` pairs on the same page. Documentation remains an instance of `Mobile Flow Documentation`
 (`769:282`) and composes nested Sections, Rows, Steps, Mobile Placeholders, and Screens through slots.
