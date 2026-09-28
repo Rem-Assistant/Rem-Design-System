@@ -47,9 +47,10 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 
 ## Use the file's documentation templates
 
-- **Components:** use `Component container` (`663:2270`) for every new or changed canonical
-  component. Keep the component and its preview/spec inside that container rather than placing
-  loose masters around the canvas.
+- **Components page:** use `Component container` (`663:2270`) for every new or changed canonical
+  component. Make the detached container vertical auto-layout: put the component/variant set first,
+  then place the expandable spec UI below it. This makes the page scannable now while preserving the
+  spec surface for future detail. Do not use this container as a Screens-page layout.
 - **Flows:** detach `Mobile Flow (Detach This)` (`672:2524`) on the screen family's flow page.
   Keep the overview and the documented screens inside the detached flow. Do not add loose screen
   frames as siblings of the flow.
@@ -60,10 +61,18 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 - Put the primary journey in one `Placeholder Flows` row. Add a second row for system-state
   variants such as loading or submit failure. Add another `Placeholder Section` only when the
   flow needs a distinct titled group.
+- Sequential rows keep their arrow vectors and the template's 24-point item gap. Parallel state
+  rows omit arrows and use 200-point item spacing, which preserves the same screen-column rhythm
+  without implying that one state navigates to the next.
 - Author one light-mode screen and rely on the shared variable mode for dark appearance unless a
   contract explicitly requires a separate dark composition.
 - `DeviceFrame/iPhone` (`128:46`) remains available when a standalone bezel preview is useful;
   it does not replace the Mobile Flow documentation hierarchy.
+- Figma only accepts different top-level frames as prototype navigation destinations. Keep the
+  nested documentation hierarchy, then add a labeled `PROTOTYPE FLOWS` strip of top-level 402×874
+  frames inside the same Figma section. Wire and name its Presentation starting points. Generate
+  these frames from the documented screen sources and keep their source-node mapping in the
+  structure contract so the strip does not become an untracked duplicate.
 - **One generation only.** When a native screen supersedes a legacy template, delete the legacy
   master and its now-empty page. Migrate anything still pointing at retired masters first.
 

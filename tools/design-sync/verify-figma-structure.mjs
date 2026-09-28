@@ -37,6 +37,20 @@ export function verifyStructure(contract, pageDocument, flowDocument) {
   if (rowNodes.length !== hierarchy.rowCount) {
     errors.push(`${hierarchy.rows} must contain ${hierarchy.rowCount} visible ${hierarchy.row} rows; received ${rowNodes.length}`);
   }
+  rowNodes.forEach((row, index) => {
+    const spacing = hierarchy.rowSpacing[index];
+    if (row.itemSpacing !== spacing) {
+      errors.push(`${hierarchy.row} row ${index + 1} must use ${spacing} item spacing; received ${row.itemSpacing}`);
+    }
+    const visibleConnectors = (row.children || [])
+      .filter((node) => node.visible !== false && node.type === 'VECTOR');
+    const visiblePlaceholders = (row.children || [])
+      .filter((node) => node.visible !== false && node.name === hierarchy.placeholder);
+    const requiredConnectors = index === 0 ? Math.max(visiblePlaceholders.length - 1, 0) : 0;
+    if (visibleConnectors.length !== requiredConnectors) {
+      errors.push(`${hierarchy.row} row ${index + 1} must contain ${requiredConnectors} visible arrow vectors; received ${visibleConnectors.length}`);
+    }
+  });
 
   const screens = contract.flow.screens.map((expected) => {
     const match = index.get(expected.node);
@@ -81,7 +95,36 @@ export function verifyStructure(contract, pageDocument, flowDocument) {
     };
   });
 
-  const canonical = { page: { id: pageDocument.id, name: pageDocument.name, topLevel: actualTop }, screens };
+  const flowStartIds = new Set((pageDocument.flowStartingPoints || []).map(({ nodeId }) => nodeId));
+  const prototypeLabel = index.get(contract.flow.prototype.label.id);
+  if (!prototypeLabel || prototypeLabel.node.name !== contract.flow.prototype.label.name || prototypeLabel.ancestors[0]?.id !== flowDocument.id) {
+    errors.push(`${contract.flow.prototype.label.name} must be a direct child of flow ${contract.flow.id}`);
+  }
+  const prototype = contract.flow.prototype.frames.map((expected) => {
+    const match = index.get(expected.node);
+    if (!match) {
+      errors.push(`${expected.name} (${expected.node}) is missing from flow ${contract.flow.id}`);
+      return { ...expected, status: 'missing' };
+    }
+    const direct = match.node.type === 'FRAME' && match.node.name === expected.name && match.ancestors[0]?.id === flowDocument.id;
+    if (!direct) errors.push(`${expected.name} must be a direct FRAME child of flow ${contract.flow.id}`);
+    const hasFlowStart = flowStartIds.has(expected.node);
+    if (hasFlowStart !== expected.flowStart) {
+      errors.push(`${expected.name} flow-start status must be ${expected.flowStart}; received ${hasFlowStart}`);
+    }
+    return { ...expected, status: direct && hasFlowStart === expected.flowStart ? 'conformant' : 'invalid' };
+  });
+
+  const canonical = {
+    page: {
+      id: pageDocument.id,
+      name: pageDocument.name,
+      topLevel: actualTop,
+      flowStartingPoints: pageDocument.flowStartingPoints || [],
+    },
+    screens,
+    prototype,
+  };
   const digest = createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
   return { ok: errors.length === 0, errors, digest, canonical };
 }

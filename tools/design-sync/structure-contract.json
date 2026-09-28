@@ -18,6 +18,7 @@
       "row": "Placeholder Flows",
       "placeholder": "Mobile Placeholder",
       "forbiddenPlaceholderChildren": ["Device / Screen slot"],
+      "rowSpacing": [24, 200],
       "rowCount": 2
     },
     "screens": [
@@ -27,6 +28,16 @@
       { "name": "Consent-privacy-light", "node": "638:65", "row": 0, "evidence": true },
       { "name": "Consent-loading-light", "node": "700:109", "row": 1, "evidence": true },
       { "name": "Consent-error-light", "node": "700:147", "row": 1, "evidence": true }
-    ]
+    ],
+    "prototype": {
+      "label": { "id": "715:327", "name": "PROTOTYPE FLOWS" },
+      "frames": [
+        { "name": "Prototype · Consent", "node": "715:233", "sourceNode": "609:3", "flowStart": true },
+        { "name": "Prototype · Terms", "node": "715:245", "sourceNode": "638:28", "flowStart": false },
+        { "name": "Prototype · Privacy", "node": "715:272", "sourceNode": "638:65", "flowStart": false },
+        { "name": "Prototype · Loading", "node": "715:299", "sourceNode": "700:109", "flowStart": true },
+        { "name": "Prototype · Submit failure", "node": "715:312", "sourceNode": "700:147", "flowStart": true }
+      ]
+    }
   }
 }

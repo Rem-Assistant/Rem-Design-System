@@ -11,12 +11,21 @@ const placeholder = (entry) => ({
   name: 'Mobile Placeholder',
   children: [screen(entry)],
 });
-const rows = [0, 1].map((row) => ({
-  id: `row-${row}`,
-  type: 'FRAME',
-  name: 'Placeholder Flows',
-  children: contract.flow.screens.filter((entry) => entry.row === row).map(placeholder),
-}));
+const rows = [0, 1].map((row) => {
+  const placeholders = contract.flow.screens.filter((entry) => entry.row === row).map(placeholder);
+  const children = row === 0
+    ? placeholders.flatMap((entry, index) => index === placeholders.length - 1
+      ? [entry]
+      : [entry, { id: `arrow-${index}`, type: 'VECTOR', name: `Vector ${index + 2}`, visible: true }])
+    : placeholders;
+  return {
+    id: `row-${row}`,
+    type: 'FRAME',
+    name: 'Placeholder Flows',
+    itemSpacing: contract.flow.hierarchy.rowSpacing[row],
+    children,
+  };
+});
 const flow = {
   id: contract.flow.id,
   type: 'SECTION',
@@ -29,13 +38,18 @@ const flow = {
         }],
       }],
     }],
-  }],
+  },
+  { ...contract.flow.prototype.label, type: 'TEXT' },
+  ...contract.flow.prototype.frames.map((entry) => ({ id: entry.node, type: 'FRAME', name: entry.name, children: [] }))],
 };
 const page = {
   id: contract.page.id,
   type: 'CANVAS',
   name: contract.page.name,
   children: contract.page.topLevel,
+  flowStartingPoints: contract.flow.prototype.frames
+    .filter((entry) => entry.flowStart)
+    .map((entry) => ({ nodeId: entry.node, name: 'Consent flow' })),
 };
 
 const passing = verifyStructure(contract, page, flow);
@@ -63,6 +77,12 @@ flowRows[1].children.push(flowRows[0].children.shift());
 const wrongRow = verifyStructure(contract, page, wrongRowFlow);
 assert.equal(wrongRow.ok, false);
 assert.match(wrongRow.errors.join('\n'), /must be in Placeholder Flows row 1/);
+
+const wrongSpacingFlow = structuredClone(flow);
+wrongSpacingFlow.children[0].children[0].children[0].children[0].children[1].itemSpacing = 24;
+const wrongSpacing = verifyStructure(contract, page, wrongSpacingFlow);
+assert.equal(wrongSpacing.ok, false);
+assert.match(wrongSpacing.errors.join('\n'), /row 2 must use 200 item spacing/);
 
 const extraTopLevel = structuredClone(page);
 extraTopLevel.children.push({ id: 'extra:1', type: 'FRAME', name: 'Loose screen' });

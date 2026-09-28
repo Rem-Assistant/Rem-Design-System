@@ -61,6 +61,17 @@ Consent `609:3`, Terms `638:28`, the Privacy branch consent frame `695:585`, Pri
 `Placeholder Flows` row inside the same flow section. The separate consent-action component section
 was removed.
 
+Sequential rows retain arrow vectors with the template's 24-point gap. Parallel system-state rows
+omit arrows and use 200-point spacing so their screen columns align without implying navigation.
+On the Components page, `Component container` (`663:2270`) is a vertical auto-layout documentation
+surface: component variants first, expandable spec UI second.
+
+Nested documentation screens cannot be prototype navigation destinations in Figma. The flow section
+therefore owns a labeled `PROTOTYPE FLOWS` strip of top-level 402×874 frames sourced from the same
+documented states. Consent links to Terms, Privacy, and Loading; both legal sheets return with Back;
+Submit failure retries into Loading. Consent, Loading, and Submit failure are registered Presentation
+starting points. The strip stays inside the one consent section so prototype frames are organized.
+
 The hosted GitHub runner remains the repository, export, and comparison worker. Its `FIGMA_TOKEN`
 is consumed only by the current-head export/drift job; a token does not provide interactive canvas
 authoring. Code Connect and Dev Resources remain separate delivery concerns: Code Connect maps
