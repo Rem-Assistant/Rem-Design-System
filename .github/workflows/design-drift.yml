@@ -61,8 +61,39 @@ jobs:
             --maxDiffRatio=0.10 \
             --require=Consent-default-light,Consent-default-dark,Consent-error-dark,Consent-loading-light,Consent-terms-light,Consent-privacy-light
 
+      - name: Finalize machine-readable comparison report
+        if: always()
+        env:
+          DESIGN_DRIFT_JOB_STATUS: ${{ job.status }}
+        run: |
+          mkdir -p artifacts
+          if [ ! -s artifacts/design-drift-report.json ]; then
+            python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = {
+              "version": 1,
+              "status": "incomplete",
+              "head": os.environ.get("GITHUB_SHA"),
+              "jobStatus": os.environ.get("DESIGN_DRIFT_JOB_STATUS"),
+              "reason": "An earlier design-drift step failed before comparison produced a report.",
+              "checked": 0,
+              "failed": 0,
+              "skipped": 0,
+              "errored": 0,
+              "results": [],
+          }
+          Path("artifacts/design-drift-report.json").write_text(
+              json.dumps(report, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          fi
+
       - name: Publish machine-readable comparison report
-        if: always() && hashFiles('artifacts/design-drift-report.json') != ''
+        if: always()
         run: |
           echo '## Design drift comparison' >> "$GITHUB_STEP_SUMMARY"
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
@@ -70,11 +101,12 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload comparison report
-        if: always() && hashFiles('artifacts/design-drift-report.json') != ''
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: design-drift-report
           path: artifacts/design-drift-report.json
+          if-no-files-found: error
 
       - name: Upload diffs on failure
         if: failure()

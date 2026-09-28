@@ -81,6 +81,7 @@ for (const name of missingRequired) console.error(`✗ required pair not compare
 
 const report = {
   version: 1,
+  status: fatal === null ? 'completed' : 'error',
   head: process.env.GITHUB_SHA ?? null,
   threshold,
   maxDiffRatio,

@@ -62,7 +62,10 @@ At least one basename must match between the two folders or the comparison fails
 `--require`; a missing code snapshot, Figma export, or comparison fails the job. Every run writes
 `artifacts/design-drift-report.json`, publishes it in the job summary, and uploads it as the
 `design-drift-report` artifact. The report records the exact head, thresholds, required set, missing
-set, and per-state diff ratio.
+set, and per-state diff ratio. Its `status` is `completed` for a finished comparison, `error` when
+the comparator itself could not read an input, or `incomplete` when an earlier render/export step
+failed before comparison started. The always-run finalizer creates that last form so upstream CI
+failures cannot silently remove the diagnostic artifact.
 
 ## 3. Generator (code → Figma)
 
