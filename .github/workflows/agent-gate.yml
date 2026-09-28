@@ -17,8 +17,8 @@ permissions:
   statuses: write
 jobs:
   gate:
-    uses: samuelalake/agent-factory/.github/workflows/gate.yml@ac6974e595408284eb47b8e3a4d9c19a4966b299
+    uses: samuelalake/agent-factory/.github/workflows/gate.yml@14a63f46a00b3e9911bc90e805d734c9ca5c4a73
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: ac6974e595408284eb47b8e3a4d9c19a4966b299
+      factory_ref: 14a63f46a00b3e9911bc90e805d734c9ca5c4a73
     secrets: inherit

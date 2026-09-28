@@ -10,7 +10,9 @@
       "docs/contracts/README.md",
       "docs/contracts/icon-registry.md",
       "docs/contracts/onboarding-sign-in.md",
-      "docs/contracts/onboarding-consent.md"
+      "docs/contracts/onboarding-consent.md",
+      "SHAPE-OF-A-TASK.md",
+      "docs/figma-delivery.md"
     ],
     "skill_dirs": [
       ".claude/skills"
