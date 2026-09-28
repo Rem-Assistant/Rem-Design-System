@@ -63,6 +63,9 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   Foundations remains the visible reference for Rem-owned colors, typography, spacing, radius, and icons.
   Canonical Button labels now bind local styles (`Body/Bold`, `Body/Emphasized`, or
   `Subheadline/Emphasized`), and the live structure gate checks that none become unbound.
+  Primitives now precedes Compositions in the page list. Component-family pages use fill-free,
+  stroke-free canvas Sections; the shared documentation template owns the variable-bound
+  `background/primary` surface instead of borrowing presentation from its canvas Section.
   The three canonical screen masters (`777:248`, `777:325`, `777:392`) are reused by both documentation
   and prototype, so changing a screen no longer requires synchronizing detached copies.
 - The extraction rule is now explicit for Builder: propose a component when a region has one stable

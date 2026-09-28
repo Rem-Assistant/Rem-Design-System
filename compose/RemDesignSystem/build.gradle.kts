@@ -45,8 +45,8 @@ android {
     kotlinOptions { jvmTarget = "17" }
 }
 
-// Fail before Android resource packaging if either static Material Symbols asset is missing,
-// variable/GSUB-dependent, or lacks a registry codepoint. This is deliberately a preBuild gate,
+// Fail before Android resource packaging if either static Material Symbols asset is missing or
+// lacks a direct registry codepoint mapping. This is deliberately a preBuild gate,
 // rather than only a unit test, so a consumer cannot assemble an AAR that renders tofu at runtime.
 val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResources") {
     val fontDirectory = file("src/main/res/font")
@@ -80,29 +80,66 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
         }
 
         fun glyphIndex(bytes: ByteArray, fontTables: Map<String, Pair<Int, Int>>, codePoint: Int): Int {
-            val cmap = requireNotNull(fontTables["cmap"]) { "Material Symbols font is missing cmap" }.first
-            var format4 = -1
+            val (cmap, cmapLength) = requireNotNull(fontTables["cmap"]) {
+                "Material Symbols font is missing cmap"
+            }
+            val cmapEnd = cmap + cmapLength
+            check(cmap + 4 <= cmapEnd) { "truncated Material Symbols cmap header" }
+
+            fun format4(subtable: Int): Int {
+                val length = u16(bytes, subtable + 2)
+                check(length >= 16 && subtable + length <= cmapEnd) { "truncated format-4 cmap" }
+                val segmentCount = u16(bytes, subtable + 6) / 2
+                val endCodes = subtable + 14
+                val startCodes = endCodes + segmentCount * 2 + 2
+                val deltas = startCodes + segmentCount * 2
+                val rangeOffsets = deltas + segmentCount * 2
+                check(rangeOffsets + segmentCount * 2 <= subtable + length) { "invalid format-4 cmap arrays" }
+                repeat(segmentCount) { index ->
+                    val end = u16(bytes, endCodes + index * 2)
+                    val start = u16(bytes, startCodes + index * 2)
+                    if (codePoint !in start..end) return@repeat
+                    val delta = i16(bytes, deltas + index * 2)
+                    val rangeOffsetAddress = rangeOffsets + index * 2
+                    val rangeOffset = u16(bytes, rangeOffsetAddress)
+                    if (rangeOffset == 0) return (codePoint + delta) and 0xFFFF
+                    val glyphAddress = rangeOffsetAddress + rangeOffset + (codePoint - start) * 2
+                    check(glyphAddress + 2 <= subtable + length) { "format-4 glyph index is outside cmap" }
+                    val glyph = u16(bytes, glyphAddress)
+                    return if (glyph == 0) 0 else (glyph + delta) and 0xFFFF
+                }
+                return 0
+            }
+
+            fun grouped(subtable: Int, format: Int): Int {
+                val length = u32(bytes, subtable + 4)
+                check(length >= 16 && subtable + length <= cmapEnd) { "truncated format-$format cmap" }
+                val groupCount = u32(bytes, subtable + 12)
+                val groups = subtable + 16
+                check(groups + groupCount * 12 <= subtable + length) { "invalid format-$format cmap groups" }
+                repeat(groupCount) { index ->
+                    val group = groups + index * 12
+                    val start = u32(bytes, group)
+                    val end = u32(bytes, group + 4)
+                    if (codePoint !in start..end) return@repeat
+                    val startGlyph = u32(bytes, group + 8)
+                    return if (format == 12) startGlyph + (codePoint - start) else startGlyph
+                }
+                return 0
+            }
+
             repeat(u16(bytes, cmap + 2)) { index ->
                 val record = cmap + 4 + index * 8
+                check(record + 8 <= cmapEnd) { "truncated Material Symbols cmap record" }
                 val subtable = cmap + u32(bytes, record + 4)
-                if (u16(bytes, subtable) == 4) format4 = subtable
-            }
-            check(format4 >= 0) { "Material Symbols font has no format-4 cmap" }
-            val segmentCount = u16(bytes, format4 + 6) / 2
-            val endCodes = format4 + 14
-            val startCodes = endCodes + segmentCount * 2 + 2
-            val deltas = startCodes + segmentCount * 2
-            val rangeOffsets = deltas + segmentCount * 2
-            repeat(segmentCount) { index ->
-                val end = u16(bytes, endCodes + index * 2)
-                val start = u16(bytes, startCodes + index * 2)
-                if (codePoint !in start..end) return@repeat
-                val delta = i16(bytes, deltas + index * 2)
-                val rangeOffsetAddress = rangeOffsets + index * 2
-                val rangeOffset = u16(bytes, rangeOffsetAddress)
-                if (rangeOffset == 0) return (codePoint + delta) and 0xFFFF
-                val glyph = u16(bytes, rangeOffsetAddress + rangeOffset + (codePoint - start) * 2)
-                return if (glyph == 0) 0 else (glyph + delta) and 0xFFFF
+                check(subtable + 2 <= cmapEnd) { "Material Symbols cmap subtable is outside cmap" }
+                val format = u16(bytes, subtable)
+                val glyph = when (format) {
+                    4 -> if (codePoint <= 0xFFFF) format4(subtable) else 0
+                    12, 13 -> grouped(subtable, format)
+                    else -> 0
+                }
+                if (glyph > 0) return glyph
             }
             return 0
         }
@@ -113,7 +150,6 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
             val bytes = resource.readBytes()
             val fontTables = tables(bytes)
             check("fvar" !in fontTables) { "$label Material Symbols resource must be static" }
-            check("GSUB" !in fontTables) { "$label Material Symbols resource must not require substitution" }
             requiredCodepoints.forEach { codePoint ->
                 check(glyphIndex(bytes, fontTables, codePoint) > 0) {
                     "$label Material Symbols resource maps U+${codePoint.toString(16).uppercase()} to .notdef"

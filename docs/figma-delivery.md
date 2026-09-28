@@ -86,7 +86,7 @@ in a horizontal auto-layout row for scanning. Full Specs-plugin output is option
 rather than a Builder fidelity target.
 
 Reusable composition lives in `Composition components` (`773:2`) on the dedicated Compositions page
-(`826:482`); the Components page remains the index. `ButtonGroup` (`773:17`) provides
+(`826:482`), ordered after Primitives; `Component Index` (`3:5`) remains the index. `ButtonGroup` (`773:17`) provides
 Vertical and Horizontal variants with an Actions slot; `Lockup` (`773:22`) exposes Visual, Title,
 and Body; `ActionArea` (`773:28`) exposes a Button Group slot plus Footnote and Show Footnote
 properties. Their names are domain-neutral because the patterns may be reused outside onboarding.
@@ -105,6 +105,12 @@ receives a master-level binding audit: text uses local styles, semantic colors u
 layout uses auto layout and fill/hug, and screens use instances. The canonical Button labels are
 machine-checked for text-style bindings. Foundations remains the visible token/style reference; the
 empty Guide page was removed because its operating rules already live in the repository and index.
+
+Use top-level canvas Sections to organize each component-family page, with auto-layout inside each
+Section. Canvas Sections have no fill or stroke. `Component Documentation` (`663:2270`) owns the
+variable-bound `background/primary` surface so each specimen displays on a deliberate theme-aware
+surface. Foundations is a Rem-owned adoption layer, not a copy of the iOS 26 kit page: import only
+the semantic values Rem uses, preserve source attribution, and map the same concepts to Android.
 
 Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
 when it has one stable responsibility and either two plausible consumers or observed recurrence

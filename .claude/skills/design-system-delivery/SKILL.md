@@ -132,6 +132,9 @@ actions fill the available width equally rather than sizing from their labels.
 Keep the component index as an index. Put aggregate composition masters and their documentation on
 a dedicated Compositions page; put indivisible controls and assets on Primitives. The page boundary
 should communicate abstraction level without making the index itself another component canvas.
+Organize each component-family page with top-level canvas Sections and auto-layout inside each
+Section. Canvas Sections do not own a fill or stroke; the documentation surface binds
+`background/primary`, so the component's real surface remains visible and theme-aware.
 
 Do not turn the width of one reference device into a fixed reusable-component width. When code or
 the product layout defines a content cap, make the composition fill its parent up to that maximum;

@@ -81,7 +81,10 @@ Consent proves the reusable shape: flow chassis masters live in Device Kit (`769
 `769:282`); Sign-in, Privacy, and the three consent states are all canonical component roots inside
 the single `00` Section; `ButtonGroup`,
 `Lockup`, and `ActionArea` live in `Composition components` (`773:2`) on the dedicated
-`Compositions` page (`826:482`). The `Components` page remains the Component Index only. These
+`Compositions` page (`826:482`), ordered after Primitives. `Component Index` (`3:5`) remains the
+index only. Component-family pages use fill-free, stroke-free canvas Sections with auto-layout
+inside; the shared `Component Documentation` master (`663:2270`) owns a variable-bound
+`background/primary` surface. These
 names are intentionally domain-neutral because the patterns may serve screens beyond onboarding.
 They compose primitives and therefore live on Compositions rather than Primitives. Their roots
 inherit the parent surface. `ButtonGroup` fills its parent, and horizontal actions fill equally.
@@ -114,9 +117,11 @@ cleanup work after the proving loop is reliable.
   baseline for a later foundations pass, then map their full Dynamic Type metrics and semantic colors
   into Rem-owned variables/styles. Rem components must not depend on an external kit library at
   runtime after that mapping. Bind every text node to a Rem style rather than a raw size.
-- **Foundations remains the visible token/style reference.** Keep the Foundations page and update it
-  when a local variable or style is added. The empty Guide page is removed because its durable rules
-  live in the repository contracts and Component Index.
+- **Foundations remains the visible Rem token/style reference.** Do not paste the whole iOS 26 page
+  into Rem. Treat that kit as attributed upstream source material, adopt only the semantic colors,
+  type metrics, spacing, radius, and chrome Rem uses, and add the Android mapping beside the same Rem
+  concept. Update Foundations when a local variable or style is added. The empty Guide page is removed
+  because its durable rules live in the repository contracts and Component Index.
 - **System chrome switches by Platform.** `StatusBar` (`785:389`) and `NavigationIndicator`
   (`793:379`) expose iOS and Android treatments while retaining dark/light content switching inside
   each. They sit inside one shared product layout; Platform changes native chrome, type metrics, and
