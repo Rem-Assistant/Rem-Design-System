@@ -136,19 +136,40 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     errors.push(`${hierarchy.steps} must use ${hierarchy.stepSpacing} item spacing; received ${steps?.itemSpacing}`);
   }
 
-  const matchedFlowScreenIds = new Set();
+  const expectedPlaceholderSequence = contract.flow.screens.map(({ placeholder }) => placeholder);
+  const actualPlaceholderSequence = visibleSteps
+    .filter(({ type, name }) => type === 'INSTANCE' && name === hierarchy.placeholder)
+    .map(({ id }) => id);
+  if (JSON.stringify(actualPlaceholderSequence) !== JSON.stringify(expectedPlaceholderSequence)) {
+    errors.push(`${hierarchy.steps} placeholder ids must be ${JSON.stringify(expectedPlaceholderSequence)}; received ${JSON.stringify(actualPlaceholderSequence)}`);
+  }
+
+  const allowedScreenRoles = new Set(['evidence-state', 'branch-return-navigation-waypoint']);
+  for (const [screenIndex, expected] of contract.flow.screens.entries()) {
+    if (!allowedScreenRoles.has(expected.role)) {
+      errors.push(`${expected.name} must declare a supported flow role`);
+      continue;
+    }
+    if (expected.role === 'evidence-state' && expected.evidence !== true) {
+      errors.push(`${expected.name} evidence-state must be marked as evidence`);
+    }
+    if (expected.role === 'branch-return-navigation-waypoint') {
+      if (expected.evidence !== false) {
+        errors.push(`${expected.name} branch-return navigation waypoint must not be evidence`);
+      }
+      const nextScreen = contract.flow.screens[screenIndex + 1];
+      if (!expected.navigationTarget || expected.navigationTarget !== nextScreen?.node) {
+        errors.push(`${expected.name} branch-return navigation waypoint must target the next contracted screen`);
+      }
+    }
+  }
+
   const screens = contract.flow.screens.map((expected) => {
-    const stableIdMatch = index.get(expected.node);
-    const componentMatch = [...index.values()].find(({ node, ancestors }) =>
-      !matchedFlowScreenIds.has(node.id) && node.type === 'INSTANCE' &&
-      node.componentId === expected.componentId && ancestors[0]?.type === 'SLOT' &&
-      ancestors[0]?.name === hierarchy.screenSlot);
-    const match = stableIdMatch || componentMatch;
+    const match = index.get(expected.node);
     if (!match) {
-      errors.push(`${expected.name} (${expected.componentId}) is missing from a ${hierarchy.screenSlot} slot in flow ${contract.flow.id}`);
+      errors.push(`${expected.name} exact contracted node ${expected.node} is missing from flow ${contract.flow.id}`);
       return { ...expected, status: 'missing' };
     }
-    matchedFlowScreenIds.add(match.node.id);
 
     const [screenSlot, placeholder, stepSlot, row, rowSlot, rows, rowsSlot, section, sectionsSlot, sections, mobileFlow, document] = match.ancestors;
     const checks = [

@@ -52,7 +52,7 @@ const componentQuality = {
 };
 
 const screenInstance = (entry) => ({
-  id: `I${entry.node};nested-screen`,
+  id: entry.node,
   type: 'INSTANCE',
   name: contract.screenComponents.screens.find(({ id }) => id === entry.componentId).name,
   componentId: entry.componentId,
@@ -159,7 +159,43 @@ const firstScreenSlot = findNode(looseFlow, ({ name }) => name === contract.flow
 firstScreenSlot.children = [{ id: 'legacy-slot', type: 'FRAME', name: 'Device / Screen slot', children: firstScreenSlot.children }];
 const loose = verify(page, looseFlow);
 assert.equal(loose.ok, false);
-assert.match(loose.errors.join('\n'), /missing from a Screen slot/);
+assert.match(loose.errors.join('\n'), /screen slot must be SLOT Screen/);
+
+const substitutedFlowScreen = structuredClone(flow);
+const exactFirstScreen = findNode(substitutedFlowScreen, ({ id }) => id === contract.flow.screens[0].node);
+exactFirstScreen.id = 'replacement-with-same-component';
+const invalidSubstitutedFlowScreen = verify(page, substitutedFlowScreen);
+assert.equal(invalidSubstitutedFlowScreen.ok, false);
+assert.match(invalidSubstitutedFlowScreen.errors.join('\n'), /exact contracted node 777:764 is missing/);
+
+const invalidWaypointRoleContract = structuredClone(contract);
+const waypoint = invalidWaypointRoleContract.flow.screens.find(({ node }) => node === '777:917');
+waypoint.evidence = true;
+const invalidWaypointRole = verifyStructure(
+  invalidWaypointRoleContract,
+  page,
+  flow,
+  prototype,
+  inventory,
+  screenComponents,
+  componentQualityDocuments(),
+);
+assert.equal(invalidWaypointRole.ok, false);
+assert.match(invalidWaypointRole.errors.join('\n'), /branch-return navigation waypoint must not be evidence/);
+
+const invalidWaypointTargetContract = structuredClone(contract);
+invalidWaypointTargetContract.flow.screens.find(({ node }) => node === '777:917').navigationTarget = '777:848';
+const invalidWaypointTarget = verifyStructure(
+  invalidWaypointTargetContract,
+  page,
+  flow,
+  prototype,
+  inventory,
+  screenComponents,
+  componentQualityDocuments(),
+);
+assert.equal(invalidWaypointTarget.ok, false);
+assert.match(invalidWaypointTarget.errors.join('\n'), /branch-return navigation waypoint must target the next contracted screen/);
 
 const leftoverFlow = structuredClone(flow);
 const firstPlaceholder = findNode(leftoverFlow, ({ id }) => id === contract.flow.screens[0].placeholder);

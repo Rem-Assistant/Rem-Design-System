@@ -1,13 +1,24 @@
-# Design ↔ code sync (no Code Connect required)
+# Design ↔ code sync
 
 Keeps the Figma design faithful to the shipping SwiftUI. Code is the source of truth; the design
-is verified/generated against it. Three pieces, all driven by [`manifest.json`](./manifest.json)
-(the machine-readable `REGISTRY.md`: Figma node-id ↔ SwiftUI source).
+is verified/generated against it. The source map, parserless Code Connect templates, Figma structure,
+and visual evidence form one delivery model. [`manifest.json`](./manifest.json) is the machine-readable
+`REGISTRY.md`: Figma node-id ↔ SwiftUI and Compose source.
 
-> Code Connect solves the *opposite* direction (surfacing code in Figma Dev Mode) and isn't used
-> here. This is code→design fidelity.
+## 1. Parserless Code Connect and dev-resource links
 
-## 1. Dev-resource links (the lightweight map)
+Every canonical component mapping is authored directly as a TypeScript `.figma.ts` template under
+[`code-connect/`](../../code-connect/). SwiftUI and Compose use separate configuration files with
+their correct `language` labels, while the official `figma connect` CLI parses the same template
+format for both. There is no generated native-parser layer and no parser migration path to maintain.
+
+```bash
+npm run check-code-connect
+```
+
+The check type-checks every template and runs the official parser against both platform configs.
+Publishing those mappings to Figma is a separate account/seat capability; an unavailable publisher
+does not create a second authoring format.
 
 Attaches a **"View source"** link to every canonical component in Figma Dev Mode, pointing at its
 SwiftUI file on GitHub. Runs headlessly via the REST API (the plugin API `addDevResourceAsync` is
@@ -72,7 +83,10 @@ requires the shared Onboarding page to have one canonical screen-component inven
 documentation/prototype pair. It verifies the attached hierarchy `Mobile Flow Documentation` →
 Sections slot → Rows slot → Steps slot → `Mobile Placeholder` → exact-size Screen slot → canonical
 screen instance. It also checks the four-step placeholder/arrow sequence, each screen's component
-source, and the three direct canonical prototype instances. The public REST file-node schema does
+source by its exact contracted node id, and the three direct canonical prototype instances. The
+duplicate Default node `777:917` is a branch-return/navigation waypoint between Terms and Privacy;
+it targets `777:999` and is explicitly excluded from evidence-state counts and exports. The public
+REST file-node schema does
 not return prototype reactions, so destinations, Back actions, and the Presentation starting point
 are verified through the authenticated Figma plugin and Present mode instead of being claimed by
 this REST gate. Together these checks catch detachment, legacy wrappers, and visually aligned overlay

@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -104,10 +104,10 @@
       "stepSequence": ["Mobile Placeholder", "Flow Arrow", "Mobile Placeholder", "Flow Arrow", "Mobile Placeholder", "Flow Arrow", "Mobile Placeholder"]
     },
     "screens": [
-      { "name": "Consent-default-light", "node": "777:764", "componentId": "777:248", "placeholder": "777:759", "evidence": true },
-      { "name": "Consent-terms-light", "node": "777:848", "componentId": "777:325", "placeholder": "777:843", "evidence": true },
-      { "name": "Consent-default-light-privacy-branch", "node": "777:917", "componentId": "777:248", "placeholder": "777:912", "evidence": false },
-      { "name": "Consent-privacy-light", "node": "777:999", "componentId": "777:392", "placeholder": "777:994", "evidence": true }
+      { "name": "Consent-default-light", "node": "777:764", "componentId": "777:248", "placeholder": "777:759", "role": "evidence-state", "evidence": true },
+      { "name": "Consent-terms-light", "node": "777:848", "componentId": "777:325", "placeholder": "777:843", "role": "evidence-state", "evidence": true },
+      { "name": "Consent-default-light-privacy-branch", "node": "777:917", "componentId": "777:248", "placeholder": "777:912", "role": "branch-return-navigation-waypoint", "navigationTarget": "777:999", "evidence": false },
+      { "name": "Consent-privacy-light", "node": "777:999", "componentId": "777:392", "placeholder": "777:994", "role": "evidence-state", "evidence": true }
     ],
     "prototype": {
       "interactionVerification": "Figma plugin plus Present mode; the REST file-node schema does not return reactions",
