@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { figma, requireToken } from './lib.mjs';
+import { figma } from './lib.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -271,60 +271,150 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
   return { ok: errors.length === 0, errors, digest, canonical };
 }
 
+export function structureNodeRequests(contract) {
+  const componentQualityIds = contract.componentQuality.components.map(({ id }) => id);
+  return [
+    { label: 'page', nodeIds: [contract.page.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.page.id)}&depth=1` },
+    { label: 'inventory', nodeIds: [contract.inventory.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.inventory.id)}` },
+    { label: 'screenComponents', nodeIds: [contract.screenComponents.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.screenComponents.id)}` },
+    { label: 'componentQuality', nodeIds: componentQualityIds, path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(componentQualityIds.join(','))}` },
+    { label: 'flow', nodeIds: [contract.flow.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.id)}` },
+    { label: 'prototype', nodeIds: [contract.flow.prototype.root.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.prototype.root.id)}` },
+  ];
+}
+
+export async function createStructureReport(contract, {
+  fetchFigma = figma,
+  head = process.env.GITHUB_SHA || null,
+  capturedAt = new Date().toISOString(),
+} = {}) {
+  const requests = structureNodeRequests(contract);
+  const settled = await Promise.allSettled(
+    requests.map(({ path }) => Promise.resolve().then(() => fetchFigma(path))),
+  );
+  const documents = new Map();
+  const failedNodeIds = new Set();
+  const missingNodeIds = new Set();
+  const malformedResponses = [];
+  const requestDiagnostics = [];
+  const errors = [];
+
+  for (const [index, outcome] of settled.entries()) {
+    const request = requests[index];
+    if (outcome.status === 'rejected') {
+      const reason = outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason);
+      request.nodeIds.forEach((id) => failedNodeIds.add(id));
+      requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'error', error: reason });
+      errors.push(`Figma fetch failed for ${request.label} nodes ${request.nodeIds.join(', ')}: ${reason}`);
+      continue;
+    }
+
+    const nodes = outcome.value?.nodes;
+    if (!nodes || typeof nodes !== 'object' || Array.isArray(nodes)) {
+      request.nodeIds.forEach((id) => missingNodeIds.add(id));
+      const diagnostic = { label: request.label, nodeIds: request.nodeIds, reason: 'response.nodes is missing or malformed' };
+      malformedResponses.push(diagnostic);
+      requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'malformed' });
+      errors.push(`Malformed Figma response for ${request.label} nodes ${request.nodeIds.join(', ')}: ${diagnostic.reason}`);
+      continue;
+    }
+
+    const missingForRequest = [];
+    for (const id of request.nodeIds) {
+      const document = nodes[id]?.document;
+      if (!document || typeof document !== 'object' || Array.isArray(document)) {
+        missingNodeIds.add(id);
+        missingForRequest.push(id);
+      } else {
+        documents.set(id, document);
+      }
+    }
+    if (missingForRequest.length) {
+      const diagnostic = { label: request.label, nodeIds: missingForRequest, reason: 'contracted node document is missing or malformed' };
+      malformedResponses.push(diagnostic);
+      requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'incomplete', missingNodeIds: missingForRequest });
+      errors.push(`Figma response omitted contracted ${request.label} nodes: ${missingForRequest.join(', ')}`);
+    } else {
+      requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'fetched' });
+    }
+  }
+
+  const failed = [...failedNodeIds];
+  const missing = [...missingNodeIds];
+  const unavailable = [...new Set([...failed, ...missing])];
+  const diagnostics = {
+    requestedNodeIds: requests.flatMap(({ nodeIds }) => nodeIds),
+    failedNodeIds: failed,
+    missingNodeIds: missing,
+    unavailableNodeIds: unavailable,
+    malformedResponses,
+    requests: requestDiagnostics,
+  };
+  const reportBase = {
+    version: contract.version,
+    head,
+    capturedAt,
+    fileKey: contract.fileKey,
+    page: contract.page,
+    flow: { id: contract.flow.id, templateSource: contract.flow.templateSource },
+    prototype: contract.flow.prototype.root,
+  };
+
+  if (unavailable.length) {
+    return {
+      ...reportBase,
+      status: failed.length ? 'error' : 'incomplete',
+      errors,
+      diagnostics,
+      structureDigest: null,
+      structure: null,
+    };
+  }
+
+  try {
+    const componentQualityDocuments = Object.fromEntries(
+      contract.componentQuality.components.map(({ id }) => [id, documents.get(id)]),
+    );
+    const result = verifyStructure(
+      contract,
+      documents.get(contract.page.id),
+      documents.get(contract.flow.id),
+      documents.get(contract.flow.prototype.root.id),
+      documents.get(contract.inventory.id),
+      documents.get(contract.screenComponents.id),
+      componentQualityDocuments,
+    );
+    return {
+      ...reportBase,
+      status: result.ok ? 'completed' : 'failed',
+      structureDigest: result.digest,
+      errors: result.errors,
+      diagnostics,
+      structure: result.canonical,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ...reportBase,
+      status: 'error',
+      structureDigest: null,
+      errors: [`Figma structure verification failed: ${message}`],
+      diagnostics: { ...diagnostics, verificationError: message },
+      structure: null,
+    };
+  }
+}
+
 async function main() {
-  requireToken();
   const output = resolve(process.argv[2] || 'artifacts/figma-structure-report.json');
   const contract = JSON.parse(await readFile(resolve(HERE, 'structure-contract.json'), 'utf8'));
   await mkdir(dirname(output), { recursive: true });
-
-  let report;
-  try {
-    const pageResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.page.id)}&depth=1`);
-    const inventoryResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.inventory.id)}`);
-    const screenComponentsResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.screenComponents.id)}`);
-    const componentQualityIds = contract.componentQuality.components.map(({ id }) => id);
-    const componentQualityResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(componentQualityIds.join(','))}`);
-    const flowResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.id)}`);
-    const prototypeResponse = await figma(`/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.flow.prototype.root.id)}`);
-    const pageDocument = pageResponse.nodes?.[contract.page.id]?.document;
-    const inventoryDocument = inventoryResponse.nodes?.[contract.inventory.id]?.document;
-    const screenComponentsDocument = screenComponentsResponse.nodes?.[contract.screenComponents.id]?.document;
-    const componentQualityDocuments = Object.fromEntries(componentQualityIds.map((id) => [id, componentQualityResponse.nodes?.[id]?.document]));
-    const flowDocument = flowResponse.nodes?.[contract.flow.id]?.document;
-    const prototypeDocument = prototypeResponse.nodes?.[contract.flow.prototype.root.id]?.document;
-    if (!pageDocument || !inventoryDocument || !screenComponentsDocument || componentQualityIds.some((id) => !componentQualityDocuments[id]) || !flowDocument || !prototypeDocument) throw new Error('Figma did not return the contracted page, inventory, canonical screens, component quality roots, flow, and prototype nodes');
-
-    const result = verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument, componentQualityDocuments);
-    report = {
-      version: contract.version,
-      status: result.ok ? 'completed' : 'failed',
-      head: process.env.GITHUB_SHA || null,
-      capturedAt: new Date().toISOString(),
-      fileKey: contract.fileKey,
-      page: contract.page,
-      flow: { id: contract.flow.id, templateSource: contract.flow.templateSource },
-      prototype: contract.flow.prototype.root,
-      structureDigest: result.digest,
-      errors: result.errors,
-      structure: result.canonical,
-    };
-    await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
-    if (!result.ok) throw new Error(result.errors.join('\n'));
-  } catch (error) {
-    if (!report) {
-      report = {
-        version: 1,
-        status: 'error',
-        head: process.env.GITHUB_SHA || null,
-        capturedAt: new Date().toISOString(),
-        fileKey: contract.fileKey,
-        errors: [error instanceof Error ? error.message : String(error)],
-      };
-      await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
-    }
-    throw error;
-  }
-
+  const fetchFigma = process.env.FIGMA_TOKEN
+    ? figma
+    : async () => { throw new Error('FIGMA_TOKEN is not set'); };
+  const report = await createStructureReport(contract, { fetchFigma });
+  await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+  if (report.status !== 'completed') throw new Error(report.errors.join('\n'));
   console.log(`Verified Figma structure ${report.structureDigest} → ${output}`);
 }
 
