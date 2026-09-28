@@ -70,15 +70,18 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   structure contract lists the exact allowed top-level nodes.
 
 - **Components page:** use `Component Documentation` (`663:2270`) for every new or changed canonical
-  component, editing that reusable container when its slot contract needs to improve. Use a named
-  vertical auto-layout documentation block: canonical component/variant set first, lightweight
-  overview below. Remove empty Anatomy/Props/Layout placeholders; the Specs plugin can add those
-  later. Keep the documentation wrapper attached when its Slots can hold the master and overview;
-  otherwise the wrapper may be a local frame while the masters and specimens remain
-  components/instances. Documentation chrome uses Light semantic surfaces and text by default;
-  switch it only when the documentation is explicitly demonstrating another theme.
+  component, editing that reusable container when its slot contract needs to improve. Arrange the
+  family as a horizontal auto-layout row of vertical columns. Each column places the canonical
+  master/variant set first and an attached `Component Documentation` instance below; its Component
+  slot contains a specimen instance. A canonical master cannot live inside an instance slot. Remove
+  empty Anatomy/Props/Layout placeholders; the Specs plugin can add those later. Documentation
+  chrome uses Light semantic surfaces and text by default; switch it only when the documentation is
+  explicitly demonstrating another theme.
 - **Flows:** instance `Mobile Flow Documentation` (`769:282`) from Device Kit. Populate its Overview
   slot and the nested flow slots; never detach it. Do not add loose screen frames as siblings.
+  Treat its canvas presentation—orientation, widths, padding, fills, and nested section surfaces—as
+  master-owned. Do not duplicate those values in each flow or rebuild them from skill prose; attached
+  instances should inherit later refinements to the Device Kit components.
 - **Flow hierarchy:** `Mobile Flow Documentation` → `Mobile Flow` → `Placeholder Sections` →
   `Sections` slot → `Placeholder Section` → `Rows` slot → `Placeholder Rows` → `Rows` slot →
   `Placeholder Flows` → `Steps` slot → `Mobile Placeholder` → `Screen` slot → canonical screen
