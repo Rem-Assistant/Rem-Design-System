@@ -12,6 +12,12 @@ CONSENT = "compose/RemDesignSystem/onboarding/ConsentStep.kt"
 
 
 class PairedDeliveryTests(unittest.TestCase):
+    def test_approved_consent_state_set(self):
+        self.assertEqual(
+            CONTRACTS["onboarding-consent"]["states"],
+            ["consent-default-light", "consent-terms-light", "consent-privacy-light"],
+        )
+
     def fixtures(self, root, missing=None):
         for platform in ("swiftui", "compose"):
             (root / platform).mkdir()
