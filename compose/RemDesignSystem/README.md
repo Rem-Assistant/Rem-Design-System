@@ -42,7 +42,10 @@ form diverges.
     (`tools/material-symbols/subset.py`), which bakes the fill **directly into the cmap** (the filled
     file's codepoints map straight to the `.fill` glyphs) — so the correct fill renders with no
     `FontVariation` setting and no GSUB feature, on the render runner (Paparazzi/LayoutLib) and real
-    Android alike. The fill is a value, not a runtime hope.
+    Android alike. The fill is a value, not a runtime hope — and that is **proven, not asserted**:
+    `RemMaterialSymbolsFillTest` rasterizes each registry glyph from both `.ttf`s with pure JDK AWT
+    (renderer-independent — it reads the font bytes, not through Compose) and fails on tofu, on a filled
+    glyph that isn't more-inked than its outline twin, or on a mis-routed FILL.
   - `ConsentStep.kt` — the reproduced "Privacy by design" consent step (copy verbatim from the
     reference frame).
   - `Onboarding.figma.kt` — Code Connect for the sign-in (`411:15`) + consent (`410:16`) masters,

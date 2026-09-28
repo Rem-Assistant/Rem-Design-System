@@ -34,15 +34,35 @@ import com.rem.designsystem.R
  *
  * Render a glyph as a `Text` node:
  * `Text(RemMaterialSymbols.ShieldLock, fontFamily = RemMaterialSymbols.family(fill = 1f))`.
+ *
+ * **Proven, not asserted.** That the two files actually carry the correct baked fill — every registry
+ * codepoint present (no tofu) and the filled file's fill-twin glyphs genuinely more-inked than the
+ * outline file's — is verified by an executable rasterization check (`RemMaterialSymbolsFillTest`,
+ * which rasterizes each glyph from both files and fails on a fill mismatch), so the claim above is a
+ * gate, not a comment. See `docs/contracts/icon-registry.md` rule 1.
  */
 object RemMaterialSymbols {
+    /** Which baked static font file a requested FILL routes to. Two files, one per fill bucket. */
+    internal enum class SymbolFontFile { Outlined, Filled }
+
+    /**
+     * Route a requested FILL (0f outline … 1f filled) to the static font file whose baked glyphs match.
+     * Threshold: `fill >= 0.5f` picks the filled file. Pure and Android-free so the fill-parity test can
+     * bind to the *real* routing rather than a copy of it.
+     */
+    internal fun fontFileFor(fill: Float): SymbolFontFile =
+        if (fill >= 0.5f) SymbolFontFile.Filled else SymbolFontFile.Outlined
+
     /**
      * The Material Symbols family at a given FILL (0f outline … 1f filled). Picks the static font file
      * whose baked glyphs match — outline below the axis midpoint, filled at/above it — so the fill is
      * correct on any renderer without relying on variation settings. Threshold: `fill >= 0.5f`.
      */
     fun family(fill: Float): FontFamily {
-        val resId = if (fill >= 0.5f) R.font.material_symbols_filled else R.font.material_symbols_outlined
+        val resId = when (fontFileFor(fill)) {
+            SymbolFontFile.Filled -> R.font.material_symbols_filled
+            SymbolFontFile.Outlined -> R.font.material_symbols_outlined
+        }
         return FontFamily(Font(resId = resId))
     }
 
