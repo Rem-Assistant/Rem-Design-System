@@ -211,6 +211,7 @@ jobs:
         with:
           artifact-ids: ${{ steps.figma-run.outputs.artifact_id }}
           path: ${{ runner.temp }}/figma-evidence
+          merge-multiple: true
           repository: ${{ github.repository }}
           run-id: ${{ steps.figma-run.outputs.run_id }}
           github-token: ${{ github.token }}
