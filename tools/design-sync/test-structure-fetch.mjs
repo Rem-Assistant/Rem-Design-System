@@ -12,7 +12,7 @@ const expectedUnavailableIds = [...new Set(expectedIds)];
 
 const requests = structureNodeRequests(contract);
 assert.equal(requests[0].responseShape, 'file');
-assert.equal(requests[0].path, `/files/${contract.fileKey}?depth=1`);
+assert.equal(requests[0].path, `/files/${contract.fileKey}?depth=2`);
 
 const incomplete = await createStructureReport(contract, {
   fetchFigma: async () => ({ nodes: {} }),
@@ -43,7 +43,7 @@ assert.ok(failed.errors.some((error) => error.includes(`nodes ${contract.page.id
 let pageResponseObserved = false;
 const pageOnly = await createStructureReport(contract, {
   fetchFigma: async (path) => {
-    if (path === `/files/${contract.fileKey}?depth=1`) {
+    if (path === `/files/${contract.fileKey}?depth=2`) {
       pageResponseObserved = true;
       return {
         document: {
