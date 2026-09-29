@@ -181,12 +181,16 @@ public struct OnboardingCheckinTemplate: View {
             .foregroundStyle(DesignTokens.Color.backgroundPrimary)
             .frame(maxWidth: .infinity)
             .padding(DesignTokens.Spacing.md)
-            .background(DesignTokens.Color.buttonBackground)
+            // Bake the disabled alpha into the fill so ImageRenderer and Paparazzi produce the
+            // same ghosted CTA as the founder's Saving reference. Applying opacity to the whole
+            // Button rendered inconsistently in exact-head evidence.
+            .background(
+                DesignTokens.Color.buttonBackground.opacity(primaryEnabled ? 1 : 0.4)
+            )
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(!primaryEnabled)
-        .opacity(primaryEnabled ? 1 : 0.4)
     }
 
     private func primaryAction() {

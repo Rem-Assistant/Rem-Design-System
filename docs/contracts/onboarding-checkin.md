@@ -47,8 +47,8 @@ Content top → bottom, **centered**, max content width 560:
 |---|---|---|
 | **default** | cadence as loaded from `CheckinsService` (Morning on @ 8:00 AM, others off) | "Continue" — filled, enabled when ≥1 time is on |
 | **edited** | the user changed a toggle (e.g. Midday also on @ 12:30 PM); not yet persisted | "Continue" — filled, enabled |
-| **saving** | persisting; rows locked (non-interactive) | "Saving…" — leading spinner, disabled, 40% opacity |
-| **saved** | persisted; rows locked | "Saved" — leading `checkmark`, disabled |
+| **saving** | persisting; rows locked (non-interactive) | "Saving…" — leading spinner, disabled, ghosted 40% container fill |
+| **saved** | persisted; rows locked | "Saved" — leading `checkmark`, disabled, ghosted 40% container fill |
 | **recoverable failure** | save failed; rows interactive again; notice card above the CTA | "Try again" — filled, enabled |
 
 **Notice card:** `Color.systemRed` @ 12% fill, radius `medium`, leading warning icon (registry:
@@ -112,7 +112,7 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 - **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; inline time
   editing / a time-picker (a Settings concern); the `CheckinsService` persistence + scheduling (host).
 
-## Figma delivery (delivered — exact-head export pending)
+## Figma delivery (delivered; exact-head export is CI-gated)
 
 Figma is part of a finished screen PR (founder, 2026-09-28; `docs/figma-delivery.md`). The editable
 Check-in screen, its five states, and its place in the onboarding flow are to be authored in the
@@ -121,10 +121,10 @@ existing Rem file (`af4yDqCzp57jds9lkFiIaO`) on the shared `Onboarding` page, re
 variables, and text styles, following `SHAPE-OF-A-TASK.md` and the `rem-design-system` skill.
 
 The hosted Figma Writer authenticated through the leased remote MCP session and authored the live
-canvas against implementation commit `e8621076fae121e8109eaeb9447ac31ece3563b4` on 2026-09-29.
-Its final return path stalled after the canvas mutation, so the exact nodes were read back and the
-missing prototype destinations were completed during delivery recovery. The repository references
-below are now eligible for the exact-head export and independent Reviewer gate.
+canvas on 2026-09-29. Its final return path stalled after the canvas mutation, so the exact nodes
+were read back and the missing prototype destinations were completed during delivery recovery.
+The `delivery-scope:onboarding-checkin` gate exports these five live nodes and verifies the editable
+structure against the current PR head before the Builder delivery is published.
 
 ### Delivery record
 
@@ -164,5 +164,5 @@ The paired render passes when iOS and Android match on **all** of:
 Missing or unmatched required states fail closed.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded amendment
-on the issue. **Status:** ready for exact-head export and independent review; the paired render and
-editable Figma references above are the founder spot-check surface.
+on the issue. **Status:** the paired render, authenticated exact-head Figma exports, structure report,
+and editable node references above are the founder spot-check surface.
