@@ -57,6 +57,36 @@ class PairedDeliveryTests(unittest.TestCase):
                 "checkin-failure-light",
             ],
         )
+        references = CONTRACTS["onboarding-checkin"]["references"]
+        self.assertEqual(
+            [value["node"] for value in references.values()],
+            ["870:788", "875:857", "875:940", "875:1026", "875:1112"],
+        )
+        self.assertTrue(all(value["requireDocumentation"] is False for value in references.values()))
+        self.assertFalse(CONTRACTS["onboarding-checkin"]["requirePrototype"])
+
+    def test_canonical_only_screen_contract_uses_authenticated_master_proof(self):
+        contract = CONTRACTS["onboarding-checkin"]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "structure").mkdir()
+            (root / "structure/report.json").write_text(json.dumps({
+                "status": "completed",
+                "head": "a" * 40,
+                "structure": {
+                    "canonicalScreens": [
+                        {"id": value["node"], "status": "conformant"}
+                        for value in contract["references"].values()
+                    ],
+                    "screens": [],
+                },
+            }))
+            lines, errors = delivery._authenticated_structure_proof(root, "a" * 40, contract)
+        self.assertEqual(errors, [])
+        body = "\n".join(lines)
+        self.assertIn("`870:788` · conformant", body)
+        self.assertIn("not required", body)
+        self.assertNotIn("Authenticated prototype proof", body)
 
     def fixtures(self, root, missing=None, include_references=True, states=None, include_structure=True):
         states = states or CONTRACTS["onboarding-consent"]["states"]
