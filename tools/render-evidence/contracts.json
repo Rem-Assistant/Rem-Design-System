@@ -15,7 +15,7 @@
       "checkin-failure-light": { "name": "Checkin-failure-light", "node": "885:1429" }
     },
     "waypoints": {
-      "checkin-component-set": { "name": "Screen/Check-in", "node": "876:1121" },
+      "checkin-component-set": { "name": "Checkin-component-set", "node": "876:1121" },
       "checkin-flow-documentation": { "name": "Checkin-flow-documentation", "node": "890:1502" },
       "checkin-prototype": { "name": "Checkin-prototype", "node": "885:1121" }
     }

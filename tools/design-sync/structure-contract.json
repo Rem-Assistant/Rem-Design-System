@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 15,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -7,7 +7,9 @@
     "topLevel": [
       { "id": "760:21", "type": "SECTION", "name": "00 · Canonical screen components" },
       { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
-      { "id": "777:432", "type": "SECTION", "name": "01A · Consent · Documentation" }
+      { "id": "777:432", "type": "SECTION", "name": "01A · Consent · Documentation" },
+      { "id": "885:1121", "type": "SECTION", "name": "02B · Check-in · Prototype" },
+      { "id": "890:1502", "type": "SECTION", "name": "02A · Check-in · Documentation" }
     ]
   },
   "inventory": {
@@ -15,11 +17,21 @@
     "type": "SECTION",
     "name": "00 · Canonical screen components",
     "fill": "#F5F5F5",
+    "screenContainer": {
+      "id": "912:2",
+      "type": "FRAME",
+      "name": "HStack/Canonical Screens",
+      "layoutMode": "HORIZONTAL",
+      "primaryAxisSizingMode": "AUTO",
+      "counterAxisSizingMode": "AUTO",
+      "itemSpacing": 64
+    },
     "screens": [
       { "id": "788:3183", "type": "COMPONENT", "name": "Screen/Sign in" },
       { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default" },
       { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms" },
-      { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy" }
+      { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy" },
+      { "id": "876:1121", "type": "COMPONENT_SET", "name": "Screen/Check-in" }
     ],
     "assets": {
       "remAppIcon": {
@@ -49,10 +61,26 @@
     "id": "760:21",
     "type": "SECTION",
     "name": "00 · Canonical screen components",
+    "rootOrder": ["StatusBar", "TopBar", "Body", "NavigationIndicator"],
+    "hierarchyScreenIds": ["870:788", "875:857", "875:940", "875:1026", "875:1112"],
+    "body": {
+      "padding": 24,
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "FILL",
+      "primaryAxisAlignItems": "SPACE_BETWEEN",
+      "children": ["VStack/Content", "VStack/Actions"],
+      "actionAreaOwnsOuterInset": false,
+      "actionAreaName": "ActionArea"
+    },
     "screens": [
       { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default", "width": 402, "height": 874 },
       { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms", "width": 402, "height": 874 },
-      { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy", "width": 402, "height": 874 }
+      { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy", "width": 402, "height": 874 },
+      { "id": "870:788", "type": "COMPONENT", "name": "Status=Default", "width": 402, "height": 874 },
+      { "id": "875:857", "type": "COMPONENT", "name": "Status=Edited", "width": 402, "height": 874 },
+      { "id": "875:940", "type": "COMPONENT", "name": "Status=Saving", "width": 402, "height": 874 },
+      { "id": "875:1026", "type": "COMPONENT", "name": "Status=Saved", "width": 402, "height": 874 },
+      { "id": "875:1112", "type": "COMPONENT", "name": "Status=Failure", "width": 402, "height": 874 }
     ]
   },
   "componentQuality": {
@@ -66,12 +94,32 @@
         "checks": {
           "textStyleBindings": [
             { "id": "110:46", "name": "label" },
-            { "id": "377:3", "name": "Approve" },
-            { "id": "377:6", "name": "Connect" },
-            { "id": "381:3", "name": "Remove" },
+            { "id": "377:3", "name": "Continue" },
+            { "id": "377:6", "name": "Continue" },
+            { "id": "381:3", "name": "Continue" },
             { "id": "408:16", "name": "label" },
             { "id": "439:16", "name": "label" },
             { "id": "439:18", "name": "label" }
+          ]
+        }
+      },
+      {
+        "id": "72:24",
+        "type": "COMPONENT_SET",
+        "name": "Toast",
+        "category": "Feedback",
+        "checks": {
+          "textStyleBindings": [
+            { "id": "72:7", "name": "Message" },
+            { "id": "72:12", "name": "Message" },
+            { "id": "72:18", "name": "Message" },
+            { "id": "72:23", "name": "Message" }
+          ],
+          "variableBindings": [
+            { "id": "72:2", "name": "Variant=info" },
+            { "id": "72:8", "name": "Variant=success" },
+            { "id": "72:13", "name": "Variant=warning" },
+            { "id": "72:19", "name": "Variant=error" }
           ]
         }
       }

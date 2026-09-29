@@ -75,7 +75,19 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     errors.push(`Canonical inventory fill must be ${expectedInventory.fill}; received ${actualInventoryFill}`);
   }
   const inventoryIndex = walk(inventory);
-  const actualInventoryScreens = (inventory.children || []).map(({ id, type, name }) => ({ id, type, name }));
+  const expectedScreenContainer = expectedInventory.screenContainer;
+  const screenContainer = (inventory.children || []).find(({ id }) => id === expectedScreenContainer.id);
+  const screenContainerConforms = Boolean(screenContainer &&
+    screenContainer.type === expectedScreenContainer.type &&
+    screenContainer.name === expectedScreenContainer.name &&
+    screenContainer.layoutMode === expectedScreenContainer.layoutMode &&
+    screenContainer.primaryAxisSizingMode === expectedScreenContainer.primaryAxisSizingMode &&
+    screenContainer.counterAxisSizingMode === expectedScreenContainer.counterAxisSizingMode &&
+    screenContainer.itemSpacing === expectedScreenContainer.itemSpacing);
+  if (!screenContainerConforms) {
+    errors.push(`Canonical inventory screen container must be ${JSON.stringify(expectedScreenContainer)}`);
+  }
+  const actualInventoryScreens = (screenContainer?.children || []).map(({ id, type, name }) => ({ id, type, name }));
   if (JSON.stringify(actualInventoryScreens) !== JSON.stringify(expectedInventory.screens)) {
     errors.push(`Canonical inventory screens must be ${JSON.stringify(expectedInventory.screens)}; received ${JSON.stringify(actualInventoryScreens)}`);
   }
@@ -122,6 +134,33 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     if (!conforms) errors.push(`Canonical screen must be ${JSON.stringify(expected)}`);
     return { ...expected, status: conforms ? 'conformant' : 'invalid' };
   });
+  const hierarchyIds = new Set(expectedScreenRoot.hierarchyScreenIds);
+  for (const screenId of hierarchyIds) {
+    const screen = screenRootIndex.get(screenId)?.node;
+    if (!screen) continue;
+    const rootNames = (screen.children || []).filter(({ visible }) => visible !== false).map(({ name }) => name);
+    if (JSON.stringify(rootNames) !== JSON.stringify(expectedScreenRoot.rootOrder)) {
+      errors.push(`${screen.name} root order must be ${JSON.stringify(expectedScreenRoot.rootOrder)}; received ${JSON.stringify(rootNames)}`);
+      continue;
+    }
+    const body = (screen.children || []).find(({ name }) => name === 'Body');
+    const bodyContract = expectedScreenRoot.body;
+    const bodyNames = (body?.children || []).filter(({ visible }) => visible !== false).map(({ name }) => name);
+    const paddingMatches = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']
+      .every((key) => body?.[key] === bodyContract.padding);
+    if (!body || body.layoutSizingHorizontal !== bodyContract.layoutSizingHorizontal ||
+        body.layoutSizingVertical !== bodyContract.layoutSizingVertical ||
+        body.primaryAxisAlignItems !== bodyContract.primaryAxisAlignItems || !paddingMatches ||
+        JSON.stringify(bodyNames) !== JSON.stringify(bodyContract.children)) {
+      errors.push(`${screen.name} Body must fill, use ${bodyContract.padding}pt inset, SPACE_BETWEEN, and contain ${JSON.stringify(bodyContract.children)}`);
+      continue;
+    }
+    const bodyIndex = walk(body);
+    const actionAreas = [...bodyIndex.values()].filter(({ node }) => node.name === bodyContract.actionAreaName);
+    if (actionAreas.length !== 1) {
+      errors.push(`${screen.name} Body must contain exactly one ${bodyContract.actionAreaName}; received ${actionAreas.length}`);
+    }
+  }
 
   const componentQuality = contract.componentQuality.components.map((expectedComponent) => {
     const component = componentQualityDocuments?.[expectedComponent.id] || { id: `missing-${expectedComponent.id}`, children: [] };
@@ -136,15 +175,26 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       if (!conforms) errors.push(`${expectedComponent.name} text ${expected.id} (${expected.name}) must bind a local text style`);
       return { ...expected, styleId, status: conforms ? 'conformant' : 'invalid' };
     });
-    const checks = [...textStyleBindings];
+    const variableBindings = (expectedComponent.checks?.variableBindings || []).map((expected) => {
+      const match = componentIndex.get(expected.id)?.node;
+      const bindings = match?.boundVariables || {};
+      const conforms = Boolean(match && match.name === expected.name && Object.keys(bindings).length > 0);
+      if (!conforms) errors.push(`${expectedComponent.name} node ${expected.id} (${expected.name}) must bind semantic variables`);
+      return { ...expected, bindings: Object.keys(bindings).sort(), status: conforms ? 'conformant' : 'invalid' };
+    });
+    const checks = [...textStyleBindings, ...variableBindings];
     const passed = checks.filter(({ status }) => status === 'conformant').length;
     return {
       id: component.id,
       name: component.name,
       category: expectedComponent.category,
-      verifiedDimensions: textStyleBindings.length ? ['typography'] : [],
+      verifiedDimensions: [
+        ...(textStyleBindings.length ? ['typography'] : []),
+        ...(variableBindings.length ? ['semanticColor'] : []),
+      ],
       score: { passed, total: checks.length },
       textStyleBindings,
+      variableBindings,
     };
   });
 
@@ -339,6 +389,16 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       id: inventory.id,
       name: inventory.name,
       fill: actualInventoryFill,
+      screenContainer: screenContainer ? {
+        id: screenContainer.id,
+        type: screenContainer.type,
+        name: screenContainer.name,
+        layoutMode: screenContainer.layoutMode,
+        primaryAxisSizingMode: screenContainer.primaryAxisSizingMode,
+        counterAxisSizingMode: screenContainer.counterAxisSizingMode,
+        itemSpacing: screenContainer.itemSpacing,
+        status: screenContainerConforms ? 'conformant' : 'invalid',
+      } : { ...expectedScreenContainer, status: 'missing' },
       screens: actualInventoryScreens,
       assets: Object.values(expectedInventory.assets).map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),
       canonicalInstances: expectedInventory.canonicalInstances.map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),

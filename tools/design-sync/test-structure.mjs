@@ -9,47 +9,85 @@ const inventory = {
   type: contract.inventory.type,
   name: contract.inventory.name,
   fills: [{ type: 'SOLID', visible: true, color: { r: 245 / 255, g: 245 / 255, b: 245 / 255 } }],
-  children: contract.inventory.screens.map((screen, index) => ({
-    ...screen,
-    width: 402,
-    height: 874,
-    children: index === 0
-      ? [
-          { ...contract.inventory.assets.remAppIcon, fills: [{ type: 'IMAGE', visible: true, imageRef: 'source-raster' }] },
-          {
-            ...contract.inventory.assets.googleGlyph,
-            children: Array.from({ length: contract.inventory.assets.googleGlyph.minimumVectorCount }, (_, vectorIndex) => ({ id: `google-vector-${vectorIndex}`, type: 'VECTOR', name: 'Vector' })),
-          },
-        ]
-      : index === 1
-        ? contract.inventory.canonicalInstances.map((entry) => ({ ...entry }))
-        : [],
-  })),
+  children: [{
+    ...contract.inventory.screenContainer,
+    children: contract.inventory.screens.map((screen, index) => ({
+      ...screen,
+      width: 402,
+      height: 874,
+      children: index === 0
+        ? [
+            { ...contract.inventory.assets.remAppIcon, fills: [{ type: 'IMAGE', visible: true, imageRef: 'source-raster' }] },
+            {
+              ...contract.inventory.assets.googleGlyph,
+              children: Array.from({ length: contract.inventory.assets.googleGlyph.minimumVectorCount }, (_, vectorIndex) => ({ id: `google-vector-${vectorIndex}`, type: 'VECTOR', name: 'Vector' })),
+            },
+          ]
+        : index === 1
+          ? contract.inventory.canonicalInstances.map((entry) => ({ ...entry }))
+          : [],
+    })),
+  }],
 };
 
 const screenComponents = {
   id: contract.screenComponents.id,
   type: contract.screenComponents.type,
   name: contract.screenComponents.name,
-  children: contract.screenComponents.screens.map(({ width, height, ...entry }) => ({
-    ...entry,
-    absoluteBoundingBox: { x: 0, y: 0, width, height },
-    children: [],
-  })),
+  children: contract.screenComponents.screens.map(({ width, height, ...entry }) => {
+    const hierarchy = contract.screenComponents.hierarchyScreenIds.includes(entry.id);
+    return {
+      ...entry,
+      absoluteBoundingBox: { x: 0, y: 0, width, height },
+      children: hierarchy ? [
+        { id: `status-${entry.id}`, type: 'INSTANCE', name: 'StatusBar', children: [] },
+        { id: `top-${entry.id}`, type: 'INSTANCE', name: 'TopBar', children: [] },
+        {
+          id: `body-${entry.id}`,
+          type: 'FRAME',
+          name: 'Body',
+          layoutSizingHorizontal: 'FILL',
+          layoutSizingVertical: 'FILL',
+          primaryAxisAlignItems: 'SPACE_BETWEEN',
+          paddingTop: 24,
+          paddingRight: 24,
+          paddingBottom: 24,
+          paddingLeft: 24,
+          children: [
+            { id: `content-${entry.id}`, type: 'FRAME', name: 'VStack/Content', children: [] },
+            { id: `actions-${entry.id}`, type: 'FRAME', name: 'VStack/Actions', children: [
+              { id: `action-area-${entry.id}`, type: 'INSTANCE', name: 'ActionArea', children: [] },
+            ] },
+          ],
+        },
+        { id: `nav-${entry.id}`, type: 'INSTANCE', name: 'NavigationIndicator', children: [] },
+      ] : [],
+    };
+  }),
 };
 
-const expectedComponentQuality = contract.componentQuality.components[0];
-const componentQuality = {
-  id: expectedComponentQuality.id,
-  type: expectedComponentQuality.type,
-  name: expectedComponentQuality.name,
-  children: expectedComponentQuality.checks.textStyleBindings.map((entry) => ({
-    ...entry,
-    type: 'TEXT',
-    styles: { text: `style-${entry.id}` },
-    children: [],
-  })),
-};
+const componentQuality = Object.fromEntries(contract.componentQuality.components.map((expected) => [
+  expected.id,
+  {
+    id: expected.id,
+    type: expected.type,
+    name: expected.name,
+    children: [
+      ...(expected.checks.textStyleBindings || []).map((entry) => ({
+        ...entry,
+        type: 'TEXT',
+        styles: { text: `style-${entry.id}` },
+        children: [],
+      })),
+      ...(expected.checks.variableBindings || []).map((entry) => ({
+        ...entry,
+        type: 'COMPONENT',
+        boundVariables: { fills: [{ type: 'VARIABLE_ALIAS', id: `variable-${entry.id}` }] },
+        children: [],
+      })),
+    ],
+  },
+]));
 
 const screenInstance = (entry) => ({
   id: entry.node,
@@ -139,9 +177,8 @@ const page = {
   flowStartingPoints: structuredClone(contract.flow.prototype.flowStartingPoints),
 };
 
-const componentQualityDocuments = (componentValue = componentQuality) => ({ [expectedComponentQuality.id]: componentValue });
 const verify = (pageValue = page, flowValue = flow, prototypeValue = prototype, inventoryValue = inventory, screenValue = screenComponents, componentValue = componentQuality) =>
-  verifyStructure(contract, pageValue, flowValue, prototypeValue, inventoryValue, screenValue, componentQualityDocuments(componentValue));
+  verifyStructure(contract, pageValue, flowValue, prototypeValue, inventoryValue, screenValue, componentValue);
 const findNode = (root, predicate) => {
   if (predicate(root)) return root;
   for (const child of root.children || []) {
@@ -233,7 +270,7 @@ const invalidWaypointRole = verifyStructure(
   prototype,
   inventory,
   screenComponents,
-  componentQualityDocuments(),
+  componentQuality,
 );
 assert.equal(invalidWaypointRole.ok, false);
 assert.match(invalidWaypointRole.errors.join('\n'), /branch-return navigation waypoint must not be evidence/);
@@ -249,7 +286,7 @@ const invalidWaypointTarget = verifyStructure(
   prototype,
   inventory,
   screenComponents,
-  componentQualityDocuments(),
+  componentQuality,
 );
 assert.equal(invalidWaypointTarget.ok, false);
 assert.match(invalidWaypointTarget.errors.join('\n'), /branch-return navigation waypoint must target the next contracted screen/);
@@ -291,6 +328,13 @@ const invalidScreen = verify(page, flow, prototype, inventory, wrongScreenSize);
 assert.equal(invalidScreen.ok, false);
 assert.match(invalidScreen.errors.join('\n'), /Canonical screen must be/);
 
+const wrongScreenHierarchy = structuredClone(screenComponents);
+wrongScreenHierarchy.children.find(({ id }) => id === contract.screenComponents.hierarchyScreenIds[0])
+  .children[2].paddingLeft = 16;
+const invalidHierarchy = verify(page, flow, prototype, inventory, wrongScreenHierarchy);
+assert.equal(invalidHierarchy.ok, false);
+assert.match(invalidHierarchy.errors.join('\n'), /Body must fill, use 24pt inset/);
+
 const whiteInventory = structuredClone(inventory);
 whiteInventory.fills[0].color = { r: 1, g: 1, b: 1 };
 const wrongInventoryFill = verify(page, flow, prototype, whiteInventory);
@@ -298,9 +342,9 @@ assert.equal(wrongInventoryFill.ok, false);
 assert.match(wrongInventoryFill.errors.join('\n'), /inventory fill must be #F5F5F5/);
 
 const placeholderAssets = structuredClone(inventory);
-placeholderAssets.children[0].children[0].fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 1 } }];
-placeholderAssets.children[0].children[1].children = [];
-placeholderAssets.children[0].children.push({ id: '538:40', type: 'TEXT', name: 'logo-glyph' });
+placeholderAssets.children[0].children[0].children[0].fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 1 } }];
+placeholderAssets.children[0].children[0].children[1].children = [];
+placeholderAssets.children[0].children[0].children.push({ id: '538:40', type: 'TEXT', name: 'logo-glyph' });
 const invalidAssets = verify(page, flow, prototype, placeholderAssets);
 assert.equal(invalidAssets.ok, false);
 assert.match(invalidAssets.errors.join('\n'), /IMAGE fill from the source asset/);
@@ -308,16 +352,22 @@ assert.match(invalidAssets.errors.join('\n'), /at least 4 vector paths/);
 assert.match(invalidAssets.errors.join('\n'), /forbidden placeholder nodes/);
 
 const loosePrivacySection = structuredClone(inventory);
-loosePrivacySection.children[1].children[0].type = 'FRAME';
-delete loosePrivacySection.children[1].children[0].componentId;
+loosePrivacySection.children[0].children[1].children[0].type = 'FRAME';
+delete loosePrivacySection.children[0].children[1].children[0].componentId;
 const invalidPrivacySection = verify(page, flow, prototype, loosePrivacySection);
 assert.equal(invalidPrivacySection.ok, false);
 assert.match(invalidPrivacySection.errors.join('\n'), /canonical component 741:311/);
 
 const unboundComponentText = structuredClone(componentQuality);
-delete unboundComponentText.children[0].styles.text;
+delete unboundComponentText[contract.componentQuality.components[0].id].children[0].styles.text;
 const invalidComponentStyle = verify(page, flow, prototype, inventory, screenComponents, unboundComponentText);
 assert.equal(invalidComponentStyle.ok, false);
 assert.match(invalidComponentStyle.errors.join('\n'), /must bind a local text style/);
+
+const unboundToast = structuredClone(componentQuality);
+delete unboundToast['72:24'].children.find(({ id }) => id === '72:2').boundVariables;
+const invalidToastTokens = verify(page, flow, prototype, inventory, screenComponents, unboundToast);
+assert.equal(invalidToastTokens.ok, false);
+assert.match(invalidToastTokens.errors.join('\n'), /must bind semantic variables/);
 
 console.log('Figma structure verifier tests passed');
