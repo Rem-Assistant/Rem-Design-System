@@ -14,16 +14,16 @@ permissions:
 jobs:
   builder:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
-    uses: samuelalake/agent-factory/.github/workflows/builder.yml@4cf1e5e84ad0a801f93720aa42ca813f4819fe97
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@44907b5e64ca90358958eae062cc474c256e5e55
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: 4cf1e5e84ad0a801f93720aa42ca813f4819fe97
+      factory_ref: 44907b5e64ca90358958eae062cc474c256e5e55
       runner: ubuntu-latest
       base_ref: main
       app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      FIGMA_MCP_ACCESS_TOKEN: ${{ secrets.FIGMA_MCP_ACCESS_TOKEN }}
+      FIGMA_MCP_OAUTH_BUNDLE: ${{ secrets.FIGMA_MCP_OAUTH_BUNDLE }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
       AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}
