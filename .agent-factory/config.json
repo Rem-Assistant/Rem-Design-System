@@ -60,6 +60,7 @@
     "max_revision_attempts": 3,
     "visual_revision_context": true,
     "fallback_visual_revision_context": false,
+    "figma_mcp": true,
     "max_model_cost_usd": 3.0,
     "input_cost_per_million": 0.0,
     "output_cost_per_million": 0.0
