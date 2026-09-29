@@ -22,6 +22,9 @@ form diverges.
     `com.figma.code.connect`); dormant-but-ready. Its exact DSL is flagged to verify on the Android
     runner (Compose Code Connect is newer than SwiftUI's).
   This is the pattern every extracted Compose component follows.
+- **`compose/RemDesignSystem/rows/RemSection.kt`** — canonical grouped Section (`741:311`): optional
+  header/footer plus an open rows slot, `backgroundSecondary`, xlarge radius, and no outer stroke.
+  Its current parserless mapping lives at `code-connect/compose/Section.figma.ts`.
 - **`compose/RemDesignSystem/onboarding/*.kt`** — the **onboarding sequencer** (issue #11): the
   Compose sibling of `OnboardingFlow.swift` (deploy step dropped from the path).
   - `OnboardingSequencer.kt` — the ordered-flow driver (progress + Continue/Skip forward/back, ordered
@@ -34,12 +37,18 @@ form diverges.
     real auth (`SignInState` = returning / new / checking / error / recovery). The paired
     iOS⟷Android render (`SignIn-*` keys in `screenshots.yml`) is what the visual-parity gate diffs.
     `signInStep(...)` wraps it as the sequencer's entry step.
-  - `icons/RemMaterialSymbols.kt` + `src/main/res/font/material_symbols_outlined.ttf` — the Android
-    half of `docs/contracts/icon-registry.md`: the **Material Symbols variable font** with its FILL
-    axis (0 outline / 1 filled), bound via `FontVariation` so a filled iOS symbol never drifts to an
-    Android outline. NOT the always-filled legacy `Icons.Filled.*`. The `.ttf` is the Apache-2.0
-    Google font (`@material-symbols/font-400`, variable-FILL), subset to the registry glyphs (`error`,
-    U+E000) with `fontTools` to keep the binary tiny while preserving the FILL axis.
+  - `icons/RemMaterialSymbols.kt` + `src/main/res/font/material_symbols_{outlined,filled}.ttf` — the
+    Android half of `docs/contracts/icon-registry.md`: **Material Symbols** as two **static** font
+    files, one per FILL (outline 0 / filled 1); `family(fill)` routes a glyph to the matching file so a
+    filled iOS symbol never drifts to an Android outline. NOT the always-filled legacy `Icons.Filled.*`.
+    The `.ttf`s are the Apache-2.0 Google font subset to the registry glyphs with `fontTools`
+    (`tools/material-symbols/subset.py`), which bakes the fill **directly into the cmap** (the filled
+    file's codepoints map straight to the `.fill` glyphs) — so the correct fill renders with no
+    `FontVariation` setting and no GSUB feature, on the render runner (Paparazzi/LayoutLib) and real
+    Android alike. The fill is a value, not a runtime hope — and that is **proven, not asserted**:
+    `RemMaterialSymbolsFillTest` rasterizes each registry glyph from both `.ttf`s with pure JDK AWT
+    (renderer-independent — it reads the font bytes, not through Compose) and fails on tofu, on a filled
+    glyph that isn't more-inked than its outline twin, or on a mis-routed FILL.
   - `ConsentStep.kt` — the reproduced "Privacy by design" consent step (copy verbatim from the
     reference frame).
   - `Onboarding.figma.kt` — Code Connect for the sign-in (`411:15`) + consent (`410:16`) masters,

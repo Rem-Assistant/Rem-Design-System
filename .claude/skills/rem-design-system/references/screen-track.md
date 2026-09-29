@@ -1,8 +1,10 @@
 # Screen / pattern track — device-framed, native, all states
 
-For a **screen or flow** (Agenda, Chat, Settings, Inbox, a pattern). A screen is *composed of*
-canonical components — it is not a new component. Ground it in the real SwiftUI view so the
-structure and every state are faithful, not invented.
+For a **screen or flow** (Agenda, Chat, Settings, Inbox, a pattern). A screen is a canonical,
+full-device component *composed of* the system's lower-level components; it is not a replacement for
+those primitives. Instance that one screen master in inventory, documentation, prototype, and
+handoff. Ground it in the real SwiftUI view so the structure and every state are faithful, not
+invented.
 
 ## Ground in BOTH the source and the screenshot — then diff
 
@@ -33,10 +35,14 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 
 - **Screen = a 402×874 component**, `layoutMode="VERTICAL"`, FIXED — the device content size,
   so it drops into the bezel size-safe.
-- **Chrome from the kit:** the Apple **Navigation Bar** component (Style=Default inline /
-  Large per screen; it includes the status bar) — or a domain header like
-  `DateNavigationHeader`. Bottom chrome (toolbar/tab bar) pinned to the bottom via a
-  `layoutGrow:1` spacer above it.
+- **Chrome from the kit:** use canonical navigation/header, `StatusBar`, and
+  `NavigationIndicator` components; every standalone full-device screen includes its platform
+  chrome unless the product state explicitly hides it. Platform switches may change fonts, metrics,
+  and native icons without changing the product layout. Prefer platform-specific nested components
+  or verified semantic icon mappings over an unverified icon-font family swap. A domain header such
+  as `DateNavigationHeader` may replace navigation content, not required status chrome. Put a legal
+  sheet and its scrim above the status bar, while the navigation indicator remains at the bottom of
+  the device surface.
 - **Body from canonical instances only** — `ListRow` (as grouped `Section`s: SectionHeader +
   rows + SectionFooter), `TaskEventRow`, `SuggestedTaskRow`, `MessageBubble`, `ComposerBar`,
   the cards. Set per-row content on the nested Content/Label (see figma-gotchas). Never
@@ -44,22 +50,61 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 - **Everything auto-layout.** If you must reuse an existing absolute-positioned frame,
   `detachInstance()`/clone it and convert to auto-layout — don't ship absolute positioning
   (it can't reflow and it's why the first Agenda had to be rebuilt native).
+- **Use semantic names before structural names.** Name major regions `StatusBar`, `Body`,
+  `ActionArea`, and `NavigationIndicator`. Within those regions, use SwiftUI-first names for generic
+  layout (`VStack`, `HStack`, `ZStack`, `LazyVStack`, `LazyHStack`). The cross-platform docs map
+  those to Compose `Column`, `Row`, `Box`, `LazyColumn`, and `LazyRow`.
+- **Use auto spacing, not empty spacer frames.** Group the top and bottom regions semantically and
+  use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
+  space are invalid because they obscure intent and break when content changes.
 
-## House it in the real device bezel
+## Use the file's documentation templates
 
-- `DeviceFrame/iPhone` (`128:46`) = the **real Apple iPhone 16 Pro bezel** wrapping a
-  402×874 **Screen instance-swap slot**. Drop a screen in by setting the `Screen` property to
-  the screen's node id. All screens are the same size, so swapping is size-safe (no nested
-  resize needed).
+- **Page scale:** use one page per product domain, not one page per screen or per flow. Onboarding
+  flows belong together on `Onboarding`; Settings flows belong together on `Settings`. Keep reusable
+  components on component-family pages.
+- **Top-level sections:** give each flow a numbered documentation/prototype pair:
+  `01A · <Flow> · Documentation` and `01B · <Flow> · Prototype`, then `02A` / `02B` for the next
+  flow. Keep older canonical screens inside a named inventory/reference Section until their flow
+  documentation replaces them. Place pairs on a non-overlapping grid and verify bounds. The
+  structure contract lists the exact allowed top-level nodes.
 
-## Organize on the Screens page (Fluent-style)
-
-- One **Screens** page, split into labeled **Sections** (Figma `createSection`), one per
-  screen family: hero bezel + the state screens in a row + the source `Screen/*` components.
-  Tighten each section to hug its contents; stack sections with a gap.
-- **One generation only.** When a native screen supersedes a legacy template, delete the
-  legacy master and its now-empty page. Migrate anything still pointing at retired masters
-  first (drop refs → delete). The whole point is to not leave two generations drifting.
+- **Component-family pages:** use `Component Documentation` (`663:2270`) for every new or changed
+  canonical component. Arrange the family as a horizontal auto-layout row of vertical columns. Each
+  column places the canonical master/variant set first and an attached `Component Documentation`
+  instance below. The documentation instance contains metadata only and never repeats the specimen
+  through a Component slot. Remove
+  empty Anatomy/Props/Layout placeholders; the Specs plugin can add those later. Documentation
+  chrome uses Light semantic surfaces and text by default; switch it only when the documentation is
+  explicitly demonstrating another theme.
+- **Flows:** instance `Mobile Flow Documentation` (`769:282`) from Device Kit. Populate its Overview
+  slot and the nested flow slots; never detach it. Do not add loose screen frames as siblings.
+  Treat its canvas presentation—orientation, widths, padding, fills, and nested section surfaces—as
+  master-owned. Do not duplicate those values in each flow or rebuild them from skill prose; attached
+  instances should inherit later refinements to the Device Kit components.
+- **Flow hierarchy:** `Mobile Flow Documentation` → `Mobile Flow` → `Placeholder Sections` →
+  `Sections` slot → `Placeholder Section` → `Rows` slot → `Placeholder Rows` → `Rows` slot →
+  `Placeholder Flows` → `Steps` slot → `Mobile Placeholder` → `Screen` slot → canonical screen
+  instance. The Screen slot is exactly 402×874. A screen component replaces that slot content; do
+  not retain a legacy wrapper or align a loose screen above it.
+- Put the primary journey in one `Placeholder Flows` row. Add a second row for system-state
+  variants such as loading or submit failure. Add another `Placeholder Section` only when the
+  flow needs a distinct titled group.
+- Sequential rows keep their arrow vectors and the template's 24-point item gap. Parallel state
+  rows omit arrows and use 200-point item spacing, which preserves the same screen-column rhythm
+  without implying that one state navigates to the next.
+- Author one light-mode screen and rely on the shared variable mode for dark appearance unless a
+  contract explicitly requires a separate dark composition. Theme switching remains independent of
+  Platform switching; reviewers should be able to inspect iOS-Light, iOS-Dark, Android-Light, and
+  Android-Dark without maintaining four detached screen copies.
+- `DeviceFrame/iPhone` (`128:46`) remains available when a standalone bezel preview is useful;
+  it does not replace the Mobile Flow documentation hierarchy.
+- Keep the nested documentation hierarchy, then add a labeled `PROTOTYPE FLOWS` strip of direct
+  402×874 canonical screen instances inside the separate numbered prototype section. Wire and name
+  real Presentation starting points and set interactions on instance descendants. Keep the
+  component mapping in the structure contract so the strip cannot become an untracked duplicate.
+- **One generation only.** When a native screen supersedes a legacy template, delete the legacy
+  master and its now-empty page. Migrate anything still pointing at retired masters first.
 
 ## Finish
 

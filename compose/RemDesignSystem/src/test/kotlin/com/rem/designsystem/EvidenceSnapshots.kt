@@ -6,10 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +14,8 @@ import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
+import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.onboarding.LegalDocumentScreen
 import com.rem.designsystem.onboarding.OnboardingSequencer
 import com.rem.designsystem.onboarding.OnboardingSignInScreen
 import com.rem.designsystem.onboarding.SignInState
@@ -51,9 +49,10 @@ class EvidenceSnapshots {
         shot("ContainedIcon-dark") { RemTheme(darkTheme = true) { iconRow() } }
     }
 
-    // Mirrors the iOS ContainedIcon gallery glyph-for-glyph so the side-by-side table is a true
-    // comparison: Security (≈ lock.shield.fill, tinted+large), Description (≈ doc.text, subtle),
-    // Shield (≈ shield, subtle) — on the primary background so the "light" shot is white, not the
+    // Mirrors the iOS ContainedIcon gallery glyph-for-glyph — now via the Material Symbols glyph
+    // overload at each registry FILL, so the side-by-side table is a true comparison: shield_lock
+    // (≈ lock.shield.fill, FILL 1, tinted+large), description (≈ doc.text, FILL 0, subtle), shield
+    // (≈ shield, FILL 0, subtle) — on the primary background so the "light" shot is white, not the
     // Paparazzi default (which otherwise made the subtle tile vanish on dark).
     @Composable
     private fun iconRow() {
@@ -69,12 +68,12 @@ class EvidenceSnapshots {
                 modifier = Modifier.padding(16.dp),
             ) {
                 ContainedIcon(
-                    Icons.Filled.Security,
+                    symbol = RemMaterialSymbols.PrivacyLockShield,
                     fill = ContainedIconFill.Tint(RemColors.current.brandBlue),
                     size = ContainedIconSize.Large,
                 )
-                ContainedIcon(Icons.Filled.Description, fill = ContainedIconFill.Subtle)
-                ContainedIcon(Icons.Filled.Shield, fill = ContainedIconFill.Subtle)
+                ContainedIcon(symbol = RemMaterialSymbols.TermsDocument, fill = ContainedIconFill.Subtle)
+                ContainedIcon(symbol = RemMaterialSymbols.PrivacyPolicy, fill = ContainedIconFill.Subtle)
             }
         }
     }
@@ -149,9 +148,18 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun consent() {
-        shot("Consent-light") { RemTheme { consentScreen() } }
-        shot("Consent-dark") { RemTheme(darkTheme = true) { consentScreen() } }
+    fun consent() = shot("Consent-default-light") { RemTheme { consentScreen() } }
+
+    // Reusable legal content chrome. The host-owned modal container, scrim, and return behavior are
+    // verified by the Figma prototype and interaction evidence rather than duplicated in this fixture.
+    @Test
+    fun consentTerms() = shot("Consent-terms-light") {
+        RemTheme { LegalDocumentScreen(title = "Terms of Service", sections = previewTermsSections, onClose = {}) }
+    }
+
+    @Test
+    fun consentPrivacy() = shot("Consent-privacy-light") {
+        RemTheme { LegalDocumentScreen(title = "Privacy Policy", sections = previewPrivacySections, onClose = {}) }
     }
 
     @Composable

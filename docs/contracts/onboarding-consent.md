@@ -22,8 +22,8 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 3. **Body** — "Rem uses your data to answer you and act on the things you ask. You can review or delete
    it anytime in Settings." — `Typography.body`, `Color.labelSecondary`, centered, `Spacing.xs` below
    the title, max content width 560.
-4. **Legal list** — an inset **grouped card** (`Color.secondarySystemGroupedBackground`, radius
-   `medium`), full width, `Spacing.lg` below the body, two tappable rows split by an inset divider:
+4. **Legal list** — an inset **grouped Section** (`Color.secondarySystemGroupedBackground`, radius
+   `xlarge` / 24, no outer stroke), full width, `Spacing.lg` below the body, two tappable rows split by an inset divider:
    - **Terms of Service** — leading `doc.text` in a rounded neutral tile; title `Typography.bodyBold`
      `labelPrimary`; subtitle "How Rem accounts, subscriptions, and approved actions work."
      (`Typography.caption1`, `labelSecondary`); trailing `chevron.right` (`labelTertiary`).
@@ -46,21 +46,27 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 
 ## Rules (the decisions that are easy to drift on — stated once)
 
-- **Bottom-pinned CTA:** this step uses the sequencer's bottom-pinned CTA bar. Contrast sign-in
-  (centered, no bottom bar). The two screens differ on purpose; each is identical *across platforms*.
+- **Bottom-pinned action area:** this step pins the CTA and legal footnote as a centered bottom action
+  region; it does not add separate bar chrome. Contrast sign-in (centered, no bottom action area).
+  The two screens differ on purpose; each is identical *across platforms*.
 - **Legal rows open page sheets** — never push a nav screen; 1:1 with `LegalDocumentView`.
 - **Consent hero is the shield-lock** (`lock.shield.fill` / `shield_lock`, FILL 1) — not a
   shield-check (`Security`), not a plain shield.
 - **Row icons are outline (FILL 0)** on both platforms: `doc.text` / `description`, `shield` / `shield`.
+- **Glyph parity is semantic and rendered, while each platform stays native.** SwiftUI resolves the
+  registry mapping through SF Symbols inside `ContainedIcon`; Compose resolves the paired Material
+  Symbols codepoint and FILL through its static outlined/filled fonts inside the same design-system
+  primitive. This backend difference is approved and hidden behind `ContainedIcon`. The registry row,
+  FILL value, size, color, and paired current-head renders are the cross-platform contract.
 - **Do not invent consent-local loading or error states.** Current shipping code advances immediately
-  after acceptance. The old Deploying screen is being deprecated, so Accept has no fabricated
-  destination until the replacement onboarding step is defined.
+  after acceptance. The old Deploying screen is being deprecated, so the prototype intentionally
+  leaves Accept without a fabricated destination until the replacement onboarding step is defined.
 - **Dark mode is a variable-mode review, not a second authored frame.** The Director approved one
   light documentation set; reviewers switch the shared color mode in Figma when checking dark.
 
 ## System use
 
-- **Reuse:** `OnboardingScaffold` (bottom-pinned CTA bar), the grouped `ListRow` treatment, page
+- **Reuse:** `OnboardingScaffold` (bottom-pinned action area), `RemSection` + `ListRow`, page
   sheets + nav (`LegalDocumentView`), the primary `RemButton`, the app-icon-style contained-icon
   treatment for the hero, tokens.
 - **Exact:** the top-lockup order, the two legal rows (icons + copy + chevrons, in order), the
@@ -77,16 +83,70 @@ supersedes the earlier Figma exclusion; the approved arrangement and product rul
 are unchanged. Follow [Figma delivery](../figma-delivery.md) and `SHAPE-OF-A-TASK.md`.
 
 Update the editable consent screen and legal-sheet flow in the existing Rem file. Cover
-`Consent-default-light`, `Consent-terms-light`, and `Consent-privacy-light`, including each
-platform's intentional native presentation. The Director clarified on 2026-09-28 that separate dark
-frames are redundant because reviewers can switch the shared color-variable mode in Figma. Reuse
-canonical components and shared variables. Include screen, flow, component/preview links and the
-reused/new component ledger in the PR.
+`Consent-default-light`, `Consent-terms-light`, and `Consent-privacy-light`, including each platform's intentional
+native presentation. The Director clarified on 2026-09-28 that separate dark frames are
+redundant: the documented nodes stay in light mode and reviewers can switch the shared
+color-variable mode from the right panel. Reuse canonical components and shared variables,
+and keep the Terms / Privacy interactions working in Present mode. Include screen, flow,
+component/preview links, exported renders for every required state, and the reused/new
+component ledger in the PR.
+
+The consent composition uses the domain-neutral `Lockup`, `ActionArea`, and `ButtonGroup` masters.
+They were extracted because each owns a stable layout responsibility and has plausible consumers
+beyond this flow; onboarding-specific copy remains on the screen instance. Theme (Light/Dark) and
+Platform (iOS/Android) stay independent. Every full-device consent destination includes the canonical
+`StatusBar` (`785:389`) and `NavigationIndicator` (`793:379`) with Platform switching, while the
+documented composition remains Light for review. iOS and Android share the same product layout;
+Platform changes native chrome, type metrics, and semantic icon sources. On legal destinations, the
+device `StatusBar` remains in the background screen layer behind the scrim and sheet. The foreground
+sheet's inline title and Done affordance are sheet navigation chrome, not a second device status bar.
+
+The shared `Onboarding` page (`410:15`) uses a numbered Section pair for this flow:
+`01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`). Sign-in
+(`788:3183`) and the 402×874 consent Default (`777:248`), Terms (`777:325`), and Privacy
+(`777:392`) masters are consolidated inside
+`00 · Canonical screen components` (`760:21`). Later onboarding flows add `02A` /
+`02B` pairs on the same page. Documentation remains an instance of `Mobile Flow Documentation`
+(`769:282`) and composes nested Sections, Rows, Steps, Mobile Placeholders, and Screens through slots.
+Every documented screen is an instance in the exact 402×874 `Screen` slot; no template layer is
+detached. The one `Steps` slot contains Consent → Terms → Consent → Privacy with reusable arrow
+instances and 24-point spacing. The second Consent instance is an approved branch-return navigation
+waypoint between the Terms and Privacy paths; it reuses the Default master and is excluded from the
+required evidence-state set. There is no consent-action or speculative system-state row.
+
+Canonical screens use semantic top-level layer names (`StatusBar`, `Body`, `ActionArea`,
+`NavigationIndicator`) and SwiftUI-first structural names (`VStack`, `HStack`, `ZStack`,
+`LazyVStack`, `LazyHStack`). Compose translates those structures to `Column`, `Row`, `Box`,
+`LazyColumn`, and `LazyRow`; it does not require a second layout tree. Auto-layout
+`SPACE_BETWEEN` pins top and bottom regions without empty spacer frames.
+
+Reusable compositions are responsive rather than fixed to the 354-point content width of the
+reference iPhone. Figma, SwiftUI, and Compose make `Lockup` and `ActionArea` fill the available
+parent width up to 560 points. Lockup text, the Button Group, and the wrapping Footnote fill that
+capped region; fixed visuals keep their intrinsic size. The surrounding screen owns its horizontal
+inset and background.
 
 Reviewer must inspect the Figma exports and structure against the current iOS/Android
 evidence and this contract. Existing frame links alone do not establish that the designs
 were updated or verified. Missing authoring access is a Steward capability blocker,
 not permission to omit Figma or spend repeated screen-revision attempts.
+
+### Figma/code source linkage
+
+`tools/design-sync/manifest.json` is the machine-readable source link for each editable node. The
+Default `777:248` maps to `OnboardingConsentTemplate.swift`; Terms `777:325` and Privacy `777:392` map to
+`LegalDocumentTemplate.swift`. The template owns the centered `Typography.title1Bold` title, 44pt
+Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
+presentation — including the scrim, rounded top / drag affordance when the native idiom supplies one,
+and device-status-bar layering — and injects the current legal body; render-only legal prose remains
+in test fixtures.
+The Figma sheet nodes mirror that owned chrome and use representative body copy only for layout.
+`ConsentInteractionTests` invokes the same legal-row open and Done-dismiss endpoints used by the
+production views. Present mode verifies the Terms/Privacy destinations and Back actions; the paired
+renders verify the reusable content chrome (title, Done, divider, scroll region, and body spacing),
+while the Figma prototype verifies the host sheet presentation, scrim, and return behavior. These
+proofs are required together because a static content render alone cannot establish modal presentation
+or dismissal behavior.
 
 ## Parity acceptance (what the visual gate diffs)
 
@@ -100,8 +160,17 @@ The paired render passes when iOS and Android match on **all** of:
 - [ ] Footnote present below the CTA, same copy + role
 - [ ] Icons match the registry glyph **and FILL** on both
 
-**Evidence:** `screenshots.yml` paired table — `Consent-default-light`, `Consent-terms-light`, and
-`Consent-privacy-light` — iOS ⟷ Android side by side.
+**Evidence:** `screenshots.yml` paired table — `Consent-default-light` plus the two sheets
+`Consent-terms-light` and `Consent-privacy-light` — iOS ⟷ Android side by side. The PR's Figma table must contain a current
+export and editable node link for the same three destinations; the design-drift run must compare all three
+registered Figma/code pairs at the PR head. CI passes those three exact basenames through
+`compare.mjs --require`, then publishes `artifacts/design-drift-report.json` in the job summary and
+as a downloadable workflow artifact. Missing or unmatched required states fail closed.
+
+**Drift calibration:** the earlier loading/error calibration was retired with those speculative
+states. No historical baseline is active for this contract. The exact three-destination evidence set
+must be present and authenticated; Reviewer owns the paired visual decision. Establishing a future
+pixel threshold requires a fresh exact-head baseline plus founder and Reviewer approval.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded
 amendment on the issue. **Status:** state/evidence scope amended by the founder on 2026-09-28; the

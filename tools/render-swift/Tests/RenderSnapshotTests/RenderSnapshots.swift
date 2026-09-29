@@ -19,7 +19,8 @@ private func chevron() -> some View {
 // `ScrollView`/`List` content that `ImageRenderer` cannot — so the ACTUAL `OnboardingConsentTemplate`
 // renders faithfully (no scroll-free re-composition). Each PNG is emitted as an `XCTAttachment` and
 // extracted from the `.xcresult` afterwards (an env var like SNAPSHOT_OUT_DIR does not cross into the
-// simulator process, so the test does not write to disk itself).
+// simulator process, so the test does not write to disk itself). Consent attachment names are also
+// the required keys in `tools/design-sync/manifest.json` and the machine-readable drift report.
 @MainActor
 final class RenderSnapshots: XCTestCase {
 
@@ -30,7 +31,23 @@ final class RenderSnapshots: XCTestCase {
             render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
             render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
-            render("Consent-\(suffix)", width: 393, height: 852, dark: dark) { consentScreen }
+        }
+        render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
+        // Reusable legal content chrome. The host-owned page-sheet container, scrim, and return
+        // behavior are verified by the Figma prototype and interaction evidence.
+        render("Consent-terms-light", width: 393, height: 852, dark: false) {
+            LegalDocumentTemplate(
+                title: "Terms of Service",
+                sections: LegalDocumentFixtures.terms,
+                onClose: {}
+            )
+        }
+        render("Consent-privacy-light", width: 393, height: 852, dark: false) {
+            LegalDocumentTemplate(
+                title: "Privacy Policy",
+                sections: LegalDocumentFixtures.privacy,
+                onClose: {}
+            )
         }
         // Sign-in states, keyed to pair with the Compose `SignIn-*` shots in the side-by-side table.
         render("SignIn-returning-light", width: 393, height: 852, dark: false) {
@@ -113,7 +130,7 @@ final class RenderSnapshots: XCTestCase {
     }
 
     // The REAL onboarding consent template (with its ScrollView) — rendered faithfully now.
-    private var consentScreen: some View {
+    private func consentScreen() -> some View {
         OnboardingConsentTemplate(
             // Canonical consent copy (authority: Compose `ConsentStep.kt`), kept identical on both
             // platforms so the side-by-side evidence compares the same screen.

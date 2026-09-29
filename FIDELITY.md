@@ -23,6 +23,69 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Consent flow + component-documentation proving pass — 2026-09-28 (issue #30)
+
+- Current shipping `AIDataSharingConsentView` has no consent-local loading/error state. The speculative
+  Figma frames and paired snapshots were removed; evidence now covers Consent, Terms, and Privacy.
+  Accept remains without a prototype destination because Deploying is being deprecated and no
+  replacement onboarding step is approved.
+- The existing `Onboarding` page now holds every current onboarding artifact in named Sections:
+  canonical screen components `00` (`760:21`), consent documentation `01A` (`777:432`), and consent
+  prototype `01B` (`731:260`). Sign-in and the three consent masters are
+  consolidated in `00`. Documentation is
+  an attached `Mobile Flow Documentation` instance with nested Sections, Rows, Steps, Placeholder,
+  and Screen slots. Prototype screens are direct canonical instances and Consent is a registered flow
+  starting point. Later flows add their own `02A` / `02B` pairs on this page.
+- Added canonical `Section` (`741:311`) with optional Header/Footer and an editable Rows slot whose
+  preferred value is `ListRow`. The grouped surface uses `backgroundSecondary` + 24pt radius with no
+  outer stroke. Consent uses Section instances in its documented and prototype frames.
+- Added a SwiftUI `RemSection` adapter for custom `ScrollView` surfaces and a Compose `RemSection`
+  implementation plus parserless SwiftUI/Compose Code Connect templates. Native SwiftUI `List`/`Form` consumers should
+  continue to use `SwiftUI.Section`; both implementations translate the same Figma concept. Swift
+  package compilation passes locally; Android compilation remains a hosted-run check because this
+  checkout has no Gradle wrapper/toolchain.
+- Component documentation now uses the lightweight `Component Documentation` pattern: canonical master
+  first and a compact overview second, both nested in one auto-layout block inside `Rows & Sections ·
+  Component documentation` (`741:309`). Full Specs-plugin output is preserved separately and is not
+  the Builder fidelity bar; obsolete loose Section templates were removed from `Accessories`.
+- Added reusable composition masters on the dedicated Compositions page (`826:482`): `ButtonGroup` (`773:17`, Vertical /
+  Horizontal with Actions slot), `Lockup` (`773:22`), and `ActionArea` (`773:28`). Their names are
+  domain-neutral so the same anatomy can serve later non-onboarding screens.
+  The masters live in `Composition components` (`773:2`) as three horizontal documentation
+  columns. Each column places the canonical master first and the attached `Component Documentation`
+  metadata instance below it. The template has no Component slot and does not repeat the specimen.
+  Composition roots inherit their parent surface. `ButtonGroup` fills its
+  parent and both horizontal actions divide that width equally. `Lockup` and `ActionArea` fill their
+  parent up to the 560-point onboarding content maximum; Lockup text, the Button Group slot, and the
+  wrapping Footnote fill that responsive width in Figma, SwiftUI, and Compose rather than freezing
+  the reference iPhone's 354-point content width. The screen owns its horizontal inset.
+  The Components page now remains the Component Index only. The empty Guide page was removed;
+  Foundations remains the visible reference for Rem-owned colors, typography, spacing, radius, and icons.
+  Canonical Button labels now bind local styles (`Body/Bold`, `Body/Emphasized`, or
+  `Subheadline/Emphasized`). They are the first fixture in a data-driven component-quality audit;
+  the governing rubric scores typography, semantic color, layout, reuse, and taxonomy for every
+  touched family across Foundations, Primitives, Compositions, Templates, and Screens.
+  Primitives now precedes Compositions in the page list. Component-family pages use fill-free,
+  stroke-free canvas Sections; the shared documentation template owns the variable-bound
+  `background/primary` surface instead of borrowing presentation from its canvas Section.
+  The three canonical screen masters (`777:248`, `777:325`, `777:392`) are reused by both documentation
+  and prototype, so changing a screen no longer requires synchronizing detached copies.
+- The extraction rule is now explicit for Builder: propose a component when a region has one stable
+  responsibility plus two plausible consumers or cross-flow recurrence, while leaving one-off
+  wrappers local. Theme (Light/Dark) and Platform (iOS/Android) remain independent axes; Status Bar
+  uses platform switching and retains theme switching within each platform treatment.
+- Added canonical `StatusBar` (`785:389`) and `NavigationIndicator` (`793:379`) component sets with
+  iOS/Android Platform and dark/light content options. Every canonical onboarding screen includes
+  both; legal sheets render above the status bar. The product layout remains shared across platforms.
+- Canonical screen layers now use semantic regions first (`StatusBar`, `Body`, `ActionArea`,
+  `NavigationIndicator`) and SwiftUI-first structural names (`VStack`, `HStack`, `ZStack`). Compose
+  maps them to `Column`, `Row`, and `Box`. Empty spacer frames were removed in favor of semantic
+  groups using auto-layout `SPACE_BETWEEN`.
+- Foundations follow-up will map the iOS 26 kit's source color and type styles into Rem-owned
+  variables/styles. The kit is a source reference, not a runtime dependency of the finished library.
+
+---
+
 ## Sign-in screen — centered, paired iOS + Android per contract — 2026-09-28 (issue #27)
 
 Re-scoped the onboarding **sign-in** screen to conform to `docs/contracts/onboarding-sign-in.md` on

@@ -28,9 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rem.designsystem.brand.RemAppIcon
-import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -60,6 +58,21 @@ sealed interface SignInState {
      * "Sign in with a different account" stays the quiet escape (emphasis rule — never filled).
      */
     data class Recovery(val message: String) : SignInState
+}
+
+/** The one shared visual/action contract for interrupted authentication states. */
+internal data class SignInInterruptionPresentation(
+    val message: String,
+    val actions: List<Action> = listOf(Action.Retry, Action.DifferentAccount),
+) {
+    internal enum class Action { Retry, DifferentAccount }
+}
+
+/** Error and recovery differ in meaning, but intentionally render the same notice and action order. */
+internal fun SignInState.interruptionPresentation(): SignInInterruptionPresentation? = when (this) {
+    is SignInState.Error -> SignInInterruptionPresentation(message)
+    is SignInState.Recovery -> SignInInterruptionPresentation(message)
+    else -> null
 }
 
 /**
@@ -93,6 +106,7 @@ fun OnboardingSignInScreen(
     googleMark: ImageVector? = RemBrandGlyphs.GoogleG,
 ) {
     val colors = RemColors.current
+    val interruption = state.interruptionPresentation()
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -129,6 +143,7 @@ fun OnboardingSignInScreen(
 
             SignInActions(
                 state = state,
+                interruption = interruption,
                 onContinue = onContinue,
                 onUseDifferentAccount = onUseDifferentAccount,
                 onUseGoogle = onUseGoogle,
@@ -138,12 +153,8 @@ fun OnboardingSignInScreen(
                 googleMark = googleMark,
             )
 
-            // Notice card (error / recovery only) — directly below the action group, systemRed @ 12%.
-            when (state) {
-                is SignInState.Error -> SignInNotice(state.message)
-                is SignInState.Recovery -> SignInNotice(state.message)
-                else -> Unit
-            }
+            // One notice renderer for both interrupted states, directly below the shared actions.
+            if (interruption != null) SignInInterruptionNotice(interruption)
         }
     }
 }
@@ -152,6 +163,7 @@ fun OnboardingSignInScreen(
 @Composable
 private fun SignInActions(
     state: SignInState,
+    interruption: SignInInterruptionPresentation?,
     onContinue: () -> Unit,
     onUseDifferentAccount: () -> Unit,
     onUseGoogle: () -> Unit,
@@ -188,19 +200,28 @@ private fun SignInActions(
                 SignInButton("Signing in…", onClick = {}, enabled = false, loading = true)
             }
 
-            is SignInState.Error -> {
-                // "Try again": no leading icon, centered label.
-                SignInButton("Try again", onClick = onRetry)
-                DifferentAccountLink(onUseDifferentAccount)
-            }
+            is SignInState.Error, is SignInState.Recovery -> SignInInterruptionActions(
+                presentation = requireNotNull(interruption),
+                onRetry = onRetry,
+                onUseDifferentAccount = onUseDifferentAccount,
+            )
+        }
+    }
+}
 
-            is SignInState.Recovery -> {
-                // Recovery is a re-auth path, so "Try again" is the filled primary action — like the
-                // error state. "Sign in with a different account" stays the quiet labelSecondary link
-                // (emphasis rule: it is *never* filled or emphasized, in any state).
+/** Shared ordered actions for both Error and Recovery. */
+@Composable
+private fun SignInInterruptionActions(
+    presentation: SignInInterruptionPresentation,
+    onRetry: () -> Unit,
+    onUseDifferentAccount: () -> Unit,
+) {
+    for (action in presentation.actions) {
+        when (action) {
+            SignInInterruptionPresentation.Action.Retry ->
                 SignInButton("Try again", onClick = onRetry)
+            SignInInterruptionPresentation.Action.DifferentAccount ->
                 DifferentAccountLink(onUseDifferentAccount)
-            }
         }
     }
 }
@@ -279,33 +300,12 @@ private fun SignInTextLink(label: String, onClick: () -> Unit, accent: Boolean) 
     }
 }
 
-/**
- * Inline error/recovery notice — the Extend treatment reused across the sign-in error + recovery
- * states, directly below the action group. Token-bound (systemRed at 12% on a `medium`-radius
- * surface); the leading glyph resolves through the icon registry by meaning + FILL: the Material
- * Symbols `error` glyph at **FILL 1** (pairs with the iOS `exclamationmark.triangle.fill`).
- */
+/** One notice renderer shared by Error and Recovery; the state meaning remains in the presentation. */
 @Composable
-private fun SignInNotice(message: String, modifier: Modifier = Modifier) {
-    val colors = RemColors.current
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(RemRadius.medium))
-            .background(colors.systemRed.copy(alpha = 0.12f))
-            .padding(RemSpacing.md),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
-    ) {
-        Text(
-            text = RemMaterialSymbols.Error,
-            fontFamily = RemMaterialSymbols.family(fill = 1f),
-            fontSize = 14.sp,
-            color = colors.systemRed,
-        )
-        Text(text = message, style = RemTypography.caption1, color = colors.labelPrimary)
-    }
-}
+private fun SignInInterruptionNotice(
+    presentation: SignInInterruptionPresentation,
+    modifier: Modifier = Modifier,
+) = OnboardingNotice(message = presentation.message, modifier = modifier)
 
 /**
  * The sign-in **step** for the [OnboardingSequencer] — a thin wrapper that renders the standalone

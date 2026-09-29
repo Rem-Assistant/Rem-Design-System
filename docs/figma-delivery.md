@@ -16,9 +16,14 @@ Follow `SHAPE-OF-A-TASK.md`, `FILE-ORG.md`, and the repository's `rem-design-sys
   consent-local states and must not be fabricated.
 - Preserve each platform's intentional native treatment while matching the approved
   arrangement, copy, emphasis, glyph meaning, and FILL. Document the platform/mode of each frame.
+  Treat Theme (Light/Dark) and Platform (iOS/Android) as independent axes rather than detached
+  combined variants.
 - Update the consent flow and its legal-sheet interactions so Present works. Reuse the
   existing flow instead of creating another disconnected generation.
-- For added or changed components, deliver master/variants and a Preview tile; update
+- For added or changed components, use the reusable `Component Documentation`. Arrange component
+  families as horizontal auto-layout columns: the canonical master/variant set is first in each
+  column and an attached `Component Documentation` instance follows. The template contains metadata
+  only and has no Component slot; the master above it is the sole specimen. Update
   `REGISTRY.md`, the Figma Component Index, and `FIDELITY.md` with actual verification results.
   The annotated Anatomy/full specification remains the separate manual step already
   excluded by `SHAPE-OF-A-TASK.md`.
@@ -48,27 +53,129 @@ approval. A worker may execute on an authenticated machine, but its task, source
 result, and recovery state must remain in the Factory record. A maintainer manually
 repairing the screen is not proof that this handoff works autonomously.
 
-## Verified execution gap (2026-09-28)
+## Consent proving-case delivery (2026-09-28)
 
-The connected Codex Figma tool can read the target file. Inspection found the existing
-Onboarding page (`410:15`) and consent flow page (`609:2`), with consent (`609:3`), Terms
-(`638:28`), and Privacy (`638:65`) frames. These are starting references, not verified
-current-head deliverables; the required state set has not been proven complete.
+Consent #30 uses an authenticated Codex Builder runtime for the canvas write while Steward keeps
+the durable task, source commit, result, review, and recovery record. The existing Rem file is
+updated in place on the shared `Onboarding` page (`410:15`). `00 · Canonical screen components`
+(`760:21`) contains Sign-in and the three consent screen masters;
+`01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`) are the
+consent pair. Later flows add
+`02A` / `02B` pairs on the same page rather than creating more onboarding pages.
 
-The hosted Factory Builder currently exposes repository tools only and has no configured
-Figma authoring connection. `figma-publish.yml` is a manual Code Connect workflow, not a
-canvas authoring worker. `design-drift.yml` is a template and is not proof of this gate.
+The inventory Section uses `#F5F5F5` so its white device frames remain legible on the canvas.
+Inside those devices, the Sign-in screen uses the actual repository assets (`RemAppIcon` raster and
+the four-color Google SVG), with no placeholder text glyphs. Privacy's legal links are an instance
+of canonical `Section` (`741:311`), not a hand-built grouped frame. These are structure-contract
+requirements, so a later Builder run that restores the white inventory, placeholder marks, or loose
+privacy rows fails before review.
 
-Figma supports native canvas writes through its remote MCP server in supported clients,
-including Claude Code and Codex. It requires a Full seat, file edit access, and an
-authenticated connection on the worker. The connection in a maintainer's chat is not
-automatically available to a GitHub runner:
+The Builder must preserve the attached-instance hierarchy: `Mobile Flow Documentation` → `Mobile Flow`
+→ `Placeholder Sections` → `Sections` slot → `Placeholder Section` → `Rows` slot → `Placeholder Rows`
+→ `Rows` slot → `Placeholder Flows` → `Steps` slot → `Mobile Placeholder` → `Screen` slot → canonical
+screen instance. `Mobile Flow Documentation` (`769:282`), `Mobile Placeholder` (`769:169`), and the
+intermediate slot components are masters on Device Kit. No layer in this chain requires detachment.
+The screen replaces the exact 402×874 slot area; a leftover wrapper or loose overlay is invalid even
+when the canvas looks correct. Canonical Default `777:248`, Terms `777:325`, and Privacy `777:392`
+are instanced in documentation and prototype. Current shipping code has no
+consent-local loading or submit-failure state, so the previous speculative state row was removed.
+
+Sequential steps retain `Flow Arrow` instances with the template's 24-point gap. On component-family
+pages, each documentation column is vertical: the canonical component or variant set first, then an
+attached `Component Documentation` (`663:2270`) instance containing the lightweight overview metadata.
+The template has no Component slot and does not repeat the master. Families are arranged
+in a horizontal auto-layout row for scanning. Full Specs-plugin output is optional follow-up material
+rather than a Builder fidelity target.
+
+Reusable composition lives in `Composition components` (`773:2`) on the dedicated Compositions page
+(`826:482`), ordered after Primitives; `Component Index` (`3:5`) remains the index. `ButtonGroup` (`773:17`) provides
+Vertical and Horizontal variants with an Actions slot; `Lockup` (`773:22`) exposes Visual, Title,
+and Body; `ActionArea` (`773:28`) exposes a Button Group slot plus Footnote and Show Footnote
+properties. Their names are domain-neutral because the patterns may be reused outside onboarding.
+They are composition components rather than primitives because they assemble primitives while owning
+layout and slot contracts. Their roots have no presentation fill and inherit the surface on which they
+are placed. `ButtonGroup` fills its parent, with horizontal actions dividing the available width
+equally. `Lockup` and `ActionArea` fill their parent up to the 560-point content maximum already used
+by the SwiftUI onboarding layout. Lockup text, the Button Group slot, and the wrapping Footnote fill
+that width while fixed visuals keep their intrinsic size; the screen owns the horizontal inset. The
+three master-first documentation columns sit in `HStack/Component Documentation`; each uses the
+shared template rather than a one-off wrapper.
+
+Do not delete old component pages in bulk. Migrate one touched family at a time, update its consumers
+to the canonical instance, then move proven duplicates to Retired. Every touched or consumed family
+receives a master-level binding audit: text uses local styles, semantic colors use variables/styles,
+layout uses auto layout and fill/hug, and screens use instances. The canonical Button labels are
+the first machine-checked typography fixture in a data-driven component-quality audit. Every touched
+family uses the same scorecard: typography, semantic color, responsive layout, canonical reuse, and
+taxonomy placement. Foundations remains the visible token/style reference; the
+empty Guide page was removed because its operating rules already live in the repository and index.
+
+Use top-level canvas Sections to organize each component-family page, with auto-layout inside each
+Section. Canvas Sections have no fill or stroke. `Component Documentation` (`663:2270`) owns the
+variable-bound `background/primary` surface so each specimen displays on a deliberate theme-aware
+surface. Foundations is a Rem-owned adoption layer, not a copy of the iOS 26 kit page: import only
+the semantic values Rem uses, preserve source attribution, and map the same concepts to Android.
+
+Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
+when it has one stable responsibility and either two plausible consumers or observed recurrence
+across flows. A one-off wrapper with no owned layout, behavior, semantics, or slot contract stays
+local. This lets Builder discover reusable lockups and action areas without requiring the Director
+to name each one, while keeping speculative abstractions out of the library.
+
+Before any write, Builder re-reads the live canonical Figma node and its current parent, properties,
+variables, auto-layout, and instances. The repository records durable intent and project identifiers;
+it does not freeze changeable template anatomy. Designer edits in the canonical file update the Rem
+adapter and registry on the next touched delivery.
+
+Theme and Platform are orthogonal. Canonical `StatusBar` (`785:389`) and
+`NavigationIndicator` (`793:379`) switch between iOS and Android treatments while each treatment
+still supports dark/light content. Both platforms keep the same product layout. Platform switching
+may change native chrome, type metrics, and the nested semantic icon source; an unverified
+font-family swap is not sufficient for icon parity. Legal sheets cover the status bar and scrim while
+the navigation indicator remains at the bottom of the device surface. The later foundations pass will map the iOS 26 kit's type and color source styles into
+Rem-owned variables/styles so the finished library does not depend on the external kit at runtime.
+
+Nested documentation screens cannot be prototype navigation destinations in Figma. The separate
+`01B · Consent · Prototype` therefore owns a labeled strip of top-level 402×874 canonical screen
+instances. Consent `781:596` links to Terms `781:637` and Privacy `781:690`; both legal sheets return with Back;
+Consent is the one registered Presentation starting point. Accept remains unconnected because the
+old Deploying destination is being deprecated and no replacement step is approved yet.
+The authenticated Figma plugin inspection on 2026-09-28 verified the `Consent flow` starting point,
+both Consent row destinations, and two Back actions on each legal sheet. The public REST file-node
+schema does not return prototype reactions, so CI verifies the three direct canonical prototype
+instances while plugin/Present-mode evidence verifies their interactions.
+
+The consent flow introduces canonical `Section` (`741:311`) on Rows & Controls. It exposes optional
+Header/Footer properties plus an editable Rows slot restricted by preference to `ListRow`; the grouped
+surface uses `backgroundSecondary` and the xlarge radius with no outer stroke. `ListRow` and `Section`
+each use the same canonical documentation container style inside `Rows & Sections · Component
+documentation` (`741:309`). Placeholder Anatomy panels are omitted because the Specs plugin can
+generate them later. Existing long-form ListRow documentation and generated Specs output are
+preserved in a separate reference section, not treated as the Builder's required output. The older
+loose Section template and long-list workaround were removed from `Accessories`.
+
+The hosted GitHub runner remains the repository, export, and comparison worker. Its `FIGMA_TOKEN`
+is consumed only by the current-head export/drift job; a token does not provide interactive canvas
+authoring. Code Connect and Dev Resources remain separate delivery concerns: Code Connect maps
+Figma components to code examples, while a Dev Resource may link any relevant implementation or
+documentation. Neither substitutes for an editable canvas update.
+
+Parserless SwiftUI and Compose templates for the three canonical consent screen components are
+committed under `code-connect/`. The live Code Connect discovery endpoint currently reports that the
+connected Figma account needs a Dev or Full seat on an Organization or Enterprise plan, so those
+templates cannot be published from this session. `manifest.json`, component descriptions, and the
+templates preserve the exact source mapping until that account-level capability is available.
+
+Figma supports native canvas writes through its remote MCP server in supported clients, including
+Codex. It requires a Full seat, file edit access, and an authenticated connection on that Builder
+runtime:
 
 - https://developers.figma.com/docs/figma-mcp-server/write-to-canvas/
 - https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/
 
-The remaining implementation must connect such a worker to Steward's durable task/result
-handoff and publish independently verifiable Figma evidence. Until then, report a named
-capability blocker; do not omit Figma, call the screen finished, or spend repeated screen
-revision attempts expecting repository-only tools to edit Figma. No Figma update or
-autonomous Figma handoff is claimed by this document.
+The PR still needs exact-head Figma exports, a structure/property record, and Reviewer approval.
+A successful canvas edit alone is not complete delivery.
+
+Keep a `Guide` page only if it remains a concise entry point for file organization, Theme/Platform
+modes, source mappings, and operating rules. If those instructions are canonical in the repo and
+Component Index, migrate any unique content and delete the redundant page.

@@ -12,7 +12,7 @@ const API = 'https://api.figma.com/v1';
 
 export function requireToken() {
   if (!TOKEN) {
-    console.error('FIGMA_TOKEN is not set. Create a token at figma.com → Settings → Personal access tokens (scopes: File content read, Dev resources write).');
+    console.error('FIGMA_TOKEN is not set. Configure the existing repository secret with File content read access.');
     process.exit(2);
   }
 }

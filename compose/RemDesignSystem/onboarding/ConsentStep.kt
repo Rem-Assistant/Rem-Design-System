@@ -8,35 +8,32 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.icons.RemMaterialSymbol
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
+import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.tokens.RemColors
-import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
 
 /**
  * The **reproduced consent step** — "Privacy by design" (Reproduce mode; authority = the founder
- * onboarding reference frame `02-consent.png` + `AIDataSharingConsentView` / Figma Privacy `410:16`).
+ * onboarding reference frame `02-consent.png` + `AIDataSharingConsentView` / Figma Privacy `410:16`),
+ * built to `docs/contracts/onboarding-consent.md`. The Compose sibling of the SwiftUI
+ * `OnboardingConsentTemplate`; the two render the same screen so the paired iOS⟷Android evidence diffs
+ * clean.
+ *
  * All copy is verbatim from the reference and MUST NOT be edited without an authority change:
  *  - title:    "Privacy by design"
  *  - subtitle: "Rem uses your data to answer you and act on the things you ask. You can review or
@@ -46,19 +43,23 @@ import com.rem.designsystem.tokens.RemTypography
  *  - primary:  "Accept and Continue"
  *  - footer:   By tapping "Accept and Continue," you agree to our Terms of Service and Privacy Policy.
  *
+ * **Icons resolve through the canonical `ContainedIcon` primitive and the static Material Symbols
+ * font selected for their registry FILL** (icon-registry rule 2 — never legacy `Icons.Filled.*`,
+ * which is always-filled and can't honour an outline row). SwiftUI uses the paired SF Symbol through
+ * its `ContainedIcon`; the platform-native backends intentionally share the semantic registry row,
+ * FILL, size, color, and render contract rather than a font implementation.
+ * This is the drift fix: the hero is `shield_lock` at **FILL 1** (pairs with iOS `lock.shield.fill` —
+ * NOT `Security`, a shield-*check*), and the two legal rows + their chevrons are outline (**FILL 0**),
+ * matching the iOS SF Symbols glyph-for-glyph.
+ *
  * The two rows open the legal documents ([onOpenTerms]/[onOpenPrivacy] — page sheets on the host);
- * [onAccept] persists consent and the host advances the sequencer. Leading glyphs reuse the canonical
- * [ContainedIcon]; the iOS reference uses `doc.text` / `shield` SF Symbols — the Material equivalents
- * default here (overridable), form diverging per the SPEC contract.
+ * [onAccept] persists consent and the host advances the sequencer. The shipping consent view has no
+ * consent-local loading or error state, so this step does not invent either one.
  */
 fun consentStep(
     onAccept: () -> Unit,
     onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit,
-    accepting: Boolean = false,
-    // Match the iOS template's SF Symbols: Terms = doc.text (Description), Privacy = shield (Shield).
-    termsIcon: ImageVector = Icons.Filled.Description,
-    privacyIcon: ImageVector = Icons.Filled.Shield,
     id: String = "consent",
 ): OnboardingStep = OnboardingStep(id = id) { scope ->
     OnboardingScaffold(
@@ -66,11 +67,13 @@ fun consentStep(
             label = "Accept and Continue",
             onClick = onAccept,
             style = OnboardingActionStyle.Primary,
-            loading = accepting,
-            enabled = !accepting,
         ),
-        // Hero = shield-with-lock, matching the iOS `lock.shield.fill` hero (not a plain lock).
-        hero = OnboardingHero(icon = Icons.Filled.Security, contentDescription = "Privacy"),
+        // Hero = shield-lock (`shield_lock`, FILL 1) — the registry consent hero, matching the iOS
+        // `lock.shield.fill`. NOT `Security` (a shield-with-check, the near-miss the registry flags).
+        hero = OnboardingHero(
+            symbol = RemMaterialSymbols.PrivacyLockShield,
+            contentDescription = "Privacy",
+        ),
         title = "Privacy by design",
         subtitle = "Rem uses your data to answer you and act on the things you ask. " +
             "You can review or delete it anytime in Settings.",
@@ -79,22 +82,17 @@ fun consentStep(
         progress = scope.progress,
         onBack = scope.onBack,
     ) {
-        // Grouped card holding the two legal rows — the iOS inset-grouped section, on backgroundSecondary.
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(RemRadius.large))
-                .background(RemColors.current.backgroundSecondary),
-        ) {
+        // Canonical grouped Section: backgroundSecondary + xlarge radius, no outer stroke.
+        RemSection(modifier = Modifier.fillMaxWidth()) {
             ConsentLegalRow(
-                icon = termsIcon,
+                symbol = RemMaterialSymbols.TermsDocument, // doc.text on iOS — FILL 0 (outline)
                 title = "Terms of Service",
                 subtitle = "How Rem accounts, subscriptions, and approved actions work.",
                 onClick = onOpenTerms,
                 showSeparator = true,
             )
             ConsentLegalRow(
-                icon = privacyIcon,
+                symbol = RemMaterialSymbols.PrivacyPolicy, // shield on iOS — FILL 0 (outline)
                 title = "Privacy Policy",
                 subtitle = "What Rem, your gateway, and AI or voice providers process.",
                 onClick = onOpenPrivacy,
@@ -110,10 +108,13 @@ fun consentStep(
  * (like the CTA button flagged in `OnboardingSupport.kt`) it composes the row natively with token-bound
  * metrics rather than forking a canonical component. Flagged for extraction; until a `ListRow` primitive
  * lands, the manifest records this as `pendingNative`, not a canonical reuse.
+ *
+ * Leading + trailing glyphs are Material Symbols at **FILL 0** (outline) — matching the iOS `doc.text` /
+ * `shield` / `chevron.right` per the icon registry.
  */
 @Composable
 private fun ConsentLegalRow(
-    icon: ImageVector,
+    symbol: RemMaterialSymbol,
     title: String,
     subtitle: String,
     onClick: () -> Unit,
@@ -125,11 +126,12 @@ private fun ConsentLegalRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = RemSpacing.md, vertical = RemSpacing.md),
+                // horizontal md, vertical sm — matches the iOS `ListRow` row metrics.
+                .padding(horizontal = RemSpacing.md, vertical = RemSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ContainedIcon(
-                icon = icon,
+                symbol = symbol,
                 fill = ContainedIconFill.Subtle,
                 size = ContainedIconSize.Small,
                 contentDescription = null,
@@ -137,15 +139,15 @@ private fun ConsentLegalRow(
             Spacer(Modifier.width(RemSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = title, style = RemTypography.bodyBold, color = colors.labelPrimary)
-                Spacer(Modifier.height(2.dp))
-                Text(text = subtitle, style = RemTypography.subheadline, color = colors.labelSecondary)
+                Spacer(Modifier.height(3.dp)) // matches the iOS ListRow title↔subtitle gap
+                Text(text = subtitle, style = RemTypography.caption1, color = colors.labelSecondary)
             }
             Spacer(Modifier.width(RemSpacing.sm))
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = colors.labelTertiary,
-                modifier = Modifier.size(20.dp),
+            Text(
+                text = RemMaterialSymbols.DisclosureChevron.glyph,
+                fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.DisclosureChevron),
+                fontSize = 20.sp,
+                color = colors.labelTertiary,
             )
         }
         if (showSeparator) {
@@ -164,20 +166,6 @@ private fun ConsentLegalRow(
 @Composable
 private fun ConsentLightPreview() {
     RemTheme {
-        OnboardingSequencer(
-            steps = listOf(
-                signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),
-                consentStep(onAccept = {}, onOpenTerms = {}, onOpenPrivacy = {}),
-            ),
-            state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),
-        )
-    }
-}
-
-@Preview(name = "Consent · dark", showBackground = true, widthDp = 402, heightDp = 874)
-@Composable
-private fun ConsentDarkPreview() {
-    RemTheme(darkTheme = true) {
         OnboardingSequencer(
             steps = listOf(
                 signInStep(state = SignInState.Returning("Sam"), onContinue = {}, onUseDifferentAccount = {}),

@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 plugins {
     id("com.android.library")
@@ -15,6 +17,7 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     into(layout.buildDirectory.dir("designSystemSrc"))
     from("onboarding")
     from("primitives")
+    from("rows")
     from("brand")
     from("icons")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }
@@ -40,6 +43,128 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+
+// Fail before Android resource packaging if either static Material Symbols asset is missing or
+// lacks a direct registry codepoint mapping. This is deliberately a preBuild gate,
+// rather than only a unit test, so a consumer cannot assemble an AAR that renders tofu at runtime.
+val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResources") {
+    val fontDirectory = file("src/main/res/font")
+    val outline = fontDirectory.resolve("material_symbols_outlined.ttf")
+    val filled = fontDirectory.resolve("material_symbols_filled.ttf")
+    inputs.files(outline, filled)
+
+    doLast {
+        fun u16(bytes: ByteArray, offset: Int): Int =
+            ByteBuffer.wrap(bytes, offset, 2).order(ByteOrder.BIG_ENDIAN).short.toInt() and 0xFFFF
+        fun i16(bytes: ByteArray, offset: Int): Int =
+            ByteBuffer.wrap(bytes, offset, 2).order(ByteOrder.BIG_ENDIAN).short.toInt()
+        fun u32(bytes: ByteArray, offset: Int): Int =
+            (ByteBuffer.wrap(bytes, offset, 4).order(ByteOrder.BIG_ENDIAN).int.toLong() and 0xFFFF_FFFFL).toInt()
+
+        fun tables(bytes: ByteArray): Map<String, Pair<Int, Int>> {
+            check(bytes.size >= 12) { "invalid Material Symbols sfnt header" }
+            return buildMap {
+                repeat(u16(bytes, 4)) { index ->
+                    val record = 12 + index * 16
+                    check(record + 16 <= bytes.size) { "truncated Material Symbols table directory" }
+                    val tag = String(bytes, record, 4, Charsets.US_ASCII)
+                    val offset = u32(bytes, record + 8)
+                    val length = u32(bytes, record + 12)
+                    check(offset >= 0 && length >= 0 && offset + length <= bytes.size) {
+                        "$tag table is outside the Material Symbols font"
+                    }
+                    put(tag, offset to length)
+                }
+            }
+        }
+
+        fun glyphIndex(bytes: ByteArray, fontTables: Map<String, Pair<Int, Int>>, codePoint: Int): Int {
+            val (cmap, cmapLength) = requireNotNull(fontTables["cmap"]) {
+                "Material Symbols font is missing cmap"
+            }
+            val cmapEnd = cmap + cmapLength
+            check(cmap + 4 <= cmapEnd) { "truncated Material Symbols cmap header" }
+
+            fun format4(subtable: Int): Int {
+                val length = u16(bytes, subtable + 2)
+                check(length >= 16 && subtable + length <= cmapEnd) { "truncated format-4 cmap" }
+                val segmentCount = u16(bytes, subtable + 6) / 2
+                val endCodes = subtable + 14
+                val startCodes = endCodes + segmentCount * 2 + 2
+                val deltas = startCodes + segmentCount * 2
+                val rangeOffsets = deltas + segmentCount * 2
+                check(rangeOffsets + segmentCount * 2 <= subtable + length) { "invalid format-4 cmap arrays" }
+                repeat(segmentCount) { index ->
+                    val end = u16(bytes, endCodes + index * 2)
+                    val start = u16(bytes, startCodes + index * 2)
+                    if (codePoint !in start..end) return@repeat
+                    val delta = i16(bytes, deltas + index * 2)
+                    val rangeOffsetAddress = rangeOffsets + index * 2
+                    val rangeOffset = u16(bytes, rangeOffsetAddress)
+                    if (rangeOffset == 0) return (codePoint + delta) and 0xFFFF
+                    val glyphAddress = rangeOffsetAddress + rangeOffset + (codePoint - start) * 2
+                    check(glyphAddress + 2 <= subtable + length) { "format-4 glyph index is outside cmap" }
+                    val glyph = u16(bytes, glyphAddress)
+                    return if (glyph == 0) 0 else (glyph + delta) and 0xFFFF
+                }
+                return 0
+            }
+
+            fun grouped(subtable: Int, format: Int): Int {
+                val length = u32(bytes, subtable + 4)
+                check(length >= 16 && subtable + length <= cmapEnd) { "truncated format-$format cmap" }
+                val groupCount = u32(bytes, subtable + 12)
+                val groups = subtable + 16
+                check(groups + groupCount * 12 <= subtable + length) { "invalid format-$format cmap groups" }
+                repeat(groupCount) { index ->
+                    val group = groups + index * 12
+                    val start = u32(bytes, group)
+                    val end = u32(bytes, group + 4)
+                    if (codePoint !in start..end) return@repeat
+                    val startGlyph = u32(bytes, group + 8)
+                    return if (format == 12) startGlyph + (codePoint - start) else startGlyph
+                }
+                return 0
+            }
+
+            repeat(u16(bytes, cmap + 2)) { index ->
+                val record = cmap + 4 + index * 8
+                check(record + 8 <= cmapEnd) { "truncated Material Symbols cmap record" }
+                val subtable = cmap + u32(bytes, record + 4)
+                check(subtable + 2 <= cmapEnd) { "Material Symbols cmap subtable is outside cmap" }
+                val format = u16(bytes, subtable)
+                val glyph = when (format) {
+                    4 -> if (codePoint <= 0xFFFF) format4(subtable) else 0
+                    12, 13 -> grouped(subtable, format)
+                    else -> 0
+                }
+                if (glyph > 0) return glyph
+            }
+            return 0
+        }
+
+        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686)
+        val verified = listOf("outline" to outline, "filled" to filled).associate { (label, resource) ->
+            check(resource.isFile) { "missing packaged Material Symbols $label resource: $resource" }
+            val bytes = resource.readBytes()
+            val fontTables = tables(bytes)
+            check("fvar" !in fontTables) { "$label Material Symbols resource must be static" }
+            requiredCodepoints.forEach { codePoint ->
+                check(glyphIndex(bytes, fontTables, codePoint) > 0) {
+                    "$label Material Symbols resource maps U+${codePoint.toString(16).uppercase()} to .notdef"
+                }
+            }
+            label to bytes
+        }
+        check(!verified.getValue("outline").contentEquals(verified.getValue("filled"))) {
+            "outlined and filled Material Symbols resources must be distinct"
+        }
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(verifyMaterialSymbolResources)
 }
 
 tasks.withType<KotlinCompile>().configureEach {

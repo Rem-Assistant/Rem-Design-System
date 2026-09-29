@@ -1,13 +1,16 @@
-# Component track — the Fluent component page
+# Component track — canonical master + attached documentation
 
-For an **atomic component** (a row, control, card, bubble). Goal: one canonical master plus a
-documented page a designer *and* a developer can both read. ListRow (`101:18`) is the worked
-exemplar — copy its shape.
+For a component (an atomic row/control or a composition such as a lockup/action area). Goal: one
+canonical master plus a compact block a designer and developer can scan. `Component Documentation`
+(`663:2270`) is the required template; `ListRow` and `Section` inside `Rows & Sections · Component
+documentation` (`741:309`) are the worked examples.
 
 ## Build the master first (composable, slotted)
 
 - Base it on the iOS 26 kit piece (copy the kit's Row/control in), then layer Rem's design.
-- **Make every configurable region an instance-swap slot**, not a boolean or a baked child.
+- **Make fixed component regions instance-swap properties** and use a real Figma **Slot** when the
+  region accepts repeated or arbitrary content. `Section` (`741:311`) uses an editable `Rows` slot
+  with `ListRow` as the preferred value; Header/Footer are boolean/exposed nested properties.
   A row is three slots: **Leading Accessory** · **Content** · **Trailing Accessory**. The
   Content default is its own sub-component (`ListRowLabel`) that carries the text props, so
   the row stays composable (swap Content for a custom block) and the label still hosts
@@ -22,21 +25,39 @@ exemplar — copy its shape.
   **~60–65pt** (`Tall`) via ~12pt top/bottom padding. Separator is a bottom-pinned hairline
   toggled per instance (last row of a card hides it).
 
-## The page = top-anchored vertical auto-layout
+## Required Builder documentation
 
-One vertical auto-layout frame so placement is automatic and **new examples append to the
-bottom** — no hand-positioning. Order:
+Keep `Component Documentation` (`663:2270`) attached. Arrange related components in one horizontal
+auto-layout row, with one named vertical column per component. Each column's order is:
 
-1. **Header** — big emphasized title (56–64 Bold), a one-line description, and **code-connect
-   chips** (`SwiftUI · <file>.swift`, the pattern name). **No node-id pill** — that's for the
-   machine, not humans; the id lives in the registry.
-2. **Master** (labeled `MASTER`) — the actual component master, in the spine.
-3. **Anatomy** — the component centered in a gray *grouped-surface* presentation tile, with
-   its parts labeled by **native Figma annotations** carrying measurement properties
-   (`{label:"Leading Accessory", properties:[{type:"width"},{type:"height"}]}`). Annotations
-   show in Dev Mode, so say "open Dev Mode for the pins" in the subtitle.
-4. **Variants** (one super-header) grouping sub-sections: one per **slot** (Leading Accessory,
-   Trailing Accessory, …) plus **States** (content on/off, separators, etc.).
+1. **Canonical master or component set** — first and directly editable.
+2. **Attached documentation instance** — second. It contains the lightweight overview metadata and
+   no Component slot. Remove empty Anatomy/Props/Layout placeholders; the Specs plugin can create
+   those later when requested.
+
+The master and attached documentation instance stay in the same column so they move and scan as one
+unit. Put the row on the component's family page inside a clearly named Figma Section.
+Atomic controls belong under Primitives; components that assemble primitives and own layout,
+semantics, behavior, or slots belong under Components/Compositions. Do not scatter masters, previews,
+or generated artifacts as page-level siblings.
+
+Composition roots inherit the surface behind them unless a background is part of the component's
+owned contract. Horizontal groups of equal-priority actions use fill sizing for every action so label
+length does not create unequal widths.
+
+The Builder does **not** need to reproduce an EightShapes Specs export. A human or later browser
+agent may generate full Anatomy/Props/Layout/Data documentation after the runner batch finishes.
+Preserve existing generated output in a named reference section; do not make its depth or visual
+fidelity a delivery gate.
+
+## Optional expanded documentation
+
+When the task explicitly requests full documentation, extend the spec UI with:
+
+1. header + description + source/Code Connect reference;
+2. anatomy annotations;
+3. variant/state matrices built from instances of the one master;
+4. layout, data, accessibility, and platform notes.
 
 ## Variant/state matrices = wrapping tile grids
 
@@ -46,8 +67,9 @@ inside (mirrors a real iOS grouped list, so the component reads clearly). Lay ti
 `layoutWrap="WRAP"` grid with even spacing. Build every tile from **instances of the one
 master** so the page stays in sync automatically.
 
-Keep the sub-component masters (e.g. `ListRowLabel`, `Avatar`) **out of the doc frame** (they
-overlap it) — park them below, or on their own page per the one-component-per-page rule.
+Keep sub-component masters in their own documentation block or explicitly nested with their owning
+component. Never park them loose below a frame where later runners cannot tell whether they are
+canonical or scratch work.
 
 ## Deliver: Code Connect + Figma sync (required — never skip)
 
@@ -55,9 +77,10 @@ A component is **not delivered** until design and code are bound and in sync. Th
 most easily forgotten in a delivery, so it is explicit here and belongs in every packet's
 delivery contract:
 
-- **Code Connect binding.** Every new or changed component ships its Code Connect files —
-  `*.figma.swift` (and `*.figma.kt` on the Compose side) — mapping the Figma node to the shipped
-  source. They're excluded from the build target; the `figma connect` CLI reads them.
+- **Code Connect binding.** Every new or changed component ships current parserless `.figma.ts`
+  templates for each platform label, mapping the Figma node and Slot/property API to the shipped
+  SwiftUI and Compose source. Use separate config files with `language: swift` and
+  `language: kotlin`; the `figma connect` CLI reads the templates without building native parsers.
 - **Publish the Figma frame from code.** Regenerate/refresh the component's Figma master + doc
   page so **Figma follows the code**, never the reverse — this system is code-first. Publishing
   is plan-gated.

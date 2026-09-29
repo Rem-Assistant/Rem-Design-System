@@ -1,13 +1,21 @@
-# Design ↔ code sync (no Code Connect required)
+# Design ↔ code sync
 
-Keeps the Figma design faithful to the shipping SwiftUI. Code is the source of truth; the design
-is verified/generated against it. Three pieces, all driven by [`manifest.json`](./manifest.json)
-(the machine-readable `REGISTRY.md`: Figma node-id ↔ SwiftUI source).
+Keeps Figma, SwiftUI, and Compose aligned. The source map, parserless Code Connect templates,
+live Figma structure, and visual evidence form one delivery model. [`manifest.json`](./manifest.json)
+is the machine-readable `REGISTRY.md`: Figma node-id ↔ platform source.
 
-> Code Connect solves the *opposite* direction (surfacing code in Figma Dev Mode) and isn't used
-> here. This is code→design fidelity.
+## 1. Parserless Code Connect and dev-resource links
 
-## 1. Dev-resource links (the lightweight map)
+SwiftUI and Compose mappings live as TypeScript `.figma.ts` templates under
+[`code-connect/`](../../code-connect/). Separate configuration files give each platform its correct
+language label while the official Figma CLI parses the shared template format.
+
+```bash
+npm run check-code-connect
+```
+
+Publishing those mappings is a separate Figma account/seat capability. An unavailable publisher
+does not create another authoring format.
 
 Attaches a **"View source"** link to every canonical component in Figma Dev Mode, pointing at its
 SwiftUI file on GitHub. Runs headlessly via the REST API (the plugin API `addDevResourceAsync` is
@@ -83,6 +91,20 @@ not wait for the consent artifact. The publisher accepts at most one label and r
 against the trusted contract registry. A contract can opt into `exclusive_output_prefixes` to reject
 stale or invented outputs in its namespace while allowing unrelated regression snapshots. This keeps
 the mechanism reusable without embedding consent-specific state names in delivery code.
+
+The current Onboarding structure contract verifies one canonical screen inventory plus the Consent
+documentation/prototype pair. It checks the attached `Mobile Flow Documentation` hierarchy through
+Sections, Rows, Steps, `Mobile Placeholder`, the exact Screen slot, and its canonical screen instance.
+The second Default instance is a branch-return waypoint between Terms and Privacy and is excluded
+from evidence counts. The three prototype destinations must remain direct canonical instances.
+These strict relationships catch detached lookalikes and overlay siblings that can appear visually
+correct while no longer inheriting library changes.
+
+Every touched component family uses horizontal auto-layout documentation columns: canonical masters
+first, followed by the attached metadata template. Composition roots inherit their parent surface
+unless they explicitly own one, and equal-priority horizontal actions divide the available width.
+Theme and Platform remain independent axes. Full prototype reactions are verified in authenticated
+Figma/Present inspection because the public REST node schema does not return those interactions.
 
 ## 3. Generator (code → Figma)
 
