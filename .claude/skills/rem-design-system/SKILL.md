@@ -82,9 +82,12 @@ Consent proves the reusable shape: flow chassis masters live in Device Kit (`769
 the single `00` Section; `ButtonGroup`,
 `Lockup`, and `ActionArea` live in `Composition components` (`773:2`) on the dedicated
 `Compositions` page (`826:482`), ordered after Primitives. `Component Index` (`3:5`) remains the
-index only. Component-family pages use fill-free, stroke-free canvas Sections with auto-layout
-inside; the shared `Component Documentation` master (`663:2270`) owns a variable-bound
-`background/primary` surface. These
+index only. Component-family pages use fill-free, stroke-free native canvas Sections as navigation
+shells. Each Section contains one transparent auto-layout `Content` frame that owns the large
+header, description, divider, documentation columns, and spacing. Refit the native Section bounds
+to `Content` after every mutation so deleted or inserted families reflow without leaving gaps or
+overlapping the next Section. The shared `Component Documentation` master (`663:2270`) owns a
+variable-bound `background/primary` surface. These
 names are intentionally domain-neutral because the patterns may serve screens beyond onboarding.
 They compose primitives and therefore live on Compositions rather than Primitives. Their roots
 inherit the parent surface. `ButtonGroup` fills its parent, and horizontal actions fill equally.
@@ -141,6 +144,10 @@ cleanup work after the proving loop is reliable.
 - **Code Connect** (Figma↔SwiftUI) needs a paid Dev/Enterprise seat. Until then, record the
   binding in each component's Figma **description** and the `REGISTRY.md` mapping table —
   that's the manual equivalent, and it keeps the "app verified against" contract legible.
+- **Compare logical viewports, not bitmap dimensions.** The delivery record declares each
+  renderer's viewport/capture context. Normalize the full-frame images before judging shared
+  composition or spacing; device density, safe-area chrome, and native type rasterization remain
+  platform adaptations unless a screen contract marks them exact.
 
 ## After a meaningful change
 

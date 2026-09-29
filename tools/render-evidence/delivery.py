@@ -244,6 +244,10 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     status = "ready" if conclusion == "success" and not missing and not unexpected and not structure_errors else "failed"
     lines = [f"Current head: `{head}`", "",
              "Paired runner-produced evidence: iOS Simulator (SwiftUI) | Android Paparazzi (Compose).",
+             "Comparison basis: iOS uses a 393×852-point viewport at 2×; Android uses the full "
+             "Paparazzi `DeviceConfig.PIXEL_6` viewport; Figma references use the canonical 402×874 "
+             "frame at export scale. Normalize each image to its full logical viewport before "
+             "comparing layout; raw PNG dimensions are not layout differences.",
              "Rendering and coverage checks do not establish visual parity; Reviewer must compare the pixels against the approved contracts.", ""]
     if missing:
         lines += ["**Required evidence missing — delivery blocked:**", "", *[f"- {item}" for item in missing], ""]

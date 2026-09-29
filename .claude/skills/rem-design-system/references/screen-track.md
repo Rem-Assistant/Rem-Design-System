@@ -66,8 +66,11 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 - **Top-level sections:** give each flow a numbered documentation/prototype pair:
   `01A · <Flow> · Documentation` and `01B · <Flow> · Prototype`, then `02A` / `02B` for the next
   flow. Keep older canonical screens inside a named inventory/reference Section until their flow
-  documentation replaces them. Place pairs on a non-overlapping grid and verify bounds. The
-  structure contract lists the exact allowed top-level nodes.
+  documentation replaces them. Each native Figma Section is a navigation/bounds shell containing
+  one transparent auto-layout `Content` frame; that frame owns the large header, description,
+  divider, flow rows, and spacing. After any child is added, removed, or reordered, refit the native
+  Section bounds to `Content` with the established outer inset. Place pairs on a non-overlapping
+  grid and verify bounds. The structure contract lists the exact allowed top-level nodes.
 
 - **Component-family pages:** use `Component Documentation` (`663:2270`) for every new or changed
   canonical component. Arrange the family as a horizontal auto-layout row of vertical columns. Each

@@ -12,6 +12,26 @@ CONSENT = "compose/RemDesignSystem/onboarding/ConsentStep.kt"
 
 
 class PairedDeliveryTests(unittest.TestCase):
+    def test_delivery_declares_cross_renderer_comparison_basis(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for platform in ("swiftui", "compose"):
+                (root / platform).mkdir()
+                (root / platform / "demo-light.png").write_bytes(b"png")
+
+            status, body, _ = delivery.prepare(
+                root,
+                "a" * 40,
+                "success",
+                ["Sources/Demo.swift"],
+                {"demo": {"paths": ["Sources/**"], "states": ["demo-light"]}},
+            )
+
+        self.assertEqual(status, "ready")
+        self.assertIn("iOS uses a 393×852-point viewport at 2×", body)
+        self.assertIn("Paparazzi `DeviceConfig.PIXEL_6` viewport", body)
+        self.assertIn("raw PNG dimensions are not layout differences", body)
+
     def test_approved_consent_state_set(self):
         self.assertEqual(
             CONTRACTS["onboarding-consent"]["states"],

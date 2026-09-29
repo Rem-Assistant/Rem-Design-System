@@ -110,11 +110,21 @@ family uses the same scorecard: typography, semantic color, responsive layout, c
 taxonomy placement. Foundations remains the visible token/style reference; the
 empty Guide page was removed because its operating rules already live in the repository and index.
 
-Use top-level canvas Sections to organize each component-family page, with auto-layout inside each
-Section. Canvas Sections have no fill or stroke. `Component Documentation` (`663:2270`) owns the
-variable-bound `background/primary` surface so each specimen displays on a deliberate theme-aware
-surface. Foundations is a Rem-owned adoption layer, not a copy of the iOS 26 kit page: import only
-the semantic values Rem uses, preserve source attribution, and map the same concepts to Android.
+Use top-level native canvas Sections to organize each component-family page. A Section is a
+navigation/bounds shell, not the layout engine: it contains one transparent auto-layout `Content`
+frame that owns the large header, description, divider, component columns, and their spacing. After
+adding, removing, or reordering content, refit the native Section bounds to `Content` with the
+established outer inset and verify that the following Section does not overlap. Canvas Sections have
+no fill or stroke. `Component Documentation` (`663:2270`) owns the variable-bound
+`background/primary` surface so each specimen displays on a deliberate theme-aware surface.
+Foundations is a Rem-owned adoption layer, not a copy of the iOS 26 kit page: import only the
+semantic values Rem uses, preserve source attribution, and map the same concepts to Android.
+
+Cross-platform visual review uses logical viewports. Normalize each full-frame render to its
+declared viewport before judging shared composition, spacing, or relative scale. Raw PNG dimensions,
+capture density, and device pixel ratio are not layout differences. Status/navigation chrome,
+safe-area insets, and native type rasterization remain platform adaptations unless the active screen
+contract marks them exact.
 
 Builder performs a pattern-extraction pass as it builds each screen. A region becomes a candidate
 when it has one stable responsibility and either two plausible consumers or observed recurrence
