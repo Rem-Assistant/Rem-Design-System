@@ -82,8 +82,7 @@ fun OnboardingScaffold(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(background.color())
-            .padding(horizontal = RemSpacing.xl),
+            .background(background.color()),
     ) {
         // Top bar — back chevron (leading) mirrors the reference frames' top-left back button. When
         // there is nowhere to go back to, the sequencer passes onBack = null and we keep the same
@@ -91,7 +90,8 @@ fun OnboardingScaffold(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp),
+                .height(44.dp)
+                .padding(horizontal = RemSpacing.xl),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (onBack != null) {
@@ -120,109 +120,115 @@ fun OnboardingScaffold(
             }
         }
 
-        // Scrollable body: hero → title → subtitle → step content. Scrolls so tall steps (voice
-        // sliders, long consent copy) never clip on small devices; the CTA bar stays pinned below.
+        // Body is the explicit fill-height region below the top bar. It owns the one shared 24dp
+        // horizontal inset and contains both the scrollable content and the pinned ActionArea.
+        // Device navigation chrome remains outside this scaffold in the host.
         Column(
             modifier = Modifier
-                .widthIn(max = 560.dp)
                 .fillMaxWidth()
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = RemSpacing.xl),
         ) {
-            Spacer(Modifier.height(RemSpacing.xxl))
-            if (hero != null) {
-                val heroTint = ContainedIconFill.Tint(hero.tint ?: colors.brandBlue)
-                // The onboarding hero is the large brand squircle in every reference frame. It reuses
-                // the canonical ContainedIcon (anti-drift Rule 0) at its Large size (64dp). The
-                // reference hero reads slightly larger (~88pt); logged as a metric-reconcile item (a
-                // dedicated `hero` size token) rather than forking a bespoke tile here.
-                //
-                // A glyph hero (consent's shield-lock) renders the Material Symbols font glyph at its
-                // registry FILL — never a legacy `Icons.Filled.*` — so its FILL matches the iOS SF
-                // Symbol. A vector hero (other steps) still uses the ImageVector overload.
-                if (hero.symbol != null) {
-                    ContainedIcon(
-                        symbol = hero.symbol,
-                        fill = heroTint,
-                        size = ContainedIconSize.Large,
-                        contentDescription = hero.contentDescription,
-                    )
-                } else if (hero.icon != null) {
-                    ContainedIcon(
-                        icon = hero.icon,
-                        fill = heroTint,
-                        size = ContainedIconSize.Large,
-                        contentDescription = hero.contentDescription,
-                    )
+            // Scrollable content: hero → title → subtitle → step content. It scrolls so tall steps
+            // never clip on small devices while the ActionArea remains pinned below.
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .align(Alignment.CenterHorizontally)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(Modifier.height(RemSpacing.xxl))
+                if (hero != null) {
+                    val heroTint = ContainedIconFill.Tint(hero.tint ?: colors.brandBlue)
+                    // The onboarding hero is the large brand squircle in every reference frame. It reuses
+                    // the canonical ContainedIcon (anti-drift Rule 0) at its Large size (64dp). The
+                    // reference hero reads slightly larger (~88pt); logged as a metric-reconcile item (a
+                    // dedicated `hero` size token) rather than forking a bespoke tile here.
+                    //
+                    // A glyph hero (consent's shield-lock) renders the Material Symbols font glyph at its
+                    // registry FILL — never a legacy `Icons.Filled.*` — so its FILL matches the iOS SF
+                    // Symbol. A vector hero (other steps) still uses the ImageVector overload.
+                    if (hero.symbol != null) {
+                        ContainedIcon(
+                            symbol = hero.symbol,
+                            fill = heroTint,
+                            size = ContainedIconSize.Large,
+                            contentDescription = hero.contentDescription,
+                        )
+                    } else if (hero.icon != null) {
+                        ContainedIcon(
+                            icon = hero.icon,
+                            fill = heroTint,
+                            size = ContainedIconSize.Large,
+                            contentDescription = hero.contentDescription,
+                        )
+                    }
+                    Spacer(Modifier.height(RemSpacing.lg))
                 }
-                Spacer(Modifier.height(RemSpacing.lg))
-            }
-            if (title != null) {
-                Text(
-                    text = title,
-                    // largeTitle **semibold** — matches iOS `largeTitle.weight(.semibold)`, the contract's
-                    // "largeTitle semibold", and the sibling sign-in Compose title. (Was Bold, which read
-                    // heavier than the iOS render.)
-                    style = RemTypography.largeTitle.copy(fontWeight = FontWeight.SemiBold),
-                    color = colors.labelPrimary,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(RemSpacing.sm))
-            }
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = RemTypography.body,
-                    color = colors.labelSecondary,
-                    textAlign = TextAlign.Center,
-                )
+                if (title != null) {
+                    Text(
+                        text = title,
+                        // largeTitle **semibold** — matches iOS `largeTitle.weight(.semibold)`, the contract's
+                        // "largeTitle semibold", and the sibling sign-in Compose title. (Was Bold, which read
+                        // heavier than the iOS render.)
+                        style = RemTypography.largeTitle.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.labelPrimary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(RemSpacing.sm))
+                }
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = RemTypography.body,
+                        color = colors.labelSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(RemSpacing.xl))
+                }
+                content()
                 Spacer(Modifier.height(RemSpacing.xl))
             }
-            content()
-            Spacer(Modifier.height(RemSpacing.xl))
-        }
 
-        // Actions live inside Body, below its scrollable content. The legal footnote sits below the
-        // action. Device navigation chrome remains outside Body in the host.
-        //
-        // Spacing mirrors the iOS `OnboardingConsentTemplate` bottom bar EXACTLY so the paired render
-        // has the same density in every state: top `sm`, `md` from CTA to footnote, and `md` below.
-        // The actions fill the available parent until the shared 560dp responsive cap. This screen
-        // owns the outer inset/background; ActionArea and ButtonGroup remain background-neutral.
-        Column(
-            modifier = Modifier
-                .widthIn(max = 560.dp)
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally)
-                .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (bottomToast != null) {
-                RemToast(
-                    message = bottomToast,
-                    variant = RemToastVariant.Error,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                )
-                Spacer(Modifier.height(RemSpacing.md))
-            }
-            OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
-            if (secondary != null) {
-                Spacer(Modifier.height(RemSpacing.sm))
-                OnboardingActionButton(action = secondary, modifier = Modifier.fillMaxWidth())
-            }
-            if (legalFooter != null) {
-                Spacer(Modifier.height(RemSpacing.md))
-                // caption1 + labelSecondary, matching iOS + the contract's footnote role.
-                Text(
-                    text = legalFooter,
-                    style = RemTypography.caption1,
-                    color = colors.labelSecondary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = RemSpacing.sm),
-                )
+            // Actions are the second Body region. They share Body's outer inset with the content and
+            // stay pinned below it; ActionArea itself adds no screen-level horizontal inset.
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (bottomToast != null) {
+                    RemToast(
+                        message = bottomToast,
+                        variant = RemToastVariant.Error,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                    Spacer(Modifier.height(RemSpacing.md))
+                }
+                OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
+                if (secondary != null) {
+                    Spacer(Modifier.height(RemSpacing.sm))
+                    OnboardingActionButton(action = secondary, modifier = Modifier.fillMaxWidth())
+                }
+                if (legalFooter != null) {
+                    Spacer(Modifier.height(RemSpacing.md))
+                    // caption1 + labelSecondary, matching iOS + the contract's footnote role.
+                    Text(
+                        text = legalFooter,
+                        style = RemTypography.caption1,
+                        color = colors.labelSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = RemSpacing.sm),
+                    )
+                }
             }
         }
     }

@@ -16,9 +16,11 @@ Parent scope: #12 (onboarding middle steps) and #10.
 ## Layout — top lockup, grouped cadence list, Body-owned action region
 
 A scaffolded step (sequencer chrome: a back chevron in the nav, owned by the host, not the template).
-Body fills the available height and width with a 24pt inset and contains **two independent vertical
-regions**. `VStack/Content` is top-aligned and horizontally centered at a 560pt maximum width.
-`VStack/Actions` is bottom-pinned at the same maximum width. Nothing vertically centers the two
+Immediately below that top bar, the shared scaffold creates an explicit fill-height **Body**. Body
+applies one 24pt horizontal inset, then contains **two independent vertical regions**:
+`VStack/Content` is top-aligned and horizontally centered at a 560pt maximum width, while
+`VStack/Actions` is bottom-pinned at the same maximum width. Check-in supplies the contents and
+action state; the scaffold owns their placement inside Body. Nothing vertically centers the two
 regions as one combined block; flexible space lives between them.
 Content top → bottom:
 
@@ -48,9 +50,10 @@ Content top → bottom:
    above the ActionArea. It is brief, non-actionable, announces politely, and auto-dismisses after
    four seconds by default; the retry action remains available after it disappears.
 
-In code, the onboarding scaffold's bottom action region realizes the canonical `ActionArea`
-composition. The optional Toast is a preceding sibling inside `VStack/Actions`; it is not part of the
-ActionArea itself, whose responsibility remains the primary Button and optional footnote (off here).
+In code, the onboarding scaffold's explicit Body owns the bottom action region that realizes the
+canonical `ActionArea` composition. The optional Toast is a preceding sibling inside
+`VStack/Actions`; it is not part of the ActionArea itself, whose responsibility remains the primary
+Button and optional footnote (off here).
 
 ## States
 
@@ -68,7 +71,8 @@ action and does not replace the persistent retry control.
 ## Rules (the decisions that are easy to drift on — stated once)
 
 - **Body owns layout:** the full-device root order is `StatusBar → TopBar → Body → NavigationIndicator`.
-  Body fills the remaining width/height, owns a single 24pt outer inset, and lays out
+  The shared scaffold instantiates Body immediately below TopBar. Body fills the remaining
+  width/height, owns a single 24pt horizontal inset, and lays out
   `VStack/Content` over `VStack/Actions` with space between. ActionArea has no outer inset of its own.
   NavigationIndicator is device chrome and never moves inside Body.
 - **CTA lifecycle:** `default`/`edited` → "Continue"; `saving` → disabled "Saving…" + spinner; `saved`
@@ -96,18 +100,21 @@ action and does not replace the persistent retry control.
   that reconciles them; a toggle always reports `night`, never the `"evening"` display label.
 - **Do not invent extra consent-style loading/empty states:** the only states are the five above.
 - **Icons are semantic + FILL-pinned per the registry.** The hero is FILL 1; the three period leadings
-  are FILL 0. Each platform uses the named native glyph from the registry. Acceptance compares meaning,
-  FILL, optical weight, and role; it does not require SF Symbols and Material glyphs to share an
-  identical silhouette. Android's temporary vector path is documented in `icon-registry.md` ‡.
+  are FILL 0. iOS uses the named SF Symbols; Android currently uses the registry's explicitly
+  provisional Material Icons vector fallback with the same semantic role and fill treatment.
+  Acceptance compares meaning, FILL, optical weight, and role; it does not claim that this fallback
+  proves the final Material Symbols font-path pairing. The boundary is documented in
+  `icon-registry.md` ‡.
 
 ## System use
 
 - **Reuse:** the onboarding scaffold's Body action region, `RemSection` + `ListRow`, `ActionArea`,
   explicit Button states, `ContainedIcon` (hero + row leading), canonical `Toast`, and tokens.
-- **Systemize:** `RemSwitch` — the canonical on/off toggle (Figma set `868:210`; legacy iOS-on
-  variant `110:50`), extracted here
-  because a grouped-settings toggle recurs across Settings/automations/voice, not just this screen. On
-  both platforms it is a thin wrapper over the native switch pinned to `systemGreen`.
+- **Systemize:** `RemSwitch` — the canonical on/off API (Figma set `868:210`; legacy iOS-on variant
+  `110:50`), extracted here because a grouped-settings toggle recurs across
+  Settings/automations/voice, not just this screen. On both platforms it is a thin wrapper over the
+  native switch pinned to `systemGreen`. This PR proves it in the paired Check-in screen context;
+  standalone component-level paired render evidence remains a later component-documentation task.
 - **Exact:** the top-lockup order + copy, the three cadence rows (icons + titles, in order), the switch
   on-tint, the value-pill-only-when-on rule, Body/ActionArea hierarchy, the CTA lifecycle labels, Toast
   placement (above the ActionArea), the icon registry rows + FILL.
@@ -128,13 +135,14 @@ action and does not replace the persistent retry control.
 
 ### Platform picker design
 
-The five save-lifecycle references show the picker trigger in its closed state. Interaction
-documentation adds one iOS wheel presentation and one Android dial presentation without multiplying
-the five persisted save states. iOS nests the published three-column HIG Picker component supplied by
-the founder (`npa2Riu1JdiazH2Y9ntrwk`, `Column=3`) and composes a true two-value AM/PM column. Android
-uses a Rem-themed derivative of the official Material 3 dial picker: Material structure and behavior,
-Rem `brandBlue` accent and neutral surfaces. Runtime uses SwiftUI's wheel `DatePicker` and an Android
-`TimePickerDialog` whose native theme binds `colorAccent` to `#0C50FF`.
+The five required paired runtime renders show the picker trigger in its closed state. Separate Figma
+interaction documentation adds one iOS wheel presentation and one Android dial presentation without
+multiplying those persisted save states; this PR does **not** claim picker-open paired runtime visual
+evidence. iOS nests the published three-column HIG Picker component supplied by the founder
+(`npa2Riu1JdiazH2Y9ntrwk`, `Column=3`) and composes a true two-value AM/PM column. Android uses a
+Rem-themed derivative of the official Material 3 dial picker: Material structure and behavior, Rem
+`brandBlue` accent and neutral surfaces. The implemented interaction paths use SwiftUI's wheel
+`DatePicker` and an Android `TimePickerDialog` whose native theme binds `colorAccent` to `#0C50FF`.
 
 ## Figma delivery (delivered; exact-head export is CI-gated)
 
