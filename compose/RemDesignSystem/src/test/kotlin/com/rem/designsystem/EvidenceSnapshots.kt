@@ -150,7 +150,8 @@ class EvidenceSnapshots {
     @Test
     fun consent() = shot("Consent-default-light") { RemTheme { consentScreen() } }
 
-    // The two legal sheets the consent rows open (1:1 with LegalDocumentView), light.
+    // Reusable legal content chrome. The host-owned modal container, scrim, and return behavior are
+    // verified by the Figma prototype and interaction evidence rather than duplicated in this fixture.
     @Test
     fun consentTerms() = shot("Consent-terms-light") {
         RemTheme { LegalDocumentScreen(title = "Terms of Service", sections = previewTermsSections, onClose = {}) }

@@ -6,6 +6,8 @@ import SwiftUI
 /// ``Section``s. Per `docs/contracts/onboarding-consent.md` the design system owns the sheet chrome;
 /// the **legal copy body is owned by `LegalDocumentView`** and injected via `sections`. This shipping
 /// target contains no sample legal prose; render-only fixture copy lives in `RenderSnapshotTests`.
+/// The presenting host owns the native sheet container, scrim, optional drag affordance, and the
+/// device status bar behind it; this template owns the content chrome rendered inside that container.
 public struct LegalDocumentTemplate: View {
     /// One titled block of a legal document.
     public struct Section: Identifiable {

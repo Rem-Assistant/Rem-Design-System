@@ -33,7 +33,8 @@ final class RenderSnapshots: XCTestCase {
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
         }
         render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
-        // The two legal page sheets the consent rows open (1:1 with LegalDocumentView), light.
+        // Reusable legal content chrome. The host-owned page-sheet container, scrim, and return
+        // behavior are verified by the Figma prototype and interaction evidence.
         render("Consent-terms-light", width: 393, height: 852, dark: false) {
             LegalDocumentTemplate(
                 title: "Terms of Service",

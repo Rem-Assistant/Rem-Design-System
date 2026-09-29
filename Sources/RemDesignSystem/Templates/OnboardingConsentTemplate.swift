@@ -110,6 +110,8 @@ public struct OnboardingConsentTemplate: View {
             .padding(.horizontal, DesignTokens.Spacing.lg)
             .padding(.top, DesignTokens.Spacing.sm)
             .padding(.bottom, DesignTokens.Spacing.md)
+            // The action content fills its parent until the shared responsive cap; the screen,
+            // rather than ActionArea/ButtonGroup, owns the surrounding inset and background.
             .frame(maxWidth: 560)
         }
         .frame(maxWidth: .infinity)

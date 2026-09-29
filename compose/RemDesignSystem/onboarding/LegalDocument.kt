@@ -35,7 +35,9 @@ data class LegalSection(val heading: String, val body: String)
  * scrollable body of [sections]. Per `docs/contracts/onboarding-consent.md`, the design system owns the
  * sheet chrome; the **legal copy body is owned by `LegalDocumentView`** and injected via [sections] —
  * this shipping source contains no sample legal prose. Render-only fixture copy lives under
- * `src/test`, outside the packaged Android library.
+ * `src/test`, outside the packaged Android library. The host owns the native modal container, scrim,
+ * optional drag affordance, and device-status-bar layering; this composable owns the content chrome
+ * rendered inside that container.
  */
 @Composable
 fun LegalDocumentScreen(

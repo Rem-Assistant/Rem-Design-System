@@ -179,6 +179,8 @@ fun OnboardingScaffold(
         //
         // Spacing mirrors the iOS `OnboardingConsentTemplate` bottom bar EXACTLY so the paired render
         // has the same density in every state: top `sm`, `md` from CTA to footnote, and `md` below.
+        // The actions fill the available parent until the shared 560dp responsive cap. This screen
+        // owns the outer inset/background; ActionArea and ButtonGroup remain background-neutral.
         Column(
             modifier = Modifier
                 .widthIn(max = 560.dp)

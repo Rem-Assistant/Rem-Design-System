@@ -97,7 +97,8 @@ Platform (iOS/Android) stay independent. Every full-device consent destination i
 `StatusBar` (`785:389`) and `NavigationIndicator` (`793:379`) with Platform switching, while the
 documented composition remains Light for review. iOS and Android share the same product layout;
 Platform changes native chrome, type metrics, and semantic icon sources. On legal destinations, the
-status bar is behind the scrim and sheet rather than drawn above them.
+device `StatusBar` remains in the background screen layer behind the scrim and sheet. The foreground
+sheet's inline title and Done affordance are sheet navigation chrome, not a second device status bar.
 
 The shared `Onboarding` page (`410:15`) uses a numbered Section pair for this flow:
 `01A · Consent · Documentation` (`777:432`) and `01B · Consent · Prototype` (`731:260`). Sign-in
@@ -135,12 +136,16 @@ not permission to omit Figma or spend repeated screen-revision attempts.
 Default `777:248` maps to `OnboardingConsentTemplate.swift`; Terms `777:325` and Privacy `777:392` map to
 `LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
 Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
-presentation and injects the current legal body; render-only legal prose remains in test fixtures.
+presentation — including the scrim, rounded top / drag affordance when the native idiom supplies one,
+and device-status-bar layering — and injects the current legal body; render-only legal prose remains
+in test fixtures.
 The Figma sheet nodes mirror that owned chrome and use representative body copy only for layout.
 `ConsentInteractionTests` invokes the same legal-row open and Done-dismiss endpoints used by the
 production views. Present mode verifies the Terms/Privacy destinations and Back actions; the paired
-renders verify the resulting sheet chrome. These three proofs are required together because a static
-render alone cannot establish presentation or dismissal behavior.
+renders verify the reusable content chrome (title, Done, divider, scroll region, and body spacing),
+while the Figma prototype verifies the host sheet presentation, scrim, and return behavior. These
+proofs are required together because a static content render alone cannot establish modal presentation
+or dismissal behavior.
 
 ## Parity acceptance (what the visual gate diffs)
 
