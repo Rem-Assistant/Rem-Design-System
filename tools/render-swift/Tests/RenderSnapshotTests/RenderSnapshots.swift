@@ -75,32 +75,43 @@ final class RenderSnapshots: XCTestCase {
         // Morning on; the edited/saving/saved/failure set carries the added Midday selection so the
         // states are visibly distinct in the paired table.
         render("Checkin-default-light", width: 393, height: 852, dark: false) {
-            checkinScreen(status: .default, middayOn: false)
+            checkinScreen(status: .default, morningOn: true, middayOn: false, nightOn: false)
         }
         render("Checkin-edited-light", width: 393, height: 852, dark: false) {
-            checkinScreen(status: .edited, middayOn: true)
+            checkinScreen(status: .edited, morningOn: true, middayOn: true, nightOn: false)
         }
         render("Checkin-saving-light", width: 393, height: 852, dark: false) {
-            checkinScreen(status: .saving, middayOn: true)
+            checkinScreen(status: .saving, morningOn: true, middayOn: true, nightOn: false)
         }
         render("Checkin-saved-light", width: 393, height: 852, dark: false) {
-            checkinScreen(status: .saved, middayOn: true)
+            checkinScreen(status: .saved, morningOn: true, middayOn: true, nightOn: false)
         }
         render("Checkin-failure-light", width: 393, height: 852, dark: false) {
             checkinScreen(
                 status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
-                middayOn: true
+                morningOn: true,
+                middayOn: true,
+                nightOn: false
             )
         }
     }
 
     // The REAL onboarding Check-in template, one state per snapshot.
-    private func checkinScreen(status: OnboardingCheckinTemplate.Status, middayOn: Bool) -> some View {
+    private func checkinScreen(
+        status: OnboardingCheckinTemplate.Status,
+        morningOn: Bool,
+        middayOn: Bool,
+        nightOn: Bool
+    ) -> some View {
         OnboardingCheckinTemplate(
             status: status,
             // Through the real cadence adapter — the Evening row carries the canonical `night` slot id.
             periods: OnboardingCheckinTemplate.periods(
-                from: OnboardingCheckinTemplate.defaultCadence(middayOn: middayOn),
+                from: OnboardingCheckinTemplate.defaultCadence(
+                    morningOn: morningOn,
+                    middayOn: middayOn,
+                    nightOn: nightOn
+                ),
                 onToggle: { _, _ in }
             ),
             onPrimary: {}

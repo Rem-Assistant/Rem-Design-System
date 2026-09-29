@@ -41,6 +41,24 @@ final class CheckinInteractionTests: XCTestCase {
         XCTAssertEqual(toggled.map { $0.1 }, [true])
     }
 
+    func testCanonicalCadenceAlwaysContainsAllThreeRowsWhileEnabledFlagsChange() {
+        let defaultCadence = OnboardingCheckinTemplate.defaultCadence(
+            morningOn: true,
+            middayOn: false,
+            nightOn: false
+        )
+        let editedCadence = OnboardingCheckinTemplate.defaultCadence(
+            morningOn: true,
+            middayOn: true,
+            nightOn: true
+        )
+
+        XCTAssertEqual(defaultCadence.map(\.slot), ["morning", "midday", "night"])
+        XCTAssertEqual(editedCadence.map(\.slot), ["morning", "midday", "night"])
+        XCTAssertEqual(defaultCadence.map(\.enabled), [true, false, false])
+        XCTAssertEqual(editedCadence.map(\.enabled), [true, true, true])
+    }
+
     func testEditingATimeInvokesTheCanonicalSlotUpdateEndpoint() {
         var changes: [(CheckinSlot, Int, Int)] = []
         let periods = OnboardingCheckinTemplate.periods(

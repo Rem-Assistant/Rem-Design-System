@@ -157,7 +157,7 @@ class EvidenceSnapshots {
         RemTheme {
             OnboardingCheckinScreen(
                 status = CheckinStatus.Default,
-                periods = checkinDefaultPeriods(middayOn = false),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = false, nightOn = false),
                 onToggle = { _, _ -> },
                 onContinue = {},
             )
@@ -169,7 +169,7 @@ class EvidenceSnapshots {
         RemTheme {
             OnboardingCheckinScreen(
                 status = CheckinStatus.Edited,
-                periods = checkinDefaultPeriods(middayOn = true),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
                 onToggle = { _, _ -> },
                 onContinue = {},
             )
@@ -181,7 +181,7 @@ class EvidenceSnapshots {
         RemTheme {
             OnboardingCheckinScreen(
                 status = CheckinStatus.Saving,
-                periods = checkinDefaultPeriods(middayOn = true),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
                 onToggle = { _, _ -> },
                 onContinue = {},
             )
@@ -193,7 +193,7 @@ class EvidenceSnapshots {
         RemTheme {
             OnboardingCheckinScreen(
                 status = CheckinStatus.Saved,
-                periods = checkinDefaultPeriods(middayOn = true),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
                 onToggle = { _, _ -> },
                 onContinue = {},
             )
@@ -205,7 +205,7 @@ class EvidenceSnapshots {
         RemTheme {
             OnboardingCheckinScreen(
                 status = CheckinStatus.Failure("We couldn't save your check-in times. Check your connection and try again."),
-                periods = checkinDefaultPeriods(middayOn = true),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
                 onToggle = { _, _ -> },
                 onContinue = {},
             )

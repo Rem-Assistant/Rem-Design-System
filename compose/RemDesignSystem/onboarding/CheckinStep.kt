@@ -285,8 +285,14 @@ fun checkinStep(
  * Built through the real [checkinPeriods] adapter, so the rows carry the canonical slot ids (the
  * Evening row's id is `night`, never the display label).
  */
-fun checkinDefaultPeriods(morningOn: Boolean = true, middayOn: Boolean = false): List<CheckinPeriodUiState> =
-    checkinPeriods(checkinDefaultCadence(morningOn = morningOn, middayOn = middayOn))
+fun checkinDefaultPeriods(
+    morningOn: Boolean = true,
+    middayOn: Boolean = false,
+    nightOn: Boolean = false,
+): List<CheckinPeriodUiState> =
+    checkinPeriods(
+        checkinDefaultCadence(morningOn = morningOn, middayOn = middayOn, nightOn = nightOn),
+    )
 
 internal const val CHECKIN_TITLE = "When should Rem check in?"
 internal const val CHECKIN_SUBTITLE =
@@ -298,7 +304,7 @@ private fun CheckinDefaultPreview() {
     RemTheme {
         OnboardingCheckinScreen(
             status = CheckinStatus.Default,
-            periods = checkinDefaultPeriods(),
+            periods = checkinDefaultPeriods(morningOn = true, middayOn = false, nightOn = false),
             onToggle = { _, _ -> },
             onContinue = {},
         )
@@ -311,7 +317,7 @@ private fun CheckinSavingPreview() {
     RemTheme {
         OnboardingCheckinScreen(
             status = CheckinStatus.Saving,
-            periods = checkinDefaultPeriods(middayOn = true),
+            periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
             onToggle = { _, _ -> },
             onContinue = {},
         )
@@ -324,7 +330,7 @@ private fun CheckinFailurePreview() {
     RemTheme {
         OnboardingCheckinScreen(
             status = CheckinStatus.Failure("We couldn't save your check-in times. Check your connection and try again."),
-            periods = checkinDefaultPeriods(middayOn = true),
+            periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
             onToggle = { _, _ -> },
             onContinue = {},
         )

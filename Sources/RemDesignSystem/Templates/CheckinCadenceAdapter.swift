@@ -118,15 +118,20 @@ public extension OnboardingCheckinTemplate {
         }
     }
 
-    /// The default cadence as loaded from `CheckinsService`: Morning on @ 8:00 AM, the others off.
-    /// Returns the **raw `Checkin` fields** (not a pre-formatted value), so previews, snapshot
-    /// evidence, and the host's initial state all exercise the same real adapter path — canonical slot
-    /// ids in, formatted brief-time labels out.
-    static func defaultCadence(morningOn: Bool = true, middayOn: Bool = false) -> [Checkin] {
+    /// The canonical three-row cadence as loaded from `CheckinsService`: Morning on @ 8:00 AM by
+    /// default, the others off. Enabled flags change row state, never row membership. Returns the
+    /// **raw `Checkin` fields** (not a pre-formatted value), so previews, snapshot evidence, and the
+    /// host's initial state all exercise the same real adapter path — canonical slot ids in, formatted
+    /// brief-time labels out.
+    static func defaultCadence(
+        morningOn: Bool = true,
+        middayOn: Bool = false,
+        nightOn: Bool = false
+    ) -> [Checkin] {
         [
             Checkin(slot: "morning", enabled: morningOn, deliveryHour: 8, deliveryMinute: 0, timezone: "America/New_York"),
             Checkin(slot: "midday", enabled: middayOn, deliveryHour: 12, deliveryMinute: 30, timezone: "America/New_York"),
-            Checkin(slot: "night", enabled: false, deliveryHour: 20, deliveryMinute: 0, timezone: "America/New_York"),
+            Checkin(slot: "night", enabled: nightOn, deliveryHour: 20, deliveryMinute: 0, timezone: "America/New_York"),
         ]
     }
 }

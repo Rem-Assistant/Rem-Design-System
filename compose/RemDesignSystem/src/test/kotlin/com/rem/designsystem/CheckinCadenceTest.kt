@@ -66,6 +66,17 @@ class CheckinCadenceTest {
     }
 
     @Test
+    fun canonicalCadenceAlwaysContainsAllThreeRowsWhileEnabledFlagsChange() {
+        val defaultCadence = checkinDefaultPeriods(morningOn = true, middayOn = false, nightOn = false)
+        val editedCadence = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = true)
+
+        assertEquals(listOf("morning", "midday", "night"), defaultCadence.map { it.id })
+        assertEquals(listOf("morning", "midday", "night"), editedCadence.map { it.id })
+        assertEquals(listOf(true, false, false), defaultCadence.map { it.enabled })
+        assertEquals(listOf(true, true, true), editedCadence.map { it.enabled })
+    }
+
+    @Test
     fun adapterDisplaysEveningWhileKeepingTheCanonicalNightSlotId() {
         // The `Checkin` identity contract: display "Evening", but store/send the canonical `night` id.
         // Built from the raw shipping fields — the adapter formats the brief time itself.

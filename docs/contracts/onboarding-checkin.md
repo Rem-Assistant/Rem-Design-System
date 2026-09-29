@@ -89,6 +89,9 @@ action and does not replace the persistent retry control.
   platform picker; a confirmed value reports the canonical slot id plus hour/minute to the host and
   moves the screen to `edited`. CRUD coverage is explicit: switch-on creates/enables a cadence, the
   picker updates its time, switch-off disables it, and Continue saves the resulting set.
+- **Row membership is invariant across states.** Default, edited, saving, saved, and failure always
+  contain Morning, Midday, and Evening in that order. Enabled flags alter the switch and time-value
+  state only; turning a cadence off never removes its row.
 - **The value never wraps.** The selected time (e.g. "8:00 AM") stays on one line at its full type role
   (`Typography.body`). The Morning (populated) row keeps the same height and alignment rhythm as the
   empty Midday / Evening rows; the pill is pinned to its intrinsic width, never clipped or shrunk.

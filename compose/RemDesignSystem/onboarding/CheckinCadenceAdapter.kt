@@ -90,12 +90,17 @@ fun checkinPeriods(checkins: List<Checkin>): List<CheckinPeriodUiState> =
     }
 
 /**
- * Default cadence loaded from `CheckinsService`: Morning on @ 8:00 AM, the others off. Returns the
- * **raw `Checkin` fields** (not a pre-formatted value), so previews, snapshot evidence, and the host's
- * initial state all exercise the same real adapter path — canonical slot ids in, formatted labels out.
+ * Canonical three-row cadence loaded from `CheckinsService`: Morning on @ 8:00 AM by default, the
+ * others off. Enabled flags change row state, never row membership. Returns the **raw `Checkin`
+ * fields** (not a pre-formatted value), so previews, snapshot evidence, and the host's initial state
+ * all exercise the same real adapter path — canonical slot ids in, formatted labels out.
  */
-fun checkinDefaultCadence(morningOn: Boolean = true, middayOn: Boolean = false): List<Checkin> = listOf(
+fun checkinDefaultCadence(
+    morningOn: Boolean = true,
+    middayOn: Boolean = false,
+    nightOn: Boolean = false,
+): List<Checkin> = listOf(
     Checkin("morning", enabled = morningOn, deliveryHour = 8, deliveryMinute = 0, timezone = "America/New_York"),
     Checkin("midday", enabled = middayOn, deliveryHour = 12, deliveryMinute = 30, timezone = "America/New_York"),
-    Checkin("night", enabled = false, deliveryHour = 20, deliveryMinute = 0, timezone = "America/New_York"),
+    Checkin("night", enabled = nightOn, deliveryHour = 20, deliveryMinute = 0, timezone = "America/New_York"),
 )

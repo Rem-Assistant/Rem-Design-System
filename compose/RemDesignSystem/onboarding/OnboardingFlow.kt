@@ -74,7 +74,11 @@ private fun OnboardingFullFlowPreview() {
                     // scaffold, exactly as the handoff note promised.
                     checkinStep(
                         status = CheckinStatus.Default,
-                        periods = checkinDefaultPeriods(),
+                        periods = checkinDefaultPeriods(
+                            morningOn = true,
+                            middayOn = false,
+                            nightOn = false,
+                        ),
                         onToggle = { _, _ -> },
                         onContinue = {},
                     ),

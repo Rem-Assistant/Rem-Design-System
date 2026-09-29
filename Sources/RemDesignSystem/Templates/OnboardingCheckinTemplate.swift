@@ -324,30 +324,55 @@ private struct TimePickerValue: View {
 }
 
 #if DEBUG
-// Built through the real cadence adapter, so previews carry the canonical slot ids (Evening → `night`).
-private func checkinPreviewPeriods(morningOn: Bool = true, middayOn: Bool = false) -> [OnboardingCheckinTemplate.Period] {
+// Every preview explicitly supplies all three enabled flags to the one canonical three-row model;
+// an off row remains present and only hides its time value (Evening keeps the canonical `night` id).
+private func checkinPreviewPeriods(
+    morningOn: Bool,
+    middayOn: Bool,
+    nightOn: Bool
+) -> [OnboardingCheckinTemplate.Period] {
     OnboardingCheckinTemplate.periods(
-        from: OnboardingCheckinTemplate.defaultCadence(morningOn: morningOn, middayOn: middayOn),
+        from: OnboardingCheckinTemplate.defaultCadence(
+            morningOn: morningOn,
+            middayOn: middayOn,
+            nightOn: nightOn
+        ),
         onToggle: { _, _ in }
     )
 }
 
 #Preview("Check-in · default") {
-    OnboardingCheckinTemplate(status: .default, periods: checkinPreviewPeriods(), onPrimary: {})
+    OnboardingCheckinTemplate(
+        status: .default,
+        periods: checkinPreviewPeriods(morningOn: true, middayOn: false, nightOn: false),
+        onPrimary: {}
+    )
 }
 #Preview("Check-in · edited") {
-    OnboardingCheckinTemplate(status: .edited, periods: checkinPreviewPeriods(middayOn: true), onPrimary: {})
+    OnboardingCheckinTemplate(
+        status: .edited,
+        periods: checkinPreviewPeriods(morningOn: true, middayOn: true, nightOn: false),
+        onPrimary: {}
+    )
 }
 #Preview("Check-in · saving") {
-    OnboardingCheckinTemplate(status: .saving, periods: checkinPreviewPeriods(middayOn: true), onPrimary: {})
+    OnboardingCheckinTemplate(
+        status: .saving,
+        periods: checkinPreviewPeriods(morningOn: true, middayOn: true, nightOn: false),
+        onPrimary: {}
+    )
 }
 #Preview("Check-in · saved") {
-    OnboardingCheckinTemplate(status: .saved, periods: checkinPreviewPeriods(middayOn: true), onPrimary: {})
+    OnboardingCheckinTemplate(
+        status: .saved,
+        periods: checkinPreviewPeriods(morningOn: true, middayOn: true, nightOn: false),
+        onPrimary: {}
+    )
 }
 #Preview("Check-in · failure") {
     OnboardingCheckinTemplate(
         status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
-        periods: checkinPreviewPeriods(middayOn: true),
+        periods: checkinPreviewPeriods(morningOn: true, middayOn: true, nightOn: false),
         onPrimary: {}
     )
 }
