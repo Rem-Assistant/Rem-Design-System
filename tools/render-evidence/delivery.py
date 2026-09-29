@@ -37,11 +37,14 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
         expected_node = expected.get("node")
         canonical_matches = [entry for entry in canonical
                              if isinstance(entry, dict) and entry.get("id") == expected_node]
-        documentation_matches = [entry for entry in documented
-                                 if isinstance(entry, dict) and str(entry.get("name", "")).lower() == key]
         if len(canonical_matches) != 1 or canonical_matches[0].get("status") != "conformant":
             errors.append(f"{key} canonical component proof is missing or nonconformant")
             continue
+        if not expected.get("requireDocumentation", True):
+            reference_rows.append((key, expected_node, canonical_matches[0]["status"], "—", "not required"))
+            continue
+        documentation_matches = [entry for entry in documented
+                                 if isinstance(entry, dict) and str(entry.get("name", "")).lower() == key]
         if len(documentation_matches) != 1:
             errors.append(f"{key} must have exactly one documentation instance proof")
             continue
@@ -55,24 +58,27 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
         reference_rows.append((key, expected_node, canonical_matches[0]["status"],
                                resolved_node, documentation["status"]))
 
+    require_prototype = contract.get("requirePrototype", True)
     prototype = structure.get("prototype")
-    if not isinstance(prototype, dict):
+    if not require_prototype:
+        prototype = {}
+    elif not isinstance(prototype, dict):
         errors.append("Authenticated Figma prototype proof is missing")
         prototype = {}
     starts = prototype.get("verifiedFlowStartingPoints")
     flow_start_verification = prototype.get("flowStartVerification")
     frames = prototype.get("frames")
-    if not isinstance(starts, list) or not starts:
+    if require_prototype and (not isinstance(starts, list) or not starts):
         errors.append("Authenticated Figma prototype flow-start proof is missing")
         starts = []
-    if flow_start_verification not in {"figma-rest", "interaction-graph"}:
+    if require_prototype and flow_start_verification not in {"figma-rest", "interaction-graph"}:
         errors.append("Authenticated Figma prototype flow-start verification source is missing")
-    if not isinstance(frames, list) or not frames:
+    if require_prototype and (not isinstance(frames, list) or not frames):
         errors.append("Authenticated Figma prototype frame proof is missing")
         frames = []
 
     start_by_node: dict[str, list[str]] = {}
-    for start in starts:
+    for start in starts if require_prototype else []:
         if not isinstance(start, dict) or not isinstance(start.get("nodeId"), str) or not FIGMA_NODE_ID.fullmatch(start["nodeId"]):
             errors.append("Authenticated Figma prototype has an invalid flow start")
             continue
@@ -80,7 +86,7 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
             f"{_markdown_cell(start.get('name', 'Unnamed flow'))} ({flow_start_verification})"
         )
     prototype_rows = []
-    for frame in frames:
+    for frame in frames if require_prototype else []:
         if not isinstance(frame, dict):
             errors.append("Authenticated Figma prototype has an invalid frame proof")
             continue
@@ -137,14 +143,15 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
         lines.append(
             f"| `{key}` | `{canonical_node}` · {canonical_status} | `{instance_node}` · {instance_status} |"
         )
-    lines += [
-        "", "Authenticated prototype proof:", "",
-        "| Prototype frame | Flow start | Navigation destinations | Back actions |",
-        "|---|---|---|---:|",
-    ]
-    for name, node, flow_names, navigation_text, back_text in prototype_rows:
-        flow_start = ", ".join(f"{item} → `{node}`" for item in flow_names) if flow_names else "—"
-        lines.append(f"| {name} · `{node}` | {flow_start} | {navigation_text} | {back_text} |")
+    if require_prototype:
+        lines += [
+            "", "Authenticated prototype proof:", "",
+            "| Prototype frame | Flow start | Navigation destinations | Back actions |",
+            "|---|---|---|---:|",
+        ]
+        for name, node, flow_names, navigation_text, back_text in prototype_rows:
+            flow_start = ", ".join(f"{item} → `{node}`" for item in flow_names) if flow_names else "—"
+            lines.append(f"| {name} · `{node}` | {flow_start} | {navigation_text} | {back_text} |")
     return lines, []
 
 
