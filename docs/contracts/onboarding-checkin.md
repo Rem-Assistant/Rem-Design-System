@@ -16,7 +16,10 @@ Parent scope: #12 (onboarding middle steps) and #10.
 ## Layout — top lockup, grouped cadence list, Body-owned action region
 
 A scaffolded step (sequencer chrome: a back chevron in the nav, owned by the host, not the template).
-Content top → bottom, **centered**, max content width 560:
+Body fills the available height and width with a 24pt inset. Its content column is horizontally centered,
+limited to 560pt, and begins near the top; `VStack/Actions` stays at the bottom through space-between
+layout. The lockup/list and bottom action region are intentionally not one vertically centered block.
+Content top → bottom:
 
 1. **Hero badge** — the app-icon-style rounded square, `Color.brandBlue` fill, holding a centered
    white check-in glyph (registry `check-in schedule`: `clock.badge.checkmark.fill` / `alarm_on`,
@@ -42,6 +45,10 @@ Content top → bottom, **centered**, max content width 560:
 6. **Recoverable-failure Toast** (failure state only) — canonical `Toast` (`Variant=error`), directly
    above the ActionArea. It is brief, non-actionable, announces politely, and auto-dismisses after
    four seconds by default; the retry action remains available after it disappears.
+
+In code, the onboarding scaffold's bottom action region realizes the canonical `ActionArea`
+composition. The optional Toast is a preceding sibling inside `VStack/Actions`; it is not part of the
+ActionArea itself, whose responsibility remains the primary Button and optional footnote (off here).
 
 ## States
 
