@@ -98,11 +98,11 @@ final class RenderSnapshots: XCTestCase {
     private func checkinScreen(status: OnboardingCheckinTemplate.Status, middayOn: Bool) -> some View {
         OnboardingCheckinTemplate(
             status: status,
-            periods: [
-                .init(id: "morning", symbol: "sunrise", title: "Morning", time: "8:00 AM", isOn: true, onToggle: { _ in }),
-                .init(id: "midday", symbol: "sun.max", title: "Midday", time: "12:30 PM", isOn: middayOn, onToggle: { _ in }),
-                .init(id: "evening", symbol: "moon.stars", title: "Evening", time: "8:00 PM", isOn: false, onToggle: { _ in }),
-            ],
+            // Through the real cadence adapter — the Evening row carries the canonical `night` slot id.
+            periods: OnboardingCheckinTemplate.periods(
+                from: OnboardingCheckinTemplate.defaultCadence(middayOn: middayOn),
+                onToggle: { _, _ in }
+            ),
             onPrimary: {}
         )
     }

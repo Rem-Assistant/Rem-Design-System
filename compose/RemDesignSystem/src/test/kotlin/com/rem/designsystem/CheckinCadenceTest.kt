@@ -1,12 +1,16 @@
 package com.rem.designsystem
 
+import com.rem.designsystem.onboarding.CheckinCadence
+import com.rem.designsystem.onboarding.CheckinSlot
 import com.rem.designsystem.onboarding.CheckinStatus
 import com.rem.designsystem.onboarding.checkinDefaultPeriods
+import com.rem.designsystem.onboarding.checkinPeriods
 import com.rem.designsystem.onboarding.isPrimaryEnabled
 import com.rem.designsystem.onboarding.primaryLabel
 import com.rem.designsystem.onboarding.rowsInteractive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -53,10 +57,30 @@ class CheckinCadenceTest {
     @Test
     fun defaultCadenceStartsWithMorningOnAndTheOthersOff() {
         val periods = checkinDefaultPeriods()
-        assertEquals(listOf("morning", "midday", "evening"), periods.map { it.id })
+        // The stored/sent identity is the canonical slot id — the third slot is `night`, not "evening".
+        assertEquals(listOf("morning", "midday", "night"), periods.map { it.id })
         assertTrue(periods.first { it.id == "morning" }.enabled)
         assertEquals("8:00 AM", periods.first { it.id == "morning" }.time)
         assertFalse(periods.first { it.id == "midday" }.enabled)
-        assertFalse(periods.first { it.id == "evening" }.enabled)
+        assertFalse(periods.first { it.id == "night" }.enabled)
+    }
+
+    @Test
+    fun adapterDisplaysEveningWhileKeepingTheCanonicalNightSlotId() {
+        // The `Checkin` identity contract: display "Evening", but store/send the canonical `night` id.
+        val periods = checkinPeriods(
+            listOf(CheckinCadence(CheckinSlot.Night, time = "8:00 PM", enabled = true)),
+        )
+        assertEquals("night", periods.single().id)
+        assertEquals("Evening", periods.single().title)
+        assertEquals(CheckinSlot.Night, CheckinSlot.fromId("night"))
+        assertNull(CheckinSlot.fromId("evening"))
+    }
+
+    @Test
+    fun adapterMapsEverySlotToItsCanonicalIdAndDisplayTitle() {
+        assertEquals("morning" to "Morning", CheckinSlot.Morning.id to CheckinSlot.Morning.displayTitle)
+        assertEquals("midday" to "Midday", CheckinSlot.Midday.id to CheckinSlot.Midday.displayTitle)
+        assertEquals("night" to "Evening", CheckinSlot.Night.id to CheckinSlot.Night.displayTitle)
     }
 }

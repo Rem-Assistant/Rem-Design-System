@@ -39,6 +39,16 @@ fun RemSwitch(
             uncheckedThumbColor = Color.White,
             uncheckedTrackColor = colors.fillTertiary,
             uncheckedBorderColor = colors.fillTertiary,
+            // Locked state (a row is non-interactive while the screen is saving/saved). Material's
+            // default disabled colors wash the checked track out to a near-invisible gray; keep the
+            // green readable at a dimmed alpha so the locked-on switch stays legible — matching the
+            // native-iOS "dimmed but still green" `Toggle` disabled treatment.
+            disabledCheckedThumbColor = Color.White,
+            disabledCheckedTrackColor = colors.systemGreen.copy(alpha = 0.5f),
+            disabledCheckedBorderColor = colors.systemGreen.copy(alpha = 0.5f),
+            disabledUncheckedThumbColor = Color.White,
+            disabledUncheckedTrackColor = colors.fillTertiary.copy(alpha = 0.5f),
+            disabledUncheckedBorderColor = colors.fillTertiary.copy(alpha = 0.5f),
         ),
     )
 }

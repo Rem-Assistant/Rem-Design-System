@@ -13,9 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlarmOn
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.Bedtime
-import androidx.compose.material.icons.outlined.WbSunny
-import androidx.compose.material.icons.outlined.WbTwilight
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -268,12 +265,13 @@ fun checkinStep(
     )
 }
 
-/** Canonical Check-in cadence periods (Morning on @ 8:00 AM by default), shared by previews + evidence. */
-fun checkinDefaultPeriods(morningOn: Boolean = true, middayOn: Boolean = false): List<CheckinPeriodUiState> = listOf(
-    CheckinPeriodUiState(id = "morning", title = "Morning", time = "8:00 AM", enabled = morningOn, icon = Icons.Outlined.WbTwilight),
-    CheckinPeriodUiState(id = "midday", title = "Midday", time = "12:30 PM", enabled = middayOn, icon = Icons.Outlined.WbSunny),
-    CheckinPeriodUiState(id = "evening", title = "Evening", time = "8:00 PM", enabled = false, icon = Icons.Outlined.Bedtime),
-)
+/**
+ * Canonical Check-in cadence periods (Morning on @ 8:00 AM by default), shared by previews + evidence.
+ * Built through the real [checkinPeriods] adapter, so the rows carry the canonical slot ids (the
+ * Evening row's id is `night`, never the display label).
+ */
+fun checkinDefaultPeriods(morningOn: Boolean = true, middayOn: Boolean = false): List<CheckinPeriodUiState> =
+    checkinPeriods(checkinDefaultCadence(morningOn = morningOn, middayOn = middayOn))
 
 internal const val CHECKIN_TITLE = "When should Rem check in?"
 internal const val CHECKIN_SUBTITLE =

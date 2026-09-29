@@ -273,6 +273,12 @@ private struct TimePill: View {
         Text(text)
             .font(DesignTokens.Typography.body)
             .foregroundStyle(DesignTokens.Color.labelPrimary)
+            // Keep the value on one line at its full type role: the reference shows "8:00 AM" as a
+            // single unbroken token. Without this the pill wraps between "8:00" and "AM" inside the
+            // constrained trailing slot, which also makes the Morning row taller than its siblings.
+            // `fixedSize` claims the pill's ideal width; we do not clip or shrink the value.
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, DesignTokens.Spacing.sm)
             .padding(.vertical, DesignTokens.Spacing.xs)
             .background(
@@ -283,12 +289,12 @@ private struct TimePill: View {
 }
 
 #if DEBUG
+// Built through the real cadence adapter, so previews carry the canonical slot ids (Evening → `night`).
 private func checkinPreviewPeriods(morningOn: Bool = true, middayOn: Bool = false) -> [OnboardingCheckinTemplate.Period] {
-    [
-        .init(id: "morning", symbol: "sunrise", title: "Morning", time: "8:00 AM", isOn: morningOn, onToggle: { _ in }),
-        .init(id: "midday", symbol: "sun.max", title: "Midday", time: "12:30 PM", isOn: middayOn, onToggle: { _ in }),
-        .init(id: "evening", symbol: "moon.stars", title: "Evening", time: "8:00 PM", isOn: false, onToggle: { _ in }),
-    ]
+    OnboardingCheckinTemplate.periods(
+        from: OnboardingCheckinTemplate.defaultCadence(morningOn: morningOn, middayOn: middayOn),
+        onToggle: { _, _ in }
+    )
 }
 
 #Preview("Check-in · default") {

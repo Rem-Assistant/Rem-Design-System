@@ -71,6 +71,15 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
   checked track) — the native settings-toggle color.
 - **Value pill shows only while the row is on** and is **display-only** in onboarding; editing a time is
   a Settings concern ("add more anytime in Settings"), so no time-picker state is invented here.
+- **The value never wraps.** The selected time (e.g. "8:00 AM") stays on one line at its full type role
+  (`Typography.body`). The Morning (populated) row keeps the same height and alignment rhythm as the
+  empty Midday / Evening rows; the pill is pinned to its intrinsic width, never clipped or shrunk.
+- **Canonical slot identity (`Checkin` contract):** the three rows are the shipping `CheckinsService`
+  slots `morning | midday | night`. The third row **displays "Evening"** (per the reference) but its
+  **stored/sent id is the canonical `night`** on both platforms — the display label and the persisted
+  slot id differ on purpose. The `CheckinSlot` / cadence adapter (Swift
+  `OnboardingCheckinTemplate.periods(from:)`, Compose `checkinPeriods`) is the single tested boundary
+  that reconciles them; a toggle always reports `night`, never the `"evening"` display label.
 - **Do not invent extra consent-style loading/empty states:** the only states are the five above.
 - **Icons are semantic + FILL-pinned per the registry.** The hero is FILL 1; the three period leadings
   are FILL 0. Android renders the four check-in glyphs from the Material Icons vector set (Outlined /
@@ -91,6 +100,11 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 - **Adaptable:** per-platform safe-area handling; the exact hero-badge size; the exact value-pill radius
   and fill; the leading-icon active tint (the reference's blue morning glyph is expressed via the switch
   and the shared `.subtle` tile so the icon color is not coupled to row state).
+- **Mapping boundary:** the `CheckinSlot` / `CheckinCadence` adapter (`CheckinCadenceAdapter.swift`,
+  `CheckinCadenceAdapter.kt`) maps the shipping cadence to the template rows and forwards toggles as a
+  canonical `CheckinSlot`. It is unit-tested on both platforms (`CheckinInteractionTests`,
+  `CheckinCadenceTest`) so the `Checkin` identity contract (display "Evening" / send `night`) holds
+  without relying on the host to remap.
 - **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; inline time
   editing / a time-picker (a Settings concern); the `CheckinsService` persistence + scheduling (host).
 
