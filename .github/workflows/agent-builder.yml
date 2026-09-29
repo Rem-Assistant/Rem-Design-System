@@ -14,10 +14,10 @@ permissions:
 jobs:
   builder:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
-    uses: samuelalake/agent-factory/.github/workflows/builder.yml@a866166aa6ba7fc177c37c6ceef2f1fc440d0ae4
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@bd85c0214dde83a06c85646022332029e320c32e
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: a866166aa6ba7fc177c37c6ceef2f1fc440d0ae4
+      factory_ref: bd85c0214dde83a06c85646022332029e320c32e
       runner: ubuntu-latest
       base_ref: main
       app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}

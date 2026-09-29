@@ -46,6 +46,18 @@ class PairedDeliveryTests(unittest.TestCase):
             {"consent-flow-documentation": {"name": "Consent-flow-documentation", "node": "777:432"}},
         )
 
+    def test_approved_checkin_state_set(self):
+        self.assertEqual(
+            CONTRACTS["onboarding-checkin"]["states"],
+            [
+                "checkin-default-light",
+                "checkin-edited-light",
+                "checkin-saving-light",
+                "checkin-saved-light",
+                "checkin-failure-light",
+            ],
+        )
+
     def fixtures(self, root, missing=None, include_references=True, states=None, include_structure=True):
         states = states or CONTRACTS["onboarding-consent"]["states"]
         for platform in ("swiftui", "compose"):

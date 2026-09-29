@@ -3,6 +3,10 @@
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift", "compose/RemDesignSystem/onboarding/SignInStep.kt", "tokens/**"],
     "states": ["signin-returning-light", "signin-new-light", "signin-checking-light", "signin-error-dark", "signin-recovery-light"]
   },
+  "onboarding-checkin": {
+    "paths": ["Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift", "Sources/RemDesignSystem/Controls/RemSwitch.swift", "compose/RemDesignSystem/onboarding/CheckinStep.kt", "compose/RemDesignSystem/controls/RemSwitch.kt", "tokens/**"],
+    "states": ["checkin-default-light", "checkin-edited-light", "checkin-saving-light", "checkin-saved-light", "checkin-failure-light"]
+  },
   "onboarding-consent": {
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
     "states": ["consent-default-light", "consent-terms-light", "consent-privacy-light"],
