@@ -351,7 +351,12 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
 export function structureNodeRequests(contract) {
   const componentQualityIds = contract.componentQuality.components.map(({ id }) => id);
   return [
-    { label: 'page', nodeIds: [contract.page.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.page.id)}&depth=1` },
+    {
+      label: 'page',
+      nodeIds: [contract.page.id],
+      responseShape: 'file',
+      path: `/files/${contract.fileKey}?depth=1`,
+    },
     { label: 'inventory', nodeIds: [contract.inventory.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.inventory.id)}` },
     { label: 'screenComponents', nodeIds: [contract.screenComponents.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.screenComponents.id)}` },
     { label: 'componentQuality', nodeIds: componentQualityIds, path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(componentQualityIds.join(','))}` },
@@ -383,6 +388,38 @@ export async function createStructureReport(contract, {
       request.nodeIds.forEach((id) => failedNodeIds.add(id));
       requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'error', error: reason });
       errors.push(`Figma fetch failed for ${request.label} nodes ${request.nodeIds.join(', ')}: ${reason}`);
+      continue;
+    }
+
+    if (request.responseShape === 'file') {
+      const pages = outcome.value?.document?.children;
+      if (!Array.isArray(pages)) {
+        request.nodeIds.forEach((id) => missingNodeIds.add(id));
+        const diagnostic = { label: request.label, nodeIds: request.nodeIds, reason: 'response.document.children is missing or malformed' };
+        malformedResponses.push(diagnostic);
+        requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'malformed' });
+        errors.push(`Malformed Figma response for ${request.label} nodes ${request.nodeIds.join(', ')}: ${diagnostic.reason}`);
+        continue;
+      }
+
+      const missingForRequest = [];
+      for (const id of request.nodeIds) {
+        const document = pages.find((page) => page?.id === id);
+        if (!document || typeof document !== 'object' || Array.isArray(document)) {
+          missingNodeIds.add(id);
+          missingForRequest.push(id);
+        } else {
+          documents.set(id, document);
+        }
+      }
+      if (missingForRequest.length) {
+        const diagnostic = { label: request.label, nodeIds: missingForRequest, reason: 'contracted page document is missing or malformed' };
+        malformedResponses.push(diagnostic);
+        requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'incomplete', missingNodeIds: missingForRequest });
+        errors.push(`Figma response omitted contracted ${request.label} nodes: ${missingForRequest.join(', ')}`);
+      } else {
+        requestDiagnostics.push({ label: request.label, nodeIds: request.nodeIds, status: 'fetched' });
+      }
       continue;
     }
 
