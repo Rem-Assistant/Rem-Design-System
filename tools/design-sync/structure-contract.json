@@ -1,5 +1,5 @@
 {
-  "version": 16,
+  "version": 17,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -29,7 +29,8 @@
       { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default" },
       { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms" },
       { "id": "777:392", "type": "COMPONENT", "name": "Screen/Consent · Privacy" },
-      { "id": "876:1121", "type": "COMPONENT_SET", "name": "Screen/Check-in" }
+      { "id": "876:1121", "type": "COMPONENT_SET", "name": "Screen/Check-in" },
+      { "id": "932:4350", "type": "COMPONENT_SET", "name": "Screen/Check-in/Time Picker" }
     ],
     "assets": {
       "remAppIcon": {
