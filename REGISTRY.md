@@ -58,7 +58,8 @@ Fixed:
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
 | TimePicker — **Platform** = iOS (wheel + AM/PM) / Android (Material dial, Rem blue) | Platform Controls | `939:258` | `DatePicker(displayedComponents:.hourAndMinute)` iOS / Material `TimePicker` Compose | ✓ canonical |
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
-| OnboardingConnectorsTemplate (Connect apps — CONNECTED/AVAILABLE grouped list) | Onboarding | `133:192` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `SharedComposioConnectionsView` (app source) | ✓ canonical |
+| OnboardingConnectorsTemplate (Connect apps — CONNECTED/AVAILABLE grouped list) | Onboarding | `133:192` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `ConnectorsScreen.kt` (Compose) · `SharedComposioConnectionsView` (app source) | ✓ canonical |
+| OnboardingVoiceTemplate (Set up voice — Hear voice + Voice picker + Character & speed sliders) | Onboarding | `488:251` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) | ✓ canonical |
 | ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
 | Accessory/Value (right-aligned detail text; **Value** text prop) | Rows & Controls | `389:5` | title+value settings rows (e.g. Billing "Plan · Free") | ✓ canonical |
