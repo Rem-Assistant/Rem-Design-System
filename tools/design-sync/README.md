@@ -72,12 +72,17 @@ data. The base-branch exporter uses the trusted render-evidence contract and exp
 contract's references and waypoints. Missing required nodes fail; absent unrelated legacy registry
 nodes do not block a scoped delivery.
 
-The base-branch verifier checks the live Figma document against the fetched head structure contract.
-Its report, the exact head contract, and the exact head manifest are digest-bound into the reference
-artifact. The publisher requires a successful producing run and revalidates those digests plus the
-report's head, file, and completed status. Exact-head SwiftUI/Compose parity remains the responsibility
-of `screenshots.yml` and Reviewer. The scheduled/manual lane retains the older staging-app visual
-comparison as a health check and is not presented as pull-request evidence.
+The base-branch verifier checks the live Figma document against the fetched head structure contract,
+including the page's observed `flowStartingPoints` and each prototype node's observed REST
+`interactions`. Its report records the actual flow starts, navigation destinations, and back actions;
+it never substitutes expected contract values for those observations. The report, exact head contract,
+and exact head manifest are digest-bound into the reference artifact. The publisher requires a
+successful producing run, revalidates those digests plus the report's head, file, and completed status,
+then stages the authenticated report for the delivery formatter. Scoped delivery fails closed without
+that report and shows concise canonical-component, documentation-instance, and prototype proof tables.
+Exact-head SwiftUI/Compose parity remains the responsibility of `screenshots.yml` and Reviewer. The
+scheduled/manual lane retains the older staging-app visual comparison as a health check and is not
+presented as pull-request evidence.
 
 Add one `delivery-scope:<contract-name>` label to a PR when collateral contract edits would otherwise
 make the evidence scope ambiguous. The label also explicitly opts that delivery into authenticated

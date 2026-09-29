@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -109,13 +109,16 @@
       { "name": "Consent-privacy-light", "node": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:1054;769:174;777:1053", "componentId": "777:392", "placeholder": "I777:433;769:329;769:258;769:230;777:758;769:212;777:756;769:192;777:754;769:178;777:1054", "role": "evidence-state", "evidence": true }
     ],
     "prototype": {
-      "interactionVerification": "Figma plugin plus Present mode; the REST file-node schema does not return reactions",
+      "interactionVerification": "Figma REST interactions and page flowStartingPoints",
       "root": { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
       "label": { "id": "715:327", "name": "PROTOTYPE FLOWS" },
+      "flowStartingPoints": [
+        { "nodeId": "781:596", "name": "Consent flow" }
+      ],
       "frames": [
-        { "name": "Prototype · Consent", "node": "781:596", "type": "INSTANCE", "componentId": "777:248", "flowStart": true, "destinations": ["781:637", "781:690"], "backCount": 0 },
-        { "name": "Prototype · Terms", "node": "781:637", "type": "INSTANCE", "componentId": "777:325", "flowStart": false, "destinations": [], "backCount": 2 },
-        { "name": "Prototype · Privacy", "node": "781:690", "type": "INSTANCE", "componentId": "777:392", "flowStart": false, "destinations": [], "backCount": 2 }
+        { "name": "Prototype · Consent", "node": "781:596", "type": "INSTANCE", "componentId": "777:248", "trigger": "ON_CLICK", "destinations": ["781:637", "781:690"], "backCount": 0 },
+        { "name": "Prototype · Terms", "node": "781:637", "type": "INSTANCE", "componentId": "777:325", "trigger": "ON_CLICK", "destinations": [], "backCount": 2 },
+        { "name": "Prototype · Privacy", "node": "781:690", "type": "INSTANCE", "componentId": "777:392", "trigger": "ON_CLICK", "destinations": [], "backCount": 2 }
       ]
     }
   }

@@ -20,6 +20,42 @@ function colorToHex(color) {
   return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
 }
 
+function observedInteractions(root) {
+  const navigations = [];
+  const backActions = [];
+  const unsupportedActions = [];
+  for (const { node } of walk(root).values()) {
+    if (node.interactions === undefined) continue;
+    if (!Array.isArray(node.interactions)) {
+      unsupportedActions.push({ sourceNode: node.id, reason: 'interactions is not an array' });
+      continue;
+    }
+    for (const interaction of node.interactions) {
+      const trigger = interaction?.trigger?.type || null;
+      if (!Array.isArray(interaction?.actions) || interaction.actions.length === 0) {
+        unsupportedActions.push({ sourceNode: node.id, trigger, reason: 'interaction has no actions' });
+        continue;
+      }
+      for (const action of interaction.actions) {
+        const observed = { sourceNode: node.id, sourceName: node.name || '', trigger };
+        if (action?.type === 'NODE' && action.navigation === 'NAVIGATE' && typeof action.destinationId === 'string') {
+          navigations.push({ ...observed, destinationId: action.destinationId });
+        } else if (action?.type === 'BACK') {
+          backActions.push(observed);
+        } else {
+          unsupportedActions.push({ ...observed, actionType: action?.type || null, navigation: action?.navigation || null });
+        }
+      }
+    }
+  }
+  const bySource = (left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right));
+  return {
+    navigations: navigations.sort(bySource),
+    backActions: backActions.sort(bySource),
+    unsupportedActions: unsupportedActions.sort(bySource),
+  };
+}
+
 export function verifyStructure(contract, pageDocument, flowDocument, prototypeDocument, inventoryDocument, screenComponentsDocument, componentQualityDocuments) {
   const errors = [];
   const expectedTop = contract.page.topLevel;
@@ -230,16 +266,53 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
   if (!prototypeLabel || prototypeLabel.node.name !== contract.flow.prototype.label.name || prototypeLabel.ancestors[0]?.id !== expectedPrototypeRoot.id) {
     errors.push(`${contract.flow.prototype.label.name} must be a direct child of prototype ${expectedPrototypeRoot.id}`);
   }
-  const prototype = contract.flow.prototype.frames.map((expected) => {
+  const actualFlowStartingPoints = (pageDocument.flowStartingPoints || [])
+    .map(({ nodeId, name }) => ({ nodeId, name }))
+    .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  const expectedFlowStartingPoints = [...contract.flow.prototype.flowStartingPoints]
+    .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  if (JSON.stringify(actualFlowStartingPoints) !== JSON.stringify(expectedFlowStartingPoints)) {
+    errors.push(`Prototype flow starting points must be ${JSON.stringify(expectedFlowStartingPoints)}; received ${JSON.stringify(actualFlowStartingPoints)}`);
+  }
+  const prototypeFrames = contract.flow.prototype.frames.map((expected) => {
     const match = prototypeIndex.get(expected.node);
     if (!match) {
       errors.push(`${expected.name} (${expected.node}) is missing from prototype ${expectedPrototypeRoot.id}`);
-      return { ...expected, status: 'missing' };
+      return { node: null, name: null, type: null, componentId: null, status: 'missing', destinations: [], backCount: 0, navigations: [], backActions: [] };
     }
     const direct = match.node.type === expected.type && match.node.name === expected.name &&
       match.node.componentId === expected.componentId && match.ancestors[0]?.id === expectedPrototypeRoot.id;
     if (!direct) errors.push(`${expected.name} must be a direct ${expected.type} child of prototype ${expectedPrototypeRoot.id} from ${expected.componentId}`);
-    return { ...expected, status: direct ? 'conformant' : 'invalid' };
+    const observed = observedInteractions(match.node);
+    const destinations = observed.navigations.map(({ destinationId }) => destinationId).sort();
+    const expectedDestinations = [...expected.destinations].sort();
+    const triggersConform = [...observed.navigations, ...observed.backActions]
+      .every(({ trigger }) => trigger === expected.trigger);
+    if (JSON.stringify(destinations) !== JSON.stringify(expectedDestinations)) {
+      errors.push(`${expected.name} navigation destinations must be ${JSON.stringify(expectedDestinations)}; received ${JSON.stringify(destinations)}`);
+    }
+    if (observed.backActions.length !== expected.backCount) {
+      errors.push(`${expected.name} back action count must be ${expected.backCount}; received ${observed.backActions.length}`);
+    }
+    if (!triggersConform) {
+      errors.push(`${expected.name} interactions must use ${expected.trigger}`);
+    }
+    if (observed.unsupportedActions.length) {
+      errors.push(`${expected.name} contains unsupported prototype actions: ${JSON.stringify(observed.unsupportedActions)}`);
+    }
+    const interactionsConform = JSON.stringify(destinations) === JSON.stringify(expectedDestinations) &&
+      observed.backActions.length === expected.backCount && triggersConform && observed.unsupportedActions.length === 0;
+    return {
+      node: match.node.id,
+      name: match.node.name,
+      type: match.node.type,
+      componentId: match.node.componentId || null,
+      status: direct && interactionsConform ? 'conformant' : 'invalid',
+      destinations,
+      backCount: observed.backActions.length,
+      navigations: observed.navigations,
+      backActions: observed.backActions,
+    };
   });
 
   const canonical = {
@@ -247,7 +320,7 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       id: pageDocument.id,
       name: pageDocument.name,
       topLevel: actualTop,
-      flowStartingPoints: pageDocument.flowStartingPoints || [],
+      flowStartingPoints: actualFlowStartingPoints,
     },
     inventory: {
       id: inventory.id,
@@ -266,7 +339,10 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     stepSequence: actualSequence,
     prototypeRoot: expectedPrototypeRoot,
     screens,
-    prototype,
+    prototype: {
+      flowStartingPoints: actualFlowStartingPoints,
+      frames: prototypeFrames,
+    },
   };
   const digest = createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
   return { ok: errors.length === 0, errors, digest, canonical };
