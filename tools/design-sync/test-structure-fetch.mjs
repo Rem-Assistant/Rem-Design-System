@@ -10,6 +10,10 @@ const contract = JSON.parse(await readFile(new URL('./structure-contract.json', 
 const expectedIds = structureNodeRequests(contract).flatMap(({ nodeIds }) => nodeIds);
 const expectedUnavailableIds = [...new Set(expectedIds)];
 
+const requests = structureNodeRequests(contract);
+assert.equal(requests[0].responseShape, 'file');
+assert.equal(requests[0].path, `/files/${contract.fileKey}?depth=2`);
+
 const incomplete = await createStructureReport(contract, {
   fetchFigma: async () => ({ nodes: {} }),
   head: 'test-head',
@@ -35,6 +39,34 @@ assert.equal(failed.status, 'error');
 assert.deepEqual(failed.diagnostics.failedNodeIds, [contract.page.id]);
 assert.ok(failed.diagnostics.missingNodeIds.includes(contract.flow.id));
 assert.ok(failed.errors.some((error) => error.includes(`nodes ${contract.page.id}`) && error.includes('network unavailable')));
+
+let pageResponseObserved = false;
+const pageOnly = await createStructureReport(contract, {
+  fetchFigma: async (path) => {
+    if (path === `/files/${contract.fileKey}?depth=2`) {
+      pageResponseObserved = true;
+      return {
+        document: {
+          id: '0:0',
+          type: 'DOCUMENT',
+          children: [{
+            id: contract.page.id,
+            type: 'CANVAS',
+            name: contract.page.name,
+            children: contract.page.topLevel,
+            flowStartingPoints: contract.flow.prototype.flowStartingPoints,
+          }],
+        },
+      };
+    }
+    return { nodes: {} };
+  },
+  head: 'test-head',
+  capturedAt: '2026-09-28T00:00:00.000Z',
+});
+assert.equal(pageResponseObserved, true);
+assert.ok(!pageOnly.diagnostics.missingNodeIds.includes(contract.page.id));
+assert.ok(pageOnly.diagnostics.requests.some(({ label, status }) => label === 'page' && status === 'fetched'));
 
 const tempRoot = await mkdtemp(join(tmpdir(), 'rem-figma-structure-'));
 try {
