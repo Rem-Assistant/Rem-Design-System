@@ -355,7 +355,7 @@ export function structureNodeRequests(contract) {
       label: 'page',
       nodeIds: [contract.page.id],
       responseShape: 'file',
-      path: `/files/${contract.fileKey}?depth=1`,
+      path: `/files/${contract.fileKey}?depth=2`,
     },
     { label: 'inventory', nodeIds: [contract.inventory.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.inventory.id)}` },
     { label: 'screenComponents', nodeIds: [contract.screenComponents.id], path: `/files/${contract.fileKey}/nodes?ids=${encodeURIComponent(contract.screenComponents.id)}` },
