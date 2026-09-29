@@ -13,12 +13,27 @@ the onboarding sequencer — it carries the scaffold's back-nav and **Body-owned
 
 Parent scope: #12 (onboarding middle steps) and #10.
 
+### Steward resolution of prior review ambiguity (2026-09-29)
+
+This contract is the final interpretation for this delivery and supersedes contrary remarks from
+earlier reviewer passes over the same reference digest:
+
+- "Centered" describes horizontal alignment inside `VStack/Content`; it does not vertically center
+  Content and Actions together. Content is top-aligned and Actions are bottom-pinned.
+- Saving and Saved lock **and visibly de-emphasize** the cadence rows. The Button uses its semantic
+  disabled variant; row de-emphasis uses the shared opacity token.
+- Native icon parity means the named SF/Material registry pair at the pinned FILL and comparable
+  optical weight. It does not require identical cross-platform silhouettes.
+- The open time picker is required interaction documentation: the iOS HIG wheel and Android Material
+  dial remain platform-native presentations of the same hour/minute value.
+
 ## Layout — top lockup, grouped cadence list, Body-owned action region
 
 A scaffolded step (sequencer chrome: a back chevron in the nav, owned by the host, not the template).
-Body fills the available height and width with a 24pt inset. Its content column is horizontally centered,
-limited to 560pt, and begins near the top; `VStack/Actions` stays at the bottom through space-between
-layout. The lockup/list and bottom action region are intentionally not one vertically centered block.
+Body fills the available height and width with a 24pt inset and contains **two independent vertical
+regions**. `VStack/Content` is top-aligned and horizontally centered at a 560pt maximum width.
+`VStack/Actions` is bottom-pinned at the same maximum width. Nothing vertically centers the two
+regions as one combined block; flexible space lives between them.
 Content top → bottom:
 
 1. **Hero badge** — the app-icon-style rounded square, `Color.brandBlue` fill, holding a centered
@@ -34,8 +49,8 @@ Content top → bottom:
    Each row: leading `ContainedIcon` (`.subtle`), the period title (`Typography.body` semibold,
    `labelPrimary`), and — trailing — an **editable time value, shown only while the row is on**,
    directly left of a **`RemSwitch`** (on-tint `Color.systemGreen`). Tapping the value opens the
-   official platform time picker: SwiftUI `DatePicker` on iOS and Android `TimePickerDialog` on
-   Android. The closed row stays shared; the picker presentation intentionally follows each platform:
+   platform time picker: SwiftUI wheel `DatePicker` on iOS and an accent-themed Android
+   `TimePickerDialog`. The closed row stays shared; picker form intentionally follows each platform:
    - **Morning** — leading `sunrise` / `wb_twilight`; on by default at **8:00 AM**.
    - **Midday** — leading `sun.max` / `wb_sunny`; off by default (time 12:30 PM when on).
    - **Evening** — leading `moon.stars` / `bedtime`; off by default (time 8:00 PM when on).
@@ -56,8 +71,8 @@ ActionArea itself, whose responsibility remains the primary Button and optional 
 |---|---|---|
 | **default** | cadence as loaded from `CheckinsService` (Morning on @ 8:00 AM, others off) | "Continue" — filled, enabled when ≥1 time is on |
 | **edited** | the user changed a toggle (e.g. Midday also on @ 12:30 PM); not yet persisted | "Continue" — filled, enabled |
-| **saving** | persisting; rows locked (non-interactive) | "Saving…" — leading spinner, explicit disabled semantic colors |
-| **saved** | persisted; rows locked | "Saved" — leading `checkmark`, explicit disabled semantic colors |
+| **saving** | persisting; rows locked and visibly de-emphasized | "Saving…" — leading spinner, explicit disabled semantic colors |
+| **saved** | persisted; rows locked and visibly de-emphasized | "Saved" — leading `checkmark`, explicit disabled semantic colors |
 | **recoverable failure** | save failed; rows interactive again; transient error Toast above the CTA | "Try again" — filled, enabled |
 
 **Toast:** neutral capsule, error semantic glyph/tint, `Typography.footnote` message. It carries no
@@ -74,8 +89,9 @@ action and does not replace the persistent retry control.
   leading affordance change; it is not five different controls.
 - **"Start with one":** the CTA is inert in `default`/`edited` when **no** time is selected — the copy
   requires at least one. `saving`/`saved` lock it regardless; `failure` re-enables the retry.
-- **Rows lock during `saving`/`saved`:** the switches are non-interactive so the persisted set can't
-  change out from under the request; they are interactive again in `default`/`edited`/`failure`.
+- **Rows lock during `saving`/`saved`:** every row is non-interactive **and visibly de-emphasized with
+  `Opacity.deemphasized`**, so the persisted set cannot change under the request and the visual state
+  communicates the lock. Rows return to full emphasis in `default`/`edited`/`failure`.
 - **Switch on-tint is `systemGreen`** on both platforms (iOS `Toggle` tint / Android M3 `Switch`
   checked track) — the native settings-toggle color.
 - **Time value shows only while the row is on** and is an edit trigger. Tapping it opens the native
@@ -93,9 +109,9 @@ action and does not replace the persistent retry control.
   that reconciles them; a toggle always reports `night`, never the `"evening"` display label.
 - **Do not invent extra consent-style loading/empty states:** the only states are the five above.
 - **Icons are semantic + FILL-pinned per the registry.** The hero is FILL 1; the three period leadings
-  are FILL 0. Android renders the four check-in glyphs from the Material Icons vector set (Outlined /
-  Filled) because they are not in the baked Material Symbols subset — a documented, FILL-honouring
-  divergence (see `icon-registry.md` ‡).
+  are FILL 0. Each platform uses the named native glyph from the registry. Acceptance compares meaning,
+  FILL, optical weight, and role; it does not require SF Symbols and Material glyphs to share an
+  identical silhouette. Android's temporary vector path is documented in `icon-registry.md` ‡.
 
 ## System use
 
@@ -123,12 +139,15 @@ action and does not replace the persistent retry control.
 - **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; the
   `CheckinsService` persistence + scheduling implementation (host-owned).
 
-### Platform picker design follow-up
+### Platform picker design
 
-The five save-lifecycle references show the picker trigger in its closed state. The design-completion
-goal must add one iOS picker presentation and one Android picker presentation to the Check-in flow,
-using the official iOS 26 and Material components rather than drawing a shared imitation. Those two
-platform states are interaction documentation and do not multiply the five persisted save states.
+The five save-lifecycle references show the picker trigger in its closed state. Interaction
+documentation adds one iOS wheel presentation and one Android dial presentation without multiplying
+the five persisted save states. iOS nests the published three-column HIG Picker component supplied by
+the founder (`npa2Riu1JdiazH2Y9ntrwk`, `Column=3`) and composes a true two-value AM/PM column. Android
+uses a Rem-themed derivative of the official Material 3 dial picker: Material structure and behavior,
+Rem `brandBlue` accent and neutral surfaces. Runtime uses SwiftUI's wheel `DatePicker` and an Android
+`TimePickerDialog` whose native theme binds `colorAccent` to `#0C50FF`.
 
 ## Figma delivery (delivered; exact-head export is CI-gated)
 
@@ -158,6 +177,11 @@ the candidate is published.
 - **Prototype:** [`02B · Check-in · Prototype` · `885:1121`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1121)
   — Default is the flow starting point; Default → Edited → Saving → Saved and Failure → Saving
   exercise the normal and recoverable paths.
+- **Picker states:** [`Screen/Check-in/Time Picker` · `932:4350`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=932-4350)
+  — iOS wheel and Android dial presentations, each over the same Check-in screen.
+- **Picker composition:** [`TimePicker` · `939:258`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=939-258)
+  — `Platform=iOS|Android`; iOS retains the published HIG source instance and Android retains the
+  official Material structure in a Rem-themed derivative.
 - **Evidence instances:** [Default `885:1123`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1123),
   [Edited `885:1198`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1198),
   [Saving `885:1275`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1275),
@@ -186,7 +210,9 @@ The paired render passes when iOS and Android match on **all** of:
 - [ ] ActionArea sits inside Body and fills its inset width; label + affordance track the state
       (Continue / Saving… + spinner / Saved + check / Try again)
 - [ ] Failure Toast present in the failure state, above ActionArea, same copy + role
-- [ ] Icons match the registry glyph **and FILL** on both
+- [ ] Each platform uses its named registry glyph and **FILL** at comparable optical weight; native
+      SF/Material silhouettes may differ
+- [ ] Tapping an enabled time is documented by the iOS wheel and Rem-blue Android dial picker states
 
 **Evidence:** `screenshots.yml` paired table — `checkin-default-light`, `checkin-edited-light`,
 `checkin-saving-light`, `checkin-saved-light`, `checkin-failure-light` — iOS ⟷ Android side by side.

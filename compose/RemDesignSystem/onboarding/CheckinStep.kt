@@ -1,6 +1,7 @@
 package com.rem.designsystem.onboarding
 
 import android.app.TimePickerDialog
+import android.view.ContextThemeWrapper
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +16,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import com.rem.designsystem.R
 import com.rem.designsystem.controls.RemSwitch
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
@@ -27,6 +30,7 @@ import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.tokens.RemColors
+import com.rem.designsystem.tokens.RemOpacity
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
@@ -184,7 +188,7 @@ private fun CheckinPeriodRow(
         title = period.title,
         enabled = interactive,
         showSeparator = showSeparator,
-        modifier = modifier,
+        modifier = modifier.alpha(if (interactive) 1f else RemOpacity.deemphasized),
         leading = {
             ContainedIcon(
                 icon = period.icon,
@@ -229,9 +233,13 @@ private fun CheckinTimePickerValue(
     val colors = RemColors.current
     val context = LocalContext.current
     val dialog = remember(context, hour24, minute, onTimeChange) {
-        TimePickerDialog(context, { _, hour, selectedMinute ->
-            onTimeChange(hour, selectedMinute)
-        }, hour24, minute, false)
+        TimePickerDialog(
+            ContextThemeWrapper(context, R.style.RemTimePickerDialogTheme),
+            { _, hour, selectedMinute -> onTimeChange(hour, selectedMinute) },
+            hour24,
+            minute,
+            false,
+        )
     }
     Text(
         text = text,

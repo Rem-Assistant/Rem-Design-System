@@ -67,7 +67,11 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
-    /** A transient error toast directly above the action group. Null in every non-error state. */
+    /**
+     * A transient, non-actionable error toast directly above the action group. This shared scaffold
+     * slot is for recoverable onboarding failures; the persistent retry remains [primary]. Null in
+     * every non-error state. [RemToast] owns the four-second default dismissal lifecycle.
+     */
     bottomToast: String? = null,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,

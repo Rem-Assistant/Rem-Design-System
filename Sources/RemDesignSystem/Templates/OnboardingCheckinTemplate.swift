@@ -146,6 +146,7 @@ public struct OnboardingCheckinTemplate: View {
                 leading: { ContainedIcon(period.symbol, fill: .subtle) },
                 trailing: { rowTrailing(period) }
             )
+            .opacity(rowsInteractive ? 1 : DesignTokens.Opacity.deemphasized)
         }
     }
 

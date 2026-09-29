@@ -6,8 +6,9 @@ Icons are **font glyphs on both platforms**, not SVGs:
 - **Android** — **Material Symbols** (the *variable font*, not the legacy "Material Icons"),
   with a **FILL axis** (0 = outline, 1 = filled) plus weight / optical-size.
 
-Because both are fonts with a fill notion, an icon is matched by **meaning + FILL + weight** —
-never by "whatever Material icon looks close." One text layer per platform; no SVG components.
+Because both systems have a fill notion, an icon is matched by **meaning + FILL + optical weight** —
+never by "whatever Material icon looks close." Native SF Symbols and Material glyphs are not expected
+to share an identical outline; platform fidelity is part of the match.
 
 ## The registry
 
@@ -53,7 +54,7 @@ Google "G" (multicolor asset, both).
    a human decision rather than shipping a near-miss (e.g. `Security` ≠ `lock.shield.fill` — a
    shield-with-check is a different glyph).
 4. **Weight** follows the platform's optical default unless a row overrides it; keep the two sides at
-   the same visual weight.
+   comparable visual weight. Do not reject a correct native pair solely because its silhouette differs.
 
 > Status: seeded from the onboarding consent + sign-in needs. Grows per screen; every new row is a
 > researched pair or an explicitly-flagged open row.
