@@ -91,7 +91,8 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 - **Reuse:** the onboarding scaffold's bottom-pinned action area, `RemSection` + `ListRow`, the primary
   filled button treatment, `ContainedIcon` (hero + row leading), the shared error-notice treatment,
   tokens.
-- **Systemize:** `RemSwitch` — the canonical on/off toggle (Figma `Switch` `110:50`), extracted here
+- **Systemize:** `RemSwitch` — the canonical on/off toggle (Figma set `868:210`; legacy iOS-on
+  variant `110:50`), extracted here
   because a grouped-settings toggle recurs across Settings/automations/voice, not just this screen. On
   both platforms it is a thin wrapper over the native switch pinned to `systemGreen`.
 - **Exact:** the top-lockup order + copy, the three cadence rows (icons + titles, in order), the switch
@@ -117,14 +118,18 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 Figma is part of a finished screen PR (founder, 2026-09-28; `docs/figma-delivery.md`). The editable
 Check-in screen, its five states, and its place in the onboarding flow are to be authored in the
 existing Rem file (`af4yDqCzp57jds9lkFiIaO`) on the shared `Onboarding` page, reusing the canonical
-`Section` / `ListRow` / `Switch` (`110:50`) instances, the `Lockup` / `ActionArea` compositions, shared
+`Section` / `ListRow` / `RemSwitch` (`868:210`; legacy iOS-on variant `110:50`) instances, the
+`Lockup` / `ActionArea` compositions, shared
 variables, and text styles, following `SHAPE-OF-A-TASK.md` and the `rem-design-system` skill.
 
-The hosted Figma Writer authenticated through the leased remote MCP session and authored the live
-canvas on 2026-09-29. Its final return path stalled after the canvas mutation, so the exact nodes
-were read back and the missing prototype destinations were completed during delivery recovery.
-The `delivery-scope:onboarding-checkin` gate exports these five live nodes and verifies the editable
-structure against the current PR head before the Builder delivery is published.
+On 2026-09-29, a founder-authorized direct Codex Figma session mutated and read back the live editable
+canvas. It repaired the shared `Section` / `ListRow`, `Button`, and `RemSwitch` masters; rebuilt
+the five Check-in variants around official platform chrome and canonical compositions; and made
+inventory Section `00` self-healing. A Builder-App operator-assisted attestation binds this live
+record to the exact PR head. That attestation authenticates the readback; it does not claim that the
+hosted Factory writer authored these canvas changes. The `delivery-scope:onboarding-checkin` gate
+exports the five live nodes and verifies the editable structure against the current PR head before
+the candidate is published.
 
 ### Delivery record
 
@@ -142,8 +147,14 @@ structure against the current PR head before the Builder delivery is published.
   [Saved `885:1352`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1352), and
   [Failure `885:1429`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1429).
 - **Readback:** every evidence node is a direct 402×874 instance of the canonical set. Default,
-  Edited, Saving, Saved, and Failure expose the matching `Status` value; semantic surfaces use the
-  shared `background/primary` variable. Captured 2026-09-29 in the live editable file.
+  Edited, Saving, Saved, and Failure expose the matching `Status` value. Each root orders
+  `StatusBar`, official iOS `TopBar`, fill-height `Body`, and `Bottom`; Body owns its horizontal
+  inset and keeps the lockup centered horizontally while remaining top-anchored per this contract.
+  Cadence rows use the repaired HUG `Section` with transparent `ListRow` roots and the official
+  platform-backed `RemSwitch`. Bottom uses `ActionArea` with Footnote off; Saving and Saved select
+  explicit disabled Button variants. Failure restores `ErrorBanner` above the CTA. Inventory
+  Section `00` contains one transparent auto-layout HStack so deletion/insertion heals spacing.
+  Captured 2026-09-29 in the live editable file.
 
 ## Parity acceptance (what the visual gate diffs)
 

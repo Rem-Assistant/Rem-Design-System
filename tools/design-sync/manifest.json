@@ -15,7 +15,7 @@
     { "name": "NavigationIndicator", "node": "793:379", "page": "Device Kit", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/docs/figma-delivery.md" },
     { "name": "Screen/Check-in",     "node": "876:1121", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" },
     { "name": "ContainedIcon",        "node": "110:54",  "page": "Rows & Controls", "source": "Shared/Views/Settings/SharedSettingsIcon.swift" },
-    { "name": "Switch",               "node": "110:50",  "page": "Rows & Controls", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Controls/RemSwitch.swift" },
+    { "name": "RemSwitch",            "node": "868:210", "page": "Rows & Controls", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Controls/RemSwitch.swift" },
     { "name": "TaskEventRow",         "node": "46:21",   "page": "Tasks & Agenda",  "source": "Rem/Sources/Components/TaskEventRowView.swift" },
     { "name": "SuggestedTaskRow",     "node": "48:25",   "page": "Tasks & Agenda",  "source": "Shared/Views/Tasks/SuggestedTaskRow.swift" },
     { "name": "DateNavigationHeader", "node": "43:2",    "page": "Tasks & Agenda",  "source": "Rem/Sources/Screens/AgendaView.swift" },

@@ -34,7 +34,8 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   → title → body → grouped cadence list) with a bottom-pinned CTA whose label + affordance track the
   five save-lifecycle states, and the failure notice pinned above the CTA.
 - **New canonical component:** `RemSwitch` (`Controls/RemSwitch.swift` · `controls/RemSwitch.kt`) — a
-  thin native-switch wrapper pinned to the `systemGreen` on-tint, Figma `Switch` `110:50`, Code Connect
+  thin native-switch wrapper pinned to the `systemGreen` on-tint, Figma `RemSwitch` set `868:210`
+  (legacy iOS-on variant `110:50`), Code Connect
   `code-connect/{swiftui,compose}/RemSwitch.figma.ts`. First consumer is this screen; extracted because
   a grouped-settings toggle recurs across Settings/automations/voice.
 - **Reuse:** `RemSection` + `ListRow`, `ContainedIcon` (hero + row leadings), the shared onboarding
@@ -61,13 +62,18 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   black button. The adapter + save-lifecycle model is unit-tested on both platforms (`CheckinCadenceTest`,
   `CheckinInteractionTests` — 8:00 AM, a non-zero minute, the rejected invalid `evening`, and the `night`
   toggle/update payload).
-- **Editable Figma delivery:** hosted Figma Writer authored `Screen/Check-in` (`876:1121`) with
+- **Editable Figma delivery:** a founder-authorized direct Codex Figma session authored and read back
+  `Screen/Check-in` (`876:1121`) with
   Default / Edited / Saving / Saved / Failure variants, documentation section `02A` (`890:1502`), and
   prototype section `02B` (`885:1121`). Direct 402×874 instances are registered as exact references
   in `tools/render-evidence/contracts.json`; the prototype begins at Default and covers
-  Default → Edited → Saving → Saved plus Failure → Saving retry. The record below binds this live
-  structure to implementation commit `e8621076fae121e8109eaeb9447ac31ece3563b4` pending the
-  exact-head export/review rerun.
+  Default → Edited → Saving → Saved plus Failure → Saving retry. The canonical screen now uses
+  `StatusBar → TopBar → Body → Bottom`, an official iOS top toolbar, a horizontally centered
+  top-anchored Body, HUG Section rows with transparent ListRows, official iOS/Material Switch
+  instances behind `RemSwitch`, `ActionArea` with Footnote off, and explicit disabled Button
+  variants. Inventory Section `00` now contains one auto-layout HStack, so its spacing heals after
+  insertion or deletion. The exact-head CI rerun binds this live structure to the final commit; it
+  does not misattribute the direct interactive edit to the hosted Factory writer.
 
 ## Consent flow + component-documentation proving pass — 2026-09-28 (issue #30)
 
@@ -324,7 +330,7 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 | ListRow | `101-18` | ✅ | **Unified row** — leading icon · title · subtitle · **Accessory slot** (Chevron/Switch/Button/None), 12pt padding, bottom-pinned divider. Verified vs `05-connectors`, reused across Settings/Connectors/About. (old `68-6` retired) |
 | ContainedIcon | `110-54` | ✅ | Colored rounded-square icon container; per-row fill override for section colors. (old `12-19` deleted) |
 | Button | `110-47` | ✅ | Accessory pill (`Label` TEXT prop); brand-blue **Connect**/action. Also used in ProposalCard. (old `66-10` deleted) |
-| Switch | `110-50` | ✅ | 51×31 green Toggle, HUG-wrapped track so instance-swap resizes it in the ListRow slot. |
+| Switch | `868-210` | ✅ | Platform=iOS/Android × State=On/Off wrapper around official iOS 26 and Material 3 instances; shared `systemGreen` on-tint. |
 | DeviceFrame | `128-46` | ✅ | Real Apple iPhone 16 Pro bezel + 402×874 Screen instance-swap slot. |
 | MessageBubble | `50-7` | ✅ | Corner **18** (chat constant, not a token); **no tail** in normal style (tail is onboarding-only); user text **14pt**; brand-blue fill + 0.5px white-12% border. Assistant turns render as **bubble-less prose**. Matches `06-chat` + `ChatMessageViews.swift`. |
 | ComposerBar | `53-2` | ✅ | "Ask anything" · `+` attach · brand-blue **Speak** pill (`waveform` + "Speak", corner `medium`/12, white semibold) · `↑` send. Matches `SharedRemChatView.speakButton`. |

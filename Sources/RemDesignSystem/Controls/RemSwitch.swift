@@ -3,7 +3,8 @@ import SwiftUI
 /// The design system's on/off **Switch** — the canonical toggle used by grouped settings rows and
 /// the onboarding Check-in cadence step. Thin and token-driven: it wraps the native SwiftUI `Toggle`
 /// (so it inherits the platform's switch shape, motion, and accessibility) and pins the on-tint to
-/// `Color.systemGreen`, the iOS system switch color. Figma canonical: **Switch** (`110:50`).
+/// `Color.systemGreen`, the system switch color. Figma canonical: **RemSwitch** set (`868:210`);
+/// the legacy iOS-on variant remains `110:50`.
 ///
 /// Pure and state-driven, matching the design-system boundary (`RemButton` / `ContainedIcon`): it
 /// renders the `isOn` it is handed and reports changes through `onChange`; it never owns the value.

@@ -12,7 +12,7 @@ import com.rem.designsystem.tokens.RemColors
  * it wraps the native Material 3 [Switch] (inheriting its shape, motion, and accessibility) and pins
  * the checked track to the `systemGreen` token so it reads as the same control as the iOS switch. The
  * cross-platform contract (SPEC) is shared intent + tokens, native form. Figma canonical:
- * **Switch** (`110:50`).
+ * **RemSwitch** set (`868:210`); the legacy iOS-on variant remains `110:50`.
  *
  * Pure and state-driven, matching the design-system boundary: it renders the [checked] value it is
  * handed and reports changes through [onCheckedChange]; it never owns the value. [enabled] mirrors the

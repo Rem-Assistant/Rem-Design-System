@@ -21,6 +21,13 @@ documentation` (`741:309`) are the worked examples.
   inner track so the swap resizes.
 - **Bind** text → iOS 26 text styles, colors/spacing/radius → variables. Add the SwiftUI
   source to the master's `description`.
+- **Grouped-list ownership is explicit.** `Section.Rows` is a vertical HUG slot. The grouped
+  surface belongs to the Section rows container; `ListRow` roots are transparent. Verify the
+  master with one, two, and three inserted rows. After correcting a master, clear stale fill and
+  fixed-height overrides on existing instances so older screens inherit the repair.
+- **Interaction state is a component property.** Model `Enabled`, `Disabled`, and other durable
+  interaction states as variants. Bind their visual treatment to semantic variables; never fake a
+  disabled state by lowering the opacity of the entire instance.
 - Metrics from the kit: single-line row **44–46pt** (Apple Row `Regular`), with-subtitle
   **~60–65pt** (`Tall`) via ~12pt top/bottom padding. Separator is a bottom-pinned hairline
   toggled per instance (last row of a card hides it).
@@ -44,6 +51,11 @@ or generated artifacts as page-level siblings.
 Composition roots inherit the surface behind them unless a background is part of the component's
 owned contract. Horizontal groups of equal-priority actions use fill sizing for every action so label
 length does not create unequal widths.
+
+For platform-owned controls, search the subscribed official Apple and Material libraries first.
+Nest official instances behind a thin Rem wrapper when the product needs shared semantics or
+Platform switching. Use an official toolbar directly when its exposed API is sufficient; create a
+Rem wrapper only for additional labels, slots, or cross-platform behavior. Never fork the whole kit.
 
 The Builder does **not** need to reproduce an EightShapes Specs export. A human or later browser
 agent may generate full Anatomy/Props/Layout/Data documentation after the runner batch finishes.
