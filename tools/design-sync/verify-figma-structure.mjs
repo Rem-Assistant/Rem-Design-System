@@ -272,7 +272,12 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
   const expectedFlowStartingPoints = [...contract.flow.prototype.flowStartingPoints]
     .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   if (JSON.stringify(actualFlowStartingPoints) !== JSON.stringify(expectedFlowStartingPoints)) {
-    errors.push(`Prototype flow starting points must be ${JSON.stringify(expectedFlowStartingPoints)}; received ${JSON.stringify(actualFlowStartingPoints)}`);
+    const pagePrototypeMetadata = {
+      prototypeStartNodeID: pageDocument.prototypeStartNodeID ?? null,
+      hasFlowStartingPoints: Object.hasOwn(pageDocument, 'flowStartingPoints'),
+      prototypeKeys: Object.keys(pageDocument).filter((key) => /flow|prototype/i.test(key)).sort(),
+    };
+    errors.push(`Prototype flow starting points must be ${JSON.stringify(expectedFlowStartingPoints)}; received ${JSON.stringify(actualFlowStartingPoints)}; page prototype metadata ${JSON.stringify(pagePrototypeMetadata)}`);
   }
   const prototypeFrames = contract.flow.prototype.frames.map((expected) => {
     const match = prototypeIndex.get(expected.node);
