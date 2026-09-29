@@ -75,7 +75,19 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     errors.push(`Canonical inventory fill must be ${expectedInventory.fill}; received ${actualInventoryFill}`);
   }
   const inventoryIndex = walk(inventory);
-  const actualInventoryScreens = (inventory.children || []).map(({ id, type, name }) => ({ id, type, name }));
+  const expectedScreenContainer = expectedInventory.screenContainer;
+  const screenContainer = (inventory.children || []).find(({ id }) => id === expectedScreenContainer.id);
+  const screenContainerConforms = Boolean(screenContainer &&
+    screenContainer.type === expectedScreenContainer.type &&
+    screenContainer.name === expectedScreenContainer.name &&
+    screenContainer.layoutMode === expectedScreenContainer.layoutMode &&
+    screenContainer.primaryAxisSizingMode === expectedScreenContainer.primaryAxisSizingMode &&
+    screenContainer.counterAxisSizingMode === expectedScreenContainer.counterAxisSizingMode &&
+    screenContainer.itemSpacing === expectedScreenContainer.itemSpacing);
+  if (!screenContainerConforms) {
+    errors.push(`Canonical inventory screen container must be ${JSON.stringify(expectedScreenContainer)}`);
+  }
+  const actualInventoryScreens = (screenContainer?.children || []).map(({ id, type, name }) => ({ id, type, name }));
   if (JSON.stringify(actualInventoryScreens) !== JSON.stringify(expectedInventory.screens)) {
     errors.push(`Canonical inventory screens must be ${JSON.stringify(expectedInventory.screens)}; received ${JSON.stringify(actualInventoryScreens)}`);
   }
@@ -377,6 +389,16 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       id: inventory.id,
       name: inventory.name,
       fill: actualInventoryFill,
+      screenContainer: screenContainer ? {
+        id: screenContainer.id,
+        type: screenContainer.type,
+        name: screenContainer.name,
+        layoutMode: screenContainer.layoutMode,
+        primaryAxisSizingMode: screenContainer.primaryAxisSizingMode,
+        counterAxisSizingMode: screenContainer.counterAxisSizingMode,
+        itemSpacing: screenContainer.itemSpacing,
+        status: screenContainerConforms ? 'conformant' : 'invalid',
+      } : { ...expectedScreenContainer, status: 'missing' },
       screens: actualInventoryScreens,
       assets: Object.values(expectedInventory.assets).map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),
       canonicalInstances: expectedInventory.canonicalInstances.map(({ id, name }) => ({ id, name, status: inventoryIndex.has(id) ? 'present' : 'missing' })),

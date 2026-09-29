@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 15,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -17,6 +17,15 @@
     "type": "SECTION",
     "name": "00 · Canonical screen components",
     "fill": "#F5F5F5",
+    "screenContainer": {
+      "id": "912:2",
+      "type": "FRAME",
+      "name": "HStack/Canonical Screens",
+      "layoutMode": "HORIZONTAL",
+      "primaryAxisSizingMode": "AUTO",
+      "counterAxisSizingMode": "AUTO",
+      "itemSpacing": 64
+    },
     "screens": [
       { "id": "788:3183", "type": "COMPONENT", "name": "Screen/Sign in" },
       { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default" },
@@ -85,9 +94,9 @@
         "checks": {
           "textStyleBindings": [
             { "id": "110:46", "name": "label" },
-            { "id": "377:3", "name": "Approve" },
-            { "id": "377:6", "name": "Connect" },
-            { "id": "381:3", "name": "Remove" },
+            { "id": "377:3", "name": "Continue" },
+            { "id": "377:6", "name": "Continue" },
+            { "id": "381:3", "name": "Continue" },
             { "id": "408:16", "name": "label" },
             { "id": "439:16", "name": "label" },
             { "id": "439:18", "name": "label" }

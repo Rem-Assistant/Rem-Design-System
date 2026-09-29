@@ -9,22 +9,25 @@ const inventory = {
   type: contract.inventory.type,
   name: contract.inventory.name,
   fills: [{ type: 'SOLID', visible: true, color: { r: 245 / 255, g: 245 / 255, b: 245 / 255 } }],
-  children: contract.inventory.screens.map((screen, index) => ({
-    ...screen,
-    width: 402,
-    height: 874,
-    children: index === 0
-      ? [
-          { ...contract.inventory.assets.remAppIcon, fills: [{ type: 'IMAGE', visible: true, imageRef: 'source-raster' }] },
-          {
-            ...contract.inventory.assets.googleGlyph,
-            children: Array.from({ length: contract.inventory.assets.googleGlyph.minimumVectorCount }, (_, vectorIndex) => ({ id: `google-vector-${vectorIndex}`, type: 'VECTOR', name: 'Vector' })),
-          },
-        ]
-      : index === 1
-        ? contract.inventory.canonicalInstances.map((entry) => ({ ...entry }))
-        : [],
-  })),
+  children: [{
+    ...contract.inventory.screenContainer,
+    children: contract.inventory.screens.map((screen, index) => ({
+      ...screen,
+      width: 402,
+      height: 874,
+      children: index === 0
+        ? [
+            { ...contract.inventory.assets.remAppIcon, fills: [{ type: 'IMAGE', visible: true, imageRef: 'source-raster' }] },
+            {
+              ...contract.inventory.assets.googleGlyph,
+              children: Array.from({ length: contract.inventory.assets.googleGlyph.minimumVectorCount }, (_, vectorIndex) => ({ id: `google-vector-${vectorIndex}`, type: 'VECTOR', name: 'Vector' })),
+            },
+          ]
+        : index === 1
+          ? contract.inventory.canonicalInstances.map((entry) => ({ ...entry }))
+          : [],
+    })),
+  }],
 };
 
 const screenComponents = {
@@ -339,9 +342,9 @@ assert.equal(wrongInventoryFill.ok, false);
 assert.match(wrongInventoryFill.errors.join('\n'), /inventory fill must be #F5F5F5/);
 
 const placeholderAssets = structuredClone(inventory);
-placeholderAssets.children[0].children[0].fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 1 } }];
-placeholderAssets.children[0].children[1].children = [];
-placeholderAssets.children[0].children.push({ id: '538:40', type: 'TEXT', name: 'logo-glyph' });
+placeholderAssets.children[0].children[0].children[0].fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 1 } }];
+placeholderAssets.children[0].children[0].children[1].children = [];
+placeholderAssets.children[0].children[0].children.push({ id: '538:40', type: 'TEXT', name: 'logo-glyph' });
 const invalidAssets = verify(page, flow, prototype, placeholderAssets);
 assert.equal(invalidAssets.ok, false);
 assert.match(invalidAssets.errors.join('\n'), /IMAGE fill from the source asset/);
@@ -349,8 +352,8 @@ assert.match(invalidAssets.errors.join('\n'), /at least 4 vector paths/);
 assert.match(invalidAssets.errors.join('\n'), /forbidden placeholder nodes/);
 
 const loosePrivacySection = structuredClone(inventory);
-loosePrivacySection.children[1].children[0].type = 'FRAME';
-delete loosePrivacySection.children[1].children[0].componentId;
+loosePrivacySection.children[0].children[1].children[0].type = 'FRAME';
+delete loosePrivacySection.children[0].children[1].children[0].componentId;
 const invalidPrivacySection = verify(page, flow, prototype, loosePrivacySection);
 assert.equal(invalidPrivacySection.ok, false);
 assert.match(invalidPrivacySection.errors.join('\n'), /canonical component 741:311/);
