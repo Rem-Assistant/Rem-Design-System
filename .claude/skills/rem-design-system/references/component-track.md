@@ -21,6 +21,13 @@ documentation` (`741:309`) are the worked examples.
   inner track so the swap resizes.
 - **Bind** text → iOS 26 text styles, colors/spacing/radius → variables. Add the SwiftUI
   source to the master's `description`.
+- **Grouped-list ownership is explicit.** `Section.Rows` is a vertical HUG slot. The grouped
+  surface belongs to the Section rows container; `ListRow` roots are transparent. Verify the
+  master with one, two, and three inserted rows. After correcting a master, clear stale fill and
+  fixed-height overrides on existing instances so older screens inherit the repair.
+- **Interaction state is a component property.** Model `Enabled`, `Disabled`, and other durable
+  interaction states as variants. Bind their visual treatment to semantic variables; never fake a
+  disabled state by lowering the opacity of the entire instance.
 - Metrics from the kit: single-line row **44–46pt** (Apple Row `Regular`), with-subtitle
   **~60–65pt** (`Tall`) via ~12pt top/bottom padding. Separator is a bottom-pinned hairline
   toggled per instance (last row of a card hides it).
@@ -44,6 +51,20 @@ or generated artifacts as page-level siblings.
 Composition roots inherit the surface behind them unless a background is part of the component's
 owned contract. Horizontal groups of equal-priority actions use fill sizing for every action so label
 length does not create unequal widths.
+
+`ActionArea` owns the relationship between its ButtonGroup and optional metadata only. It has no
+outer screen inset; the containing screen Body owns that inset. A Toast is transient and
+non-actionable: use the canonical `Toast` (`72:24`), keep its semantic Variant and Message bindings,
+and let the platform implementation auto-dismiss after four seconds by default. Use a persistent
+ContextualMessage when the user must act on the feedback.
+
+For platform-owned controls, search the subscribed official Apple and Material libraries first.
+Nest official instances behind a thin Rem wrapper when the product needs shared semantics or
+Platform switching. Use an official toolbar directly when its exposed API is sufficient; create a
+Rem wrapper only for additional labels, slots, or cross-platform behavior. Never fork the whole kit.
+The approved Compose-first Material 3 source is
+`EFTsJQRHLbzN7zmPGqbJyx` (Switch `54446:25289`; dial picker `52949:27916`; keyboard picker
+`52949:28053`). Use those native controls in Android states rather than copying iOS geometry.
 
 The Builder does **not** need to reproduce an EightShapes Specs export. A human or later browser
 agent may generate full Anatomy/Props/Layout/Data documentation after the runner batch finishes.

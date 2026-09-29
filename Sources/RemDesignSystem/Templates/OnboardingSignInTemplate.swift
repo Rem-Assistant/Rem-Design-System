@@ -141,23 +141,17 @@ public struct OnboardingSignInTemplate: View {
                 if let icon { icon.frame(width: 18, height: 18) }
                 Text(title)
                     .font(DesignTokens.Typography.bodyBold)
-                    .foregroundStyle(DesignTokens.Color.backgroundPrimary)
             }
             .frame(maxWidth: .infinity)
-            .padding(DesignTokens.Spacing.md)
-            .background(DesignTokens.Color.buttonBackground)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .remButton(.rectBlack)
         .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.4)
     }
 
     private var appleMark: AnyView {
         AnyView(
             Image(systemName: "apple.logo")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(DesignTokens.Color.backgroundPrimary)
         )
     }
 

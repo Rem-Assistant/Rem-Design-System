@@ -43,6 +43,13 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   as `DateNavigationHeader` may replace navigation content, not required status chrome. Put a legal
   sheet and its scrim above the status bar, while the navigation indicator remains at the bottom of
   the device surface.
+- **Use official platform controls before drawing replacements.** Search the subscribed Apple iOS
+  and Material libraries for switches, pickers, toolbars, and other system UI. Use the official
+  instance directly when its API covers the screen. Put it behind a thin Rem-owned wrapper when Rem
+  needs one semantic API, extra labels/slots, or Platform switching. Preserve one product hierarchy;
+  switch the native treatment, metrics, and interaction presentation by Platform. Do not copy or
+  republish an entire upstream kit, and do not invent a picker or other interaction state that the
+  active screen contract excludes.
 - **Body from canonical instances only** — `ListRow` (as grouped `Section`s: SectionHeader +
   rows + SectionFooter), `TaskEventRow`, `SuggestedTaskRow`, `MessageBubble`, `ComposerBar`,
   the cards. Set per-row content on the nested Content/Label (see figma-gotchas). Never
@@ -54,6 +61,13 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   `ActionArea`, and `NavigationIndicator`. Within those regions, use SwiftUI-first names for generic
   layout (`VStack`, `HStack`, `ZStack`, `LazyVStack`, `LazyHStack`). The cross-platform docs map
   those to Compose `Column`, `Row`, `Box`, `LazyColumn`, and `LazyRow`.
+- **Full-device root order is semantic.** Use sibling regions in source order:
+  `StatusBar`, optional `TopBar`, `Body`, `NavigationIndicator`. `Body` fills the remaining width and
+  height, owns the screen's 24-point outer inset, and contains `VStack/Content` plus
+  `VStack/Actions`. Put the canonical `ActionArea` inside `VStack/Actions`; turn off its Footnote
+  property when the screen has no supporting copy. `ActionArea` owns no screen inset. Keep
+  `NavigationIndicator` outside Body as device chrome. Follow the product contract for top versus
+  center alignment; use auto-layout `SPACE_BETWEEN` rather than an empty spacer frame.
 - **Use auto spacing, not empty spacer frames.** Group the top and bottom regions semantically and
   use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
   space are invalid because they obscure intent and break when content changes.
@@ -71,6 +85,10 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   divider, flow rows, and spacing. After any child is added, removed, or reordered, refit the native
   Section bounds to `Content` with the established outer inset. Place pairs on a non-overlapping
   grid and verify bounds. The structure contract lists the exact allowed top-level nodes.
+  Native Figma Sections never reflow their children by themselves; the transparent Content frame is
+  the layout engine. The same rule applies to the canonical-screen inventory: place its masters in
+  one auto-layout HStack/VStack so deleting or inserting a screen heals spacing automatically, then
+  refit the native Section bounds.
 
 - **Component-family pages:** use `Component Documentation` (`663:2270`) for every new or changed
   canonical component. Arrange the family as a horizontal auto-layout row of vertical columns. Each

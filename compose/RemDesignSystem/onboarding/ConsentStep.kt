@@ -1,20 +1,10 @@
 package com.rem.designsystem.onboarding
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.icons.RemMaterialSymbol
@@ -22,6 +12,7 @@ import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
+import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
@@ -102,16 +93,7 @@ fun consentStep(
     }
 }
 
-/**
- * A single consent legal row (leading icon · title + subtitle · trailing chevron). This is a **bespoke,
- * hand-rolled row** — there is no Compose `ListRow` primitive in this design-system module yet, so
- * (like the CTA button flagged in `OnboardingSupport.kt`) it composes the row natively with token-bound
- * metrics rather than forking a canonical component. Flagged for extraction; until a `ListRow` primitive
- * lands, the manifest records this as `pendingNative`, not a canonical reuse.
- *
- * Leading + trailing glyphs are Material Symbols at **FILL 0** (outline) — matching the iOS `doc.text` /
- * `shield` / `chevron.right` per the icon registry.
- */
+/** A legal-document configuration of the canonical [ListRow]. */
 @Composable
 private fun ConsentLegalRow(
     symbol: RemMaterialSymbol,
@@ -122,44 +104,29 @@ private fun ConsentLegalRow(
     modifier: Modifier = Modifier,
 ) {
     val colors = RemColors.current
-    Column(modifier = modifier.clickableRole(onClick = onClick, label = title)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                // horizontal md, vertical sm — matches the iOS `ListRow` row metrics.
-                .padding(horizontal = RemSpacing.md, vertical = RemSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    ListRow(
+        title = title,
+        subtitle = subtitle,
+        onClick = onClick,
+        showSeparator = showSeparator,
+        modifier = modifier,
+        leading = {
             ContainedIcon(
                 symbol = symbol,
                 fill = ContainedIconFill.Subtle,
                 size = ContainedIconSize.Small,
                 contentDescription = null,
             )
-            Spacer(Modifier.width(RemSpacing.md))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = RemTypography.bodyBold, color = colors.labelPrimary)
-                Spacer(Modifier.height(3.dp)) // matches the iOS ListRow title↔subtitle gap
-                Text(text = subtitle, style = RemTypography.caption1, color = colors.labelSecondary)
-            }
-            Spacer(Modifier.width(RemSpacing.sm))
+        },
+        trailing = {
             Text(
                 text = RemMaterialSymbols.DisclosureChevron.glyph,
                 fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.DisclosureChevron),
                 fontSize = 20.sp,
                 color = colors.labelTertiary,
             )
-        }
-        if (showSeparator) {
-            Box(
-                modifier = Modifier
-                    .padding(start = RemSpacing.xxl + RemSpacing.md)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(colors.separator),
-            )
-        }
-    }
+        },
+    )
 }
 
 @Preview(name = "Consent · light", showBackground = true, widthDp = 402, heightDp = 874)
