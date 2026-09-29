@@ -46,8 +46,9 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 
 ## Rules (the decisions that are easy to drift on — stated once)
 
-- **Bottom-pinned CTA:** this step uses the sequencer's bottom-pinned CTA bar. Contrast sign-in
-  (centered, no bottom bar). The two screens differ on purpose; each is identical *across platforms*.
+- **Bottom-pinned action area:** this step pins the CTA and legal footnote as a centered bottom action
+  region; it does not add separate bar chrome. Contrast sign-in (centered, no bottom action area).
+  The two screens differ on purpose; each is identical *across platforms*.
 - **Legal rows open page sheets** — never push a nav screen; 1:1 with `LegalDocumentView`.
 - **Consent hero is the shield-lock** (`lock.shield.fill` / `shield_lock`, FILL 1) — not a
   shield-check (`Security`), not a plain shield.
@@ -65,7 +66,7 @@ A scaffolded step (sequencer chrome: a back chevron in the nav). Content top →
 
 ## System use
 
-- **Reuse:** `OnboardingScaffold` (bottom-pinned CTA bar), `RemSection` + `ListRow`, page
+- **Reuse:** `OnboardingScaffold` (bottom-pinned action area), `RemSection` + `ListRow`, page
   sheets + nav (`LegalDocumentView`), the primary `RemButton`, the app-icon-style contained-icon
   treatment for the hero, tokens.
 - **Exact:** the top-lockup order, the two legal rows (icons + copy + chevrons, in order), the
