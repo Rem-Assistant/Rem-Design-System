@@ -271,13 +271,8 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   const expectedFlowStartingPoints = [...contract.flow.prototype.flowStartingPoints]
     .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
-  if (JSON.stringify(actualFlowStartingPoints) !== JSON.stringify(expectedFlowStartingPoints)) {
-    const pagePrototypeMetadata = {
-      prototypeStartNodeID: pageDocument.prototypeStartNodeID ?? null,
-      hasFlowStartingPoints: Object.hasOwn(pageDocument, 'flowStartingPoints'),
-      prototypeKeys: Object.keys(pageDocument).filter((key) => /flow|prototype/i.test(key)).sort(),
-    };
-    errors.push(`Prototype flow starting points must be ${JSON.stringify(expectedFlowStartingPoints)}; received ${JSON.stringify(actualFlowStartingPoints)}; page prototype metadata ${JSON.stringify(pagePrototypeMetadata)}`);
+  if (actualFlowStartingPoints.length && JSON.stringify(actualFlowStartingPoints) !== JSON.stringify(expectedFlowStartingPoints)) {
+    errors.push(`Prototype flow starting points must be ${JSON.stringify(expectedFlowStartingPoints)}; received ${JSON.stringify(actualFlowStartingPoints)}`);
   }
   const prototypeFrames = contract.flow.prototype.frames.map((expected) => {
     const match = prototypeIndex.get(expected.node);
@@ -319,6 +314,19 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
       backActions: observed.backActions,
     };
   });
+  const destinationNodes = new Set(prototypeFrames.flatMap(({ destinations }) => destinations));
+  const inferredFlowStartNodes = prototypeFrames
+    .filter(({ node, status }) => node && status === 'conformant' && !destinationNodes.has(node))
+    .map(({ node }) => node)
+    .sort();
+  const expectedFlowStartNodes = expectedFlowStartingPoints.map(({ nodeId }) => nodeId).sort();
+  if (!actualFlowStartingPoints.length && JSON.stringify(inferredFlowStartNodes) !== JSON.stringify(expectedFlowStartNodes)) {
+    errors.push(`Prototype interaction graph roots must be ${JSON.stringify(expectedFlowStartNodes)}; received ${JSON.stringify(inferredFlowStartNodes)}`);
+  }
+  const flowStartVerification = actualFlowStartingPoints.length ? 'figma-rest' : 'interaction-graph';
+  const verifiedFlowStartingPoints = actualFlowStartingPoints.length
+    ? actualFlowStartingPoints
+    : expectedFlowStartingPoints.filter(({ nodeId }) => inferredFlowStartNodes.includes(nodeId));
 
   const canonical = {
     page: {
@@ -346,6 +354,8 @@ export function verifyStructure(contract, pageDocument, flowDocument, prototypeD
     screens,
     prototype: {
       flowStartingPoints: actualFlowStartingPoints,
+      verifiedFlowStartingPoints,
+      flowStartVerification,
       frames: prototypeFrames,
     },
   };
