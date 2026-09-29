@@ -59,11 +59,14 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
     if not isinstance(prototype, dict):
         errors.append("Authenticated Figma prototype proof is missing")
         prototype = {}
-    starts = prototype.get("flowStartingPoints")
+    starts = prototype.get("verifiedFlowStartingPoints")
+    flow_start_verification = prototype.get("flowStartVerification")
     frames = prototype.get("frames")
     if not isinstance(starts, list) or not starts:
         errors.append("Authenticated Figma prototype flow-start proof is missing")
         starts = []
+    if flow_start_verification not in {"figma-rest", "interaction-graph"}:
+        errors.append("Authenticated Figma prototype flow-start verification source is missing")
     if not isinstance(frames, list) or not frames:
         errors.append("Authenticated Figma prototype frame proof is missing")
         frames = []
@@ -73,7 +76,9 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
         if not isinstance(start, dict) or not isinstance(start.get("nodeId"), str) or not FIGMA_NODE_ID.fullmatch(start["nodeId"]):
             errors.append("Authenticated Figma prototype has an invalid flow start")
             continue
-        start_by_node.setdefault(start["nodeId"], []).append(_markdown_cell(start.get("name", "Unnamed flow")))
+        start_by_node.setdefault(start["nodeId"], []).append(
+            f"{_markdown_cell(start.get('name', 'Unnamed flow'))} ({flow_start_verification})"
+        )
     prototype_rows = []
     for frame in frames:
         if not isinstance(frame, dict):

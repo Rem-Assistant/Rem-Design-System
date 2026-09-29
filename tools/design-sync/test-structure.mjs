@@ -156,6 +156,8 @@ assert.equal(passing.ok, true, passing.errors.join('\n'));
 assert.equal(passing.canonical.screens.every((entry) => entry.status === 'conformant'), true);
 assert.equal(passing.canonical.canonicalScreens.every((entry) => entry.status === 'conformant'), true);
 assert.deepEqual(passing.canonical.prototype.flowStartingPoints, contract.flow.prototype.flowStartingPoints);
+assert.deepEqual(passing.canonical.prototype.verifiedFlowStartingPoints, contract.flow.prototype.flowStartingPoints);
+assert.equal(passing.canonical.prototype.flowStartVerification, 'figma-rest');
 assert.deepEqual(passing.canonical.prototype.frames.map(({ destinations, backCount }) => ({ destinations, backCount })), [
   { destinations: ['781:637', '781:690'], backCount: 0 },
   { destinations: [], backCount: 2 },
@@ -168,6 +170,20 @@ wrongFlowStart.flowStartingPoints[0].nodeId = '781:637';
 const invalidFlowStart = verify(wrongFlowStart);
 assert.equal(invalidFlowStart.ok, false);
 assert.match(invalidFlowStart.errors.join('\n'), /flow starting points/);
+
+const restWithoutFlowStart = structuredClone(page);
+restWithoutFlowStart.flowStartingPoints = [];
+const inferredFlowStart = verify(restWithoutFlowStart);
+assert.equal(inferredFlowStart.ok, true, inferredFlowStart.errors.join('\n'));
+assert.deepEqual(inferredFlowStart.canonical.prototype.flowStartingPoints, []);
+assert.deepEqual(inferredFlowStart.canonical.prototype.verifiedFlowStartingPoints, contract.flow.prototype.flowStartingPoints);
+assert.equal(inferredFlowStart.canonical.prototype.flowStartVerification, 'interaction-graph');
+
+const ambiguousGraph = structuredClone(prototype);
+findNode(ambiguousGraph, ({ id }) => id === '781:596-action-0').interactions = [];
+const invalidGraphRoot = verify(restWithoutFlowStart, flow, ambiguousGraph);
+assert.equal(invalidGraphRoot.ok, false);
+assert.match(invalidGraphRoot.errors.join('\n'), /interaction graph roots/);
 
 const wrongDestination = structuredClone(prototype);
 findNode(wrongDestination, ({ id }) => id === '781:596-action-0')

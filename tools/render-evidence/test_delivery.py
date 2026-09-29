@@ -67,6 +67,8 @@ class PairedDeliveryTests(unittest.TestCase):
                 ],
                 "prototype": {
                     "flowStartingPoints": [{"nodeId": "781:596", "name": "Consent flow"}],
+                    "verifiedFlowStartingPoints": [{"nodeId": "781:596", "name": "Consent flow"}],
+                    "flowStartVerification": "figma-rest",
                     "frames": [
                         {
                             "node": "781:596", "name": "Prototype · Consent", "status": "conformant",
@@ -121,7 +123,7 @@ class PairedDeliveryTests(unittest.TestCase):
             self.assertIn("consent-flow-documentation", body)
             self.assertIn("Authenticated editable Figma proof", body)
             self.assertIn("Authenticated prototype proof", body)
-            self.assertIn("Consent flow → `781:596`", body)
+            self.assertIn("Consent flow (figma-rest) → `781:596`", body)
             self.assertIn("ListRow · `781:600` → `781:637`", body)
             self.assertIn("Scrim · `781:640` · ON_CLICK", body)
             self.assertIn("Done · `781:641` · ON_CLICK", body)
@@ -230,6 +232,7 @@ class PairedDeliveryTests(unittest.TestCase):
             lambda report: report["structure"]["screens"][0].update(componentId="999:999"),
             lambda report: report["structure"]["prototype"]["frames"][1].update(status="invalid"),
             lambda report: report["structure"]["prototype"]["frames"][0].update(destinations=["781:637"]),
+            lambda report: report["structure"]["prototype"].pop("flowStartVerification"),
         )
         for mutate in mutations:
             with tempfile.TemporaryDirectory() as tmp:
