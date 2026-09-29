@@ -14,6 +14,10 @@ permissions:
 jobs:
   builder:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
+    concurrency:
+      group: rem-design-system-figma-writer
+      cancel-in-progress: false
+      queue: max
     uses: samuelalake/agent-factory/.github/workflows/builder.yml@32ad33d2110d4e63b883804bb2017514a796869d
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
