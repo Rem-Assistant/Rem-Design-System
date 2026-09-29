@@ -34,9 +34,57 @@ final class CheckinInteractionTests: XCTestCase {
         XCTAssertEqual(evening.id, "night")
         XCTAssertEqual(evening.title, "Evening")
 
+        // The toggle/update payload preserves the canonical `night` slot id (never the "Evening" label).
         evening.toggle(true)
         XCTAssertEqual(toggled.map { $0.0 }, [.night])
+        XCTAssertEqual(toggled.map { $0.0.rawValue }, ["night"])
         XCTAssertEqual(toggled.map { $0.1 }, [true])
+    }
+
+    func testAdapterMapsTheRawShippingCheckinFields() {
+        // The adapter accepts the authoritative `Checkin` fields (slot / enabled / deliveryHour /
+        // deliveryMinute / timezone) and formats the brief-time label itself — the host supplies no
+        // display string. 8:00 AM (zero minute) and a non-zero minute both round-trip correctly.
+        var toggled: [(CheckinSlot, Bool)] = []
+        let periods = OnboardingCheckinTemplate.periods(
+            from: [
+                Checkin(slot: "morning", enabled: true, deliveryHour: 8, deliveryMinute: 0, timezone: "America/New_York"),
+                Checkin(slot: "midday", enabled: false, deliveryHour: 12, deliveryMinute: 30, timezone: "America/New_York"),
+                Checkin(slot: "night", enabled: false, deliveryHour: 21, deliveryMinute: 5, timezone: "America/New_York"),
+            ],
+            onToggle: { slot, on in toggled.append((slot, on)) }
+        )
+
+        XCTAssertEqual(periods.map { $0.id }, ["morning", "midday", "night"])
+        XCTAssertEqual(periods[0].time, "8:00 AM")   // zero minute, single-digit hour, AM
+        XCTAssertEqual(periods[1].time, "12:30 PM")  // non-zero minute, noon → 12 PM
+        XCTAssertEqual(periods[2].time, "9:05 PM")   // non-zero minute is zero-padded; 21h → 9 PM
+    }
+
+    func testAdapterRejectsAnInvalidSlotIdSuchAsEvening() {
+        // "evening" is the *display* label, never a valid slot id — the adapter drops it so a bogus
+        // slot can never reach persistence or render a row.
+        let periods = OnboardingCheckinTemplate.periods(
+            from: [
+                Checkin(slot: "evening", enabled: true, deliveryHour: 20, deliveryMinute: 0, timezone: "America/New_York"),
+                Checkin(slot: "night", enabled: true, deliveryHour: 20, deliveryMinute: 0, timezone: "America/New_York"),
+            ],
+            onToggle: { _, _ in }
+        )
+
+        // Only the valid `night` row survives; the invalid `evening` id is rejected.
+        XCTAssertEqual(periods.map { $0.id }, ["night"])
+        XCTAssertEqual(periods.first?.title, "Evening")
+        XCTAssertNil(CheckinSlot.validating(id: "evening"))
+        XCTAssertEqual(CheckinSlot.validating(id: "night"), .night)
+    }
+
+    func testTimeFormatterHandlesTheClockEdges() {
+        XCTAssertEqual(CheckinSlot.formatTime(deliveryHour: 0, deliveryMinute: 0), "12:00 AM")
+        XCTAssertEqual(CheckinSlot.formatTime(deliveryHour: 8, deliveryMinute: 0), "8:00 AM")
+        XCTAssertEqual(CheckinSlot.formatTime(deliveryHour: 12, deliveryMinute: 30), "12:30 PM")
+        XCTAssertEqual(CheckinSlot.formatTime(deliveryHour: 20, deliveryMinute: 0), "8:00 PM")
+        XCTAssertEqual(CheckinSlot.formatTime(deliveryHour: 9, deliveryMinute: 5), "9:05 AM")
     }
 
     func testCheckinSlotDisplayTitlesMatchTheCanonicalIds() {

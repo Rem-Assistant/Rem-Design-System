@@ -100,11 +100,15 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 - **Adaptable:** per-platform safe-area handling; the exact hero-badge size; the exact value-pill radius
   and fill; the leading-icon active tint (the reference's blue morning glyph is expressed via the switch
   and the shared `.subtle` tile so the icon color is not coupled to row state).
-- **Mapping boundary:** the `CheckinSlot` / `CheckinCadence` adapter (`CheckinCadenceAdapter.swift`,
-  `CheckinCadenceAdapter.kt`) maps the shipping cadence to the template rows and forwards toggles as a
-  canonical `CheckinSlot`. It is unit-tested on both platforms (`CheckinInteractionTests`,
-  `CheckinCadenceTest`) so the `Checkin` identity contract (display "Evening" / send `night`) holds
-  without relying on the host to remap.
+- **Mapping boundary:** the `CheckinSlot` / `Checkin` adapter (`CheckinCadenceAdapter.swift`,
+  `CheckinCadenceAdapter.kt`) accepts the **raw shipping `Checkin` fields** — `slot`, `enabled`,
+  `deliveryHour`, `deliveryMinute`, `timezone` — validates the slot against `morning | midday | night`
+  (rejecting anything else, including the `"evening"` display label), **formats the hour/minute into the
+  brief-time label internally** (`8:00 AM`, `12:30 PM` — the host supplies no display string), produces
+  the canonical template rows, and forwards toggles as a canonical `CheckinSlot`. It is unit-tested on
+  both platforms (`CheckinInteractionTests`, `CheckinCadenceTest` — covering 8:00 AM, a non-zero minute,
+  the rejected invalid `evening`, and the `night` toggle/update payload) so the `Checkin` identity
+  contract (display "Evening" / send `night`) holds without relying on the host to remap.
 - **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; inline time
   editing / a time-picker (a Settings concern); the `CheckinsService` persistence + scheduling (host).
 

@@ -295,8 +295,17 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             val filled = action.style == OnboardingActionStyle.Primary
             // Primary = buttonBackground (black in light / white in dark) with the inverted label
             // (backgroundPrimary). Secondary = the neutral fill used for a second provider button.
-            val containerColor = if (filled) colors.buttonBackground else colors.fillTertiary
+            val baseContainer = if (filled) colors.buttonBackground else colors.fillTertiary
             val labelColor = if (filled) colors.backgroundPrimary else colors.labelPrimary
+            // Disabled / loading (Check-in "Saving…"/"Saved", the "Continue" no-selection state,
+            // sign-in "Signing in…"): dim the CONTAINER by baking the alpha into the fill, and keep the
+            // label + spinner at full `labelColor`. A group `Modifier.alpha` over the whole button is
+            // not reliably composited in the LayoutLib render, which left the black CTA opaque with a
+            // dark, illegible label. Baking the alpha into a solid fill ghosts the button
+            // deterministically — a light-grey button with a legible inverted label — matching the iOS
+            // ghosted CTA and the founder reference's "Saving…" frame.
+            val containerColor =
+                if (interactive) baseContainer else baseContainer.copy(alpha = RemOnboardingMetrics.disabledAlpha)
             Box(
                 modifier = modifier
                     .heightIn(min = 50.dp)
@@ -304,7 +313,6 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
                     // `SignInButton`, so the paired CTA reads as the same treatment on both platforms.
                     .clip(RoundedCornerShape(RemRadius.medium))
                     .background(containerColor)
-                    .alpha(if (interactive) 1f else RemOnboardingMetrics.disabledAlpha)
                     .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)
                     .padding(vertical = RemSpacing.md, horizontal = RemSpacing.lg),
                 contentAlignment = Alignment.Center,

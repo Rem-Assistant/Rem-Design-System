@@ -1,6 +1,6 @@
 package com.rem.designsystem
 
-import com.rem.designsystem.onboarding.CheckinCadence
+import com.rem.designsystem.onboarding.Checkin
 import com.rem.designsystem.onboarding.CheckinSlot
 import com.rem.designsystem.onboarding.CheckinStatus
 import com.rem.designsystem.onboarding.checkinDefaultPeriods
@@ -68,12 +68,47 @@ class CheckinCadenceTest {
     @Test
     fun adapterDisplaysEveningWhileKeepingTheCanonicalNightSlotId() {
         // The `Checkin` identity contract: display "Evening", but store/send the canonical `night` id.
+        // Built from the raw shipping fields — the adapter formats the brief time itself.
         val periods = checkinPeriods(
-            listOf(CheckinCadence(CheckinSlot.Night, time = "8:00 PM", enabled = true)),
+            listOf(Checkin(slot = "night", enabled = true, deliveryHour = 20, deliveryMinute = 0, timezone = "America/New_York")),
         )
         assertEquals("night", periods.single().id)
         assertEquals("Evening", periods.single().title)
+        // The row's id is the toggle/update payload the screen reports — the canonical `night`.
+        assertEquals(CheckinSlot.Night, CheckinSlot.fromId(periods.single().id))
         assertEquals(CheckinSlot.Night, CheckinSlot.fromId("night"))
+        assertNull(CheckinSlot.fromId("evening"))
+    }
+
+    @Test
+    fun adapterMapsTheRawShippingCheckinFieldsAndFormatsTheTimeInternally() {
+        // The adapter accepts the authoritative `Checkin` fields (slot / enabled / deliveryHour /
+        // deliveryMinute / timezone) and formats the brief-time label itself — no host display string.
+        val periods = checkinPeriods(
+            listOf(
+                Checkin(slot = "morning", enabled = true, deliveryHour = 8, deliveryMinute = 0, timezone = "America/New_York"),
+                Checkin(slot = "midday", enabled = false, deliveryHour = 12, deliveryMinute = 30, timezone = "America/New_York"),
+                Checkin(slot = "night", enabled = false, deliveryHour = 21, deliveryMinute = 5, timezone = "America/New_York"),
+            ),
+        )
+        assertEquals(listOf("morning", "midday", "night"), periods.map { it.id })
+        assertEquals("8:00 AM", periods[0].time)   // zero minute, single-digit hour, AM
+        assertEquals("12:30 PM", periods[1].time)  // non-zero minute, noon → 12 PM
+        assertEquals("9:05 PM", periods[2].time)   // non-zero minute zero-padded; 21h → 9 PM
+    }
+
+    @Test
+    fun adapterRejectsAnInvalidSlotIdSuchAsEvening() {
+        // "evening" is the *display* label, never a valid slot id — the adapter drops it so a bogus
+        // slot can never reach persistence or render a row.
+        val periods = checkinPeriods(
+            listOf(
+                Checkin(slot = "evening", enabled = true, deliveryHour = 20, deliveryMinute = 0, timezone = "America/New_York"),
+                Checkin(slot = "night", enabled = true, deliveryHour = 20, deliveryMinute = 0, timezone = "America/New_York"),
+            ),
+        )
+        assertEquals(listOf("night"), periods.map { it.id })
+        assertEquals("Evening", periods.single().title)
         assertNull(CheckinSlot.fromId("evening"))
     }
 

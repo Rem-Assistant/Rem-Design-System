@@ -46,10 +46,21 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   (FILL 0). Android renders these from the Material Icons vector set (Outlined/Filled), a documented
   FILL-honouring divergence from the baked Material Symbols subset (which cannot be regenerated on this
   runner — no `fonttools`/network). See `docs/contracts/icon-registry.md` ‡.
+- **Mapping boundary:** the `CheckinSlot` / `Checkin` adapter (`CheckinCadenceAdapter.{swift,kt}`)
+  accepts the raw shipping `Checkin` fields (`slot`, `enabled`, `deliveryHour`, `deliveryMinute`,
+  `timezone`), validates the slot against `morning | midday | night`, formats the hour/minute into the
+  brief-time label internally (no host display string), produces the canonical rows, and forwards toggles
+  as a canonical `CheckinSlot` — so the `Checkin` identity (display "Evening" / send `night`) holds
+  without the host remapping.
 - **Evidence:** the five states — `checkin-default-light`, `checkin-edited-light`, `checkin-saving-light`,
   `checkin-saved-light`, `checkin-failure-light` — via `RenderSnapshotTests` (iOS) and `EvidenceSnapshots`
   (Compose/Paparazzi), declared in `tools/render-evidence/contracts.json` as `onboarding-checkin`. The
-  pure save-lifecycle model is unit-tested (`CheckinCadenceTest`, `CheckinInteractionTests`).
+  Android `checkin-saving-light` / `checkin-saved-light` CTA now ghosts the container (baked-alpha fill)
+  while keeping the inverted label + spinner at full color, so "Saving…" / "Saved" stay legible on the
+  dimmed button — matching the iOS ghosted CTA and the reference, instead of a dark label on an opaque
+  black button. The adapter + save-lifecycle model is unit-tested on both platforms (`CheckinCadenceTest`,
+  `CheckinInteractionTests` — 8:00 AM, a non-zero minute, the rejected invalid `evening`, and the `night`
+  toggle/update payload).
 - **Open (capability-gated):** the editable Figma screen + five states + prototype flow + component
   ledger, and the exact-head Figma exports. Native Figma canvas authoring requires the authenticated
   Figma MCP / Codex Builder runtime, which is **not present on the hosted build runner** — a Steward
