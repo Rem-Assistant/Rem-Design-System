@@ -116,7 +116,12 @@ const prototypeNode = (entry) => {
     type: entry.type,
     name: entry.name,
     componentId: entry.componentId,
-    children: actions.map((action, index) => ({ id: `${entry.node}-action-${index}`, type: 'FRAME', name: 'Target', reactions: [{ trigger: { type: 'ON_CLICK' }, actions: [action] }] })),
+    children: actions.map((action, index) => ({
+      id: `${entry.node}-action-${index}`,
+      type: 'FRAME',
+      name: action.type === 'BACK' ? (index === 0 ? 'Scrim' : 'Done') : 'ListRow',
+      interactions: [{ trigger: { type: entry.trigger }, actions: [action] }],
+    })),
   };
 };
 const prototype = {
@@ -131,9 +136,7 @@ const page = {
   type: 'CANVAS',
   name: contract.page.name,
   children: contract.page.topLevel,
-  flowStartingPoints: contract.flow.prototype.frames
-    .filter((entry) => entry.flowStart)
-    .map((entry) => ({ nodeId: entry.node, name: 'Consent flow' })),
+  flowStartingPoints: structuredClone(contract.flow.prototype.flowStartingPoints),
 };
 
 const componentQualityDocuments = (componentValue = componentQuality) => ({ [expectedComponentQuality.id]: componentValue });
@@ -152,7 +155,40 @@ const passing = verify();
 assert.equal(passing.ok, true, passing.errors.join('\n'));
 assert.equal(passing.canonical.screens.every((entry) => entry.status === 'conformant'), true);
 assert.equal(passing.canonical.canonicalScreens.every((entry) => entry.status === 'conformant'), true);
+assert.deepEqual(passing.canonical.prototype.flowStartingPoints, contract.flow.prototype.flowStartingPoints);
+assert.deepEqual(passing.canonical.prototype.frames.map(({ destinations, backCount }) => ({ destinations, backCount })), [
+  { destinations: ['781:637', '781:690'], backCount: 0 },
+  { destinations: [], backCount: 2 },
+  { destinations: [], backCount: 2 },
+]);
 assert.match(passing.digest, /^[a-f0-9]{64}$/);
+
+const wrongFlowStart = structuredClone(page);
+wrongFlowStart.flowStartingPoints[0].nodeId = '781:637';
+const invalidFlowStart = verify(wrongFlowStart);
+assert.equal(invalidFlowStart.ok, false);
+assert.match(invalidFlowStart.errors.join('\n'), /flow starting points/);
+
+const wrongDestination = structuredClone(prototype);
+findNode(wrongDestination, ({ id }) => id === '781:596-action-0')
+  .interactions[0].actions[0].destinationId = '781:690';
+const invalidDestination = verify(page, flow, wrongDestination);
+assert.equal(invalidDestination.ok, false);
+assert.match(invalidDestination.errors.join('\n'), /navigation destinations/);
+assert.deepEqual(invalidDestination.canonical.prototype.frames[0].destinations, ['781:690', '781:690']);
+
+const wrongBackTrigger = structuredClone(prototype);
+findNode(wrongBackTrigger, ({ id }) => id === '781:637-action-0')
+  .interactions[0].trigger.type = 'ON_HOVER';
+const invalidBackTrigger = verify(page, flow, wrongBackTrigger);
+assert.equal(invalidBackTrigger.ok, false);
+assert.match(invalidBackTrigger.errors.join('\n'), /interactions must use ON_CLICK/);
+
+const missingBack = structuredClone(prototype);
+findNode(missingBack, ({ id }) => id === '781:690').children.pop();
+const invalidBackCount = verify(page, flow, missingBack);
+assert.equal(invalidBackCount.ok, false);
+assert.match(invalidBackCount.errors.join('\n'), /back action count must be 2; received 1/);
 
 const looseFlow = structuredClone(flow);
 const firstScreenSlot = findNode(looseFlow, ({ name }) => name === contract.flow.hierarchy.screenSlot);

@@ -6,6 +6,143 @@ from pathlib import Path
 import re
 
 
+FIGMA_NODE_ID = re.compile(r"^(?:I)?\d+:\d+(?:;\d+:\d+)*$")
+
+
+def _markdown_cell(value: object) -> str:
+    return str(value).replace("\n", " ").replace("\r", " ").replace("|", "\\|").replace("`", "'")
+
+
+def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    report_path = root / "structure/report.json"
+    if not report_path.is_file():
+        return [], ["Authenticated Figma structure report is missing"]
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        return [], [f"Authenticated Figma structure report is invalid: {error}"]
+    if not isinstance(report, dict) or report.get("status") != "completed" or report.get("head") != head:
+        return [], ["Authenticated Figma structure report does not match the completed exact-head verification"]
+    structure = report.get("structure")
+    if not isinstance(structure, dict):
+        return [], ["Authenticated Figma structure report has no verified structure"]
+
+    canonical = structure.get("canonicalScreens")
+    documented = structure.get("screens")
+    if not isinstance(canonical, list) or not isinstance(documented, list):
+        return [], ["Authenticated Figma structure report has no canonical/documentation screen proof"]
+    reference_rows = []
+    for key, expected in contract.get("references", {}).items():
+        expected_node = expected.get("node")
+        canonical_matches = [entry for entry in canonical
+                             if isinstance(entry, dict) and entry.get("id") == expected_node]
+        documentation_matches = [entry for entry in documented
+                                 if isinstance(entry, dict) and str(entry.get("name", "")).lower() == key]
+        if len(canonical_matches) != 1 or canonical_matches[0].get("status") != "conformant":
+            errors.append(f"{key} canonical component proof is missing or nonconformant")
+            continue
+        if len(documentation_matches) != 1:
+            errors.append(f"{key} must have exactly one documentation instance proof")
+            continue
+        documentation = documentation_matches[0]
+        resolved_node = documentation.get("resolvedNode")
+        if (documentation.get("status") != "conformant" or
+                documentation.get("componentId") != expected_node or
+                not isinstance(resolved_node, str) or not FIGMA_NODE_ID.fullmatch(resolved_node)):
+            errors.append(f"{key} documentation instance proof is missing or mismatched")
+            continue
+        reference_rows.append((key, expected_node, canonical_matches[0]["status"],
+                               resolved_node, documentation["status"]))
+
+    prototype = structure.get("prototype")
+    if not isinstance(prototype, dict):
+        errors.append("Authenticated Figma prototype proof is missing")
+        prototype = {}
+    starts = prototype.get("flowStartingPoints")
+    frames = prototype.get("frames")
+    if not isinstance(starts, list) or not starts:
+        errors.append("Authenticated Figma prototype flow-start proof is missing")
+        starts = []
+    if not isinstance(frames, list) or not frames:
+        errors.append("Authenticated Figma prototype frame proof is missing")
+        frames = []
+
+    start_by_node: dict[str, list[str]] = {}
+    for start in starts:
+        if not isinstance(start, dict) or not isinstance(start.get("nodeId"), str) or not FIGMA_NODE_ID.fullmatch(start["nodeId"]):
+            errors.append("Authenticated Figma prototype has an invalid flow start")
+            continue
+        start_by_node.setdefault(start["nodeId"], []).append(_markdown_cell(start.get("name", "Unnamed flow")))
+    prototype_rows = []
+    for frame in frames:
+        if not isinstance(frame, dict):
+            errors.append("Authenticated Figma prototype has an invalid frame proof")
+            continue
+        node = frame.get("node")
+        destinations = frame.get("destinations")
+        back_count = frame.get("backCount")
+        navigations = frame.get("navigations")
+        back_actions = frame.get("backActions")
+        if (not isinstance(node, str) or not FIGMA_NODE_ID.fullmatch(node) or
+                frame.get("status") != "conformant" or
+                not isinstance(destinations, list) or
+                any(not isinstance(item, str) or not FIGMA_NODE_ID.fullmatch(item) for item in destinations) or
+                isinstance(back_count, bool) or not isinstance(back_count, int) or back_count < 0 or
+                not isinstance(navigations, list) or not isinstance(back_actions, list)):
+            errors.append("Authenticated Figma prototype frame proof is missing or nonconformant")
+            continue
+        interaction_entries = [*navigations, *back_actions]
+        if any(
+            not isinstance(action, dict) or
+            not isinstance(action.get("sourceNode"), str) or
+            not FIGMA_NODE_ID.fullmatch(action["sourceNode"]) or
+            not isinstance(action.get("sourceName"), str) or
+            not isinstance(action.get("trigger"), str)
+            for action in interaction_entries
+        ):
+            errors.append("Authenticated Figma prototype interaction proof is malformed")
+            continue
+        raw_destinations = [action.get("destinationId") for action in navigations]
+        if (any(not isinstance(item, str) or not FIGMA_NODE_ID.fullmatch(item) for item in raw_destinations) or
+                sorted(raw_destinations) != sorted(destinations) or len(back_actions) != back_count):
+            errors.append("Authenticated Figma prototype interactions do not match their observed summary")
+            continue
+        navigation_text = ", ".join(
+            f"{_markdown_cell(action['sourceName'])} · `{action['sourceNode']}` → `{action['destinationId']}`"
+            for action in navigations
+        ) if navigations else "—"
+        back_text = ", ".join(
+            f"{_markdown_cell(action['sourceName'])} · `{action['sourceNode']}` · {_markdown_cell(action['trigger'])}"
+            for action in back_actions
+        ) if back_actions else "—"
+        prototype_rows.append((
+            _markdown_cell(frame.get("name", node)), node,
+            start_by_node.get(node, []), navigation_text, back_text,
+        ))
+    if errors:
+        return [], errors
+
+    lines = [
+        "Authenticated editable Figma proof:", "",
+        "| Required reference | Canonical component | Documentation instance |",
+        "|---|---|---|",
+    ]
+    for key, canonical_node, canonical_status, instance_node, instance_status in reference_rows:
+        lines.append(
+            f"| `{key}` | `{canonical_node}` · {canonical_status} | `{instance_node}` · {instance_status} |"
+        )
+    lines += [
+        "", "Authenticated prototype proof:", "",
+        "| Prototype frame | Flow start | Navigation destinations | Back actions |",
+        "|---|---|---|---:|",
+    ]
+    for name, node, flow_names, navigation_text, back_text in prototype_rows:
+        flow_start = ", ".join(f"{item} → `{node}`" for item in flow_names) if flow_names else "—"
+        lines.append(f"| {name} · `{node}` | {flow_start} | {navigation_text} | {back_text} |")
+    return lines, []
+
+
 def _evidence(root: Path, platform: str) -> dict[str, Path]:
     evidence: dict[str, Path] = {}
     for path in sorted((root / platform).glob("*.png")):
@@ -89,7 +226,17 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
         key for key in observed_keys
         if any(key.startswith(prefix) for prefix in prefixes) and key not in required and key not in waypoint_keys
     )
-    status = "ready" if conclusion == "success" and not missing and not unexpected else "failed"
+    structure_lines: list[str] = []
+    structure_errors: list[str] = []
+    if reference_contracts:
+        if len(reference_contracts) != 1:
+            structure_errors.append("Exactly one scoped contract is required for authenticated Figma structure proof")
+        else:
+            contract_name = next(iter(reference_contracts))
+            structure_lines, structure_errors = _authenticated_structure_proof(
+                root, head, contracts[contract_name]
+            )
+    status = "ready" if conclusion == "success" and not missing and not unexpected and not structure_errors else "failed"
     lines = [f"Current head: `{head}`", "",
              "Paired runner-produced evidence: iOS Simulator (SwiftUI) | Android Paparazzi (Compose).",
              "Rendering and coverage checks do not establish visual parity; Reviewer must compare the pixels against the approved contracts.", ""]
@@ -98,6 +245,9 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     if unexpected:
         lines += ["**Unexpected contract-prefixed output — delivery blocked:**", "",
                   *[f"- {item}" for item in unexpected], ""]
+    if structure_errors:
+        lines += ["**Authenticated editable Figma proof invalid — delivery blocked:**", "",
+                  *[f"- {item}" for item in structure_errors], ""]
     if conclusion != "success":
         lines += ["**Render workflow did not pass.** Builder must repair its failing checks.", ""]
     include_reference_column = bool(references or required_references)
@@ -139,6 +289,8 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
                 attachments.append(path)
             else:
                 lines.append(f"| `{key}` | **Not exported** |")
+    if structure_lines:
+        lines += ["", *structure_lines]
     lines += ["", "Rows marked **Not rendered** are not evidence of cross-platform parity.",
               "", "_Generated by Agent Factory. Delivery workflow authored by Codex._"]
     return status, "\n".join(lines) + "\n", attachments

@@ -150,12 +150,18 @@ export function validateStructureContract(contract, { expectedFileKey } = {}) {
   const prototypeLabel = object(prototype.label, 'flow.prototype.label');
   node(prototypeLabel.id, 'flow.prototype.label.id', true);
   string(prototypeLabel.name, 'flow.prototype.label.name');
+  array(prototype.flowStartingPoints, 'flow.prototype.flowStartingPoints', { min: 1, max: 50 }).forEach((entry, index) => {
+    object(entry, `flow.prototype.flowStartingPoints[${index}]`);
+    node(entry.nodeId, `flow.prototype.flowStartingPoints[${index}].nodeId`, true);
+    string(entry.name, `flow.prototype.flowStartingPoints[${index}].name`);
+  });
   array(prototype.frames, 'flow.prototype.frames', { min: 1, max: 50 }).forEach((entry, index) => {
     object(entry, `flow.prototype.frames[${index}]`);
     string(entry.name, `flow.prototype.frames[${index}].name`);
     node(entry.node, `flow.prototype.frames[${index}].node`, true);
     node(entry.componentId, `flow.prototype.frames[${index}].componentId`, true);
     string(entry.type, `flow.prototype.frames[${index}].type`, { max: 100 });
+    string(entry.trigger, `flow.prototype.frames[${index}].trigger`, { pattern: /^[A-Z][A-Z0-9_]*$/, max: 100 });
     array(entry.destinations, `flow.prototype.frames[${index}].destinations`, { max: 50 })
       .forEach((id, destinationIndex) => node(id, `flow.prototype.frames[${index}].destinations[${destinationIndex}]`, true));
     if (!Number.isInteger(entry.backCount) || entry.backCount < 0 || entry.backCount > 100) {
