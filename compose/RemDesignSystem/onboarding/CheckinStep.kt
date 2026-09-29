@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -29,8 +28,8 @@ import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.rows.ListRow
+import com.rem.designsystem.rows.ListRowEmphasis
 import com.rem.designsystem.tokens.RemColors
-import com.rem.designsystem.tokens.RemOpacity
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
@@ -187,8 +186,9 @@ private fun CheckinPeriodRow(
     ListRow(
         title = period.title,
         enabled = interactive,
+        emphasis = if (interactive) ListRowEmphasis.Standard else ListRowEmphasis.Deemphasized,
         showSeparator = showSeparator,
-        modifier = modifier.alpha(if (interactive) 1f else RemOpacity.deemphasized),
+        modifier = modifier,
         leading = {
             ContainedIcon(
                 icon = period.icon,

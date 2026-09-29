@@ -15,13 +15,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
+import com.rem.designsystem.tokens.RemOpacity
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTypography
+
+/** Semantic row emphasis backed by the shared foundation opacity token. */
+enum class ListRowEmphasis { Standard, Deemphasized }
 
 /**
  * Canonical Compose list-row content: optional leading accessory, title/subtitle, and trailing slot.
@@ -35,11 +40,16 @@ fun ListRow(
     subtitle: String? = null,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
+    emphasis: ListRowEmphasis = ListRowEmphasis.Standard,
     showSeparator: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
     val colors = RemColors.current
+    val emphasisAlpha = when (emphasis) {
+        ListRowEmphasis.Standard -> 1f
+        ListRowEmphasis.Deemphasized -> RemOpacity.deemphasized
+    }
     val interaction = if (onClick != null) {
         Modifier
             .semantics { role = Role.Button }
@@ -47,7 +57,7 @@ fun ListRow(
     } else {
         Modifier
     }
-    Column(modifier = modifier.then(interaction)) {
+    Column(modifier = modifier.alpha(emphasisAlpha).then(interaction)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

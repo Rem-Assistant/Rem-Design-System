@@ -13,20 +13,6 @@ the onboarding sequencer — it carries the scaffold's back-nav and **Body-owned
 
 Parent scope: #12 (onboarding middle steps) and #10.
 
-### Steward resolution of prior review ambiguity (2026-09-29)
-
-This contract is the final interpretation for this delivery and supersedes contrary remarks from
-earlier reviewer passes over the same reference digest:
-
-- "Centered" describes horizontal alignment inside `VStack/Content`; it does not vertically center
-  Content and Actions together. Content is top-aligned and Actions are bottom-pinned.
-- Saving and Saved lock **and visibly de-emphasize** the cadence rows. The Button uses its semantic
-  disabled variant; row de-emphasis uses the shared opacity token.
-- Native icon parity means the named SF/Material registry pair at the pinned FILL and comparable
-  optical weight. It does not require identical cross-platform silhouettes.
-- The open time picker is required interaction documentation: the iOS HIG wheel and Android Material
-  dial remain platform-native presentations of the same hour/minute value.
-
 ## Layout — top lockup, grouped cadence list, Body-owned action region
 
 A scaffolded step (sequencer chrome: a back chevron in the nav, owned by the host, not the template).
@@ -38,7 +24,8 @@ Content top → bottom:
 
 1. **Hero badge** — the app-icon-style rounded square, `Color.brandBlue` fill, holding a centered
    white check-in glyph (registry `check-in schedule`: `clock.badge.checkmark.fill` / `alarm_on`,
-   FILL 1). Centered near the top of the content area.
+   FILL 1). The named native pair shares meaning and comparable optical weight while retaining each
+   platform's silhouette. Centered near the top of the content area.
 2. **Title** — "When should Rem check in?" — `Typography.largeTitle` semibold, `Color.labelPrimary`,
    centered, `Spacing.md` below the badge.
 3. **Body** — "At each time you pick, Rem writes you a brief on what came in. Start with one; add more
@@ -71,8 +58,8 @@ ActionArea itself, whose responsibility remains the primary Button and optional 
 |---|---|---|
 | **default** | cadence as loaded from `CheckinsService` (Morning on @ 8:00 AM, others off) | "Continue" — filled, enabled when ≥1 time is on |
 | **edited** | the user changed a toggle (e.g. Midday also on @ 12:30 PM); not yet persisted | "Continue" — filled, enabled |
-| **saving** | persisting; rows locked and visibly de-emphasized | "Saving…" — leading spinner, explicit disabled semantic colors |
-| **saved** | persisted; rows locked and visibly de-emphasized | "Saved" — leading `checkmark`, explicit disabled semantic colors |
+| **saving** | persisting; rows locked with `ListRowEmphasis.deemphasized`, backed by the shared opacity token | "Saving…" — leading spinner, explicit disabled semantic colors |
+| **saved** | persisted; rows locked with `ListRowEmphasis.deemphasized`, backed by the shared opacity token | "Saved" — leading `checkmark`, explicit disabled semantic colors |
 | **recoverable failure** | save failed; rows interactive again; transient error Toast above the CTA | "Try again" — filled, enabled |
 
 **Toast:** neutral capsule, error semantic glyph/tint, `Typography.footnote` message. It carries no

@@ -143,10 +143,10 @@ public struct OnboardingCheckinTemplate: View {
         RemSection(rows: periods) { period in
             ListRow(
                 period.title,
+                emphasis: rowsInteractive ? .standard : .deemphasized,
                 leading: { ContainedIcon(period.symbol, fill: .subtle) },
                 trailing: { rowTrailing(period) }
             )
-            .opacity(rowsInteractive ? 1 : DesignTokens.Opacity.deemphasized)
         }
     }
 
