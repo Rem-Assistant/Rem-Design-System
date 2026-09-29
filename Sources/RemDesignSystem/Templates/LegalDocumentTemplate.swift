@@ -40,7 +40,7 @@ public struct LegalDocumentTemplate: View {
             // Inline nav bar: centered title + a 44pt Done affordance, matching the Compose sheet.
             ZStack {
                 Text(title)
-                    .font(DesignTokens.Typography.title1.weight(.semibold))
+                    .font(DesignTokens.Typography.title1Bold)
                     .foregroundStyle(DesignTokens.Color.labelPrimary)
                 HStack {
                     Spacer(minLength: 0)

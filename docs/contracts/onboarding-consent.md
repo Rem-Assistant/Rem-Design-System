@@ -134,7 +134,7 @@ not permission to omit Figma or spend repeated screen-revision attempts.
 
 `tools/design-sync/manifest.json` is the machine-readable source link for each editable node. The
 Default `777:248` maps to `OnboardingConsentTemplate.swift`; Terms `777:325` and Privacy `777:392` map to
-`LegalDocumentTemplate.swift`. The template owns the centered title, 44pt
+`LegalDocumentTemplate.swift`. The template owns the centered `Typography.title1Bold` title, 44pt
 Done affordance, divider, scroll region, spacing, and token bindings. The shipping host owns sheet
 presentation — including the scrim, rounded top / drag affordance when the native idiom supplies one,
 and device-status-bar layering — and injects the current legal body; render-only legal prose remains
