@@ -5,7 +5,20 @@
   },
   "onboarding-checkin": {
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift", "Sources/RemDesignSystem/Controls/RemSwitch.swift", "compose/RemDesignSystem/onboarding/CheckinStep.kt", "compose/RemDesignSystem/controls/RemSwitch.kt", "tokens/**"],
-    "states": ["checkin-default-light", "checkin-edited-light", "checkin-saving-light", "checkin-saved-light", "checkin-failure-light"]
+    "states": ["checkin-default-light", "checkin-edited-light", "checkin-saving-light", "checkin-saved-light", "checkin-failure-light"],
+    "exclusive_output_prefixes": ["checkin-"],
+    "references": {
+      "checkin-default-light": { "name": "Checkin-default-light", "node": "885:1123" },
+      "checkin-edited-light": { "name": "Checkin-edited-light", "node": "885:1198" },
+      "checkin-saving-light": { "name": "Checkin-saving-light", "node": "885:1275" },
+      "checkin-saved-light": { "name": "Checkin-saved-light", "node": "885:1352" },
+      "checkin-failure-light": { "name": "Checkin-failure-light", "node": "885:1429" }
+    },
+    "waypoints": {
+      "checkin-component-set": { "name": "Screen/Check-in", "node": "876:1121" },
+      "checkin-flow-documentation": { "name": "Checkin-flow-documentation", "node": "890:1502" },
+      "checkin-prototype": { "name": "Checkin-prototype", "node": "885:1121" }
+    }
   },
   "onboarding-consent": {
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
