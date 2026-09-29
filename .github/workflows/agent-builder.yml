@@ -8,12 +8,29 @@ on:
         description: Issue number
         required: true
         type: string
+      figma_attest:
+        description: Attest an already-verified persisted Figma delivery
+        required: false
+        default: false
+        type: boolean
+      pr:
+        description: Pull request number for Figma attestation
+        required: false
+        type: string
+      record_path:
+        description: Checked-in Figma delivery record
+        required: false
+        type: string
+      screen_prefix:
+        description: Design-sync manifest screen prefix
+        required: false
+        type: string
 permissions:
   actions: read
   contents: read
 jobs:
   builder:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
+    if: (github.event_name == 'workflow_dispatch' && inputs.figma_attest != true) || github.event.label.name == 'agent:builder'
     uses: samuelalake/agent-factory/.github/workflows/builder.yml@aece3450ee38de6dc3ff64afe7151ff41cb37878
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
@@ -25,5 +42,19 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       FIGMA_MCP_OAUTH_BUNDLE: ${{ secrets.FIGMA_MCP_OAUTH_BUNDLE }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
+      AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}
+  figma-attest:
+    if: github.event_name == 'workflow_dispatch' && inputs.figma_attest == true
+    uses: samuelalake/agent-factory/.github/workflows/figma-attest.yml@aece3450ee38de6dc3ff64afe7151ff41cb37878
+    with:
+      issue: ${{ inputs.issue }}
+      pr: ${{ inputs.pr }}
+      record_path: ${{ inputs.record_path }}
+      screen_prefix: ${{ inputs.screen_prefix }}
+      factory_ref: aece3450ee38de6dc3ff64afe7151ff41cb37878
+      runner: ubuntu-latest
+      app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
+    secrets:
       AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
       AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}
