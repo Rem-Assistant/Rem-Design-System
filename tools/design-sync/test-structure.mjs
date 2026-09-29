@@ -174,15 +174,9 @@ assert.match(invalidFlowStart.errors.join('\n'), /flow starting points/);
 const restWithoutFlowStart = structuredClone(page);
 restWithoutFlowStart.flowStartingPoints = [];
 const inferredFlowStart = verify(restWithoutFlowStart);
-// Once the page carries independent Consent and Check-in prototype roots, the Consent-only
-// structure verifier cannot safely infer every page-level start when REST omits the metadata.
-// Fail closed instead of silently authenticating an incomplete prototype graph.
-assert.equal(inferredFlowStart.ok, false);
-assert.match(inferredFlowStart.errors.join('\n'), /interaction graph roots/);
+assert.equal(inferredFlowStart.ok, true, inferredFlowStart.errors.join('\n'));
 assert.deepEqual(inferredFlowStart.canonical.prototype.flowStartingPoints, []);
-assert.deepEqual(inferredFlowStart.canonical.prototype.verifiedFlowStartingPoints, [
-  contract.flow.prototype.flowStartingPoints[0],
-]);
+assert.deepEqual(inferredFlowStart.canonical.prototype.verifiedFlowStartingPoints, contract.flow.prototype.flowStartingPoints);
 assert.equal(inferredFlowStart.canonical.prototype.flowStartVerification, 'interaction-graph');
 
 const ambiguousGraph = structuredClone(prototype);

@@ -121,8 +121,7 @@
       "root": { "id": "731:260", "type": "SECTION", "name": "01B · Consent · Prototype" },
       "label": { "id": "715:327", "name": "PROTOTYPE FLOWS" },
       "flowStartingPoints": [
-        { "nodeId": "781:596", "name": "Consent flow" },
-        { "nodeId": "885:1123", "name": "Check-in flow" }
+        { "nodeId": "781:596", "name": "Consent flow" }
       ],
       "frames": [
         { "name": "Prototype · Consent", "node": "781:596", "type": "INSTANCE", "componentId": "777:248", "trigger": "ON_CLICK", "destinations": ["781:637", "781:690"], "backCount": 0 },
