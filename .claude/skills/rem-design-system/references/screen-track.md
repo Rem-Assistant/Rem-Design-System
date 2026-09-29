@@ -62,10 +62,12 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   layout (`VStack`, `HStack`, `ZStack`, `LazyVStack`, `LazyHStack`). The cross-platform docs map
   those to Compose `Column`, `Row`, `Box`, `LazyColumn`, and `LazyRow`.
 - **Full-device root order is semantic.** Use sibling regions in source order:
-  `StatusBar`, optional `TopBar`, `Body`, `Bottom`. `Body` fills the remaining height and
-  owns the screen's horizontal inset. Follow the product contract for top versus center alignment;
-  horizontal centering belongs inside `Body`, not in an empty spacer. Bottom actions use the
-  canonical `ActionArea`; turn off its Footnote property when the screen has no supporting copy.
+  `StatusBar`, optional `TopBar`, `Body`, `NavigationIndicator`. `Body` fills the remaining width and
+  height, owns the screen's 24-point outer inset, and contains `VStack/Content` plus
+  `VStack/Actions`. Put the canonical `ActionArea` inside `VStack/Actions`; turn off its Footnote
+  property when the screen has no supporting copy. `ActionArea` owns no screen inset. Keep
+  `NavigationIndicator` outside Body as device chrome. Follow the product contract for top versus
+  center alignment; use auto-layout `SPACE_BETWEEN` rather than an empty spacer frame.
 - **Use auto spacing, not empty spacer frames.** Group the top and bottom regions semantically and
   use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
   space are invalid because they obscure intent and break when content changes.

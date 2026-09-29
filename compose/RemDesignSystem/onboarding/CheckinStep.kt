@@ -51,7 +51,7 @@ sealed interface CheckinStatus {
     /** The change persisted. CTA shows a brief "Saved" confirmation before the host advances. */
     data object Saved : CheckinStatus
 
-    /** Persistence failed and can be retried. A notice sits above the CTA; primary = "Try again". */
+    /** Persistence failed and can be retried. A transient error toast sits above "Try again". */
     data class Failure(val message: String) : CheckinStatus
 }
 
@@ -98,8 +98,8 @@ data class CheckinPeriodUiState(
  * the founder reference frame `tasks/refs/onboarding/04-checkin.png` + the shipping `CheckinsService`
  * / `Checkin` cadence model.
  *
- * A scaffolded onboarding step (hero → title → body → grouped time-of-day list) with a bottom-pinned
- * CTA whose label + treatment track the save lifecycle. Presentational and state-driven — no
+ * A scaffolded onboarding step (hero → title → body → grouped time-of-day list) with a Body-owned
+ * ActionArea whose label + treatment track the save lifecycle. Presentational and state-driven — no
  * scheduling, no persistence. The host maps `CheckinsService` to [status] + [periods] and wires real
  * behaviour through the callbacks: [onToggle] persists a row's on/off, [onContinue] advances after a
  * successful save, [onRetry] re-attempts after a failure.
@@ -134,12 +134,12 @@ fun OnboardingCheckinScreen(
         is CheckinStatus.Failure ->
             OnboardingAction(label = status.primaryLabel(), onClick = onRetry, enabled = true)
     }
-    val notice = (status as? CheckinStatus.Failure)?.message
+    val toast = (status as? CheckinStatus.Failure)?.message
 
     OnboardingScaffold(
         modifier = modifier,
         primary = primary,
-        bottomNotice = notice,
+        bottomToast = toast,
         // Registry hero: `alarm_on` (pairs with the iOS `clock.badge.checkmark.fill`, FILL 1) — a
         // scheduled, confirmed check-in time — on the brand-blue squircle.
         hero = OnboardingHero(icon = Icons.Filled.AlarmOn, contentDescription = "Check-in schedule"),

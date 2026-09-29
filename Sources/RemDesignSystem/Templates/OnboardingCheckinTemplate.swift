@@ -8,7 +8,7 @@ import SwiftUI
 ///
 /// Reproduced from the founder reference frame `tasks/refs/onboarding/04-checkin.png` and the shipping
 /// `CheckinsService` cadence model: a scaffolded onboarding step (hero → title → body → grouped list
-/// of time-of-day rows) with a **bottom-pinned CTA** whose label + treatment track the save lifecycle
+/// of time-of-day rows) with a Body-owned **ActionArea** whose label + treatment track the save lifecycle
 /// seen in the reference ("Saving…"). Composes design-system components: ``ContainedIcon`` (hero + row
 /// leading), ``RemSection`` + ``ListRow`` (the cadence list), ``RemSwitch`` (per-row toggle).
 ///
@@ -61,7 +61,7 @@ public struct OnboardingCheckinTemplate: View {
         case saving
         /// The change persisted. CTA shows a brief "Saved" confirmation before the host advances.
         case saved
-        /// Persistence failed and can be retried. A notice sits above the CTA; primary = "Try again".
+        /// Persistence failed and can be retried. A transient Toast sits above "Try again".
         case failure(message: String)
     }
 
@@ -89,19 +89,21 @@ public struct OnboardingCheckinTemplate: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
+        // `Body` owns the screen inset and fills the available content region. Its content and
+        // actions are one semantic VStack with space between; system navigation chrome stays with
+        // the host outside this template.
+        VStack(spacing: DesignTokens.Spacing.xl) {
             ScrollView {
                 VStack(spacing: DesignTokens.Spacing.lg) {
                     Spacer(minLength: DesignTokens.Spacing.xxl)
                     hero
                     cadenceCard
                 }
-                .padding(DesignTokens.Spacing.lg)
-                .padding(.bottom, DesignTokens.Spacing.xl)
                 .frame(maxWidth: 560)
             }
             bottomBar
         }
+        .padding(DesignTokens.Spacing.xl)
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
     }
 
@@ -144,21 +146,17 @@ public struct OnboardingCheckinTemplate: View {
         }
     }
 
-    /// Bottom-pinned region — an optional recoverable-failure notice above the primary CTA. There is no
-    /// legal footnote on this step (unlike consent); the cadence step's copy carries no legal terms.
+    /// Actions inside `Body` — a transient recoverable-failure toast above the primary CTA. There is
+    /// no legal footnote on this step, so this uses the ActionArea composition with metadata hidden.
     private var bottomBar: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: DesignTokens.Spacing.md) {
-                if case .failure(let message) = status { notice(message) }
-                primaryButton
+        VStack(spacing: DesignTokens.Spacing.md) {
+            if case .failure(let message) = status {
+                RemToast(variant: .error, message: message)
             }
-            .padding(.horizontal, DesignTokens.Spacing.lg)
-            .padding(.top, DesignTokens.Spacing.sm)
-            .padding(.bottom, DesignTokens.Spacing.md)
-            .frame(maxWidth: 560)
+            primaryButton
         }
         .frame(maxWidth: .infinity)
-        .background(DesignTokens.Color.backgroundPrimary)
+        .frame(maxWidth: 560)
     }
 
     /// The primary CTA — the shipping `SignInButton` treatment (`buttonBackground` fill, `medium`
@@ -178,18 +176,9 @@ public struct OnboardingCheckinTemplate: View {
                 Text(primaryLabel)
                     .font(DesignTokens.Typography.bodyBold)
             }
-            .foregroundStyle(DesignTokens.Color.backgroundPrimary)
             .frame(maxWidth: .infinity)
-            .padding(DesignTokens.Spacing.md)
-            // Bake the disabled alpha into the fill so ImageRenderer and Paparazzi produce the
-            // same ghosted CTA as the founder's Saving reference. Applying opacity to the whole
-            // Button rendered inconsistently in exact-head evidence.
-            .background(
-                DesignTokens.Color.buttonBackground.opacity(primaryEnabled ? 1 : 0.4)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .remButton(.rectBlack)
         .disabled(!primaryEnabled)
     }
 
@@ -232,28 +221,6 @@ public struct OnboardingCheckinTemplate: View {
         periods.contains { $0.isOn }
     }
 
-    /// Recoverable-failure notice — the shared `systemRed` @ 12% treatment (mirrors sign-in's notice +
-    /// the Compose `OnboardingNotice`) so the paired evidence reads as the same card. The leading glyph
-    /// resolves through the icon registry by meaning + FILL: `exclamationmark.triangle.fill`
-    /// (`error`, FILL 1).
-    private func notice(_ message: String) -> some View {
-        HStack(alignment: .top, spacing: DesignTokens.Spacing.sm) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(DesignTokens.Color.systemRed)
-            Text(message)
-                .font(DesignTokens.Typography.caption1)
-                .foregroundStyle(DesignTokens.Color.labelPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(DesignTokens.Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
-                .fill(DesignTokens.Color.systemRed.opacity(0.12))
-        )
-    }
 }
 
 // MARK: - Canonical copy (shared by previews, snapshot evidence, and the Compose sibling)

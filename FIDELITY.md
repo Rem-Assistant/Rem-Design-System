@@ -31,16 +31,16 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 - **Paired code:** SwiftUI `Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift` and
   Compose `compose/RemDesignSystem/onboarding/CheckinStep.kt` (`OnboardingCheckinScreen` /
   `checkinStep(status:…)`, hosted by `OnboardingSequencer`). Both render the same scaffolded step (hero
-  → title → body → grouped cadence list) with a bottom-pinned CTA whose label + affordance track the
-  five save-lifecycle states, and the failure notice pinned above the CTA.
+  → title → body → grouped cadence list) with an ActionArea inside the fill-height Body whose label +
+  affordance track the five save-lifecycle states, and a transient error Toast above the ActionArea.
 - **New canonical component:** `RemSwitch` (`Controls/RemSwitch.swift` · `controls/RemSwitch.kt`) — a
   thin native-switch wrapper pinned to the `systemGreen` on-tint, Figma `RemSwitch` set `868:210`
   (legacy iOS-on variant `110:50`), Code Connect
   `code-connect/{swiftui,compose}/RemSwitch.figma.ts`. First consumer is this screen; extracted because
   a grouped-settings toggle recurs across Settings/automations/voice.
-- **Reuse:** `RemSection` + `ListRow`, `ContainedIcon` (hero + row leadings), the shared onboarding
-  scaffold bottom action area (extended with an optional `bottomNotice` slot), the shared error-notice
-  treatment, generated tokens. The value pill is local (`TimePill` / `CheckinTimePill`), flagged for
+- **Reuse:** `RemSection` + `ListRow`, `ContainedIcon` (hero + row leadings), canonical `ActionArea`,
+  explicit Button states, and canonical `Toast` (`72:24`, SwiftUI/Compose auto-dismiss after 4s), plus
+  generated tokens. The value pill is local (`TimePill` / `CheckinTimePill`), flagged for
   extraction.
 - **Icons:** four new registry rows — hero `clock.badge.checkmark.fill` / `alarm_on` (FILL 1) and the
   Morning/Midday/Evening leadings `sunrise`·`sun.max`·`moon.stars` / `wb_twilight`·`wb_sunny`·`bedtime`
@@ -56,10 +56,9 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 - **Evidence:** the five states — `checkin-default-light`, `checkin-edited-light`, `checkin-saving-light`,
   `checkin-saved-light`, `checkin-failure-light` — via `RenderSnapshotTests` (iOS) and `EvidenceSnapshots`
   (Compose/Paparazzi), declared in `tools/render-evidence/contracts.json` as `onboarding-checkin`. The
-  Android `checkin-saving-light` / `checkin-saved-light` CTA now ghosts the container (baked-alpha fill)
-  while keeping the inverted label + spinner at full color, so "Saving…" / "Saved" stay legible on the
-  dimmed button — matching the iOS ghosted CTA and the reference, instead of a dark label on an opaque
-  black button. The adapter + save-lifecycle model is unit-tested on both platforms (`CheckinCadenceTest`,
+  Android `checkin-saving-light` / `checkin-saved-light` CTA now uses the same explicit semantic
+  disabled container and label roles as Figma and SwiftUI, with no whole-control opacity. The adapter +
+  save-lifecycle model is unit-tested on both platforms (`CheckinCadenceTest`,
   `CheckinInteractionTests` — 8:00 AM, a non-zero minute, the rejected invalid `evening`, and the `night`
   toggle/update payload).
 - **Editable Figma delivery:** a founder-authorized direct Codex Figma session authored and read back
@@ -68,10 +67,11 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   prototype section `02B` (`885:1121`). Direct 402×874 instances are registered as exact references
   in `tools/render-evidence/contracts.json`; the prototype begins at Default and covers
   Default → Edited → Saving → Saved plus Failure → Saving retry. The canonical screen now uses
-  `StatusBar → TopBar → Body → Bottom`, an official iOS top toolbar, a horizontally centered
-  top-anchored Body, HUG Section rows with transparent ListRows, official iOS/Material Switch
-  instances behind `RemSwitch`, `ActionArea` with Footnote off, and explicit disabled Button
-  variants. Inventory Section `00` now contains one auto-layout HStack, so its spacing heals after
+  `StatusBar → TopBar → Body → NavigationIndicator`, an official iOS top toolbar, and a fill-height
+  Body with one 24pt inset and `VStack/Content` + `VStack/Actions`. It uses HUG Section rows with
+  transparent ListRows, official iOS/Material Switch instances behind `RemSwitch`, HUG `ActionArea`
+  with Footnote off, canonical Toast in Failure, and explicit disabled Button variants. Inventory
+  Section `00` now contains one auto-layout HStack, so its spacing heals after
   insertion or deletion. The exact-head CI rerun binds this live structure to the final commit; it
   does not misattribute the direct interactive edit to the hosted Factory writer.
 
@@ -337,7 +337,7 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 | ContextualMessage | `73-39` | ✅ | Five states (info/success/warning/error/neutral) with correct colored status glyphs. |
 | ThinkingBlock | `63-20` | ✅ | Collapsed "Thought for a moment ⌄" and expanded reasoning body. |
 | TypingDots | `17-3` | ✅ | Three-dot typing indicator. |
-| Toast | `72-24` | ✅ | Four states (info/success/warning/error), colored status glyphs on gray pill. |
+| Toast | `72-24` | ✅ | Four semantic variants, responsive Message binding, colored status glyphs on gray pill; SwiftUI/Compose auto-dismiss after 4s and announce politely. |
 | ToolResultCard | `62-2` | ✅ | Generic tool-result card (calendar-events example). |
 | TaskEventRow | `46-21` | ✅ | Dashed-circle status indicator (overdue), two-part time label (`08` `00`/`AM`), gray leading bar for events, bold 2-line title. Chevron is a row sibling, not part of the component — matches `TaskEventView`. |
 | SuggestedTaskRow | `48-25` | ✅ | Dashed-border card, blue stacked action (`+ Add` / `↪ Move`), meta line, `×` dismiss. Matches `01-agenda`. |

@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "fileKey": "af4yDqCzp57jds9lkFiIaO",
   "page": {
     "id": "410:15",
@@ -52,6 +52,17 @@
     "id": "760:21",
     "type": "SECTION",
     "name": "00 · Canonical screen components",
+    "rootOrder": ["StatusBar", "TopBar", "Body", "NavigationIndicator"],
+    "hierarchyScreenIds": ["870:788", "875:857", "875:940", "875:1026", "875:1112"],
+    "body": {
+      "padding": 24,
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "FILL",
+      "primaryAxisAlignItems": "SPACE_BETWEEN",
+      "children": ["VStack/Content", "VStack/Actions"],
+      "actionAreaOwnsOuterInset": false,
+      "actionAreaName": "ActionArea"
+    },
     "screens": [
       { "id": "777:248", "type": "COMPONENT", "name": "Screen/Consent · Default", "width": 402, "height": 874 },
       { "id": "777:325", "type": "COMPONENT", "name": "Screen/Consent · Terms", "width": 402, "height": 874 },
@@ -80,6 +91,26 @@
             { "id": "408:16", "name": "label" },
             { "id": "439:16", "name": "label" },
             { "id": "439:18", "name": "label" }
+          ]
+        }
+      },
+      {
+        "id": "72:24",
+        "type": "COMPONENT_SET",
+        "name": "Toast",
+        "category": "Feedback",
+        "checks": {
+          "textStyleBindings": [
+            { "id": "72:7", "name": "Message" },
+            { "id": "72:12", "name": "Message" },
+            { "id": "72:18", "name": "Message" },
+            { "id": "72:23", "name": "Message" }
+          ],
+          "variableBindings": [
+            { "id": "72:2", "name": "Variant=info" },
+            { "id": "72:8", "name": "Variant=success" },
+            { "id": "72:13", "name": "Variant=warning" },
+            { "id": "72:19", "name": "Variant=error" }
           ]
         }
       }

@@ -52,10 +52,19 @@ Composition roots inherit the surface behind them unless a background is part of
 owned contract. Horizontal groups of equal-priority actions use fill sizing for every action so label
 length does not create unequal widths.
 
+`ActionArea` owns the relationship between its ButtonGroup and optional metadata only. It has no
+outer screen inset; the containing screen Body owns that inset. A Toast is transient and
+non-actionable: use the canonical `Toast` (`72:24`), keep its semantic Variant and Message bindings,
+and let the platform implementation auto-dismiss after four seconds by default. Use a persistent
+ContextualMessage when the user must act on the feedback.
+
 For platform-owned controls, search the subscribed official Apple and Material libraries first.
 Nest official instances behind a thin Rem wrapper when the product needs shared semantics or
 Platform switching. Use an official toolbar directly when its exposed API is sufficient; create a
 Rem wrapper only for additional labels, slots, or cross-platform behavior. Never fork the whole kit.
+The approved Compose-first Material 3 source is
+`EFTsJQRHLbzN7zmPGqbJyx` (Switch `54446:25289`; dial picker `52949:27916`; keyboard picker
+`52949:28053`). Use those native controls in Android states rather than copying iOS geometry.
 
 The Builder does **not** need to reproduce an EightShapes Specs export. A human or later browser
 agent may generate full Anatomy/Props/Layout/Data documentation after the runner batch finishes.

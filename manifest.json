@@ -586,8 +586,8 @@
     },
     "Toast": {
       "group": "general",
-      "mirrors": "RemToast (compact transient notice)",
-      "status": "draft",
+      "mirrors": "RemToast (SwiftUI and Compose compact transient feedback)",
+      "status": "canonical",
       "props": {
         "variant": {
           "type": "enum",

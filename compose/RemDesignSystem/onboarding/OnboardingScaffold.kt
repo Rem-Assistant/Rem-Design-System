@@ -26,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
+import com.rem.designsystem.feedback.RemToast
+import com.rem.designsystem.feedback.RemToastVariant
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -46,7 +47,8 @@ import com.rem.designsystem.icons.RemMaterialSymbol
  * The **shared onboarding chrome** — the reusable layout every sequencer step renders into. It is the
  * Compose sibling of the SwiftUI onboarding shell (`OnboardingFlow.swift` step scaffold): a back
  * affordance + optional progress + a centered hero/title/subtitle over a scrollable content slot,
- * with a bottom-pinned CTA bar (primary + optional secondary) and an optional legal footer.
+ * with an action region inside the fill-height Body (primary + optional secondary) and an optional
+ * legal footer.
  *
  * It is **presentational and state-driven** — it owns no navigation or auth logic; the
  * [OnboardingSequencer] drives it and the host wires real behaviour through the [OnboardingAction]
@@ -65,12 +67,8 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
-    /**
-     * A recoverable-failure notice pinned directly above the primary CTA (the Check-in save-failure
-     * state). One treatment shared with sign-in's [OnboardingNotice], so the paired evidence reads as
-     * the same card wherever it appears. Null in every non-error state.
-     */
-    bottomNotice: String? = null,
+    /** A transient error toast directly above the action group. Null in every non-error state. */
+    bottomToast: String? = null,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
@@ -181,7 +179,8 @@ fun OnboardingScaffold(
             Spacer(Modifier.height(RemSpacing.xl))
         }
 
-        // Bottom CTA region — pinned; does not scroll. The legal footnote sits below the action.
+        // Actions live inside Body, below its scrollable content. The legal footnote sits below the
+        // action. Device navigation chrome remains outside Body in the host.
         //
         // Spacing mirrors the iOS `OnboardingConsentTemplate` bottom bar EXACTLY so the paired render
         // has the same density in every state: top `sm`, `md` from CTA to footnote, and `md` below.
@@ -195,8 +194,12 @@ fun OnboardingScaffold(
                 .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (bottomNotice != null) {
-                OnboardingNotice(message = bottomNotice, modifier = Modifier.fillMaxWidth())
+            if (bottomToast != null) {
+                RemToast(
+                    message = bottomToast,
+                    variant = RemToastVariant.Error,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
                 Spacer(Modifier.height(RemSpacing.md))
             }
             OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
@@ -296,16 +299,16 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             // Primary = buttonBackground (black in light / white in dark) with the inverted label
             // (backgroundPrimary). Secondary = the neutral fill used for a second provider button.
             val baseContainer = if (filled) colors.buttonBackground else colors.fillTertiary
-            val labelColor = if (filled) colors.backgroundPrimary else colors.labelPrimary
-            // Disabled / loading (Check-in "Saving…"/"Saved", the "Continue" no-selection state,
-            // sign-in "Signing in…"): dim the CONTAINER by baking the alpha into the fill, and keep the
-            // label + spinner at full `labelColor`. A group `Modifier.alpha` over the whole button is
-            // not reliably composited in the LayoutLib render, which left the black CTA opaque with a
-            // dark, illegible label. Baking the alpha into a solid fill ghosts the button
-            // deterministically — a light-grey button with a legible inverted label — matching the iOS
-            // ghosted CTA and the founder reference's "Saving…" frame.
-            val containerColor =
-                if (interactive) baseContainer else baseContainer.copy(alpha = RemOnboardingMetrics.disabledAlpha)
+            val labelColor = if (!interactive) {
+                colors.labelTertiary
+            } else if (filled) {
+                colors.backgroundPrimary
+            } else {
+                colors.labelPrimary
+            }
+            // Disabled is an explicit semantic state shared with Figma Button.State=Disabled. It
+            // changes container and label tokens; it never lowers opacity on the complete control.
+            val containerColor = if (interactive) baseContainer else colors.fillTertiary
             Box(
                 modifier = modifier
                     .heightIn(min = 50.dp)
@@ -341,7 +344,9 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
         }
 
         OnboardingActionStyle.TextAccent, OnboardingActionStyle.TextSubtle -> {
-            val labelColor = if (action.style == OnboardingActionStyle.TextAccent) {
+            val labelColor = if (!interactive) {
+                colors.labelTertiary
+            } else if (action.style == OnboardingActionStyle.TextAccent) {
                 colors.systemBlue
             } else {
                 colors.labelSecondary
@@ -349,7 +354,6 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             Box(
                 modifier = modifier
                     .heightIn(min = 44.dp)
-                    .alpha(if (interactive) 1f else RemOnboardingMetrics.disabledAlpha)
                     .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)
                     .padding(vertical = RemSpacing.sm),
                 contentAlignment = Alignment.Center,
@@ -359,13 +363,3 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
         }
     }
 }
-
-/** Onboarding metrics that are not (yet) token-backed. Centralized so no view holds a literal. */
-internal object RemOnboardingMetrics {
-    /** Dimming applied to a disabled/loading CTA (matches the greyed "Saving…" reference button). */
-    const val disabledAlpha: Float = RemDisabledAlpha
-}
-
-// The disabled dimming has no token on tokens.json yet; kept as one named constant to reconcile
-// alongside the other flagged onboarding metrics rather than sprinkled as a call-site literal.
-private const val RemDisabledAlpha: Float = 0.4f

@@ -62,8 +62,8 @@ struct RemButtonTokenSet {
             verticalPadding = DesignTokens.Spacing.md
             fillsWidth = true
             font = DesignTokens.Typography.bodyBold
-            backgroundDisabled = DesignTokens.Color.labelTertiary.opacity(0.35)
-            foregroundDisabled = DesignTokens.Color.backgroundPrimary
+            backgroundDisabled = DesignTokens.Color.fillTertiary
+            foregroundDisabled = DesignTokens.Color.labelTertiary
             pressedOpacity = 0.72
             switch variant {
             case .rectBlue:

@@ -1,19 +1,19 @@
 # Contract — Onboarding · Check-in cadence
 
 **Outcome:** iOS + Android render the Check-in cadence step *identically* — same top lockup, same
-grouped time-of-day list with switches, same bottom-pinned CTA that tracks the save lifecycle, same
+grouped time-of-day list with switches, same Body-owned action area that tracks the save lifecycle, same
 icons + FILL. **Mode:** Reproduce (the founder onboarding reference frame
 `tasks/refs/onboarding/04-checkin.png`) + Extend (the save-lifecycle states around it) + Systemize
 (extracts the canonical `RemSwitch`).
 
 **Authority:** the shipping `CheckinsService` / `Checkin` cadence model (RemClaw) and the founder
 reference frame `tasks/refs/onboarding/04-checkin.png` (the "Saving…" state). This is a step **inside**
-the onboarding sequencer — it carries the scaffold's back-nav and **bottom-pinned CTA**, like consent
+the onboarding sequencer — it carries the scaffold's back-nav and **Body-owned ActionArea**, like consent
 (and unlike sign-in, which is its own centered screen). That difference is intentional, not drift.
 
 Parent scope: #12 (onboarding middle steps) and #10.
 
-## Layout — top lockup, grouped cadence list, bottom-pinned CTA
+## Layout — top lockup, grouped cadence list, Body-owned action region
 
 A scaffolded step (sequencer chrome: a back chevron in the nav, owned by the host, not the template).
 Content top → bottom, **centered**, max content width 560:
@@ -34,12 +34,12 @@ Content top → bottom, **centered**, max content width 560:
    - **Morning** — leading `sunrise` / `wb_twilight`; on by default at **8:00 AM**.
    - **Midday** — leading `sun.max` / `wb_sunny`; off by default (time 12:30 PM when on).
    - **Evening** — leading `moon.stars` / `bedtime`; off by default (time 8:00 PM when on).
-5. **Primary CTA** — full-width filled (`Color.buttonBackground`, `Typography.bodyBold` inverted label,
-   radius `medium`), **pinned above the bottom safe area**. Its label + treatment track the save
-   lifecycle (see States). There is **no** legal footnote on this step.
-6. **Recoverable-failure notice** (failure state only) — the shared `Color.systemRed` @ 12% card
-   (leading `exclamationmark.triangle.fill` / `error`, FILL 1 + `Typography.caption1` message), directly
-   **above** the CTA.
+5. **Primary CTA** — canonical `ActionArea` with Footnote off, inside Body's `VStack/Actions` and
+   full-width within Body's 24pt inset. Its Button uses an explicit semantic disabled state rather
+   than whole-control opacity. Its label + treatment track the save lifecycle (see States).
+6. **Recoverable-failure Toast** (failure state only) — canonical `Toast` (`Variant=error`), directly
+   above the ActionArea. It is brief, non-actionable, announces politely, and auto-dismisses after
+   four seconds by default; the retry action remains available after it disappears.
 
 ## States
 
@@ -47,19 +47,19 @@ Content top → bottom, **centered**, max content width 560:
 |---|---|---|
 | **default** | cadence as loaded from `CheckinsService` (Morning on @ 8:00 AM, others off) | "Continue" — filled, enabled when ≥1 time is on |
 | **edited** | the user changed a toggle (e.g. Midday also on @ 12:30 PM); not yet persisted | "Continue" — filled, enabled |
-| **saving** | persisting; rows locked (non-interactive) | "Saving…" — leading spinner, disabled, ghosted 40% container fill |
-| **saved** | persisted; rows locked | "Saved" — leading `checkmark`, disabled, ghosted 40% container fill |
-| **recoverable failure** | save failed; rows interactive again; notice card above the CTA | "Try again" — filled, enabled |
+| **saving** | persisting; rows locked (non-interactive) | "Saving…" — leading spinner, explicit disabled semantic colors |
+| **saved** | persisted; rows locked | "Saved" — leading `checkmark`, explicit disabled semantic colors |
+| **recoverable failure** | save failed; rows interactive again; transient error Toast above the CTA | "Try again" — filled, enabled |
 
-**Notice card:** `Color.systemRed` @ 12% fill, radius `medium`, leading warning icon (registry:
-`exclamationmark.triangle.fill` / `error`, FILL 1) + `Typography.caption1` message — the same treatment
-as sign-in's error/recovery notice, so the paired evidence reads as one card wherever it appears.
+**Toast:** neutral capsule, error semantic glyph/tint, `Typography.footnote` message. It carries no
+action and does not replace the persistent retry control.
 
 ## Rules (the decisions that are easy to drift on — stated once)
 
-- **Bottom-pinned action area:** this step pins the CTA (and, in failure, the notice above it) as a
-  centered bottom action region; the lockup + list stay top-anchored. Contrast sign-in (centered, no
-  bottom action area). The two screens differ on purpose; each is identical *across platforms*.
+- **Body owns layout:** the full-device root order is `StatusBar → TopBar → Body → NavigationIndicator`.
+  Body fills the remaining width/height, owns a single 24pt outer inset, and lays out
+  `VStack/Content` over `VStack/Actions` with space between. ActionArea has no outer inset of its own.
+  NavigationIndicator is device chrome and never moves inside Body.
 - **CTA lifecycle:** `default`/`edited` → "Continue"; `saving` → disabled "Saving…" + spinner; `saved`
   → disabled "Saved" + check; `failure` → enabled "Try again". The primary is one button whose label +
   leading affordance change; it is not five different controls.
@@ -88,16 +88,15 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 
 ## System use
 
-- **Reuse:** the onboarding scaffold's bottom-pinned action area, `RemSection` + `ListRow`, the primary
-  filled button treatment, `ContainedIcon` (hero + row leading), the shared error-notice treatment,
-  tokens.
+- **Reuse:** the onboarding scaffold's Body action region, `RemSection` + `ListRow`, `ActionArea`,
+  explicit Button states, `ContainedIcon` (hero + row leading), canonical `Toast`, and tokens.
 - **Systemize:** `RemSwitch` — the canonical on/off toggle (Figma set `868:210`; legacy iOS-on
   variant `110:50`), extracted here
   because a grouped-settings toggle recurs across Settings/automations/voice, not just this screen. On
   both platforms it is a thin wrapper over the native switch pinned to `systemGreen`.
 - **Exact:** the top-lockup order + copy, the three cadence rows (icons + titles, in order), the switch
-  on-tint, the value-pill-only-when-on rule, the bottom-pinned CTA, the CTA lifecycle labels, the notice
-  placement (above the CTA), the icon registry rows + FILL.
+  on-tint, the value-pill-only-when-on rule, Body/ActionArea hierarchy, the CTA lifecycle labels, Toast
+  placement (above the ActionArea), the icon registry rows + FILL.
 - **Adaptable:** per-platform safe-area handling; the exact hero-badge size; the exact value-pill radius
   and fill; the leading-icon active tint (the reference's blue morning glyph is expressed via the switch
   and the shared `.subtle` tile so the icon color is not coupled to row state).
@@ -148,11 +147,12 @@ the candidate is published.
   [Failure `885:1429`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1429).
 - **Readback:** every evidence node is a direct 402×874 instance of the canonical set. Default,
   Edited, Saving, Saved, and Failure expose the matching `Status` value. Each root orders
-  `StatusBar`, official iOS `TopBar`, fill-height `Body`, and `Bottom`; Body owns its horizontal
-  inset and keeps the lockup centered horizontally while remaining top-anchored per this contract.
+  `StatusBar`, official iOS `TopBar`, fill-height `Body`, and `NavigationIndicator`; Body owns one 24pt
+  inset and contains `VStack/Content` plus `VStack/Actions`, keeping the lockup centered horizontally
+  while remaining top-anchored per this contract.
   Cadence rows use the repaired HUG `Section` with transparent `ListRow` roots and the official
-  platform-backed `RemSwitch`. Bottom uses `ActionArea` with Footnote off; Saving and Saved select
-  explicit disabled Button variants. Failure restores `ErrorBanner` above the CTA. Inventory
+  platform-backed `RemSwitch`. `VStack/Actions` uses `ActionArea` with Footnote off; Saving and Saved
+  select explicit disabled Button variants. Failure adds canonical `Toast` above the ActionArea. Inventory
   Section `00` contains one transparent auto-layout HStack so deletion/insertion heals spacing.
   Captured 2026-09-29 in the live editable file.
 
@@ -165,9 +165,9 @@ The paired render passes when iOS and Android match on **all** of:
 - [ ] Cadence list: grouped card, three rows in order (Morning, Midday, Evening), same leading icons
       (outline) + same titles + trailing switches
 - [ ] Switch on-tint is `systemGreen`; a row's value pill shows only while that row is on
-- [ ] CTA bottom-pinned, full-width filled; label + affordance track the state
+- [ ] ActionArea sits inside Body and fills its inset width; label + affordance track the state
       (Continue / Saving… + spinner / Saved + check / Try again)
-- [ ] Failure notice present in the failure state, **above** the CTA, same copy + role
+- [ ] Failure Toast present in the failure state, above ActionArea, same copy + role
 - [ ] Icons match the registry glyph **and FILL** on both
 
 **Evidence:** `screenshots.yml` paired table — `checkin-default-light`, `checkin-edited-light`,

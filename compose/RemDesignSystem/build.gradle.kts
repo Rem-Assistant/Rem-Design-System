@@ -19,6 +19,7 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     from("primitives")
     from("controls")
     from("rows")
+    from("feedback")
     from("brand")
     from("icons")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }
