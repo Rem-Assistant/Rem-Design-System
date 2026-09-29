@@ -149,9 +149,16 @@ actions fill the available width equally rather than sizing from their labels.
 Keep the component index as an index. Put aggregate composition masters and their documentation on
 a dedicated Compositions page; put indivisible controls and assets on Primitives. The page boundary
 should communicate abstraction level without making the index itself another component canvas.
-Organize each component-family page with top-level canvas Sections and auto-layout inside each
-Section. Canvas Sections do not own a fill or stroke; the documentation surface binds
-`background/primary`, so the component's real surface remains visible and theme-aware.
+Organize each component-family page with top-level native Figma Sections for canvas navigation and
+one transparent auto-layout `Content` frame inside each Section. `Content` owns the visible large
+header, description, divider, documentation rows, and their spacing, so adding, removing, or
+reordering children heals automatically. The native Section is a bounds shell, not a layout engine:
+after every content mutation, refit its bounds to `Content` with the established outer inset and
+verify neighboring Sections do not overlap. Canvas Sections do not own a fill or stroke; the
+documentation surface binds `background/primary`, so the component's real surface remains visible
+and theme-aware. If the active Figma runtime cannot refit a native Section reliably, use the same
+auto-layout frame and visual treatment as the temporary top-level container rather than positioning
+children manually.
 
 Do not turn the width of one reference device into a fixed reusable-component width. When code or
 the product layout defines a content cap, make the composition fill its parent up to that maximum;
@@ -201,6 +208,12 @@ A system change is complete when:
 - a machine contract verifies page/section hierarchy, component ancestry, required
   states, critical style bindings, prototype roots, and starting points;
 - current rendered evidence is reviewed against the editable Figma states.
+
+When comparing evidence from different renderers, normalize every image to its declared logical
+viewport before judging composition, spacing, or relative scale. Raw PNG dimensions, capture
+density, and device pixel ratio are not layout differences. Treat platform status/navigation
+chrome, safe-area insets, and native type rasterization as platform adaptations unless the screen
+contract marks them exact.
 
 Keep exploratory proposals visibly separate from canonical as-built work. Promote
 them only after the product decision and implementation are approved.
