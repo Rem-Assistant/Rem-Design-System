@@ -17,6 +17,7 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     into(layout.buildDirectory.dir("designSystemSrc"))
     from("onboarding")
     from("primitives")
+    from("controls")
     from("rows")
     from("brand")
     from("icons")

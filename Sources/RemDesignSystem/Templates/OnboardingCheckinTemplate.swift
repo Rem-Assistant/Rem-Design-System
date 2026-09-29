@@ -1,0 +1,313 @@
+import SwiftUI
+
+/// Presentational template for the onboarding **"When should Rem check in?"** cadence step.
+/// Pure: no scheduling, no persistence, no `CheckinsService` — the app wraps it, maps the shipping
+/// `CheckinsService` / `Checkin` cadence to the ``Period`` list + a save ``Status``, and supplies the
+/// toggle / continue / retry callbacks. The template only renders the state it is handed (the same
+/// boundary that keeps sign-in "wired to real behaviour, no mock").
+///
+/// Reproduced from the founder reference frame `tasks/refs/onboarding/04-checkin.png` and the shipping
+/// `CheckinsService` cadence model: a scaffolded onboarding step (hero → title → body → grouped list
+/// of time-of-day rows) with a **bottom-pinned CTA** whose label + treatment track the save lifecycle
+/// seen in the reference ("Saving…"). Composes design-system components: ``ContainedIcon`` (hero + row
+/// leading), ``RemSection`` + ``ListRow`` (the cadence list), ``RemSwitch`` (per-row toggle).
+///
+/// The Compose sibling is `OnboardingCheckinScreen` (`compose/RemDesignSystem/onboarding/CheckinStep.kt`);
+/// the two render the same states so the side-by-side evidence compares the same screen. Built to
+/// `docs/contracts/onboarding-checkin.md`.
+public struct OnboardingCheckinTemplate: View {
+    /// One time-of-day cadence row (Morning / Midday / Evening). `time` is the formatted brief time,
+    /// shown as a value pill only while the row is on. `onToggle` is the single persistence endpoint
+    /// the production row and the interaction tests both invoke.
+    public struct Period: Identifiable {
+        public let id: String
+        public let symbol: String
+        public let title: String
+        public let time: String?
+        public let isOn: Bool
+        public let onToggle: (Bool) -> Void
+
+        public init(
+            id: String,
+            symbol: String,
+            title: String,
+            time: String?,
+            isOn: Bool,
+            onToggle: @escaping (Bool) -> Void
+        ) {
+            self.id = id
+            self.symbol = symbol
+            self.title = title
+            self.time = time
+            self.isOn = isOn
+            self.onToggle = onToggle
+        }
+
+        /// The single toggle endpoint used by the production switch and interaction tests.
+        func toggle(_ on: Bool) {
+            onToggle(on)
+        }
+    }
+
+    /// The save lifecycle, driven by the host's real `CheckinsService`. Mirrors the Compose
+    /// `CheckinStatus`. `default` (pristine, as-loaded) and `edited` (unsaved user change) share the
+    /// "Continue" CTA; `saving` / `saved` / `failure` are the reference's persistence states.
+    public enum Status: Equatable {
+        /// The cadence exactly as loaded from `CheckinsService`; nothing changed yet.
+        case `default`
+        /// The user changed a toggle or time; the change is not yet persisted.
+        case edited
+        /// The change is being persisted. CTA shows the disabled "Saving…" spinner; rows lock.
+        case saving
+        /// The change persisted. CTA shows a brief "Saved" confirmation before the host advances.
+        case saved
+        /// Persistence failed and can be retried. A notice sits above the CTA; primary = "Try again".
+        case failure(message: String)
+    }
+
+    var status: Status
+    var title: String
+    var message: String
+    var periods: [Period]
+    var onPrimary: () -> Void
+    var onRetry: () -> Void
+
+    public init(
+        status: Status,
+        title: String = OnboardingCheckinTemplate.canonicalTitle,
+        message: String = OnboardingCheckinTemplate.canonicalMessage,
+        periods: [Period],
+        onPrimary: @escaping () -> Void,
+        onRetry: @escaping () -> Void = {}
+    ) {
+        self.status = status
+        self.title = title
+        self.message = message
+        self.periods = periods
+        self.onPrimary = onPrimary
+        self.onRetry = onRetry
+    }
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    Spacer(minLength: DesignTokens.Spacing.xxl)
+                    hero
+                    cadenceCard
+                }
+                .padding(DesignTokens.Spacing.lg)
+                .padding(.bottom, DesignTokens.Spacing.xl)
+                .frame(maxWidth: 560)
+            }
+            bottomBar
+        }
+        .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
+    }
+
+    private var hero: some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            // Registry hero: `clock.badge.checkmark.fill` (pairs with Android `alarm_on`, FILL 1) —
+            // a scheduled, confirmed check-in time. White glyph on the brand-blue squircle.
+            ContainedIcon("clock.badge.checkmark.fill", fill: .tint(DesignTokens.Color.brandBlue), size: .large)
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                Text(title)
+                    .font(DesignTokens.Typography.largeTitle.weight(.semibold))
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    .multilineTextAlignment(.center)
+                Text(message)
+                    .font(DesignTokens.Typography.body)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var cadenceCard: some View {
+        RemSection(rows: periods) { period in
+            ListRow(
+                period.title,
+                leading: { ContainedIcon(period.symbol, fill: .subtle) },
+                trailing: { rowTrailing(period) }
+            )
+        }
+    }
+
+    /// Trailing accessory: the value pill (only while the row is on) sits directly left of the switch.
+    @ViewBuilder private func rowTrailing(_ period: Period) -> some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            if period.isOn, let time = period.time {
+                TimePill(time)
+            }
+            RemSwitch(isOn: period.isOn, enabled: rowsInteractive, onChange: period.toggle)
+        }
+    }
+
+    /// Bottom-pinned region — an optional recoverable-failure notice above the primary CTA. There is no
+    /// legal footnote on this step (unlike consent); the cadence step's copy carries no legal terms.
+    private var bottomBar: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: DesignTokens.Spacing.md) {
+                if case .failure(let message) = status { notice(message) }
+                primaryButton
+            }
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.top, DesignTokens.Spacing.sm)
+            .padding(.bottom, DesignTokens.Spacing.md)
+            .frame(maxWidth: 560)
+        }
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    /// The primary CTA — the shipping `SignInButton` treatment (`buttonBackground` fill, `medium`
+    /// radius, inverted `bodyBold` label) with a leading spinner (`saving`) or checkmark (`saved`) so
+    /// the paired render reads as the same button across every state on both platforms.
+    private var primaryButton: some View {
+        Button(action: primaryAction) {
+            HStack(spacing: DesignTokens.Spacing.sm) {
+                switch status {
+                case .saving:
+                    ProgressView().tint(DesignTokens.Color.backgroundPrimary)
+                case .saved:
+                    Image(systemName: "checkmark").font(.system(size: 15, weight: .bold))
+                default:
+                    EmptyView()
+                }
+                Text(primaryLabel)
+                    .font(DesignTokens.Typography.bodyBold)
+            }
+            .foregroundStyle(DesignTokens.Color.backgroundPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(DesignTokens.Spacing.md)
+            .background(DesignTokens.Color.buttonBackground)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(!primaryEnabled)
+        .opacity(primaryEnabled ? 1 : 0.4)
+    }
+
+    private func primaryAction() {
+        switch status {
+        case .failure: onRetry()
+        default: onPrimary()
+        }
+    }
+
+    private var primaryLabel: String {
+        switch status {
+        case .default, .edited: return "Continue"
+        case .saving: return "Saving\u{2026}"
+        case .saved: return "Saved"
+        case .failure: return "Try again"
+        }
+    }
+
+    /// The CTA is actionable when there is at least one selected time ("Start with one") and no save is
+    /// in flight; `failure` re-enables it for the retry.
+    private var primaryEnabled: Bool {
+        switch status {
+        case .default, .edited: return anyEnabled
+        case .saving, .saved: return false
+        case .failure: return true
+        }
+    }
+
+    /// Rows lock while a save is in flight or has just completed, so the persisted set can't change
+    /// out from under the request.
+    private var rowsInteractive: Bool {
+        switch status {
+        case .saving, .saved: return false
+        default: return true
+        }
+    }
+
+    private var anyEnabled: Bool {
+        periods.contains { $0.isOn }
+    }
+
+    /// Recoverable-failure notice — the shared `systemRed` @ 12% treatment (mirrors sign-in's notice +
+    /// the Compose `OnboardingNotice`) so the paired evidence reads as the same card. The leading glyph
+    /// resolves through the icon registry by meaning + FILL: `exclamationmark.triangle.fill`
+    /// (`error`, FILL 1).
+    private func notice(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.sm) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignTokens.Color.systemRed)
+            Text(message)
+                .font(DesignTokens.Typography.caption1)
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
+                .fill(DesignTokens.Color.systemRed.opacity(0.12))
+        )
+    }
+}
+
+// MARK: - Canonical copy (shared by previews, snapshot evidence, and the Compose sibling)
+
+public extension OnboardingCheckinTemplate {
+    /// Title — verbatim from the reference frame. MUST NOT change without an authority change.
+    static let canonicalTitle = "When should Rem check in?"
+    /// Body — verbatim from the reference frame. MUST NOT change without an authority change.
+    static let canonicalMessage =
+        "At each time you pick, Rem writes you a brief on what came in. Start with one; add more anytime in Settings."
+}
+
+/// A small value pill showing the selected brief time (e.g. "8:00 AM"). Display-only in onboarding —
+/// editing a time is a Settings concern ("add more anytime in Settings"), so no picker is invented
+/// here. Token-bound and local to this step; flagged for extraction if a second consumer appears.
+private struct TimePill: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+
+    var body: some View {
+        Text(text)
+            .font(DesignTokens.Typography.body)
+            .foregroundStyle(DesignTokens.Color.labelPrimary)
+            .padding(.horizontal, DesignTokens.Spacing.sm)
+            .padding(.vertical, DesignTokens.Spacing.xs)
+            .background(
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                    .fill(DesignTokens.Color.fillTertiary)
+            )
+    }
+}
+
+#if DEBUG
+private func checkinPreviewPeriods(morningOn: Bool = true, middayOn: Bool = false) -> [OnboardingCheckinTemplate.Period] {
+    [
+        .init(id: "morning", symbol: "sunrise", title: "Morning", time: "8:00 AM", isOn: morningOn, onToggle: { _ in }),
+        .init(id: "midday", symbol: "sun.max", title: "Midday", time: "12:30 PM", isOn: middayOn, onToggle: { _ in }),
+        .init(id: "evening", symbol: "moon.stars", title: "Evening", time: "8:00 PM", isOn: false, onToggle: { _ in }),
+    ]
+}
+
+#Preview("Check-in · default") {
+    OnboardingCheckinTemplate(status: .default, periods: checkinPreviewPeriods(), onPrimary: {})
+}
+#Preview("Check-in · edited") {
+    OnboardingCheckinTemplate(status: .edited, periods: checkinPreviewPeriods(middayOn: true), onPrimary: {})
+}
+#Preview("Check-in · saving") {
+    OnboardingCheckinTemplate(status: .saving, periods: checkinPreviewPeriods(middayOn: true), onPrimary: {})
+}
+#Preview("Check-in · saved") {
+    OnboardingCheckinTemplate(status: .saved, periods: checkinPreviewPeriods(middayOn: true), onPrimary: {})
+}
+#Preview("Check-in · failure") {
+    OnboardingCheckinTemplate(
+        status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
+        periods: checkinPreviewPeriods(middayOn: true),
+        onPrimary: {}
+    )
+}
+#endif

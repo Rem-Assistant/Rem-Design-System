@@ -23,6 +23,39 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
 
+## Check-in cadence step — paired iOS + Android per contract — 2026-09-29 (issue #52)
+
+- **Screen:** onboarding **Check-in cadence** — "When should Rem check in?" — reproduced to
+  `docs/contracts/onboarding-checkin.md`. Authority: the shipping `CheckinsService` / `Checkin` cadence
+  model + the founder reference frame `tasks/refs/onboarding/04-checkin.png` (the "Saving…" state).
+- **Paired code:** SwiftUI `Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift` and
+  Compose `compose/RemDesignSystem/onboarding/CheckinStep.kt` (`OnboardingCheckinScreen` /
+  `checkinStep(status:…)`, hosted by `OnboardingSequencer`). Both render the same scaffolded step (hero
+  → title → body → grouped cadence list) with a bottom-pinned CTA whose label + affordance track the
+  five save-lifecycle states, and the failure notice pinned above the CTA.
+- **New canonical component:** `RemSwitch` (`Controls/RemSwitch.swift` · `controls/RemSwitch.kt`) — a
+  thin native-switch wrapper pinned to the `systemGreen` on-tint, Figma `Switch` `110:50`, Code Connect
+  `code-connect/{swiftui,compose}/RemSwitch.figma.ts`. First consumer is this screen; extracted because
+  a grouped-settings toggle recurs across Settings/automations/voice.
+- **Reuse:** `RemSection` + `ListRow`, `ContainedIcon` (hero + row leadings), the shared onboarding
+  scaffold bottom action area (extended with an optional `bottomNotice` slot), the shared error-notice
+  treatment, generated tokens. The value pill is local (`TimePill` / `CheckinTimePill`), flagged for
+  extraction.
+- **Icons:** four new registry rows — hero `clock.badge.checkmark.fill` / `alarm_on` (FILL 1) and the
+  Morning/Midday/Evening leadings `sunrise`·`sun.max`·`moon.stars` / `wb_twilight`·`wb_sunny`·`bedtime`
+  (FILL 0). Android renders these from the Material Icons vector set (Outlined/Filled), a documented
+  FILL-honouring divergence from the baked Material Symbols subset (which cannot be regenerated on this
+  runner — no `fonttools`/network). See `docs/contracts/icon-registry.md` ‡.
+- **Evidence:** the five states — `checkin-default-light`, `checkin-edited-light`, `checkin-saving-light`,
+  `checkin-saved-light`, `checkin-failure-light` — via `RenderSnapshotTests` (iOS) and `EvidenceSnapshots`
+  (Compose/Paparazzi), declared in `tools/render-evidence/contracts.json` as `onboarding-checkin`. The
+  pure save-lifecycle model is unit-tested (`CheckinCadenceTest`, `CheckinInteractionTests`).
+- **Open (capability-gated):** the editable Figma screen + five states + prototype flow + component
+  ledger, and the exact-head Figma exports. Native Figma canvas authoring requires the authenticated
+  Figma MCP / Codex Builder runtime, which is **not present on the hosted build runner** — a Steward
+  capability blocker, recorded in the contract's *Figma delivery* section, not an omission. The
+  contract carries no Figma `references`, so the drift gate does not fail closed on the pending export.
+
 ## Consent flow + component-documentation proving pass — 2026-09-28 (issue #30)
 
 - Current shipping `AIDataSharingConsentView` has no consent-local loading/error state. The speculative

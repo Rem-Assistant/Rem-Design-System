@@ -70,10 +70,13 @@ private fun OnboardingFullFlowPreview() {
                         title = "Connectors",
                         subtitle = "Connect Rem to the tools you use so it can keep you up to date and surface what needs doing.",
                     ),
-                    placeholderMiddleStep(
-                        id = "checkin",
-                        title = "When should Rem check in?",
-                        subtitle = "At each time you pick, Rem writes you a brief on what came in.",
+                    // The real Check-in cadence step (#52) — an ordinary OnboardingStep on the same
+                    // scaffold, exactly as the handoff note promised.
+                    checkinStep(
+                        status = CheckinStatus.Default,
+                        periods = checkinDefaultPeriods(),
+                        onToggle = { _, _ -> },
+                        onContinue = {},
                     ),
                 ),
             ),

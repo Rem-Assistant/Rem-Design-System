@@ -65,6 +65,12 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
+    /**
+     * A recoverable-failure notice pinned directly above the primary CTA (the Check-in save-failure
+     * state). One treatment shared with sign-in's [OnboardingNotice], so the paired evidence reads as
+     * the same card wherever it appears. Null in every non-error state.
+     */
+    bottomNotice: String? = null,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
@@ -189,6 +195,10 @@ fun OnboardingScaffold(
                 .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            if (bottomNotice != null) {
+                OnboardingNotice(message = bottomNotice, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(RemSpacing.md))
+            }
             OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
             if (secondary != null) {
                 Spacer(Modifier.height(RemSpacing.sm))

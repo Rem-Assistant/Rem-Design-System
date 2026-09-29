@@ -18,6 +18,24 @@ never by "whatever Material icon looks close." One text layer per platform; no S
 | terms / document | `doc.text` | `description` | **0** | legal row |
 | disclosure chevron | `chevron.right` | `chevron_right` | **0** | list-row accessory |
 | error / warning | `exclamationmark.triangle.fill` | `error` | **1** | notice card |
+| check-in schedule | `clock.badge.checkmark.fill` | `alarm_on` | **1** | check-in hero — a clock/alarm with a confirmation check ‡ |
+| morning / sunrise | `sunrise` | `wb_twilight` | **0** | check-in row leading ‡ |
+| midday / sun | `sun.max` | `wb_sunny` | **0** | check-in row leading ‡ |
+| evening / moon | `moon.stars` | `bedtime` | **0** | check-in row leading ‡ |
+
+‡ **Android render path for the four check-in rows.** These four glyphs are **not** in the baked
+`RemMaterialSymbols` static subset (which carries only the five consent/sign-in codepoints), and
+regenerating that subset needs the offline font toolchain (`tools/material-symbols/subset.py` +
+`fonttools` + the upstream variable font). Until a subset regeneration lands, Android renders these
+rows from the **Material Icons** vector set (`androidx.compose.material:material-icons-extended`) via
+the `ContainedIcon(icon:)` / `OnboardingHero(icon:)` ImageVector path already used for non-registry
+heroes — **`Icons.Outlined.*` for the FILL-0 rows, `Icons.Filled.AlarmOn` for the FILL-1 hero**, so
+the pinned FILL is still honoured (outline vs filled is a value, not a guess). This is a deliberate,
+documented divergence from the Material Symbols *font* path used by consent, flagged for a future
+subset regeneration to unify the check-in rows onto the font path. The pairings are researched
+semantic twins (a clock-with-check hero; sunrise / sun / moon time-of-day markers), not near-misses —
+but `clock.badge.checkmark` ↔ `alarm_on` is the closest available clock+check pair on both sides and
+is the one row a designer may want to revisit if a truer twin appears.
 
 **Brand marks are assets, not registry glyphs** (they have no font twin):
 `RemAppIcon` (raster, both platforms) · Apple mark (SF `apple.logo` / bundled monochrome vector) ·

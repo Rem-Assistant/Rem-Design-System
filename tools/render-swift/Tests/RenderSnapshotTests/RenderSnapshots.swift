@@ -71,6 +71,40 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
+        // Check-in cadence states, keyed to pair with the Compose `Checkin-*` shots. Default has only
+        // Morning on; the edited/saving/saved/failure set carries the added Midday selection so the
+        // states are visibly distinct in the paired table.
+        render("Checkin-default-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .default, middayOn: false)
+        }
+        render("Checkin-edited-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .edited, middayOn: true)
+        }
+        render("Checkin-saving-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saving, middayOn: true)
+        }
+        render("Checkin-saved-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saved, middayOn: true)
+        }
+        render("Checkin-failure-light", width: 393, height: 852, dark: false) {
+            checkinScreen(
+                status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
+                middayOn: true
+            )
+        }
+    }
+
+    // The REAL onboarding Check-in template, one state per snapshot.
+    private func checkinScreen(status: OnboardingCheckinTemplate.Status, middayOn: Bool) -> some View {
+        OnboardingCheckinTemplate(
+            status: status,
+            periods: [
+                .init(id: "morning", symbol: "sunrise", title: "Morning", time: "8:00 AM", isOn: true, onToggle: { _ in }),
+                .init(id: "midday", symbol: "sun.max", title: "Midday", time: "12:30 PM", isOn: middayOn, onToggle: { _ in }),
+                .init(id: "evening", symbol: "moon.stars", title: "Evening", time: "8:00 PM", isOn: false, onToggle: { _ in }),
+            ],
+            onPrimary: {}
+        )
     }
 
     // MARK: - Galleries (mirror each component's #Preview)
