@@ -1,0 +1,46 @@
+name: Figma delivery attestation
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Source issue number
+        required: true
+        type: string
+      pr:
+        description: Draft pull request number
+        required: true
+        type: string
+      record_path:
+        description: Checked-in Figma delivery record
+        required: true
+        type: string
+      screen_prefix:
+        description: Manifest screen-name prefix
+        required: true
+        type: string
+      mode:
+        description: Truthful canvas authorship mode
+        required: true
+        default: operator_assisted
+        type: choice
+        options:
+          - operator_assisted
+          - hosted_writer_recovery
+
+jobs:
+  attest:
+    uses: samuelalake/agent-factory/.github/workflows/figma-attest.yml@main
+    with:
+      repo: Rem-Assistant/Rem-Design-System
+      issue: ${{ inputs.issue }}
+      pr: ${{ inputs.pr }}
+      record_path: ${{ inputs.record_path }}
+      screen_prefix: ${{ inputs.screen_prefix }}
+      factory_ref: main
+      runner: ubuntu-latest
+      app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
+      mode: ${{ inputs.mode }}
+    secrets:
+      AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
+      AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}
