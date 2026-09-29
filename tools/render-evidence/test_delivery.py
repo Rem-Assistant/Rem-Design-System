@@ -26,7 +26,7 @@ class PairedDeliveryTests(unittest.TestCase):
             {"consent-flow-documentation": {"name": "Consent-flow-documentation", "node": "777:432"}},
         )
 
-    def fixtures(self, root, missing=None, include_references=True, states=None):
+    def fixtures(self, root, missing=None, include_references=True, states=None, include_structure=True):
         states = states or CONTRACTS["onboarding-consent"]["states"]
         for platform in ("swiftui", "compose"):
             (root / platform).mkdir()
@@ -44,6 +44,58 @@ class PairedDeliveryTests(unittest.TestCase):
         for key in CONTRACTS["onboarding-consent"]["waypoints"]:
             if ("reference", key) != missing:
                 (root / "reference" / (key + ".png")).write_bytes(b"figma")
+        if not include_structure:
+            return
+        references = CONTRACTS["onboarding-consent"]["references"]
+        (root / "structure").mkdir()
+        (root / "structure/report.json").write_text(json.dumps({
+            "status": "completed",
+            "head": "a" * 40,
+            "structure": {
+                "canonicalScreens": [
+                    {"id": value["node"], "status": "conformant"}
+                    for value in references.values()
+                ],
+                "screens": [
+                    {
+                        "name": key,
+                        "componentId": value["node"],
+                        "resolvedNode": f"I777:433;769:{index}",
+                        "status": "conformant",
+                    }
+                    for index, (key, value) in enumerate(references.items(), start=1)
+                ],
+                "prototype": {
+                    "flowStartingPoints": [{"nodeId": "781:596", "name": "Consent flow"}],
+                    "frames": [
+                        {
+                            "node": "781:596", "name": "Prototype · Consent", "status": "conformant",
+                            "destinations": ["781:637", "781:690"], "backCount": 0, "backActions": [],
+                            "navigations": [
+                                {"sourceNode": "781:600", "sourceName": "ListRow", "trigger": "ON_CLICK", "destinationId": "781:637"},
+                                {"sourceNode": "781:601", "sourceName": "ListRow", "trigger": "ON_CLICK", "destinationId": "781:690"},
+                            ],
+                        },
+                        {
+                            "node": "781:637", "name": "Prototype · Terms", "status": "conformant",
+                            "destinations": [], "backCount": 2, "navigations": [],
+                            "backActions": [
+                                {"sourceNode": "781:640", "sourceName": "Scrim", "trigger": "ON_CLICK"},
+                                {"sourceNode": "781:641", "sourceName": "Done", "trigger": "ON_CLICK"},
+                            ],
+                        },
+                        {
+                            "node": "781:690", "name": "Prototype · Privacy", "status": "conformant",
+                            "destinations": [], "backCount": 2, "navigations": [],
+                            "backActions": [
+                                {"sourceNode": "781:693", "sourceName": "Scrim", "trigger": "ON_CLICK"},
+                                {"sourceNode": "781:694", "sourceName": "Done", "trigger": "ON_CLICK"},
+                            ],
+                        },
+                    ],
+                },
+            },
+        }), encoding="utf-8")
 
     def test_each_required_state_publishes_adjacent_platforms(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,6 +119,14 @@ class PairedDeliveryTests(unittest.TestCase):
                 self.assertIn(f"![compose Render {key}]", row)
                 self.assertIn(f"![Figma Reference {key}]", row)
             self.assertIn("consent-flow-documentation", body)
+            self.assertIn("Authenticated editable Figma proof", body)
+            self.assertIn("Authenticated prototype proof", body)
+            self.assertIn("Consent flow → `781:596`", body)
+            self.assertIn("ListRow · `781:600` → `781:637`", body)
+            self.assertIn("Scrim · `781:640` · ON_CLICK", body)
+            self.assertIn("Done · `781:641` · ON_CLICK", body)
+            for value in CONTRACTS["onboarding-consent"]["references"].values():
+                self.assertIn(f"`{value['node']}` · conformant", body)
             self.assertNotIn("signin-returning-light", body)
 
     def test_explicit_contract_ignores_collateral_other_screen_changes(self):
@@ -142,6 +202,47 @@ class PairedDeliveryTests(unittest.TestCase):
                 )
                 self.assertEqual(status, "failed")
                 self.assertIn(f"{key} / figma-reference", body)
+
+    def test_scoped_delivery_requires_exact_head_structure_proof(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); self.fixtures(root, include_structure=False)
+            status, body, _ = delivery.prepare(
+                root, "a" * 40, "success", [CONSENT], CONTRACTS,
+                primary_contract="onboarding-consent",
+            )
+            self.assertEqual(status, "failed")
+            self.assertIn("structure report is missing", body)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); self.fixtures(root)
+            report = json.loads((root / "structure/report.json").read_text())
+            report["head"] = "b" * 40
+            (root / "structure/report.json").write_text(json.dumps(report))
+            status, body, _ = delivery.prepare(
+                root, "a" * 40, "success", [CONSENT], CONTRACTS,
+                primary_contract="onboarding-consent",
+            )
+            self.assertEqual(status, "failed")
+            self.assertIn("does not match the completed exact-head verification", body)
+
+    def test_scoped_delivery_rejects_mismatched_documentation_or_prototype_proof(self):
+        mutations = (
+            lambda report: report["structure"]["screens"][0].update(componentId="999:999"),
+            lambda report: report["structure"]["prototype"]["frames"][1].update(status="invalid"),
+            lambda report: report["structure"]["prototype"]["frames"][0].update(destinations=["781:637"]),
+        )
+        for mutate in mutations:
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp); self.fixtures(root)
+                report = json.loads((root / "structure/report.json").read_text())
+                mutate(report)
+                (root / "structure/report.json").write_text(json.dumps(report))
+                status, body, _ = delivery.prepare(
+                    root, "a" * 40, "success", [CONSENT], CONTRACTS,
+                    primary_contract="onboarding-consent",
+                )
+                self.assertEqual(status, "failed")
+                self.assertIn("proof invalid", body)
 
     def test_exclusive_prefix_rejects_uncontracted_output_without_hardcoding(self):
         with tempfile.TemporaryDirectory() as tmp:

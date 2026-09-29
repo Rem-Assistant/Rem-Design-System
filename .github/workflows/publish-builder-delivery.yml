@@ -240,6 +240,8 @@ jobs:
             --require-reference-export --require-structure-verification
           mkdir -p "$EVIDENCE_ROOT/reference"
           cp "$FIGMA_ROOT"/reference/*.png "$EVIDENCE_ROOT/reference/"
+          mkdir -p "$EVIDENCE_ROOT/structure"
+          cp "$FIGMA_ROOT/structure/report.json" "$EVIDENCE_ROOT/structure/report.json"
 
       - name: Checkout exact Agent Factory publisher
         uses: actions/checkout@v4
