@@ -29,8 +29,10 @@ Content top → bottom, **centered**, max content width 560:
 4. **Cadence list** — an inset grouped **`RemSection`** (`Color.backgroundSecondary`, radius `xlarge` /
    24, no outer stroke), full width, `Spacing.lg` below the body, three rows split by inset dividers.
    Each row: leading `ContainedIcon` (`.subtle`), the period title (`Typography.body` semibold,
-   `labelPrimary`), and — trailing — a **value pill with the brief time, shown only while the row is on**,
-   directly left of a **`RemSwitch`** (on-tint `Color.systemGreen`):
+   `labelPrimary`), and — trailing — an **editable time value, shown only while the row is on**,
+   directly left of a **`RemSwitch`** (on-tint `Color.systemGreen`). Tapping the value opens the
+   official platform time picker: SwiftUI `DatePicker` on iOS and Android `TimePickerDialog` on
+   Android. The closed row stays shared; the picker presentation intentionally follows each platform:
    - **Morning** — leading `sunrise` / `wb_twilight`; on by default at **8:00 AM**.
    - **Midday** — leading `sun.max` / `wb_sunny`; off by default (time 12:30 PM when on).
    - **Evening** — leading `moon.stars` / `bedtime`; off by default (time 8:00 PM when on).
@@ -69,8 +71,10 @@ action and does not replace the persistent retry control.
   change out from under the request; they are interactive again in `default`/`edited`/`failure`.
 - **Switch on-tint is `systemGreen`** on both platforms (iOS `Toggle` tint / Android M3 `Switch`
   checked track) — the native settings-toggle color.
-- **Value pill shows only while the row is on** and is **display-only** in onboarding; editing a time is
-  a Settings concern ("add more anytime in Settings"), so no time-picker state is invented here.
+- **Time value shows only while the row is on** and is an edit trigger. Tapping it opens the native
+  platform picker; a confirmed value reports the canonical slot id plus hour/minute to the host and
+  moves the screen to `edited`. CRUD coverage is explicit: switch-on creates/enables a cadence, the
+  picker updates its time, switch-off disables it, and Continue saves the resulting set.
 - **The value never wraps.** The selected time (e.g. "8:00 AM") stays on one line at its full type role
   (`Typography.body`). The Morning (populated) row keeps the same height and alignment rhythm as the
   empty Midday / Evening rows; the pill is pinned to its intrinsic width, never clipped or shrunk.
@@ -109,8 +113,15 @@ action and does not replace the persistent retry control.
   both platforms (`CheckinInteractionTests`, `CheckinCadenceTest` — covering 8:00 AM, a non-zero minute,
   the rejected invalid `evening`, and the `night` toggle/update payload) so the `Checkin` identity
   contract (display "Evening" / send `night`) holds without relying on the host to remap.
-- **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; inline time
-  editing / a time-picker (a Settings concern); the `CheckinsService` persistence + scheduling (host).
+- **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; the
+  `CheckinsService` persistence + scheduling implementation (host-owned).
+
+### Platform picker design follow-up
+
+The five save-lifecycle references show the picker trigger in its closed state. The design-completion
+goal must add one iOS picker presentation and one Android picker presentation to the Check-in flow,
+using the official iOS 26 and Material components rather than drawing a shared imitation. Those two
+platform states are interaction documentation and do not multiply the five persisted save states.
 
 ## Figma delivery (delivered; exact-head export is CI-gated)
 

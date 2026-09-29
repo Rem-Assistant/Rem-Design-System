@@ -9,6 +9,7 @@ export default {
       status = CheckinStatus.Default,
       periods = checkinDefaultPeriods(),
       onToggle = onToggle,
+      onTimeChange = onTimeChange,
       onContinue = onContinue,
       onRetry = onRetry,
     )

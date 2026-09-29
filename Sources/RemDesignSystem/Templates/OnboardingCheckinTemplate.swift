@@ -16,36 +16,49 @@ import SwiftUI
 /// the two render the same states so the side-by-side evidence compares the same screen. Built to
 /// `docs/contracts/onboarding-checkin.md`.
 public struct OnboardingCheckinTemplate: View {
-    /// One time-of-day cadence row (Morning / Midday / Evening). `time` is the formatted brief time,
-    /// shown as a value pill only while the row is on. `onToggle` is the single persistence endpoint
-    /// the production row and the interaction tests both invoke.
+    /// One time-of-day cadence row (Morning / Midday / Evening). The formatted `time` is shown only
+    /// while the row is on; `hour24` and `minute` seed the native iOS time picker. The host receives
+    /// toggle and time edits through distinct persistence callbacks keyed by this period's canonical id.
     public struct Period: Identifiable {
         public let id: String
         public let symbol: String
         public let title: String
         public let time: String?
+        public let hour24: Int
+        public let minute: Int
         public let isOn: Bool
         public let onToggle: (Bool) -> Void
+        public let onTimeChange: (Int, Int) -> Void
 
         public init(
             id: String,
             symbol: String,
             title: String,
             time: String?,
+            hour24: Int = 8,
+            minute: Int = 0,
             isOn: Bool,
-            onToggle: @escaping (Bool) -> Void
+            onToggle: @escaping (Bool) -> Void,
+            onTimeChange: @escaping (Int, Int) -> Void = { _, _ in }
         ) {
             self.id = id
             self.symbol = symbol
             self.title = title
             self.time = time
+            self.hour24 = hour24
+            self.minute = minute
             self.isOn = isOn
             self.onToggle = onToggle
+            self.onTimeChange = onTimeChange
         }
 
         /// The single toggle endpoint used by the production switch and interaction tests.
         func toggle(_ on: Bool) {
             onToggle(on)
+        }
+
+        func changeTime(hour24: Int, minute: Int) {
+            onTimeChange(hour24, minute)
         }
     }
 
@@ -101,7 +114,7 @@ public struct OnboardingCheckinTemplate: View {
                 }
                 .frame(maxWidth: 560)
             }
-            bottomBar
+            actionsRegion
         }
         .padding(DesignTokens.Spacing.xl)
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
@@ -140,7 +153,13 @@ public struct OnboardingCheckinTemplate: View {
     @ViewBuilder private func rowTrailing(_ period: Period) -> some View {
         HStack(spacing: DesignTokens.Spacing.sm) {
             if period.isOn, let time = period.time {
-                TimePill(time)
+                TimePickerValue(
+                    text: time,
+                    hour24: period.hour24,
+                    minute: period.minute,
+                    enabled: rowsInteractive,
+                    onTimeChange: period.changeTime
+                )
             }
             RemSwitch(isOn: period.isOn, enabled: rowsInteractive, onChange: period.toggle)
         }
@@ -148,15 +167,23 @@ public struct OnboardingCheckinTemplate: View {
 
     /// Actions inside `Body` — a transient recoverable-failure toast above the primary CTA. There is
     /// no legal footnote on this step, so this uses the ActionArea composition with metadata hidden.
-    private var bottomBar: some View {
+    private var actionsRegion: some View {
         VStack(spacing: DesignTokens.Spacing.md) {
-            if case .failure(let message) = status {
-                RemToast(variant: .error, message: message)
-            }
-            primaryButton
+            noticeRegion
+            actionArea
         }
         .frame(maxWidth: .infinity)
         .frame(maxWidth: 560)
+    }
+
+    @ViewBuilder private var noticeRegion: some View {
+        if case .failure(let message) = status {
+            RemToast(variant: .error, message: message)
+        }
+    }
+
+    private var actionArea: some View {
+        primaryButton
     }
 
     /// The primary CTA — the shipping `SignInButton` treatment (`buttonBackground` fill, `medium`
@@ -233,29 +260,65 @@ public extension OnboardingCheckinTemplate {
         "At each time you pick, Rem writes you a brief on what came in. Start with one; add more anytime in Settings."
 }
 
-/// A small value pill showing the selected brief time (e.g. "8:00 AM"). Display-only in onboarding —
-/// editing a time is a Settings concern ("add more anytime in Settings"), so no picker is invented
-/// here. Token-bound and local to this step; flagged for extraction if a second consumer appears.
-private struct TimePill: View {
+/// Compact time value that opens the platform's native time picker. Its closed appearance stays
+/// aligned with the canonical row while the picker UI, typography, and input behavior remain iOS-owned.
+private struct TimePickerValue: View {
     let text: String
-    init(_ text: String) { self.text = text }
+    let hour24: Int
+    let minute: Int
+    let enabled: Bool
+    let onTimeChange: (Int, Int) -> Void
+    @State private var isPickerPresented = false
 
     var body: some View {
-        Text(text)
-            .font(DesignTokens.Typography.body)
-            .foregroundStyle(DesignTokens.Color.labelPrimary)
-            // Keep the value on one line at its full type role: the reference shows "8:00 AM" as a
-            // single unbroken token. Without this the pill wraps between "8:00" and "AM" inside the
-            // constrained trailing slot, which also makes the Morning row taller than its siblings.
-            // `fixedSize` claims the pill's ideal width; we do not clip or shrink the value.
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .padding(.horizontal, DesignTokens.Spacing.sm)
-            .padding(.vertical, DesignTokens.Spacing.xs)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
-                    .fill(DesignTokens.Color.fillTertiary)
-            )
+        Button { isPickerPresented = true } label: {
+            Text(text)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, DesignTokens.Spacing.sm)
+                .padding(.vertical, DesignTokens.Spacing.xs)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                        .fill(DesignTokens.Color.fillTertiary)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel("Edit \(text)")
+        .popover(isPresented: $isPickerPresented) {
+            platformPicker
+        }
+    }
+
+    @ViewBuilder private var platformPicker: some View {
+        #if os(iOS)
+        picker.datePickerStyle(.wheel)
+        #else
+        picker
+        #endif
+    }
+
+    private var picker: some View {
+        DatePicker(
+            "Check-in time",
+            selection: Binding(
+                get: { pickerDate },
+                set: { date in
+                    let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+                    onTimeChange(components.hour ?? hour24, components.minute ?? minute)
+                }
+            ),
+            displayedComponents: .hourAndMinute
+        )
+        .labelsHidden()
+        .padding()
+        .presentationCompactAdaptation(.sheet)
+    }
+
+    private var pickerDate: Date {
+        Calendar.current.date(from: DateComponents(hour: hour24, minute: minute)) ?? Date()
     }
 }
 

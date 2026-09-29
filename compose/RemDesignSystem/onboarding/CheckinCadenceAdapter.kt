@@ -82,6 +82,8 @@ fun checkinPeriods(checkins: List<Checkin>): List<CheckinPeriodUiState> =
             id = slot.id,
             title = slot.displayTitle,
             time = formatCheckinTime(checkin.deliveryHour, checkin.deliveryMinute),
+            hour24 = checkin.deliveryHour,
+            minute = checkin.deliveryMinute,
             enabled = checkin.enabled,
             icon = slot.icon,
         )

@@ -9,7 +9,8 @@ export default {
       status: .default,
       periods: OnboardingCheckinTemplate.periods(
         from: OnboardingCheckinTemplate.defaultCadence(),
-        onToggle: onToggle
+        onToggle: onToggle,
+        onTimeChange: onTimeChange
       ),
       onPrimary: onContinue,
       onRetry: onRetry

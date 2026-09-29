@@ -95,6 +95,8 @@ class CheckinCadenceTest {
         assertEquals("8:00 AM", periods[0].time)   // zero minute, single-digit hour, AM
         assertEquals("12:30 PM", periods[1].time)  // non-zero minute, noon → 12 PM
         assertEquals("9:05 PM", periods[2].time)   // non-zero minute zero-padded; 21h → 9 PM
+        assertEquals(listOf(8, 12, 21), periods.map { it.hour24 })
+        assertEquals(listOf(0, 30, 5), periods.map { it.minute })
     }
 
     @Test

@@ -1,12 +1,10 @@
 package com.rem.designsystem.onboarding
 
+import android.app.TimePickerDialog
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,17 +13,19 @@ import androidx.compose.material.icons.filled.AlarmOn
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.rem.designsystem.controls.RemSwitch
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
+import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -88,6 +88,8 @@ data class CheckinPeriodUiState(
     val id: String,
     val title: String,
     val time: String?,
+    val hour24: Int,
+    val minute: Int,
     val enabled: Boolean,
     val icon: ImageVector,
 )
@@ -114,6 +116,7 @@ fun OnboardingCheckinScreen(
     status: CheckinStatus,
     periods: List<CheckinPeriodUiState>,
     onToggle: (String, Boolean) -> Unit,
+    onTimeChange: (String, Int, Int) -> Unit = { _, _, _ -> },
     onContinue: () -> Unit,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
@@ -156,6 +159,7 @@ fun OnboardingCheckinScreen(
                     period = period,
                     interactive = rowsInteractive,
                     onToggle = onToggle,
+                    onTimeChange = onTimeChange,
                     showSeparator = index < periods.lastIndex,
                 )
             }
@@ -164,72 +168,71 @@ fun OnboardingCheckinScreen(
 }
 
 /**
- * A single cadence row: leading icon · title · (value pill when on) · switch. Bespoke, hand-rolled row
- * (there is no Compose `ListRow` primitive in this module yet — the same flag as `ConsentLegalRow`),
- * composed natively with token-bound metrics that match the iOS `ListRow`.
+ * A single cadence configuration of canonical [ListRow]. The enabled time is an editable value: it
+ * opens Android's native [TimePickerDialog] and reports the canonical slot id with the chosen time.
  */
 @Composable
 private fun CheckinPeriodRow(
     period: CheckinPeriodUiState,
     interactive: Boolean,
     onToggle: (String, Boolean) -> Unit,
+    onTimeChange: (String, Int, Int) -> Unit,
     showSeparator: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val colors = RemColors.current
-    Column(modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                // horizontal md, vertical sm — matches the iOS `ListRow` row metrics.
-                .padding(horizontal = RemSpacing.md, vertical = RemSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    ListRow(
+        title = period.title,
+        enabled = interactive,
+        showSeparator = showSeparator,
+        modifier = modifier,
+        leading = {
             ContainedIcon(
                 icon = period.icon,
                 fill = ContainedIconFill.Subtle,
                 size = ContainedIconSize.Small,
                 contentDescription = null,
             )
-            Spacer(Modifier.width(RemSpacing.md))
-            Text(
-                text = period.title,
-                style = RemTypography.bodyBold,
-                color = colors.labelPrimary,
-                modifier = Modifier.weight(1f),
-            )
+        },
+        trailing = {
             val time = period.time
             if (period.enabled && time != null) {
+                CheckinTimePickerValue(
+                    text = time,
+                    hour24 = period.hour24,
+                    minute = period.minute,
+                    enabled = interactive,
+                    onTimeChange = { hour, minute -> onTimeChange(period.id, hour, minute) },
+                )
                 Spacer(Modifier.width(RemSpacing.sm))
-                CheckinTimePill(time)
             }
-            Spacer(Modifier.width(RemSpacing.sm))
             RemSwitch(
                 checked = period.enabled,
                 onCheckedChange = { onToggle(period.id, it) },
                 enabled = interactive,
             )
-        }
-        if (showSeparator) {
-            Box(
-                modifier = Modifier
-                    .padding(start = RemSpacing.xxl + RemSpacing.md)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(colors.separator),
-            )
-        }
-    }
+        },
+    )
 }
 
 /**
- * The selected brief time as a value pill (e.g. "8:00 AM"). Display-only in onboarding — editing a
- * time is a Settings concern ("add more anytime in Settings"), so no picker is invented here.
- * Token-bound and local to this step; flagged for extraction if a second consumer appears.
+ * The selected brief time. It preserves the compact value treatment in the row and opens the
+ * platform time picker when tapped; the host owns persistence through [onTimeChange].
  */
 @Composable
-private fun CheckinTimePill(text: String) {
+private fun CheckinTimePickerValue(
+    text: String,
+    hour24: Int,
+    minute: Int,
+    enabled: Boolean,
+    onTimeChange: (Int, Int) -> Unit,
+) {
     val colors = RemColors.current
+    val context = LocalContext.current
+    val dialog = remember(context, hour24, minute, onTimeChange) {
+        TimePickerDialog(context, { _, hour, selectedMinute ->
+            onTimeChange(hour, selectedMinute)
+        }, hour24, minute, false)
+    }
     Text(
         text = text,
         style = RemTypography.body,
@@ -237,7 +240,9 @@ private fun CheckinTimePill(text: String) {
         modifier = Modifier
             .clip(RoundedCornerShape(RemRadius.small))
             .background(colors.fillTertiary)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Edit $text") { dialog.show() }
             .padding(horizontal = RemSpacing.sm, vertical = RemSpacing.xs),
+        maxLines = 1,
     )
 }
 
@@ -250,6 +255,7 @@ fun checkinStep(
     status: CheckinStatus,
     periods: List<CheckinPeriodUiState>,
     onToggle: (String, Boolean) -> Unit,
+    onTimeChange: (String, Int, Int) -> Unit = { _, _, _ -> },
     onContinue: () -> Unit,
     onRetry: () -> Unit = {},
     id: String = "checkin",
@@ -258,6 +264,7 @@ fun checkinStep(
         status = status,
         periods = periods,
         onToggle = onToggle,
+        onTimeChange = onTimeChange,
         onContinue = onContinue,
         onRetry = onRetry,
         progress = scope.progress,

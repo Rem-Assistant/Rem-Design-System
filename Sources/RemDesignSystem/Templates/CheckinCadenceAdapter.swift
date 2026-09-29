@@ -96,7 +96,8 @@ public extension OnboardingCheckinTemplate {
     /// This is the tested mapping boundary the contract requires (`CheckinInteractionTests`).
     static func periods(
         from checkins: [Checkin],
-        onToggle: @escaping (CheckinSlot, Bool) -> Void
+        onToggle: @escaping (CheckinSlot, Bool) -> Void,
+        onTimeChange: @escaping (CheckinSlot, Int, Int) -> Void = { _, _, _ in }
     ) -> [Period] {
         checkins.compactMap { checkin in
             guard let slot = CheckinSlot.validating(id: checkin.slot) else { return nil }
@@ -108,8 +109,11 @@ public extension OnboardingCheckinTemplate {
                     deliveryHour: checkin.deliveryHour,
                     deliveryMinute: checkin.deliveryMinute
                 ),
+                hour24: checkin.deliveryHour,
+                minute: checkin.deliveryMinute,
                 isOn: checkin.enabled,
-                onToggle: { onToggle(slot, $0) }
+                onToggle: { onToggle(slot, $0) },
+                onTimeChange: { hour, minute in onTimeChange(slot, hour, minute) }
             )
         }
     }

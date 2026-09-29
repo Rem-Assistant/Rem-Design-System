@@ -7,12 +7,13 @@
     "paths": ["Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift", "Sources/RemDesignSystem/Controls/RemSwitch.swift", "compose/RemDesignSystem/onboarding/CheckinStep.kt", "compose/RemDesignSystem/controls/RemSwitch.kt", "tokens/**"],
     "states": ["checkin-default-light", "checkin-edited-light", "checkin-saving-light", "checkin-saved-light", "checkin-failure-light"],
     "exclusive_output_prefixes": ["checkin-"],
+    "requirePrototype": false,
     "references": {
-      "checkin-default-light": { "name": "Checkin-default-light", "node": "885:1123" },
-      "checkin-edited-light": { "name": "Checkin-edited-light", "node": "885:1198" },
-      "checkin-saving-light": { "name": "Checkin-saving-light", "node": "885:1275" },
-      "checkin-saved-light": { "name": "Checkin-saved-light", "node": "885:1352" },
-      "checkin-failure-light": { "name": "Checkin-failure-light", "node": "885:1429" }
+      "checkin-default-light": { "name": "Checkin-default-light", "node": "870:788", "requireDocumentation": false },
+      "checkin-edited-light": { "name": "Checkin-edited-light", "node": "875:857", "requireDocumentation": false },
+      "checkin-saving-light": { "name": "Checkin-saving-light", "node": "875:940", "requireDocumentation": false },
+      "checkin-saved-light": { "name": "Checkin-saved-light", "node": "875:1026", "requireDocumentation": false },
+      "checkin-failure-light": { "name": "Checkin-failure-light", "node": "875:1112", "requireDocumentation": false }
     },
     "waypoints": {
       "checkin-component-set": { "name": "Checkin-component-set", "node": "876:1121" },

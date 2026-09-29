@@ -41,6 +41,21 @@ final class CheckinInteractionTests: XCTestCase {
         XCTAssertEqual(toggled.map { $0.1 }, [true])
     }
 
+    func testEditingATimeInvokesTheCanonicalSlotUpdateEndpoint() {
+        var changes: [(CheckinSlot, Int, Int)] = []
+        let periods = OnboardingCheckinTemplate.periods(
+            from: OnboardingCheckinTemplate.defaultCadence(),
+            onToggle: { _, _ in },
+            onTimeChange: { slot, hour, minute in changes.append((slot, hour, minute)) }
+        )
+
+        periods[1].changeTime(hour24: 13, minute: 45)
+
+        XCTAssertEqual(changes.map { $0.0 }, [.midday])
+        XCTAssertEqual(changes.map { $0.1 }, [13])
+        XCTAssertEqual(changes.map { $0.2 }, [45])
+    }
+
     func testAdapterMapsTheRawShippingCheckinFields() {
         // The adapter accepts the authoritative `Checkin` fields (slot / enabled / deliveryHour /
         // deliveryMinute / timezone) and formats the brief-time label itself — the host supplies no
@@ -59,6 +74,8 @@ final class CheckinInteractionTests: XCTestCase {
         XCTAssertEqual(periods[0].time, "8:00 AM")   // zero minute, single-digit hour, AM
         XCTAssertEqual(periods[1].time, "12:30 PM")  // non-zero minute, noon → 12 PM
         XCTAssertEqual(periods[2].time, "9:05 PM")   // non-zero minute is zero-padded; 21h → 9 PM
+        XCTAssertEqual(periods.map { $0.hour24 }, [8, 12, 21])
+        XCTAssertEqual(periods.map { $0.minute }, [0, 30, 5])
     }
 
     func testAdapterRejectsAnInvalidSlotIdSuchAsEvening() {

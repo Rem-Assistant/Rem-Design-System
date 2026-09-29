@@ -37,7 +37,7 @@ Fixed:
 
 | Component | Page | Node | SwiftUI source | Status |
 |---|---|---|---|---|
-| ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) — swappable leading (ContainedIcon/Avatar), re-based to iOS 26 metrics + variables | Rows & Controls | `101:18` | `SharedSettingsView.swift` insetGrouped rows | ✓ canonical (kept — kit Row leading isn't swappable to ContainedIcon) |
+| ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) — swappable leading (ContainedIcon/Avatar), re-based to iOS 26 metrics + variables | Rows & Controls | `101:18` | SwiftUI `Sources/RemDesignSystem/Rows/ListRow.swift` · Compose `compose/RemDesignSystem/rows/ListRow.kt` | ✓ canonical on both platforms (kept — kit Row leading isn't swappable to ContainedIcon) |
 | ListRowLabel (default Content: Title/Subtitle) | ListRow | `188:2` | the row's text block | ✓ canonical |
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | Section (optional Header/Footer + vertical HUG Rows slot; grouped surface + xlarge radius, no outline; ListRow roots stay transparent) | Rows & Controls | `741:311` | native `SwiftUI.Section` in List/Form; `RemSection.swift` adapter in custom ScrollView; Compose `rows/RemSection.kt` | ✓ canonical · parserless SwiftUI/Compose Code Connect authored · docs `741:309` |
