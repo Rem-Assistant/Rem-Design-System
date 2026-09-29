@@ -13,6 +13,7 @@
     { "name": "Flow Overview",       "node": "790:461", "page": "Device Kit", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/docs/figma-delivery.md" },
     { "name": "StatusBar",           "node": "785:389", "page": "Device Kit", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/docs/figma-delivery.md" },
     { "name": "NavigationIndicator", "node": "793:379", "page": "Device Kit", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/docs/figma-delivery.md" },
+    { "name": "Screen/Check-in",     "node": "876:1121", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" },
     { "name": "ContainedIcon",        "node": "110:54",  "page": "Rows & Controls", "source": "Shared/Views/Settings/SharedSettingsIcon.swift" },
     { "name": "Switch",               "node": "110:50",  "page": "Rows & Controls", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Controls/RemSwitch.swift" },
     { "name": "TaskEventRow",         "node": "46:21",   "page": "Tasks & Agenda",  "source": "Rem/Sources/Components/TaskEventRowView.swift" },
@@ -43,6 +44,11 @@
     { "name": "SignIn-light",  "node": "788:3183", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift" },
     { "name": "Consent-default-light", "node": "777:248", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
     { "name": "Consent-terms-light",   "node": "777:325", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
-    { "name": "Consent-privacy-light", "node": "777:392", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" }
+    { "name": "Consent-privacy-light", "node": "777:392", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
+    { "name": "Checkin-default-light", "node": "885:1123", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" },
+    { "name": "Checkin-edited-light",  "node": "885:1198", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" },
+    { "name": "Checkin-saving-light",  "node": "885:1275", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" },
+    { "name": "Checkin-saved-light",   "node": "885:1352", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" },
+    { "name": "Checkin-failure-light", "node": "885:1429", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift" }
   ]
 }

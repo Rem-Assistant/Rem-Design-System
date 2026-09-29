@@ -61,11 +61,13 @@ Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
   black button. The adapter + save-lifecycle model is unit-tested on both platforms (`CheckinCadenceTest`,
   `CheckinInteractionTests` — 8:00 AM, a non-zero minute, the rejected invalid `evening`, and the `night`
   toggle/update payload).
-- **Open (capability-gated):** the editable Figma screen + five states + prototype flow + component
-  ledger, and the exact-head Figma exports. Native Figma canvas authoring requires the authenticated
-  Figma MCP / Codex Builder runtime, which is **not present on the hosted build runner** — a Steward
-  capability blocker, recorded in the contract's *Figma delivery* section, not an omission. The
-  contract carries no Figma `references`, so the drift gate does not fail closed on the pending export.
+- **Editable Figma delivery:** hosted Figma Writer authored `Screen/Check-in` (`876:1121`) with
+  Default / Edited / Saving / Saved / Failure variants, documentation section `02A` (`890:1502`), and
+  prototype section `02B` (`885:1121`). Direct 402×874 instances are registered as exact references
+  in `tools/render-evidence/contracts.json`; the prototype begins at Default and covers
+  Default → Edited → Saving → Saved plus Failure → Saving retry. The record below binds this live
+  structure to implementation commit `e8621076fae121e8109eaeb9447ac31ece3563b4` pending the
+  exact-head export/review rerun.
 
 ## Consent flow + component-documentation proving pass — 2026-09-28 (issue #30)
 

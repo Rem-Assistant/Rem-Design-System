@@ -112,7 +112,7 @@ as sign-in's error/recovery notice, so the paired evidence reads as one card whe
 - **Excluded:** other onboarding screens (own contracts); the sequencer chrome itself; inline time
   editing / a time-picker (a Settings concern); the `CheckinsService` persistence + scheduling (host).
 
-## Figma delivery (required — capability-pending)
+## Figma delivery (delivered — exact-head export pending)
 
 Figma is part of a finished screen PR (founder, 2026-09-28; `docs/figma-delivery.md`). The editable
 Check-in screen, its five states, and its place in the onboarding flow are to be authored in the
@@ -120,15 +120,30 @@ existing Rem file (`af4yDqCzp57jds9lkFiIaO`) on the shared `Onboarding` page, re
 `Section` / `ListRow` / `Switch` (`110:50`) instances, the `Lockup` / `ActionArea` compositions, shared
 variables, and text styles, following `SHAPE-OF-A-TASK.md` and the `rem-design-system` skill.
 
-Native Figma canvas authoring requires the authenticated Figma MCP / Codex Builder runtime (a Full seat
-with file edit access; see `docs/figma-delivery.md`). That connection is **not available on the hosted
-build runner used for this delivery**, whose `FIGMA_TOKEN` drives export/drift only — so the canvas
-write is a **Steward capability blocker**, not an omission. This PR therefore ships the complete paired
-code, contract, registry, tests, and current-head render evidence; the editable Figma screen + prototype
-flow + component ledger and the exact-head exports are the outstanding capability-gated step, to be
-completed on the authenticated runtime before the founder spot-check. This contract is deliberately
-registered as render-evidence-only in `tools/render-evidence/contracts.json` (no Figma `references`), so
-the drift gate does not fail closed on a Figma artifact that the authoring runtime has not yet produced.
+The hosted Figma Writer authenticated through the leased remote MCP session and authored the live
+canvas against implementation commit `e8621076fae121e8109eaeb9447ac31ece3563b4` on 2026-09-29.
+Its final return path stalled after the canvas mutation, so the exact nodes were read back and the
+missing prototype destinations were completed during delivery recovery. The repository references
+below are now eligible for the exact-head export and independent Reviewer gate.
+
+### Delivery record
+
+- **File:** [Rem Design System](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System)
+- **Canonical component set:** [`Screen/Check-in` · `876:1121`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=876-1121)
+  — horizontal auto layout, hug contents, five `Status` variants, shared component instances,
+  variables, and text styles.
+- **Documentation:** [`02A · Check-in · Documentation` · `890:1502`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=890-1502)
+- **Prototype:** [`02B · Check-in · Prototype` · `885:1121`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1121)
+  — Default is the flow starting point; Default → Edited → Saving → Saved and Failure → Saving
+  exercise the normal and recoverable paths.
+- **Evidence instances:** [Default `885:1123`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1123),
+  [Edited `885:1198`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1198),
+  [Saving `885:1275`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1275),
+  [Saved `885:1352`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1352), and
+  [Failure `885:1429`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=885-1429).
+- **Readback:** every evidence node is a direct 402×874 instance of the canonical set. Default,
+  Edited, Saving, Saved, and Failure expose the matching `Status` value; semantic surfaces use the
+  shared `background/primary` variable. Captured 2026-09-29 in the live editable file.
 
 ## Parity acceptance (what the visual gate diffs)
 
@@ -149,5 +164,5 @@ The paired render passes when iOS and Android match on **all** of:
 Missing or unmatched required states fail closed.
 
 **Amendment path:** founder for arrangement / product decisions; Builder may propose a bounded amendment
-on the issue. **Status:** approved for Build (arrangement + states + icons per the reference); the paired
-render is the proof the founder spot-checks; the Figma canvas author is capability-gated as above.
+on the issue. **Status:** ready for exact-head export and independent review; the paired render and
+editable Figma references above are the founder spot-check surface.
