@@ -17,6 +17,7 @@ jobs:
     concurrency:
       group: rem-design-system-figma-writer
       cancel-in-progress: false
+      # Preserve every waiting flow while the shared Figma writer is occupied.
       queue: max
     uses: samuelalake/agent-factory/.github/workflows/builder.yml@32ad33d2110d4e63b883804bb2017514a796869d
     with:
