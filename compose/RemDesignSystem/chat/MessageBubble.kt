@@ -12,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
@@ -31,9 +30,8 @@ enum class MessageRole { User, Assistant }
  * two roles, mirroring the Figma **MessageBubble** component set (`50:7`) and the shipped
  * `ChatMessageViews.swift`:
  *
- * - [MessageRole.User] (sent) — a brandBlue rounded bubble, trailing-aligned, with white text: the
- *   iMessage "sent" treatment the Figma node draws. (White here == the SwiftUI `labelOnColor` token;
- *   the Compose token scheme has no on-color token yet — a parity gap to close in the generator.)
+ * - [MessageRole.User] (sent) — a brandBlue rounded bubble, trailing-aligned, with labelOnColor
+ *   (white) text: the iMessage "sent" treatment the Figma node draws.
  * - [MessageRole.Assistant] (received) — plain text on the surface, leading-aligned, no bubble; reads
  *   as prose/markdown with minimal chrome.
  *
@@ -67,7 +65,7 @@ fun MessageBubble(
                 MessageRole.User -> Text(
                     text = text,
                     style = RemTypography.chatMessage,
-                    color = Color.White,
+                    color = colors.labelOnColor,
                     modifier = Modifier
                         .background(colors.brandBlue, RoundedCornerShape(RemRadius.xlarge))
                         .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md),

@@ -226,6 +226,7 @@ function ktColorEntries(light) {
   push("labelPrimary", c.label.primary);
   push("labelSecondary", c.label.secondary);
   push("labelTertiary", c.label.tertiary);
+  push("labelOnColor", c.label.onColor);
   push("separator", c.separator);
   push("fillTertiary", c.fill.tertiary);
   push("buttonBackground", c.buttonBackground);
