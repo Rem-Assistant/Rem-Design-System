@@ -91,9 +91,9 @@ final class RenderSnapshots: XCTestCase {
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
         render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
         // Wave 2 screens — components composed into surfaces.
-        render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen }
-        render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen }
-        render("ChatScreen-light", width: 402, height: 820, dark: false) { chatScreen }
+        render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
+        render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
+        render("ChatScreen-light", width: 402, height: 820, dark: false) { chatScreen() }
     }
 
     private func agendaScreen() -> some View {
