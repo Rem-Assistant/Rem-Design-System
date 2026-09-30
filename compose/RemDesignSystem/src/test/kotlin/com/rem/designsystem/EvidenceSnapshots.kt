@@ -179,17 +179,12 @@ class EvidenceSnapshots {
     fun connectors() = shot("Connectors-light") {
         RemTheme {
             OnboardingConnectorsScreen(
-                connected = listOf(
-                    Connector(Icons.Filled.Email, Color(0xFFEA4335), "Gmail", "Connected · Active") {},
-                    Connector(Icons.Filled.DateRange, Color(0xFF1A73E8), "Google Calendar", "Connected · Active") {},
-                    Connector(Icons.Filled.List, Color(0xFF111827), "Notion", "Connected · Active") {},
-                    Connector(Icons.Filled.Notifications, Color(0xFF6B4FBB), "Slack", "Connected · Paused") {},
+                connectors = listOf(
+                    Connector(Icons.Filled.Email, Color(0xFFEA4335), "Gmail", "Connected", true) {},
+                    Connector(Icons.Filled.DateRange, Color(0xFF1A73E8), "Google Calendar", "Not connected", false) {},
+                    Connector(Icons.Filled.Notifications, Color(0xFF6B4FBB), "Slack", "Not connected", false) {},
                 ),
-                available = listOf(
-                    Connector(Icons.Filled.Star, Color(0xFF1FA463), "Google Drive", "Not connected") {},
-                    Connector(Icons.Filled.Menu, Color(0xFF5E6AD2), "Linear", "Not connected") {},
-                    Connector(Icons.Filled.CheckCircle, Color(0xFFE44332), "Todoist", "Not connected") {},
-                ),
+                onContinue = {}, onSkip = {},
             )
         }
     }

@@ -1,89 +1,157 @@
 import SwiftUI
 
-/// Presentational template for the onboarding **"Connect your apps"** (Connectors) screen.
-/// Pure: no Composio client, no OAuth, no navigation — the app supplies the connector data + row
-/// actions and owns navigation/first-run coach-mark. Mirrors the shipping `SharedComposioConnectionsView`
-/// (Rem/Shared/Views/Settings). Figma: `Screen/Connectors` (`133:192`). Composes design-system
-/// components: `ContainedIcon` (brand-tinted row leading), `ListRow` (connector rows), `RemSection`
-/// (grouped CONNECTED / AVAILABLE surfaces). iOS-canonical; renders adaptively on iPadOS/macOS.
+/// Presentational template for the onboarding **"Connectors"** step (Connect your apps).
+/// This is the **onboarding treatment**, NOT the Settings connectors list: it mirrors the shape of
+/// `OnboardingConsentTemplate` (hero lockup → grouped card on a white flip background → bottom CTA), so
+/// it stays consistent with the other onboarding steps. Figma authority: `tasks/refs/onboarding/03-connectors.png`.
+/// Pure: the app supplies connector data + actions and owns navigation/coach-mark.
 ///
-/// Brand tiles use `ContainedIcon(.tint(brand))` with a representative SF Symbol per provider — brand
-/// *logo* assets are a follow-up (icon registry); the tile color + glyph read as the provider today.
+/// Rows use the onboarding controls (a **toggle** for a connected app, a **Connect** pill for an
+/// available one) — not the Settings chevron rows. Reuses `ContainedIcon`, `ListRow`, `RemSection`,
+/// `RemButton`.
 public struct OnboardingConnectorsTemplate: View {
-    /// A single connector row: brand tile + name + connection status + tap target.
     public struct Connector: Identifiable {
         public let id = UUID()
         public let symbol: String
         public let tint: Color
         public let name: String
         public let status: String
+        public let isConnected: Bool
         public let action: () -> Void
-        public init(symbol: String, tint: Color, name: String, status: String, action: @escaping () -> Void) {
-            self.symbol = symbol; self.tint = tint; self.name = name; self.status = status; self.action = action
+        public init(symbol: String, tint: Color, name: String, status: String, isConnected: Bool, action: @escaping () -> Void) {
+            self.symbol = symbol; self.tint = tint; self.name = name; self.status = status
+            self.isConnected = isConnected; self.action = action
         }
     }
 
+    var heroSymbol: String
     var title: String
-    var connected: [Connector]
-    var available: [Connector]
+    var message: String
+    var connectors: [Connector]
+    var showSeeMore: Bool
+    var onSeeMore: () -> Void
+    var onContinue: () -> Void
+    var onSkip: () -> Void
 
     public init(
+        heroSymbol: String = "link",
         title: String = "Connectors",
-        connected: [Connector],
-        available: [Connector]
+        message: String = "Connect Rem to the tools you use so it can keep you up to date and surface what needs doing.",
+        connectors: [Connector],
+        showSeeMore: Bool = true,
+        onSeeMore: @escaping () -> Void = {},
+        onContinue: @escaping () -> Void,
+        onSkip: @escaping () -> Void
     ) {
-        self.title = title
-        self.connected = connected
-        self.available = available
+        self.heroSymbol = heroSymbol; self.title = title; self.message = message
+        self.connectors = connectors; self.showSeeMore = showSeeMore
+        self.onSeeMore = onSeeMore; self.onContinue = onContinue; self.onSkip = onSkip
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                if !connected.isEmpty {
-                    RemSection(header: "Connected", rows: connected) { c in row(c) }
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    Spacer(minLength: DesignTokens.Spacing.xxl)
+                    hero
+                    card
                 }
-                if !available.isEmpty {
-                    RemSection(header: "Available", rows: available) { c in row(c) }
-                }
+                .padding(DesignTokens.Spacing.lg)
+                .frame(maxWidth: 560)
             }
-            .padding(DesignTokens.Spacing.lg)
-            .frame(maxWidth: 560)
+            bottomBar
         }
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
-        .navigationTitle(title)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.large)
-        #endif
     }
 
-    private func row(_ c: Connector) -> some View {
-        ListRow(
-            c.name,
-            subtitle: c.status,
-            action: c.action,
-            leading: { ContainedIcon(c.symbol, fill: .tint(c.tint)) },
-            trailing: { DisclosureChevron() }
-        )
+    private var hero: some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            ContainedIcon(heroSymbol, fill: .tint(DesignTokens.Color.brandBlue), size: .large)
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                Text(title)
+                    .font(DesignTokens.Typography.largeTitle.weight(.semibold))
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    .multilineTextAlignment(.center)
+                Text(message)
+                    .font(DesignTokens.Typography.body)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var card: some View {
+        RemSection {
+            VStack(spacing: 0) {
+                ForEach(connectors) { c in
+                    ListRow(
+                        c.name,
+                        subtitle: c.status,
+                        leading: { ContainedIcon(c.symbol, fill: .tint(c.tint)) },
+                        trailing: { control(for: c) }
+                    )
+                    if c.id != connectors.last?.id || showSeeMore {
+                        Divider().overlay(DesignTokens.Color.separator).padding(.leading, 60)
+                    }
+                }
+                if showSeeMore {
+                    Button(action: onSeeMore) {
+                        HStack(spacing: DesignTokens.Spacing.sm) {
+                            Image(systemName: "chevron.down").font(.system(size: 13, weight: .semibold))
+                            Text("See more")
+                            Spacer()
+                        }
+                        .font(DesignTokens.Typography.body)
+                        .foregroundStyle(DesignTokens.Color.brandBlue)
+                        .padding(.horizontal, DesignTokens.Spacing.md)
+                        .padding(.vertical, DesignTokens.Spacing.sm)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func control(for c: Connector) -> some View {
+        if c.isConnected {
+            Toggle(isOn: .constant(true)) { EmptyView() }
+                .labelsHidden()
+                .tint(DesignTokens.Color.systemGreen)
+        } else {
+            Button("Connect", action: c.action)
+                .remButton(.pillSecondary)
+        }
+    }
+
+    private var bottomBar: some View {
+        VStack(spacing: DesignTokens.Spacing.sm) {
+            Button("Continue", action: onContinue)
+                .remPrimaryActionButton()
+            Button("Skip", action: onSkip)
+                .font(DesignTokens.Typography.body.weight(.semibold))
+                .foregroundStyle(DesignTokens.Color.brandBlue)
+                .buttonStyle(.plain)
+        }
+        .padding(.horizontal, DesignTokens.Spacing.lg)
+        .padding(.top, DesignTokens.Spacing.sm)
+        .padding(.bottom, DesignTokens.Spacing.md)
+        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 }
 
 #if DEBUG
 #Preview("OnboardingConnectorsTemplate") {
-    NavigationStack {
-        OnboardingConnectorsTemplate(
-            connected: [
-                .init(symbol: "envelope.fill", tint: .red, name: "Gmail", status: "Connected · Active", action: {}),
-                .init(symbol: "calendar", tint: .blue, name: "Google Calendar", status: "Connected · Active", action: {}),
-                .init(symbol: "note.text", tint: .primary, name: "Notion", status: "Connected · Active", action: {}),
-                .init(symbol: "number", tint: .purple, name: "Slack", status: "Connected · Paused", action: {}),
-            ],
-            available: [
-                .init(symbol: "externaldrive.fill", tint: .green, name: "Google Drive", status: "Not connected", action: {}),
-                .init(symbol: "list.bullet.rectangle", tint: .indigo, name: "Linear", status: "Not connected", action: {}),
-                .init(symbol: "checklist", tint: .red, name: "Todoist", status: "Not connected", action: {}),
-            ]
-        )
-    }
+    OnboardingConnectorsTemplate(
+        connectors: [
+            .init(symbol: "envelope.fill", tint: .red, name: "Gmail", status: "Connected", isConnected: true, action: {}),
+            .init(symbol: "calendar", tint: .blue, name: "Google Calendar", status: "Not connected", isConnected: false, action: {}),
+            .init(symbol: "number", tint: .purple, name: "Slack", status: "Not connected", isConnected: false, action: {}),
+        ],
+        onContinue: {}, onSkip: {}
+    )
 }
 #endif

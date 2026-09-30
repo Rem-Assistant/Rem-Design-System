@@ -7,7 +7,7 @@ import SwiftUI
 /// (hear-voice + picker rows), `ContainedIcon` (row leadings), and native `Slider` (the platform
 /// control for Character & speed — shared intent, native form). iOS-canonical; adapts on iPadOS/macOS.
 public struct OnboardingVoiceTemplate: View {
-    var title: String
+    var heroSymbol: String
     var voiceName: String
     var selectedVoice: String
     var onHearVoice: () -> Void
@@ -15,18 +15,20 @@ public struct OnboardingVoiceTemplate: View {
     @Binding var speed: Double
     @Binding var consistency: Double
     @Binding var likeness: Double
+    var onContinue: () -> Void
 
     public init(
-        title: String = "Voice",
+        heroSymbol: String = "waveform",
         voiceName: String = "Aria",
         selectedVoice: String,
         onHearVoice: @escaping () -> Void,
         onSelectVoice: @escaping () -> Void,
         speed: Binding<Double>,
         consistency: Binding<Double>,
-        likeness: Binding<Double>
+        likeness: Binding<Double>,
+        onContinue: @escaping () -> Void = {}
     ) {
-        self.title = title
+        self.heroSymbol = heroSymbol
         self.voiceName = voiceName
         self.selectedVoice = selectedVoice
         self.onHearVoice = onHearVoice
@@ -34,11 +36,17 @@ public struct OnboardingVoiceTemplate: View {
         self._speed = speed
         self._consistency = consistency
         self._likeness = likeness
+        self.onContinue = onContinue
     }
 
     public var body: some View {
+        VStack(spacing: 0) {
         ScrollView {
             VStack(spacing: DesignTokens.Spacing.lg) {
+                // Hero — matches the onboarding hero-lockup pattern (Consent/Connectors): a blue
+                // ContainedIcon tile at the top of the step.
+                ContainedIcon(heroSymbol, fill: .tint(DesignTokens.Color.brandBlue), size: .large)
+                    .padding(.top, DesignTokens.Spacing.md)
                 RemSection {
                     ListRow(
                         "Hear this voice",
@@ -84,11 +92,20 @@ public struct OnboardingVoiceTemplate: View {
             .padding(DesignTokens.Spacing.lg)
             .frame(maxWidth: 560)
         }
+        bottomBar
+        }
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
-        .navigationTitle(title)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+    }
+
+    private var bottomBar: some View {
+        Button("Continue", action: onContinue)
+            .remPrimaryActionButton()
+            .frame(maxWidth: 560)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.top, DesignTokens.Spacing.sm)
+            .padding(.bottom, DesignTokens.Spacing.md)
+            .background(DesignTokens.Color.backgroundPrimary)
     }
 
     private var rowSeparator: some View {

@@ -158,37 +158,30 @@ final class RenderSnapshots: XCTestCase {
         )
     }
 
-    // Connectors — CONNECTED/AVAILABLE grouped list; brand tiles use system-color tokens (token-bound).
+    // Connectors — onboarding treatment: hero lockup + grouped card (toggle / Connect) on a white flip
+    // bg + Continue/Skip. Brand tiles use system-color tokens (token-bound).
     private func connectorsScreen() -> some View {
-        NavigationStack {
-            OnboardingConnectorsTemplate(
-                connected: [
-                    .init(symbol: "envelope.fill", tint: DesignTokens.Color.systemRed, name: "Gmail", status: "Connected · Active", action: {}),
-                    .init(symbol: "calendar", tint: DesignTokens.Color.systemBlue, name: "Google Calendar", status: "Connected · Active", action: {}),
-                    .init(symbol: "note.text", tint: DesignTokens.Color.labelPrimary, name: "Notion", status: "Connected · Active", action: {}),
-                    .init(symbol: "number", tint: DesignTokens.Color.systemPurple, name: "Slack", status: "Connected · Paused", action: {}),
-                ],
-                available: [
-                    .init(symbol: "externaldrive.fill", tint: DesignTokens.Color.systemGreen, name: "Google Drive", status: "Not connected", action: {}),
-                    .init(symbol: "list.bullet.rectangle", tint: DesignTokens.Color.systemIndigo, name: "Linear", status: "Not connected", action: {}),
-                    .init(symbol: "checklist", tint: DesignTokens.Color.systemRed, name: "Todoist", status: "Not connected", action: {}),
-                ]
-            )
-        }
+        OnboardingConnectorsTemplate(
+            connectors: [
+                .init(symbol: "envelope.fill", tint: DesignTokens.Color.systemRed, name: "Gmail", status: "Connected", isConnected: true, action: {}),
+                .init(symbol: "calendar", tint: DesignTokens.Color.systemBlue, name: "Google Calendar", status: "Not connected", isConnected: false, action: {}),
+                .init(symbol: "number", tint: DesignTokens.Color.systemPurple, name: "Slack", status: "Not connected", isConnected: false, action: {}),
+            ],
+            onContinue: {}, onSkip: {}
+        )
     }
 
-    // Voice setup — hear/picker rows + Character & speed sliders (constant bindings for the static render).
+    // Voice setup — hero + hear/picker rows + Character & speed sliders + Continue (constant bindings).
     private func voiceScreen() -> some View {
-        NavigationStack {
-            OnboardingVoiceTemplate(
-                selectedVoice: "Aria (Warm)",
-                onHearVoice: {},
-                onSelectVoice: {},
-                speed: .constant(0.45),
-                consistency: .constant(0.7),
-                likeness: .constant(0.6)
-            )
-        }
+        OnboardingVoiceTemplate(
+            selectedVoice: "Aria (Warm)",
+            onHearVoice: {},
+            onSelectVoice: {},
+            speed: .constant(0.45),
+            consistency: .constant(0.7),
+            likeness: .constant(0.6),
+            onContinue: {}
+        )
     }
 
     // MARK: - iOS hosting-controller snapshot

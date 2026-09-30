@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -26,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,15 +44,10 @@ import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
 
 /**
- * The **Voice** onboarding screen — "Set up your voice". Compose sibling of the SwiftUI
- * `OnboardingVoiceTemplate`; the two render the same screen so paired iOS⟷Android evidence diffs clean.
- * Authority = Figma `Screen/Voice` (`488:251`).
- *
- * Pure/presentational: the host supplies the current voice + slider values and owns navigation
- * (TopAppBar "Voice") and persistence. Composes canonical `RemSection` + token-bound rows + the native
- * Material `Slider` for Character & speed (shared intent, native form — SwiftUI uses `Slider` too).
- * Brand/leading glyphs are core Material stand-ins (play/settings) pending registry icons — matching
- * the SwiftUI SF Symbol stand-ins glyph-for-intent.
+ * The **Voice** onboarding step — Compose sibling of the SwiftUI `OnboardingVoiceTemplate`. Onboarding
+ * treatment: a hero tile at top → hear/picker rows → Character & speed sliders on a white flip
+ * background → bottom **Continue** CTA, consistent with the other onboarding steps. Authority:
+ * `tasks/refs/onboarding/05-voice.png` (flipped to white bg + grey content per the flow-consistency rule).
  */
 @Composable
 fun OnboardingVoiceScreen(
@@ -63,57 +62,57 @@ fun OnboardingVoiceScreen(
     likeness: Float,
     onLikenessChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    heroIcon: ImageVector = Icons.Filled.PlayArrow,
+    onContinue: () -> Unit = {},
 ) {
     val colors = RemColors.current
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(RemSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(RemSpacing.md),
-    ) {
-        RemSection(modifier = Modifier.fillMaxWidth()) {
-            IconTextRow(
-                icon = Icons.Filled.PlayArrow,
-                tint = colors.brandBlue,
-                title = "Hear this voice",
-                subtitle = voiceName,
-                onClick = onHearVoice,
-            )
-        }
-
-        RemSection(
-            modifier = Modifier.fillMaxWidth(),
-            header = "Spoken responses",
-            footer = "Choose how Rem sounds when reading a response or talking with you.",
+    Column(modifier = modifier.fillMaxSize().background(colors.backgroundPrimary)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(RemSpacing.md),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(RemSpacing.md),
         ) {
-            IconTextRow(
-                icon = Icons.Filled.Settings,
-                tint = colors.brandBlue,
-                title = "Voice",
-                trailingValue = selectedVoice,
-                onClick = onSelectVoice,
-            )
-        }
+            Spacer(Modifier.height(RemSpacing.lg))
+            ContainedIcon(icon = heroIcon, fill = ContainedIconFill.Tint(colors.brandBlue), size = ContainedIconSize.Large)
 
-        RemSection(
-            modifier = Modifier.fillMaxWidth(),
-            header = "Character & speed",
-            footer = "Speed applies to the next thing Rem says. Consistency trades expressive range for " +
-                "a steadier delivery, and likeness controls how closely Rem holds to the chosen voice.",
-        ) {
-            SliderRow("Speed", "Slower", "Faster", speed, onSpeedChange)
-            RowSeparator()
-            SliderRow("Consistency", "More expressive", "More consistent", consistency, onConsistencyChange)
-            RowSeparator()
-            SliderRow("Likeness", "Looser", "Closer", likeness, onLikenessChange)
+            RemSection(modifier = Modifier.fillMaxWidth()) {
+                IconTextRow(Icons.Filled.PlayArrow, colors.brandBlue, "Hear this voice", onHearVoice, subtitle = voiceName)
+            }
+            RemSection(
+                modifier = Modifier.fillMaxWidth(),
+                header = "Spoken responses",
+                footer = "Choose how Rem sounds when reading a response or talking with you.",
+            ) {
+                IconTextRow(Icons.Filled.Settings, colors.brandBlue, "Voice", onSelectVoice, trailingValue = selectedVoice)
+            }
+            RemSection(
+                modifier = Modifier.fillMaxWidth(),
+                header = "Character & speed",
+                footer = "Speed applies to the next thing Rem says. Consistency trades expressive range for " +
+                    "a steadier delivery, and likeness controls how closely Rem holds to the chosen voice.",
+            ) {
+                SliderRow("Speed", "Slower", "Faster", speed, onSpeedChange)
+                RowSeparator()
+                SliderRow("Consistency", "More expressive", "More consistent", consistency, onConsistencyChange)
+                RowSeparator()
+                SliderRow("Likeness", "Looser", "Closer", likeness, onLikenessChange)
+            }
         }
+        Button(
+            onClick = onContinue,
+            modifier = Modifier.fillMaxWidth().padding(RemSpacing.lg),
+            colors = ButtonDefaults.buttonColors(containerColor = colors.labelPrimary, contentColor = colors.backgroundPrimary),
+        ) { Text("Continue", style = RemTypography.bodyBold) }
     }
 }
 
 @Composable
 private fun IconTextRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     tint: Color,
     title: String,
     onClick: () -> Unit,
@@ -168,10 +167,7 @@ private fun SliderRow(
         Slider(
             value = value,
             onValueChange = onValueChange,
-            colors = SliderDefaults.colors(
-                thumbColor = colors.brandBlue,
-                activeTrackColor = colors.brandBlue,
-            ),
+            colors = SliderDefaults.colors(thumbColor = colors.brandBlue, activeTrackColor = colors.brandBlue),
         )
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(text = minLabel, style = RemTypography.caption1, color = colors.labelSecondary)
@@ -184,13 +180,7 @@ private fun SliderRow(
 @Composable
 private fun RowSeparator() {
     val colors = RemColors.current
-    Box(
-        modifier = Modifier
-            .padding(horizontal = RemSpacing.md)
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(colors.separator),
-    )
+    Box(modifier = Modifier.padding(horizontal = RemSpacing.md).fillMaxWidth().height(1.dp).background(colors.separator))
 }
 
 @Preview(name = "Voice · light", showBackground = true, widthDp = 402, heightDp = 874)
@@ -203,14 +193,11 @@ private fun VoiceLightPreview() {
         OnboardingVoiceScreen(
             voiceName = "Aria",
             selectedVoice = "Aria (Warm)",
-            onHearVoice = {},
-            onSelectVoice = {},
-            speed = speed,
-            onSpeedChange = { speed = it },
-            consistency = consistency,
-            onConsistencyChange = { consistency = it },
-            likeness = likeness,
-            onLikenessChange = { likeness = it },
+            onHearVoice = {}, onSelectVoice = {},
+            speed = speed, onSpeedChange = { speed = it },
+            consistency = consistency, onConsistencyChange = { consistency = it },
+            likeness = likeness, onLikenessChange = { likeness = it },
+            onContinue = {},
         )
     }
 }
