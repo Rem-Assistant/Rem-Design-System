@@ -58,6 +58,18 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
   space are invalid because they obscure intent and break when content changes.
 
+## Evaluate flow consistency (think in systems, not per-screen rules)
+
+A flow is a system: every step should share the same structural pattern, and the job is to **evaluate
+consistency across steps**, not to memorize per-screen exceptions. Before a flow is done, check each
+step against its neighbors on the system's shared dimensions — header/`Lockup` presence and order, the
+background↔content relationship, spacing rhythm, and canonical component reuse — and flag or fix any
+step that deviates. **The deviation is the signal, not a named screen.** A screen reused from another
+context (e.g. a Settings surface pulled into onboarding) is the usual culprit: it arrives carrying its
+original skin (grey bg + white cards, no Lockup) and breaks the pattern its neighbors hold (white bg +
+grey content + Lockup) — restore consistency with the system rather than applying a screen-specific
+recipe.
+
 ## Use the file's documentation templates
 
 - **Page scale:** use one page per product domain, not one page per screen or per flow. Onboarding
