@@ -83,9 +83,15 @@ Fixed:
 ### Screens (Wave 2 — composed from the components; paired SwiftUI + Compose, CI-verified)
 | Screen | Figma | Code | Status |
 |--------|-------|------|--------|
-| AgendaScreen (DateNavigationHeader + divider + TaskEventRow list; content slot) | Agenda page `356:2` / scenarios `530:22` | `Screens/AgendaScreen.swift` · `screens/AgendaScreen.kt` | ✓ code (Figma master + doc/proto sections pending) |
-| InboxScreen (large title + unfiled TaskEventRows, no time / pills hidden) | Inbox page `356:8` | `Screens/InboxScreen.swift` · `screens/InboxScreen.kt` | ✓ code (Figma master + doc/proto sections pending) |
-| ChatScreen (MessageBubble transcript + optional VoiceBar + RemComposerBar) | Chat `71:533` / composer `527:2` | `Screens/ChatScreen.swift` · `screens/ChatScreen.kt` | ✓ code (Figma master + doc/proto sections pending) |
+| AgendaScreen (DateNavigationHeader + divider + TaskEventRow list; content slot) | Agenda page `356:2` / scenarios `530:22` | `Screens/AgendaScreen.swift` · `screens/AgendaScreen.kt` | ✓ code + Doc `1068:573` + Proto `1041:378` + states `③` |
+| InboxScreen (large title + unfiled TaskEventRows, no time / pills hidden) | Inbox page `356:8` | `Screens/InboxScreen.swift` · `screens/InboxScreen.kt` | ✓ code + Doc `1067:171` + Proto `1067:113` |
+| ChatScreen (MessageBubble transcript + optional VoiceBar + RemComposerBar) | Chat `71:533` / composer `527:2` | `Screens/ChatScreen.swift` · `screens/ChatScreen.kt` | ✓ code + Doc `1065:240` + Proto `1064:179` (Chat page) |
+
+### Screens (Wave 3 — Task-detail, Settings; paired SwiftUI + Compose, CI-verified)
+| Screen | Figma | Code | Status |
+|--------|-------|------|--------|
+| TaskDetailScreen (header title/date/meta pills + content slot + pinned RemComposerBar; reuses RemPill/RemSection/RemFaceMark) | master `299:2` · Doc `1071:216` · Proto `1069:145` (Task & Events page) | `Screens/TaskDetailScreen.swift` · `screens/TaskDetailScreen.kt` | ✓ code + Figma doc/proto |
+| SettingsScreen (large title + grouped RemSection/ListRow, iOS-green toggles, single-row-no-divider) | master `130:44` · Doc `1071:8125` · Proto `1070:858` (Settings page) | `Screens/SettingsScreen.swift` · `screens/SettingsScreen.kt` · new `rows/ListRow.kt` (Compose) | ✓ code + Figma doc/proto |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
