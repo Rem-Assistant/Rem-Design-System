@@ -60,6 +60,7 @@ Fixed:
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
 | OnboardingConnectorsTemplate (Connect apps — CONNECTED/AVAILABLE grouped list) | Onboarding | `133:192` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `ConnectorsScreen.kt` (Compose) · `SharedComposioConnectionsView` (app source) | ✓ canonical |
 | OnboardingVoiceTemplate (Set up voice — Hear voice + Voice picker + Character & speed sliders) | Onboarding | `488:251` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) | ✓ canonical |
+| RemContentUnavailableView (empty state — symbol · title · message · action) | ContentUnavailableView | `140:1613` | `RemContentUnavailableView.swift` (SwiftUI) · `RemContentUnavailableView.kt` (Compose); reusable piece of Screen/Agenda-Empty | ✓ canonical |
 | ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
 | Accessory/Value (right-aligned detail text; **Value** text prop) | Rows & Controls | `389:5` | title+value settings rows (e.g. Billing "Plan · Free") | ✓ canonical |
