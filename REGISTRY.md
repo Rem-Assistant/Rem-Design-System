@@ -58,8 +58,8 @@ Fixed:
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
 | TimePicker — **Platform** = iOS (wheel + AM/PM) / Android (Material dial, Rem blue) | Platform Controls | `939:258` | `DatePicker(displayedComponents:.hourAndMinute)` iOS / Material `TimePicker` Compose | ✓ canonical |
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
-| OnboardingConnectorsTemplate (Connect apps — CONNECTED/AVAILABLE grouped list) | Onboarding | `133:192` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `ConnectorsScreen.kt` (Compose) · `SharedComposioConnectionsView` (app source) | ✓ canonical |
-| OnboardingVoiceTemplate (Set up voice — Hear voice + Voice picker + Character & speed sliders) | Onboarding | `488:251` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) | ✓ canonical |
+| Screen/Connectors · Onboarding (Lockup hero + flip + toggle/Connect rows + Continue/Skip) | Onboarding | `978:3177` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `ConnectorsScreen.kt` (Compose) · ref `tasks/refs/onboarding/03-connectors.png` | ✓ canonical (settings variant = `Screen/Connectors 133:192`) |
+| Screen/Voice · Onboarding (hero + hear/picker + Character & speed sliders + Continue) | Onboarding | `991:2` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) · ref `tasks/refs/onboarding/05-voice.png` — Figma sliders section pending | ✓ canonical (code complete) |
 | RemContentUnavailableView (empty state — symbol · title · message · action) | ContentUnavailableView | `140:1613` | `RemContentUnavailableView.swift` (SwiftUI) · `RemContentUnavailableView.kt` (Compose); reusable piece of Screen/Agenda-Empty | ✓ canonical |
 | ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
