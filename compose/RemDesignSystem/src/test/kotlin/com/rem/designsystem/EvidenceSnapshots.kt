@@ -39,6 +39,15 @@ import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.screens.AgendaScreen
 import com.rem.designsystem.screens.InboxScreen
 import com.rem.designsystem.screens.ChatScreen
+import com.rem.designsystem.screens.TaskDetailScreen
+import com.rem.designsystem.screens.SettingsScreen
+import com.rem.designsystem.rows.ListRow
+import com.rem.designsystem.rows.DisclosureChevron
+import com.rem.designsystem.rows.RemSection
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.Text as M3Text
 import com.rem.designsystem.chat.VoiceBar
 import com.rem.designsystem.chat.VoiceBarState
 import com.rem.designsystem.rows.TaskEventRow
@@ -374,6 +383,52 @@ class EvidenceSnapshots {
                     role = MessageRole.Assistant,
                 )
                 MessageBubble("Yes, go ahead.", role = MessageRole.User)
+            }
+        }
+    }
+
+    @Test
+    fun taskDetailScreen() = shot("TaskDetailScreen-light") {
+        RemTheme {
+            TaskDetailScreen(title = "Draft the investor update", dateText = "Oct 1 2026", metaPills = listOf("Fundraise")) {
+                M3Text("LAST ACTIVITY", style = RemTypography.caption1, color = RemColors.current.labelSecondary)
+                M3Text(
+                    "Rem drafted the investor update and pulled last quarter's metrics — want me to send it?",
+                    style = RemTypography.body, color = RemColors.current.labelPrimary,
+                )
+                RemSection(header = "Notes") {
+                    M3Text(
+                        "Add your notes here",
+                        style = RemTypography.body, color = RemColors.current.labelTertiary,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun settingsScreen() = shot("SettingsScreen-light") {
+        RemTheme {
+            SettingsScreen {
+                RemSection {
+                    ListRow(
+                        title = "Avery Diaz", subtitle = "avery@example.com",
+                        leading = { ContainedIcon(icon = Icons.Filled.Person, fill = ContainedIconFill.Tint(RemColors.current.systemIndigo), size = ContainedIconSize.Small) },
+                    )
+                }
+                RemSection(header = "General") {
+                    ListRow(
+                        title = "Connectors",
+                        leading = { ContainedIcon(icon = Icons.Filled.Link, fill = ContainedIconFill.Tint(RemColors.current.systemBlue), size = ContainedIconSize.Small) },
+                        trailing = { DisclosureChevron() },
+                    )
+                    ListRow(
+                        title = "Voice", subtitle = "Aria",
+                        leading = { ContainedIcon(icon = Icons.Filled.Mic, fill = ContainedIconFill.Tint(RemColors.current.systemPurple), size = ContainedIconSize.Small) },
+                        trailing = { DisclosureChevron() },
+                    )
+                }
             }
         }
     }

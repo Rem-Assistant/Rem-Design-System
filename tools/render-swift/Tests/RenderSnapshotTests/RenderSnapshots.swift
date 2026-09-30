@@ -95,6 +95,49 @@ final class RenderSnapshots: XCTestCase {
         render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
         render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
         render("ChatScreen-light", width: 402, height: 820, dark: false) { chatScreen() }
+        // Wave 3 screens
+        render("TaskDetailScreen-light", width: 402, height: 820, dark: false) { taskDetailScreen() }
+        render("SettingsScreen-light", width: 402, height: 820, dark: false) { settingsScreen() }
+    }
+
+    private func taskDetailScreen() -> some View {
+        TaskDetailScreen(title: "Draft the investor update", dateText: "Oct 1 2026", metaPills: ["Fundraise"], composerState: .idle) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                Text("LAST ACTIVITY")
+                    .font(DesignTokens.Typography.caption1)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                Text("Rem drafted the investor update and pulled last quarter's metrics — want me to send it?")
+                    .font(DesignTokens.Typography.body)
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                RemSection(header: "Notes") {
+                    Text("Add your notes here")
+                        .font(DesignTokens.Typography.body)
+                        .foregroundStyle(DesignTokens.Color.labelTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(DesignTokens.Spacing.md)
+                }
+            }
+        }
+    }
+
+    private func settingsScreen() -> some View {
+        SettingsScreen {
+            RemSection {
+                ListRow("Avery Diaz", subtitle: "avery@example.com",
+                        leading: { ContainedIcon("person.fill", fill: .tint(DesignTokens.Color.systemIndigo)) },
+                        trailing: { EmptyView() })
+            }
+            RemSection(header: "General") {
+                ListRow("Connectors",
+                        leading: { ContainedIcon("link", fill: .tint(DesignTokens.Color.systemBlue)) },
+                        trailing: { chevron() })
+                Divider().padding(.leading, 60)
+                ListRow("Voice", subtitle: "Aria",
+                        leading: { ContainedIcon("mic.fill", fill: .tint(DesignTokens.Color.systemPurple)) },
+                        trailing: { chevron() })
+            }
+        }
     }
 
     private func agendaScreen() -> some View {
