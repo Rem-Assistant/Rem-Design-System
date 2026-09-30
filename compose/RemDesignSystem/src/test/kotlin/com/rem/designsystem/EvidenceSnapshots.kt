@@ -35,6 +35,9 @@ import com.rem.designsystem.chat.MessageBubble
 import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ComposerSendState
+import com.rem.designsystem.screens.AgendaScreen
+import com.rem.designsystem.screens.InboxScreen
+import com.rem.designsystem.screens.ChatScreen
 import com.rem.designsystem.chat.VoiceBar
 import com.rem.designsystem.chat.VoiceBarState
 import com.rem.designsystem.rows.TaskEventRow
@@ -315,6 +318,43 @@ class EvidenceSnapshots {
                 RemComposerBar()
                 RemComposerBar(text = "Remind me to send the investor update tomorrow", state = ComposerSendState.Active, showAttachments = true)
                 RemComposerBar(text = "Plan the rest of my day", state = ComposerSendState.Sending)
+            }
+        }
+    }
+
+    @Test
+    fun agendaScreen() = shot("AgendaScreen-light") {
+        RemTheme {
+            AgendaScreen(dateText = "Oct 1 2026", onPrevious = {}, onNext = {}) {
+                TaskEventRow(kind = TaskEventKind.Task, title = "Reply to Alex about the audition", leading = TaskEventLeading.Time("9:00"), pills = listOf("3 tasks"))
+                TaskEventRow(kind = TaskEventKind.Event(RemColors.current.systemBlue), title = "Team standup", leading = TaskEventLeading.Time("10:30"), pills = listOf("Work"))
+                TaskEventRow(kind = TaskEventKind.Task, title = "Draft the investor update", leading = TaskEventLeading.Time("14:00"), pills = listOf("Fundraise"))
+            }
+        }
+    }
+
+    @Test
+    fun inboxScreen() = shot("InboxScreen-light") {
+        RemTheme {
+            InboxScreen {
+                TaskEventRow(kind = TaskEventKind.Task, title = "Follow up with the Freestyle team", leading = TaskEventLeading.None, showPills = false)
+                TaskEventRow(kind = TaskEventKind.Task, title = "Review the Q4 roadmap draft", leading = TaskEventLeading.None, showPills = false)
+                TaskEventRow(kind = TaskEventKind.Task, title = "Book the venue for the offsite", leading = TaskEventLeading.None, showPills = false)
+            }
+        }
+    }
+
+    @Test
+    fun chatScreen() = shot("ChatScreen-light") {
+        RemTheme {
+            ChatScreen(composerState = ComposerSendState.Idle) {
+                MessageBubble("Can you tidy up my inbox before I start my day?", role = MessageRole.User)
+                MessageBubble(
+                    "Done — I archived 38 newsletters and snoozed 5 low-priority threads. " +
+                        "Want me to draft replies to the two that still need you?",
+                    role = MessageRole.Assistant,
+                )
+                MessageBubble("Yes, go ahead.", role = MessageRole.User)
             }
         }
     }

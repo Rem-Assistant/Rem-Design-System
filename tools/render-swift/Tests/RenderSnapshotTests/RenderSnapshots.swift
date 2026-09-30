@@ -90,6 +90,41 @@ final class RenderSnapshots: XCTestCase {
         render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
         render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+        // Wave 2 screens — components composed into surfaces.
+        render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen }
+        render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen }
+        render("ChatScreen-light", width: 402, height: 820, dark: false) { chatScreen }
+    }
+
+    private func agendaScreen() -> some View {
+        AgendaScreen(dateText: "Oct 1 2026", onPrevious: {}, onNext: {}) {
+            TaskEventRow(kind: .task, title: "Reply to Alex about the audition", leading: .time("9:00"), pills: ["3 tasks"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .event(DesignTokens.Color.systemBlue), title: "Team standup", leading: .time("10:30"), pills: ["Work"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Draft the investor update", leading: .time("14:00"), pills: ["Fundraise"])
+        }
+    }
+
+    private func inboxScreen() -> some View {
+        InboxScreen {
+            TaskEventRow(kind: .task, title: "Follow up with the Freestyle team", leading: .none, showPills: false)
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Review the Q4 roadmap draft", leading: .none, showPills: false)
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Book the venue for the offsite", leading: .none, showPills: false)
+        }
+    }
+
+    private func chatScreen() -> some View {
+        ChatScreen(composerText: "", composerState: .idle) {
+            MessageBubble("Can you tidy up my inbox before I start my day?", role: .user)
+            MessageBubble(
+                "Done — I archived 38 newsletters and snoozed 5 low-priority threads. Want me to draft replies to the two that still need you?",
+                role: .assistant
+            )
+            MessageBubble("Yes, go ahead.", role: .user)
+        }
     }
 
     @ViewBuilder private var composerBars: some View {

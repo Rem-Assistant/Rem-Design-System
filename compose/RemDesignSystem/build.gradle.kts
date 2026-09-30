@@ -26,6 +26,7 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     from("icons")
     from("agenda")
     from("chat")
+    from("screens")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }
     exclude("**/*.figma.kt")
 }
