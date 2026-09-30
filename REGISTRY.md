@@ -59,7 +59,7 @@ Fixed:
 | TimePicker — **Platform** = iOS (wheel + AM/PM) / Android (Material dial, Rem blue) | Platform Controls | `939:258` | `DatePicker(displayedComponents:.hourAndMinute)` iOS / Material `TimePicker` Compose | ✓ canonical |
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
 | Screen/Connectors · Onboarding (Lockup hero + flip + toggle/Connect rows + Continue/Skip) | Onboarding | `993:3243` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `ConnectorsScreen.kt` (Compose) · ref `tasks/refs/onboarding/03-connectors.png` | ✓ canonical (settings variant = `Screen/Connectors 133:192`) |
-| Screen/Voice · Onboarding (hero + hear/picker + Character & speed sliders + Continue) | Onboarding | `993:3244` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) · ref `tasks/refs/onboarding/05-voice.png` — Figma complete incl. sliders | ✓ canonical (code complete) |
+| Screen/Voice · Onboarding (hero + hear/picker + Character & speed sliders + Continue) | Onboarding | `993:3244` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) · ref `tasks/refs/onboarding/05-voice.png` | ✓ canonical — **corrected model applied**: back TopBar + `RemSlider` (wrapped iOS 26 kit, plain) + single-row sections divider-free. **Flow complete**: `05A · Voice · Documentation` + `05B · Voice · Prototype` (base `1027:156` → wired → voice-picker sheet `1060:4356`). |
 | RemContentUnavailableView (empty state — symbol · title · message · action) | ContentUnavailableView | `140:1613` | `RemContentUnavailableView.swift` (SwiftUI) · `RemContentUnavailableView.kt` (Compose); reusable piece of Screen/Agenda-Empty | ✓ canonical |
 | ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
@@ -70,6 +70,7 @@ Fixed:
 | ConversationView | ConversationView | `71:35` | folds into Chat screen | consolidating |
 | VoiceBar (MiniPlayerBar, 6 states) | Screens ⑤ | `160:884` | `MiniPlayerBar.swift` | ✓ canonical |
 | Pill (quiet status/metadata chip — kinds neutral / dot(color) / list) | Tasks & Agenda | `490624be…` (component set) | `Primitives/RemPill.swift` · `primitives/RemPill.kt` | ✓ canonical (Wave 2 · CI-verified iOS+Android) |
+| Slider (wraps platform native — forked iOS 26 `Sliders` / Material 3 `Standard slider`, plain: Show Symbols/Ticks off) | Platform Controls | iOS26 set `03734c61…` · M3 `4851d51e…` | `Primitives/RemSlider.swift` · `primitives/RemSlider.kt` (native/Material Slider, brand-tinted) | ✓ canonical (Wave 2 · used in Voice) |
 
 > **Wave 2 — paired DS code added (branch `claude/ds-flows`, CI-verified both platforms).** The Tasks/Chat
 > components above now have canonical Rem Design System code (not just the app-source lineage): `RemPill`,
