@@ -19,8 +19,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +36,7 @@ import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
+import com.rem.designsystem.primitives.RemSlider
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
@@ -169,11 +168,7 @@ private fun SliderRow(
             .padding(horizontal = RemSpacing.md, vertical = RemSpacing.sm),
     ) {
         Text(text = label, style = RemTypography.bodyBold, color = colors.labelPrimary)
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            colors = SliderDefaults.colors(thumbColor = colors.brandBlue, activeTrackColor = colors.brandBlue),
-        )
+        RemSlider(value = value, onValueChange = onValueChange)
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(text = minLabel, style = RemTypography.caption1, color = colors.labelSecondary)
             Spacer(Modifier.weight(1f))

@@ -119,8 +119,7 @@ public struct OnboardingVoiceTemplate: View {
             Text(label)
                 .font(DesignTokens.Typography.body.weight(.semibold))
                 .foregroundStyle(DesignTokens.Color.labelPrimary)
-            Slider(value: value, in: 0...1)
-                .tint(DesignTokens.Color.brandBlue)
+            RemSlider(value: value, in: 0...1)
             HStack {
                 Text(min)
                 Spacer()

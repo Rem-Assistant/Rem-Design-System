@@ -30,6 +30,7 @@ import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.primitives.RemContentUnavailableView
 import com.rem.designsystem.primitives.RemPill
 import com.rem.designsystem.primitives.RemPillKind
+import com.rem.designsystem.primitives.RemSlider
 import com.rem.designsystem.agenda.DateNavigationHeader
 import com.rem.designsystem.chat.MessageBubble
 import com.rem.designsystem.chat.MessageRole
@@ -237,6 +238,24 @@ class EvidenceSnapshots {
                 RemPill("Standup", kind = RemPillKind.Dot(RemColors.current.systemBlue))
                 RemPill("Personal")
             }
+        }
+    }
+
+    @Test
+    fun slider() {
+        shot("Slider-light") { RemTheme { sliderGallery() } }
+        shot("Slider-dark") { RemTheme(darkTheme = true) { sliderGallery() } }
+    }
+
+    @Composable
+    private fun sliderGallery() {
+        Column(
+            modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            RemSlider(value = 0.25f, onValueChange = {})
+            RemSlider(value = 0.6f, onValueChange = {})
+            RemSlider(value = 0.9f, onValueChange = {})
         }
     }
 

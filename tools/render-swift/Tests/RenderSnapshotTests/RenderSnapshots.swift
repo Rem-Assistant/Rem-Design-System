@@ -32,6 +32,7 @@ final class RenderSnapshots: XCTestCase {
             render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
             render("Pill-\(suffix)", width: 240, height: nil, dark: dark) { pillGallery }
+            render("Slider-\(suffix)", width: 320, height: nil, dark: dark) { sliderGallery }
         }
         render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
         // Reusable legal content chrome. The host-owned page-sheet container, scrim, and return
@@ -221,6 +222,17 @@ final class RenderSnapshots: XCTestCase {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // RemSlider gallery — the wrapped platform slider at a few values.
+    @ViewBuilder private var sliderGallery: some View {
+        VStack(spacing: 18) {
+            RemSlider(value: .constant(0.25))
+            RemSlider(value: .constant(0.6))
+            RemSlider(value: .constant(0.9))
+        }
+        .padding(24)
         .background(DesignTokens.Color.backgroundPrimary)
     }
 
