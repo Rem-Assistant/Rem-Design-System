@@ -71,6 +71,18 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
+        // Wave 1 onboarding flows — paired with the Compose `Connectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
+        render("Connectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
+        render("Voice-light", width: 393, height: 852, dark: false) { voiceScreen() }
+        render("AgendaEmpty-light", width: 393, height: 852, dark: false) {
+            RemContentUnavailableView(
+                symbol: "calendar.badge.plus",
+                title: "No agenda yet",
+                message: "Create a new task or schedule existing ones",
+                actionLabel: "Add New",
+                action: {}
+            )
+        }
     }
 
     // MARK: - Galleries (mirror each component's #Preview)
@@ -144,6 +156,39 @@ final class RenderSnapshots: XCTestCase {
             footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
             onPrimary: {}
         )
+    }
+
+    // Connectors — CONNECTED/AVAILABLE grouped list; brand tiles use system-color tokens (token-bound).
+    private func connectorsScreen() -> some View {
+        NavigationStack {
+            OnboardingConnectorsTemplate(
+                connected: [
+                    .init(symbol: "envelope.fill", tint: DesignTokens.Color.systemRed, name: "Gmail", status: "Connected · Active", action: {}),
+                    .init(symbol: "calendar", tint: DesignTokens.Color.systemBlue, name: "Google Calendar", status: "Connected · Active", action: {}),
+                    .init(symbol: "note.text", tint: DesignTokens.Color.labelPrimary, name: "Notion", status: "Connected · Active", action: {}),
+                    .init(symbol: "number", tint: DesignTokens.Color.systemPurple, name: "Slack", status: "Connected · Paused", action: {}),
+                ],
+                available: [
+                    .init(symbol: "externaldrive.fill", tint: DesignTokens.Color.systemGreen, name: "Google Drive", status: "Not connected", action: {}),
+                    .init(symbol: "list.bullet.rectangle", tint: DesignTokens.Color.systemIndigo, name: "Linear", status: "Not connected", action: {}),
+                    .init(symbol: "checklist", tint: DesignTokens.Color.systemRed, name: "Todoist", status: "Not connected", action: {}),
+                ]
+            )
+        }
+    }
+
+    // Voice setup — hear/picker rows + Character & speed sliders (constant bindings for the static render).
+    private func voiceScreen() -> some View {
+        NavigationStack {
+            OnboardingVoiceTemplate(
+                selectedVoice: "Aria (Warm)",
+                onHearVoice: {},
+                onSelectVoice: {},
+                speed: .constant(0.45),
+                consistency: .constant(0.7),
+                likeness: .constant(0.6)
+            )
+        }
     }
 
     // MARK: - iOS hosting-controller snapshot

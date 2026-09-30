@@ -25,6 +25,19 @@ import com.rem.designsystem.onboarding.signInStep
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
+import com.rem.designsystem.primitives.RemContentUnavailableView
+import com.rem.designsystem.onboarding.Connector
+import com.rem.designsystem.onboarding.OnboardingConnectorsScreen
+import com.rem.designsystem.onboarding.OnboardingVoiceScreen
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.graphics.Color
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemTheme
 import org.junit.Rule
@@ -160,6 +173,52 @@ class EvidenceSnapshots {
     @Test
     fun consentPrivacy() = shot("Consent-privacy-light") {
         RemTheme { LegalDocumentScreen(title = "Privacy Policy", sections = previewPrivacySections, onClose = {}) }
+    }
+
+    @Test
+    fun connectors() = shot("Connectors-light") {
+        RemTheme {
+            OnboardingConnectorsScreen(
+                connected = listOf(
+                    Connector(Icons.Filled.Email, Color(0xFFEA4335), "Gmail", "Connected · Active") {},
+                    Connector(Icons.Filled.DateRange, Color(0xFF1A73E8), "Google Calendar", "Connected · Active") {},
+                    Connector(Icons.Filled.List, Color(0xFF111827), "Notion", "Connected · Active") {},
+                    Connector(Icons.Filled.Notifications, Color(0xFF6B4FBB), "Slack", "Connected · Paused") {},
+                ),
+                available = listOf(
+                    Connector(Icons.Filled.Star, Color(0xFF1FA463), "Google Drive", "Not connected") {},
+                    Connector(Icons.Filled.Menu, Color(0xFF5E6AD2), "Linear", "Not connected") {},
+                    Connector(Icons.Filled.CheckCircle, Color(0xFFE44332), "Todoist", "Not connected") {},
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun voice() = shot("Voice-light") {
+        RemTheme {
+            OnboardingVoiceScreen(
+                voiceName = "Aria",
+                selectedVoice = "Aria (Warm)",
+                onHearVoice = {}, onSelectVoice = {},
+                speed = 0.45f, onSpeedChange = {},
+                consistency = 0.7f, onConsistencyChange = {},
+                likeness = 0.6f, onLikenessChange = {},
+            )
+        }
+    }
+
+    @Test
+    fun agendaEmpty() = shot("AgendaEmpty-light") {
+        RemTheme {
+            RemContentUnavailableView(
+                icon = Icons.Filled.DateRange,
+                title = "No agenda yet",
+                message = "Create a new task or schedule existing ones",
+                actionLabel = "Add New",
+                onAction = {},
+            )
+        }
     }
 
     @Composable
