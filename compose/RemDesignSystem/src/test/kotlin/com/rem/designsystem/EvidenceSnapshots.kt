@@ -33,6 +33,8 @@ import com.rem.designsystem.primitives.RemPillKind
 import com.rem.designsystem.agenda.DateNavigationHeader
 import com.rem.designsystem.chat.MessageBubble
 import com.rem.designsystem.chat.MessageRole
+import com.rem.designsystem.chat.RemComposerBar
+import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.chat.VoiceBar
 import com.rem.designsystem.chat.VoiceBarState
 import com.rem.designsystem.rows.TaskEventRow
@@ -299,6 +301,20 @@ class EvidenceSnapshots {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 VoiceBarState.values().forEach { VoiceBar(state = it) }
+            }
+        }
+    }
+
+    @Test
+    fun composerBar() = shot("ComposerBar-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                RemComposerBar()
+                RemComposerBar(text = "Remind me to send the investor update tomorrow", state = ComposerSendState.Active, showAttachments = true)
+                RemComposerBar(text = "Plan the rest of my day", state = ComposerSendState.Sending)
             }
         }
     }

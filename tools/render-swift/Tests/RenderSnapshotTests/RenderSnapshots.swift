@@ -89,6 +89,17 @@ final class RenderSnapshots: XCTestCase {
         render("MessageBubble-light", width: 402, height: nil, dark: false) { messageBubbles }
         render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
+        render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+    }
+
+    @ViewBuilder private var composerBars: some View {
+        VStack(spacing: 20) {
+            RemComposerBar()
+            RemComposerBar(text: "Remind me to send the investor update tomorrow", state: .active, showAttachments: true)
+            RemComposerBar(text: "Plan the rest of my day", state: .sending)
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 
     // MARK: - Wave 2 galleries
