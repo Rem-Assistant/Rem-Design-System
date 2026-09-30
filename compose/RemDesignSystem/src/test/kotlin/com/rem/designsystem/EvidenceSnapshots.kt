@@ -26,6 +26,8 @@ import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.primitives.RemContentUnavailableView
+import com.rem.designsystem.primitives.RemPill
+import com.rem.designsystem.primitives.RemPillKind
 import com.rem.designsystem.onboarding.Connector
 import com.rem.designsystem.onboarding.OnboardingConnectorsScreen
 import com.rem.designsystem.onboarding.OnboardingVoiceScreen
@@ -200,6 +202,26 @@ class EvidenceSnapshots {
                 consistency = 0.7f, onConsistencyChange = {},
                 likeness = 0.6f, onLikenessChange = {},
             )
+        }
+    }
+
+    @Test
+    fun pill() {
+        shot("Pill-light") { RemTheme { pillGallery() } }
+        shot("Pill-dark") { RemTheme(darkTheme = true) { pillGallery() } }
+    }
+
+    @Composable
+    private fun pillGallery() {
+        Box(
+            modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(24.dp)) {
+                RemPill("3 tasks", kind = RemPillKind.List)
+                RemPill("Standup", kind = RemPillKind.Dot(RemColors.current.systemBlue))
+                RemPill("Personal")
+            }
         }
     }
 

@@ -31,6 +31,7 @@ final class RenderSnapshots: XCTestCase {
             render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
             render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
+            render("Pill-\(suffix)", width: 240, height: nil, dark: dark) { pillGallery }
         }
         render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
         // Reusable legal content chrome. The host-owned page-sheet container, scrim, and return
@@ -111,6 +112,18 @@ final class RenderSnapshots: XCTestCase {
             .padding(40)
             .frame(maxWidth: .infinity)
             .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // Pill gallery — the three quiet-chip kinds (list badge for tasks, colored dot for events, plain).
+    @ViewBuilder private var pillGallery: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            RemPill("3 tasks", kind: .list)
+            RemPill("Standup", kind: .dot(DesignTokens.Color.systemBlue))
+            RemPill("Personal")
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 
     @ViewBuilder private var iconRow: some View {
