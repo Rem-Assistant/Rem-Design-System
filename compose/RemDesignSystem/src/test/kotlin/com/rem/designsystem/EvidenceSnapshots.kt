@@ -3,8 +3,10 @@ package com.rem.designsystem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +30,14 @@ import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.primitives.RemContentUnavailableView
 import com.rem.designsystem.primitives.RemPill
 import com.rem.designsystem.primitives.RemPillKind
+import com.rem.designsystem.agenda.DateNavigationHeader
+import com.rem.designsystem.chat.MessageBubble
+import com.rem.designsystem.chat.MessageRole
+import com.rem.designsystem.chat.VoiceBar
+import com.rem.designsystem.chat.VoiceBarState
+import com.rem.designsystem.rows.TaskEventRow
+import com.rem.designsystem.rows.TaskEventKind
+import com.rem.designsystem.rows.TaskEventLeading
 import com.rem.designsystem.onboarding.Connector
 import com.rem.designsystem.onboarding.OnboardingConnectorsScreen
 import com.rem.designsystem.onboarding.OnboardingVoiceScreen
@@ -235,6 +245,61 @@ class EvidenceSnapshots {
                 actionLabel = "Add New",
                 onAction = {},
             )
+        }
+    }
+
+    @Test
+    fun dateNavigationHeader() = shot("DateNavigationHeader-light") {
+        RemTheme {
+            Box(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary),
+                contentAlignment = Alignment.Center,
+            ) {
+                DateNavigationHeader(dateText = "Oct 1 2026", onPrevious = {}, onNext = {})
+            }
+        }
+    }
+
+    @Test
+    fun messageBubble() = shot("MessageBubble-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                MessageBubble("Can you tidy up my inbox before I start my day?", role = MessageRole.User)
+                MessageBubble(
+                    "Done — I archived 38 newsletters and snoozed 5 low-priority threads.\n\n" +
+                        "Want me to draft replies to the two that still need you?",
+                    role = MessageRole.Assistant,
+                )
+                MessageBubble("Yes, go ahead.", role = MessageRole.User, meta = "9:41 AM")
+            }
+        }
+    }
+
+    @Test
+    fun taskEventRow() = shot("TaskEventRow-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+            ) {
+                TaskEventRow(kind = TaskEventKind.Task, title = "Reply to Alex about the audition", leading = TaskEventLeading.Time("9:00"), pills = listOf("3 tasks"))
+                TaskEventRow(kind = TaskEventKind.Event(RemColors.current.systemBlue), title = "Team standup", leading = TaskEventLeading.Time("10:30"), pills = listOf("Work"))
+                TaskEventRow(kind = TaskEventKind.Task, title = "Unfiled inbox task", leading = TaskEventLeading.Schedule, showPills = false)
+            }
+        }
+    }
+
+    @Test
+    fun voiceBar() = shot("VoiceBar-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                VoiceBarState.values().forEach { VoiceBar(state = it) }
+            }
         }
     }
 

@@ -84,6 +84,58 @@ final class RenderSnapshots: XCTestCase {
                 action: {}
             )
         }
+        // Wave 2 core components — paired with the Compose shots of the same names.
+        render("DateNavigationHeader-light", width: 402, height: nil, dark: false) { dateNavHeader }
+        render("MessageBubble-light", width: 402, height: nil, dark: false) { messageBubbles }
+        render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
+        render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
+    }
+
+    // MARK: - Wave 2 galleries
+
+    @ViewBuilder private var dateNavHeader: some View {
+        DateNavigationHeader(dateText: "Oct 1 2026", onPrevious: {}, onNext: {})
+            .padding(.vertical, 24)
+            .frame(maxWidth: .infinity)
+            .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var messageBubbles: some View {
+        VStack(spacing: DesignTokens.Spacing.lg) {
+            MessageBubble("Can you tidy up my inbox before I start my day?", role: .user)
+            MessageBubble(
+                "Done — I archived 38 newsletters and snoozed 5 low-priority threads.\n\nWant me to draft replies to the two that still need you?",
+                role: .assistant
+            )
+            MessageBubble("Yes, go ahead.", role: .user, meta: "9:41 AM")
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var taskEventRows: some View {
+        VStack(spacing: 0) {
+            TaskEventRow(kind: .task, title: "Reply to Alex about the audition", leading: .time("9:00"), pills: ["3 tasks"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .event(DesignTokens.Color.systemBlue), title: "Team standup", leading: .time("10:30"), pills: ["Work"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Unfiled inbox task", leading: .schedule, showPills: false)
+        }
+        .background(DesignTokens.Color.backgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var voiceBarStack: some View {
+        VStack(spacing: 12) {
+            ForEach(VoiceBarState.allCases, id: \.self) { state in
+                VoiceBar(state)
+            }
+        }
+        .padding(20)
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 
     // MARK: - Galleries (mirror each component's #Preview)
