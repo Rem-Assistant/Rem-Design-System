@@ -67,6 +67,7 @@ public struct MessageBubble: View {
             Text(text)
                 .font(DesignTokens.Typography.chatMessage)
                 .foregroundStyle(DesignTokens.Color.labelOnColor)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, DesignTokens.Spacing.lg)
                 .padding(.vertical, DesignTokens.Spacing.md)
                 .background(
@@ -80,6 +81,7 @@ public struct MessageBubble: View {
             Text(text)
                 .font(DesignTokens.Typography.chatMessage)
                 .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, DesignTokens.Spacing.xs)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
