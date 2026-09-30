@@ -67,6 +67,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.Color
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemTheme
+import com.rem.designsystem.tokens.RemTypography
 import org.junit.Rule
 import org.junit.Test
 
