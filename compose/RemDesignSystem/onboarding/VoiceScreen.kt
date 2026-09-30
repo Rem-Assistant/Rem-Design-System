@@ -1,6 +1,7 @@
 package com.rem.designsystem.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.tokens.RemColors
+import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
@@ -105,7 +107,10 @@ fun OnboardingVoiceScreen(
         Button(
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth().padding(RemSpacing.lg),
-            colors = ButtonDefaults.buttonColors(containerColor = colors.labelPrimary, contentColor = colors.backgroundPrimary),
+            // Match the iOS primary action button radius (RemButtonStyle.primary = `medium`), not
+            // Material's default pill.
+            shape = RoundedCornerShape(RemRadius.medium),
+            colors = ButtonDefaults.buttonColors(containerColor = colors.buttonBackground, contentColor = colors.backgroundPrimary),
         ) { Text("Continue", style = RemTypography.bodyBold) }
     }
 }

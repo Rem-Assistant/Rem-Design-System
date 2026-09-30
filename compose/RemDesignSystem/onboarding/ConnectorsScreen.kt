@@ -1,6 +1,8 @@
 package com.rem.designsystem.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +42,7 @@ import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.tokens.RemColors
+import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
@@ -109,7 +113,10 @@ fun OnboardingConnectorsScreen(
             Button(
                 onClick = onContinue,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.labelPrimary, contentColor = colors.backgroundPrimary),
+                // Match the iOS primary action button (RemButtonStyle.primary = rounded-rect at the
+                // `medium` radius), not Material's default pill, so Continue is identical across platforms.
+                shape = RoundedCornerShape(RemRadius.medium),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.buttonBackground, contentColor = colors.backgroundPrimary),
             ) { Text("Continue", style = RemTypography.bodyBold) }
             TextButton(onClick = onSkip) { Text("Skip", style = RemTypography.bodyBold, color = colors.brandBlue) }
         }
@@ -132,11 +139,23 @@ private fun ConnectorRow(c: Connector) {
         }
         Spacer(Modifier.width(RemSpacing.sm))
         if (c.isConnected) {
-            Switch(checked = true, onCheckedChange = { c.onClick() })
+            // iOS-green track (matches the SwiftUI `Toggle` .tint(systemGreen)) instead of Material's
+            // default purple.
+            Switch(
+                checked = true,
+                onCheckedChange = { c.onClick() },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = colors.systemGreen,
+                    checkedBorderColor = colors.systemGreen,
+                ),
+            )
         } else {
+            // Capsule pill, matching the iOS `.remButton(.pillSecondary)` Connect affordance.
             Button(
                 onClick = c.onClick,
-                colors = ButtonDefaults.buttonColors(containerColor = colors.backgroundPrimary, contentColor = colors.brandBlue),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(containerColor = colors.fillTertiary, contentColor = colors.brandBlue),
             ) { Text("Connect", style = RemTypography.bodyBold) }
         }
     }
