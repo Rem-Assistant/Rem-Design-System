@@ -69,6 +69,22 @@ Fixed:
 | RemComposerBar | RemComposerBar | `53:2` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) | ✓ canonical |
 | ConversationView | ConversationView | `71:35` | folds into Chat screen | consolidating |
 | VoiceBar (MiniPlayerBar, 6 states) | Screens ⑤ | `160:884` | `MiniPlayerBar.swift` | ✓ canonical |
+| Pill (quiet status/metadata chip — kinds neutral / dot(color) / list) | Tasks & Agenda | `490624be…` (component set) | `Primitives/RemPill.swift` · `primitives/RemPill.kt` | ✓ canonical (Wave 2 · CI-verified iOS+Android) |
+
+> **Wave 2 — paired DS code added (branch `claude/ds-flows`, CI-verified both platforms).** The Tasks/Chat
+> components above now have canonical Rem Design System code (not just the app-source lineage): `RemPill`,
+> `Rows/TaskEventRow.swift`+`rows/TaskEventRow.kt`, `Chat/MessageBubble.swift`+`chat/MessageBubble.kt`
+> (user bubble = brandBlue+labelOnColor per Figma), `Chat/VoiceBar.swift`+`chat/VoiceBar.kt` (6 states),
+> `Chat/RemComposerBar.swift`+`chat/RemComposerBar.kt` (idle/active/sending), `Agenda/DateNavigationHeader.swift`
+> +`agenda/DateNavigationHeader.kt` (grey chevrons/dashes + brandBlue calendar per Figma). All registered in
+> both render harnesses.
+
+### Screens (Wave 2 — composed from the components; paired SwiftUI + Compose, CI-verified)
+| Screen | Figma | Code | Status |
+|--------|-------|------|--------|
+| AgendaScreen (DateNavigationHeader + divider + TaskEventRow list; content slot) | Agenda page `356:2` / scenarios `530:22` | `Screens/AgendaScreen.swift` · `screens/AgendaScreen.kt` | ✓ code (Figma master + doc/proto sections pending) |
+| InboxScreen (large title + unfiled TaskEventRows, no time / pills hidden) | Inbox page `356:8` | `Screens/InboxScreen.swift` · `screens/InboxScreen.kt` | ✓ code (Figma master + doc/proto sections pending) |
+| ChatScreen (MessageBubble transcript + optional VoiceBar + RemComposerBar) | Chat `71:533` / composer `527:2` | `Screens/ChatScreen.swift` · `screens/ChatScreen.kt` | ✓ code (Figma master + doc/proto sections pending) |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
