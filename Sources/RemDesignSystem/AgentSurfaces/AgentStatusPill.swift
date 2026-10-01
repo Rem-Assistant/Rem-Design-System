@@ -48,7 +48,11 @@ public struct AgentStatusPill: View {
             .lineLimit(1)
             .padding(.horizontal, DesignTokens.Spacing.md)
             .padding(.vertical, 6)
+            // Glass over content, with a `backgroundSecondary` underlay so the capsule still reads on a
+            // flat (e.g. white) backdrop — matches the Compose sibling (no material blur there) and the
+            // Figma proposal's visible capsule.
             .background(.ultraThinMaterial, in: Capsule())
+            .background(DesignTokens.Color.backgroundSecondary, in: Capsule())
     }
 }
 

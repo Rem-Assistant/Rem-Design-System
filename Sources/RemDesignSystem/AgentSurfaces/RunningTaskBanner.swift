@@ -76,7 +76,11 @@ public struct RunningTaskBanner: View {
         .padding(.horizontal, DesignTokens.Spacing.sm)
         .padding(.vertical, DesignTokens.Spacing.sm)
         .frame(minHeight: 56)
+        // Glass over content, with a `backgroundSecondary` underlay so the capsule still reads on a flat
+        // (e.g. white) backdrop — matches the Compose sibling and the Figma proposal's visible capsule.
         .background(.ultraThinMaterial,
+                    in: Capsule(style: .continuous))
+        .background(DesignTokens.Color.backgroundSecondary,
                     in: Capsule(style: .continuous))
     }
 }
