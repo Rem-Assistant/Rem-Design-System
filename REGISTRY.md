@@ -106,7 +106,7 @@ Fixed:
 | RunningTaskBanner (Live-Activity glass pill: thumbnail + task + status + Stop; **Tone** working/attention) | `432:39` | `AgentSurfaces/RunningTaskBanner.swift` · `agentsurfaces/RunningTaskBanner.kt` | ✓ Wave 4 code |
 | BrowserLiveCard (in-chat card; **State** Opening/Active/Ended) | `524:31` | `AgentSurfaces/BrowserLiveCard.swift` · `agentsurfaces/BrowserLiveCard.kt` | ✓ Wave 4 code |
 | ExecutionTrace (modal "show your work": status pill + ✕, title/subtitle/ts, MAIN/SUBAGENT step rows, Working footer) | `431:21` (Timeline base `482:56`) | `AgentSurfaces/ExecutionTrace.swift` · `agentsurfaces/ExecutionTrace.kt` | ✓ Wave 4 code |
-| **WalletScreen** (large-title template: balance hero + Add-funds CTA · usage + budget meter · recent activity · payment) — **PROPOSAL** | none (net-new) | `Screens/WalletScreen.swift` · `screens/WalletScreen.kt` | ✓ code (proposal — needs founder review before a Figma master) |
+| **WalletScreen** (large-title template: balance hero + Add-funds CTA · usage + budget meter · recent activity · payment) — **PROPOSAL** | master `1075:121` · Doc `1079:2` (Proposed · Agent surfaces page) | `Screens/WalletScreen.swift` · `screens/WalletScreen.kt` | ✓ code + Figma master/doc (proposal — built to the verified render; product decisions flagged for founder review) |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
