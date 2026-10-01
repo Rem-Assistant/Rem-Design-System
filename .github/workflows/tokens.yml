@@ -15,6 +15,9 @@ on:
       - "tools/**"
       - ".agent-factory/**"
       - "docs/contracts/**"
+      - "Sources/**"
+      - "compose/**"
+      - "Package.swift"
       - ".github/workflows/tokens.yml"
   pull_request:
     paths:
@@ -25,6 +28,9 @@ on:
       - "tools/**"
       - ".agent-factory/**"
       - "docs/contracts/**"
+      - "Sources/**"
+      - "compose/**"
+      - "Package.swift"
       - ".github/workflows/tokens.yml"
 
 jobs:
@@ -39,5 +45,7 @@ jobs:
         run: node tools/generate-tokens.mjs --check
       - name: manifest.json in sync with props + docs
         run: node tools/build-manifest.mjs --check
+      - name: Component architecture contract (baseline-ratcheted)
+        run: node tools/lint-components.mjs
       - name: Paired evidence delivery contract
         run: python3 -m unittest discover -s tools/render-evidence -p 'test_*.py'
