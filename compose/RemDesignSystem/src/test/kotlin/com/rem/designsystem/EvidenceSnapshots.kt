@@ -44,6 +44,19 @@ import com.rem.designsystem.screens.SettingsScreen
 import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.rows.DisclosureChevron
 import com.rem.designsystem.rows.RemSection
+import com.rem.designsystem.agentsurfaces.AgentStatusPill
+import com.rem.designsystem.agentsurfaces.AgentStatusTone
+import com.rem.designsystem.agentsurfaces.RunningTaskBanner
+import com.rem.designsystem.agentsurfaces.RunningTaskTone
+import com.rem.designsystem.agentsurfaces.BrowserLiveCard
+import com.rem.designsystem.agentsurfaces.BrowserLiveCardState
+import com.rem.designsystem.agentsurfaces.ExecutionTrace
+import com.rem.designsystem.agentsurfaces.ExecutionStep
+import com.rem.designsystem.agentsurfaces.ExecutionTraceLane
+import com.rem.designsystem.agentsurfaces.ExecutionStepStatus
+import com.rem.designsystem.agentsurfaces.ExecutionTraceStatus
+import com.rem.designsystem.screens.WalletScreen
+import com.rem.designsystem.screens.WalletProposalContent
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mic
@@ -431,6 +444,111 @@ class EvidenceSnapshots {
                     )
                 }
             }
+        }
+    }
+
+    // MARK: - Wave 4 — agent surfaces (product bets) + Wallet proposal
+
+    @Test
+    fun agentStatusPill() = shot("AgentStatusPill-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                AgentStatusPill("Working")
+                AgentStatusPill("Needs you", tone = AgentStatusTone.Attention)
+            }
+        }
+    }
+
+    @Test
+    fun agentStatusPillDark() = shot("AgentStatusPill-dark") {
+        RemTheme(darkTheme = true) {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                AgentStatusPill("Working")
+                AgentStatusPill("Needs you", tone = AgentStatusTone.Attention)
+            }
+        }
+    }
+
+    @Test
+    fun runningTaskBanner() = shot("RunningTaskBanner-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                RunningTaskBanner(task = "Browser", status = "Signing in to my.dnb.com")
+                RunningTaskBanner(task = "Browser", status = "Needs you · Password rejected", tone = RunningTaskTone.Attention)
+            }
+        }
+    }
+
+    @Test
+    fun browserLiveCard() = shot("BrowserLiveCard-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                BrowserLiveCard(BrowserLiveCardState.Opening)
+                BrowserLiveCard(BrowserLiveCardState.Active)
+                BrowserLiveCard(BrowserLiveCardState.Ended)
+            }
+        }
+    }
+
+    @Test
+    fun executionTrace() = shot("ExecutionTrace-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+            ) {
+                ExecutionTrace(
+                    status = ExecutionTraceStatus.InProgress,
+                    title = "Build RFE checklist",
+                    subtitle = "Writing the RFE checklist PDF template",
+                    timestamp = "10:49pm",
+                    steps = listOf(
+                        ExecutionStep(
+                            label = "Launched H-1B RFE Checklist Tailoring Subagent",
+                            detail = "Delegated the checklist prep to a subagent via artifact.send_input, covering a tailored checklist for USCIS.",
+                            lane = ExecutionTraceLane.Main,
+                            status = ExecutionStepStatus.Done,
+                        ),
+                        ExecutionStep(
+                            label = "Prepared RFE Checklist Source Directories",
+                            detail = "Staged the checklist sources; the concatenate step returned an incomplete JSON payload.",
+                            lane = ExecutionTraceLane.Subagent("01"),
+                            status = ExecutionStepStatus.Failed,
+                        ),
+                        ExecutionStep(
+                            label = "Found USCIS RFE Official Results",
+                            detail = "Web search targeting USCIS official guidance for H-1B Requests for Evidence.",
+                            lane = ExecutionTraceLane.Subagent("01"),
+                            status = ExecutionStepStatus.Done,
+                        ),
+                        ExecutionStep(
+                            label = "Created index.html source file",
+                            detail = "Wrote the RFE checklist HTML template used to render the PDF.",
+                            lane = ExecutionTraceLane.Subagent("01"),
+                            status = ExecutionStepStatus.Done,
+                        ),
+                    ),
+                    footer = "Working",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun walletScreen() = shot("WalletScreen-light") {
+        RemTheme {
+            WalletScreen { WalletProposalContent() }
         }
     }
 

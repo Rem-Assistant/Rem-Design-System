@@ -92,6 +92,21 @@ Fixed:
 |--------|-------|------|--------|
 | TaskDetailScreen (header title/date/meta pills + content slot + pinned RemComposerBar; reuses RemPill/RemSection/RemFaceMark) | master `299:2` · Doc `1071:216` · Proto `1069:145` (Task & Events page) | `Screens/TaskDetailScreen.swift` · `screens/TaskDetailScreen.kt` | ✓ code + Figma doc/proto |
 | SettingsScreen (large title + grouped RemSection/ListRow, iOS-green toggles, single-row-no-divider) | master `130:44` · Doc `1071:8125` · Proto `1070:858` (Settings page) | `Screens/SettingsScreen.swift` · `screens/SettingsScreen.kt` · new `rows/ListRow.kt` (Compose) | ✓ code + Figma doc/proto |
+
+### Wave 4 — Agent surfaces (product bets) + Wallet (paired SwiftUI + Compose, CI-verified)
+> The Muse-informed agentic surfaces, now **graduated from `Proposed` into DS code** — each built from
+> its proposal node as ground truth (new `AgentSurfaces/` folder; Compose `agentsurfaces/`, added to the
+> gather list). They render a **state**, not the wired control (the VoiceBar convention). **Wallet** is a
+> **net-new screen proposal** — no Figma master or shipping source yet; every choice is flagged
+> `// PROPOSAL:` in-code for founder review.
+
+| Surface | Figma (proposal) | Code | Status |
+|--------|------------------|------|--------|
+| AgentStatusPill (glass capsule; **Tone** neutral/attention — attention = brand-blue text per Figma) | `427:21` | `AgentSurfaces/AgentStatusPill.swift` · `agentsurfaces/AgentStatusPill.kt` | ✓ Wave 4 code (CI light+dark) |
+| RunningTaskBanner (Live-Activity glass pill: thumbnail + task + status + Stop; **Tone** working/attention) | `432:39` | `AgentSurfaces/RunningTaskBanner.swift` · `agentsurfaces/RunningTaskBanner.kt` | ✓ Wave 4 code |
+| BrowserLiveCard (in-chat card; **State** Opening/Active/Ended) | `524:31` | `AgentSurfaces/BrowserLiveCard.swift` · `agentsurfaces/BrowserLiveCard.kt` | ✓ Wave 4 code |
+| ExecutionTrace (modal "show your work": status pill + ✕, title/subtitle/ts, MAIN/SUBAGENT step rows, Working footer) | `431:21` (Timeline base `482:56`) | `AgentSurfaces/ExecutionTrace.swift` · `agentsurfaces/ExecutionTrace.kt` | ✓ Wave 4 code |
+| **WalletScreen** (large-title template: balance hero + Add-funds CTA · usage + budget meter · recent activity · payment) — **PROPOSAL** | none (net-new) | `Screens/WalletScreen.swift` · `screens/WalletScreen.kt` | ✓ code (proposal — needs founder review before a Figma master) |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
@@ -127,12 +142,12 @@ Fixed:
 
 | Proposed component | Node | Muse pattern |
 |---|---|---|
-| AgentStatusPill — **Tone** = Neutral / Attention · **Status** text prop (Working / Generating PDF / Reviewing guidance / Needs approval / Needs you) | `427:21` | glass status pill under the agent avatar |
+| AgentStatusPill — **Tone** = Neutral / Attention · **Status** text prop (Working / Generating PDF / Reviewing guidance / Needs approval / Needs you) · **✓ graduated → Wave 4 DS code** | `427:21` | glass status pill under the agent avatar |
 | ActionCard — **State** = Active / Completed (agent-initiated input: icon tile + title + subtitle + CTA → "Added") | `428:37` | inline "Secure Store" action card |
 | ApprovalGate — in-chat permission prompt: icon + heading + body + Details JSON block + **Allow (gradient/Commit) / Always allow / Deny** | `429:20` | in-chat approval card ("Allow Arlo to …?") |
 | **Timeline (base component)** — reusable vertical timeline: status node (green ✓ / red ✗ / blue in-progress) on a **connecting rail** + title + right-aligned timestamp + secondary description; tail node has no connector. Founder-directed ("create your own timeline component"). **Used on the Activity screen `413:32`.** | `482:56` | our own timeline (evolves the exec-trace, adds the connecting rail) |
-| Execution trace (pattern reference / modal variant) — "In progress" pill + X, MAIN/SUBAGENT step rows, "Working" footer. **Superseded by the `Timeline` base component `482:56`** as the product pattern; kept as the modal/standalone reference (avatar / in-chat). | `431:21` | agent step-timeline / "show your work" surface |
-| RunningTaskBanner — **Tone** = Working / Attention (glass pill: thumbnail + task + status + Stop) | `432:39` | Live-Activity "Browser · Needs you" banner |
+| Execution trace (pattern reference / modal variant) — "In progress" pill + X, MAIN/SUBAGENT step rows, "Working" footer. **Superseded by the `Timeline` base component `482:56`** as the product pattern; kept as the modal/standalone reference (avatar / in-chat). · **✓ graduated → Wave 4 DS code** (`AgentSurfaces/ExecutionTrace`) | `431:21` | agent step-timeline / "show your work" surface |
+| RunningTaskBanner — **Tone** = Working / Attention (glass pill: thumbnail + task + status + Stop) · **✓ graduated → Wave 4 DS code** | `432:39` | Live-Activity "Browser · Needs you" banner |
 | Connector consent pre-screen (sheet) — logo tile + name + tagline + 3 icon-rows + legal + **gradient Connect** / Cancel | `434:21` | connector consent sheet ("Connect Notion?") |
 | Accessory/MenuValue — value + up/down chevron pull-down (**Value** text prop: Ask / Allow / Deny), on canonical ListRow | `435:22` | per-capability permission menu (Browser perms) |
 | ContentUnavailableView + CTA — empty state with an action slot (icon + title + subtitle + **Button/Standard-blue**) | `436:67` | "No info saved → Add login info" |

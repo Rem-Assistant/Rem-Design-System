@@ -12,6 +12,15 @@ private func chevron() -> some View {
         .foregroundStyle(DesignTokens.Color.labelTertiary)
 }
 
+// Trailing amount for a wallet transaction row (credits = systemGreen "+", debits = labelPrimary).
+// File-scope for the same reason as `chevron()` — it's used inside ListRow escaping trailing closures.
+private func walletAmount(_ amount: String, credit: Bool) -> some View {
+    Text(amount)
+        .font(DesignTokens.Typography.body.weight(.semibold))
+        .foregroundStyle(credit ? DesignTokens.Color.systemGreen : DesignTokens.Color.labelPrimary)
+        .monospacedDigit()
+}
+
 // Faithful iOS screenshot evidence. Runs on an iOS Simulator (via `xcodebuild test`) so the tokens
 // resolve to real iOS UIColor semantics — `.systemBackground` is WHITE on iOS (it is grey on macOS,
 // which is why the earlier macOS `ImageRenderer` renders looked inverted). Snapshots a real
@@ -98,6 +107,155 @@ final class RenderSnapshots: XCTestCase {
         // Wave 3 screens
         render("TaskDetailScreen-light", width: 402, height: 820, dark: false) { taskDetailScreen() }
         render("SettingsScreen-light", width: 402, height: 820, dark: false) { settingsScreen() }
+        // Wave 4 — agent surfaces (product bets) + Wallet proposal
+        render("AgentStatusPill-light", width: 320, height: nil, dark: false) { agentStatusPills }
+        render("AgentStatusPill-dark", width: 320, height: nil, dark: true) { agentStatusPills }
+        render("RunningTaskBanner-light", width: 440, height: nil, dark: false) { runningTaskBanners }
+        render("BrowserLiveCard-light", width: 380, height: nil, dark: false) { browserLiveCards }
+        render("ExecutionTrace-light", width: 430, height: nil, dark: false) { executionTrace }
+        render("WalletScreen-light", width: 402, height: 900, dark: false) { walletScreen() }
+    }
+
+    // MARK: - Wave 4 galleries (agent surfaces) + Wallet
+
+    @ViewBuilder private var agentStatusPills: some View {
+        VStack(spacing: 14) {
+            AgentStatusPill("Working")
+            AgentStatusPill("Needs you", tone: .attention)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var runningTaskBanners: some View {
+        VStack(spacing: 14) {
+            RunningTaskBanner(task: "Browser", status: "Signing in to my.dnb.com")
+            RunningTaskBanner(task: "Browser", status: "Needs you · Password rejected", tone: .attention)
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var browserLiveCards: some View {
+        VStack(spacing: 14) {
+            BrowserLiveCard(.opening)
+            BrowserLiveCard(.active)
+            BrowserLiveCard(.ended)
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var executionTrace: some View {
+        ExecutionTrace(
+            status: .inProgress,
+            title: "Build RFE checklist",
+            subtitle: "Writing the RFE checklist PDF template",
+            timestamp: "10:49pm",
+            steps: [
+                .init(label: "Launched H-1B RFE Checklist Tailoring Subagent",
+                      detail: "Delegated the checklist prep to a subagent via artifact.send_input, covering a tailored checklist for USCIS.",
+                      lane: .main, status: .done),
+                .init(label: "Prepared RFE Checklist Source Directories",
+                      detail: "Staged the checklist sources; the concatenate step returned an incomplete JSON payload.",
+                      lane: .subagent("01"), status: .failed),
+                .init(label: "Found USCIS RFE Official Results",
+                      detail: "Web search targeting USCIS official guidance for H-1B Requests for Evidence.",
+                      lane: .subagent("01"), status: .done),
+                .init(label: "Created index.html source file",
+                      detail: "Wrote the RFE checklist HTML template used to render the PDF.",
+                      lane: .subagent("01"), status: .done),
+            ],
+            footer: "Working"
+        )
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // Wallet proposal body — ported from WalletScreen.swift's preview (its building blocks are
+    // preview-private, so the harness reconstructs the same composition from the public API).
+    private func walletScreen() -> some View {
+        WalletScreen {
+            // Balance hero
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xl) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                    HStack(spacing: DesignTokens.Spacing.md) {
+                        ContainedIcon("wallet.pass.fill", fill: .tint(DesignTokens.Color.brandBlue))
+                        Text("Available balance")
+                            .font(DesignTokens.Typography.footnote)
+                            .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    }
+                    Text("$42.75")
+                        .font(DesignTokens.Typography.title1Bold)
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    Text("≈ 1,710 credits remaining")
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                }
+                Button(action: {}) { Text("Add funds").frame(maxWidth: .infinity) }
+                    .remButton(.rectBlack)
+            }
+            .padding(DesignTokens.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignTokens.Color.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+
+            // Usage summary + budget meter
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                HStack {
+                    Text("Spent this period")
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    Spacer()
+                    Text("$18.20")
+                        .font(DesignTokens.Typography.body.weight(.semibold))
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                        .monospacedDigit()
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(DesignTokens.Color.fillTertiary)
+                        Capsule().fill(DesignTokens.Color.brandBlue)
+                            .frame(width: geo.size.width * (18.20 / 50.00))
+                    }
+                }
+                .frame(height: 8)
+                Text("$18.20 of $50.00 monthly budget")
+                    .font(DesignTokens.Typography.caption1)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+            }
+            .padding(DesignTokens.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignTokens.Color.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+
+            // Recent activity
+            RemSection(header: "Recent activity") {
+                ListRow("Agent run · Inbox triage", subtitle: "Today, 9:24 AM",
+                        leading: { ContainedIcon("bolt.fill", fill: .tint(DesignTokens.Color.systemBlue)) },
+                        trailing: { walletAmount("-$0.42", credit: false) })
+                Divider().padding(.leading, 60)
+                ListRow("Agent run · Draft email reply", subtitle: "Today, 8:10 AM",
+                        leading: { ContainedIcon("bolt.fill", fill: .tint(DesignTokens.Color.systemBlue)) },
+                        trailing: { walletAmount("-$0.18", credit: false) })
+                Divider().padding(.leading, 60)
+                ListRow("Top-up", subtitle: "Yesterday",
+                        leading: { ContainedIcon("plus.circle.fill", fill: .tint(DesignTokens.Color.systemGreen)) },
+                        trailing: { walletAmount("+$20.00", credit: true) })
+                Divider().padding(.leading, 60)
+                ListRow("Monthly plan credit", subtitle: "Sep 25",
+                        leading: { ContainedIcon("arrow.triangle.2.circlepath", fill: .tint(DesignTokens.Color.systemGreen)) },
+                        trailing: { walletAmount("+$5.00", credit: true) })
+            }
+
+            // Payment method — single-row section (no divider)
+            RemSection(header: "Payment") {
+                ListRow("Visa ending 4242", subtitle: "Expires 08/27",
+                        leading: { ContainedIcon("creditcard.fill", fill: .tint(DesignTokens.Color.systemIndigo)) },
+                        trailing: { chevron() })
+            }
+        }
     }
 
     private func taskDetailScreen() -> some View {
