@@ -37,6 +37,7 @@ import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.screens.AgendaScreen
+import com.rem.designsystem.screens.AddTaskField
 import com.rem.designsystem.screens.InboxScreen
 import com.rem.designsystem.screens.ChatScreen
 import com.rem.designsystem.screens.TaskDetailScreen
@@ -56,7 +57,13 @@ import com.rem.designsystem.agentsurfaces.ExecutionTraceLane
 import com.rem.designsystem.agentsurfaces.ExecutionStepStatus
 import com.rem.designsystem.agentsurfaces.ExecutionTraceStatus
 import com.rem.designsystem.screens.WalletScreen
-import com.rem.designsystem.screens.WalletProposalContent
+import com.rem.designsystem.screens.walletReferenceProviders
+import com.rem.designsystem.screens.SettingsReferenceContent
+import com.rem.designsystem.agentsurfaces.DailyBriefCard
+import com.rem.designsystem.agentsurfaces.BriefCounts
+import com.rem.designsystem.rows.SuggestionSection
+import com.rem.designsystem.rows.TaskSuggestion
+import com.rem.designsystem.rows.SuggestionAccept
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mic
@@ -376,6 +383,63 @@ class EvidenceSnapshots {
     }
 
     @Test
+    fun dailyBriefCard() = shot("DailyBriefCard-light") {
+        RemTheme {
+            Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp)) {
+                DailyBriefCard(
+                    title = "Daily brief",
+                    summary = "Sent to damilola.ogunnaike@gmail.com at 9:37 am — “Hi Damilola, I’ll send " +
+                        "you the notes from yesterday’s call before 2pm. Best, Larissa.” 1 task overdue needs attention.",
+                    onTap = {}, onRead = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun suggestionSection() = shot("SuggestionSection-light") {
+        RemTheme {
+            Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp)) {
+                SuggestionSection(
+                    suggestions = listOf(
+                        TaskSuggestion("Set up the TestFlight pipeline using ASC CLI", "Samuel · Granola · 8h ago"),
+                        TaskSuggestion("Pull the Claude/DSFlows branch and confirm the Compose UI renders", "Damilola · Granola · 8h ago"),
+                        TaskSuggestion("Reply to the venue about the deposit", "‘Confirm Saturday’ · overdue 3d", accept = SuggestionAccept.Move),
+                    ),
+                    onAccept = {}, onDismiss = {}, onSeeMore = {},
+                )
+            }
+        }
+    }
+
+    // The full Today screen assembled from DS components — the engineer's parity target.
+    @Test
+    fun agendaToday() = shot("AgendaToday-light") {
+        RemTheme {
+            AgendaScreen(dateText = "Oct 2 2026", onPrevious = {}, onNext = {}) {
+                DailyBriefCard(
+                    title = "Daily brief",
+                    summary = "1 task overdue needs attention. Larissa will send yesterday’s call notes before 2pm.",
+                    counts = BriefCounts(done = 0, total = 0),
+                    onTap = {},
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                TaskEventRow(kind = TaskEventKind.Task, title = "Send yesterday’s call notes", pills = listOf("Overdue"))
+                TaskEventRow(kind = TaskEventKind.Event(RemColors.current.systemBlue), title = "National Day", pills = listOf("Holidays in Nigeria"))
+                AddTaskField(text = "", onTextChange = {}, onAdd = {}, modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+                SuggestionSection(
+                    suggestions = listOf(
+                        TaskSuggestion("Set up the TestFlight pipeline using ASC CLI", "Samuel · Granola · 8h ago"),
+                        TaskSuggestion("Continue applying to other programs", "Larissa · Gmail · 1d ago"),
+                    ),
+                    onAccept = {}, onDismiss = {},
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+        }
+    }
+
+    @Test
     fun inboxScreen() = shot("InboxScreen-light") {
         RemTheme {
             InboxScreen {
@@ -422,29 +486,9 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun settingsScreen() = shot("SettingsScreen-light") {
-        RemTheme {
-            SettingsScreen {
-                RemSection {
-                    ListRow(
-                        title = "Avery Diaz", subtitle = "avery@example.com",
-                        leading = { ContainedIcon(icon = Icons.Filled.Person, fill = ContainedIconFill.Tint(RemColors.current.systemIndigo), size = ContainedIconSize.Small) },
-                    )
-                }
-                RemSection(header = "General") {
-                    ListRow(
-                        title = "Connectors",
-                        leading = { ContainedIcon(icon = Icons.Filled.Link, fill = ContainedIconFill.Tint(RemColors.current.systemBlue), size = ContainedIconSize.Small) },
-                        trailing = { DisclosureChevron() },
-                    )
-                    ListRow(
-                        title = "Voice", subtitle = "Aria",
-                        leading = { ContainedIcon(icon = Icons.Filled.Mic, fill = ContainedIconFill.Tint(RemColors.current.systemPurple), size = ContainedIconSize.Small) },
-                        trailing = { DisclosureChevron() },
-                    )
-                }
-            }
-        }
+    fun settingsScreen() {
+        shot("SettingsScreen-light") { RemTheme { SettingsScreen { SettingsReferenceContent() } } }
+        shot("SettingsScreen-dark") { RemTheme(darkTheme = true) { SettingsScreen { SettingsReferenceContent() } } }
     }
 
     // MARK: - Wave 4 — agent surfaces (product bets) + Wallet proposal
@@ -546,10 +590,9 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun walletScreen() = shot("WalletScreen-light") {
-        RemTheme {
-            WalletScreen { WalletProposalContent() }
-        }
+    fun walletScreen() {
+        shot("WalletScreen-light") { RemTheme { WalletScreen(providers = walletReferenceProviders(), onBack = {}) } }
+        shot("WalletScreen-dark") { RemTheme(darkTheme = true) { WalletScreen(providers = walletReferenceProviders(), onBack = {}) } }
     }
 
     @Composable
