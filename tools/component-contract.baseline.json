@@ -1,0 +1,25 @@
+{
+  "grandfathered": [
+    "AgentStatusPill:figma",
+    "BrowserLiveCard:figma",
+    "DateNavigationHeader:figma",
+    "ExecutionTrace:figma",
+    "ExecutionTrace:tokenset",
+    "ListRow:figma",
+    "MessageBubble:figma",
+    "RemAppIcon:figma",
+    "RemButton:compose",
+    "RemComposerBar:figma",
+    "RemContentUnavailableView:figma",
+    "RemGoogleGlyph:compose",
+    "RemGoogleGlyph:figma",
+    "RemPill:figma",
+    "RemSection:figma",
+    "RemSlider:figma",
+    "RunningTaskBanner:figma",
+    "TaskEventRow:figma",
+    "TaskEventRow:tokenset",
+    "VoiceBar:figma",
+    "VoiceBar:tokenset"
+  ]
+}
