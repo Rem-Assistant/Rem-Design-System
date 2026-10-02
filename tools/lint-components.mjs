@@ -79,9 +79,13 @@ for (const folder of COMPONENT_FOLDERS) {
     if (TIER2.has(name) && !existsSync(join(dir, `${name}TokenSet.swift`)))
       add(name, 'tokenset', `cross-product component missing ${name}TokenSet.swift`);
 
-    // token-only (no raw hex in the body)
+    // token-only (no raw hex in the body) — scan code only, not comments (DS docs often cite hex
+    // values like "#3C3C43" in prose; those are not violations).
     const body = readFileSync(file, 'utf8');
-    if (HEX.test(body)) add(name, 'hex', `raw color literal in ${folder}/${entry}`);
+    const codeOnly = body
+      .replace(/\/\*[\s\S]*?\*\//g, '')                               // block comments
+      .split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l)).join('\n'); // line / doc-comment / * lines
+    if (HEX.test(codeOnly)) add(name, 'hex', `raw color literal in ${folder}/${entry}`);
   }
 }
 
