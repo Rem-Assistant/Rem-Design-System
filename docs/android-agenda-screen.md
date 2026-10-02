@@ -1,9 +1,10 @@
-# Android Agenda screen — handoff
+# Android screens — handoff (Agenda · Settings · Wallet)
 
-For the engineer integrating the Android app. The Agenda/Today screen was drifting from the design
-because the app was hand-building screens with **Material 3 defaults** instead of composing them from
-the **Compose design system** (`compose/RemDesignSystem/`). This branch (`claude/ds-flows`) adds the
-missing components and a full worked Agenda screen so you compose it the same way iOS does.
+For the engineer integrating the Android app. The screens were drifting from the design because the app
+was hand-building them with **Material 3 defaults** instead of composing from the **Compose design
+system** (`compose/RemDesignSystem/`). This branch (`claude/ds-flows`) adds the missing components and
+full worked screens — **Agenda, Settings, and Wallet** — so you compose them the same way iOS does, and
+both platforms are verified by the paired render job (see **Status**).
 
 ## The one rule
 
@@ -48,6 +49,32 @@ structure. Component map, top to bottom:
 
 The whole thing lives inside `AgendaScreen(dateText, onPrevious, onNext) { ...content... }`.
 
+## Build the Settings screen
+
+New IA (matches the reference screenshot), inside `SettingsScreen { ... }`:
+
+| Element | DS component | Notes |
+|---|---|---|
+| Free-plan usage card | (inline) | plan name + "% used" + reset caption + meter + **Upgrade** |
+| Nav rows | `ListRow` + `DisclosureChevron` in `RemSection` | flat **monochrome** icon leading (not colored `ContainedIcon` tiles) |
+
+Groups: **Connectors · Devices · Wallet · Secure credentials store · Permissions · Messaging channels**,
+then **Notifications · Appearance**. Canonical composition: `SettingsReferenceContent()` (shared by the
+preview + the Paparazzi evidence).
+
+## Build the Wallet screen
+
+Wallet is a **payment-methods** screen (NOT a balance/credits ledger), reached from Settings → Wallet:
+
+| Element | DS component | Notes |
+|---|---|---|
+| Centered hero | `ContainedIcon(wallet, .subtle, .large)` + title + subtitle | "Securely save payment methods for {agent} to use when making purchases for you." |
+| Provider rows | `WalletScreen(providers:)` → `PaymentProvider` | logo tile + name + trailing **Add** (linkable) / **Coming soon** |
+
+Reference providers: **Link by Stripe** (Add) · **Shop Pay** (Coming soon), via
+`WalletScreen.referenceProviders()` (Swift) / `walletReferenceProviders()` (Compose). Provider logo
+tiles are placeholders until real brand assets land (logo debt).
+
 ## The four drift fixes (what the current Android build got wrong)
 
 These are the specific places the screenshot diverged from the design-system source of truth:
@@ -69,6 +96,19 @@ These are the specific places the screenshot diverged from the design-system sou
   objective "does it match" signal; use it instead of comparing by eye.
 - App chrome **not** in the DS: the bottom tab bar (menu · chat · +) and the `update_required` banner
   are app-level — theme them with `RemColors`/`RemTypography`, but they aren't DS components.
+
+## Status
+
+Verified on **PR #68** by the paired render job (`screenshots.yml`): Compose (Android, Paparazzi) +
+SwiftUI (iOS) render every component + screen to light/dark PNGs, side by side.
+
+- **Agenda, Settings, Wallet** — built on **both** platforms (Compose + SwiftUI), token-only.
+- **Inbox, Chat, TaskDetail** — already render on both platforms (Wave 2/3); at parity.
+- Compose render confirmed green against HEAD; the SwiftUI package builds (`swift build`); the latest iOS
+  render confirms the harness.
+- **Open (not a code/render issue):** the `agent-factory` **figma-writer-delivery gate** wants a
+  Builder-App-authored Figma delivery record per head — an orchestration/attestation step decided
+  separately from the code, pending the Figma-lane (Codex) call.
 
 ## Known follow-ups (DS side, not blocking you)
 
