@@ -1,215 +1,158 @@
 import SwiftUI
 
-/// **WalletScreen** — a **net-new product proposal** surface (there is no Figma master or shipping
-/// source for this screen yet). It follows the same large-title template as `InboxScreen` /
-/// `SettingsScreen`: a large "Wallet" title over a scrolling body of grouped cards, with chrome
-/// (status bar, nav bar, home indicator) supplied by the platform. The host supplies the body through
-/// `content`, exactly as the sibling screens do — so the hero card, usage summary, and transactions
-/// section below are composed from canonical components (`RemSection`, `ListRow`, `ContainedIcon`,
-/// `RemButtonStyle`) in the `#Preview`, not baked into the template.
+/// **WalletScreen** — a **payment-methods** screen (NOT a balance/credits ledger): reached from
+/// Settings → Wallet, it lets the user securely save payment methods for the agent to use when making
+/// purchases. A centered hero (neutral wallet tile + title + subtitle) over a grouped list of payment
+/// providers, each a logo tile + name + trailing action (**Add** when linkable, **Coming soon** when
+/// not). Chrome (status bar, nav bar) comes from the platform.
 ///
-/// Product intent (Rem thesis + Muse-informed payments direction): agent work costs money (model
-/// usage / credits), so a Wallet home shows **balance / credits** (hero + top-up CTA), a **usage
-/// summary** for the period, and a **recent activity** list. Every concrete choice here (dollars +
-/// credits dual unit, a monthly budget meter, the transaction taxonomy, a saved payment method) is a
-/// *proposal* for the founder to correct — see the `// PROPOSAL:` notes in the preview.
-///
-/// Compose sibling: `screens/WalletScreen.kt`.
-public struct WalletScreen<Content: View>: View {
-    private let title: String
-    private let content: () -> Content
+/// Authority: the reference Wallet screen (Settings → Wallet; "Securely save payment methods for
+/// {agent} to use when making purchases for you"; Link by Stripe / Shop Pay). Compose sibling:
+/// `screens/WalletScreen.kt`. Brand provider glyphs/colors are placeholders until real logo assets
+/// land (logo debt).
+public enum WalletProviderAction {
+    /// The provider can be linked now.
+    case add(() -> Void)
+    /// The provider is announced but not yet available.
+    case comingSoon
 
-    public init(title: String = "Wallet", @ViewBuilder content: @escaping () -> Content) {
-        self.title = title
-        self.content = content
+    var isComingSoon: Bool { if case .comingSoon = self { return true } else { return false } }
+}
+
+public struct PaymentProvider: Identifiable {
+    public let id = UUID()
+    public let name: String
+    public let tileColor: Color
+    public let symbol: String
+    public let action: WalletProviderAction
+
+    public init(name: String, tileColor: Color, symbol: String, action: WalletProviderAction) {
+        self.name = name
+        self.tileColor = tileColor
+        self.symbol = symbol
+        self.action = action
+    }
+}
+
+public struct WalletScreen: View {
+    private let providers: [PaymentProvider]
+    private let agentName: String
+    private let onBack: (() -> Void)?
+
+    public init(providers: [PaymentProvider], agentName: String = "Rem", onBack: (() -> Void)? = nil) {
+        self.providers = providers
+        self.agentName = agentName
+        self.onBack = onBack
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(DesignTokens.Typography.largeTitle.weight(.bold))
-                .foregroundStyle(DesignTokens.Color.labelPrimary)
+        VStack(spacing: 0) {
+            if let onBack {
+                HStack {
+                    Button(action: onBack) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(DesignTokens.Color.labelPrimary)
+                            .frame(width: 36, height: 36)
+                            .background(DesignTokens.Color.backgroundSecondary, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                }
                 .padding(.horizontal, DesignTokens.Spacing.lg)
                 .padding(.top, DesignTokens.Spacing.md)
-                .padding(.bottom, DesignTokens.Spacing.sm)
+            }
+
             ScrollView {
-                VStack(spacing: DesignTokens.Spacing.xl) {
-                    content()
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    ContainedIcon("wallet.pass", fill: .subtle, size: .large)
+                        .padding(.top, DesignTokens.Spacing.xl)
+
+                    VStack(spacing: DesignTokens.Spacing.sm) {
+                        Text("Wallet")
+                            .font(DesignTokens.Typography.title1Bold)
+                            .foregroundStyle(DesignTokens.Color.labelPrimary)
+                        Text("Securely save payment methods for \(agentName) to use when making purchases for you.")
+                            .font(DesignTokens.Typography.subheadline)
+                            .foregroundStyle(DesignTokens.Color.labelSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    RemSection {
+                        ForEach(providers) { provider in
+                            ProviderRow(provider: provider)
+                            if provider.id != providers.last?.id {
+                                Divider().padding(.leading, DesignTokens.Spacing.xxl + DesignTokens.Spacing.md)
+                            }
+                        }
+                    }
+                    .padding(.top, DesignTokens.Spacing.md)
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, DesignTokens.Spacing.lg)
                 .padding(.bottom, DesignTokens.Spacing.xl)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignTokens.Color.backgroundPrimary)
     }
 }
 
-#if DEBUG
-// MARK: - Proposal building blocks (preview-scoped, mirror SettingsScreen's private helpers)
-
-/// The **balance hero** — a prominent card in the shared card language (`backgroundSecondary` fill +
-/// `xlarge` continuous radius, the same surface `RemSection` uses), carrying the current balance, a
-/// credits equivalent, and the primary **Add funds** CTA. Deliberately a neutral card, not a saturated
-/// brand fill — the system reserves loud tone fills for status badges, so the hero stays tasteful and
-/// on-system. The balance uses `title1Bold` so it reads as the hero without competing with the page's
-/// `largeTitle`.
-private struct WalletBalanceCard: View {
-    let balance: String
-    let credits: String
-    var onAddFunds: () -> Void = {}
+private struct ProviderRow: View {
+    let provider: PaymentProvider
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xl) {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                HStack(spacing: DesignTokens.Spacing.md) {
-                    ContainedIcon("wallet.pass.fill", fill: .tint(DesignTokens.Color.brandBlue))
-                    Text("Available balance")
-                        .font(DesignTokens.Typography.footnote)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                }
-                Text(balance)
-                    .font(DesignTokens.Typography.title1Bold)
-                    .foregroundStyle(DesignTokens.Color.labelPrimary)
-                Text(credits)
-                    .font(DesignTokens.Typography.subheadline)
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-            }
-            Button(action: onAddFunds) {
-                Text("Add funds").frame(maxWidth: .infinity)
-            }
-            .remButton(.rectBlack)
-        }
-        .padding(DesignTokens.Spacing.lg)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignTokens.Color.backgroundSecondary)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
-    }
-}
-
-/// The **usage summary** — a card (same surface tokens) with this period's spend, a slim budget
-/// meter, and a caption. PROPOSAL: a monthly budget cap is a plausible v1 guardrail; drop the meter
-/// if Wallet should stay purely a balance ledger without a budget concept.
-private struct WalletUsageCard: View {
-    let spent: String
-    let caption: String
-    let fraction: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
-            HStack {
-                Text("Spent this period")
-                    .font(DesignTokens.Typography.subheadline)
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                Spacer()
-                Text(spent)
+        HStack(spacing: DesignTokens.Spacing.md) {
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+                .fill(provider.tileColor)
+                .frame(width: 32, height: 32)
+                .overlay(
+                    Image(systemName: provider.symbol)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                )
+            Text(provider.name)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(provider.action.isComingSoon
+                                 ? DesignTokens.Color.labelSecondary
+                                 : DesignTokens.Color.labelPrimary)
+            Spacer()
+            switch provider.action {
+            case .add(let onAdd):
+                Button("Add", action: onAdd)
                     .font(DesignTokens.Typography.body.weight(.semibold))
-                    .foregroundStyle(DesignTokens.Color.labelPrimary)
-                    .monospacedDigit()
-            }
-            UsageMeter(fraction: fraction)
-            Text(caption)
-                .font(DesignTokens.Typography.caption1)
-                .foregroundStyle(DesignTokens.Color.labelSecondary)
-        }
-        .padding(DesignTokens.Spacing.lg)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignTokens.Color.backgroundSecondary)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
-    }
-}
-
-/// A slim capsule meter: `fillTertiary` track + `brandBlue` fill. No canonical Meter component exists
-/// yet, so (like `SettingsScreen`'s `ProfileAvatar`) it lives with the proposal rather than the API.
-private struct UsageMeter: View {
-    let fraction: Double
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(DesignTokens.Color.fillTertiary)
-                Capsule()
-                    .fill(DesignTokens.Color.brandBlue)
-                    .frame(width: geo.size.width * max(0, min(1, fraction)))
+                    .foregroundStyle(DesignTokens.Color.brandBlue)
+                    .buttonStyle(.plain)
+            case .comingSoon:
+                Text("Coming soon")
+                    .font(DesignTokens.Typography.body)
+                    .foregroundStyle(DesignTokens.Color.labelTertiary)
             }
         }
-        .frame(height: 8)
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.md)
     }
 }
 
-/// Trailing amount label for a transaction row: a credit (top-up / plan grant) is `systemGreen` with a
-/// `+`; a debit (agent spend) is `labelPrimary`. Monospaced digits keep the column aligned.
-private struct TransactionAmount: View {
-    let amount: String
-    let isCredit: Bool
-
-    var body: some View {
-        Text(amount)
-            .font(DesignTokens.Typography.body.weight(.semibold))
-            .foregroundStyle(isCredit ? DesignTokens.Color.systemGreen : DesignTokens.Color.labelPrimary)
-            .monospacedDigit()
+public extension WalletScreen {
+    /// The two reference providers. Tile colors approximate the brands; glyphs are placeholders until
+    /// real logo assets land (logo debt).
+    static func referenceProviders(onAddStripe: @escaping () -> Void = {}) -> [PaymentProvider] {
+        [
+            PaymentProvider(name: "Link by Stripe",
+                            tileColor: Color(red: 0, green: 0.84, blue: 0.44),
+                            symbol: "link",
+                            action: .add(onAddStripe)),
+            PaymentProvider(name: "Shop Pay",
+                            tileColor: Color(red: 0.35, green: 0.19, blue: 0.96),
+                            symbol: "bag.fill",
+                            action: .comingSoon),
+        ]
     }
 }
 
-/// A recent-activity entry. PROPOSAL: the taxonomy is agent-spend vs. credit (top-up / plan grant);
-/// `symbol` + `tint` categorise the leading `ContainedIcon`.
-private struct WalletTransaction: Identifiable {
-    let id = UUID()
-    let title: String
-    let date: String
-    let amount: String
-    let isCredit: Bool
-    let symbol: String
-    let tint: Color
-}
-
-private struct WalletScreenPreview: View {
-    private let transactions: [WalletTransaction] = [
-        .init(title: "Agent run · Inbox triage", date: "Today, 9:24 AM", amount: "-$0.42",
-              isCredit: false, symbol: "bolt.fill", tint: DesignTokens.Color.systemBlue),
-        .init(title: "Agent run · Draft email reply", date: "Today, 8:10 AM", amount: "-$0.18",
-              isCredit: false, symbol: "bolt.fill", tint: DesignTokens.Color.systemBlue),
-        .init(title: "Top-up", date: "Yesterday", amount: "+$20.00",
-              isCredit: true, symbol: "plus.circle.fill", tint: DesignTokens.Color.systemGreen),
-        .init(title: "Agent run · Calendar summary", date: "Sep 28", amount: "-$0.31",
-              isCredit: false, symbol: "bolt.fill", tint: DesignTokens.Color.systemBlue),
-        .init(title: "Monthly plan credit", date: "Sep 25", amount: "+$5.00",
-              isCredit: true, symbol: "arrow.triangle.2.circlepath", tint: DesignTokens.Color.systemGreen),
-    ]
-
-    var body: some View {
-        WalletScreen {
-            // Balance hero — PROPOSAL: show both a dollar balance and a credits equivalent so the
-            // user reads the number either way agent cost is eventually billed.
-            WalletBalanceCard(balance: "$42.75", credits: "≈ 1,710 credits remaining")
-
-            // Usage — PROPOSAL: $50 monthly budget; 36% used.
-            WalletUsageCard(spent: "$18.20",
-                            caption: "$18.20 of $50.00 monthly budget",
-                            fraction: 18.20 / 50.00)
-
-            // Recent activity — multi-row RemSection, so it draws canonical inset separators.
-            RemSection(header: "Recent activity", rows: transactions) { tx in
-                ListRow(tx.title,
-                        subtitle: tx.date,
-                        leading: { ContainedIcon(tx.symbol, fill: .tint(tx.tint)) },
-                        trailing: { TransactionAmount(amount: tx.amount, isCredit: tx.isCredit) })
-            }
-
-            // Payment method — PROPOSAL (optional): single-row section, no divider. Drop if top-up
-            // always routes through the OS payment sheet (Apple Pay) with no stored method.
-            RemSection(header: "Payment") {
-                ListRow("Visa ending 4242",
-                        subtitle: "Expires 08/27",
-                        action: {},
-                        leading: { ContainedIcon("creditcard.fill", fill: .tint(DesignTokens.Color.systemIndigo)) },
-                        trailing: { DisclosureChevron() })
-            }
-        }
-    }
-}
-
-#Preview("WalletScreen") {
-    WalletScreenPreview()
+#if DEBUG
+#Preview {
+    WalletScreen(providers: WalletScreen.referenceProviders(), onBack: {})
 }
 #endif

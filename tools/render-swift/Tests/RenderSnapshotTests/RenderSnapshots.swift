@@ -12,13 +12,19 @@ private func chevron() -> some View {
         .foregroundStyle(DesignTokens.Color.labelTertiary)
 }
 
-// Trailing amount for a wallet transaction row (credits = systemGreen "+", debits = labelPrimary).
-// File-scope for the same reason as `chevron()` — it's used inside ListRow escaping trailing closures.
-private func walletAmount(_ amount: String, credit: Bool) -> some View {
-    Text(amount)
-        .font(DesignTokens.Typography.body.weight(.semibold))
-        .foregroundStyle(credit ? DesignTokens.Color.systemGreen : DesignTokens.Color.labelPrimary)
-        .monospacedDigit()
+// A Settings nav row: flat monochrome SF Symbol + title + chevron. File-scope so the ListRow trailing
+// closure doesn't capture `self`. Mirrors the Compose `SettingsNavRow`.
+private func settingsNavRow(_ title: String, symbol: String) -> some View {
+    ListRow(
+        title,
+        leading: {
+            Image(systemName: symbol)
+                .font(.system(size: 17))
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .frame(width: 28)
+        },
+        trailing: { chevron() }
+    )
 }
 
 // Faithful iOS screenshot evidence. Runs on an iOS Simulator (via `xcodebuild test`) so the tokens
@@ -173,89 +179,10 @@ final class RenderSnapshots: XCTestCase {
         .background(DesignTokens.Color.backgroundPrimary)
     }
 
-    // Wallet proposal body — ported from WalletScreen.swift's preview (its building blocks are
-    // preview-private, so the harness reconstructs the same composition from the public API).
+    // Wallet — the payment-methods screen (Settings → Wallet), rendered from the public API so the
+    // iOS evidence matches the Compose `WalletScreen` side-by-side.
     private func walletScreen() -> some View {
-        WalletScreen {
-            // Balance hero
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xl) {
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                    HStack(spacing: DesignTokens.Spacing.md) {
-                        ContainedIcon("wallet.pass.fill", fill: .tint(DesignTokens.Color.brandBlue))
-                        Text("Available balance")
-                            .font(DesignTokens.Typography.footnote)
-                            .foregroundStyle(DesignTokens.Color.labelSecondary)
-                    }
-                    Text("$42.75")
-                        .font(DesignTokens.Typography.title1Bold)
-                        .foregroundStyle(DesignTokens.Color.labelPrimary)
-                    Text("≈ 1,710 credits remaining")
-                        .font(DesignTokens.Typography.subheadline)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                }
-                Button(action: {}) { Text("Add funds").frame(maxWidth: .infinity) }
-                    .remButton(.rectBlack)
-            }
-            .padding(DesignTokens.Spacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignTokens.Color.backgroundSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
-
-            // Usage summary + budget meter
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
-                HStack {
-                    Text("Spent this period")
-                        .font(DesignTokens.Typography.subheadline)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                    Spacer()
-                    Text("$18.20")
-                        .font(DesignTokens.Typography.body.weight(.semibold))
-                        .foregroundStyle(DesignTokens.Color.labelPrimary)
-                        .monospacedDigit()
-                }
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(DesignTokens.Color.fillTertiary)
-                        Capsule().fill(DesignTokens.Color.brandBlue)
-                            .frame(width: geo.size.width * (18.20 / 50.00))
-                    }
-                }
-                .frame(height: 8)
-                Text("$18.20 of $50.00 monthly budget")
-                    .font(DesignTokens.Typography.caption1)
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-            }
-            .padding(DesignTokens.Spacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignTokens.Color.backgroundSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
-
-            // Recent activity
-            RemSection(header: "Recent activity") {
-                ListRow("Agent run · Inbox triage", subtitle: "Today, 9:24 AM",
-                        leading: { ContainedIcon("bolt.fill", fill: .tint(DesignTokens.Color.systemBlue)) },
-                        trailing: { walletAmount("-$0.42", credit: false) })
-                Divider().padding(.leading, 60)
-                ListRow("Agent run · Draft email reply", subtitle: "Today, 8:10 AM",
-                        leading: { ContainedIcon("bolt.fill", fill: .tint(DesignTokens.Color.systemBlue)) },
-                        trailing: { walletAmount("-$0.18", credit: false) })
-                Divider().padding(.leading, 60)
-                ListRow("Top-up", subtitle: "Yesterday",
-                        leading: { ContainedIcon("plus.circle.fill", fill: .tint(DesignTokens.Color.systemGreen)) },
-                        trailing: { walletAmount("+$20.00", credit: true) })
-                Divider().padding(.leading, 60)
-                ListRow("Monthly plan credit", subtitle: "Sep 25",
-                        leading: { ContainedIcon("arrow.triangle.2.circlepath", fill: .tint(DesignTokens.Color.systemGreen)) },
-                        trailing: { walletAmount("+$5.00", credit: true) })
-            }
-
-            // Payment method — single-row section (no divider)
-            RemSection(header: "Payment") {
-                ListRow("Visa ending 4242", subtitle: "Expires 08/27",
-                        leading: { ContainedIcon("creditcard.fill", fill: .tint(DesignTokens.Color.systemIndigo)) },
-                        trailing: { chevron() })
-            }
-        }
+        WalletScreen(providers: WalletScreen.referenceProviders())
     }
 
     private func taskDetailScreen() -> some View {
@@ -281,19 +208,49 @@ final class RenderSnapshots: XCTestCase {
 
     private func settingsScreen() -> some View {
         SettingsScreen {
-            RemSection {
-                ListRow("Avery Diaz", subtitle: "avery@example.com",
-                        leading: { ContainedIcon("person.fill", fill: .tint(DesignTokens.Color.systemIndigo)) },
-                        trailing: { EmptyView() })
+            // Free-plan usage card
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                HStack {
+                    Text("Free plan")
+                        .font(DesignTokens.Typography.body.weight(.semibold))
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    Spacer()
+                    Text("0% used")
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                }
+                Text("Weekly limit resets on Oct 8")
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                Capsule().fill(DesignTokens.Color.fillTertiary).frame(height: 8)
+                Divider()
+                Text("Upgrade")
+                    .font(DesignTokens.Typography.body.weight(.semibold))
+                    .foregroundStyle(DesignTokens.Color.brandBlue)
             }
-            RemSection(header: "General") {
-                ListRow("Connectors",
-                        leading: { ContainedIcon("link", fill: .tint(DesignTokens.Color.systemBlue)) },
-                        trailing: { chevron() })
-                Divider().padding(.leading, 60)
-                ListRow("Voice", subtitle: "Aria",
-                        leading: { ContainedIcon("mic.fill", fill: .tint(DesignTokens.Color.systemPurple)) },
-                        trailing: { chevron() })
+            .padding(DesignTokens.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignTokens.Color.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+
+            // Core surfaces
+            RemSection {
+                settingsNavRow("Connectors", symbol: "square.grid.2x2.fill")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Devices", symbol: "eyeglasses")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Wallet", symbol: "wallet.pass")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Secure credentials store", symbol: "lock.shield")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Permissions", symbol: "hand.raised")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Messaging channels", symbol: "bubble.left")
+            }
+            RemSection {
+                settingsNavRow("Notifications", symbol: "bell")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Appearance", symbol: "paintbrush")
             }
         }
     }
