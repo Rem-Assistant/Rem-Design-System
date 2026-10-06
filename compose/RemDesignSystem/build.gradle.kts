@@ -9,10 +9,14 @@ plugins {
     id("app.cash.paparazzi")
 }
 
-// The reference layout keeps component sources flat (onboarding/, primitives/) plus the generated
-// token file at ../../tokens/generated/RemTokens.kt. Gather them into one compilable tree, dropping
-// the Code Connect bindings (*.figma.kt import a Figma package that is intentionally NOT a build
-// dependency — exactly as the SwiftUI target excludes *.figma.swift in ../../Package.swift).
+// The reference layout keeps component sources in per-family folders (onboarding/, primitives/, rows/,
+// brand/, icons/, agenda/, chat/) plus the generated token file at ../../tokens/generated/RemTokens.kt.
+// Gather them into one compilable tree, dropping the Code Connect bindings (*.figma.kt import a Figma
+// package that is intentionally NOT a build dependency — exactly as the SwiftUI target excludes
+// *.figma.swift in ../../Package.swift).
+// NOTE: unlike SwiftUI/SPM (which auto-discovers new folders under Sources/), this gather list is
+// explicit — when you add a NEW component folder, add a `from("<folder>")` line below or its files
+// won't compile (they'll surface as "Unresolved reference '<folder>'" in EvidenceSnapshots).
 val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     into(layout.buildDirectory.dir("designSystemSrc"))
     from("onboarding")
@@ -20,6 +24,10 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     from("rows")
     from("brand")
     from("icons")
+    from("agenda")
+    from("chat")
+    from("screens")
+    from("agentsurfaces")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }
     exclude("**/*.figma.kt")
 }
