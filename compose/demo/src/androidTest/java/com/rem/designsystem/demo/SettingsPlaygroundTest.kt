@@ -18,6 +18,9 @@ class SettingsPlaygroundTest {
         compose.waitForIdle()
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        // Compose semantics can expose the new route before the device capture shows it.
+        // Wait for the platform accessibility stream to settle, including dialogs/IME.
+        automation.waitForIdle(500, 5000)
         // AGP uninstalls the app after connected tests, removing app-scoped files.
         // Test-owned MediaStore output survives that cleanup on the dedicated emulator.
         val resolver = compose.activity.contentResolver
