@@ -201,17 +201,21 @@ private fun GmailPermissions(session: SettingsConnectorsSession, accountId: Stri
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GmailPermissionRow(permission: GmailPermission, selected: Boolean, tag: String, onSelect: () -> Unit) {
     val colors = RemColors.current
     Row(Modifier.fillMaxWidth().selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
         .padding(horizontal = 16.dp, vertical = 12.dp).testTag(tag), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(permission.title, style = RemTypography.body, color = colors.labelPrimary, modifier = Modifier.weight(1f, fill = false))
+            // Let the whole badge flow below the title instead of reserving its width and
+            // squeezing the title into letter-sized fragments at accessibility text sizes.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(permission.title, style = RemTypography.body, color = colors.labelPrimary, modifier = Modifier.align(Alignment.CenterVertically))
                 if (permission == GmailPermission.LowRisk || permission == GmailPermission.AlwaysAllow) {
                     val risk = permission == GmailPermission.AlwaysAllow
-                    Row(Modifier.background((if (risk) colors.systemRed else colors.brandBlue).copy(alpha = .12f), CircleShape)
+                    Row(Modifier.align(Alignment.CenterVertically)
+                        .background((if (risk) colors.systemRed else colors.brandBlue).copy(alpha = .12f), CircleShape)
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         if (risk) Icon(Icons.Filled.Warning, contentDescription = null, tint = colors.systemRed, modifier = Modifier.size(12.dp))

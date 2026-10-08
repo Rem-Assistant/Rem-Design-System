@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -30,23 +31,36 @@ fun ConnectorRow(
     onClick: (() -> Unit)? = null, showsDivider: Boolean = false,
     leading: @Composable () -> Unit, content: (@Composable () -> Unit)? = null,
 ) {
-    ListRow(modifier = modifier.heightIn(min = 64.dp), showsDivider = showsDivider, onClick = onClick,
-        leading = leading, content = { if (content == null) ListRowLabel(title, subtitle) else content() }, trailing = {
-            when (accessory) {
-                is ConnectorRowAccessory.Action -> TextButton(onClick = accessory.onClick,
-                    modifier = Modifier.semantics { contentDescription = "${accessory.label} $title" },
-                    shape = CircleShape,
-                    colors = ButtonDefaults.textButtonColors(contentColor = RemColors.current.brandBlue, containerColor = RemColors.current.fillTertiary)) {
-                    Text(accessory.label, style = RemTypography.body)
-                }
-                ConnectorRowAccessory.Progress -> CircularProgressIndicator(Modifier.size(20.dp)
-                    .semantics { contentDescription = "Connecting $title" }, strokeWidth = 2.dp)
-                ConnectorRowAccessory.Disclosure -> DisclosureChevron()
-                is ConnectorRowAccessory.Toggle -> Switch(checked = accessory.checked,
-                    onCheckedChange = accessory.onCheckedChange,
-                    modifier = Modifier.semantics { contentDescription = title })
+    val fontScale = LocalDensity.current.fontScale
+    val accessoryContent: @Composable () -> Unit = {
+        when (accessory) {
+            is ConnectorRowAccessory.Action -> TextButton(onClick = accessory.onClick,
+                modifier = Modifier.semantics { contentDescription = "${accessory.label} $title" },
+                shape = CircleShape,
+                colors = ButtonDefaults.textButtonColors(contentColor = RemColors.current.brandBlue, containerColor = RemColors.current.fillTertiary)) {
+                Text(accessory.label, style = RemTypography.body)
             }
-        })
+            ConnectorRowAccessory.Progress -> CircularProgressIndicator(Modifier.size(20.dp)
+                .semantics { contentDescription = "Connecting $title" }, strokeWidth = 2.dp)
+            ConnectorRowAccessory.Disclosure -> DisclosureChevron()
+            is ConnectorRowAccessory.Toggle -> Switch(checked = accessory.checked,
+                onCheckedChange = accessory.onCheckedChange,
+                modifier = Modifier.semantics { contentDescription = title })
+        }
+    }
+    BoxWithConstraints {
+        // Keep the label readable as the available width shrinks or text grows. An action
+        // can move below its label; disclosure, progress and switch accessories retain their slot.
+        val stackAction = accessory is ConnectorRowAccessory.Action && maxWidth < (280 * fontScale).dp
+        ListRow(modifier = modifier.heightIn(min = 64.dp), showsDivider = showsDivider, onClick = onClick,
+            leading = leading, content = {
+                if (content == null) ListRowLabel(title, subtitle) else content()
+                if (stackAction) {
+                    Spacer(Modifier.height(8.dp))
+                    accessoryContent()
+                }
+            }, trailing = { if (!stackAction) accessoryContent() })
+    }
 }
 enum class ConnectorProvider(val title: String, val asset: Int) {
     Gmail("Gmail", R.drawable.connector_gmail), GoogleCalendar("Google Calendar", R.drawable.connector_google_calendar),
