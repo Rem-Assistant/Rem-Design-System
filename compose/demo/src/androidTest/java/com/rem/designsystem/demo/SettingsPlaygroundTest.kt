@@ -3,6 +3,7 @@ package com.rem.designsystem.demo
 import android.graphics.Bitmap
 import android.content.ContentValues
 import android.provider.MediaStore
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -117,4 +118,146 @@ class SettingsPlaygroundTest {
         compose.onNodeWithTag("notifications").performClick().assertIsOff()
         capture("android-controls")
     }
+    private fun waitForTag(tag: String) {
+        compose.waitUntil(5000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+    }
+    private fun openDestination(destination: String, rootTag: String) {
+        openSettings()
+        compose.onNodeWithTag("openAgent").performClick()
+        waitForTag("agentSettings")
+        compose.onNodeWithTag("agentDestination.$destination").performScrollTo().performClick()
+        waitForTag(rootTag)
+    }
+
+    @Test fun pairedDevicesBoundaryCancelRemovalRefreshAndRecreation() {
+        openDestination("PairedDevices", "pairedDevices")
+        compose.onNodeWithTag("pairedDevices.peer.mac-studio").assertExists()
+        capture("PairedDevices-light")
+        compose.onNodeWithTag("pairedDevices.add").performClick()
+        compose.onNodeWithTag("pairedDevices.addBoundary").assertExists()
+        compose.onNodeWithText("Pair a new device").assertExists()
+        capture("PairedDevices-add-boundary-light")
+        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithTag("pairedDevices.peer.mac-studio").assertExists().performClick()
+        compose.onNodeWithTag("pairedDevices.removeAccess").assertExists()
+        capture("PairedDevices-detail-light")
+        compose.onNodeWithTag("pairedDevices.back").performClick()
+        compose.onNodeWithTag("pairedDevices.peer.mac-studio").assertExists().performClick()
+        compose.onNodeWithTag("pairedDevices.removeAccess").performScrollTo().performClick()
+        compose.onNodeWithTag("pairedDevices.removeConfirmation").assertExists()
+        capture("PairedDevices-remove-confirmation-light")
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithTag("pairedDevices.removeConfirmation").assertDoesNotExist()
+        compose.onNodeWithTag("pairedDevices.removeAccess").assertExists().performClick()
+        compose.onNodeWithTag("pairedDevices.confirmRemove").performClick()
+        compose.onNodeWithText("No paired devices").assertExists()
+        compose.onNodeWithTag("pairedDevices.peer.mac-studio").assertDoesNotExist()
+        compose.onNodeWithTag("pairedDevices.add").assertDoesNotExist()
+        compose.onNodeWithTag("pairedDevices.refresh").performClick()
+        compose.onNodeWithText("No paired devices").assertExists()
+        capture("PairedDevices-empty-light")
+        compose.activityRule.scenario.recreate()
+        waitForTag("pairedDevices.refresh")
+        compose.onNodeWithText("No paired devices").assertExists()
+        compose.onNodeWithTag("pairedDevices.peer.mac-studio").assertDoesNotExist()
+        compose.onNodeWithTag("pairedDevices.refresh").performClick()
+        compose.onNodeWithText("No paired devices").assertExists()
+        capture("PairedDevices-empty-recreated-light")
+        compose.onNodeWithTag("pairedDevices.back").performClick()
+        waitForTag("agentSettings")
+    }
+
+    @Test fun memoryControlsSurviveSummaryAndComposerGivesLocalFeedback() {
+        openDestination("Memory", "settingsMemory")
+        compose.onNodeWithTag("memory.toggle.SearchAndReference").assertIsOn()
+        compose.onNodeWithTag("memory.toggle.GenerateMemory").assertIsOn()
+        compose.onNodeWithTag("memory.toggle.SensitiveTopics").assertIsOff()
+        capture("Memory-light")
+        compose.onNodeWithTag("memory.toggle.SearchAndReference").performClick().assertIsOff()
+        compose.onNodeWithTag("memory.toggle.GenerateMemory").performClick().assertIsOff()
+        compose.onNodeWithTag("memory.toggle.SensitiveTopics").performClick().assertIsOn()
+        compose.onNodeWithTag("memory.summaryRow").performScrollTo().performClick()
+        waitForTag("memorySummary")
+        capture("Memory-summary-light")
+        compose.onNodeWithTag("memory.composerSend").assertIsNotEnabled()
+        compose.onNodeWithTag("memory.composerField").performTextInput("Use short answers in this prototype.")
+        compose.onNodeWithTag("memory.composerSend").assertIsEnabled().performClick()
+        compose.onNodeWithTag("memory.composerFeedback")
+            .assertTextEquals("Noted in this prototype session. Rem doesn’t reply or change memory here.")
+            .performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("memory.composerField").assertTextEquals("")
+        compose.onNodeWithTag("memory.composerSend").assertIsNotEnabled()
+        capture("Memory-composer-feedback-light")
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("settingsMemory")
+        compose.onNodeWithTag("memory.toggle.SearchAndReference").assertIsOff()
+        compose.onNodeWithTag("memory.toggle.GenerateMemory").assertIsOff()
+        compose.onNodeWithTag("memory.toggle.SensitiveTopics").assertIsOn()
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("agentSettings")
+    }
+
+    @Test fun modelsPickerMaskedDraftBackDiscardAndSingleSave() {
+        openDestination("Models", "settingsModels")
+        capture("Models-light")
+        compose.onNodeWithTag("models.addProviderKey").performScrollTo().performClick()
+        waitForTag("modelsAddKey")
+        compose.onAllNodesWithTag("models.saveKey").assertCountEquals(1)
+        compose.onAllNodesWithText("Save").assertCountEquals(1)
+        compose.onNodeWithTag("models.saveKey").assertIsNotEnabled()
+        capture("Models-add-key-empty-light")
+        compose.onNodeWithContentDescription("Choose provider").performClick()
+        val providers = listOf("Anthropic", "OpenAI", "Google", "Mistral", "OpenRouter")
+        providers.forEach { compose.onNodeWithTag("models.providerOption.$it").assertExists() }
+        val optionMatcher = providers.map { hasTestTag("models.providerOption.$it") }.reduce { left, right -> left or right }
+        compose.onAllNodes(optionMatcher).assertCountEquals(5)
+        capture("Models-provider-picker-light")
+        compose.onNodeWithTag("models.providerOption.OpenAI").performClick()
+        compose.onNodeWithContentDescription("Provider OpenAI").assertExists()
+        compose.onNodeWithTag("models.keyField")
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+            .performTextInput("prototype-only-placeholder")
+        compose.onNodeWithTag("models.saveKey").assertIsEnabled()
+        capture("Models-key-masked-light")
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("settingsModels")
+        compose.onNodeWithTag("models.addProviderKey").performScrollTo().performClick()
+        compose.onNodeWithTag("models.keyField").assertTextEquals("")
+        compose.onNodeWithTag("models.saveKey").assertIsNotEnabled()
+        compose.onNodeWithTag("models.keyField").performTextInput("another-prototype-placeholder")
+        compose.onAllNodesWithTag("models.saveKey").assertCountEquals(1)
+        compose.onAllNodesWithText("Save").assertCountEquals(1)
+        compose.onNodeWithTag("models.saveKey").performClick()
+        waitForTag("settingsModels")
+        compose.onNodeWithTag("models.addProviderKey").performScrollTo().performClick()
+        compose.onNodeWithTag("models.keyField").assertTextEquals("")
+        compose.onNodeWithTag("models.saveKey").assertIsNotEnabled()
+        compose.onNodeWithTag("back").performClick()
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("agentSettings")
+    }
+
+    private fun captureDestinationAppearance(dark: Boolean = false, largeText: Boolean = false) {
+        appearance(dark = dark, largeText = largeText)
+        val suffix = if (largeText) "large-text" else "dark"
+        val destinations = listOf(
+            listOf("PairedDevices", "pairedDevices", "pairedDevices.peer.mac-studio"),
+            listOf("Memory", "settingsMemory", "memory.summaryRow"),
+            listOf("Models", "settingsModels", "models.addProviderKey"),
+        )
+        destinations.forEach { (route, rootTag, finalControl) ->
+            openDestination(route, rootTag)
+            capture("$route-$suffix")
+            compose.onNodeWithTag(finalControl).performScrollTo().assertIsDisplayed()
+            if (largeText) capture("$route-large-text-bottom")
+            compose.onNodeWithTag(if (route == "PairedDevices") "pairedDevices.back" else "back").performClick()
+            waitForTag("agentSettings")
+            compose.onNodeWithTag("back").performClick() // Agent settings -> Settings.
+            compose.onNodeWithTag("back").performClick() // Settings -> gallery.
+            waitForTag("openSettings")
+        }
+    }
+    @Test fun destinationsDarkAppearance() = captureDestinationAppearance(dark = true)
+    @Test fun destinationsLargeTextReachability() = captureDestinationAppearance(largeText = true)
+
 }
