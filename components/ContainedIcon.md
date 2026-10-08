@@ -20,6 +20,15 @@ rules:
 A glyph in a rounded, colored container — the leading icon for settings/list rows. The glyph renders
 white and centered on a token-colored fill.
 
+## Native semantic fill contract
+
+SwiftUI and Compose `Subtle` use the gray semantic `backgroundSecondary` container with a **primary**
+semantic `labelPrimary` glyph. This follows light/dark appearance without hardcoded black or white.
+Settings utility icons select Subtle explicitly. Explicit tinted brand, status and accent treatments
+retain their selected color and on-color glyph; they are not converted to Subtle by this rule.
+The native token sets own this treatment, and parserless mappings record the foreground token.
+The web reference API documented below is separate from the native fill/size APIs.
+
 ## When to use
 - The `leading` accessory of a `ListRow`.
 - Any place needing a small, categorized icon chip (brand blue default; system colors for category).
