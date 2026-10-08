@@ -29,6 +29,7 @@ public struct ProviderPreConsentBenefit: Identifiable, Sendable {
 /// mark, semantic benefit icons, exact provider copy, and callbacks. Link, Shop Pay and Notion can
 /// use this same structure without sharing their purpose/disclosure or inventing an auth flow.
 public struct ProviderPreConsentContent<ProviderMark: View, BenefitIcon: View>: View {
+    @ScaledMetric(relativeTo: .body) private var benefitIconSlot: CGFloat = 26
     private let payload: ProviderPreConsentPayload
     private let accessibilityIdentifier: String
     private let actionAccessibilityPrefix: String
@@ -68,7 +69,7 @@ public struct ProviderPreConsentContent<ProviderMark: View, BenefitIcon: View>: 
                     HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
                         benefitIcon(benefit)
                             .font(.body)
-                            .frame(width: 26, height: 26)
+                            .frame(width: benefitIconSlot, height: benefitIconSlot)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                             Text(benefit.title).font(DesignTokens.Typography.body.weight(.semibold))

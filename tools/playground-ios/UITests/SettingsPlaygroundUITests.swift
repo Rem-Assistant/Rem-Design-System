@@ -371,7 +371,8 @@ final class SettingsPlaygroundUITests: XCTestCase {
                 let frame = element.frame
                 if !frame.isEmpty && viewport.contains(frame) { return }
                 let overflow = frame.maxY > bottom ? frame.maxY - bottom + 8 : frame.minY - top - 8
-                let distance = min(abs(overflow), viewport.height * 0.4)
+                // A tiny correction can remain below UIKit’s scroll gesture threshold.
+                let distance = min(max(44, abs(overflow)), viewport.height * 0.4)
                 let direction: CGFloat = overflow > 0 ? 1 : -1
                 let origin = app.coordinate(withNormalizedOffset: .zero)
                 let start = origin.withOffset(CGVector(dx: bounds.width / 2, dy: viewport.midY + direction * distance / 2))
@@ -399,18 +400,18 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertTrue(toggle.exists)
         let expected = isOn ? "1" : "0"
         guard toggle.value as? String != expected else { return }
-        toggle.tap()
-        if toggle.value as? String != expected {
-            // SwiftUI can expose the whole labeled row as the switch's AX frame.
-            // Its trailing native control is the interactive target, not the label center.
-            let frame = toggle.frame
-            guard !frame.isEmpty, !frame.isInfinite, app.frame.contains(frame) else {
-                XCTFail("Expected a visible native Memory switch: \(identifier)")
-                return
-            }
-            print("Memory switch trailing-control fallback: \(toggle.debugDescription)")
-            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        // The labeled SwiftUI switch exposes a separate native switch child.
+        // Target that real control rather than the containing row or an estimated point.
+        let nativeSwitch = toggle.switches.firstMatch
+        if nativeSwitch.exists {
+            XCTAssertTrue(nativeSwitch.isHittable)
+            nativeSwitch.tap()
+        } else {
+            toggle.tap()
         }
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", expected),
+                                                object: toggle)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 3), .completed)
         assertToggle(identifier, isOn: isOn)
     }
 

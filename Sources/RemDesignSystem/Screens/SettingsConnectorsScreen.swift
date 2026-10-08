@@ -4,22 +4,14 @@ import SwiftUI
 /// Native List/Section and outer host NavigationStack; no real account or provider is contacted.
 public struct SettingsConnectorsScreen: View {
     @State private var fixture = GmailFixture()
-    @State private var showingGmail = false
-    @State private var gmailDestinationIsVisible = false
     @State private var boundary: String?
     public init() {}
 
     public var body: some View {
         List {
             Section {
-                // Keep the presentation anchor until its destination finishes disappearing.
-                // Last-account removal and native dismissal happen in the same update.
-                if fixture.isConnected || gmailDestinationIsVisible {
-                    NavigationLink(isActive: $showingGmail) {
-                        GmailSettingsView(fixture: $fixture)
-                        .onAppear { gmailDestinationIsVisible = true }
-                        .onDisappear { gmailDestinationIsVisible = false }
-                    } label: {
+                if fixture.isConnected {
+                    NavigationLink(value: GmailSettingsRoute.detail) {
                         ConnectorRow("Gmail", state: .connected, subtitle: "Connected • Active",
                                      accessory: .disclosure, layout: .nativeList) { ConnectorProviderMark(.gmail) }
                     }
@@ -47,6 +39,18 @@ public struct SettingsConnectorsScreen: View {
         .navigationTitle("Connectors").settingsInlineNavigationTitle()
         .accessibilityIdentifier("settingsConnectors")
         .connectorBoundary($boundary)
+        // Register once outside lazy rows and conditional provider membership. The host's
+        // NavigationPath owns every Gmail push, including account Settings opened from a Menu.
+        .navigationDestination(for: GmailSettingsRoute.self) { route in
+            switch route {
+            case .detail:
+                GmailSettingsView(fixture: $fixture)
+            case .connectorPermissions:
+                GmailPermissionsView(fixture: $fixture, account: nil)
+            case .accountPermissions(let account):
+                GmailPermissionsView(fixture: $fixture, account: account)
+            }
+        }
     }
     private func available(_ provider: ConnectorProvider) -> some View {
         ConnectorRow(provider.title, state: .available, accessory: .action("Connect", {
@@ -56,11 +60,16 @@ public struct SettingsConnectorsScreen: View {
     }
 }
 
+private enum GmailSettingsRoute: Hashable {
+    case detail
+    case connectorPermissions
+    case accountPermissions(GmailAccountFixture)
+}
+
 private struct GmailSettingsView: View {
     @Binding var fixture: GmailFixture
     @Environment(\.dismiss) private var dismiss
     @State private var confirmation: GmailDisconnect?
-    @State private var accountSettings: GmailAccountFixture?
     @State private var boundary: String?
 
     var body: some View {
@@ -78,7 +87,7 @@ private struct GmailSettingsView: View {
                         ListRowLabel(account.email, subtitle: account.role)
                     }, trailing: {
                         Menu {
-                            Button("Settings") { accountSettings = account }
+                            NavigationLink("Settings", value: GmailSettingsRoute.accountPermissions(account))
                             .accessibilityIdentifier("gmail.accountSettings.\(account.id)")
                             Button("Disconnect account", role: .destructive) { confirmation = .account(account) }
                                 .accessibilityIdentifier("gmail.disconnectAccount.\(account.id)")
@@ -95,9 +104,9 @@ private struct GmailSettingsView: View {
                 }.accessibilityIdentifier("gmail.connectAnother")
             } header: { HStack { Text("Connected accounts").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
-                NavigationLink {
-                    GmailPermissionsView(fixture: $fixture, account: nil)
-                } label: { ListRowLabel("Permissions", subtitle: fixture.connectorPermission.title) }
+                NavigationLink(value: GmailSettingsRoute.connectorPermissions) {
+                    ListRowLabel("Permissions", subtitle: fixture.connectorPermission.title)
+                }
                 .accessibilityIdentifier("gmail.permissions")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             actionSection("Read actions", actions: GmailFixtureCopy.readActions)
@@ -111,9 +120,6 @@ private struct GmailSettingsView: View {
         }
         .connectorListSurface().navigationTitle("Gmail").settingsInlineNavigationTitle()
         .accessibilityIdentifier("gmail.detail")
-        .navigationDestination(item: $accountSettings) { account in
-            GmailPermissionsView(fixture: $fixture, account: account)
-        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -135,6 +141,8 @@ private struct GmailSettingsView: View {
                     case .account(let account): fixture.disconnect(accountID: account.id)
                     }
                     confirmation = nil
+                    // The stable route registration survives removal of the source row;
+                    // this screen-owned dismiss pops only the current Gmail detail entry.
                     if !fixture.isConnected { dismiss() }
                 }.accessibilityIdentifier("gmail.confirmDisconnect")
                 Button("Cancel", role: .cancel) { confirmation = nil }
