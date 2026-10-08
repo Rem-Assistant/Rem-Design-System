@@ -46,6 +46,8 @@ const verify = ({ contract, nodes }) => verifyPlaygroundStructure(contract, 'age
 test('verifies canonical roots, API page type, reuse, copy, properties and independent slot spacing', () => {
   const result = verify(fixture()); assert.deepEqual(result.errors, []);
   assert.equal(result.structure.canonicalScreens.length, 3);
+  // Explicit 0 values are present in the fixture, so no schema default is restored.
+  assert.deepEqual(result.defaultsApplied, []);
 });
 test('rejects wrong page identity, moved sections and root replacement', () => {
   for (const mutate of [
@@ -80,16 +82,19 @@ test('rejects slot spacing drift, wrong preceding action and absent local coordi
 });
 test('numeric failures expose bounded presence, type and geometry diagnostics without accepting defaults', () => {
   const f = fixture();
-  f.nodes['6:1'].layoutMode = 'VERTICAL';
+  // NONE layout is not auto-layout, so an absent paddingBottom still fails closed with diagnostics.
+  f.nodes['6:1'].layoutMode = 'NONE';
   delete f.nodes['6:1'].paddingBottom;
   f.nodes['6:2'].itemSpacing = null;
   delete f.nodes['6:4'].relativeTransform;
-  const errors = verify(f).errors;
+  const result = verify(f);
+  const errors = result.errors;
+  assert.deepEqual(result.defaultsApplied, []);
   const details = (prefix) => JSON.parse(errors.find((error) => error.startsWith(prefix)).split('; observed=')[1]);
   assert.deepEqual(details('6:1 paddingBottom'), {
     nodeId: '6:1', field: 'paddingBottom', hasOwnProperty: false,
     observedType: 'undefined', observedValue: 'undefined', nodeType: 'SLOT',
-    layoutMode: 'VERTICAL', nodeMissing: false,
+    layoutMode: 'NONE', nodeMissing: false,
   });
   assert.equal(details('6:2 itemSpacing').hasOwnProperty, true);
   assert.equal(details('6:2 itemSpacing').observedType, 'null');
@@ -126,4 +131,124 @@ test('trusted delivery references match all six exact source roots and exempt on
     assert.equal(delivery[lane.laneId].requirePrototype, false);
     assert.ok(Object.values(delivery[lane.laneId].references).every((r) => r.requireDocumentation === false));
   }
+});
+
+// --- Issue #91: REST zero-default (paddingBottom / itemSpacing) transport normalization ---
+// Make a zero-default field genuinely absent (as the REST transport delivers it) on a node with a
+// valid auto-layout mode. Base fixture ids: 6:1 is the SLOT (paddingBottom), 6:2 is the parent
+// FRAME (itemSpacing).
+const absentFixture = (nodeId, field, layoutMode) => {
+  const f = fixture();
+  f.nodes[nodeId].layoutMode = layoutMode;
+  delete f.nodes[nodeId][field];
+  return f;
+};
+test('restores schema-default 0 for an absent paddingBottom/itemSpacing on each allowed FRAME/SLOT auto-layout mode', () => {
+  for (const [nodeId, field, type] of [['6:1', 'paddingBottom', 'SLOT'], ['6:2', 'itemSpacing', 'FRAME']]) {
+    for (const layoutMode of ['HORIZONTAL', 'VERTICAL']) {
+      const result = verify(absentFixture(nodeId, field, layoutMode));
+      assert.deepEqual(result.errors, [], `${nodeId}/${field}/${layoutMode}`);
+      assert.equal(result.defaultsApplied.length, 1);
+      assert.deepEqual(result.defaultsApplied[0], {
+        nodeId, field, rawPresence: 'absent', hadOwnProperty: false, appliedValue: 0,
+        nodeType: type, layoutMode, schemaBasis: result.defaultsApplied[0].schemaBasis,
+      });
+      assert.match(result.defaultsApplied[0].schemaBasis, /HasFramePropertiesTrait/);
+      if (type === 'SLOT') assert.match(result.defaultsApplied[0].schemaBasis, /SlotNode/);
+      else assert.doesNotMatch(result.defaultsApplied[0].schemaBasis, /SlotNode/);
+    }
+  }
+});
+test('normalization mutates neither the fetched node nor the contract', () => {
+  const f = absentFixture('6:1', 'paddingBottom', 'VERTICAL');
+  const nodeBefore = JSON.stringify(f.nodes['6:1']);
+  const contractBefore = JSON.stringify(f.contract);
+  const result = verify(f);
+  assert.deepEqual(result.errors, []);
+  assert.equal(Object.hasOwn(f.nodes['6:1'], 'paddingBottom'), false);
+  assert.equal(JSON.stringify(f.nodes['6:1']), nodeBefore);
+  assert.equal(JSON.stringify(f.contract), contractBefore);
+});
+test('explicit 0 is accepted without emitting a default-normalization audit entry', () => {
+  const f = fixture();
+  f.nodes['6:1'].layoutMode = 'VERTICAL'; f.nodes['6:1'].paddingBottom = 0;
+  f.nodes['6:2'].layoutMode = 'VERTICAL'; f.nodes['6:2'].itemSpacing = 0;
+  const result = verify(f);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.defaultsApplied, []);
+});
+test('fails closed and applies no default for absent node, wrong identity, disallowed/unknown type and non-auto-layout', () => {
+  for (const mutate of [
+    (n) => { delete n['6:1']; },                                                                   // absent node
+    (n) => { n['6:1'].layoutMode = 'VERTICAL'; delete n['6:1'].paddingBottom; n['6:1'].id = '6:9'; },     // wrong id
+    (n) => { n['6:1'].layoutMode = 'VERTICAL'; delete n['6:1'].paddingBottom; n['6:1'].name = 'Renamed'; }, // wrong name
+    (n) => { n['6:1'].layoutMode = 'VERTICAL'; delete n['6:1'].paddingBottom; n['6:1'].type = 'COMPONENT'; }, // disallowed type
+    (n) => { n['6:1'].layoutMode = 'VERTICAL'; delete n['6:1'].paddingBottom; n['6:1'].type = 'MYSTERY'; },   // unknown type
+    (n) => { delete n['6:1'].paddingBottom; },                                                      // missing layoutMode
+    (n) => { n['6:1'].layoutMode = 'NONE'; delete n['6:1'].paddingBottom; },                        // NONE layout
+    (n) => { n['6:1'].layoutMode = 'GRID'; delete n['6:1'].paddingBottom; },                        // GRID layout
+    (n) => { n['6:1'].layoutMode = 'DIAGONAL'; delete n['6:1'].paddingBottom; },                    // unknown layout
+  ]) {
+    const f = fixture(); mutate(f.nodes);
+    const result = verify(f);
+    assert.ok(result.errors.length, 'expected fail-closed error');
+    assert.deepEqual(result.defaultsApplied, []);
+  }
+});
+test('fails closed for explicit undefined/null/string/boolean/NaN/Infinity/-Infinity and nonzero where zero is required', () => {
+  for (const value of [undefined, null, 'x', false, true, NaN, Infinity, -Infinity, 12]) {
+    const f = fixture();
+    f.nodes['6:1'].layoutMode = 'VERTICAL';
+    f.nodes['6:1'].paddingBottom = value; // present own property → not absent → never normalized
+    const result = verify(f);
+    assert.ok(result.errors.some((e) => e.startsWith('6:1 paddingBottom')), `value ${String(value)}`);
+    assert.deepEqual(result.defaultsApplied, []);
+  }
+});
+test('does not normalize a zero-default field whose expectation is nonzero, nor a non-zero-default missing field', () => {
+  const f1 = fixture();
+  f1.contract.lanes[0].canonicalSlotAssertions[0].numericProperties.paddingBottom = 24; // nonzero expectation
+  f1.nodes['6:1'].layoutMode = 'VERTICAL'; delete f1.nodes['6:1'].paddingBottom;
+  const r1 = verify(f1);
+  assert.ok(r1.errors.some((e) => e.startsWith('6:1 paddingBottom')));
+  assert.deepEqual(r1.defaultsApplied, []);
+  const f2 = fixture();
+  f2.nodes['6:1'].layoutMode = 'VERTICAL'; delete f2.nodes['6:1'].paddingTop; // not a zero-default field
+  const r2 = verify(f2);
+  assert.ok(r2.errors.some((e) => e.startsWith('6:1 paddingTop')));
+  assert.deepEqual(r2.defaultsApplied, []);
+});
+test('normalization never masks top-padding drift or missing/changed first-child coordinates', () => {
+  for (const mutate of [
+    (n) => { n['6:1'].paddingTop = 0; },                              // top padding 24 → 0 drift
+    (n) => { delete n['6:4'].relativeTransform; },                   // missing first-child coordinate
+    (n) => { n['6:4'].relativeTransform = [[1, 0, 0], [0, 1, 48]]; }, // changed first-child y
+  ]) {
+    const f = fixture(); mutate(f.nodes);
+    const result = verify(f);
+    assert.ok(result.errors.length);
+    assert.deepEqual(result.defaultsApplied, []);
+  }
+});
+const fetchFromFixture = (f) => async (url) => {
+  const ids = decodeURIComponent(url.split('ids=')[1].split('&')[0]).split(',');
+  const nodes = {};
+  for (const id of ids) if (f.nodes[id]) nodes[id] = { document: f.nodes[id] };
+  return { nodes };
+};
+test('createPlaygroundStructureReport surfaces and serializes the applied-default audit data', async () => {
+  const f = absentFixture('6:1', 'paddingBottom', 'VERTICAL');
+  const report = await createPlaygroundStructureReport(f.contract, 'agenda-suggestions', {
+    head: 'b'.repeat(40), fetchFigma: fetchFromFixture(f),
+  });
+  assert.equal(report.status, 'completed');
+  assert.deepEqual(report.errors, []);
+  assert.equal(report.defaultsApplied.length, 1);
+  const serialized = JSON.parse(JSON.stringify(report));
+  assert.equal(serialized.defaultsApplied[0].nodeId, '6:1');
+  assert.equal(serialized.defaultsApplied[0].field, 'paddingBottom');
+  assert.equal(serialized.defaultsApplied[0].appliedValue, 0);
+  assert.equal(serialized.defaultsApplied[0].nodeType, 'SLOT');
+  assert.equal(serialized.defaultsApplied[0].layoutMode, 'VERTICAL');
+  assert.match(serialized.defaultsApplied[0].schemaBasis, /SlotNode/);
 });
