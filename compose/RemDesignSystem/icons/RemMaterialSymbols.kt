@@ -152,4 +152,18 @@ object RemMaterialSymbols {
         codePoint = 0xE000,
         fill = 1f,
     )
+
+    // Settings New: official google/material-design-icons codepoints; native semantic mapping.
+    val Info = RemMaterialSymbol("Settings info", "info", 0xE88E, 1f)
+    val Billing = RemMaterialSymbol("Settings billing", "credit_card", 0xE8A1, 1f)
+    val Permissions = RemMaterialSymbol("Settings permissions", "pan_tool", 0xE925, 1f)
+    val Share = RemMaterialSymbol("Settings share", "ios_share", 0xE6B8, 0f)
+    val Devices = RemMaterialSymbol("Settings devices", "devices", 0xE326, 0f)
+    val Connectors = RemMaterialSymbol("Settings connectors", "link", 0xE250, 1f)
+    val Browser = RemMaterialSymbol("Settings browser", "language", 0xEA07, 0f)
+    val Automations = RemMaterialSymbol("Settings automations", "notifications_active", 0xE7F7, 1f)
+    val Memory = RemMaterialSymbol("Settings memory", "psychology", 0xEA4A, 0f)
+    val Models = RemMaterialSymbol("Settings models", "memory", 0xE322, 0f)
+    val Wallet = RemMaterialSymbol("Settings wallet", "wallet", 0xF8FF, 0f)
+    val Voice = RemMaterialSymbol("Settings voice", "graphic_eq", 0xE1B8, 0f)
 }

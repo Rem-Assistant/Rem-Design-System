@@ -8,3 +8,10 @@ _skills-src/
 # Local Python verification caches
 __pycache__/
 *.pyc
+
+# Native playground outputs (source projects remain tracked)
+**/build/
+**/.gradle/
+**/local.properties
+**/xcuserdata/
+**/*.xcuserstate

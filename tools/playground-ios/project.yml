@@ -1,0 +1,39 @@
+name: RemSettingsPlayground
+options:
+  bundleIdPrefix: com.rem.playground
+  deploymentTarget:
+    iOS: '17.0'
+packages:
+  RemDesignSystem:
+    path: ../..
+settings:
+  base:
+    SWIFT_VERSION: '5.9'
+    CODE_SIGNING_ALLOWED: NO
+    GENERATE_INFOPLIST_FILE: YES
+    TARGETED_DEVICE_FAMILY: '1,2'
+targets:
+  RemSettingsPlayground:
+    type: application
+    platform: iOS
+    sources: [App]
+    dependencies:
+      - package: RemDesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rem.playground.settings
+        INFOPLIST_KEY_CFBundleDisplayName: Rem Playground
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+  RemSettingsPlaygroundUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: RemSettingsPlayground
+schemes:
+  RemSettingsPlayground:
+    build:
+      targets:
+        RemSettingsPlayground: all
+    test:
+      targets: [RemSettingsPlaygroundUITests]

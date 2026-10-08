@@ -14,6 +14,8 @@ public struct ListRow<Leading: View, Trailing: View>: View {
     let action: (() -> Void)?
     let leading: () -> Leading
     let trailing: () -> Trailing
+    private var settingsContent: AnyView?
+    private var showsDivider = false
 
     public init(
         _ title: String,
@@ -29,6 +31,23 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         self.trailing = trailing
     }
 
+    /// Canonical settings density with an editable Content slot. The caller owns the divider,
+    /// and may supply native fields, labels, or a menu without creating a competing row.
+    public init<Content: View>(
+        showsDivider: Bool = false,
+        @ViewBuilder leading: @escaping () -> Leading,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.title = ""
+        self.subtitle = nil
+        self.action = nil
+        self.leading = leading
+        self.trailing = trailing
+        self.settingsContent = AnyView(content())
+        self.showsDivider = showsDivider
+    }
+
     public var body: some View {
         if let action {
             Button(action: action) { rowContent }
@@ -38,26 +57,44 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         }
     }
 
-    private var rowContent: some View {
-        HStack(spacing: DesignTokens.Spacing.md) {
-            leading()
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(DesignTokens.Typography.body.weight(.semibold))
-                    .foregroundStyle(DesignTokens.Color.labelPrimary)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(DesignTokens.Typography.caption1)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+    @ViewBuilder private var rowContent: some View {
+        if let settingsContent {
+            VStack(spacing: 0) {
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    leading()
+                    settingsContent.frame(maxWidth: .infinity, alignment: .leading)
+                    trailing()
+                }
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .padding(.vertical, DesignTokens.Spacing.md)
+                .frame(minHeight: 60)
+                .contentShape(Rectangle())
+                if showsDivider {
+                    Divider().overlay(DesignTokens.Color.separator)
+                        .padding(.leading, DesignTokens.Spacing.lg)
                 }
             }
-            Spacer(minLength: DesignTokens.Spacing.sm)
-            trailing()
+        } else {
+            HStack(spacing: DesignTokens.Spacing.md) {
+                leading()
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(DesignTokens.Typography.body.weight(.semibold))
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(DesignTokens.Typography.caption1)
+                            .foregroundStyle(DesignTokens.Color.labelSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer(minLength: DesignTokens.Spacing.sm)
+                trailing()
+            }
+            .padding(.horizontal, DesignTokens.Spacing.md)
+            .padding(.vertical, DesignTokens.Spacing.sm)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, DesignTokens.Spacing.md)
-        .padding(.vertical, DesignTokens.Spacing.sm)
-        .contentShape(Rectangle())
     }
 }
 

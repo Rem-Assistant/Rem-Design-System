@@ -152,7 +152,7 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
             return 0
         }
 
-        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686)
+        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686, 0xE88E, 0xE8A1, 0xE925, 0xE6B8, 0xE326, 0xE250, 0xEA07, 0xE7F7, 0xEA4A, 0xE322, 0xF8FF, 0xE1B8)
         val verified = listOf("outline" to outline, "filled" to filled).associate { (label, resource) ->
             check(resource.isFile) { "missing packaged Material Symbols $label resource: $resource" }
             val bytes = resource.readBytes()

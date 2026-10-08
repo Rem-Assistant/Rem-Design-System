@@ -5,6 +5,7 @@ import SwiftUI
 /// internal token set) so it can appear in `ContainedIcon`'s public API — the same shape as
 /// `RemButtonSize`.
 public enum ContainedIconSize: Sendable {
+    case settings // 29pt / 7pt radius — Settings New 1964:86819
     case small   // 38pt — inline list-row leading
     case large   // 64pt — hero
 }
@@ -28,6 +29,9 @@ struct ContainedIconTokenSet {
 
     init(fill: ContainedIcon.Fill, size: ContainedIconSize) {
         switch size {
+        case .settings:
+            dimension = 29
+            cornerRadius = 7
         case .small:
             dimension = 38
             cornerRadius = DesignTokens.CornerRadius.small          // 8
@@ -38,7 +42,7 @@ struct ContainedIconTokenSet {
             // lives in exactly one place rather than at call sites.
             cornerRadius = 18
         }
-        glyphPointSize = dimension * 0.46
+        glyphPointSize = size == .settings ? 17 : dimension * 0.46
 
         switch fill {
         case .tint(let color):
