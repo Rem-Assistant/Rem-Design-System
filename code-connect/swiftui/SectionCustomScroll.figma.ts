@@ -1,6 +1,6 @@
 // url=https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=1307-667
 // source=Sources/RemDesignSystem/Rows/RemSection.swift
-// component=SwiftUI.Section
+// component=RemSection
 import figma from 'figma'
 const instance = figma.selectedInstance
 const rows = instance.getSlot('Rows')
@@ -10,15 +10,14 @@ const headerCode = header?.type === 'INSTANCE' ? header.executeTemplate().exampl
 const footerCode = footer?.type === 'INSTANCE' ? footer.executeTemplate().example : undefined
 const style = instance.getEnum('Style', { 'Inset Grouped': '.insetGrouped', 'Plain': '.plain' })
 export default {
-    example: figma.code`// Native List context: apply ${style} to the owning List's listStyle.
-    // Rows must use ListRow(layout: .nativeList); NavigationLink owns disclosure.
-    Section {
-        ${rows}
-    } header: {
+    example: figma.code`// Custom ScrollView context; do not place this card inside native List.
+    RemSection(style: ${style}, header: {
         ${headerCode}
-    } footer: {
+    }, footer: {
         ${footerCode}
+    }) {
+        ${rows}
     }`,
-    imports: ['import SwiftUI', 'import RemDesignSystem'],
-    id: 'rem-section-swiftui', metadata: { nestable: true },
+    imports: ['import RemDesignSystem'],
+    id: 'rem-section-custom-scroll-swiftui', metadata: { nestable: true },
 }

@@ -29,6 +29,8 @@ public struct RemSection: View {
     private var prominentHeader = false
     private var headerCase: Text.Case? = .uppercase
     private let rows: AnyView
+    private var headerContent: AnyView?
+    private var footerContent: AnyView?
 
     public init<Rows: View>(
         header: String? = nil,
@@ -39,6 +41,19 @@ public struct RemSection: View {
         self.header = header
         self.footer = footer
         self.style = style
+        self.rows = AnyView(rows())
+    }
+
+    /// Slot-based custom-scroll adapter for configurable Figma header/footer children.
+    /// Native List/Form callers should compose SwiftUI.Section instead.
+    public init<Header: View, Footer: View, Rows: View>(
+        style: RemSectionStyle = .insetGrouped,
+        @ViewBuilder header: () -> Header,
+        @ViewBuilder footer: () -> Footer,
+        @ViewBuilder rows: () -> Rows
+    ) {
+        self.header = nil; self.footer = nil; self.style = style
+        self.headerContent = AnyView(header()); self.footerContent = AnyView(footer())
         self.rows = AnyView(rows())
     }
 
@@ -88,7 +103,9 @@ public struct RemSection: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let header {
+            if let headerContent {
+                headerContent.padding(.horizontal, DesignTokens.Spacing.md).padding(.bottom, DesignTokens.Spacing.xs)
+            } else if let header {
                 Text(header)
                     .textCase(headerCase)
                     .font(prominentHeader ? DesignTokens.Typography.body.weight(.semibold) : DesignTokens.Typography.footnote)
@@ -99,7 +116,9 @@ public struct RemSection: View {
 
             rowsSurface
 
-            if let footer {
+            if let footerContent {
+                footerContent.padding(.horizontal, DesignTokens.Spacing.md).padding(.top, DesignTokens.Spacing.xs)
+            } else if let footer {
                 Text(footer)
                     .font(DesignTokens.Typography.footnote)
                     .foregroundStyle(DesignTokens.Color.labelSecondary)

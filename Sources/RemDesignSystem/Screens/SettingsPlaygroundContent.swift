@@ -110,7 +110,7 @@ public struct AgentSettingsContent: View {
                     .accessibilityIdentifier("automationsUnavailable")
                     .accessibilityHint("Unavailable. Automations design is awaiting a decision.")
             } header: { Text("Capabilities") } footer: {
-                Text("Manage connected surfaces and how your agent can perform. Automations is unavailable while its design is being finalized.")
+                Text("Manage connected surfaces and how your agent can perform.")
             }
             Section("Intelligence") {
                 destination(.memory, "Memory", symbol: "brain.head.profile")

@@ -71,7 +71,7 @@ fun AgentSettingsContent(
             modifier = Modifier.testTag("agentDestination.${route.name}"))
     }
     Column(Modifier.testTag("agentSettings").padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-        RemSection(header = "Capabilities", footer = "Manage connected surfaces and how your agent can perform. Automations is unavailable while its design is being finalized.", settingsHeader = true) {
+        RemSection(header = "Capabilities", footer = "Manage connected surfaces and how your agent can perform.", settingsHeader = true) {
             destination(AgentSettingsDestination.PairedDevices, "Paired Devices", "2", Symbols.Devices, true)
             destination(AgentSettingsDestination.Connectors, "Connectors", symbol = Symbols.Connectors, divider = true)
             destination(AgentSettingsDestination.CloudBrowser, "Cloud browser", symbol = Symbols.Browser, divider = true)

@@ -76,3 +76,19 @@ fun RemSection(
         }
     }
 }
+
+/** Slot-based adapter for configurable headers/footers, without changing the text convenience API. */
+@Composable
+fun RemSection(
+    header: @Composable () -> Unit,
+    footer: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    style: RemSectionStyle = RemSectionStyle.InsetGrouped,
+    rows: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier) {
+        Column(Modifier.padding(horizontal = RemSpacing.md)) { header() }
+        RemSection(style = style, rows = rows)
+        Column(Modifier.padding(horizontal = RemSpacing.md)) { footer() }
+    }
+}
