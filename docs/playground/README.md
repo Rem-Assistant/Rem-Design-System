@@ -2,12 +2,35 @@
 
 This is a local, bounded playground, tracked by [issue70](https://github.com/Rem-Assistant/Rem-Design-System/issues/70). It is not integrated into the production Rem app. [Design and behavior contract](../contracts/settings-playground.md).
 
+## Current integration — October 8, 2026
+
+Draft [PR73](https://github.com/Rem-Assistant/Rem-Design-System/pull/73), branch
+`codex/settings-integration`, now connects Paired devices, Connectors, Cloud browser, Memory,
+Models, Wallet, and Voice on both platforms. Automations remains unavailable. These are local
+fixtures: there is no real pairing, OAuth, payment, audio playback, account deletion, key persistence,
+or service access. Entry references such as Billing and Help & Support are still noninteractive.
+
+Open Settings, then **Agent settings**. iOS uses native SwiftUI `List`, `Section`, and
+`NavigationLink` containers with shared row content; Compose uses native Material controls and
+the shared Rem row/section components. Utility icon containers use Subtle; provider brand marks
+and explicit preview/action accents retain their intended treatment.
+
+The entry name, Help & Support question-mark icon, and removal of the entry row's extra minimum
+height are approved code amendments. Saved Figma references preserve their original content.
+Code Connect mappings are checked locally; publication remains blocked by the Figma plan entitlement.
+
+Three bounded Factory batches delivered Devices, Memory/Models, and Cloud browser candidates.
+Their successful delivery is separate from runtime and visual verification. Root integration repairs
+and destination tests are tracked in [the verification record](verification.md). The records below
+describe the earlier two-screen baseline and are retained for provenance; their four-test results
+and zero-Factory-run count do not describe the expanded integration.
+
 ## Run
 
 - **iOS:** open `tools/playground-ios/RemSettingsPlayground.xcodeproj`, choose the RemSettingsPlayground scheme and a dedicated simulator, Run. [CLI/test instructions](../../tools/playground-ios/README.md).
 - **Android:** open `compose` in Android Studio, select `demo`, Run. Existing wrapper requires JDK17 and Android SDK34. [CLI/test instructions](../../compose/README.md).
-- Start at the gallery. Choose Success/Slow/Error, open Settings, tap Rem. Use Back/Cancel or Retry as appropriate. Shared controls supports a local toggle and name edit with Save/Cancel.
-- Other rows are visual references. There is no connection to real accounts or services; no destructive action is wired. Automations remains outside scope.
+- Start at the gallery. Choose Success/Slow/Error, open Settings, tap Agent settings. Use Back/Cancel or Retry as appropriate. Shared controls supports a local toggle and name edit with Save/Cancel.
+- Destination removals and saves affect local fixtures only. There is no connection to real accounts or services. Automations remains outside scope.
 
 ## Sources and baseline
 

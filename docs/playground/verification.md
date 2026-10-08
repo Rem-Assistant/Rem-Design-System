@@ -1,4 +1,20 @@
-# Verification record — October 7, 2026 (America/Los_Angeles)
+# Verification record
+
+## Expanded integration — October 8, 2026, verification in progress
+
+- All seven designed destinations are connected in the iOS and Android playground hosts. No production integration or real service actions are implied.
+- Hosted run [37747643483](https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37747643483), commit `3e37ab0`: Android's 14 earlier journeys passed; iOS passed seven foundation journeys and failed seven destination journeys. Both library render jobs passed.
+- Expanded run [37749685731](https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37749685731), commit `af733c6`: iOS completed 25 tests, seven passed and 18 failed at destination entry. Its overall job was subsequently cancelled when replaced; retained build log and screenshots establish those individual results. Actual images show a highlighted Agent settings row without navigation. Moving the value-route registration to the root did not repair this. Commit `e9805c3` uses direct native destination links instead; runtime confirmation is pending.
+- That expanded run's Android test target failed compilation because text/IME action functions return `Unit`; commit `ee2506e` separates those test calls. App/library render jobs passed. Replacement run [37750545192](https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37750545192) is tracked separately.
+- Root inspected actual light/dark and selected large-text screenshots. The fresh iOS entry shows the approved Agent settings label, question-mark Help & Support icon, and equal profile/agent row heights. Earlier Android captures exposed a purple checked-switch thumb in dark mode (repaired in `97e3d13`) and a stale previous-screen image named Memory summary (platform capture settling added in `f242938`). These repairs require fresh runtime captures; this is not a blanket visual pass.
+- Read-only Figma foundation verification [37746071402](https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37746071402) passed for entry `1964:86819` and Agent settings `1827:50855`. It does not cover every destination/state.
+- Local Code Connect type checks and both platform parsers passed, including ConnectorRow mappings. Publishing is not confirmed; Figma plan entitlement remains a blocker.
+- Generated design evidence was archived losslessly with an independently verified SHA-256/size manifest. This reduces the PR from 383 to 278 files and removes GitHub's 300-file diff transport blocker. The approximately 1.71 MB diff still exceeds the unchanged 750,000-byte automated review cap; it must not be treated as fully reviewed or merged.
+- Pre-existing vendored skill changes remain inconsistent with their recorded upstream pin. They have not been reset or silently repinned.
+
+## Historical two-screen baseline — October 7, 2026 (America/Los_Angeles)
+
+The following results apply only to the original bounded baseline, not the expanded seven-destination integration.
 
 ## Established
 
