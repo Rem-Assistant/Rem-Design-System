@@ -447,15 +447,17 @@ class SettingsPlaygroundTest {
             SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
         )
     }
-    private fun openCloudSites() {
+    private fun openCloudSites(rootCaptureName: String) {
         openDestination("CloudBrowser", "cloudBrowser.root")
-        capture("CloudBrowser-light")
+        // MediaStore suffixes repeated display names with spaces/parentheses. Each journey
+        // retains its own capture under a stable name accepted by the evidence publisher.
+        capture(rootCaptureName)
         compose.onNodeWithTag("cloudBrowser.seeAllSites").performScrollTo().performClick()
         waitForTag("cloudBrowser.sitesList")
     }
 
     @Test fun cloudAddSiteEmptyFocusAndSystemBackDiscards() {
-        openCloudSites()
+        openCloudSites("CloudBrowser-light")
         capture("CloudBrowser-sites-light")
         compose.onNodeWithTag("cloudBrowser.sites.addSite").performClick()
         waitForTag("cloudBrowser.addSiteForm")
@@ -484,7 +486,7 @@ class SettingsPlaygroundTest {
     }
 
     @Test fun cloudLoginEditsCookieClearAndRecreationPreserveLocalMutation() {
-        openCloudSites()
+        openCloudSites("CloudBrowser-root-before-login-edit-light")
         compose.onNodeWithTag("cloudBrowser.site.github.com").performClick()
         waitForTag("cloudBrowser.siteDetail")
         capture("CloudBrowser-site-detail-light")
@@ -596,7 +598,7 @@ class SettingsPlaygroundTest {
     }
 
     @Test fun cloudAddLoginEmptyFocusFilledSaveAndSystemBackDiscard() {
-        openCloudSites()
+        openCloudSites("CloudBrowser-root-before-login-add-light")
         compose.onNodeWithTag("cloudBrowser.site.linear.app").performScrollTo().performClick()
         waitForTag("cloudBrowser.siteDetail")
         compose.onNodeWithTag("cloudBrowser.siteDetail.addLogin").performScrollTo().performClick()
@@ -650,7 +652,7 @@ class SettingsPlaygroundTest {
     }
 
     @Test fun cloudRemoveLoginCancelAndConfirmPreservesOtherCredential() {
-        openCloudSites()
+        openCloudSites("CloudBrowser-root-before-login-remove-light")
         compose.onNodeWithTag("cloudBrowser.site.github.com").performClick()
         waitForTag("cloudBrowser.siteDetail")
         compose.onNodeWithTag("cloudBrowser.siteDetail.addLogin").performScrollTo().performClick()
