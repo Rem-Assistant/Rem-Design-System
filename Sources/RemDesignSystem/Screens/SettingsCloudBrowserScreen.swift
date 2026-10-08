@@ -1,0 +1,706 @@
+import SwiftUI
+
+/// **SettingsCloudBrowserScreen** — the Settings → Agent settings → **Cloud browser** destination.
+///
+/// A native grouped `List` surface that lets the user review and configure how the agent opens sites:
+/// a default permission, a recent-sites list, per-site access, saved logins (view / add / edit /
+/// remove), cookies & sessions, and the destructive clear-data paths — each with the authored
+/// confirmation. Every nested screen is owned here through the **outer host `NavigationStack`**: this
+/// view never nests its own `NavigationStack`; it declares its pushes with
+/// `navigationDestination(item:)` / `navigationDestination(isPresented:)` so the host chrome supplies
+/// native Back, and edit mode swaps the toolbar for Cancel / Save in place.
+///
+/// Authority: `docs/playground/settings-design/settings-destinations.md` (Cloud browser) and the raw
+/// node contexts / screenshots for `1833:5071`, `1868:6148/6153/6176/6197/6214/6227/6245/6250/6255`,
+/// `1875:6710/6711/6712/6713/6714`, `1934:9071`, `1956:8160/8161/8162`. Compose sibling:
+/// `screens/SettingsCloudBrowserScreen.kt`.
+///
+/// Prototype-only: all text entry is illustrative fixture data; passwords are always masked and never
+/// written to the Keychain, shared preferences, the network, or a real browser. State lives only in
+/// the in-memory `CloudBrowserModel` for this playground session.
+public struct SettingsCloudBrowserScreen: View {
+    @StateObject private var model = CloudBrowserModel()
+
+    /// Deterministic zero-argument entry point. The host registers this as the `cloudBrowser` route
+    /// inside its `NavigationStack`; this view owns everything below the Cloud browser root.
+    public init() {}
+
+    public var body: some View {
+        CloudBrowserRootList(model: model)
+            .navigationTitle("Cloud browser")
+            .inlineNavTitle()
+            .accessibilityIdentifier("cloudBrowser.root")
+    }
+}
+
+// MARK: - Root
+
+private struct CloudBrowserRootList: View {
+    @ObservedObject var model: CloudBrowserModel
+    @State private var openedSiteID: UUID?
+    @State private var showAllSites = false
+    @State private var showAddSite = false
+    @State private var confirmClearAll = false
+
+    var body: some View {
+        List {
+            Section("Default access") {
+                CloudPermissionRow(title: "Default permission",
+                                   subtitle: "Ask before Rem opens a new site.",
+                                   selection: $model.defaultPermission)
+                    .accessibilityIdentifier("cloudBrowser.defaultPermission")
+            }
+
+            Section {
+                ForEach(model.recentSites) { site in
+                    CloudSiteRow(site: site) { openedSiteID = site.id }
+                }
+                Button("See all sites") { showAllSites = true }
+                    .cloudLinkStyle()
+                    .accessibilityIdentifier("cloudBrowser.seeAllSites")
+            } header: {
+                CloudSectionHeader("Sites", actionTitle: "Add site") { showAddSite = true }
+                    .accessibilityIdentifier("cloudBrowser.addSite")
+            } footer: {
+                Text("Recent sites appear here. Add a site to configure its access.")
+            }
+
+            Section {
+                Button(role: .destructive) { confirmClearAll = true } label: {
+                    CloudLabel("Cookies and sessions across every site.",
+                               title: "Clear all site data", tint: .red)
+                }
+                .accessibilityIdentifier("cloudBrowser.clearAllData")
+            } footer: {
+                Text("Saved passwords remain until you remove them.")
+            }
+        }
+        .cloudListStyle()
+        .navigationDestination(item: $openedSiteID) { id in
+            CloudSiteDetail(model: model, siteID: id)
+        }
+        .navigationDestination(isPresented: $showAllSites) {
+            CloudSitesList(model: model)
+        }
+        .navigationDestination(isPresented: $showAddSite) {
+            CloudAddSiteForm(model: model)
+        }
+        .confirmationDialog("Clear data for all sites?", isPresented: $confirmClearAll,
+                            titleVisibility: .visible) {
+            Button("Clear all site data", role: .destructive) { model.clearAllSiteData() }
+                .accessibilityIdentifier("cloudBrowser.confirmClearAll")
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Rem will be signed out of all sites. Saved logins are kept.")
+        }
+    }
+}
+
+// MARK: - All sites
+
+private struct CloudSitesList: View {
+    @ObservedObject var model: CloudBrowserModel
+    @State private var openedSiteID: UUID?
+    @State private var showAddSite = false
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(model.sites) { site in
+                    CloudSiteRow(site: site) { openedSiteID = site.id }
+                }
+            } header: {
+                CloudSectionHeader("Sites", actionTitle: "Add site") { showAddSite = true }
+                    .accessibilityIdentifier("cloudBrowser.sites.addSite")
+            }
+        }
+        .cloudListStyle()
+        .navigationTitle("Sites")
+        .inlineNavTitle()
+        .accessibilityIdentifier("cloudBrowser.sitesList")
+        .navigationDestination(item: $openedSiteID) { id in
+            CloudSiteDetail(model: model, siteID: id)
+        }
+        .navigationDestination(isPresented: $showAddSite) {
+            CloudAddSiteForm(model: model)
+        }
+    }
+}
+
+// MARK: - Add site
+
+private struct CloudAddSiteForm: View {
+    @ObservedObject var model: CloudBrowserModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var urlDraft = ""
+    @State private var permission: CloudSitePermission = .ask
+    @State private var username = ""
+    @State private var password = ""
+    @FocusState private var domainFocused: Bool
+
+    private var canSave: Bool { CloudBrowserModel.canAddSite(urlDraft: urlDraft) }
+
+    var body: some View {
+        List {
+            Section {
+                CloudURLField(label: "Enter domain or URL", placeholder: "https://example.com",
+                              text: $urlDraft, focused: $domainFocused)
+                    .accessibilityIdentifier("cloudBrowser.addSite.domainField")
+            }
+            Section {
+                CloudPermissionRow(title: "Permission",
+                                   subtitle: "Choose how Rem should handle this site.",
+                                   selection: $permission)
+            } header: { Text("Access") }
+            Section {
+                CloudTextField(placeholder: "Username or email (optional)", text: $username)
+                    .accessibilityIdentifier("cloudBrowser.addSite.username")
+                CloudSecureField(placeholder: "Password (optional)", text: $password)
+                    .accessibilityIdentifier("cloudBrowser.addSite.password")
+            } header: { Text("Login details") } footer: {
+                Text("Save a login now, or add one later from the site's detail screen.")
+            }
+        }
+        .cloudListStyle()
+        .navigationTitle("Add site")
+        .inlineNavTitle()
+        .accessibilityIdentifier("cloudBrowser.addSiteForm")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    if model.addSite(urlDraft: urlDraft, permission: permission,
+                                     username: username, password: password) != nil {
+                        dismiss()
+                    }
+                }
+                .disabled(!canSave)
+                .accessibilityIdentifier("cloudBrowser.addSite.save")
+            }
+        }
+        .onAppear { domainFocused = true }
+    }
+}
+
+// MARK: - Site detail
+
+private struct CloudSiteDetail: View {
+    @ObservedObject var model: CloudBrowserModel
+    let siteID: UUID
+
+    @State private var openedLoginID: UUID?
+    @State private var showAddLogin = false
+    @State private var showCookies = false
+    @State private var confirmClearSite = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Group {
+            if let site = model.site(siteID) {
+                List {
+                    Section {
+                        CloudPermissionRow(title: "Permission",
+                                           subtitle: "Controls whether Rem can open this site.",
+                                           selection: Binding(
+                                            get: { site.permission },
+                                            set: { model.setPermission($0, for: siteID) }))
+                            .accessibilityIdentifier("cloudBrowser.siteDetail.permission")
+                    } header: { Text("Access") }
+
+                    Section {
+                        ForEach(site.logins) { login in
+                            CloudNavRow {
+                                CloudLabel("Password saved securely", title: login.username)
+                            } action: { openedLoginID = login.id }
+                                .accessibilityIdentifier("cloudBrowser.siteDetail.login")
+                        }
+                        Button("Add login") { showAddLogin = true }
+                            .cloudLinkStyle()
+                            .accessibilityIdentifier("cloudBrowser.siteDetail.addLogin")
+                    } header: { Text("Saved logins") }
+
+                    Section {
+                        CloudNavRow {
+                            CloudLabel(site.cookieSummary, title: "Cookies & sessions")
+                        } action: { showCookies = true }
+                            .accessibilityIdentifier("cloudBrowser.siteDetail.cookies")
+                        Button(role: .destructive) { confirmClearSite = true } label: {
+                            CloudLabel("Signs Rem out of \(site.domain).",
+                                       title: "Clear site data", tint: .red)
+                        }
+                        .accessibilityIdentifier("cloudBrowser.siteDetail.clearSiteData")
+                    } header: { Text("Site data") }
+                }
+                .cloudListStyle()
+                .navigationTitle(site.domain)
+                .inlineNavTitle()
+                .accessibilityIdentifier("cloudBrowser.siteDetail")
+                .navigationDestination(item: $openedLoginID) { loginID in
+                    CloudSavedLoginView(model: model, siteID: siteID, loginID: loginID)
+                }
+                .navigationDestination(isPresented: $showAddLogin) {
+                    CloudAddLoginForm(model: model, siteID: siteID)
+                }
+                .navigationDestination(isPresented: $showCookies) {
+                    CloudCookiesView(model: model, siteID: siteID)
+                }
+                .confirmationDialog("Clear data for \(site.domain)?", isPresented: $confirmClearSite,
+                                    titleVisibility: .visible) {
+                    Button("Clear site data", role: .destructive) { model.clearSiteData(siteID: siteID) }
+                        .accessibilityIdentifier("cloudBrowser.siteDetail.confirmClear")
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Rem will be signed out of this site. Saved logins are kept.")
+                }
+            } else {
+                Color.clear.onAppear { dismiss() }
+            }
+        }
+    }
+}
+
+// MARK: - Add login
+
+private struct CloudAddLoginForm: View {
+    @ObservedObject var model: CloudBrowserModel
+    let siteID: UUID
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var username = ""
+    @State private var password = ""
+    @FocusState private var usernameFocused: Bool
+
+    private var domain: String { model.site(siteID)?.domain ?? "this site" }
+    private var canSave: Bool { CloudBrowserModel.canAddLogin(username: username, password: password) }
+
+    var body: some View {
+        List {
+            Section {
+                CloudLabel("Login will be available only for this site.", title: domain)
+            } header: { Text("Website") }
+            Section {
+                CloudTextField(placeholder: "Username or email", text: $username, focused: $usernameFocused)
+                    .accessibilityIdentifier("cloudBrowser.addLogin.username")
+                CloudSecureField(placeholder: "Password", text: $password)
+                    .accessibilityIdentifier("cloudBrowser.addLogin.password")
+            } header: { Text("Login details") } footer: {
+                Text("Rem uses this login only when you authorize access to \(domain).")
+            }
+        }
+        .cloudListStyle()
+        .navigationTitle("Add login")
+        .inlineNavTitle()
+        .accessibilityIdentifier("cloudBrowser.addLoginForm")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    if model.addLogin(siteID: siteID, username: username, password: password) != nil {
+                        dismiss()
+                    }
+                }
+                .disabled(!canSave)
+                .accessibilityIdentifier("cloudBrowser.addLogin.save")
+            }
+        }
+        .onAppear { usernameFocused = true }
+    }
+}
+
+// MARK: - Saved login (view / edit)
+
+private struct CloudSavedLoginView: View {
+    @ObservedObject var model: CloudBrowserModel
+    let siteID: UUID
+    let loginID: UUID
+
+    private enum Field { case none, username, password }
+    @State private var editing: Field = .none
+    @State private var draft = ""
+    @State private var confirmRemove = false
+    @FocusState private var fieldFocused: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    private var domain: String { model.site(siteID)?.domain ?? "this site" }
+    private var canSave: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    var body: some View {
+        Group {
+            if let site = model.site(siteID), let login = site.logins.first(where: { $0.id == loginID }) {
+                List {
+                    Section {
+                        CloudLabel("This credential is scoped to this site.", title: site.domain)
+                    } header: { Text("Website") }
+
+                    Section {
+                        usernameRow(login)
+                        passwordRow(login)
+                    } header: { Text("Login details") } footer: {
+                        Text("Illustrative values. Saved credentials require secure storage and explicit authorization.")
+                    }
+
+                    Section {
+                        Button(role: .destructive) { confirmRemove = true } label: {
+                            Text("Remove login").frame(maxWidth: .infinity)
+                        }
+                        .accessibilityIdentifier("cloudBrowser.savedLogin.remove")
+                    }
+                }
+                .cloudListStyle()
+                .navigationTitle("Saved login")
+                .inlineNavTitle()
+                .accessibilityIdentifier("cloudBrowser.savedLogin")
+                .hideBackButton(editing != .none)
+                .toolbar {
+                    if editing != .none {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { editing = .none }
+                                .accessibilityIdentifier("cloudBrowser.savedLogin.cancel")
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") { commit() }
+                                .disabled(!canSave)
+                                .accessibilityIdentifier("cloudBrowser.savedLogin.save")
+                        }
+                    }
+                }
+                .onChange(of: editing) { _, newValue in fieldFocused = newValue != .none }
+                .confirmationDialog("Remove saved login?", isPresented: $confirmRemove,
+                                    titleVisibility: .visible) {
+                    Button("Remove login", role: .destructive) {
+                        model.removeLogin(siteID: siteID, loginID: loginID)
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("cloudBrowser.savedLogin.confirmRemove")
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This removes the saved credential for \(domain).")
+                }
+            } else {
+                Color.clear.onAppear { dismiss() }
+            }
+        }
+    }
+
+    @ViewBuilder private func usernameRow(_ login: CloudSavedLogin) -> some View {
+        if editing == .username {
+            CloudEditableField(label: "Username or email", placeholder: "Username or email",
+                               text: $draft, focused: $fieldFocused, secure: false)
+                .accessibilityIdentifier("cloudBrowser.savedLogin.usernameField")
+        } else {
+            CloudEditRow(title: "Username or email", value: login.username,
+                         showsPencil: editing == .none) { start(.username, with: login.username) }
+                .accessibilityIdentifier("cloudBrowser.savedLogin.editUsername")
+        }
+    }
+
+    @ViewBuilder private func passwordRow(_ login: CloudSavedLogin) -> some View {
+        if editing == .password {
+            CloudEditableField(label: "Password", placeholder: "Password",
+                               text: $draft, focused: $fieldFocused, secure: true)
+                .accessibilityIdentifier("cloudBrowser.savedLogin.passwordField")
+        } else {
+            CloudEditRow(title: "Password", value: login.maskedPassword,
+                         showsPencil: editing == .none) { start(.password, with: "") }
+                .accessibilityIdentifier("cloudBrowser.savedLogin.editPassword")
+        }
+    }
+
+    private func start(_ field: Field, with value: String) {
+        draft = value
+        editing = field
+    }
+
+    private func commit() {
+        switch editing {
+        case .username: model.updateUsername(siteID: siteID, loginID: loginID, to: draft)
+        case .password: model.updatePassword(siteID: siteID, loginID: loginID, to: draft)
+        case .none: break
+        }
+        editing = .none
+    }
+}
+
+// MARK: - Cookies & sessions
+
+private struct CloudCookiesView: View {
+    @ObservedObject var model: CloudBrowserModel
+    let siteID: UUID
+    @State private var confirmClear = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Group {
+            if let site = model.site(siteID) {
+                List {
+                    Section {
+                        CloudLabel(site.signedIn ? "Signed in" : "Signed out", title: "Session")
+                        CloudLabel(site.illustrativeCookies, title: "Cookies")
+                    } header: { Text(site.domain) } footer: {
+                        Text("Clearing cookies signs Rem out of this site. Saved logins are separate.")
+                    }
+                    Section {
+                        Button(role: .destructive) { confirmClear = true } label: {
+                            Text("Clear site data").frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        .accessibilityIdentifier("cloudBrowser.cookies.clearSiteData")
+                    }
+                }
+                .cloudListStyle()
+                .navigationTitle("Cookies & sessions")
+                .inlineNavTitle()
+                .accessibilityIdentifier("cloudBrowser.cookies")
+                .confirmationDialog("Clear data for \(site.domain)?", isPresented: $confirmClear,
+                                    titleVisibility: .visible) {
+                    Button("Clear site data", role: .destructive) { model.clearSiteData(siteID: siteID) }
+                        .accessibilityIdentifier("cloudBrowser.cookies.confirmClear")
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Rem will be signed out of this site. Saved logins are kept.")
+                }
+            } else {
+                Color.clear.onAppear { dismiss() }
+            }
+        }
+    }
+}
+
+// MARK: - Shared row pieces
+
+/// A plain title/subtitle label, reusing the canonical `ListRowLabel`. `title` is the primary 17pt
+/// line; the leading argument is the 13pt secondary line (so call sites read top-to-bottom).
+private struct CloudLabel: View {
+    let subtitle: String
+    let title: String
+    var tint: Color?
+    init(_ subtitle: String, title: String, tint: Color? = nil) {
+        self.subtitle = subtitle; self.title = title; self.tint = tint
+    }
+    var body: some View {
+        if let tint {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.body).foregroundStyle(tint)
+                Text(subtitle).font(.footnote).foregroundStyle(DesignTokens.Color.labelSecondary)
+            }
+            .frame(minHeight: 40)
+        } else {
+            ListRowLabel(title, subtitle: subtitle).frame(minHeight: 40)
+        }
+    }
+}
+
+/// A site row: domain title + derived `permission · status` subtitle, pushed by a full-row tap with a
+/// native-style disclosure chevron.
+private struct CloudSiteRow: View {
+    let site: CloudSite
+    let action: () -> Void
+    var body: some View {
+        CloudNavRow { ListRowLabel(site.domain, subtitle: site.rowSubtitle) }
+            action: { action() }
+            .accessibilityIdentifier("cloudBrowser.site.\(site.domain)")
+    }
+}
+
+/// A full-row button that pushes a nested screen, with a trailing disclosure chevron (the authored
+/// `chevron.right`). Used where the outer `NavigationStack` is driven by local state rather than a
+/// value link, so the chevron is drawn explicitly.
+private struct CloudNavRow<Label: View>: View {
+    @ViewBuilder let label: () -> Label
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DesignTokens.Spacing.sm) {
+                label().frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(DesignTokens.Color.labelTertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// A read row with a trailing pencil edit affordance (the CRUD "update" entry point). The whole row is
+/// not tappable; only the pencil starts editing, matching the authored masters.
+private struct CloudEditRow: View {
+    let title: String
+    let value: String
+    let showsPencil: Bool
+    let onEdit: () -> Void
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            ListRowLabel(title, subtitle: value).frame(maxWidth: .infinity, alignment: .leading)
+            if showsPencil {
+                Button(action: onEdit) {
+                    Image(systemName: "pencil")
+                        .font(.body)
+                        .foregroundStyle(DesignTokens.Color.labelTertiary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+/// The inline-edit field: a subordinate label over a focused native input (the row keeps its geometry
+/// while the persistent label demotes to secondary). Passwords use a `SecureField`, always masked.
+private struct CloudEditableField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var focused: FocusState<Bool>.Binding
+    let secure: Bool
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.footnote).foregroundStyle(DesignTokens.Color.labelSecondary)
+            Group {
+                if secure {
+                    SecureField(placeholder, text: $text)
+                } else {
+                    TextField(placeholder, text: $text).noAutocap()
+                }
+            }
+            .font(.body)
+            .focused(focused)
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+/// Add-site domain field: a subordinate label appears above the input once focused or nonempty, and
+/// the placeholder switches from the empty prompt to the URL example — matching the authored empty vs
+/// focused states.
+private struct CloudURLField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var focused: FocusState<Bool>.Binding
+    private var showsLabel: Bool { focused.wrappedValue || !text.isEmpty }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if showsLabel {
+                Text(label).font(.footnote).foregroundStyle(DesignTokens.Color.labelSecondary)
+            }
+            TextField(showsLabel ? placeholder : label, text: $text)
+                .font(.body)
+                .urlKeyboard()
+                .noAutocap()
+                .focused(focused)
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+private struct CloudTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    var focused: FocusState<Bool>.Binding? = nil
+    var body: some View {
+        let field = TextField(placeholder, text: $text).font(.body).noAutocap().frame(minHeight: 44)
+        if let focused { field.focused(focused) } else { field }
+    }
+}
+
+private struct CloudSecureField: View {
+    let placeholder: String
+    @Binding var text: String
+    var body: some View {
+        SecureField(placeholder, text: $text).font(.body).frame(minHeight: 44)
+    }
+}
+
+/// The trailing value menu ("Ask ⌄"), restricted to the observed Ask / Allow policies.
+private struct CloudPermissionRow: View {
+    let title: String
+    let subtitle: String
+    @Binding var selection: CloudSitePermission
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            ListRowLabel(title, subtitle: subtitle).frame(maxWidth: .infinity, alignment: .leading)
+            Picker("Permission", selection: $selection) {
+                ForEach(CloudSitePermission.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("cloudBrowser.permissionMenu")
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+/// A grouped-section header with a trailing blue action (e.g. "Sites" + "Add site"). Reuses the native
+/// Section header slot; the parent `List` owns the inset.
+private struct CloudSectionHeader: View {
+    let title: String
+    let actionTitle: String
+    let action: () -> Void
+    init(_ title: String, actionTitle: String, action: @escaping () -> Void) {
+        self.title = title; self.actionTitle = actionTitle; self.action = action
+    }
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Button(actionTitle, action: action)
+                .font(.body)
+                .foregroundStyle(DesignTokens.Color.brandBlue)
+                .textCase(nil)
+        }
+    }
+}
+
+// MARK: - Platform helpers (iOS-only modifiers no-op elsewhere)
+
+private extension View {
+    @ViewBuilder func cloudListStyle() -> some View {
+        #if os(iOS)
+        self.listStyle(.insetGrouped).environment(\.defaultMinListRowHeight, 44).textCase(nil)
+        #else
+        self.listStyle(.inset).environment(\.defaultMinListRowHeight, 44).textCase(nil)
+        #endif
+    }
+
+    @ViewBuilder func cloudLinkStyle() -> some View {
+        self.font(.body).foregroundStyle(DesignTokens.Color.brandBlue)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder func inlineNavTitle() -> some View {
+        #if os(iOS)
+        self.navigationBarTitleDisplayMode(.inline)
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder func hideBackButton(_ hidden: Bool) -> some View {
+        #if os(iOS)
+        self.navigationBarBackButtonHidden(hidden)
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder func urlKeyboard() -> some View {
+        #if os(iOS)
+        self.keyboardType(.URL)
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder func noAutocap() -> some View {
+        #if os(iOS)
+        self.textInputAutocapitalization(.never).autocorrectionDisabled()
+        #else
+        self.autocorrectionDisabled()
+        #endif
+    }
+}
+
+#if DEBUG
+#Preview("Cloud browser") {
+    NavigationStack { SettingsCloudBrowserScreen() }
+}
+#endif

@@ -6,6 +6,7 @@
     "ExecutionTrace:figma",
     "ExecutionTrace:tokenset",
     "ListRow:figma",
+    "ListRowLabel:figma",
     "MessageBubble:figma",
     "RemAppIcon:figma",
     "RemButton:compose",
