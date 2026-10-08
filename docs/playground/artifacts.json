@@ -2,16 +2,82 @@
   {
     "path": "/Volumes/SatechiSSD/CodexBuilds/rem-settings-20261008/RemSettingsPlayground-iOS-simulator.zip",
     "bytes": 979853,
-    "sha256": "c4abae5033c3d47557a130410cbff560e42e605d904c13d8a94bc59853d607d5"
+    "sha256": "c4abae5033c3d47557a130410cbff560e42e605d904c13d8a94bc59853d607d5",
+    "availability": "Local-only historical app binary; no hosted binary download is claimed."
   },
   {
     "path": "/Volumes/SatechiSSD/CodexBuilds/rem-settings-20261008/android/demo/outputs/apk/debug/demo-debug.apk",
     "bytes": 17228546,
-    "sha256": "8e4016641d3b720f8c662b3cc934af102baf7d4769d1eb91c26f49a5642ba87d"
+    "sha256": "8e4016641d3b720f8c662b3cc934af102baf7d4769d1eb91c26f49a5642ba87d",
+    "availability": "Local-only historical app binary; no hosted binary download is claimed."
   },
   {
     "path": "/Volumes/SatechiSSD/CodexBuilds/rem-settings-20261008/android/demo/outputs/apk/androidTest/debug/demo-debug-androidTest.apk",
     "bytes": 1066304,
-    "sha256": "098d81fd4a99fc276c2a12a1e9f7805ca68d40a5467c0d4867b49e8909a71d3c"
+    "sha256": "098d81fd4a99fc276c2a12a1e9f7805ca68d40a5467c0d4867b49e8909a71d3c",
+    "availability": "Local-only historical app binary; no hosted binary download is claimed."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "settings-ios-journeys",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11553451130",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 32435000,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "settings-compose-screenshots",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11552710413",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 4277929,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "swiftui-screenshots",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11552710023",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 2842902,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "settings-swiftui-screenshots",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11552484131",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 23742252,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "settings-android-journeys",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11552445450",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 122090,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "settings-ios-build-log",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11552414274",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 61925,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
+  },
+  {
+    "kind": "hosted-historical-runtime-evidence",
+    "name": "compose-screenshots",
+    "url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053/artifacts/11551464777",
+    "run_url": "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/37779992053",
+    "head": "8c5ed2803890449d6e2b31104097f34d64f54b0e",
+    "bytes": 941914,
+    "scope": "Predates the Agent settings subtitle removal; not current-head verification or an app binary download."
   }
 ]
