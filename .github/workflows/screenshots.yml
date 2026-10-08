@@ -111,10 +111,11 @@ jobs:
           xcodebuild test \
             -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
             -scheme RemSettingsPlayground \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             -parallel-testing-enabled NO \
             -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tail -100
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log" | tail -100
       - name: Extract actual playground screenshots
         if: always()
         run: |
@@ -136,7 +137,9 @@ jobs:
         if: always()
         with:
           name: settings-ios-journeys
-          path: ${{ runner.temp }}/SettingsPlayground.xcresult
+          path: |
+            ${{ runner.temp }}/SettingsPlayground.xcresult
+            ${{ runner.temp }}/settings-ios-build.log
           if-no-files-found: error
 
   settings-android:
