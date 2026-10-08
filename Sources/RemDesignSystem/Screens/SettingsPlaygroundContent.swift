@@ -5,6 +5,9 @@ public enum AgentSettingsDestination: String, CaseIterable, Hashable, Sendable {
     case pairedDevices, connectors, cloudBrowser, memory, models, wallet, voice
 }
 
+/// Value route for hosts that own one path for the complete Settings hierarchy.
+public enum SettingsEntryDestination: Hashable, Sendable { case agentSettings }
+
 /// Reusable Settings row content. Native containers own padding, separators and disclosure.
 /// Standalone callers can opt into the legacy padded layout and an explicit divider.
 public struct SettingsRowLabel: View {
@@ -30,15 +33,21 @@ public struct SettingsRowLabel: View {
 public struct SettingsEntryContent: View {
     private let openAgent: (() -> Void)?
     private let agentDestination: AnyView?
+    private let agentRoute: SettingsEntryDestination?
     private let onShare: (() -> Void)?
     /// Compatibility for action-driven hosts. The native destination initializer is preferred.
     public init(onShare: (() -> Void)? = nil, openAgent: @escaping () -> Void) {
         self.onShare = onShare
-        self.openAgent = openAgent; self.agentDestination = nil
+        self.openAgent = openAgent; self.agentDestination = nil; self.agentRoute = nil
     }
     public init<Destination: View>(onShare: (() -> Void)? = nil, @ViewBuilder agentDestination: () -> Destination) {
         self.onShare = onShare
-        self.openAgent = nil; self.agentDestination = AnyView(agentDestination())
+        self.openAgent = nil; self.agentDestination = AnyView(agentDestination()); self.agentRoute = nil
+    }
+    /// Keeps native navigation in the host's value-driven path across Settings and its children.
+    public init(onShare: (() -> Void)? = nil, agentRoute: SettingsEntryDestination) {
+        self.onShare = onShare
+        self.openAgent = nil; self.agentDestination = nil; self.agentRoute = agentRoute
     }
     public var body: some View {
         List {
@@ -53,7 +62,10 @@ public struct SettingsEntryContent: View {
                 }, trailing: { EmptyView() })
             }
             Section {
-                if let agentDestination {
+                if let agentRoute {
+                    NavigationLink(value: agentRoute) { agentLabel }
+                        .accessibilityIdentifier("openAgent")
+                } else if let agentDestination {
                     NavigationLink { agentDestination } label: { agentLabel }
                         .accessibilityIdentifier("openAgent")
                 } else if let openAgent {

@@ -16,10 +16,13 @@ struct RemSettingsPlaygroundApp: App {
 
 enum LoadFixture: String, CaseIterable { case success = "Success", slow = "Slow", error = "Error" }
 
+private enum PlaygroundRoute: Hashable { case settings, controls }
+
 struct PlaygroundHome: View {
+    @State private var path = NavigationPath()
     @State private var fixture = LoadFixture.success
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Form {
                 Section("Native component playground") {
                     Text("Settings New · iOS").font(.headline)
@@ -27,10 +30,30 @@ struct PlaygroundHome: View {
                     Picker("Load fixture", selection: $fixture) {
                         ForEach(LoadFixture.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).accessibilityIdentifier("fixturePicker")
-                    NavigationLink("Open Settings") { SettingsPreview(fixture: fixture) }.accessibilityIdentifier("openSettings")
-                    NavigationLink("Shared controls") { ControlsPreview() }
+                    NavigationLink("Open Settings", value: PlaygroundRoute.settings).accessibilityIdentifier("openSettings")
+                    NavigationLink("Shared controls", value: PlaygroundRoute.controls)
                 }
             }.navigationTitle("Rem Playground")
+                .navigationDestination(for: PlaygroundRoute.self) { route in
+                    switch route {
+                    case .settings: SettingsPreview(fixture: fixture)
+                    case .controls: ControlsPreview()
+                    }
+                }
+                .navigationDestination(for: SettingsEntryDestination.self) { _ in
+                    AgentPreview(fixture: fixture)
+                }
+                .navigationDestination(for: AgentSettingsDestination.self) { route in
+                    switch route {
+                    case .pairedDevices: SettingsPairedDevicesScreen()
+                    case .memory: SettingsMemoryScreen()
+                    case .models: SettingsModelsScreen()
+                    case .cloudBrowser: SettingsCloudBrowserScreen()
+                    case .wallet: SettingsWalletScreen()
+                    case .voice: SettingsVoiceScreen()
+                    case .connectors: SettingsConnectorsScreen()
+                    }
+                }
         }
     }
 }
@@ -39,7 +62,7 @@ struct SettingsPreview: View {
     let fixture: LoadFixture
     @State private var sharing = false
     var body: some View {
-        SettingsEntryContent(onShare: { sharing = true }, agentDestination: { AgentPreview(fixture: fixture) })
+        SettingsEntryContent(onShare: { sharing = true }, agentRoute: .agentSettings)
             .background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $sharing) { PlaygroundShareSheet() }
@@ -63,17 +86,7 @@ struct AgentPreview: View {
         // A stable container owns the load task while its loading/ready child changes.
         ZStack {
             if status == "ready" {
-                AgentSettingsContent(availableDestinations: [.pairedDevices, .connectors, .cloudBrowser, .memory, .models, .wallet, .voice]) { route in
-                    switch route {
-                    case .pairedDevices: SettingsPairedDevicesScreen()
-                    case .memory: SettingsMemoryScreen()
-                    case .models: SettingsModelsScreen()
-                    case .cloudBrowser: SettingsCloudBrowserScreen()
-                    case .wallet: SettingsWalletScreen()
-                    case .voice: SettingsVoiceScreen()
-                    case .connectors: SettingsConnectorsScreen()
-                    }
-                }
+                AgentSettingsContent(availableDestinations: [.pairedDevices, .connectors, .cloudBrowser, .memory, .models, .wallet, .voice])
             } else {
                 VStack(spacing: 20) {
                     if status == "loading" {
@@ -92,7 +105,6 @@ struct AgentPreview: View {
             .task(id: attempt) {
                 // Native pushes can reattach this host's task. Once loaded, keep the
                 // source links stable while a child destination is being presented.
-                print("Settings loader: attempt=\(attempt), status=\(status)")
                 guard status != "ready" else { return }
                 status = "loading"
                 do {
