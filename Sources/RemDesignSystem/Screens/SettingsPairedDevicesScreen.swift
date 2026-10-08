@@ -205,7 +205,7 @@ struct PairedDeviceDetailView: View {
                     showingRemoveConfirmation = true
                 } label: {
                     Text(PairedDevicesCopy.removeAccess)
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .accessibilityIdentifier("pairedDevices.removeAccess")
             } footer: {

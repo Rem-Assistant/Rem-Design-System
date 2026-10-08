@@ -182,7 +182,8 @@ private struct AddProviderKeyView: View {
                             .foregroundStyle(DesignTokens.Color.labelSecondary)
                             .accessibilityHidden(true)
                     }
-                    SecureField("API key", text: $keyDraft)
+                    SecureField("API key", text: $keyDraft,
+                                prompt: Text("API key").foregroundColor(DesignTokens.Color.labelSecondary))
                         .focused($keyFocused)
                         .font(DesignTokens.Typography.body)
                         .textContentType(.password)

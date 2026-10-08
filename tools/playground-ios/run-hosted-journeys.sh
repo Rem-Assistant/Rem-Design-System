@@ -12,8 +12,16 @@ fi
 # A sample is diagnostic evidence; it does not change the app or suppress a test failure.
 (
   while true; do
-    if [[ -f "$RUNNER_TEMP/settings-ios-build.log" ]] &&
-       grep -q 'App event loop idle notification not received' "$RUNNER_TEMP/settings-ios-build.log"; then
+    log_file="$RUNNER_TEMP/settings-ios-build.log"
+    stale_log=false
+    if [[ -f "$log_file" ]]; then
+      log_age=$(( $(date +%s) - $(stat -f %m "$log_file") ))
+      if (( log_age >= 60 )) && pgrep -x RemSettingsPlayground >/dev/null; then
+        stale_log=true
+      fi
+    fi
+    if [[ -f "$log_file" ]] &&
+       { grep -q 'App event loop idle notification not received' "$log_file" || [[ "$stale_log" == true ]]; }; then
       for app_pid in $(pgrep -x RemSettingsPlayground || true); do
         sample "$app_pid" 5 1 -file "$RUNNER_TEMP/settings-ios-main-thread-$app_pid.txt" || true
       done

@@ -945,8 +945,12 @@ final class SettingsPlaygroundUITests: XCTestCase {
             XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
             capture("Wallet-\(provider)-consent-\(suffix)")
             if suffix == "large-text" {
-                reveal(app.staticTexts["You choose what Rem can do"])
-                reveal(app.staticTexts["Rem asks before actions that need review. Disconnect anytime in Settings."])
+                let benefit = app.descendants(matching: .any).matching(NSPredicate(
+                    format: "label CONTAINS %@ AND label CONTAINS %@",
+                    "You choose what Rem can do",
+                    "Rem asks before actions that need review. Disconnect anytime in Settings."
+                )).firstMatch
+                reveal(benefit)
                 capture("Wallet-\(provider)-consent-large-text-benefit")
             }
             let disclosure = app.staticTexts["Next, continue to \(name) to sign in and review access. Rem will exchange info with \(name); see its terms and privacy policy."]
