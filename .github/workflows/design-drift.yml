@@ -47,7 +47,11 @@ jobs:
           test "$(jq -r .state <<<"$meta")" = open
           test "$(jq -r .draft <<<"$meta")" = true
           test "$(jq -r .base.ref <<<"$meta")" = codex/settings-integration
-          test "$(jq -r .base.sha <<<"$meta")" = "$GITHUB_SHA"
+          # pull.base.sha can remain the PR creation snapshot after the base
+          # branch advances. Resolve the admitted integration ref directly.
+          encoded_ref=$(jq -rn --arg ref codex/settings-integration '$ref | @uri')
+          trusted_base_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded_ref}" --jq .object.sha)
+          test "$trusted_base_sha" = "$GITHUB_SHA"
           test "$(jq -r .base.repo.full_name <<<"$meta")" = "$GITHUB_REPOSITORY"
           test "$(jq -r .head.repo.full_name <<<"$meta")" = "$GITHUB_REPOSITORY"
           head_ref=$(jq -r .head.ref <<<"$meta")

@@ -110,6 +110,11 @@ jobs:
           base_sha=$(jq -r .base.sha <<<"$pr_meta")
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             test "$base_ref" = codex/settings-integration
+            # Bind manual evidence to the current admitted integration ref,
+            # never the potentially stale pull.base.sha creation snapshot.
+            encoded_ref=$(jq -rn --arg ref "$base_ref" '$ref | @uri')
+            base_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded_ref}" --jq .object.sha)
+            test "$base_sha" = "$GITHUB_SHA"
             test "$(jq -r .state <<<"$pr_meta")" = open
             test "$(jq -r .draft <<<"$pr_meta")" = true
             test "$(jq -r .head.repo.full_name <<<"$pr_meta")" = "$GITHUB_REPOSITORY"
