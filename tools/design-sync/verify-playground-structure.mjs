@@ -85,7 +85,26 @@ export function verifyPlaygroundStructure(contract, scope, nodes) {
     for (const [key, value] of Object.entries(properties)) {
       // REST exposes local coordinates in relativeTransform when geometry=paths.
       const observed = key === 'y' ? actual?.relativeTransform?.[1]?.[2] : actual?.[key];
-      check(typeof observed === 'number' && observed === value, `${label} ${key} differs from ${value}`);
+      if (typeof observed !== 'number' || observed !== value) {
+        // Only selected public geometry fields are logged; never the whole REST response.
+        // Bound unexpected values so malformed source data cannot flood diagnostics.
+        const raw = (input) => JSON.stringify(input)?.slice(0, 512) ?? 'undefined';
+        const details = {
+          nodeId: actual?.id ?? label,
+          field: key,
+          hasOwnProperty: actual != null && Object.hasOwn(actual, key),
+          observedType: observed === null ? 'null' : typeof observed,
+          observedValue: raw(observed),
+          nodeType: actual?.type ?? null,
+          layoutMode: actual?.layoutMode ?? null,
+          nodeMissing: actual == null,
+          ...(key === 'y' ? {
+            relativeTransformHasOwnProperty: actual != null && Object.hasOwn(actual, 'relativeTransform'),
+            relativeTransformRaw: raw(actual?.relativeTransform),
+          } : {}),
+        };
+        check(false, `${label} ${key} differs from ${value}; observed=${JSON.stringify(details)}`);
+      }
     }
   };
   for (const slot of lane.canonicalSlotAssertions) {
