@@ -44,12 +44,12 @@ private struct CloudBrowserRootList: View {
 
     var body: some View {
         List {
-            Section("Default access") {
+            Section {
                 CloudPermissionRow(title: "Default permission",
                                    subtitle: "Ask before Rem opens a new site.",
                                    selection: $model.defaultPermission)
                     .accessibilityIdentifier("cloudBrowser.defaultPermission")
-            }
+            } header: { Text("Default access").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
                 ForEach(model.recentSites) { site in
@@ -63,7 +63,7 @@ private struct CloudBrowserRootList: View {
                     .accessibilityIdentifier("cloudBrowser.addSite")
             } footer: {
                 Text("Recent sites appear here. Add a site to configure its access.")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
                 Button(role: .destructive) { confirmClearAll = true } label: {
@@ -71,9 +71,9 @@ private struct CloudBrowserRootList: View {
                                title: "Clear all site data", tint: .red)
                 }
                 .accessibilityIdentifier("cloudBrowser.clearAllData")
-            } header: { Text("Browser data") } footer: {
+            } header: { Text("Browser data").textCase(nil) } footer: {
                 Text("Saved passwords remain until you remove them.")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .cloudListStyle()
         .navigationDestination(item: $openedSiteID) { id in
@@ -109,7 +109,7 @@ private struct CloudSitesList: View {
                 ForEach(model.sites) { site in
                     CloudSiteRow(site: site) { openedSiteID = site.id }
                 }
-            } header: { Text("Sites") }
+            } header: { Text("Sites").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .cloudListStyle()
         .navigationTitle("Sites")
@@ -150,20 +150,20 @@ private struct CloudAddSiteForm: View {
                 CloudURLField(label: "Enter domain or URL", placeholder: "https://example.com",
                               text: $urlDraft, focused: $domainFocused)
                     .accessibilityIdentifier("cloudBrowser.addSite.domainField")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 CloudPermissionRow(title: "Permission",
                                    subtitle: "Choose how Rem should handle this site.",
                                    selection: $permission)
-            } header: { Text("Access") }
+            } header: { Text("Access").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 CloudTextField(placeholder: "Username or email (optional)", text: $username)
                     .accessibilityIdentifier("cloudBrowser.addSite.username")
                 CloudSecureField(placeholder: "Password (optional)", text: $password)
                     .accessibilityIdentifier("cloudBrowser.addSite.password")
-            } header: { Text("Login details") } footer: {
+            } header: { Text("Login details").textCase(nil) } footer: {
                 Text("Save a login now, or add one later from the site's detail screen.")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .cloudListStyle()
         .navigationTitle("Add site")
@@ -208,7 +208,7 @@ private struct CloudSiteDetail: View {
                                             get: { site.permission },
                                             set: { model.setPermission($0, for: siteID) }))
                             .accessibilityIdentifier("cloudBrowser.siteDetail.permission")
-                    } header: { Text("Access") }
+                    } header: { Text("Access").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         ForEach(site.logins) { login in
@@ -220,7 +220,7 @@ private struct CloudSiteDetail: View {
                         Button("Add login") { showAddLogin = true }
                             .cloudLinkStyle()
                             .accessibilityIdentifier("cloudBrowser.siteDetail.addLogin")
-                    } header: { Text("Saved logins") }
+                    } header: { Text("Saved logins").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         CloudNavRow {
@@ -232,7 +232,7 @@ private struct CloudSiteDetail: View {
                                        title: "Clear site data", tint: .red)
                         }
                         .accessibilityIdentifier("cloudBrowser.siteDetail.clearSiteData")
-                    } header: { Text("Site data") }
+                    } header: { Text("Site data").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
                 }
                 .cloudListStyle()
                 .navigationTitle(site.domain)
@@ -279,15 +279,15 @@ private struct CloudAddLoginForm: View {
         List {
             Section {
                 CloudLabel("Login will be available only for this site.", title: domain)
-            } header: { Text("Website") }
+            } header: { Text("Website").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 CloudLoginField(label: "Username or email", text: $username)
                     .accessibilityIdentifier("cloudBrowser.addLogin.username")
                 CloudLoginField(label: "Password", text: $password, secure: true)
                     .accessibilityIdentifier("cloudBrowser.addLogin.password")
-            } header: { Text("Login details") } footer: {
+            } header: { Text("Login details").textCase(nil) } footer: {
                 Text("Rem uses this login only when you authorize access to \(domain).")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .cloudListStyle()
         .navigationTitle("Add login")
@@ -331,21 +331,21 @@ private struct CloudSavedLoginView: View {
                 List {
                     Section {
                         CloudLabel("This credential is scoped to this site.", title: site.domain)
-                    } header: { Text("Website") }
+                    } header: { Text("Website").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         usernameRow(login)
                         passwordRow(login)
-                    } header: { Text("Login details") } footer: {
+                    } header: { Text("Login details").textCase(nil) } footer: {
                         Text("Illustrative values. Saved credentials require secure storage and explicit authorization.")
-                    }
+                    }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         Button(role: .destructive) { confirmRemove = true } label: {
                             Text("Remove login").frame(maxWidth: .infinity)
                         }
                         .accessibilityIdentifier("cloudBrowser.savedLogin.remove")
-                    }
+                    }.listRowBackground(DesignTokens.Color.backgroundSecondary)
                 }
                 .cloudListStyle()
                 .navigationTitle("Saved login")
@@ -444,15 +444,15 @@ private struct CloudCookiesView: View {
                     Section {
                         CloudLabel(site.signedIn ? "Signed in" : "Signed out", title: "Session")
                         CloudLabel(site.illustrativeCookies, title: "Cookies")
-                    } header: { Text(site.domain) } footer: {
+                    } header: { Text(site.domain).textCase(nil) } footer: {
                         Text("Clearing cookies signs Rem out of this site. Saved logins are separate.")
-                    }
+                    }.listRowBackground(DesignTokens.Color.backgroundSecondary)
                     Section {
                         Button(role: .destructive) { confirmClear = true } label: {
                             Text("Clear site data").frame(maxWidth: .infinity, alignment: .center)
                         }
                         .accessibilityIdentifier("cloudBrowser.cookies.clearSiteData")
-                    }
+                    }.listRowBackground(DesignTokens.Color.backgroundSecondary)
                 }
                 .cloudListStyle()
                 .navigationTitle("Cookies & sessions")
@@ -565,9 +565,9 @@ private struct CloudEditableField: View {
             Text(label).font(.footnote).foregroundStyle(DesignTokens.Color.labelSecondary)
             Group {
                 if secure {
-                    SecureField(placeholder, text: $text)
+                    SecureField(placeholder, text: $text, prompt: Text(placeholder).foregroundStyle(DesignTokens.Color.labelSecondary))
                 } else {
-                    TextField(placeholder, text: $text).noAutocap()
+                    TextField(placeholder, text: $text, prompt: Text(placeholder).foregroundStyle(DesignTokens.Color.labelSecondary)).noAutocap()
                 }
             }
             .font(.body)
@@ -591,7 +591,8 @@ private struct CloudURLField: View {
             if showsLabel {
                 Text(label).font(.footnote).foregroundStyle(DesignTokens.Color.labelSecondary)
             }
-            TextField(showsLabel ? placeholder : label, text: $text)
+            TextField(showsLabel ? placeholder : label, text: $text,
+                      prompt: Text(showsLabel ? placeholder : label).foregroundStyle(DesignTokens.Color.labelSecondary))
                 .font(.body)
                 .urlKeyboard()
                 .noAutocap()
@@ -621,9 +622,11 @@ private struct CloudLoginField: View {
             }
             Group {
                 if secure {
-                    SecureField(showsLabel ? "" : label, text: $text)
+                    SecureField(showsLabel ? "" : label, text: $text,
+                                prompt: Text(showsLabel ? "" : label).foregroundStyle(DesignTokens.Color.labelSecondary))
                 } else {
-                    TextField(showsLabel ? "" : label, text: $text).noAutocap()
+                    TextField(showsLabel ? "" : label, text: $text,
+                              prompt: Text(showsLabel ? "" : label).foregroundStyle(DesignTokens.Color.labelSecondary)).noAutocap()
                 }
             }
             .font(filledResting ? .footnote : .body)
@@ -640,7 +643,7 @@ private struct CloudTextField: View {
     @Binding var text: String
     var focused: FocusState<Bool>.Binding? = nil
     var body: some View {
-        let field = TextField(placeholder, text: $text).font(.body).noAutocap().frame(minHeight: 44)
+        let field = TextField(placeholder, text: $text, prompt: Text(placeholder).foregroundStyle(DesignTokens.Color.labelSecondary)).font(.body).noAutocap().frame(minHeight: 44)
         if let focused { field.focused(focused) } else { field }
     }
 }
@@ -649,7 +652,7 @@ private struct CloudSecureField: View {
     let placeholder: String
     @Binding var text: String
     var body: some View {
-        SecureField(placeholder, text: $text).font(.body).frame(minHeight: 44)
+        SecureField(placeholder, text: $text, prompt: Text(placeholder).foregroundStyle(DesignTokens.Color.labelSecondary)).font(.body).frame(minHeight: 44)
     }
 }
 
@@ -683,7 +686,7 @@ private struct CloudSectionHeader: View {
     }
     var body: some View {
         HStack {
-            Text(title)
+            Text(title).textCase(nil)
             Spacer()
             Button(actionTitle, action: action)
                 .font(.body)
@@ -698,9 +701,11 @@ private struct CloudSectionHeader: View {
 private extension View {
     @ViewBuilder func cloudListStyle() -> some View {
         #if os(iOS)
-        self.listStyle(.insetGrouped).environment(\.defaultMinListRowHeight, 44).textCase(nil)
+        self.listStyle(.insetGrouped).scrollContentBackground(.hidden)
+            .background(DesignTokens.Color.backgroundPrimary).environment(\.defaultMinListRowHeight, 44).textCase(nil)
         #else
-        self.listStyle(.inset).environment(\.defaultMinListRowHeight, 44).textCase(nil)
+        self.listStyle(.inset).scrollContentBackground(.hidden)
+            .background(DesignTokens.Color.backgroundPrimary).environment(\.defaultMinListRowHeight, 44).textCase(nil)
         #endif
     }
 
