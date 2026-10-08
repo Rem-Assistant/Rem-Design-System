@@ -111,9 +111,7 @@ public struct SettingsModelsScreen: View {
         }
         .settingsDestinationList()
         .navigationTitle("Models")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .settingsInlineNavigationTitle()
         .accessibilityIdentifier("settingsModels")
         .accessibilityHint(PlaygroundMockData.hint)
         .navigationDestination(for: ModelsRoute.self) { route in
@@ -136,6 +134,7 @@ private struct AddProviderKeyView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var provider: ModelProvider
     @State private var keyDraft = ""
+    @FocusState private var keyFocused: Bool
 
     init(initialProvider: ModelProvider, onSave: @escaping (ModelProvider) -> Void) {
         self.initialProvider = initialProvider
@@ -176,14 +175,23 @@ private struct AddProviderKeyView: View {
                     .accessibilityIdentifier("models.providerPicker")
                 }
 
-                SecureField("API key", text: $keyDraft)
-                    .font(DesignTokens.Typography.body)
-                    .textContentType(.password)
-                    .autocorrectionDisabled()
-                    #if os(iOS)
-                    .textInputAutocapitalization(.never)
-                    #endif
-                    .accessibilityIdentifier("models.keyField")
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    if keyFocused || !keyDraft.isEmpty {
+                        Text("API key")
+                            .font(DesignTokens.Typography.footnote)
+                            .foregroundStyle(DesignTokens.Color.labelSecondary)
+                            .accessibilityHidden(true)
+                    }
+                    SecureField("API key", text: $keyDraft)
+                        .focused($keyFocused)
+                        .font(DesignTokens.Typography.body)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                        #if os(iOS)
+                        .textInputAutocapitalization(.never)
+                        #endif
+                        .accessibilityIdentifier("models.keyField")
+                }
             } header: {
                 Text("API key")
             } footer: {
@@ -192,15 +200,15 @@ private struct AddProviderKeyView: View {
         }
         .settingsDestinationList()
         .navigationTitle("Add provider key")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .settingsInlineNavigationTitle()
         .accessibilityIdentifier("modelsAddKey")
         .accessibilityHint(PlaygroundMockData.hint)
+        .onDisappear { keyDraft = "" }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     onSave(provider)
+                    keyDraft = ""
                     dismiss()
                 }
                 .disabled(!ModelsFixture.canSave(keyDraft: keyDraft))

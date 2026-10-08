@@ -121,9 +121,7 @@ public struct SettingsMemoryScreen: View {
         }
         .settingsDestinationList()
         .navigationTitle("Memory")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .settingsInlineNavigationTitle()
         .accessibilityIdentifier("settingsMemory")
         .accessibilityHint(PlaygroundMockData.hint)
         .navigationDestination(for: MemoryRoute.self) { route in
@@ -147,7 +145,7 @@ public struct SettingsMemoryScreen: View {
 
 /// Memory summary (`1865:6193`): scrolling freeform summary with a simple interactive composer pinned
 /// below. The composer is the Memory-specific interactive variant called for by the Settings source
-/// contract (the shared `RemComposerBar` is a static presentational component with model/Speak slots);
+/// contract, using the canonical interactive `RemComposerBar` with model/Speak slots hidden;
 /// it shows only the plus + send affordances and runs the deterministic local send boundary.
 private struct MemorySummaryView: View {
     @State private var draft = ""
@@ -184,46 +182,16 @@ private struct MemorySummaryView: View {
         }
         .background(DesignTokens.Color.backgroundPrimary)
         .navigationTitle("Memory summary")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .settingsInlineNavigationTitle()
         .accessibilityIdentifier("memorySummary")
     }
 
-    private var canSend: Bool {
-        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
     private var composer: some View {
-        VStack(spacing: DesignTokens.Spacing.sm) {
-            TextField(MemoryFixture.composerPlaceholder, text: $draft, axis: .vertical)
-                .font(DesignTokens.Typography.chatMessage)
-                .foregroundStyle(DesignTokens.Color.labelPrimary)
-                .accessibilityIdentifier("memory.composerField")
-
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                Image(systemName: "plus")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                Spacer(minLength: DesignTokens.Spacing.sm)
-                Button(action: send) {
-                    ZStack {
-                        Circle().fill(canSend ? DesignTokens.Color.brandBlue : DesignTokens.Color.fillTertiary)
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(canSend ? DesignTokens.Color.labelOnColor : DesignTokens.Color.labelSecondary)
-                    }
-                    .frame(width: 32, height: 32)
-                }
-                .buttonStyle(.plain)
-                .disabled(!canSend)
-                .accessibilityLabel("Send")
-                .accessibilityIdentifier("memory.composerSend")
-            }
-        }
-        .padding(DesignTokens.Spacing.md)
-        .background(DesignTokens.Color.backgroundSecondary,
-                    in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        RemComposerBar(
+            text: $draft, placeholder: MemoryFixture.composerPlaceholder,
+            showModel: false, showSpeak: false, accessibilityPrefix: "memory",
+            onAdd: { feedback = "Attachments are unavailable in this prototype." }, onSend: send
+        )
         .padding(.horizontal, DesignTokens.Spacing.lg)
         .padding(.bottom, DesignTokens.Spacing.sm)
     }

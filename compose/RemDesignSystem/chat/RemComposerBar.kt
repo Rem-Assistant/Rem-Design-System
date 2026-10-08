@@ -1,6 +1,7 @@
 package com.rem.designsystem.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,12 +20,15 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,8 +57,17 @@ fun RemComposerBar(
     model: String = "Auto",
     state: ComposerSendState = ComposerSendState.Idle,
     showAttachments: Boolean = false,
+    showModel: Boolean = true,
+    showSpeak: Boolean = true,
+    onTextChange: ((String) -> Unit)? = null,
+    onSend: (() -> Unit)? = null,
+    onAdd: (() -> Unit)? = null,
+    accessibilityPrefix: String = "composer",
 ) {
     val colors = RemColors.current
+    val effectiveState = if (onTextChange != null && state != ComposerSendState.Sending) {
+        if (text.isBlank()) ComposerSendState.Idle else ComposerSendState.Active
+    } else state
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -66,27 +79,51 @@ fun RemComposerBar(
             AttachmentsStrip()
         }
 
-        Text(
-            text = text.ifEmpty { placeholder },
-            style = RemTypography.chatMessage,
-            color = if (text.isEmpty()) colors.labelTertiary else colors.labelPrimary,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (onTextChange != null) {
+            Box {
+                if (text.isEmpty()) Text(placeholder, style = RemTypography.chatMessage, color = colors.labelTertiary)
+                BasicTextField(
+                    value = text, onValueChange = onTextChange,
+                    textStyle = RemTypography.chatMessage.copy(color = colors.labelPrimary),
+                    cursorBrush = SolidColor(colors.brandBlue),
+                    modifier = Modifier.fillMaxWidth().testTag("$accessibilityPrefix.composerField"),
+                )
+            }
+        } else {
+            Text(
+                text = text.ifEmpty { placeholder },
+                style = RemTypography.chatMessage,
+                color = if (text.isEmpty()) colors.labelTertiary else colors.labelPrimary,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
-            // Model selector
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = model, style = RemTypography.subheadline, color = colors.labelSecondary)
-                Icon(Icons.Filled.UnfoldMore, contentDescription = null, tint = colors.labelTertiary, modifier = Modifier.size(14.dp))
+            if (onAdd != null) {
+                IconButton(onClick = onAdd, modifier = Modifier.testTag("$accessibilityPrefix.composerAdd")) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
+                }
+            } else {
+                Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
+            }
+            if (showModel) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = model, style = RemTypography.subheadline, color = colors.labelSecondary)
+                    Icon(Icons.Filled.UnfoldMore, contentDescription = null, tint = colors.labelTertiary, modifier = Modifier.size(14.dp))
+                }
             }
             Box(modifier = Modifier.weight(1f))
-            SpeakPill()
-            SendButton(state)
+            if (showSpeak) SpeakPill()
+            if (onSend != null) {
+                IconButton(onClick = onSend, enabled = effectiveState != ComposerSendState.Idle,
+                    modifier = Modifier.testTag("$accessibilityPrefix.composerSend")) {
+                    SendButton(effectiveState)
+                }
+            } else { SendButton(effectiveState) }
         }
     }
 }

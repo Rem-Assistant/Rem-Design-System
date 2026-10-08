@@ -12,6 +12,15 @@ public enum PlaygroundMockData {
 }
 
 extension View {
+    /// Inline navigation titles are iOS chrome. Keep shared destination views valid on macOS.
+    @ViewBuilder func settingsInlineNavigationTitle() -> some View {
+        #if os(iOS)
+        self.navigationBarTitleDisplayMode(.inline)
+        #else
+        self
+        #endif
+    }
+
     /// Native grouped-list chrome for a destination screen — insetGrouped on iOS, inset on macOS,
     /// with the Settings row-height minimum and no automatic header upper-casing.
     @ViewBuilder func settingsDestinationList() -> some View {

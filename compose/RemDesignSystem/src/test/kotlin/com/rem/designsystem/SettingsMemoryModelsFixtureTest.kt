@@ -4,6 +4,8 @@ import com.rem.designsystem.screens.MemoryContent
 import com.rem.designsystem.screens.MemoryControl
 import com.rem.designsystem.screens.ModelProvider
 import com.rem.designsystem.screens.ModelsContent
+import com.rem.designsystem.screens.SavedProvidersSaver
+import androidx.compose.runtime.saveable.SaverScope
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -65,6 +67,17 @@ class SettingsMemoryModelsFixtureTest {
         assertFalse(ModelsContent.canSave(""))
         assertFalse(ModelsContent.canSave("   "))
         assertTrue(ModelsContent.canSave("sk-illustrative-dummy"))
+    }
+
+    @Test fun savedProviderFlagsRoundTripThroughOnlySaveableProviderNames() {
+        val scope = object : SaverScope {
+            override fun canBeSaved(value: Any): Boolean = value is String
+        }
+        val providers = ModelProvider.entries.toSet()
+        val saved = with(SavedProvidersSaver) { scope.save(providers) }
+        assertNotNull(saved)
+        assertEquals(ModelProvider.entries.map { it.name }, saved)
+        assertEquals(providers, SavedProvidersSaver.restore(saved!!))
     }
 
     @Test fun modelsSaveRecordsFlagForNewProviderWithoutStoringKey() {

@@ -22,19 +22,52 @@ public struct RemComposerBar: View {
     private let model: String
     private let state: SendState
     private let showAttachments: Bool
+    private let showModel: Bool
+    private let showSpeak: Bool
+    private var textBinding: Binding<String>?
+    private var onSend: (() -> Void)?
+    private var onAdd: (() -> Void)?
+    private var accessibilityPrefix = "composer"
 
     public init(
         text: String = "",
         placeholder: String = "Ask anything",
         model: String = "Auto",
         state: SendState = .idle,
-        showAttachments: Bool = false
+        showAttachments: Bool = false,
+        showModel: Bool = true,
+        showSpeak: Bool = true
     ) {
         self.text = text
         self.placeholder = placeholder
         self.model = model
         self.state = state
         self.showAttachments = showAttachments
+        self.showModel = showModel
+        self.showSpeak = showSpeak
+    }
+
+    /// Interactive composition of the same canonical pill. Empty text disables Send; the parent
+    /// owns draft state and all actions. No text is stored or transmitted by this component.
+    public init(
+        text: Binding<String>, placeholder: String = "Ask anything", model: String = "Auto",
+        state: SendState = .idle, showAttachments: Bool = false,
+        showModel: Bool = true, showSpeak: Bool = true,
+        accessibilityPrefix: String = "composer", onAdd: (() -> Void)? = nil,
+        onSend: @escaping () -> Void
+    ) {
+        self.init(text: text.wrappedValue, placeholder: placeholder, model: model,
+                  state: state, showAttachments: showAttachments, showModel: showModel, showSpeak: showSpeak)
+        self.textBinding = text
+        self.onSend = onSend
+        self.onAdd = onAdd
+        self.accessibilityPrefix = accessibilityPrefix
+    }
+
+    private var currentText: String { textBinding?.wrappedValue ?? text }
+    private var effectiveState: SendState {
+        guard textBinding != nil, state != .sending else { return state }
+        return currentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .idle : .active
     }
 
     public var body: some View {
@@ -44,24 +77,45 @@ public struct RemComposerBar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Text(text.isEmpty ? placeholder : text)
-                .font(DesignTokens.Typography.chatMessage)
-                .foregroundStyle(text.isEmpty ? DesignTokens.Color.labelTertiary : DesignTokens.Color.labelPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+            if let textBinding {
+                TextField(placeholder, text: textBinding, axis: .vertical)
+                    .font(DesignTokens.Typography.chatMessage)
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    .accessibilityIdentifier("\(accessibilityPrefix).composerField")
+            } else {
+                Text(text.isEmpty ? placeholder : text)
+                    .font(DesignTokens.Typography.chatMessage)
+                    .foregroundStyle(text.isEmpty ? DesignTokens.Color.labelTertiary : DesignTokens.Color.labelPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             HStack(spacing: DesignTokens.Spacing.sm) {
-                Image(systemName: "plus")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                modelSelector
+                if let onAdd {
+                    Button(action: onAdd) { addGlyph.frame(minWidth: 44, minHeight: 44) }
+                        .buttonStyle(.plain).accessibilityLabel("Add")
+                        .accessibilityIdentifier("\(accessibilityPrefix).composerAdd")
+                } else { addGlyph }
+                if showModel { modelSelector }
                 Spacer(minLength: DesignTokens.Spacing.sm)
-                speakPill
-                sendButton
+                if showSpeak { speakPill }
+                if let onSend {
+                    Button(action: onSend) { sendButton.frame(minWidth: 44, minHeight: 44) }
+                        .buttonStyle(.plain)
+                        .disabled(effectiveState == .idle)
+                        .accessibilityLabel(effectiveState == .sending ? "Stop" : "Send")
+                        .accessibilityIdentifier("\(accessibilityPrefix).composerSend")
+                } else { sendButton }
             }
         }
         .padding(DesignTokens.Spacing.md)
         .background(DesignTokens.Color.backgroundSecondary, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+    }
+
+    private var addGlyph: some View {
+        Image(systemName: "plus")
+            .font(.system(size: 17, weight: .regular))
+            .foregroundStyle(DesignTokens.Color.labelSecondary)
     }
 
     private var modelSelector: some View {
@@ -91,15 +145,15 @@ public struct RemComposerBar: View {
     private var sendButton: some View {
         ZStack {
             Circle().fill(sendFill)
-            Image(systemName: state == .sending ? "stop.fill" : "arrow.up")
-                .font(.system(size: state == .sending ? 12 : 15, weight: .bold))
+            Image(systemName: effectiveState == .sending ? "stop.fill" : "arrow.up")
+                .font(.system(size: effectiveState == .sending ? 12 : 15, weight: .bold))
                 .foregroundStyle(sendForeground)
         }
         .frame(width: 32, height: 32)
     }
 
     private var sendFill: Color {
-        switch state {
+        switch effectiveState {
         case .idle: return DesignTokens.Color.fillTertiary
         case .active: return DesignTokens.Color.brandBlue
         case .sending: return DesignTokens.Color.systemRed
@@ -107,7 +161,7 @@ public struct RemComposerBar: View {
     }
 
     private var sendForeground: Color {
-        state == .idle ? DesignTokens.Color.labelSecondary : DesignTokens.Color.labelOnColor
+        effectiveState == .idle ? DesignTokens.Color.labelSecondary : DesignTokens.Color.labelOnColor
     }
 
     private var attachmentsStrip: some View {

@@ -1,5 +1,6 @@
 package com.rem.designsystem.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -27,11 +28,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -77,6 +79,12 @@ object ModelsContent {
 
 private enum class ModelsRoute { Root, AddKey }
 
+// Saved state contains provider identities only. The key draft never enters this saver or a Bundle.
+internal val SavedProvidersSaver = listSaver<Set<ModelProvider>, String>(
+    save = { providers -> providers.map { it.name } },
+    restore = { names -> names.map { ModelProvider.valueOf(it) }.toSet() },
+)
+
 /**
  * Models destination entry point. Owns its scaffold/title and a nested root↔addKey stack. [onBack]
  * leaves the destination (outer navigation is owned by the host).
@@ -90,11 +98,25 @@ fun SettingsModelsScreen(onBack: () -> Unit) {
     // Session fixture state, owned here so Back from Add provider key discards the draft but a saved
     // flag persists for the session.
     var autoManagedModel by rememberSaveable { mutableStateOf(true) }
-    var savedProviders by remember { mutableStateOf(setOf(ModelProvider.Anthropic)) }
-    val availableProviders = remember { mutableSetOf<ModelProvider>().toMutableStateList() }
+    var savedProviders by rememberSaveable(stateSaver = SavedProvidersSaver) {
+        mutableStateOf(setOf(ModelProvider.Anthropic))
+    }
+    var anthropicAvailable by rememberSaveable { mutableStateOf(false) }
+    var provider by rememberSaveable { mutableStateOf(ModelProvider.Anthropic) }
+    var keyDraft by remember { mutableStateOf("") }
+    val canSave = ModelsContent.canSave(keyDraft)
 
     val title = if (route == ModelsRoute.Root) "Models" else "Add provider key"
-    val leave = { if (route == ModelsRoute.AddKey) route = ModelsRoute.Root else onBack() }
+    val leave = {
+        keyDraft = ""
+        if (route == ModelsRoute.AddKey) route = ModelsRoute.Root else onBack()
+    }
+    val openAddKey = {
+        provider = ModelProvider.Anthropic
+        keyDraft = ""
+        route = ModelsRoute.AddKey
+    }
+    BackHandler(onBack = leave)
 
     Scaffold(
         containerColor = colors.backgroundPrimary,
@@ -104,6 +126,21 @@ fun SettingsModelsScreen(onBack: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = leave, modifier = Modifier.testTag("back")) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (route == ModelsRoute.AddKey) {
+                        TextButton(
+                            onClick = {
+                                if (ModelsContent.canSave(keyDraft)) {
+                                    savedProviders = ModelsContent.recordSavedKey(savedProviders, provider)
+                                    keyDraft = ""
+                                    route = ModelsRoute.Root
+                                }
+                            },
+                            enabled = canSave,
+                            modifier = Modifier.testTag("models.saveKey"),
+                        ) { Text("Save") }
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = colors.backgroundPrimary),
@@ -116,17 +153,15 @@ fun SettingsModelsScreen(onBack: () -> Unit) {
                     autoManagedModel = autoManagedModel,
                     onAutoChange = { autoManagedModel = it },
                     anthropicSaved = ModelProvider.Anthropic in savedProviders,
-                    anthropicAvailable = ModelProvider.Anthropic in availableProviders,
-                    onAnthropicAvailableChange = {
-                        if (it) availableProviders.add(ModelProvider.Anthropic) else availableProviders.remove(ModelProvider.Anthropic)
-                    },
-                    openAddKey = { route = ModelsRoute.AddKey },
+                    anthropicAvailable = anthropicAvailable,
+                    onAnthropicAvailableChange = { anthropicAvailable = it },
+                    openAddKey = openAddKey,
                 )
                 ModelsRoute.AddKey -> AddProviderKeyContent(
-                    onSave = { provider ->
-                        savedProviders = ModelsContent.recordSavedKey(savedProviders, provider)
-                        route = ModelsRoute.Root
-                    },
+                    provider = provider,
+                    onProviderChange = { provider = it },
+                    keyDraft = keyDraft,
+                    onKeyDraftChange = { keyDraft = it },
                 )
             }
         }
@@ -201,23 +236,17 @@ private fun ModelsRootContent(
 }
 
 @Composable
-private fun AddProviderKeyContent(onSave: (ModelProvider) -> Unit) {
+private fun AddProviderKeyContent(
+    provider: ModelProvider,
+    onProviderChange: (ModelProvider) -> Unit,
+    keyDraft: String,
+    onKeyDraftChange: (String) -> Unit,
+) {
     val colors = RemColors.current
-    var provider by rememberSaveable { mutableStateOf(ModelProvider.Anthropic) }
-    var keyDraft by rememberSaveable { mutableStateOf("") }
     var pickerExpanded by remember { mutableStateOf(false) }
-    val canSave = ModelsContent.canSave(keyDraft)
+    var keyFocused by remember { mutableStateOf(false) }
 
     Column(Modifier.testTag("modelsAddKey").fillMaxSize().verticalScroll(rememberScrollState())) {
-        // Single Save action for the Add provider key screen (the native top-bar back discards).
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = { onSave(provider) }, enabled = canSave, modifier = Modifier.testTag("models.saveKey")) {
-                Text("Save")
-            }
-        }
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             RemSection(header = "API key", footer = ModelsContent.keyFooter, settingsHeader = true) {
                 ListRow(
@@ -245,7 +274,7 @@ private fun AddProviderKeyContent(onSave: (ModelProvider) -> Unit) {
                                 ModelProvider.entries.forEach { candidate ->
                                     DropdownMenuItem(
                                         text = { Text(candidate.displayName) },
-                                        onClick = { provider = candidate; pickerExpanded = false },
+                                        onClick = { onProviderChange(candidate); pickerExpanded = false },
                                         trailingIcon = { if (candidate == provider) Icon(Icons.Filled.Check, contentDescription = null) },
                                         modifier = Modifier.testTag("models.providerOption.${candidate.displayName}"),
                                     )
@@ -257,20 +286,25 @@ private fun AddProviderKeyContent(onSave: (ModelProvider) -> Unit) {
                 ListRow(
                     leading = {},
                     content = {
-                        Box {
-                            if (keyDraft.isEmpty()) {
-                                Text("API key", style = RemTypography.body, color = colors.labelTertiary)
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (keyFocused || keyDraft.isNotEmpty()) {
+                                Text("API key", style = RemTypography.footnote, color = colors.labelSecondary)
                             }
-                            BasicTextField(
-                                value = keyDraft,
-                                onValueChange = { keyDraft = it },
-                                singleLine = true,
-                                textStyle = RemTypography.body.copy(color = colors.labelPrimary),
-                                visualTransformation = PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.brandBlue),
-                                modifier = Modifier.fillMaxWidth().testTag("models.keyField"),
-                            )
+                            Box {
+                                if (keyDraft.isEmpty()) {
+                                    Text("API key", style = RemTypography.body, color = colors.labelTertiary)
+                                }
+                                BasicTextField(
+                                    value = keyDraft,
+                                    onValueChange = onKeyDraftChange,
+                                    singleLine = true,
+                                    textStyle = RemTypography.body.copy(color = colors.labelPrimary),
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.brandBlue),
+                                    modifier = Modifier.fillMaxWidth().onFocusChanged { keyFocused = it.isFocused }.testTag("models.keyField"),
+                                )
+                            }
                         }
                     },
                     trailing = {},

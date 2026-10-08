@@ -1,16 +1,11 @@
 package com.rem.designsystem.screens
 
-import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,7 +18,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.rows.ListRowLabel
 import com.rem.designsystem.rows.RemSection
@@ -101,8 +96,25 @@ private enum class MemoryRoute { Root, Summary }
 fun SettingsMemoryScreen(onBack: () -> Unit) {
     val colors = RemColors.current
     var route by rememberSaveable { mutableStateOf(MemoryRoute.Root) }
+    // Parent-owned primitive values survive the summary branch and activity recreation.
+    var searchAndReference by rememberSaveable { mutableStateOf(true) }
+    var generateMemory by rememberSaveable { mutableStateOf(true) }
+    var sensitiveTopics by rememberSaveable { mutableStateOf(false) }
+    val controls = mapOf(
+        MemoryControl.SearchAndReference to searchAndReference,
+        MemoryControl.GenerateMemory to generateMemory,
+        MemoryControl.SensitiveTopics to sensitiveTopics,
+    )
+    val onToggle: (MemoryControl, Boolean) -> Unit = { control, on ->
+        when (control) {
+            MemoryControl.SearchAndReference -> searchAndReference = on
+            MemoryControl.GenerateMemory -> generateMemory = on
+            MemoryControl.SensitiveTopics -> sensitiveTopics = on
+        }
+    }
     val title = if (route == MemoryRoute.Root) "Memory" else "Memory summary"
     val leave = { if (route == MemoryRoute.Summary) route = MemoryRoute.Root else onBack() }
+    BackHandler(onBack = leave)
 
     Scaffold(
         containerColor = colors.backgroundPrimary,
@@ -120,7 +132,7 @@ fun SettingsMemoryScreen(onBack: () -> Unit) {
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             when (route) {
-                MemoryRoute.Root -> MemoryRootContent(openSummary = { route = MemoryRoute.Summary })
+                MemoryRoute.Root -> MemoryRootContent(controls, onToggle, openSummary = { route = MemoryRoute.Summary })
                 MemoryRoute.Summary -> MemorySummaryContent()
             }
         }
@@ -128,9 +140,11 @@ fun SettingsMemoryScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun MemoryRootContent(openSummary: () -> Unit) {
-    var controls by remember { mutableStateOf(MemoryContent.toggleDefaults) }
-    fun toggle(control: MemoryControl, on: Boolean) { controls = controls + (control to on) }
+private fun MemoryRootContent(
+    controls: Map<MemoryControl, Boolean>,
+    onToggle: (MemoryControl, Boolean) -> Unit,
+    openSummary: () -> Unit,
+) {
 
     Column(
         Modifier
@@ -142,9 +156,9 @@ private fun MemoryRootContent(openSummary: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
         RemSection(header = "Memory controls", footer = MemoryContent.controlsFooter, settingsHeader = true) {
-            toggleRow(MemoryControl.SearchAndReference, "Search and reference chats", "Use details from past chats", controls, ::toggle, divider = true)
-            toggleRow(MemoryControl.GenerateMemory, "Generate memory", "Update the summary from chats", controls, ::toggle, divider = true)
-            toggleRow(MemoryControl.SensitiveTopics, "Sensitive topics", "Allow sensitive details", controls, ::toggle)
+            toggleRow(MemoryControl.SearchAndReference, "Search and reference chats", "Use details from past chats", controls, onToggle, divider = true)
+            toggleRow(MemoryControl.GenerateMemory, "Generate memory", "Update the summary from chats", controls, onToggle, divider = true)
+            toggleRow(MemoryControl.SensitiveTopics, "Sensitive topics", "Allow sensitive details", controls, onToggle)
         }
         RemSection(header = "Overview", footer = MemoryContent.overviewFooter, settingsHeader = true) {
             ListRow(
@@ -207,9 +221,12 @@ private fun MemorySummaryContent() {
                 Text(it, style = RemTypography.footnote, color = colors.labelSecondary, modifier = Modifier.testTag("memory.composerFeedback"))
             }
         }
-        MemoryComposer(
-            draft = draft,
-            onDraftChange = { draft = it },
+        RemComposerBar(
+            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
+            text = draft, placeholder = MemoryContent.composerPlaceholder,
+            onTextChange = { draft = it },
+            showModel = false, showSpeak = false, accessibilityPrefix = "memory",
+            onAdd = { feedback = "Attachments are unavailable in this prototype." },
             onSend = {
                 feedback = MemoryContent.composerFeedback(draft)
                 draft = ""
@@ -217,59 +234,3 @@ private fun MemorySummaryContent() {
         )
     }
 }
-
-/**
- * The Memory-specific interactive composer called for by the Settings source contract — plus + send
- * only, no model/Speak slots (the shared [com.rem.designsystem.chat.RemComposerBar] is a static
- * presentational variant that includes those). Runs the deterministic local send boundary.
- */
-@Composable
-private fun MemoryComposer(draft: String, onDraftChange: (String) -> Unit, onSend: () -> Unit) {
-    val colors = RemColors.current
-    val canSend = draft.isNotBlank()
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 8.dp)
-            .background(colors.backgroundSecondary, RoundedCornerShape(30.dp))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box {
-            if (draft.isEmpty()) {
-                Text(MemoryContent.composerPlaceholder, style = RemTypography.chatMessage, color = colors.labelTertiary)
-            }
-            BasicTextField(
-                value = draft,
-                onValueChange = onDraftChange,
-                textStyle = RemTypography.chatMessage.copy(color = colors.labelPrimary),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.brandBlue),
-                modifier = Modifier.fillMaxWidth().testTag("memory.composerField"),
-            )
-        }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Add, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
-            Box(Modifier.weight(1f))
-            Box(
-                Modifier
-                    .size(32.dp)
-                    .background(if (canSend) colors.brandBlue else colors.fillTertiary, CircleShape)
-                    .then(if (canSend) Modifier.clickableSend(onSend) else Modifier)
-                    .testTag("memory.composerSend")
-                    .semantics { contentDescription = "Send" },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Filled.ArrowUpward,
-                    contentDescription = null,
-                    tint = if (canSend) colors.labelOnColor else colors.labelSecondary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-    }
-}
-
-private fun Modifier.clickableSend(onSend: () -> Unit): Modifier =
-    this.then(androidx.compose.foundation.clickable(onClick = onSend))
