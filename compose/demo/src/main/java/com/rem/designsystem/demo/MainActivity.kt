@@ -59,6 +59,9 @@ class MainActivity : ComponentActivity() {
                         secondaryContainer = rem.backgroundSecondary, onSecondaryContainer = rem.labelPrimary,
                         surface = rem.backgroundPrimary, onSurface = rem.labelPrimary,
                         surfaceVariant = rem.backgroundSecondary, onSurfaceVariant = rem.labelSecondary,
+                        surfaceTint = rem.backgroundSecondary,
+                        surfaceContainer = rem.backgroundSecondary,
+                        surfaceContainerHigh = rem.backgroundSecondary,
                         background = rem.backgroundPrimary, onBackground = rem.labelPrimary,
                         error = rem.systemRed,
                     )
