@@ -1,0 +1,17 @@
+Implement approved Settings prototype destinations in both SwiftUI and Compose, using the frozen Settings foundation API. This is a code-only child of Settings integration; no Figma writes, deployment, main merge, agent-routing labels, real service calls or credentials.
+
+## Authority and mandatory references
+Read docs/contracts/settings-foundation.md, docs/contracts/settings-foundation-api.md and docs/playground/settings-design/settings-destinations.md. Read the raw node contexts and screenshots for EVERY state in your assigned destination sections; they are source evidence, not app screen images. Follow repository skills. Utility contained icons use explicit Subtle; exact provider marks remain authentic. Use semantic tokens, native iOS List/Section/navigation/control semantics, shared Rem components and Compose equivalents. Never replace source screens with explanatory cards or generic forms.
+
+## Ownership and integration
+Create only the specified new screen/component files, destination fixture logic and tests/docs specific to this task. Do not edit central SettingsEntryContent, AgentSettingsContent, playground hosts, workflows, Factory config, tokens or other lanes' files. Root owns registering destination navigation and real-host end-to-end tests; expose a public zero-argument deterministic screen entry point for each destination, with a standard onBack callback on Compose. Each screen owns nested navigation and back behavior; avoid nesting native navigation containers in SwiftUI (outer host NavigationStack owns). Each Compose destination should own its scaffold/title and nested stack. Persistence is in-memory per playground session only; external boundaries are explicit prototype sheets, no invented provider screens/success state.
+
+Add meaningful fixture-state tests where they prove scope/cancel/save, and document accessibility IDs for root journey tests and source-node coverage. All text entry is local illustrative data. Mask credentials/key drafts, never network/Keychain/shared preferences. No process/browser/simulator interactions with Trove.
+
+## Completion
+Produce finished code, not a plan. Run available narrow syntax/token/mapping checks and platform compilation if runner supports it. State exact checks run and any unsupported checks; do not claim visual verification without actual renders. Update task coverage doc with each approved source node represented, boundary gaps, API entry names and any source reconciliations. Keep PR draft against codex/settings-integration; do not merge or deploy.
+
+## Assigned scope
+Implement Paired devices only, including populated, empty, detail and remove confirmation. Entry names: Swift SettingsPairedDevicesScreen; Kotlin SettingsPairedDevicesScreen(onBack: () -> Unit). Own correspondingly named new screen files plus uniquely named fixture helpers/tests. Wallet, pre-consent, Voice and Connectors await shared design contracts and are not part of this task.
+
+Exact nodes and copy are in the Paired devices section of settings-destinations.md. Confirm removes fixture peer and returns to list/empty; cancel preserves peer/detail. Current device is absent. Add has no authored pairing flow; expose a named local simulation boundary, never fabricate pairing. Refresh deterministic fixture action must not pair any real device. Device status/approvedAt source values must remain illustrative. Screen keyboard/dynamic type/native back behavior must be valid on iOS and Material equivalent.
