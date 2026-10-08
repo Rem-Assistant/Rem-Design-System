@@ -46,13 +46,17 @@ public struct OnboardingVoiceTemplate: View {
                 )
             }
             .settingsDestinationList()
+            // Keep the screen identifier/hint on the scrolling List — the same boundary Settings and
+            // the chooser use — so they bind to the List's accessibility container and do not propagate
+            // onto the sibling `actionArea` buttons, which must keep their distinct `.continue`/`.skip`
+            // identifiers.
+            .accessibilityIdentifier("onboardingVoice")
+            .accessibilityHint(PlaygroundMockData.hint)
             actionArea
         }
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
         .navigationTitle("")
         .settingsInlineNavigationTitle()
-        .accessibilityIdentifier("onboardingVoice")
-        .accessibilityHint(PlaygroundMockData.hint)
         .onDisappear { fixture.stopPreview() }
     }
 
