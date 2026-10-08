@@ -92,6 +92,42 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertTrue(app.buttons["openAgent"].exists)
         capture("ios-cancelled-load")
     }
+    /// Native SwiftUI Menus can expose a valid visible frame but no AX hit point.
+    /// Do not use reveal() here: its upward scrolling moves the account row out of view.
+    private func tapGmailMenu(_ identifier: String, toolbar: Bool = false) {
+        let menu = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+        let navigationBar = app.navigationBars["Gmail"]
+        XCTAssertTrue(navigationBar.waitForExistence(timeout: 3))
+        for _ in 0..<12 {
+            let appBounds = app.frame
+            let visibleBounds = toolbar ? appBounds : CGRect(
+                x: appBounds.minX, y: navigationBar.frame.maxY,
+                width: appBounds.width, height: max(0, appBounds.maxY - navigationBar.frame.maxY))
+            if menu.exists {
+                let frame = menu.frame
+                if !frame.isEmpty && !frame.isInfinite && visibleBounds.contains(frame) {
+                    if menu.isHittable {
+                        menu.tap()
+                    } else {
+                        // Match XCTest's native Menu center-point workaround, only after
+                        // checking this exact element lies fully inside the visible viewport.
+                        menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                    }
+                    return
+                }
+                if !toolbar && frame.minY >= visibleBounds.maxY {
+                    app.swipeUp()
+                    continue
+                }
+            }
+            if toolbar { break }
+            app.swipeDown()
+        }
+        capture("Gmail-menu-unreachable")
+        print(app.debugDescription)
+        XCTFail("Expected visible Gmail menu: \(identifier)")
+    }
+
     func testConnectorsGmailMenusAndScopedPermissions() {
         openDestination("connectors", title: "Connectors")
         capture("Connectors-light")
@@ -111,7 +147,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         app.buttons["connectors.provider.gmail"].tap()
         XCTAssertTrue(app.navigationBars["Gmail"].waitForExistence(timeout: 3))
         capture("Gmail-default-light")
-        app.buttons["gmail.accountMenu.avery"].tap()
+        tapGmailMenu("gmail.accountMenu.avery")
         XCTAssertTrue(app.buttons["gmail.accountSettings.avery"].waitForExistence(timeout: 3))
         capture("Gmail-account-menu-light")
         app.buttons["gmail.accountSettings.avery"].tap()
@@ -119,7 +155,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertTrue(app.buttons["gmail.permission.avery.lowRisk"].isSelected)
         capture("Gmail-account-permissions-light")
         navigateBack(from: "Settings", to: "Gmail")
-        app.buttons["gmail.connectorMenu"].tap()
+        tapGmailMenu("gmail.connectorMenu", toolbar: true)
         XCTAssertTrue(app.buttons["gmail.disconnectAll"].waitForExistence(timeout: 3))
         capture("Gmail-connector-menu-light")
         app.navigationBars["Gmail"].staticTexts["Gmail"].tap() // Native outside-menu dismissal.
@@ -141,7 +177,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         }
         navigateBack(from: "Permissions", to: "Gmail")
         for _ in 0..<2 { app.swipeDown() }
-        app.buttons["gmail.accountMenu.avery"].tap()
+        tapGmailMenu("gmail.accountMenu.avery")
         XCTAssertTrue(app.buttons["gmail.accountSettings.avery"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["gmail.disconnectAccount.avery"].exists)
         capture("Gmail-account-menu-after-policy-light")
@@ -167,7 +203,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         app.buttons["gmail.permission.connector.alwaysAllow"].tap()
         navigateBack(from: "Permissions", to: "Gmail")
         for _ in 0..<2 { app.swipeDown() }
-        app.buttons["gmail.accountMenu.avery"].tap()
+        tapGmailMenu("gmail.accountMenu.avery")
         app.buttons["gmail.accountSettings.avery"].tap()
         XCTAssertTrue(app.buttons["gmail.permission.avery.alwaysAsk"].isSelected, "Connector changes must retain an explicit account override")
         capture("Gmail-account-override-retained-light")
@@ -182,9 +218,9 @@ final class SettingsPlaygroundUITests: XCTestCase {
             openDestination("connectors", title: "Connectors")
             app.buttons["connectors.provider.gmail"].tap()
             XCTAssertTrue(app.navigationBars["Gmail"].waitForExistence(timeout: 3))
-            let menu = app.buttons[all ? "gmail.connectorMenu" : "gmail.accountMenu.avery"]
+            let menuID = all ? "gmail.connectorMenu" : "gmail.accountMenu.avery"
             let action = app.buttons[all ? "gmail.disconnectAll" : "gmail.disconnectAccount.avery"]
-            menu.tap()
+            tapGmailMenu(menuID, toolbar: all)
             XCTAssertTrue(action.waitForExistence(timeout: 3))
             action.tap()
             let confirm = app.buttons["gmail.confirmDisconnect"]
@@ -195,7 +231,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
             app.buttons["Cancel"].tap()
             XCTAssertTrue(app.navigationBars["Gmail"].exists)
             XCTAssertTrue(app.staticTexts["avery@example.com"].exists, "Cancel must retain membership")
-            menu.tap()
+            tapGmailMenu(menuID, toolbar: all)
             action.tap()
             XCTAssertTrue(confirm.waitForExistence(timeout: 3))
             confirm.tap()
@@ -234,8 +270,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
             capture("Gmail-connector-permissions-bottom-\(suffix)")
             navigateBack(from: "Permissions", to: "Gmail")
             for _ in 0..<7 { app.swipeDown() }
-            reveal(app.buttons["gmail.accountMenu.avery"])
-            app.buttons["gmail.accountMenu.avery"].tap()
+            tapGmailMenu("gmail.accountMenu.avery")
             app.buttons["gmail.accountSettings.avery"].tap()
             XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
             reveal(app.staticTexts["Controls what Rem can do with avery@example.com. Overrides the connector-wide setting for this account."])
@@ -362,11 +397,13 @@ final class SettingsPlaygroundUITests: XCTestCase {
         composer.tap()
         composer.typeText("Use short answers in this prototype.")
         XCTAssertTrue(send.isEnabled)
+        capture("Memory-composer-focused-light")
         send.tap()
         let feedback = app.staticTexts["memory.composerFeedback"]
         XCTAssertTrue(feedback.waitForExistence(timeout: 3))
         XCTAssertEqual(feedback.label, "Noted in this prototype session. Rem doesn’t reply or change memory here.")
         XCTAssertFalse(send.isEnabled)
+        capture("Memory-composer-feedback-initial-light")
         reveal(feedback)
         capture("Memory-composer-feedback-light")
         navigateBack(from: "Memory summary", to: "Memory")
@@ -970,7 +1007,10 @@ final class SettingsPlaygroundUITests: XCTestCase {
             reveal(app.sliders["voice.slider.speed"])
             capture("Voice-large-text-speed")
         }
-        let footer = app.staticTexts["Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."]
+        let footer = app.staticTexts.matching(NSPredicate(
+            format: "label == %@",
+            "Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."
+        )).firstMatch
         reveal(footer)
         capture("Voice-\(suffix)-footer")
         let choose = app.buttons["voice.chooseVoice"]

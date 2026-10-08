@@ -153,30 +153,38 @@ private struct MemorySummaryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
-                    Text(MemoryFixture.summaryMetadata)
-                        .font(DesignTokens.Typography.footnote)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                    ForEach(MemoryFixture.summarySections, id: \.self) { section in
-                        Text(section.heading)
-                            .font(DesignTokens.Typography.body)
-                            .foregroundStyle(DesignTokens.Color.labelPrimary)
-                            .accessibilityAddTraits(.isHeader)
-                        Text(section.body)
-                            .font(DesignTokens.Typography.body)
-                            .foregroundStyle(DesignTokens.Color.labelPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if let feedback {
-                        Text(feedback)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                        Text(MemoryFixture.summaryMetadata)
                             .font(DesignTokens.Typography.footnote)
                             .foregroundStyle(DesignTokens.Color.labelSecondary)
-                            .accessibilityIdentifier("memory.composerFeedback")
+                        ForEach(MemoryFixture.summarySections, id: \.self) { section in
+                            Text(section.heading)
+                                .font(DesignTokens.Typography.body)
+                                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                                .accessibilityAddTraits(.isHeader)
+                            Text(section.body)
+                                .font(DesignTokens.Typography.body)
+                                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        if let feedback {
+                            Text(feedback)
+                                .font(DesignTokens.Typography.footnote)
+                                .foregroundStyle(DesignTokens.Color.labelSecondary)
+                                .accessibilityIdentifier("memory.composerFeedback")
+                                .id("memory.composerFeedback")
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(DesignTokens.Spacing.lg)
+                }
+                .onChange(of: feedback) { _, value in
+                    if value != nil {
+                        proxy.scrollTo("memory.composerFeedback", anchor: .bottom)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(DesignTokens.Spacing.lg)
             }
             composer
         }

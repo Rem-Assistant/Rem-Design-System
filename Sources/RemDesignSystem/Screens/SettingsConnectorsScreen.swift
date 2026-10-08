@@ -5,17 +5,22 @@ import SwiftUI
 public struct SettingsConnectorsScreen: View {
     @State private var fixture = GmailFixture()
     @State private var showingGmail = false
+    @State private var gmailDestinationIsVisible = false
     @State private var boundary: String?
     public init() {}
 
     public var body: some View {
         List {
             Section {
-                if fixture.isConnected {
+                // Keep the presentation anchor until its destination finishes disappearing.
+                // Last-account removal and the isActive pop happen in the same update.
+                if fixture.isConnected || gmailDestinationIsVisible {
                     NavigationLink(isActive: $showingGmail) {
                         GmailSettingsView(fixture: $fixture, onDisconnected: {
                             if !fixture.isConnected { showingGmail = false }
                         })
+                        .onAppear { gmailDestinationIsVisible = true }
+                        .onDisappear { gmailDestinationIsVisible = false }
                     } label: {
                         ConnectorRow("Gmail", state: .connected, subtitle: "Connected • Active",
                                      accessory: .disclosure, layout: .nativeList) { ConnectorProviderMark(.gmail) }
@@ -79,7 +84,10 @@ private struct GmailSettingsView: View {
                             .accessibilityIdentifier("gmail.accountSettings.\(account.id)")
                             Button("Disconnect account", role: .destructive) { confirmation = .account(account) }
                                 .accessibilityIdentifier("gmail.disconnectAccount.\(account.id)")
-                        } label: { Image(systemName: "ellipsis").frame(minWidth: 44, minHeight: 44) }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+                        }
                         .accessibilityLabel("Actions for \(account.email)")
                         .accessibilityIdentifier("gmail.accountMenu.\(account.id)")
                     })
@@ -113,7 +121,10 @@ private struct GmailSettingsView: View {
                 Menu {
                     Button("Disconnect accounts", role: .destructive) { confirmation = .all }
                         .accessibilityIdentifier("gmail.disconnectAll")
-                } label: { Image(systemName: "ellipsis") }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+                }
                 .accessibilityLabel("Gmail actions").accessibilityIdentifier("gmail.connectorMenu")
             }
         }
