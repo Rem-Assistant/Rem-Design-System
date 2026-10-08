@@ -88,8 +88,8 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
-        // Wave 1 onboarding flows — paired with the Compose `Connectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
-        render("Connectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
+        // Wave 1 onboarding flows — paired with the Compose `LegacyOnboardingConnectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
+        render("LegacyOnboardingConnectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
         // Onboarding Voice now has its own interactive native journey (OnboardingVoice-* captures)
         // that reuses the shared VoiceControlsContent/VoiceChooserContent cores; the legacy static
         // gallery render was retired so it cannot drift from, or collide with, those journey shots.

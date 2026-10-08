@@ -223,7 +223,7 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun connectors() = shot("Connectors-light") {
+    fun connectors() = shot("LegacyOnboardingConnectors-light") {
         RemTheme {
             OnboardingConnectorsScreen(
                 connectors = listOf(
