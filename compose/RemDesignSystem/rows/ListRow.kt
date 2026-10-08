@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
@@ -83,4 +85,30 @@ fun DisclosureChevron(modifier: Modifier = Modifier) {
         tint = RemColors.current.labelTertiary,
         modifier = modifier.size(20.dp),
     )
+}
+
+/** Content-slot settings density, matching the SwiftUI ListRow overload. */
+@Composable
+fun ListRow(
+    modifier: Modifier = Modifier,
+    showsDivider: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    leading: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+    trailing: @Composable () -> Unit,
+) {
+    Column {
+        Row(
+            modifier.fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .heightIn(min = 60.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            leading()
+            Column(Modifier.weight(1f)) { content() }
+            trailing()
+        }
+        if (showsDivider) HorizontalDivider(Modifier.padding(start = 16.dp), thickness = 0.5.dp, color = RemColors.current.separator)
+    }
 }

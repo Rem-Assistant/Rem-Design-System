@@ -39,6 +39,7 @@ Fixed:
 |---|---|---|---|---|
 | ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) — swappable leading (ContainedIcon/Avatar), re-based to iOS 26 metrics + variables | Rows & Controls | `101:18` | `SharedSettingsView.swift` insetGrouped rows | ✓ canonical (kept — kit Row leading isn't swappable to ContainedIcon) |
 | ListRowLabel (default Content: Title/Subtitle) | ListRow | `188:2` | the row's text block | ✓ canonical |
+| ConnectorRow — State {Available/Connecting/Connected/Error}, Accessory {Action/Progress/Disclosure/Switch}; nested provider/content overrides | ConnectorRow | `2213:9330` | `Rows/ConnectorRow.swift` + `rows/ConnectorRow.kt` | ✓ shared controlled API; local parserless mappings; Settings uses Disclosure; existing onboarding unchanged |
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | Section (optional Header/Footer + editable Rows slot; background + xlarge radius, no outline) | Rows & Controls | `741:311` | native `SwiftUI.Section` in List/Form; `RemSection.swift` adapter in custom ScrollView; Compose `rows/RemSection.kt` | ✓ canonical · parserless SwiftUI/Compose Code Connect authored · docs `741:309` |
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
@@ -219,3 +220,14 @@ empty state) — see CLEANUP "Founder review 6" for the full gap list + build or
 | View history — Activity (task-scoped timeline) | `413:32` | Task & Events page — pushed screen: back+"Activity" nav → task header (title + subtitle + timestamp, **no modal pill/X**) → the **`Timeline` base component `482:56`** (status nodes on a connecting rail + title/time/description). Replaces the old one-comment-deep Rem/You activity list and the earlier rail-less exec-trace body. Entered from the task detail (and the agent avatar routes here). Backing view `TaskActivityHistoryView`. |
 | Onboarding — Start Using Rem | `414:15` | ⚠ **UP FOR DEPRECATION** (founder) — post-setup activation being retired in favour of the `GuidedFlow` coach-mark overlay. `PostSetupActivationView` |
 | Onboarding — Setting Up (deploying) | `415:15` | ⚠ **UP FOR DEPRECATION** (founder) — `OnboardingFlow.deployingContent`. Don't invest further. **Dropped from the `OnboardingSequencer` path (issue #11)** — the sequencer injects no deploy/provisioning slot; the deploy code itself is retired later with the runtime migration's *Product cleanup* (out of scope for #11). |
+
+
+## Settings New — code-only playground mapping (October 8, 2026)
+
+This mapping describes the current bounded prototype; earlier Settings registry entries above retain their historical identities. Source nodes and exact designed states are recorded in [the destination contract](docs/contracts/settings-destinations.md), with [runtime and variant evidence](docs/playground/verification.md). No Figma masters were created or edited in this code pass.
+
+| Concept | Current source mapping | Contract |
+|---|---|---|
+| Settings entry / Agent settings | `Screens/SettingsPlaygroundContent.swift` and Compose `screens/SettingsPlaygroundContent.kt`; source entry `1964:86819`, Agent `1827:50855` | Native SwiftUI List/Section; shared Rem row content. Seven designed fixture destinations; Automations visibly unavailable. |
+| Utility ContainedIcon | `Primitives/ContainedIcon.swift`, Compose `primitives/ContainedIcon.kt`; variant set `614:8`; both `code-connect/*/ContainedIcon.figma.ts` | Subtle default = backgroundSecondary + labelPrimary; explicit Tinted remains available. Settings glyph17; primitive Small mapping glyph15. Publication is not confirmed. |
+| Provider pre-consent content | `Templates/ProviderPreConsentContent.swift` and Compose `screens/ProviderPreConsentContent.kt`; source composition `1898:54528` | Reused by Wallet's two providers; native actions and scrolling, caller-owned provider content. iOS decorative icon slot scales with Dynamic Type. |

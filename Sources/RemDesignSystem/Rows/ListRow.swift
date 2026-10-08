@@ -8,12 +8,22 @@ import SwiftUI
 /// The trailing slot is for *non-disclosure* accessories (a `Switch`, a value label, a badge). Use an
 /// explicit chevron only for a non-navigation row (e.g. a Button-based sheet opener that isn't in a
 /// `List`). When `action` is set the whole row is a plain button (tap target = full row).
+public enum ListRowLayout: Sendable {
+    /// Preserve the existing standalone row padding and optional divider.
+    case standalone
+    /// Native List/Form owns insets and separators. No custom disclosure is added.
+    case nativeList
+}
+
 public struct ListRow<Leading: View, Trailing: View>: View {
     let title: String
     let subtitle: String?
     let action: (() -> Void)?
     let leading: () -> Leading
     let trailing: () -> Trailing
+    private var settingsContent: AnyView?
+    private var showsDivider = false
+    private var layout: ListRowLayout = .standalone
 
     public init(
         _ title: String,
@@ -29,6 +39,25 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         self.trailing = trailing
     }
 
+    /// Canonical settings density with an editable Content slot. The caller owns the divider,
+    /// and may supply native fields, labels, or a menu without creating a competing row.
+    public init<Content: View>(
+        showsDivider: Bool = false,
+        layout: ListRowLayout = .standalone,
+        @ViewBuilder leading: @escaping () -> Leading,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.title = ""
+        self.subtitle = nil
+        self.action = nil
+        self.leading = leading
+        self.trailing = trailing
+        self.settingsContent = AnyView(content())
+        self.showsDivider = showsDivider
+        self.layout = layout
+    }
+
     public var body: some View {
         if let action {
             Button(action: action) { rowContent }
@@ -38,26 +67,50 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         }
     }
 
-    private var rowContent: some View {
-        HStack(spacing: DesignTokens.Spacing.md) {
-            leading()
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(DesignTokens.Typography.body.weight(.semibold))
-                    .foregroundStyle(DesignTokens.Color.labelPrimary)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(DesignTokens.Typography.caption1)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+    @ViewBuilder private var rowContent: some View {
+        if let settingsContent, layout == .nativeList {
+            HStack(spacing: DesignTokens.Spacing.md) {
+                leading()
+                settingsContent.frame(maxWidth: .infinity, alignment: .leading)
+                trailing()
+            }.contentShape(Rectangle())
+        } else if let settingsContent {
+            VStack(spacing: 0) {
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    leading()
+                    settingsContent.frame(maxWidth: .infinity, alignment: .leading)
+                    trailing()
+                }
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .padding(.vertical, DesignTokens.Spacing.md)
+                .frame(minHeight: 60)
+                .contentShape(Rectangle())
+                if showsDivider {
+                    Divider().overlay(DesignTokens.Color.separator)
+                        .padding(.leading, DesignTokens.Spacing.lg)
                 }
             }
-            Spacer(minLength: DesignTokens.Spacing.sm)
-            trailing()
+        } else {
+            HStack(spacing: DesignTokens.Spacing.md) {
+                leading()
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(DesignTokens.Typography.body.weight(.semibold))
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(DesignTokens.Typography.caption1)
+                            .foregroundStyle(DesignTokens.Color.labelSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer(minLength: DesignTokens.Spacing.sm)
+                trailing()
+            }
+            .padding(.horizontal, DesignTokens.Spacing.md)
+            .padding(.vertical, DesignTokens.Spacing.sm)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, DesignTokens.Spacing.md)
-        .padding(.vertical, DesignTokens.Spacing.sm)
-        .contentShape(Rectangle())
     }
 }
 

@@ -152,7 +152,7 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
             return 0
         }
 
-        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686)
+        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686, 0xE88E, 0xE8A1, 0xE925, 0xE6B8, 0xE326, 0xE250, 0xEA07, 0xE7F7, 0xEA4A, 0xE322, 0xF8FF, 0xE1B8)
         val verified = listOf("outline" to outline, "filled" to filled).associate { (label, resource) ->
             check(resource.isFile) { "missing packaged Material Symbols $label resource: $resource" }
             val bytes = resource.readBytes()
@@ -182,6 +182,11 @@ tasks.withType<KotlinCompile>().configureEach {
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
     implementation(composeBom)
+    // activity-compose supplies BackHandler, used by nested-stack destinations (e.g. Paired devices
+    // list ↔ detail) to own their own system-back behaviour rather than exiting to the host.
+    implementation("androidx.activity:activity-compose:1.9.2")
+    // Retain Cloud browser fixture state in memory through Activity recreation; never save credentials.
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
