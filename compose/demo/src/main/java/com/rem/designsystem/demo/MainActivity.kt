@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class LoadFixture { Success, Slow, Error }
-private enum class Route { Home, Settings, Agent, Controls }
+private enum class Route { Home, Settings, Agent, Controls, AgendaSuggestions }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,9 +82,10 @@ fun Playground() {
     var route by rememberSaveable { mutableStateOf(Route.Home) }
     var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
+    var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
     val back = { route = if (route == Route.Agent) Route.Settings else Route.Home }
     BackHandler(route != Route.Home && destination == null) { back() }
-    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls" }
+    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls"; Route.AgendaSuggestions -> "Agenda New" }
     Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
         if (destination == null) {
         CenterAlignedTopAppBar(title = { Text(title, style = RemTypography.bodyBold) }, navigationIcon = {
@@ -105,6 +106,14 @@ fun Playground() {
                     }
                     Button(onClick = { route = Route.Settings }, modifier = Modifier.testTag("openSettings")) { Text("Open Settings") }
                     OutlinedButton(onClick = { route = Route.Controls }) { Text("Shared controls") }
+
+                    Text("Agenda New · Suggestions", style = RemTypography.title3Bold)
+                    Text("A local Agenda Suggestions journey: Add / Move / Dismiss, overflow, and the empty day becoming populated — all from deterministic fixtures.", style = RemTypography.footnote)
+                    Text("Agenda fixture", style = RemTypography.bodyBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) }
+                    }
+                    Button(onClick = { route = Route.AgendaSuggestions }, modifier = Modifier.testTag("openAgendaSuggestions")) { Text("Open Agenda Suggestions") }
                 }
                 Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) {
                     SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {
@@ -119,6 +128,7 @@ fun Playground() {
                     onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
                     onCancel = { route = Route.Settings })
                 Route.Controls -> ControlsPreview()
+                Route.AgendaSuggestions -> AgendaSuggestionsPlayground(fixture = agendaFixture)
             }
         }
     }

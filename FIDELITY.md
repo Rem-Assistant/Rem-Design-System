@@ -10,6 +10,60 @@ Approved entry amendments rename Rem to Agent settings, give Help & Support a qu
 
 ---
 
+## Agenda New — Suggestions playground — October 8, 2026 (issue #83)
+
+Code-only fixture prototype on the isolated `codex/playground-expansion` base; **not** production Rem
+integration and **not** a claim that the whole Agenda surface is complete. Only the authored
+*Suggestions* slice is implemented. Source authority: Figma `af4yDqCzp57jds9lkFiIaO`, page `1910:40765`,
+Suggestions section `2336:19584` (archive verified by SHA-256
+`494a323503cf281b37df737c9e987c9b97b48fcb3a79511aba33c8de1b7da2ae` plus all 99 enclosed file hashes).
+
+**New / changed code**
+- `AgendaSuggestionRow` (SwiftUI `Agenda/AgendaSuggestionRow.swift`) implements the current
+  `2336:19583` contract — dashed tile, leading Add/Move CTA, title + field-owned reason, dismiss ✕;
+  no spinner / success badge / error card / Retry.
+- **Component-architecture contract (2026-10-08 revision):** the canonical Compose twin now lives in
+  `compose/RemDesignSystem/rows/AgendaSuggestionRow.kt` with an API mirroring the SwiftUI row
+  (`action` add/move, `title`, `metadata`, accept/dismiss, test tags); `rows/SuggestedTaskRow.kt`
+  remains as a `TaskSuggestion`-based wrapper that delegates to it, so existing call sites
+  (`SuggestionSection`, `AgendaSuggestionsPlayground`, `AgendaScreen`, evidence snapshots) and the
+  rendered behaviour are unchanged. Parserless Code Connect source mappings were authored for both
+  platforms (`code-connect/swiftui/AgendaSuggestionRow.figma.ts`,
+  `code-connect/compose/AgendaSuggestionRow.figma.ts`) binding the canonical Figma component
+  `2336:19583` (variant property `action` add `2336:19561` / move `2336:19572`, Title/Metadata text
+  props) to the SwiftUI and Compose rows. `node tools/lint-components.mjs` and
+  `npm run check-code-connect` (types + SwiftUI + Compose parse) pass. Live Code Connect publication
+  stays plan-blocked (Dev/Org seat); the templates and `REGISTRY.md` record the source binding.
+- `AgendaSuggestionsPlaygroundView` (SwiftUI) and `AgendaSuggestionsPlayground` (Compose) compose the
+  reused `DateNavigationHeader`, `TaskEventRow` (a `pending` dashed-ring option was added), the empty
+  `RemContentUnavailableView`, a sort trigger, and the Add New / Schedule bar. The Suggestions slot
+  follows AddNew/Schedule with exactly 24pt spacing and owns that gap, so removing the slot removes it.
+- Overflow uses the native sheet (`.sheet` / `ModalBottomSheet`) with the authored **Suggestions / Done**
+  header, divider and scrollable content; no fixed detents or invented drag indicator.
+- Discoverable routes added to both existing hosts (`tools/playground-ios/App`, `compose/demo`); a new
+  iOS UI-test class `AgendaSuggestionsUITests` is registered in the Xcode project.
+
+**Supplied source states implemented and visually compared** (against the packet PNGs):
+initial/inline `2336:19585`, Add `2337:19714`, Move `2337:19928`, Dismiss `2337:20122`,
+none `2337:20436`, overflow `2338:20884`, accepted-open `2338:20977`, empty-one `2337:20667`,
+empty-accepted `2337:20986`, empty-overflow `2338:21059`, empty→populated `2338:21133`. Authored rules
+`2338:21758` / `2338:21759` (≤3 inline, all live rows in overflow, optimistic add/move/dismiss, last
+removal hides the slot and closes overflow, overflow persists while rows remain, deterministic
+restoration, no network/spinner) are modelled locally.
+
+**Paired captures** (unique per run): canonical `AgendaSuggestions-inline-light`,
+`AgendaSuggestions-overflow-light`, `AgendaSuggestions-none-light` (iOS `RenderSnapshots` + Compose
+`EvidenceSnapshots`); behavioral `AgendaSuggestions-{added,moved,dismissed,last-removal,restored,
+empty-populated}-light`, plus `-dark` and `-large-text`, from the iOS/Android journey tests. Render
+screenshots alone are not treated as proof — each interaction is asserted in the tests.
+
+**Not claimed / excluded:** the wider Agenda shell (creation / scheduling / detail / Brief / recovery),
+Inspector date / minimum-duration / all-day semantics, Check-in, Automations, Chat, real scheduling,
+backend. Live Figma REST verification and the hosted paired-render review remain the separate delivery
+gates; no build or live verification has run inside this task.
+
+---
+
 This is the record for the **Mac-verify fidelity** step: every Figma component in the
 library was checked against the **real SwiftUI render** of the shipping Rem app, using two
 grounds of truth in combination:
