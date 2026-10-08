@@ -20,26 +20,32 @@ import com.rem.designsystem.primitives.*
 import com.rem.designsystem.rows.*
 import com.rem.designsystem.tokens.*
 
-/** Settled Settings New entry 1964:86819. Host owns navigation/data; other rows are references. */
+/** The same seven stable identities as SwiftUI. Automations is deliberately absent. */
+enum class AgentSettingsDestination { PairedDevices, Connectors, CloudBrowser, Memory, Models, Wallet, Voice }
+
+/** Settled Settings New entry 1964:86819. Host owns scrolling and navigation. */
 @Composable
-fun SettingsEntryContent(openAgent: () -> Unit) {
+fun SettingsEntryContent(openAgent: () -> Unit) = SettingsEntryContent(openAgent, onShare = null)
+
+@Composable
+fun SettingsEntryContent(openAgent: () -> Unit, onShare: (() -> Unit)?) {
     val colors = RemColors.current
     Column(Modifier.padding(horizontal = 16.dp).padding(top = 10.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         RemSection {
-            ListRow(leading = { Box(Modifier.size(29.dp).background(Color(0xFFDBDBE5), CircleShape)) }, content = {
+            ListRow(leading = { Box(Modifier.size(29.dp).background(colors.fillTertiary, CircleShape)) }, content = {
                 Text("Avery Diaz", style = RemTypography.bodyBold, color = colors.labelPrimary)
                 Text("avery@example.com", style = RemTypography.footnote, color = colors.labelSecondary)
             }, trailing = {})
         }
-        RemSection { SettingsReferenceRow("Rem", "Connected", Symbols.Info, colors.systemBlue, minHeight = 82, onClick = openAgent, modifier = Modifier.testTag("openAgent")) }
+        RemSection { SettingsRowLabel("Rem", "Connected", Symbols.Info, minHeight = 82, onClick = openAgent, modifier = Modifier.testTag("openAgent")) }
         RemSection {
-            SettingsReferenceRow("Billing & Usage", symbol = Symbols.Billing, color = colors.systemBlue, divider = true)
-            SettingsReferenceRow("Permissions", symbol = Symbols.Permissions, color = colors.systemBlue)
+            SettingsRowLabel("Billing & Usage", symbol = Symbols.Billing, showsDivider = true)
+            SettingsRowLabel("Permissions", symbol = Symbols.Permissions)
         }
-        RemSection { SettingsReferenceRow("About", symbol = Symbols.Info, color = Color.Gray) }
+        RemSection { SettingsRowLabel("About", symbol = Symbols.Info) }
         RemSection {
-            SettingsReferenceRow("Share Rem", symbol = Symbols.Share, color = colors.systemGreen, divider = true, disclosure = false)
-            SettingsReferenceRow("Help & Support", symbol = Symbols.Share, color = colors.systemBlue)
+            SettingsRowLabel("Share Rem", symbol = Symbols.Share, showsDivider = true, disclosure = false, onClick = onShare, modifier = Modifier.testTag("shareRem"))
+            SettingsRowLabel("Help & Support", symbol = Symbols.Share)
         }
         for (title in listOf("Sign Out", "Delete Account")) {
             RemSection {
@@ -51,41 +57,54 @@ fun SettingsEntryContent(openAgent: () -> Unit) {
     }
 }
 
-/** Agent Settings 1827:50855. Automations is a reference only, outside this implementation. */
+/** Only supplied routes are interactive. Automations remains a visibly unavailable reference. */
 @Composable
-fun AgentSettingsContent() {
-    val colors = RemColors.current
-    val pink = Color(0xFFFF2D55)
+fun AgentSettingsContent(
+    availableDestinations: Set<AgentSettingsDestination> = emptySet(),
+    openDestination: (AgentSettingsDestination) -> Unit = {},
+) {
+    @Composable fun destination(route: AgentSettingsDestination, title: String, subtitle: String? = null,
+                                symbol: RemMaterialSymbol, divider: Boolean = false) {
+        val available = route in availableDestinations
+        SettingsRowLabel(title, subtitle, symbol, showsDivider = divider,
+            onClick = if (available) { { openDestination(route) } } else null,
+            modifier = Modifier.testTag("agentDestination.${route.name}"))
+    }
     Column(Modifier.testTag("agentSettings").padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
-        RemSection(header = "Capabilities", footer = "Manage connected surfaces and how your agent can perform.", settingsHeader = true) {
-            SettingsReferenceRow("Paired Devices", "2", Symbols.Devices, colors.systemIndigo, divider = true)
-            SettingsReferenceRow("Connectors", symbol = Symbols.Connectors, color = colors.systemPurple, divider = true)
-            SettingsReferenceRow("Cloud browser", symbol = Symbols.Browser, color = colors.systemBlue, divider = true)
-            SettingsReferenceRow("Automations", "Scheduled and triggered work", Symbols.Automations, pink)
+        RemSection(header = "Capabilities", footer = "Manage connected surfaces and how your agent can perform. Automations is unavailable while its design is being finalized.", settingsHeader = true) {
+            destination(AgentSettingsDestination.PairedDevices, "Paired Devices", "2", Symbols.Devices, true)
+            destination(AgentSettingsDestination.Connectors, "Connectors", symbol = Symbols.Connectors, divider = true)
+            destination(AgentSettingsDestination.CloudBrowser, "Cloud browser", symbol = Symbols.Browser, divider = true)
+            SettingsRowLabel("Automations", "Scheduled and triggered work", Symbols.Automations,
+                unavailableReason = "Unavailable. Automations design is awaiting a decision.", modifier = Modifier.testTag("automationsUnavailable"))
         }
         RemSection(header = "Intelligence", settingsHeader = true) {
-            SettingsReferenceRow("Memory", symbol = Symbols.Memory, color = pink, divider = true)
-            SettingsReferenceRow("Models", "Automatic", Symbols.Models, colors.systemIndigo, divider = true)
-            SettingsReferenceRow("Wallet", symbol = Symbols.Wallet, color = colors.systemBlue)
+            destination(AgentSettingsDestination.Memory, "Memory", symbol = Symbols.Memory, divider = true)
+            destination(AgentSettingsDestination.Models, "Models", "Automatic", Symbols.Models, true)
+            destination(AgentSettingsDestination.Wallet, "Wallet", symbol = Symbols.Wallet)
         }
         RemSection(header = "Experience", settingsHeader = true) {
-            SettingsReferenceRow("Voice", "Aria", Symbols.Voice, colors.systemBlue)
+            destination(AgentSettingsDestination.Voice, "Voice", "Aria", Symbols.Voice)
         }
     }
 }
 
+/** Canonical Settings row: explicit Subtle/settings icon, label slot and one optional disclosure. */
 @Composable
-private fun SettingsReferenceRow(
-    title: String, subtitle: String? = null, symbol: RemMaterialSymbol, color: Color,
-    divider: Boolean = false, disclosure: Boolean = true, minHeight: Int = 60, onClick: (() -> Unit)? = null, modifier: Modifier = Modifier,
+fun SettingsRowLabel(
+    title: String, subtitle: String? = null, symbol: RemMaterialSymbol,
+    modifier: Modifier = Modifier, showsDivider: Boolean = false, disclosure: Boolean = true,
+    minHeight: Int = 60, onClick: (() -> Unit)? = null,
+    unavailableReason: String = "Visual reference; unavailable in this playground",
 ) {
-    val colors = RemColors.current
-    ListRow(modifier = modifier, showsDivider = divider, onClick = onClick,
-        leading = { ContainedIcon(symbol, modifier = Modifier.clearAndSetSemantics {}, fill = ContainedIconFill.Tint(color), size = ContainedIconSize.Settings) },
+    val rowModifier = if (onClick == null) modifier.semantics(mergeDescendants = true) {
+        contentDescription = "$title. $unavailableReason"
+    } else modifier
+    ListRow(modifier = rowModifier, showsDivider = showsDivider, onClick = onClick,
+        leading = { ContainedIcon(symbol, modifier = Modifier.clearAndSetSemantics {}, fill = ContainedIconFill.Subtle, size = ContainedIconSize.Settings) },
         content = {
             Column(Modifier.heightIn(min = (minHeight - 24).dp), verticalArrangement = Arrangement.Center) {
-                Text(title, style = RemTypography.body, color = colors.labelPrimary)
-                if (subtitle != null) Text(subtitle, style = RemTypography.footnote, color = colors.labelSecondary)
+                ListRowLabel(title, subtitle)
             }
-        }, trailing = { if (disclosure) DisclosureChevron() })
+        }, trailing = { if (disclosure && onClick != null) DisclosureChevron() })
 }

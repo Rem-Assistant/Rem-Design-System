@@ -27,13 +27,45 @@ class SettingsPlaygroundTest {
     }
     @Test fun navigationAndBack() {
         openSettings()
-        capture("android-settings-entry")
+        capture("SettingsEntry-light")
         compose.onNodeWithTag("openAgent").performClick()
         waitForText("Capabilities")
         compose.onNodeWithText("Scheduled and triggered work").assertExists()
-        capture("android-agent-settings")
+        capture("AgentSettings-light")
         compose.onNodeWithTag("back").performClick()
         compose.onNodeWithTag("openAgent").assertExists()
+    }
+    private fun appearance(dark: Boolean = false, largeText: Boolean = false) {
+        compose.activityRule.scenario.onActivity {
+            it.intent.putExtra("settingsDark", dark)
+            it.intent.putExtra("settingsLargeText", largeText)
+        }
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+    }
+    @Test fun darkSettingsFoundation() {
+        appearance(dark = true)
+        openSettings()
+        capture("SettingsEntry-dark")
+        compose.onNodeWithTag("openAgent").performClick()
+        waitForText("Capabilities")
+        capture("AgentSettings-dark")
+    }
+    @Test fun largeTextSettingsScrolls() {
+        appearance(largeText = true)
+        openSettings()
+        capture("SettingsEntry-large-text")
+        compose.onNodeWithTag("openAgent").performClick()
+        waitForText("Capabilities")
+        capture("AgentSettings-large-text")
+        compose.onNodeWithText("Voice").performScrollTo().assertIsDisplayed()
+        capture("AgentSettings-large-text-bottom")
+    }
+    @Test fun automationsHasNoNavigationAction() {
+        openSettings()
+        compose.onNodeWithTag("openAgent").performClick()
+        waitForText("Capabilities")
+        compose.onNodeWithTag("automationsUnavailable").assertHasNoClickAction()
     }
     @Test fun errorRetryAndCancel() {
         openSettings("Error")

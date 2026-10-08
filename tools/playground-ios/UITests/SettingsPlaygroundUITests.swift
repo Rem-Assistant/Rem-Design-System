@@ -4,6 +4,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     let app = XCUIApplication()
     override func setUpWithError() throws {
         continueAfterFailure = false
+        app.launchArguments = ["--settings-light"]
         app.launch()
     }
     private func capture(_ name: String) {
@@ -20,13 +21,46 @@ final class SettingsPlaygroundUITests: XCTestCase {
     }
     func testSettingsNavigationAndBack() {
         openSettings()
-        capture("ios-settings-entry")
+        capture("SettingsEntry-light")
         app.buttons["openAgent"].tap()
         XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Scheduled and triggered work"].exists)
-        capture("ios-agent-settings")
+        capture("AgentSettings-light")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["openAgent"].waitForExistence(timeout: 3))
+    }
+    func testDarkSettingsFoundation() {
+        app.terminate()
+        app.launchArguments = ["--settings-dark"]
+        app.launch()
+        openSettings()
+        capture("SettingsEntry-dark")
+        app.buttons["openAgent"].tap()
+        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        capture("AgentSettings-dark")
+    }
+    func testLargeTextSettingsScrolls() {
+        app.terminate()
+        app.launchArguments = ["--settings-light", "--settings-large-text"]
+        app.launch()
+        openSettings()
+        capture("SettingsEntry-large-text")
+        app.buttons["openAgent"].tap()
+        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        capture("AgentSettings-large-text")
+        for _ in 0..<5 where !app.staticTexts["Voice"].isHittable { app.swipeUp() }
+        XCTAssertTrue(app.staticTexts["Voice"].isHittable)
+        capture("AgentSettings-large-text-bottom")
+    }
+    func testAutomationsHasNoNavigationAction() {
+        openSettings()
+        app.buttons["openAgent"].tap()
+        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["automationsUnavailable"].exists)
+        let row = app.descendants(matching: .any)["automationsUnavailable"].firstMatch
+        XCTAssertTrue(row.exists)
+        row.tap()
+        XCTAssertTrue(app.navigationBars["Agent settings"].exists)
     }
     func testErrorRetryAndCancel() {
         openSettings("Error")

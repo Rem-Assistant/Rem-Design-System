@@ -3,7 +3,14 @@ import RemDesignSystem
 
 @main
 struct RemSettingsPlaygroundApp: App {
-    var body: some Scene { WindowGroup { PlaygroundHome() } }
+    @Environment(\.dynamicTypeSize) private var systemTypeSize
+    var body: some Scene {
+        WindowGroup {
+            PlaygroundHome()
+                .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--settings-dark") ? .dark : (ProcessInfo.processInfo.arguments.contains("--settings-light") ? .light : nil))
+                .dynamicTypeSize(ProcessInfo.processInfo.arguments.contains("--settings-large-text") ? .accessibility3 : systemTypeSize)
+        }
+    }
 }
 
 enum LoadFixture: String, CaseIterable { case success = "Success", slow = "Slow", error = "Error" }
@@ -29,12 +36,10 @@ struct PlaygroundHome: View {
 
 struct SettingsPreview: View {
     let fixture: LoadFixture
-    @State private var openAgent = false
     var body: some View {
-        ScrollView { SettingsEntryContent { openAgent = true } }
+        SettingsEntryContent(agentDestination: { AgentPreview(fixture: fixture) })
             .background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $openAgent) { AgentPreview(fixture: fixture) }
     }
 }
 
@@ -46,7 +51,7 @@ struct AgentPreview: View {
     var body: some View {
         Group {
             if status == "ready" {
-                ScrollView { AgentSettingsContent() }.accessibilityIdentifier("agentSettings")
+                AgentSettingsContent()
             } else {
                 VStack(spacing: 20) {
                     if status == "loading" {

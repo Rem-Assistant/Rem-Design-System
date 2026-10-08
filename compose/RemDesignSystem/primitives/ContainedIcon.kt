@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.icons.RemMaterialSymbol
 import com.rem.designsystem.tokens.RemColors
@@ -31,7 +32,7 @@ import com.rem.designsystem.tokens.RemTheme
  * Compose `ContainedIcon` — the Android sibling of `Primitives/ContainedIcon.swift`. **Thin**: it
  * reads every value from [containedIconTokens] and renders. Cross-platform contract (SPEC): intent +
  * tokens are shared, form is native — the glyph is a Material [ImageVector], not an SF Symbol.
- * Figma canonical: ContainedIcon `110:54` / variant set `614:8` (Fill × Size). Code Connect binding:
+ * Figma canonical: ContainedIcon `110:54` / variant set `614:8` (Style × Size). Code Connect binding:
  * `ContainedIcon.figma.kt`.
  */
 @Composable
@@ -41,6 +42,7 @@ fun ContainedIcon(
     fill: ContainedIconFill = ContainedIconFill.Subtle,
     size: ContainedIconSize = ContainedIconSize.Small,
     contentDescription: String? = null,
+    glyphSize: Dp? = null,
 ) {
     val tokens = containedIconTokens(fill, size)
     Box(
@@ -54,7 +56,7 @@ fun ContainedIcon(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = tokens.foreground,
-            modifier = Modifier.size(tokens.glyphSize),
+            modifier = Modifier.size(glyphSize ?: tokens.glyphSize),
         )
     }
 }
@@ -70,6 +72,7 @@ fun ContainedIcon(
     fill: ContainedIconFill = ContainedIconFill.Subtle,
     size: ContainedIconSize = ContainedIconSize.Small,
     contentDescription: String? = null,
+    glyphSize: Dp? = null,
 ) = ContainedIcon(
     glyph = symbol.glyph,
     glyphFill = symbol.fill,
@@ -77,6 +80,7 @@ fun ContainedIcon(
     fill = fill,
     size = size,
     contentDescription = contentDescription,
+    glyphSize = glyphSize,
 )
 
 /**
@@ -95,9 +99,10 @@ fun ContainedIcon(
     fill: ContainedIconFill = ContainedIconFill.Subtle,
     size: ContainedIconSize = ContainedIconSize.Small,
     contentDescription: String? = null,
+    glyphSize: Dp? = null,
 ) {
     val tokens = containedIconTokens(fill, size)
-    val glyphSizeSp = with(LocalDensity.current) { tokens.glyphSize.toSp() }
+    val glyphSizeSp = with(LocalDensity.current) { (glyphSize ?: tokens.glyphSize).toSp() }
     val desc = contentDescription
     Box(
         modifier = modifier

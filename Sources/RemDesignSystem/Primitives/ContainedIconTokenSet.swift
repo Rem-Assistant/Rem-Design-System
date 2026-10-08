@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The size axis of `ContainedIcon` — 1:1 with the Figma **Size** property on the
+/// The size axis of `ContainedIcon`. Figma Small maps to `.settings`; `.small` is the legacy 38pt size.
+/// The Figma **Size** property lives on the
 /// ContainedIcon variant set (`614:8`). Kept a public top-level enum (not nested in the
 /// internal token set) so it can appear in `ContainedIcon`'s public API — the same shape as
 /// `RemButtonSize`.
@@ -13,7 +14,7 @@ public enum ContainedIconSize: Sendable {
 /// Resolves every styleable value for a `ContainedIcon` `(fill, size)` into one value type —
 /// the same **TokenSet** pattern as `RemButtonTokenSet`. Every value comes from `DesignTokens`
 /// (one documented exception, below), so `ContainedIcon` itself stays thin and no literals live
-/// in the view. Figma canonical: ContainedIcon variant set `614:8` (property **Fill**:
+/// in the view. Figma canonical: ContainedIcon variant set `614:8` (property **Style**:
 /// Tinted/Subtle × **Size**: Small/Large).
 ///
 /// There is deliberately **no** `ContainedIconStyle`: unlike `RemButton`, a `ContainedIcon` is a

@@ -1,6 +1,9 @@
 package com.rem.designsystem.demo
 
 import android.os.Bundle
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -29,7 +32,16 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { RemTheme { MaterialTheme { Playground() } } }
+        setContent {
+            val dark = if (intent.hasExtra("settingsDark")) intent.getBooleanExtra("settingsDark", false) else isSystemInDarkTheme()
+            val density = LocalDensity.current
+            val scale = if (intent.getBooleanExtra("settingsLargeText", false)) 2f else density.fontScale
+            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+                RemTheme(darkTheme = dark) {
+                    MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) { Playground() }
+                }
+            }
+        }
     }
 }
 
