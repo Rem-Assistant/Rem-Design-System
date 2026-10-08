@@ -6,7 +6,7 @@ Approved by Samuel on 2026-10-08 for an isolated native playground; no productio
 
 Figma file af4yDqCzp57jds9lkFiIaO, Settings New entry 1964:86819, Agent Settings 1827:50855, destination section 1833:5014. Source extraction is retained under docs/playground/design-context. Figma was read on 2026-10-08. Native navigation chrome, font scaling, keyboard, menus and system sheets follow each platform.
 
-Samuel explicitly approved two amendments to the current visual source: iOS uses native SwiftUI List/Section rather than ScrollView/RemSection cards; all Settings ContainedIcon consumers use Subtle fill rather than their current explicit tinted overrides. Preserve icon identities, settings size 29/radius7/glyph17, text, order, grouping and semantic tokens. Native grouped corners/section chrome may follow OS behavior; do not reconstruct custom cards to imitate native List.
+Samuel explicitly approved two amendments to the current visual source: iOS uses native SwiftUI List/Section rather than ScrollView/RemSection cards; all Settings ContainedIcon consumers use Subtle fill rather than their current explicit tinted overrides. Samuel subsequently refined Subtle to use semantic labelPrimary glyphs on the verified backgroundSecondary gray container; preserve explicit brand/status/accent exceptions. Preserve icon identities, settings size 29/radius7/glyph17, text, order, grouping and semantic tokens. Native grouped corners/section chrome may follow OS behavior; do not reconstruct custom cards to imitate native List.
 
 ## Foundation owner
 

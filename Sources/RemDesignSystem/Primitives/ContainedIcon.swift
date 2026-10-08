@@ -6,7 +6,7 @@ import SwiftUI
 /// **ContainedIcon** `110:54` / variant set `614:8` (Style × Size). SF Symbols render natively via
 /// `Image(systemName:)`. Two fills:
 /// - `.tint(color)` — solid color square + on-color (white) glyph (hero, colored settings icons).
-/// - `.subtle` — translucent `fill/tertiary` square + `label/secondary` glyph (inline row leading).
+/// - `.subtle` — gray `background/secondary` square + `label/primary` glyph (inline row leading).
 public struct ContainedIcon: View {
     public enum Fill: Sendable {
         case tint(Color)

@@ -14,7 +14,7 @@ import com.rem.designsystem.tokens.RemRadius
  */
 enum class ContainedIconSize { Settings, Small, Large }
 
-/** Fill axis — 1:1 with the Figma **Fill** property: `Tinted` (solid + on-color glyph) / `Subtle`. */
+/** Fill axis — 1:1 with the Figma **Style** property: `Tinted` (solid + on-color glyph) / `Subtle`. */
 sealed interface ContainedIconFill {
     data class Tint(val color: Color) : ContainedIconFill
     data object Subtle : ContainedIconFill
@@ -60,8 +60,8 @@ internal fun containedIconTokens(fill: ContainedIconFill, size: ContainedIconSiz
             dimension = dimension,
             cornerRadius = cornerRadius,
             glyphSize = glyphSize,
-            background = colors.fillTertiary,
-            foreground = colors.labelSecondary,
+            background = colors.backgroundSecondary,
+            foreground = colors.labelPrimary,
         )
     }
 }

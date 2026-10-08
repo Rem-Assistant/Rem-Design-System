@@ -33,7 +33,8 @@ import com.rem.designsystem.tokens.RemTheme
  * reads every value from [containedIconTokens] and renders. Cross-platform contract (SPEC): intent +
  * tokens are shared, form is native — the glyph is a Material [ImageVector], not an SF Symbol.
  * Figma canonical: ContainedIcon `110:54` / variant set `614:8` (Style × Size). Code Connect binding:
- * `ContainedIcon.figma.kt`.
+ * `code-connect/compose/ContainedIcon.figma.ts`. Subtle pairs `backgroundSecondary` with `labelPrimary`;
+ * explicit tinted/brand/status fills retain their on-color foreground.
  */
 @Composable
 fun ContainedIcon(

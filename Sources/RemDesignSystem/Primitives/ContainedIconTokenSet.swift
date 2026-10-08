@@ -50,8 +50,8 @@ struct ContainedIconTokenSet {
             background = color
             foreground = DesignTokens.Color.labelOnColor
         case .subtle:
-            background = DesignTokens.Color.fillTertiary
-            foreground = DesignTokens.Color.labelSecondary
+            background = DesignTokens.Color.backgroundSecondary
+            foreground = DesignTokens.Color.labelPrimary
         }
     }
 }
