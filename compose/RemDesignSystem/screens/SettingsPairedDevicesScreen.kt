@@ -46,8 +46,12 @@ import com.rem.designsystem.tokens.*
 @Composable
 fun SettingsPairedDevicesScreen(onBack: () -> Unit) {
     var state by rememberSaveable(stateSaver = listSaver<PairedDevicesState, String>(
-        save = { it.peers.map { peer -> peer.id } },
-        restore = { ids -> PairedDevicesState(PairedDevicesState().peers.filter { it.id in ids }) },
+        // listSaver drops an empty list, so retain a version marker even after the last removal.
+        save = { listOf("v1") + it.peers.map { peer -> peer.id } },
+        restore = { saved ->
+            val ids = saved.drop(1)
+            PairedDevicesState(PairedDevicesState().peers.filter { it.id in ids })
+        },
     )) { mutableStateOf(PairedDevicesState()) }
     var selectedPeerId by rememberSaveable { mutableStateOf<String?>(null) }
     var showingAddBoundary by rememberSaveable { mutableStateOf(false) }
