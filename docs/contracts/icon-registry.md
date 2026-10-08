@@ -39,3 +39,25 @@ Google "G" (multicolor asset, both).
 
 > Status: seeded from the onboarding consent + sign-in needs. Grows per screen; every new row is a
 > researched pair or an explicitly-flagged open row.
+
+
+## Settings New trial mappings
+
+Codepoints verified from Google's official [Material Symbols codepoints](https://github.com/google/material-design-icons/blob/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints). Existing subset generator bakes both fills and the preBuild gate checks every new codepoint. Native outline silhouettes differ; these mappings preserve semantic intent for the bounded playground.
+
+| Meaning | iOS | Android / codepoint | FILL | Status |
+|---|---|---|---|---|
+| Info / About | info.circle.fill | info / E88E | 1 | semantic native pair |
+| Billing | creditcard.fill | credit_card / E8A1 | 1 | semantic native pair |
+| Permissions | hand.raised.fill | pan_tool / E925 | 1 | semantic native pair |
+| Share / Support | square.and.arrow.up | ios_share / E6B8 | 0 | source uses same glyph for both rows |
+| Paired devices | macbook.and.iphone | devices / E326 | 0 | semantic native pair |
+| Connectors | link.circle.fill | link / E250 | 1 | **Open:** Material link has no encircling disc; candidate for trial, needs design decision before production |
+| Cloud browser | globe | language / EA07 | 0 | semantic native pair |
+| Automations | bell.badge.fill | notifications_active / E7F7 | 1 | native notification emphasis differs; visual reference only |
+| Memory | brain.head.profile | psychology / EA4A | 0 | semantic native pair |
+| Models | cpu | memory / E322 | 0 | semantic native pair |
+| Wallet | wallet.pass | wallet / F8FF | 0 | semantic native pair |
+| Voice | waveform | graphic_eq / E1B8 | 0 | semantic native pair |
+
+Native app navigation chrome uses platform back-arrow controls; it is not a design-system glyph specimen.

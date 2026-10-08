@@ -2,7 +2,7 @@
 // Component architecture contract lint — see docs/contracts/component-architecture.md
 //
 // Checks the deterministic parts of the contract across the SwiftUI component source set:
-//   figma   — a co-located <Name>.figma.swift Code Connect file exists AND is in Package.swift exclude:
+//   figma   — a matching parserless SwiftUI mapping OR an excluded, co-located archived native mapping
 //   compose — a Compose twin <Name>.kt exists somewhere under compose/RemDesignSystem/
 //   tokenset— cross-product components (TIER2 below) have a <Name>TokenSet.swift
 //   hex     — no raw color literals in the view body (token-only)
@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parserlessMappingMatches } from './component-code-connect.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SW_ROOT = join(ROOT, 'Sources', 'RemDesignSystem');
@@ -52,6 +53,18 @@ const composeNames = new Set(
 
 const pkg = readFileSync(join(ROOT, 'Package.swift'), 'utf8');
 
+// The configured SwiftUI parserless template directory; Compose mappings cannot satisfy this guard.
+function parserlessTemplates(dir) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return parserlessTemplates(path);
+    return entry.name.endsWith('.figma.ts') ? [readFileSync(path, 'utf8')] : [];
+  });
+}
+const swiftTemplates = parserlessTemplates(join(ROOT, 'code-connect', 'swiftui'));
+
+
 // Raw color literal — the token-only rule. Conservative, high-signal patterns only.
 const HEX = /Color\(\s*red:|UIColor\(\s*red:|#[0-9A-Fa-f]{6}\b|Color\(0x[0-9A-Fa-f]{6}/;
 
@@ -67,10 +80,16 @@ for (const folder of COMPONENT_FOLDERS) {
     const file = join(dir, entry);
     const name = componentName(file);
 
-    // figma: <Name>.figma.swift co-located AND excluded from the SPM target.
+    // Prefer the current parserless path. Exact source + identity + node URL must agree.
+    // Archived native mappings still count, but any native file must stay excluded from SPM.
+    const mapped = swiftTemplates.some((text) => parserlessMappingMatches(text, {
+      source: `Sources/RemDesignSystem/${folder}/${entry}`, component: name,
+    }));
     const figmaFile = join(dir, `${name}.figma.swift`);
-    if (!existsSync(figmaFile)) add(name, 'figma', `missing ${folder}/${name}.figma.swift`);
-    else if (!pkg.includes(`${name}.figma.swift`)) add(name, 'figma-exclude', `${name}.figma.swift not in Package.swift exclude:`);
+    if (!mapped && !existsSync(figmaFile))
+      add(name, 'figma', `missing matching parserless mapping or ${folder}/${name}.figma.swift`);
+    if (existsSync(figmaFile) && !pkg.includes(`${folder}/${name}.figma.swift`))
+      add(name, 'figma-exclude', `${name}.figma.swift not in Package.swift exclude:`);
 
     // compose twin anywhere under compose/RemDesignSystem/
     if (!composeNames.has(name)) add(name, 'compose', `no Compose twin ${name}.kt`);

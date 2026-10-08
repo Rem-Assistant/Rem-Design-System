@@ -30,9 +30,13 @@ owes, plus a stricter split that only cross-product components need. Enforced by
    `0xRRGGBB`, `#RRGGBB`) and no ad-hoc magic numbers for themeable values in the view body. Small
    structural constants (a 32pt control diameter, a 1pt hairline) are fine; a color or a type size is
    not.
-2. **Code Connect.** A co-located `<Component>.figma.swift` binding the real Swift type to the Figma
-   node + properties (see `RemButton.figma.swift`). It must also be listed in `Package.swift`
-   `exclude:` (the shipping library never links `github.com/figma/code-connect`).
+2. **Code Connect.** New mappings use parserless `.figma.ts` templates under `code-connect/swiftui/`
+   and `code-connect/compose/`. The SwiftUI contract lint accepts a template only when its exact
+   `source` path and `component` identity match the checked source and it names a valid Figma node
+   URL with a parserless `figma.code` example. `npm run check-code-connect` separately checks types
+   and parses the templates. Archived co-located `<Component>.figma.swift` mappings remain accepted;
+   every such native file must still appear in `Package.swift` `exclude:` so the shipping library
+   never links `github.com/figma/code-connect`. Neither file format proves live publication.
 3. **Cross-platform mirror.** A Compose twin under `compose/RemDesignSystem/<folder>/` with a matching
    public API (same variants/states, mirrored names). New Compose folders go in the
    `gatherDesignSystemSources` list in `compose/RemDesignSystem/build.gradle.kts`.

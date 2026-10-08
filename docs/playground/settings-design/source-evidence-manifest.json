@@ -1,0 +1,559 @@
+{
+  "schema_version": 1,
+  "source_commit": "af733c6798ba273d0b833b85df305eed27002c00",
+  "pull_request_base_commit": "9719751510da02e16b8482b475c8604990cbba4b",
+  "purpose": "Byte-preserved, generated Figma source references; not runtime assets or CI canonical references.",
+  "archive": {
+    "path": "docs/playground/settings-design/source-evidence.zip",
+    "size_bytes": 3374070,
+    "sha256": "a2df936ed20d05d31b6cb63c58f4444c5b176245216efc154ada0b95dac21ca0",
+    "compression": "ZIP_STORED",
+    "entry_timestamp": "1980-01-01T00:00:00",
+    "entry_unix_mode": "100644",
+    "entry_order": "lexicographic full repository-relative path"
+  },
+  "file_count": 108,
+  "total_uncompressed_bytes": 3354338,
+  "files": [
+    {
+      "path": "docs/playground/settings-design/raw/1833-5031.txt",
+      "size_bytes": 20853,
+      "sha256": "baaf8b09978cfafe5d0766580a1a550914c73f9d054f643e0bf1fdc88ae581fe"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-5048.txt",
+      "size_bytes": 35954,
+      "sha256": "70ec1b205c32d3587ffbaf9f3b27e93e3b4dadf514e8122c4207838097e69ce9"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-5071.txt",
+      "size_bytes": 31763,
+      "sha256": "568647434a30a7c0db41fa8982c4b5d2872044428622f1cc92a10dcbdf5de3c2"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-5096.txt",
+      "size_bytes": 26529,
+      "sha256": "2bdd94790dc0e080ba2efc5be14c6b87bd8d94db3149f97f922cb8e1a1af8a0c"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-5109.txt",
+      "size_bytes": 23948,
+      "sha256": "51539b18866b170e49252ec7ac52a6d6093e1feb0e477a98994ab597364cd2e9"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-51817.txt",
+      "size_bytes": 21259,
+      "sha256": "721eda4b220c75993dc5cd0772d25e4eb64867411c269f0e15f96143d781da5c"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-52316.txt",
+      "size_bytes": 14591,
+      "sha256": "860adff716da01104236b9780a849aaaeaae3155693d1c969f343b5b4e89557d"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1833-52344.txt",
+      "size_bytes": 24614,
+      "sha256": "ea7503205e3603ac01c1153b3674aea3e14e9811d1b56b9ae58c14195e723727"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1839-52547.txt",
+      "size_bytes": 25916,
+      "sha256": "7a785552b2a057af42053fd563345c18c2a4ae81982fe56d9f5958310bd3b49b"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1865-6193.txt",
+      "size_bytes": 11671,
+      "sha256": "e806003c3d7080b490e7b38424b9b1abf984aa94cbeb701863f207815e264ae4"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6148.txt",
+      "size_bytes": 27301,
+      "sha256": "db4cafc4049b85fd7ac906abd7878b7584675d2aaacea78ad211dfd286545b5d"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6153.txt",
+      "size_bytes": 30589,
+      "sha256": "d7436be6894e64435ea813803ca8da879f1563de409893b4b7f3df3a6f7cca55"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6176.txt",
+      "size_bytes": 28991,
+      "sha256": "f54e9a5206c018f62b9124a0dadedb5ad5530f43ad1edc3d94152444258f8d12"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6197.txt",
+      "size_bytes": 29195,
+      "sha256": "bfc2de9489fb2044d0c0aa44fcf6bc5753b608f58cd78801898fa18732655cad"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6214.txt",
+      "size_bytes": 21954,
+      "sha256": "a1be9374437654552f374b7d6e57e1495b3db74562d23565dafab45f2a38b54e"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6227.txt",
+      "size_bytes": 19702,
+      "sha256": "4299ea509a7ec6749b9c09b6ddf90b2202bf64ab7a3798e825e071996d55b59b"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6245.txt",
+      "size_bytes": 26382,
+      "sha256": "19ecea3ff2a07b30968e298c41f7f564b67cc63a26a54dedcc98e6c325aebca1"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6250.txt",
+      "size_bytes": 22306,
+      "sha256": "411721bfd757a04c4c9d44a9bf6a1464cff7d64ce99733fc8dfb601b0a98697d"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1868-6255.txt",
+      "size_bytes": 27886,
+      "sha256": "f56dd961ad2e4b965b62180bd3d44f6d3493babb18243f6281d7a2eea7a0c6a9"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1870-54593.txt",
+      "size_bytes": 5778,
+      "sha256": "69bcc2a8fbd24cd97771912ce58afe2881e7fb28f50e7fc1e8582329b3cfb055"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1875-6710.txt",
+      "size_bytes": 24033,
+      "sha256": "af3a10ed55d551aee39b7dd1926e2c78ebabb3466bbc3168537fb07358c10e71"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1875-6711.txt",
+      "size_bytes": 24033,
+      "sha256": "17a97ff590cc3b0a4b0ce6918fd14c0a69f79b3391c67083f6cbaab1c0f64b9d"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1875-6712.txt",
+      "size_bytes": 26411,
+      "sha256": "20dda125828bd00be01d797c1f787058b0377118d57b3409fd0179e485f4a2d8"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1875-6713.txt",
+      "size_bytes": 24073,
+      "sha256": "7feac8ea87f7e01b83bc009b10aef1daca1df4a8f540c182450db2f2c1d47683"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1875-6714.txt",
+      "size_bytes": 18598,
+      "sha256": "023a68fcbfd4ca7f378e639ac86f3a5d86c460ba6c0f457794a3a365e2e43b88"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1876-51201.txt",
+      "size_bytes": 3083,
+      "sha256": "44d6ce91c0d8970cdd56db142d8cc8712bae40eb7ca6881f011ec486b58db968"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1876-51246.txt",
+      "size_bytes": 3731,
+      "sha256": "71b50576000bee438ebf08616adb38bfe20c5e2905e3368be89093c0cb23ba53"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1876-51319.txt",
+      "size_bytes": 3069,
+      "sha256": "90da1dafe48cd333e79ed491de544b2367e17921fbe6e49124e971d4c487c339"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1876-51348.txt",
+      "size_bytes": 3079,
+      "sha256": "2ed5395beb9aed04e393047299711d40614be8c814635f0380c2b74d36b32374"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1882-42599.txt",
+      "size_bytes": 22056,
+      "sha256": "f496e9962283c0a3efcd7029950504bf2f064d148bd7296b5fe2b84deda20e1b"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7678.txt",
+      "size_bytes": 51230,
+      "sha256": "1d70a32c324b92b6192db7b6d35898b9a33a2d8267b0697f3c5e06266544e139"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7679.txt",
+      "size_bytes": 51492,
+      "sha256": "5da782d7e3b2ec9b793011214d9c392615deb3e1da524bd84199dd8262b07ee5"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7680.txt",
+      "size_bytes": 51484,
+      "sha256": "fd8d569f99f0adf2a9f3a2cda4be280ac0c39beb621700f2f0f576ec7146f81a"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7681.txt",
+      "size_bytes": 30371,
+      "sha256": "8e781af6b7b0b2ea9e6d7cb7f44debf8988a1c6dbe9d953414d8438de36b291e"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7682.txt",
+      "size_bytes": 30331,
+      "sha256": "72ca20c8bc0ec8df3a9f32e54357d06eeff23a404cdc59a77d5eb508265134ca"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7683.txt",
+      "size_bytes": 51641,
+      "sha256": "77956133546db6ce9731fd22401fe1cc49e92b90563e58272111f41bd404115d"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7684.txt",
+      "size_bytes": 51645,
+      "sha256": "0eb579a7e135ff56ef2694644b186cc6d5bf499222ff6f93051daf56e9449bc6"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1883-7685.txt",
+      "size_bytes": 1091,
+      "sha256": "19c121cf0d2d064aa1d0dcb8765fe6763741b84f7b845d3fa54ef30fffdb04bf"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1898-53941.txt",
+      "size_bytes": 27172,
+      "sha256": "39c51dc7b941a0e619599efe51643730a27c89b763ba0bb7e940dc11a95077ae"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1898-54081.txt",
+      "size_bytes": 27022,
+      "sha256": "3ace7c80246c5932a25bc453ca2fbf04067b8389e49a9cfc539075b93cc4a026"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1904-55842.txt",
+      "size_bytes": 5171,
+      "sha256": "994d68d2490498cf2a15376df16ec7b1057a29056e0f8da13e332bebd326bd4a"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1904-56533.txt",
+      "size_bytes": 32125,
+      "sha256": "e8af0a8376ea88d03a71973143f5a0de3b4cab02cd189a0039672614845875c7"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1904-56534.txt",
+      "size_bytes": 86,
+      "sha256": "b31193f3d5a2caa3c70caff7c12c679192f3fc156c0dfd35ce4ca59aed5f42c8"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1904-56535.txt",
+      "size_bytes": 86,
+      "sha256": "74363b14947116dd4478f6a27cf83329ccd8079cedb8ece97df0d9f2078e4b6f"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1926-53854.txt",
+      "size_bytes": 7626,
+      "sha256": "e3567c4a748c1e4f758c9a45465edad1906522658b25892e64f47e5f3747083f"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1926-53931.txt",
+      "size_bytes": 7607,
+      "sha256": "b7c4a65c3bb65a080aaca4a1bf24fe45dceb50f0a2a8f4e6ba2be14c10e35070"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1934-9067.txt",
+      "size_bytes": 21923,
+      "sha256": "b2f4120397d8006ae307676d23468e4c324b49a5e2c48ae9329bab16d0f562b9"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1934-9068.txt",
+      "size_bytes": 21935,
+      "sha256": "fd8de540c2f0d105b392e7ccebe83f19dadf6d7d81fc496c749235f6d572843e"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1934-9069.txt",
+      "size_bytes": 20960,
+      "sha256": "cd4c4e0b9e1c9d388c543da6ee00def7b62ba932e7d18d156861e29e17a965ae"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1934-9070.txt",
+      "size_bytes": 20290,
+      "sha256": "afbc62d954742974672f9a4bba10f70c73a2e38ea932f57b77908d01fb517fc9"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1934-9071.txt",
+      "size_bytes": 23249,
+      "sha256": "67e006b483076982a3c31b637722ee9fc01890082bf5f0c2c126118549a03de1"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1956-8160.txt",
+      "size_bytes": 44634,
+      "sha256": "fa157a873f07cd8ae30e4dfcd63fa61fbf88bba0108d204b0e8f1e83103c4fc7"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1956-8161.txt",
+      "size_bytes": 47086,
+      "sha256": "ab7ea72762a46ad1dc8ce6c8a92709e2594b502b15d8aafc9ed69c065ec72d2f"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1956-8162.txt",
+      "size_bytes": 50015,
+      "sha256": "d7bc17a46279c930cd073cd1a6dcd3e703317e52b4852b3d19d0f037e9e32bb8"
+    },
+    {
+      "path": "docs/playground/settings-design/raw/1956-8163.txt",
+      "size_bytes": 40657,
+      "sha256": "2fa7daac8de319f84030091739879b0486c404eb5b99c91d69b311622f8810c5"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-5031.png",
+      "size_bytes": 21453,
+      "sha256": "4580916d2fc34c03361de0c4ae7e2f38dddebae15c97f16b11f83c49211fbaa9"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-5048.png",
+      "size_bytes": 39720,
+      "sha256": "540f3885e08ae6bba4321f577143d1ff4e12416ba0afb0c03e897504946a5141"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-5071.png",
+      "size_bytes": 40799,
+      "sha256": "2998da1a9d8b214fab50ca60515fc6868586a227a13a24ac8a0edddc70963981"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-5096.png",
+      "size_bytes": 41050,
+      "sha256": "5edd23087339e9db88e1667288e2f4ffa3ae7eada8d5f00d2d01498f32065727"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-5109.png",
+      "size_bytes": 25003,
+      "sha256": "3c7d9a4c98f274bc38aa530f78387c2a7e70aaa4f2e551f5170b8cd237df2239"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-51817.png",
+      "size_bytes": 23584,
+      "sha256": "35013b4c813e01b52fb7335e118ed2693daac65e4a17717aba54eab8238ddd68"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-52316.png",
+      "size_bytes": 23376,
+      "sha256": "dc541656549d53660b7a53236ef7c5cec4f790d6aa3c5d47d285f9e414e69585"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1833-52344.png",
+      "size_bytes": 29245,
+      "sha256": "d1f8783397c2d468482b63082aea610ac0f2d863e72b2787b8d59b40dc91789d"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1839-52547.png",
+      "size_bytes": 50624,
+      "sha256": "dfa9848c1be2c547d5ed2fd25738598d9df8700fb47dd4ed8c94395b85a20823"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1865-6193.png",
+      "size_bytes": 50683,
+      "sha256": "895435f1fc98232df80f4e1d237acb3f62c4ae156ecc5e762316f673531e4862"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6148.png",
+      "size_bytes": 23997,
+      "sha256": "fd5db71eabdc309bbf43165273c2c6bbbce16495118dc08995099b5904c201ca"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6153.png",
+      "size_bytes": 60202,
+      "sha256": "054def66203d7788d3dab3efdfe63ac645207b848c1bd1a4b4a6cfff56e65636"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6176.png",
+      "size_bytes": 31409,
+      "sha256": "fd7aedab887c8bfb55033ea6c80ec5d5c3f1cf48697d13d1346fe66ea0d9c710"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6197.png",
+      "size_bytes": 34194,
+      "sha256": "5e7209f878114958ae1d6aa3487d5ce549ce21062e9f6d6daf1b43d018135fb4"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6214.png",
+      "size_bytes": 27845,
+      "sha256": "4b0c782072b766f035bc3370ba369c7f4a4573924ececcad2120f9b58a5f5aca"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6227.png",
+      "size_bytes": 23475,
+      "sha256": "7dd6fb57f3d9b5b80589aa8d52f88c049857e0e6e813d0525ec70b113dc9e8c8"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6245.png",
+      "size_bytes": 27616,
+      "sha256": "a2a50230d8cb0f83ad3b8241aae5c261025d86f1bfe2e00d5ac7a94b072f4d7a"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6250.png",
+      "size_bytes": 46758,
+      "sha256": "e032517fc86f88a13d1e14b780a606c502e8b081762a67f079cce6184b1dc4e2"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1868-6255.png",
+      "size_bytes": 53443,
+      "sha256": "c186d37c2fdd89c57d8d20a0ad7d8a9073e4321176dfb4a42b62f30fb3816801"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1870-54593.png",
+      "size_bytes": 16519,
+      "sha256": "ddbb79efa8e28987a16f3701972b0d8c6707bc9a4516099be093e36cefd27706"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1875-6710.png",
+      "size_bytes": 44491,
+      "sha256": "06d4f75e5a2ecd8ae47a68d74548cd6edfe0f47bea1a7f6a947840e4fd33cec7"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1875-6711.png",
+      "size_bytes": 43423,
+      "sha256": "81624b76ee162f8b08d40f9cf8074b382980e303c85de9b224a249ecab0bd1bf"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1875-6712.png",
+      "size_bytes": 46222,
+      "sha256": "2ed1d5e47305485f7b96f69e180842130f76dda4bf3918512f2b0e2e4140da30"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1875-6713.png",
+      "size_bytes": 43235,
+      "sha256": "eb903b92a902e8eed4642083a396112459adb57000a3262d6f1f4bb5953dae4b"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1875-6714.png",
+      "size_bytes": 43509,
+      "sha256": "322d26cd9c654ca462fb8ad09f17fe9b12ce2bf815e80998bb299f5d9f1d3c2b"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1876-51201.png",
+      "size_bytes": 9824,
+      "sha256": "1d72d49d33653b5a8184add5ef2a67f4d1c7eb9b83e6fee4900b54e057932a0f"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1876-51246.png",
+      "size_bytes": 12247,
+      "sha256": "435c2744c15b0ce29c1156b73f7c24057abd5cd641bcd8c62e296ceeb59bcb6d"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1876-51319.png",
+      "size_bytes": 30918,
+      "sha256": "57b7cf5f8689bba243b0cf361397c60879ad7fbeeaf4ee793db420f88184afeb"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1876-51348.png",
+      "size_bytes": 30464,
+      "sha256": "77f7361a703d5c2cc63cb8b0dfa8be897b7cc5b337465b195cbbf816e3376492"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1882-42599.png",
+      "size_bytes": 32094,
+      "sha256": "6a1b605bc00ec0765a301232c120d5548879e12b312bf8ea0535000bcc3b59c0"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7678.png",
+      "size_bytes": 39960,
+      "sha256": "dc41942675366e83dd75b896e54590610ac3609abfa5f7ab2ba7a2fec22ad4be"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7679.png",
+      "size_bytes": 50920,
+      "sha256": "9ea3a3f6c81481dcce1796927c03d460f791be2a2150ab44dd4c46aabaeaaf0b"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7680.png",
+      "size_bytes": 58086,
+      "sha256": "55ac25a5d614220576b294f99924d9301fd26d2c64dc21e6404474f9ffafd1c8"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7681.png",
+      "size_bytes": 48306,
+      "sha256": "9977fcbab19bbcb643148d6828c74770a0b9ae9ab9a7f45c4086239230956f76"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7682.png",
+      "size_bytes": 50079,
+      "sha256": "3ef06df52c301af4e93bb0eb019eadf9ef711b14f842e1e5ca5e7d92886ba84d"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7683.png",
+      "size_bytes": 77006,
+      "sha256": "07e74f7423cba640cf901a41479d944253540a7024e1320eaefcaceaf40aa05c"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1883-7684.png",
+      "size_bytes": 76435,
+      "sha256": "b7bdd1c020e550ce9ef68d01c201060116e59fa51893d682469778c73d6bdbb3"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1898-53941.png",
+      "size_bytes": 60420,
+      "sha256": "6b3e9dd9a07586aa8bd1e9a18b8ba1b695b8fee1d605f5513a8a627d4ed13a4d"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1898-54081.png",
+      "size_bytes": 62840,
+      "sha256": "7132405c95456b75a5f93c859156edf083557c629579cbee228bf3a8105a5fd8"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1904-55842.png",
+      "size_bytes": 10795,
+      "sha256": "69ce20a584d291be84904b0bf78de0e84c1c55c97cc98a39bc36de061c4d021c"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1904-56533.png",
+      "size_bytes": 45477,
+      "sha256": "dad7305001f9afd13fd992277675906fdddd8caa777094f2ff653cfcd54fdfc0"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1904-56534.png",
+      "size_bytes": 60449,
+      "sha256": "68da6a4cdd930321f61a26ed37ce3cde6e095be34cd5ee288ac5d493dfa5b345"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1926-53854.png",
+      "size_bytes": 26683,
+      "sha256": "7fa3d5966eb96f5103169bb0df988d650ff4054e9e49a3a58ce228fa9d98724e"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1926-53931.png",
+      "size_bytes": 26786,
+      "sha256": "ddbfa385f061fc2390bf8dc91bb254c092b9ebbf383ad281245c1f075687dff6"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1934-9067.png",
+      "size_bytes": 24205,
+      "sha256": "c95a2360696a16b76eeb98101876e298fc39ff65a8a6c3e48156536f6f9cbddf"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1934-9068.png",
+      "size_bytes": 42948,
+      "sha256": "3c33d40a464dad7b3af18a64dd519b936cf1e6e311266ea26c97081594e2b4a0"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1934-9069.png",
+      "size_bytes": 20694,
+      "sha256": "6c86ed5623d25f2e177ded372a4739e41d424d62bbd828cf55685d1f64dc1bd5"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1934-9070.png",
+      "size_bytes": 34946,
+      "sha256": "ef9f260010ee63dc5f9e910114d99722d1f7a46f602c82ba687259bb16f3b65f"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1934-9071.png",
+      "size_bytes": 29695,
+      "sha256": "cc299ed1b33002f18654e37c2b33b977f4ec947599875e2ed315f21b3094db34"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1956-8160.png",
+      "size_bytes": 33911,
+      "sha256": "0d14c88f16384aa48422b6b4087fa48cecef22ff2ae327ff74a9e18395ec2c01"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1956-8161.png",
+      "size_bytes": 27296,
+      "sha256": "799ea0f51e8d40f49932e5d02fb7de790e7d121785733fe73bd056038623b6ed"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1956-8162.png",
+      "size_bytes": 22977,
+      "sha256": "9a7705d4a56e5caaa7ce4478a8c3b147c8762c53657d8ffc707d53a352d21c4e"
+    },
+    {
+      "path": "docs/playground/settings-design/screenshots/1956-8163.png",
+      "size_bytes": 49725,
+      "sha256": "147ba54286071c367d2adf07546aa1a6d7c588909c83f02340ba4d9534cd4ec8"
+    }
+  ]
+}

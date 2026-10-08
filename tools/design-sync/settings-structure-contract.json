@@ -1,0 +1,395 @@
+{
+  "version": 1,
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "page": {
+    "id": "1825:29320",
+    "type": "CANVAS",
+    "name": "Settings New"
+  },
+  "section": {
+    "id": "1825:30003",
+    "type": "SECTION",
+    "name": "Settings"
+  },
+  "amendments": [
+    "Native SwiftUI List/Section replaces the source custom scroll composition; Android retains canonical Compose sections.",
+    "Settings contained icons use Subtle by explicit approval, while the current read-only Figma source remains tinted.",
+    "Automations is visibly unavailable pending an approved design; its source label is retained.",
+    "The approved entry title Agent settings, omitted Connected subtitle, and Help & Support question-mark glyph are now present in the live Figma source. Code removes the inherited extra Agent row minimum; the source row still has a fixed 82-point height, which is not an approved spacing target."
+  ],
+  "screens": [
+    {
+      "id": "1964:86819",
+      "name": "Screen/Settings \u00b7 Working entry",
+      "type": "COMPONENT",
+      "instances": [
+        {
+          "id": "I1827:50774;1237:14",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1237:14;741:314;2001:67451",
+          "parent": "I1827:50774;1237:14;741:314",
+          "componentId": "101:18",
+          "text": [
+            "Avery Diaz",
+            "avery@example.com"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:14;741:314;2001:67451;188:192",
+          "parent": "I1827:50774;1237:14;741:314;2001:67451;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Avery Diaz",
+            "avery@example.com"
+          ]
+        },
+        {
+          "id": "I1827:50774;1224:5237",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1224:5237;741:314;2001:67459",
+          "parent": "I1827:50774;1224:5237;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\udd75",
+            "Agent settings",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50774;1224:5237;741:314;2001:67459;188:192",
+          "parent": "I1827:50774;1224:5237;741:314;2001:67459;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Agent settings"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:92",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1237:92;741:314;2001:67462",
+          "parent": "I1827:50774;1237:92;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\udf70",
+            "Billing & Usage",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:92;741:314;2001:67462;188:192",
+          "parent": "I1827:50774;1237:92;741:314;2001:67462;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Billing & Usage"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:92;741:314;2001:67463",
+          "parent": "I1827:50774;1237:92;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\ude7c",
+            "Permissions",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:92;741:314;2001:67463;188:192",
+          "parent": "I1827:50774;1237:92;741:314;2001:67463;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Permissions"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:154",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1237:154;741:314;2001:67453",
+          "parent": "I1827:50774;1237:154;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\udd75",
+            "About",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:154;741:314;2001:67453;188:192",
+          "parent": "I1827:50774;1237:154;741:314;2001:67453;101:13",
+          "componentId": "188:2",
+          "text": [
+            "About"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:218",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1237:218;741:314;2001:67447",
+          "parent": "I1827:50774;1237:218;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\ude02",
+            "Share Rem"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:218;741:314;2001:67447;188:192",
+          "parent": "I1827:50774;1237:218;741:314;2001:67447;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Share Rem"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:218;741:314;2001:67477",
+          "parent": "I1827:50774;1237:218;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\udd4d",
+            "Help & Support",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50774;1237:218;741:314;2001:67477;188:192",
+          "parent": "I1827:50774;1237:218;741:314;2001:67477;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Help & Support"
+          ]
+        },
+        {
+          "id": "I1827:50774;1618:38432",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1618:38432;741:314;2001:67455",
+          "parent": "I1827:50774;1618:38432;741:314",
+          "componentId": "101:18",
+          "text": [
+            "Sign Out"
+          ]
+        },
+        {
+          "id": "I1827:50774;1618:38432;741:314;2001:67455;188:192",
+          "parent": "I1827:50774;1618:38432;741:314;2001:67455;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Sign Out"
+          ]
+        },
+        {
+          "id": "I1827:50774;1618:38449",
+          "parent": "1827:50774",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50774;1618:38449;741:314;2001:67457",
+          "parent": "I1827:50774;1618:38449;741:314",
+          "componentId": "101:18",
+          "text": [
+            "Delete Account"
+          ]
+        },
+        {
+          "id": "I1827:50774;1618:38449;741:314;2001:67457;188:192",
+          "parent": "I1827:50774;1618:38449;741:314;2001:67457;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Delete Account"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1827:50855",
+      "name": "Screen/Agent settings \u00b7 Working",
+      "type": "COMPONENT",
+      "instances": [
+        {
+          "id": "1827:50851",
+          "parent": "1827:50850",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23431",
+          "parent": "I1827:50851;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc2\udf29",
+            "Paired Devices",
+            "2",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23431;188:192",
+          "parent": "I1827:50851;741:314;1823:23431;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Paired Devices",
+            "2"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23432",
+          "parent": "I1827:50851;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc1\udca1",
+            "Connectors",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23432;188:192",
+          "parent": "I1827:50851;741:314;1823:23432;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Connectors"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23433",
+          "parent": "I1827:50851;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc0\uddaa",
+            "Cloud browser",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23433;188:192",
+          "parent": "I1827:50851;741:314;1823:23433;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Cloud browser"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23435",
+          "parent": "I1827:50851;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc1\udf57",
+            "Automations",
+            "Scheduled and triggered work",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50851;741:314;1823:23435;188:192",
+          "parent": "I1827:50851;741:314;1823:23435;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Automations",
+            "Scheduled and triggered work"
+          ]
+        },
+        {
+          "id": "1827:50852",
+          "parent": "1827:50850",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50852;741:314;1823:23445",
+          "parent": "I1827:50852;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc2\udfcf",
+            "Memory",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50852;741:314;1823:23445;188:192",
+          "parent": "I1827:50852;741:314;1823:23445;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Memory"
+          ]
+        },
+        {
+          "id": "I1827:50852;741:314;1823:23446",
+          "parent": "I1827:50852;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc2\udee5",
+            "Models",
+            "Automatic",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50852;741:314;1823:23446;188:192",
+          "parent": "I1827:50852;741:314;1823:23446;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Models",
+            "Automatic"
+          ]
+        },
+        {
+          "id": "I1827:50852;741:314;1823:23447",
+          "parent": "I1827:50852;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc1\udffe",
+            "Wallet",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50852;741:314;1823:23447;188:192",
+          "parent": "I1827:50852;741:314;1823:23447;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Wallet"
+          ]
+        },
+        {
+          "id": "1827:50853",
+          "parent": "1827:50850",
+          "componentId": "741:311"
+        },
+        {
+          "id": "I1827:50853;741:314;1823:23455",
+          "parent": "I1827:50853;741:314",
+          "componentId": "101:18",
+          "text": [
+            "\udbc1\ude6b",
+            "Voice",
+            "Aria",
+            "\udbc0\udd8a"
+          ]
+        },
+        {
+          "id": "I1827:50853;741:314;1823:23455;188:192",
+          "parent": "I1827:50853;741:314;1823:23455;101:13",
+          "componentId": "188:2",
+          "text": [
+            "Voice",
+            "Aria"
+          ]
+        }
+      ]
+    }
+  ]
+}

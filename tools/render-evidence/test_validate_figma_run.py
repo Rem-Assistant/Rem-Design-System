@@ -57,6 +57,42 @@ class FigmaWorkflowRunValidationTests(unittest.TestCase):
             head_sha=self.head_sha, base_sha=self.base_sha, base_ref="main",
         )
 
+    def test_manual_settings_run_requires_opt_in_and_exact_trusted_base(self):
+        run, item = self.fixtures()
+        run.update(event="workflow_dispatch", head_sha=self.base_sha,
+                   head_branch="codex/settings-integration", pull_requests=[])
+        item["workflow_run"].update(head_sha=self.base_sha, head_branch=run["head_branch"])
+        kwargs = dict(repository=self.repository, pr=31, head_sha=self.head_sha,
+                      base_sha=self.base_sha, base_ref="codex/settings-integration",
+                      head_ref="agent-factory/settings-issue-74")
+        with self.assertRaises(ValueError):
+            validator.validate(run, item, **kwargs)
+        self.assertEqual(validator.validate(run, item, allow_settings_manual=True, **kwargs)["run_id"], run["id"])
+        for field, value in (("head_sha", self.head_sha), ("head_branch", "main"), ("conclusion", "failure")):
+            broken = dict(run); broken[field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                validator.validate(broken, item, allow_settings_manual=True, **kwargs)
+        kwargs["base_ref"] = "main"
+        with self.assertRaises(ValueError):
+            validator.validate(run, item, allow_settings_manual=True, **kwargs)
+
+    def test_manual_stack_requires_an_exact_admitted_pair_and_base_sha(self):
+        for base, head in (("codex/settings-review-contracts", "codex/settings-review-native"),
+                           ("codex/settings-review-native", "codex/settings-review-evidence")):
+            run, item = self.fixtures()
+            run.update(event="workflow_dispatch", head_sha=self.base_sha,
+                       head_branch=base, pull_requests=[])
+            item["workflow_run"].update(head_sha=self.base_sha, head_branch=base)
+            kwargs = dict(repository=self.repository, pr=31, head_sha=self.head_sha,
+                          base_sha=self.base_sha, base_ref=base, head_ref=head,
+                          allow_settings_manual=True)
+            self.assertEqual(validator.validate(run, item, **kwargs)["run_id"], run["id"])
+            for change in ({"head_ref": "codex/unrelated"}, {"head_ref": base},
+                           {"base_ref": "main"}, {"base_sha": "c" * 40},
+                           {"allow_settings_manual": False}):
+                with self.subTest(base=base, change=change), self.assertRaises(ValueError):
+                    validator.validate(run, item, **(kwargs | change))
+
     def test_accepts_real_pull_request_target_metadata_shape(self):
         run, artifact = self.fixtures()
         self.assertEqual(self.validate(run, artifact), {

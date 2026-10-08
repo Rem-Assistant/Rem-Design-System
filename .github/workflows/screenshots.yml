@@ -8,27 +8,46 @@ name: screenshots
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to verify (both by default)
+        type: choice
+        default: both
+        options: [both, ios, android]
+      ios_test:
+        description: Optional comma-separated iOS test methods for a focused run
+        type: string
+        default: ''
   pull_request:
     paths:
+      - "tools/playground-ios/**"
       - "Sources/**"
       - "compose/**"
       - "tokens/generated/**"
       - "tools/render-evidence/**"
       - "tools/render-swift/**"
+      - "docs/playground/evidence/**"
+      - "docs/playground/artifacts.json"
+      - "docs/playground/verification.md"
+      - ".github/workflows/screenshots.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: screenshots-${{ github.ref }}
+  group: screenshots-${{ github.ref }}-${{ inputs.platform || 'both' }}
   cancel-in-progress: true
 
 jobs:
   swiftui:
     name: Render SwiftUI (iOS)
+    if: inputs.platform != 'android'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - name: List schemes (debug)
         run: xcodebuild -list || true
       - name: Render on iOS Simulator (light + dark)
@@ -62,9 +81,13 @@ jobs:
 
   compose:
     name: Render Compose (Android)
+    if: inputs.platform != 'ios'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -89,13 +112,119 @@ jobs:
           path: artifacts/compose/*.png
           if-no-files-found: error
 
+  settings-ios:
+    name: Exercise Settings playground (iOS)
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'android'
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Run the actual playground journeys
+        timeout-minutes: 40
+        env:
+          IOS_TEST: ${{ inputs.ios_test }}
+        run: bash tools/playground-ios/run-hosted-journeys.sh
+      - name: Extract actual playground screenshots
+        if: always()
+        run: |
+          set -euo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          mkdir -p artifacts/settings-swiftui "$RUNNER_TEMP/settings-attachments"
+          xcparse attachments "$RUNNER_TEMP/SettingsPlayground.xcresult" "$RUNNER_TEMP/settings-attachments"
+          find "$RUNNER_TEMP/settings-attachments" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f")
+            cp "$f" "artifacts/settings-swiftui/${b%%_*}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-swiftui-screenshots
+          path: artifacts/settings-swiftui/*.png
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-ios-build-log
+          path: |
+            ${{ runner.temp }}/settings-ios-build.log
+            ${{ runner.temp }}/settings-ios-main-thread*.txt
+          if-no-files-found: error
+      - name: Package iOS journey diagnostics
+        if: always()
+        run: |
+          if [ -d "$RUNNER_TEMP/SettingsPlayground.xcresult" ]; then
+            tar -czf "$RUNNER_TEMP/settings-ios-journeys.tar.gz" -C "$RUNNER_TEMP" SettingsPlayground.xcresult
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-ios-journeys
+          path: ${{ runner.temp }}/settings-ios-journeys.tar.gz
+          if-no-files-found: error
+
+  settings-android:
+    name: Exercise Settings playground (Android)
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'ios'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          disable-animations: true
+          working-directory: compose
+          # The action starts a separate shell per line; folded syntax keeps
+          # test status and capture collection in one shell process.
+          script: >-
+            result=0;
+            gradle :demo:connectedDebugAndroidTest --stacktrace --no-daemon || result=$?;
+            mkdir -p ../artifacts/settings-compose;
+            adb pull /sdcard/Pictures/RemSettingsPlayground/. ../artifacts/settings-compose/ || true;
+            exit "$result"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-compose-screenshots
+          path: artifacts/settings-compose/*.png
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-android-journeys
+          path: |
+            compose/demo/build/reports/androidTests/
+            compose/demo/build/outputs/androidTest-results/
+          if-no-files-found: error
+
   evidence:
     name: Assemble render evidence
-    needs: [swiftui, compose]
+    needs: [swiftui, compose, settings-ios, settings-android]
     if: ${{ always() && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           path: dl
@@ -113,6 +242,8 @@ jobs:
           mkdir -p out/swiftui out/compose out/delivery
           cp dl/swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
           cp dl/compose-screenshots/*.png out/compose/ 2>/dev/null || true
+          cp dl/settings-swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
+          cp dl/settings-compose-screenshots/*.png out/compose/ 2>/dev/null || true
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
