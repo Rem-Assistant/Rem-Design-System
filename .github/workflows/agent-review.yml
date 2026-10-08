@@ -27,10 +27,10 @@ jobs:
       (github.actor == 'agent-factory-builder[bot]' && github.event.changes.body &&
       (contains(github.event.pull_request.body, 'builder-delivery-status:ready') ||
       contains(github.event.pull_request.body, 'builder-delivery-status:failed')))))
-    uses: samuelalake/agent-factory/.github/workflows/review.yml@3a767861cebce2f08f21639297ab8693b77f9a4f
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@8522d84d9cd429c9b8cb9d028cf665a6136403c0
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: 3a767861cebce2f08f21639297ab8693b77f9a4f
+      factory_ref: 8522d84d9cd429c9b8cb9d028cf665a6136403c0
       reviewer_app_id: ${{ vars.AGENT_FACTORY_REVIEWER_APP_ID }}
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
@@ -40,14 +40,6 @@ jobs:
       AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY }}
       AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
       AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
-  integration:
-    needs: review
-    uses: samuelalake/agent-factory/.github/workflows/integration.yml@3a767861cebce2f08f21639297ab8693b77f9a4f
-    with:
-      pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: 3a767861cebce2f08f21639297ab8693b77f9a4f
-      timeout_seconds: 1800
-      steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
-    secrets:
-      AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
-      AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
+  # Settings integration is owned by the coordinating task. The upstream
+  # integration failure router adds default-branch Steward/retry labels even
+  # with automatic_promotion=false, so this lane deliberately omits that job.

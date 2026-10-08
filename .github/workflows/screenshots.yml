@@ -115,6 +115,23 @@ jobs:
             -parallel-testing-enabled NO \
             -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tail -100
+      - name: Extract actual playground screenshots
+        if: always()
+        run: |
+          set -euo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          mkdir -p artifacts/settings-swiftui "$RUNNER_TEMP/settings-attachments"
+          xcparse attachments "$RUNNER_TEMP/SettingsPlayground.xcresult" "$RUNNER_TEMP/settings-attachments"
+          find "$RUNNER_TEMP/settings-attachments" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f")
+            cp "$f" "artifacts/settings-swiftui/${b%%_*}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-swiftui-screenshots
+          path: artifacts/settings-swiftui/*.png
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -149,7 +166,18 @@ jobs:
           arch: x86_64
           disable-animations: true
           working-directory: compose
-          script: gradle :demo:connectedDebugAndroidTest --stacktrace --no-daemon
+          script: |
+            result=0
+            gradle :demo:connectedDebugAndroidTest --stacktrace --no-daemon || result=$?
+            mkdir -p ../artifacts/settings-compose
+            adb pull /sdcard/Android/data/com.rem.designsystem.demo/files/. ../artifacts/settings-compose/ || true
+            exit "$result"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-compose-screenshots
+          path: artifacts/settings-compose/*.png
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -186,6 +214,8 @@ jobs:
           mkdir -p out/swiftui out/compose out/delivery
           cp dl/swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
           cp dl/compose-screenshots/*.png out/compose/ 2>/dev/null || true
+          cp dl/settings-swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
+          cp dl/settings-compose-screenshots/*.png out/compose/ 2>/dev/null || true
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
