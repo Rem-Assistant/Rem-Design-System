@@ -262,6 +262,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     }
     private func openCloudSites() {
         openDestination("cloudBrowser", title: "Cloud browser")
+        capture("CloudBrowser-light")
         let sites = app.buttons["cloudBrowser.seeAllSites"]
         reveal(sites)
         sites.tap()
@@ -364,7 +365,8 @@ final class SettingsPlaygroundUITests: XCTestCase {
         for (route, title, name, finalControl) in [
             ("pairedDevices", "Paired devices", "PairedDevices", "pairedDevices.peer.mac-studio"),
             ("memory", "Memory", "Memory", "memory.summaryRow"),
-            ("models", "Models", "Models", "models.addProviderKey")
+            ("models", "Models", "Models", "models.addProviderKey"),
+            ("cloudBrowser", "Cloud browser", "CloudBrowser", "cloudBrowser.seeAllSites")
         ] {
             app.terminate()
             app.launchArguments = arguments

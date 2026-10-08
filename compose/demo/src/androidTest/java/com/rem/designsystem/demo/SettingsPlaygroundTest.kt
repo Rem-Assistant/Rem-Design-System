@@ -252,6 +252,7 @@ class SettingsPlaygroundTest {
     }
     private fun openCloudSites() {
         openDestination("CloudBrowser", "cloudBrowser.root")
+        capture("CloudBrowser-light")
         compose.onNodeWithTag("cloudBrowser.seeAllSites").performScrollTo().performClick()
         waitForTag("cloudBrowser.sitesList")
     }
@@ -355,13 +356,19 @@ class SettingsPlaygroundTest {
             listOf("PairedDevices", "pairedDevices", "pairedDevices.peer.mac-studio"),
             listOf("Memory", "settingsMemory", "memory.summaryRow"),
             listOf("Models", "settingsModels", "models.addProviderKey"),
+            listOf("CloudBrowser", "cloudBrowser.root", "cloudBrowser.seeAllSites"),
         )
         destinations.forEach { (route, rootTag, finalControl) ->
             openDestination(route, rootTag)
             capture("$route-$suffix")
             compose.onNodeWithTag(finalControl).performScrollTo().assertIsDisplayed()
             if (largeText) capture("$route-large-text-bottom")
-            compose.onNodeWithTag(if (route == "PairedDevices") "pairedDevices.back" else "back").performClick()
+            val backTag = when (route) {
+                "PairedDevices" -> "pairedDevices.back"
+                "CloudBrowser" -> "cloudBrowser.back"
+                else -> "back"
+            }
+            compose.onNodeWithTag(backTag).performClick()
             waitForTag("agentSettings")
             compose.onNodeWithTag("back").performClick() // Agent settings -> Settings.
             compose.onNodeWithTag("back").performClick() // Settings -> gallery.
