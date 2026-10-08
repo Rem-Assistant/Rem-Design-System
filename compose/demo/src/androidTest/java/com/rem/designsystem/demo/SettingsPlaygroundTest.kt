@@ -773,4 +773,138 @@ class SettingsPlaygroundTest {
     @Test fun destinationsDarkAppearance() = captureDestinationAppearance(dark = true)
     @Test fun destinationsLargeTextReachability() = captureDestinationAppearance(largeText = true)
 
+    private fun waitForWalletModalDismissed() {
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("wallet.consent.connect").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("wallet.provider.link").assertIsDisplayed()
+    }
+    @Test fun walletBothProvidersCancelBoundaryCloseRecreationAndSwipeDismiss() {
+        openDestination("Wallet", "settingsWallet")
+        capture("Wallet-light")
+        listOf("link" to "app.link.com", "shopPay" to "shop.app").forEach { (provider, domain) ->
+            compose.onNodeWithTag("wallet.provider.$provider").performClick()
+            waitForTag("wallet.consent.$provider")
+            capture("Wallet-$provider-consent-light")
+            compose.onNodeWithTag("wallet.consent.cancel").performScrollTo().performClick()
+            waitForWalletModalDismissed()
+            compose.onNodeWithTag("wallet.provider.$provider").performClick()
+            waitForTag("wallet.consent.$provider")
+            compose.activityRule.scenario.recreate()
+            waitForTag("wallet.consent.$provider")
+            compose.onNodeWithTag("wallet.consent.connect").performScrollTo().performClick()
+            waitForTag("wallet.external.$provider")
+            compose.onNodeWithText(domain).assertIsDisplayed()
+            compose.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+            capture("Wallet-$provider-boundary-light")
+            compose.onNodeWithTag("wallet.external.close").performClick()
+            compose.waitUntil(5000) { compose.onAllNodesWithTag("wallet.external.close").fetchSemanticsNodes().isEmpty() }
+            compose.onNodeWithTag("wallet.provider.$provider").performClick()
+            waitForTag("wallet.consent.$provider")
+            // Native nested scrolling hands the downward gesture to the modal sheet at its top.
+            compose.onNodeWithTag("wallet.consent.$provider").performTouchInput { swipeDown() }
+            waitForWalletModalDismissed()
+            compose.onNodeWithTag("wallet.provider.$provider").performClick()
+            waitForTag("wallet.consent.$provider")
+            systemBack()
+            waitForWalletModalDismissed()
+        }
+        compose.onNodeWithTag("wallet.back").performClick()
+        waitForTag("agentSettings")
+    }
+
+    private fun assertVoiceSlider(id: String, expected: Float) {
+        compose.onNodeWithTag("voice.slider.$id").assert(SemanticsMatcher.expectValue(
+            SemanticsProperties.ProgressBarRangeInfo,
+            androidx.compose.ui.semantics.ProgressBarRangeInfo(expected, 0f..1f),
+        ))
+    }
+    @Test fun voiceSelectionPreviewMenuAndSlidersSurviveBackAndRecreation() {
+        openDestination("Voice", "settingsVoice")
+        capture("Voice-light")
+        compose.onNodeWithTag("voice.conversationEntry").performClick()
+        compose.onNodeWithTag("voice.entry.VoiceSession").assertExists()
+        compose.onNodeWithTag("voice.entry.Chat").assertExists()
+        capture("Voice-menu-light")
+        compose.onNodeWithTag("voice.entry.Chat").performClick()
+        compose.onNodeWithTag("settingsVoice").assertExists()
+        compose.onNodeWithTag("voice.chooseVoice").performScrollTo().performClick()
+        waitForTag("voiceChooser")
+        val voices = listOf("aria", "sol", "rowan", "juniper", "vale")
+        voices.forEach { compose.onNodeWithTag("voice.select.$it").assertExists() }
+        val matcher = voices.map { hasTestTag("voice.select.$it") }.reduce { left, right -> left or right }
+        compose.onAllNodes(matcher).assertCountEquals(5)
+        compose.onNodeWithTag("voice.select.aria").assertIsSelected()
+        capture("Voice-chooser-light")
+        compose.onNodeWithTag("voice.preview.rowan").performClick()
+        compose.onNodeWithTag("voice.preview.rowan").assert(hasContentDescription("Pause Rowan", substring = true))
+        compose.onNodeWithTag("voice.select.aria").assertIsSelected()
+        compose.onNodeWithTag("voice.select.rowan").assertIsNotSelected()
+        capture("Voice-chooser-preview-light")
+        compose.onNodeWithTag("voice.select.sol").performClick().assertIsSelected()
+        compose.onNodeWithTag("voice.select.aria").assertIsNotSelected()
+        compose.onNodeWithTag("voice.preview.rowan").assert(hasContentDescription("Pause Rowan", substring = true))
+        compose.onNodeWithTag("voiceChooser").assertExists()
+        capture("Voice-chooser-selected-light")
+        systemBack()
+        waitForTag("settingsVoice")
+        compose.onNodeWithTag("voice.previewSelected").assert(hasContentDescription("Preview Sol", substring = true)).performClick()
+        compose.onNodeWithTag("voice.previewSelected").assert(hasContentDescription("Pause Sol", substring = true))
+        capture("Voice-preview-selected-light")
+        compose.onNodeWithTag("voice.previewSelected").performClick()
+        val values = listOf("speed" to 0.75f, "consistency" to 0.50f, "likeness" to 0.75f)
+        values.forEach { (id, target) ->
+            compose.onNodeWithTag("voice.slider.$id").performScrollTo()
+                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(target) }
+            assertVoiceSlider(id, target)
+        }
+        capture("Voice-sliders-adjusted-light")
+        compose.onNodeWithTag("voice.chooseVoice").performScrollTo().performClick()
+        compose.onNodeWithTag("voice.select.sol").assertIsSelected()
+        compose.onNodeWithTag("voice.preview.rowan").assert(hasContentDescription("Preview Rowan", substring = true))
+        systemBack()
+        waitForTag("settingsVoice")
+        values.forEach { (id, target) -> assertVoiceSlider(id, target) }
+        compose.activityRule.scenario.recreate()
+        waitForTag("settingsVoice")
+        values.forEach { (id, target) -> assertVoiceSlider(id, target) }
+        compose.onNodeWithTag("voice.previewSelected").assert(hasContentDescription("Preview Sol", substring = true))
+        compose.onNodeWithTag("voice.conversationEntry").assertTextContains("Chat")
+        capture("Voice-preferences-recreated-light")
+        systemBack()
+        waitForTag("agentSettings")
+    }
+
+    private fun captureWalletVoiceAppearance(dark: Boolean = false, largeText: Boolean = false) {
+        appearance(dark = dark, largeText = largeText)
+        val suffix = if (largeText) "large-text" else "dark"
+        openDestination("Wallet", "settingsWallet")
+        capture("Wallet-$suffix")
+        listOf("link" to "Link", "shopPay" to "Shop Pay").forEach { (provider, name) ->
+            compose.onNodeWithTag("wallet.provider.$provider").performClick()
+            waitForTag("wallet.consent.$provider")
+            capture("Wallet-$provider-consent-$suffix")
+            compose.onNodeWithText("Next, continue to $name to sign in and review access. Rem will exchange info with $name; see its terms and privacy policy.")
+                .performScrollTo().assertIsDisplayed()
+            if (largeText) capture("Wallet-$provider-consent-large-text-footer")
+            compose.onNodeWithTag("wallet.consent.connect").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("wallet.consent.cancel").performScrollTo().performClick()
+            waitForWalletModalDismissed()
+        }
+        compose.onNodeWithTag("wallet.back").performClick()
+        waitForTag("agentSettings")
+        compose.onNodeWithTag("agentDestination.Voice").performScrollTo().performClick()
+        waitForTag("settingsVoice")
+        capture("Voice-$suffix")
+        compose.onNodeWithText("Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice.")
+            .performScrollTo().assertIsDisplayed()
+        capture("Voice-$suffix-footer")
+        compose.onNodeWithTag("voice.chooseVoice").performScrollTo().performClick()
+        waitForTag("voiceChooser")
+        capture("Voice-chooser-$suffix")
+        compose.onNodeWithText("Your choice follows this agent across your devices. Tap a play button to hear a preview.")
+            .performScrollTo().assertIsDisplayed()
+        capture("Voice-chooser-$suffix-footer")
+    }
+    @Test fun walletVoiceDarkAppearance() = captureWalletVoiceAppearance(dark = true)
+    @Test fun walletVoiceLargeTextReachability() = captureWalletVoiceAppearance(largeText = true)
+
 }

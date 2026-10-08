@@ -808,4 +808,162 @@ final class SettingsPlaygroundUITests: XCTestCase {
         captureDestinationAppearance(arguments: ["--settings-light", "--settings-large-text"], suffix: "large-text")
     }
 
+    private func assertWalletSheetDismissed() {
+        let hidden = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
+                                               object: app.buttons["wallet.consent.connect"])
+        XCTAssertEqual(XCTWaiter.wait(for: [hidden], timeout: 4), .completed)
+        let rootReady = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"),
+                                                  object: app.buttons["wallet.provider.link"])
+        XCTAssertEqual(XCTWaiter.wait(for: [rootReady], timeout: 4), .completed)
+    }
+    func testWalletBothProvidersCancelBoundaryCloseAndSwipeDismiss() {
+        openDestination("wallet", title: "Wallet")
+        capture("Wallet-light")
+        for (provider, domain) in [("link", "app.link.com"), ("shopPay", "shop.app")] {
+            let row = app.buttons["wallet.provider.\(provider)"]
+            row.tap()
+            XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
+            capture("Wallet-\(provider)-consent-light")
+            app.buttons["wallet.consent.cancel"].tap()
+            assertWalletSheetDismissed()
+            row.tap()
+            XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
+            app.buttons["wallet.consent.connect"].tap()
+            XCTAssertTrue(app.navigationBars[domain].waitForExistence(timeout: 3))
+            XCTAssertTrue(app.buttons["wallet.external.close"].exists)
+            XCTAssertEqual(app.webViews.count, 0, "Boundary must not load a provider website")
+            XCTAssertEqual(app.textFields.count + app.secureTextFields.count, 0)
+            capture("Wallet-\(provider)-boundary-light")
+            app.buttons["wallet.external.close"].tap()
+            XCTAssertTrue(row.waitForExistence(timeout: 3))
+            let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
+                                                  object: app.buttons["wallet.external.close"])
+            XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 4), .completed)
+            row.tap()
+            XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
+            let sheet = app.descendants(matching: .any).matching(identifier: "wallet.consent.\(provider)").firstMatch
+            XCTAssertTrue(sheet.exists)
+            sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.02))
+                .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
+            assertWalletSheetDismissed()
+            // A dismissed flow must request consent again, never show a fabricated linked state.
+            row.tap()
+            XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
+            app.buttons["wallet.consent.cancel"].tap()
+            assertWalletSheetDismissed()
+        }
+        navigateBack(from: "Wallet", to: "Agent settings")
+    }
+
+    private func voiceRevealAbove(_ element: XCUIElement) {
+        for _ in 0..<8 where !element.isHittable { app.swipeDown() }
+        XCTAssertTrue(element.isHittable)
+    }
+    private func voiceSliderPercent(_ slider: XCUIElement) -> Double {
+        let text = slider.value as? String ?? ""
+        let number = text.split(whereSeparator: { !$0.isNumber && $0 != "." }).compactMap { Double($0) }.first
+        XCTAssertNotNil(number, "Slider should expose a numeric accessibility value")
+        return number ?? -1
+    }
+    func testVoiceSelectionPreviewMenuAndSlidersSurviveChooserBack() {
+        openDestination("voice", title: "Voice")
+        capture("Voice-light")
+        app.buttons["voice.conversationEntry"].tap()
+        XCTAssertTrue(app.buttons["Voice session"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Chat"].exists)
+        capture("Voice-menu-light")
+        app.buttons["Chat"].tap()
+        XCTAssertTrue(app.navigationBars["Voice"].exists)
+        let choose = app.buttons["voice.chooseVoice"]
+        reveal(choose)
+        choose.tap()
+        XCTAssertTrue(app.navigationBars["Choose a voice"].waitForExistence(timeout: 3))
+        let voices = ["aria", "sol", "rowan", "juniper", "vale"]
+        for voice in voices { XCTAssertTrue(app.buttons["voice.select.\(voice)"].exists) }
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "voice.select.")).count, 5)
+        XCTAssertTrue(app.buttons["voice.select.aria"].isSelected)
+        capture("Voice-chooser-light")
+        app.buttons["voice.preview.rowan"].tap()
+        XCTAssertTrue(app.buttons["voice.preview.rowan"].label.contains("Pause Rowan"))
+        XCTAssertTrue(app.buttons["voice.select.aria"].isSelected)
+        XCTAssertFalse(app.buttons["voice.select.rowan"].isSelected)
+        capture("Voice-chooser-preview-light")
+        app.buttons["voice.select.sol"].tap()
+        XCTAssertTrue(app.buttons["voice.select.sol"].isSelected)
+        XCTAssertFalse(app.buttons["voice.select.aria"].isSelected)
+        XCTAssertTrue(app.buttons["voice.preview.rowan"].label.contains("Pause Rowan"))
+        XCTAssertTrue(app.navigationBars["Choose a voice"].exists)
+        capture("Voice-chooser-selected-light")
+        navigateBack(from: "Choose a voice", to: "Voice")
+        XCTAssertEqual(app.buttons["voice.previewSelected"].label, "Preview Sol")
+        app.buttons["voice.previewSelected"].tap()
+        XCTAssertTrue(app.buttons["voice.previewSelected"].label.contains("Pause Sol"))
+        capture("Voice-preview-selected-light")
+        app.buttons["voice.previewSelected"].tap()
+        var adjusted: [String: Double] = [:]
+        for (id, target) in [("speed", 0.75), ("consistency", 0.50), ("likeness", 0.75)] {
+            let slider = app.sliders["voice.slider.\(id)"]
+            reveal(slider)
+            slider.adjust(toNormalizedSliderPosition: CGFloat(target))
+            let actual = voiceSliderPercent(slider)
+            XCTAssertEqual(actual, target * 100, accuracy: 6)
+            adjusted[id] = actual
+        }
+        capture("Voice-sliders-adjusted-light")
+        voiceRevealAbove(choose)
+        choose.tap()
+        XCTAssertTrue(app.navigationBars["Choose a voice"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["voice.select.sol"].isSelected)
+        XCTAssertTrue(app.buttons["voice.preview.rowan"].label.contains("Preview Rowan"))
+        navigateBack(from: "Choose a voice", to: "Voice")
+        for id in ["speed", "consistency", "likeness"] {
+            let slider = app.sliders["voice.slider.\(id)"]
+            reveal(slider)
+            XCTAssertEqual(voiceSliderPercent(slider), adjusted[id]!, accuracy: 0.1)
+        }
+        voiceRevealAbove(app.buttons["voice.conversationEntry"])
+        XCTAssertTrue(app.buttons["voice.conversationEntry"].label.contains("Chat"))
+        navigateBack(from: "Voice", to: "Agent settings")
+    }
+
+    private func captureWalletVoiceAppearance(arguments: [String], suffix: String) {
+        app.terminate()
+        app.launchArguments = arguments
+        app.launch()
+        openDestination("wallet", title: "Wallet")
+        capture("Wallet-\(suffix)")
+        for (provider, name) in [("link", "Link"), ("shopPay", "Shop Pay")] {
+            app.buttons["wallet.provider.\(provider)"].tap()
+            XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
+            capture("Wallet-\(provider)-consent-\(suffix)")
+            let disclosure = app.staticTexts["Next, continue to \(name) to sign in and review access. Rem will exchange info with \(name); see its terms and privacy policy."]
+            reveal(disclosure)
+            XCTAssertTrue(app.buttons["wallet.consent.connect"].isHittable)
+            if suffix == "large-text" { capture("Wallet-\(provider)-consent-large-text-footer") }
+            app.buttons["wallet.consent.cancel"].tap()
+            assertWalletSheetDismissed()
+        }
+        app.terminate()
+        app.launch()
+        openDestination("voice", title: "Voice")
+        capture("Voice-\(suffix)")
+        let footer = app.staticTexts["Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."]
+        reveal(footer)
+        capture("Voice-\(suffix)-footer")
+        let choose = app.buttons["voice.chooseVoice"]
+        voiceRevealAbove(choose)
+        choose.tap()
+        XCTAssertTrue(app.navigationBars["Choose a voice"].waitForExistence(timeout: 3))
+        capture("Voice-chooser-\(suffix)")
+        let chooserFooter = app.staticTexts["Your choice follows this agent across your devices. Tap a play button to hear a preview."]
+        reveal(chooserFooter)
+        capture("Voice-chooser-\(suffix)-footer")
+    }
+    func testWalletVoiceDarkAppearance() {
+        captureWalletVoiceAppearance(arguments: ["--settings-dark"], suffix: "dark")
+    }
+    func testWalletVoiceLargeTextReachability() {
+        captureWalletVoiceAppearance(arguments: ["--settings-light", "--settings-large-text"], suffix: "large-text")
+    }
+
 }
