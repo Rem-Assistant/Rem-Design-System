@@ -23,7 +23,7 @@ struct PlaygroundHome: View {
             Form {
                 Section("Native component playground") {
                     Text("Settings New · iOS").font(.headline)
-                    Text("A local prototype with illustrative data. Paired Devices, Cloud browser, Memory, Models, Wallet and Voice are connected. Voice preview controls are simulated without audio. Connectors is awaiting integration; Automations remains outside this trial.").font(.footnote)
+                    Text("A local prototype with illustrative data for all seven designed Agent settings destinations. Voice previews demonstrate controls without audio. Automations remains outside this trial.").font(.footnote)
                     Picker("Load fixture", selection: $fixture) {
                         ForEach(LoadFixture.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).accessibilityIdentifier("fixturePicker")
@@ -63,7 +63,7 @@ struct AgentPreview: View {
         // A stable container owns the load task while its loading/ready child changes.
         ZStack {
             if status == "ready" {
-                AgentSettingsContent(availableDestinations: [.pairedDevices, .cloudBrowser, .memory, .models, .wallet, .voice])
+                AgentSettingsContent(availableDestinations: [.pairedDevices, .connectors, .cloudBrowser, .memory, .models, .wallet, .voice])
                     .navigationDestination(for: AgentSettingsDestination.self) { route in
                         switch route {
                         case .pairedDevices: SettingsPairedDevicesScreen()
@@ -72,7 +72,7 @@ struct AgentPreview: View {
                         case .cloudBrowser: SettingsCloudBrowserScreen()
                         case .wallet: SettingsWalletScreen()
                         case .voice: SettingsVoiceScreen()
-                        case .connectors: EmptyView()
+                        case .connectors: SettingsConnectorsScreen()
                         }
                     }
             } else {
