@@ -1,37 +1,114 @@
 {
   "onboarding-sign-in": {
-    "paths": ["Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift", "compose/RemDesignSystem/onboarding/SignInStep.kt", "tokens/**"],
-    "states": ["signin-returning-light", "signin-new-light", "signin-checking-light", "signin-error-dark", "signin-recovery-light"]
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift",
+      "compose/RemDesignSystem/onboarding/SignInStep.kt",
+      "tokens/**"
+    ],
+    "states": [
+      "signin-returning-light",
+      "signin-new-light",
+      "signin-checking-light",
+      "signin-error-dark",
+      "signin-recovery-light"
+    ]
   },
   "onboarding-checkin": {
-    "paths": ["Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift", "Sources/RemDesignSystem/Controls/RemSwitch.swift", "compose/RemDesignSystem/onboarding/CheckinStep.kt", "compose/RemDesignSystem/controls/RemSwitch.kt", "tokens/**"],
-    "states": ["checkin-default-light", "checkin-edited-light", "checkin-saving-light", "checkin-saved-light", "checkin-failure-light"],
-    "exclusive_output_prefixes": ["checkin-"],
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift",
+      "Sources/RemDesignSystem/Controls/RemSwitch.swift",
+      "compose/RemDesignSystem/onboarding/CheckinStep.kt",
+      "compose/RemDesignSystem/controls/RemSwitch.kt",
+      "tokens/**"
+    ],
+    "states": [
+      "checkin-default-light",
+      "checkin-edited-light",
+      "checkin-saving-light",
+      "checkin-saved-light",
+      "checkin-failure-light"
+    ],
+    "exclusive_output_prefixes": [
+      "checkin-"
+    ],
     "requirePrototype": false,
     "references": {
-      "checkin-default-light": { "name": "Checkin-default-light", "node": "870:788", "requireDocumentation": false },
-      "checkin-edited-light": { "name": "Checkin-edited-light", "node": "875:857", "requireDocumentation": false },
-      "checkin-saving-light": { "name": "Checkin-saving-light", "node": "875:940", "requireDocumentation": false },
-      "checkin-saved-light": { "name": "Checkin-saved-light", "node": "875:1026", "requireDocumentation": false },
-      "checkin-failure-light": { "name": "Checkin-failure-light", "node": "875:1112", "requireDocumentation": false }
+      "checkin-default-light": {
+        "name": "Checkin-default-light",
+        "node": "870:788",
+        "requireDocumentation": false
+      },
+      "checkin-edited-light": {
+        "name": "Checkin-edited-light",
+        "node": "875:857",
+        "requireDocumentation": false
+      },
+      "checkin-saving-light": {
+        "name": "Checkin-saving-light",
+        "node": "875:940",
+        "requireDocumentation": false
+      },
+      "checkin-saved-light": {
+        "name": "Checkin-saved-light",
+        "node": "875:1026",
+        "requireDocumentation": false
+      },
+      "checkin-failure-light": {
+        "name": "Checkin-failure-light",
+        "node": "875:1112",
+        "requireDocumentation": false
+      }
     },
     "waypoints": {
-      "checkin-component-set": { "name": "Checkin-component-set", "node": "876:1121" },
-      "checkin-flow-documentation": { "name": "Checkin-flow-documentation", "node": "890:1502" },
-      "checkin-prototype": { "name": "Checkin-prototype", "node": "885:1121" }
+      "checkin-component-set": {
+        "name": "Checkin-component-set",
+        "node": "876:1121"
+      },
+      "checkin-flow-documentation": {
+        "name": "Checkin-flow-documentation",
+        "node": "890:1502"
+      },
+      "checkin-prototype": {
+        "name": "Checkin-prototype",
+        "node": "885:1121"
+      }
     }
   },
   "onboarding-consent": {
-    "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
-    "states": ["consent-default-light", "consent-terms-light", "consent-privacy-light"],
-    "exclusive_output_prefixes": ["consent-"],
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift",
+      "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift",
+      "compose/RemDesignSystem/onboarding/ConsentStep.kt",
+      "compose/RemDesignSystem/onboarding/LegalDocument.kt",
+      "tokens/**"
+    ],
+    "states": [
+      "consent-default-light",
+      "consent-terms-light",
+      "consent-privacy-light"
+    ],
+    "exclusive_output_prefixes": [
+      "consent-"
+    ],
     "references": {
-      "consent-default-light": { "name": "Consent-default-light", "node": "777:248" },
-      "consent-terms-light": { "name": "Consent-terms-light", "node": "777:325" },
-      "consent-privacy-light": { "name": "Consent-privacy-light", "node": "777:392" }
+      "consent-default-light": {
+        "name": "Consent-default-light",
+        "node": "777:248"
+      },
+      "consent-terms-light": {
+        "name": "Consent-terms-light",
+        "node": "777:325"
+      },
+      "consent-privacy-light": {
+        "name": "Consent-privacy-light",
+        "node": "777:392"
+      }
     },
     "waypoints": {
-      "consent-flow-documentation": { "name": "Consent-flow-documentation", "node": "777:432" }
+      "consent-flow-documentation": {
+        "name": "Consent-flow-documentation",
+        "node": "777:432"
+      }
     }
   },
   "settings-foundation": {
@@ -62,6 +139,90 @@
         "node": "1827:50855",
         "requireDocumentation": false
       }
-    }
+    },
+    "runtimeGroups": [
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsPairedDevices*.swift",
+          "compose/RemDesignSystem/screens/SettingsPairedDevices*.kt"
+        ],
+        "states": [
+          "paireddevices-light",
+          "paireddevices-empty-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsConnectors*.swift",
+          "compose/RemDesignSystem/screens/SettingsConnectors*.kt",
+          "Sources/RemDesignSystem/Rows/ConnectorRow.swift",
+          "compose/RemDesignSystem/rows/ConnectorRow.kt"
+        ],
+        "states": [
+          "connectors-light",
+          "gmail-connector-permissions-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsCloudBrowser*.swift",
+          "compose/RemDesignSystem/screens/SettingsCloudBrowser*.kt"
+        ],
+        "states": [
+          "cloudbrowser-light",
+          "cloudbrowser-add-login-filled-light",
+          "cloudbrowser-cookies-cleared-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsMemory*.swift",
+          "compose/RemDesignSystem/screens/SettingsMemory*.kt",
+          "Sources/RemDesignSystem/Chat/RemComposerBar.swift",
+          "compose/RemDesignSystem/chat/RemComposerBar.kt"
+        ],
+        "states": [
+          "memory-light",
+          "memory-composer-feedback-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsModels*.swift",
+          "compose/RemDesignSystem/screens/SettingsModels*.kt"
+        ],
+        "states": [
+          "models-light",
+          "models-provider-picker-light",
+          "models-key-masked-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsWallet*.swift",
+          "compose/RemDesignSystem/screens/SettingsWallet*.kt",
+          "Sources/RemDesignSystem/Templates/ProviderPreConsentContent.swift",
+          "compose/RemDesignSystem/screens/ProviderPreConsentContent.kt"
+        ],
+        "states": [
+          "wallet-light",
+          "wallet-link-consent-light",
+          "wallet-shoppay-consent-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsVoice*.swift",
+          "compose/RemDesignSystem/screens/SettingsVoice*.kt",
+          "Sources/RemDesignSystem/Primitives/RemSlider.swift",
+          "compose/RemDesignSystem/primitives/RemSlider.kt"
+        ],
+        "states": [
+          "voice-light",
+          "voice-chooser-preview-light",
+          "voice-sliders-adjusted-light"
+        ]
+      }
+    ]
   }
 }

@@ -356,6 +356,7 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ needs.locate.outputs.head_sha }}
           VERIFY_CONCLUSION: ${{ needs.locate.outputs.conclusion }}
+          VERIFY_RUN_ID: ${{ needs.locate.outputs.run_id }}
           BASE_REF: ${{ steps.validate.outputs.base_ref }}
           BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
@@ -376,6 +377,7 @@ jobs:
           fi
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/delivery.py" \
             --evidence-root "$EVIDENCE_ROOT" --head "$SHA" --conclusion "$VERIFY_CONCLUSION" \
+            --run-url "https://github.com/${REPO}/actions/runs/${VERIFY_RUN_ID}" \
             --changed-paths "$RUNNER_TEMP/evidence-changed-paths.txt" \
             "${SCOPE_ARGS[@]}" \
             --output "$RUNNER_TEMP/paired-delivery"
