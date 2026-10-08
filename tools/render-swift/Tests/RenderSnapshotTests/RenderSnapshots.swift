@@ -88,9 +88,9 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
-        // Wave 1 onboarding flows — paired with the Compose `Connectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
-        render("Connectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
-        render("Voice-light", width: 393, height: 852, dark: false) { voiceScreen() }
+        // Wave 1 onboarding flows — paired with the Compose `LegacyOnboardingConnectors-*`/`LegacyOnboardingVoice-*`/`AgendaEmpty-*` shots.
+        render("LegacyOnboardingConnectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
+        render("LegacyOnboardingVoice-light", width: 393, height: 852, dark: false) { voiceScreen() }
         render("AgendaEmpty-light", width: 393, height: 852, dark: false) {
             RemContentUnavailableView(
                 symbol: "calendar.badge.plus",
