@@ -23,7 +23,7 @@ struct PlaygroundHome: View {
             Form {
                 Section("Native component playground") {
                     Text("Settings New · iOS").font(.headline)
-                    Text("A local fixture. Only Settings → Rem is connected. Other rows are visual references. Automations is outside this trial.").font(.footnote)
+                    Text("A local prototype with illustrative data. Paired Devices, Cloud browser, Memory and Models are connected; other destinations are awaiting implementation. Automations remains outside this trial.").font(.footnote)
                     Picker("Load fixture", selection: $fixture) {
                         ForEach(LoadFixture.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).accessibilityIdentifier("fixturePicker")
@@ -62,7 +62,16 @@ struct AgentPreview: View {
     var body: some View {
         Group {
             if status == "ready" {
-                AgentSettingsContent()
+                AgentSettingsContent(availableDestinations: [.pairedDevices, .cloudBrowser, .memory, .models])
+                    .navigationDestination(for: AgentSettingsDestination.self) { route in
+                        switch route {
+                        case .pairedDevices: SettingsPairedDevicesScreen()
+                        case .memory: SettingsMemoryScreen()
+                        case .models: SettingsModelsScreen()
+                        case .cloudBrowser: SettingsCloudBrowserScreen()
+                        case .connectors, .wallet, .voice: EmptyView()
+                        }
+                    }
             } else {
                 VStack(spacing: 20) {
                     if status == "loading" {

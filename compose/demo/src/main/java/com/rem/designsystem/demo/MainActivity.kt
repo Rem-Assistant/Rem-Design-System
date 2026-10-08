@@ -55,22 +55,25 @@ private enum class Route { Home, Settings, Agent, Controls }
 fun Playground() {
     val context = LocalContext.current
     var route by rememberSaveable { mutableStateOf(Route.Home) }
+    var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     val back = { route = if (route == Route.Agent) Route.Settings else Route.Home }
-    BackHandler(route != Route.Home) { back() }
+    BackHandler(route != Route.Home && destination == null) { back() }
     val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls" }
     Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
+        if (destination == null) {
         CenterAlignedTopAppBar(title = { Text(title, style = RemTypography.bodyBold) }, navigationIcon = {
             if (route != Route.Home) IconButton(onClick = back, modifier = Modifier.testTag("back")) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = RemColors.current.backgroundPrimary))
+        }
     }) { padding ->
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(Modifier.then(if (destination == null) Modifier.padding(padding) else Modifier).fillMaxSize()) {
             when (route) {
                 Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text("Settings New · Android", style = RemTypography.title3Bold)
-                    Text("A local fixture. Only Settings → Rem is connected. Other rows are visual references. Automations is outside this trial.", style = RemTypography.footnote)
+                    Text("A local prototype with illustrative data. Paired Devices, Cloud browser, Memory and Models are connected; other destinations are awaiting implementation. Automations remains outside this trial.", style = RemTypography.footnote)
                     Text("Load fixture", style = RemTypography.bodyBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) }
@@ -87,7 +90,9 @@ fun Playground() {
                         context.startActivity(Intent.createChooser(share, null))
                     })
                 }
-                Route.Agent -> AgentPreview(fixture, onCancel = { route = Route.Settings })
+                Route.Agent -> AgentPreview(fixture, destination = destination,
+                    onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
+                    onCancel = { route = Route.Settings })
                 Route.Controls -> ControlsPreview()
             }
         }
@@ -95,7 +100,9 @@ fun Playground() {
 }
 
 @Composable
-private fun AgentPreview(fixture: LoadFixture, onCancel: () -> Unit) {
+private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestination?,
+                         onOpenDestination: (AgentSettingsDestination) -> Unit,
+                         onDestinationBack: () -> Unit, onCancel: () -> Unit) {
     var status by remember { mutableStateOf("loading") }
     var attempt by remember { mutableIntStateOf(0) }
     LaunchedEffect(attempt) {
@@ -103,7 +110,18 @@ private fun AgentPreview(fixture: LoadFixture, onCancel: () -> Unit) {
         delay(if (fixture == LoadFixture.Slow && attempt == 0) 10000 else 200)
         status = if (fixture == LoadFixture.Error && attempt == 0) "error" else "ready"
     }
-    if (status == "ready") Column(Modifier.verticalScroll(rememberScrollState())) { AgentSettingsContent() }
+    if (status == "ready") {
+        when (destination) {
+            AgentSettingsDestination.PairedDevices -> SettingsPairedDevicesScreen(onBack = onDestinationBack)
+            AgentSettingsDestination.Memory -> SettingsMemoryScreen(onBack = onDestinationBack)
+            AgentSettingsDestination.Models -> SettingsModelsScreen(onBack = onDestinationBack)
+            AgentSettingsDestination.CloudBrowser -> SettingsCloudBrowserScreen(onBack = onDestinationBack)
+            else -> Column(Modifier.verticalScroll(rememberScrollState())) {
+                AgentSettingsContent(availableDestinations = setOf(AgentSettingsDestination.PairedDevices,
+                    AgentSettingsDestination.CloudBrowser, AgentSettingsDestination.Memory, AgentSettingsDestination.Models), openDestination = onOpenDestination)
+            }
+        }
+    }
     else Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)) {
         if (status == "loading") {
             CircularProgressIndicator()

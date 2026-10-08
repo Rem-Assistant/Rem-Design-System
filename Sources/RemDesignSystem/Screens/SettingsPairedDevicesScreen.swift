@@ -29,11 +29,13 @@ public struct SettingsPairedDevicesScreen: View {
         }
         .background(DesignTokens.Color.backgroundPrimary)
         .navigationTitle(PairedDevicesCopy.navigationTitle)
-        .navigationBarTitleDisplayMode(.inline)
+        .settingsInlineNavigationTitle()
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button(PairedDevicesCopy.addAction) { showingAddBoundary = true }
-                    .accessibilityIdentifier("pairedDevices.add")
+                if !state.isEmpty {
+                    Button(PairedDevicesCopy.addAction) { showingAddBoundary = true }
+                        .accessibilityIdentifier("pairedDevices.add")
+                }
             }
         }
         .sheet(isPresented: $showingAddBoundary) { addBoundarySheet }
@@ -61,13 +63,15 @@ public struct SettingsPairedDevicesScreen: View {
                 Text(PairedDevicesCopy.listFooter)
             }
         }
-        .listStyle(.insetGrouped)
-        .textCase(nil)
+        .settingsDestinationList()
     }
 
     private func deviceRow(_ peer: PairedDevicePeer) -> some View {
         ListRow(layout: .nativeList, leading: {
-            ContainedIcon(peer.heroSymbol, fill: .subtle, size: .settings, glyphWeight: .regular)
+            Image(systemName: peer.heroSymbol)
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .frame(width: 29, height: 29)
                 .accessibilityHidden(true)
         }, content: {
             VStack(alignment: .leading, spacing: 3) {
@@ -91,6 +95,8 @@ public struct SettingsPairedDevicesScreen: View {
     // MARK: Empty state (1833:52316)
 
     private var emptyState: some View {
+        GeometryReader { geometry in
+            ScrollView {
         VStack(spacing: DesignTokens.Spacing.lg) {
             Spacer()
             ContainedIcon(PairedDevicesCopy.emptySymbol, fill: .subtle, size: .large, glyphWeight: .regular)
@@ -113,14 +119,17 @@ public struct SettingsPairedDevicesScreen: View {
             Spacer()
         }
         .padding(.horizontal, DesignTokens.Spacing.xl)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
         .accessibilityIdentifier("pairedDevices.empty")
+            }
+        }
     }
 
     // MARK: Add boundary (explicit, no authored pairing destination)
 
     private var addBoundarySheet: some View {
         NavigationStack {
+            ScrollView {
             VStack(spacing: DesignTokens.Spacing.lg) {
                 ContainedIcon(PairedDevicesCopy.emptySymbol, fill: .subtle, size: .large, glyphWeight: .regular)
                     .accessibilityHidden(true)
@@ -131,10 +140,12 @@ public struct SettingsPairedDevicesScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(DesignTokens.Spacing.xl)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, DesignTokens.Spacing.xl)
+            }
             .background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle(PairedDevicesCopy.addTitle)
-            .navigationBarTitleDisplayMode(.inline)
+            .settingsInlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(PairedDevicesCopy.addDismiss) { showingAddBoundary = false }
@@ -200,10 +211,9 @@ struct PairedDeviceDetailView: View {
                 Text(PairedDevicesCopy.detailFooter)
             }
         }
-        .listStyle(.insetGrouped)
-        .textCase(nil)
+        .settingsDestinationList()
         .navigationTitle(peer.name)
-        .navigationBarTitleDisplayMode(.inline)
+        .settingsInlineNavigationTitle()
         .confirmationDialog(
             PairedDevicesCopy.removeConfirmationTitle(peer.name),
             isPresented: $showingRemoveConfirmation,

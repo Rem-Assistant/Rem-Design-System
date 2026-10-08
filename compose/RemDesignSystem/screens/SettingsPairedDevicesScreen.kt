@@ -7,10 +7,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LaptopMac
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -43,7 +45,10 @@ import com.rem.designsystem.tokens.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPairedDevicesScreen(onBack: () -> Unit) {
-    var state by remember { mutableStateOf(PairedDevicesState()) }
+    var state by rememberSaveable(stateSaver = listSaver<PairedDevicesState, String>(
+        save = { it.peers.map { peer -> peer.id } },
+        restore = { ids -> PairedDevicesState(PairedDevicesState().peers.filter { it.id in ids }) },
+    )) { mutableStateOf(PairedDevicesState()) }
     var selectedPeerId by rememberSaveable { mutableStateOf<String?>(null) }
     var showingAddBoundary by rememberSaveable { mutableStateOf(false) }
 
@@ -67,7 +72,7 @@ fun SettingsPairedDevicesScreen(onBack: () -> Unit) {
                     }
                 },
                 actions = {
-                    if (!onDetail) {
+                    if (!onDetail && !state.isEmpty) {
                         TextButton(onClick = { showingAddBoundary = true }, modifier = Modifier.testTag("pairedDevices.add")) {
                             Text(PairedDevicesCopy.ADD_ACTION, style = RemTypography.bodyBold, color = colors.brandBlue)
                         }
@@ -111,12 +116,8 @@ private fun PairedDevicesList(state: PairedDevicesState, onOpen: (String) -> Uni
                     showsDivider = index < state.peers.lastIndex,
                     onClick = { onOpen(peer.id) },
                     leading = {
-                        ContainedIcon(
-                            symbol = Symbols.Devices,
-                            modifier = Modifier.clearAndSetSemantics {},
-                            fill = ContainedIconFill.Subtle,
-                            size = ContainedIconSize.Settings,
-                        )
+                        Icon(Icons.Outlined.LaptopMac, contentDescription = null,
+                            modifier = Modifier.size(29.dp), tint = colors.labelPrimary)
                     },
                     content = {
                         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
