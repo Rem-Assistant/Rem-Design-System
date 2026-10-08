@@ -755,7 +755,7 @@ class SettingsPlaygroundTest {
                 waitForTag("cloudBrowser.savedLogin")
                 compose.onNodeWithText(username).assertExists()
                 compose.onNodeWithText("•".repeat(12)).assertExists()
-                capture("CloudBrowser-clear-all-retained-login-$domain-light")
+                capture("CloudBrowser-clear-all-retained-login-${domain.replace('.', '-')}-light")
                 systemBack()
                 waitForTag("cloudBrowser.siteDetail")
                 systemBack()
