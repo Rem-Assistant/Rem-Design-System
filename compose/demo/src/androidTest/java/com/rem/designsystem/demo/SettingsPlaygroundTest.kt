@@ -1,6 +1,8 @@
 package com.rem.designsystem.demo
 
 import android.graphics.Bitmap
+import android.os.Build
+import android.view.inspector.WindowInspector
 import android.content.ContentValues
 import android.provider.MediaStore
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -11,6 +13,8 @@ import androidx.test.espresso.Espresso
 import androidx.compose.ui.text.AnnotatedString
 import org.junit.Rule
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class SettingsPlaygroundTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
@@ -21,6 +25,20 @@ class SettingsPlaygroundTest {
         // Compose semantics can expose the new route before the device capture shows it.
         // Wait for the platform accessibility stream to settle, including dialogs/IME.
         automation.waitForIdle(500, 5000)
+        if (Build.VERSION.SDK_INT >= 29) {
+            // Semantics/idle do not guarantee that SurfaceFlinger has the latest route pixels.
+            // Flush the focused activity/dialog window and wait for its submitted frame.
+            val committed = CountDownLatch(1)
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val root = WindowInspector.getGlobalWindowViews().lastOrNull { it.isShown && it.hasWindowFocus() }
+                    ?: compose.activity.window.decorView
+                root.viewTreeObserver.registerFrameCommitCallback {
+                    root.postOnAnimation { committed.countDown() }
+                }
+                root.invalidate()
+            }
+            check(committed.await(5, TimeUnit.SECONDS)) { "No rendered frame committed before screenshot $name" }
+        }
         // AGP uninstalls the app after connected tests, removing app-scoped files.
         // Test-owned MediaStore output survives that cleanup on the dedicated emulator.
         val resolver = compose.activity.contentResolver
@@ -755,12 +773,20 @@ class SettingsPlaygroundTest {
             listOf("PairedDevices", "pairedDevices", "pairedDevices.peer.mac-studio"),
             listOf("Memory", "settingsMemory", "memory.summaryRow"),
             listOf("Models", "settingsModels", "models.addProviderKey"),
-            listOf("CloudBrowser", "cloudBrowser.root", "cloudBrowser.seeAllSites"),
+            listOf("CloudBrowser", "cloudBrowser.root", "cloudBrowser.clearAllData"),
         )
         destinations.forEach { (route, rootTag, finalControl) ->
             openDestination(route, rootTag)
             capture("$route-$suffix")
             compose.onNodeWithTag(finalControl).performScrollTo().assertIsDisplayed()
+            if (largeText && route == "Memory") {
+                compose.onNodeWithText("Open the generated summary to ask Rem to correct, add, or forget something.")
+                    .performScrollTo().assertIsDisplayed()
+            }
+            if (largeText && route == "CloudBrowser") {
+                compose.onNodeWithText("Saved passwords remain until you remove them.")
+                    .performScrollTo().assertIsDisplayed()
+            }
             if (largeText) capture("$route-large-text-bottom")
             val backTag = when (route) {
                 "PairedDevices" -> "pairedDevices.back"

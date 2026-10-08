@@ -182,7 +182,7 @@ private fun PairedDeviceDetail(peer: PairedDevicePeer, onRemove: (String) -> Uni
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(RemSpacing.xs)) {
             ContainedIcon(
-                symbol = Symbols.Devices,
+                icon = Icons.Outlined.LaptopMac,
                 modifier = Modifier.clearAndSetSemantics {},
                 fill = ContainedIconFill.Subtle,
                 size = ContainedIconSize.Large,
