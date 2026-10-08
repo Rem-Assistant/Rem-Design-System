@@ -32,6 +32,32 @@ class PairedDeliveryTests(unittest.TestCase):
         self.assertIn("Paparazzi `DeviceConfig.PIXEL_6` viewport", body)
         self.assertIn("raw PNG dimensions are not layout differences", body)
 
+    def test_actual_settings_capture_names_pair_with_source_contract(self):
+        contract = CONTRACTS["settings-foundation"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for platform in ("swiftui", "compose", "reference"):
+                (root / platform).mkdir()
+                for name in ("SettingsEntry-light", "AgentSettings-light"):
+                    (root / platform / (name + ".png")).write_bytes(b"fixture")
+            (root / "structure").mkdir()
+            (root / "structure/report.json").write_text(json.dumps({
+                "status": "completed", "head": "a" * 40,
+                "structure": {"canonicalScreens": [
+                    {"id": value["node"], "status": "conformant"}
+                    for value in contract["references"].values()
+                ], "screens": [], "sourceAmendments": ["Subtle is explicitly approved."]},
+            }))
+            status, body, attachments = delivery.prepare(
+                root, "a" * 40, "success", ["tools/playground-ios/App/RemSettingsPlaygroundApp.swift"],
+                CONTRACTS, primary_contract="settings-foundation",
+            )
+        self.assertEqual(status, "ready")
+        self.assertEqual(len(attachments), 6)
+        self.assertIn("actual Settings playground", body)
+        self.assertIn("Subtle is explicitly approved", body)
+        self.assertNotIn("Paparazzi", body)
+
     def test_approved_consent_state_set(self):
         self.assertEqual(
             CONTRACTS["onboarding-consent"]["states"],
