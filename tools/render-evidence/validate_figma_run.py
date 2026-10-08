@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import re
+from settings_routing import validate_settings_pair
 
 
 def _positive_int(value: object, label: str) -> int:
@@ -20,7 +21,8 @@ def _mapping(value: object, label: str) -> dict:
 
 
 def validate(run: dict, artifact: dict, *, repository: str, pr: int,
-             head_sha: str, base_sha: str, base_ref: str, allow_settings_manual: bool = False) -> dict:
+             head_sha: str, base_sha: str, base_ref: str, allow_settings_manual: bool = False,
+             head_ref: str | None = None) -> dict:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
         raise ValueError("full repository name required")
     _positive_int(pr, "PR number")
@@ -36,8 +38,8 @@ def validate(run: dict, artifact: dict, *, repository: str, pr: int,
     manual = run.get("event") == "workflow_dispatch"
     if run.get("event") != "pull_request_target" and not (manual and allow_settings_manual):
         raise ValueError("Figma evidence was not produced by an authorized event")
-    if manual and base_ref != "codex/settings-integration":
-        raise ValueError("manual Figma evidence requires the Settings integration base")
+    if manual:
+        validate_settings_pair(base_ref, head_ref)
     if run.get("status") != "completed" or run.get("conclusion") != "success":
         raise ValueError("Figma evidence run did not complete successfully")
     expected_run_sha = base_sha if manual else head_sha
@@ -71,6 +73,8 @@ def validate(run: dict, artifact: dict, *, repository: str, pr: int,
         base = _mapping(binding.get("base"), "PR base binding")
         if head.get("sha") != head_sha or head.get("ref") != head_branch:
             raise ValueError("Figma run PR binding does not match the feature head")
+        if head_ref is not None and head.get("ref") != head_ref:
+            raise ValueError("Figma run PR binding does not match the expected head ref")
         if base.get("sha") != base_sha or base.get("ref") != base_ref:
             raise ValueError("Figma run PR binding does not match the expected base")
         for side, value in (("head", head), ("base", base)):
@@ -100,6 +104,7 @@ def main() -> None:
     parser.add_argument("--repository", required=True)
     parser.add_argument("--pr", type=int, required=True)
     parser.add_argument("--head-sha", required=True)
+    parser.add_argument("--head-ref")
     parser.add_argument("--base-sha", required=True)
     parser.add_argument("--base-ref", required=True)
     parser.add_argument("--allow-settings-manual", action="store_true")
@@ -113,6 +118,7 @@ def main() -> None:
         base_sha=args.base_sha,
         base_ref=args.base_ref,
         allow_settings_manual=args.allow_settings_manual,
+        head_ref=args.head_ref,
     )
 
 

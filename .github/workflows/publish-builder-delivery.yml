@@ -58,7 +58,10 @@ jobs:
           set -euo pipefail
           [[ "$RUN_ID" =~ ^[0-9]+$ ]]
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            test "$GITHUB_REF_NAME" = codex/settings-integration
+            case "$GITHUB_REF_NAME" in
+              codex/settings-integration|codex/settings-review-contracts|codex/settings-review-native) ;;
+              *) echo '::error::unsupported manual publisher ref'; exit 1 ;;
+            esac
           fi
           meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
           test "$(jq -r .event <<<"$meta")" = pull_request
@@ -108,8 +111,17 @@ jobs:
           test "$(jq -r .base.repo.full_name <<<"$pr_meta")" = "$GITHUB_REPOSITORY"
           base_ref=$(jq -r .base.ref <<<"$pr_meta")
           base_sha=$(jq -r .base.sha <<<"$pr_meta")
+          head_ref=$(jq -r .head.ref <<<"$pr_meta")
+          test "$(jq -r .state <<<"$pr_meta")" = open
+          test "$(jq -r .head.repo.full_name <<<"$pr_meta")" = "$GITHUB_REPOSITORY"
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            test "$base_ref" = codex/settings-integration
+            test "$GITHUB_REF_NAME" = "$base_ref"
+            case "$base_ref:$head_ref" in
+              codex/settings-integration:agent-factory/settings-issue-*)
+                [[ "$head_ref" =~ ^agent-factory/settings-issue-[0-9]+$ ]] ;;
+              codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
+              *) echo '::error::unsupported Settings base/head pair'; exit 1 ;;
+            esac
             # Bind manual evidence to the current admitted integration ref,
             # never the potentially stale pull.base.sha creation snapshot.
             encoded_ref=$(jq -rn --arg ref "$base_ref" '$ref | @uri')
@@ -118,11 +130,10 @@ jobs:
             test "$(jq -r .state <<<"$pr_meta")" = open
             test "$(jq -r .draft <<<"$pr_meta")" = true
             test "$(jq -r .head.repo.full_name <<<"$pr_meta")" = "$GITHUB_REPOSITORY"
-            head_ref=$(jq -r .head.ref <<<"$pr_meta")
-            [[ "$head_ref" =~ ^agent-factory/settings-issue-[0-9]+$ ]]
           fi
           echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
           mapfile -t scopes < <(jq -r '.labels[].name | select(startswith("delivery-scope:")) | sub("^delivery-scope:"; "")' <<<"$pr_meta")
           test "${#scopes[@]}" -le 1
           if [ "${#scopes[@]}" = "1" ]; then
@@ -131,7 +142,11 @@ jobs:
           else
             echo "primary_contract=" >> "$GITHUB_OUTPUT"
           fi
-          case "$base_ref" in main|codex/settings-integration) ;; *) echo "::error::unsupported evidence base branch: $base_ref"; exit 1 ;; esac
+          case "$base_ref:$head_ref" in
+            main:*|codex/settings-integration:*) ;;
+            codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
+            *) echo "::error::unsupported evidence base/head pair: $base_ref:$head_ref"; exit 1 ;;
+          esac
           run_meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
           test "$(jq -r .path <<<"$run_meta")" = ".github/workflows/screenshots.yml"
           gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/pulls" --jq '.[].number' | grep -Fxq "$PR"
@@ -205,6 +220,7 @@ jobs:
           SHA: ${{ needs.locate.outputs.head_sha }}
           BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           BASE_REF: ${{ steps.validate.outputs.base_ref }}
+          HEAD_REF: ${{ steps.validate.outputs.head_ref }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
         run: |
           set -euo pipefail
@@ -231,7 +247,6 @@ jobs:
           case "$run_event" in
             pull_request_target) ;;
             workflow_dispatch)
-              test "$BASE_REF" = codex/settings-integration
               MANUAL_ARGS=(--allow-settings-manual)
               ;;
             *) echo '::error::unsupported Figma evidence event'; exit 1 ;;
@@ -248,7 +263,7 @@ jobs:
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/validate_figma_run.py" \
             --run-meta "$run_meta_path" --artifact "$artifact_meta_path" \
             --repository "$GITHUB_REPOSITORY" --pr "$PR" \
-            --head-sha "$SHA" --base-sha "$BASE_SHA" --base-ref "$BASE_REF" "${MANUAL_ARGS[@]}"
+            --head-sha "$SHA" --head-ref "$HEAD_REF" --base-sha "$BASE_SHA" --base-ref "$BASE_REF" "${MANUAL_ARGS[@]}"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "run_attempt=$run_attempt" >> "$GITHUB_OUTPUT"
           echo "artifact_id=$(jq -r .id <<<"$artifact")" >> "$GITHUB_OUTPUT"
@@ -273,6 +288,8 @@ jobs:
           FIGMA_RUN_ID: ${{ steps.figma-run.outputs.run_id }}
           FIGMA_RUN_ATTEMPT: ${{ steps.figma-run.outputs.run_attempt }}
           FIGMA_RUN_EVENT: ${{ steps.figma-run.outputs.event }}
+          BASE_REF: ${{ steps.validate.outputs.base_ref }}
+          HEAD_REF: ${{ steps.validate.outputs.head_ref }}
           BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           TRUSTED_WORKFLOW_SHA: ${{ steps.validate.outputs.trusted_design_workflow_sha }}
           PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
@@ -283,7 +300,7 @@ jobs:
           contracts_sha=$(shasum -a 256 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/contracts.json" | awk '{print $1}')
           MANUAL_ARGS=()
           if [ "$FIGMA_RUN_EVENT" = workflow_dispatch ]; then
-            MANUAL_ARGS=(--manual-base-sha "$BASE_SHA")
+            MANUAL_ARGS=(--manual-base-sha "$BASE_SHA" --manual-base-ref "$BASE_REF" --manual-head-ref "$HEAD_REF")
           fi
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/artifact.py" \
             --root "$FIGMA_ROOT" --pr "$PR" --sha "$SHA" \
@@ -339,11 +356,20 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ needs.locate.outputs.head_sha }}
           VERIFY_CONCLUSION: ${{ needs.locate.outputs.conclusion }}
+          BASE_REF: ${{ steps.validate.outputs.base_ref }}
+          BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
           PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
         run: |
           set -euo pipefail
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
+          # Refuse a stale delivery if the candidate or trusted base moved during export/upload preparation.
+          pr_meta=$(gh api "repos/${REPO}/pulls/${PR}")
+          test "$(jq -r .head.sha <<<"$pr_meta")" = "$SHA"
+          test "$(jq -r .base.ref <<<"$pr_meta")" = "$BASE_REF"
+          test "$(jq -r .state <<<"$pr_meta")" = open
+          encoded_ref=$(jq -rn --arg ref "$BASE_REF" '$ref | @uri')
+          test "$(gh api "repos/${REPO}/git/ref/heads/${encoded_ref}" --jq .object.sha)" = "$BASE_SHA"
           SCOPE_ARGS=()
           if [ -n "$PRIMARY_CONTRACT" ]; then
             SCOPE_ARGS=(--primary-contract "$PRIMARY_CONTRACT")

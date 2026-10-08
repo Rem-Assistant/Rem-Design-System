@@ -63,7 +63,8 @@ class FigmaWorkflowRunValidationTests(unittest.TestCase):
                    head_branch="codex/settings-integration", pull_requests=[])
         item["workflow_run"].update(head_sha=self.base_sha, head_branch=run["head_branch"])
         kwargs = dict(repository=self.repository, pr=31, head_sha=self.head_sha,
-                      base_sha=self.base_sha, base_ref="codex/settings-integration")
+                      base_sha=self.base_sha, base_ref="codex/settings-integration",
+                      head_ref="agent-factory/settings-issue-74")
         with self.assertRaises(ValueError):
             validator.validate(run, item, **kwargs)
         self.assertEqual(validator.validate(run, item, allow_settings_manual=True, **kwargs)["run_id"], run["id"])
@@ -74,6 +75,23 @@ class FigmaWorkflowRunValidationTests(unittest.TestCase):
         kwargs["base_ref"] = "main"
         with self.assertRaises(ValueError):
             validator.validate(run, item, allow_settings_manual=True, **kwargs)
+
+    def test_manual_stack_requires_an_exact_admitted_pair_and_base_sha(self):
+        for base, head in (("codex/settings-review-contracts", "codex/settings-review-native"),
+                           ("codex/settings-review-native", "codex/settings-review-evidence")):
+            run, item = self.fixtures()
+            run.update(event="workflow_dispatch", head_sha=self.base_sha,
+                       head_branch=base, pull_requests=[])
+            item["workflow_run"].update(head_sha=self.base_sha, head_branch=base)
+            kwargs = dict(repository=self.repository, pr=31, head_sha=self.head_sha,
+                          base_sha=self.base_sha, base_ref=base, head_ref=head,
+                          allow_settings_manual=True)
+            self.assertEqual(validator.validate(run, item, **kwargs)["run_id"], run["id"])
+            for change in ({"head_ref": "codex/unrelated"}, {"head_ref": base},
+                           {"base_ref": "main"}, {"base_sha": "c" * 40},
+                           {"allow_settings_manual": False}):
+                with self.subTest(base=base, change=change), self.assertRaises(ValueError):
+                    validator.validate(run, item, **(kwargs | change))
 
     def test_accepts_real_pull_request_target_metadata_shape(self):
         run, artifact = self.fixtures()

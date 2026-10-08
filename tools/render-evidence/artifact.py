@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from settings_routing import validate_settings_pair
 
 
 def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
@@ -14,7 +15,9 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
              primary_contract: str | None = None,
              require_reference_export: bool = False,
              require_structure_verification: bool = False,
-             manual_base_sha: str | None = None) -> dict:
+             manual_base_sha: str | None = None,
+             manual_base_ref: str | None = None,
+             manual_head_ref: str | None = None) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("full lowercase head SHA required")
     if not re.fullmatch(r"[0-9a-f]{64}", workflow_sha256):
@@ -72,10 +75,11 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
     if manual_base_sha is not None:
         if not re.fullmatch(r"[0-9a-f]{40}", manual_base_sha):
             raise ValueError("full trusted manual base SHA required")
+        validate_settings_pair(manual_base_ref, manual_head_ref)
         if (manifest.get("event") != "workflow_dispatch" or
                 manifest.get("manual_base_sha") != manual_base_sha or
-                manifest.get("manual_base_ref") != "codex/settings-integration" or
-                not re.fullmatch(r"agent-factory/settings-issue-[0-9]+", str(manifest.get("manual_head_ref", ""))) or
+                manifest.get("manual_base_ref") != manual_base_ref or
+                manifest.get("manual_head_ref") != manual_head_ref or
                 primary_contract != "settings-foundation"):
             raise ValueError("manual Figma manifest is not bound to the isolated Settings candidate")
 
@@ -120,6 +124,8 @@ def main() -> None:
     parser.add_argument("--require-reference-export", action="store_true")
     parser.add_argument("--require-structure-verification", action="store_true")
     parser.add_argument("--manual-base-sha")
+    parser.add_argument("--manual-base-ref")
+    parser.add_argument("--manual-head-ref")
     args = parser.parse_args()
     validate(
         args.root,
@@ -135,6 +141,8 @@ def main() -> None:
         require_reference_export=args.require_reference_export,
         require_structure_verification=args.require_structure_verification,
         manual_base_sha=args.manual_base_sha,
+        manual_base_ref=args.manual_base_ref,
+        manual_head_ref=args.manual_head_ref,
     )
 
 

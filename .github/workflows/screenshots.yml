@@ -26,6 +26,10 @@ on:
       - "tokens/generated/**"
       - "tools/render-evidence/**"
       - "tools/render-swift/**"
+      - "docs/playground/evidence/**"
+      - "docs/playground/artifacts.json"
+      - "docs/playground/verification.md"
+      - ".github/workflows/screenshots.yml"
 
 permissions:
   contents: read
@@ -110,7 +114,7 @@ jobs:
 
   settings-ios:
     name: Exercise Settings playground (iOS)
-    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration') && inputs.platform != 'android'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'android'
     runs-on: macos-14
     timeout-minutes: 45
     steps:
@@ -163,7 +167,7 @@ jobs:
 
   settings-android:
     name: Exercise Settings playground (Android)
-    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration') && inputs.platform != 'ios'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'ios'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
