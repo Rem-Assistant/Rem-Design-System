@@ -10,7 +10,7 @@ public struct SettingsConnectorsScreen: View {
 
     public var body: some View {
         List {
-            Section("Connected") {
+            Section {
                 if fixture.isConnected {
                     NavigationLink(isActive: $showingGmail) {
                         GmailSettingsView(fixture: $fixture, onDisconnected: {
@@ -34,11 +34,11 @@ public struct SettingsConnectorsScreen: View {
                         }
                     }.buttonStyle(.plain).accessibilityIdentifier("connectors.provider.\(provider.id)")
                 }
-            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
-            Section("Available") {
+            } header: { HStack { Text("Connected").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            Section {
                 if !fixture.isConnected { available(.gmail) }
                 ForEach([ConnectorProvider.googleDrive, .linear, .todoist]) { available($0) }
-            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Available").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .connectorListSurface().environment(\.defaultMinListRowHeight, 64)
         .navigationTitle("Connectors").settingsInlineNavigationTitle()
@@ -69,7 +69,7 @@ private struct GmailSettingsView: View {
                     Text("Read and manage Gmail").font(.body).foregroundStyle(DesignTokens.Color.labelSecondary)
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, DesignTokens.Spacing.sm)
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
-            Section("Connected accounts") {
+            Section {
                 ForEach(fixture.accounts) { account in
                     ListRow(layout: .nativeList, leading: { GmailAccountAvatar() }, content: {
                         ListRowLabel(account.email, subtitle: account.role)
@@ -88,7 +88,7 @@ private struct GmailSettingsView: View {
                 Button("Connect another account") {
                     boundary = "Adding a Gmail account requires provider authorization, which is not included in this prototype. No account is connected."
                 }.accessibilityIdentifier("gmail.connectAnother")
-            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Connected accounts").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 NavigationLink {
                     GmailPermissionsView(fixture: $fixture, account: nil)
@@ -97,12 +97,12 @@ private struct GmailSettingsView: View {
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             actionSection("Read actions", actions: GmailFixtureCopy.readActions)
             actionSection("Write actions", actions: GmailFixtureCopy.writeActions)
-            Section("Information") {
+            Section {
                 boundaryRow("Category", subtitle: "Productivity", message: "Connector category details are not included in this prototype.")
                 boundaryRow("Website", subtitle: "mail.google.com", message: "External Gmail website navigation is not included in this prototype.")
                 boundaryRow("Privacy Policy", subtitle: "policies.google.com", message: "External privacy-policy navigation is not included in this prototype.")
                 boundaryRow("Report an issue", message: "Issue reporting is not included in this prototype. No report is sent.")
-            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Information").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .connectorListSurface().navigationTitle("Gmail").settingsInlineNavigationTitle()
         .accessibilityIdentifier("gmail.detail")
@@ -134,11 +134,11 @@ private struct GmailSettingsView: View {
         .connectorBoundary($boundary)
     }
     private func actionSection(_ title: String, actions: [String]) -> some View {
-        Section(title) {
+        Section {
             ForEach(actions, id: \.self) { action in
                 boundaryRow(action, message: "\(action) is a listed Gmail capability. Executing actions is not included in this prototype; no email is read or changed.")
             }
-        }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+        } header: { HStack { Text(title).textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
     }
     private func boundaryRow(_ title: String, subtitle: String? = nil, message: String) -> some View {
         Button { boundary = message } label: {
@@ -204,7 +204,7 @@ private struct GmailPermissionsView: View {
                         .accessibilityAddTraits(selected == permission ? .isSelected : [])
                         .accessibilityIdentifier("gmail.permission.\(scopeID).\(permission.id)")
                 }
-            } header: { Text("Access level") } footer: {
+            } header: { HStack { Text("Access level").textCase(nil) } } footer: {
                 Text(account.map { GmailFixtureCopy.accountFooter($0.email) } ?? GmailFixtureCopy.connectorFooter)
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }

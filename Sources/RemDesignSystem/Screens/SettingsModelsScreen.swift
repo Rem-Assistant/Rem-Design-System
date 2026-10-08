@@ -77,7 +77,7 @@ public struct SettingsModelsScreen: View {
                 .tint(DesignTokens.Color.systemGreen)
                 .accessibilityIdentifier("models.toggle.auto")
             } header: {
-                Text("Rem").textCase(nil)
+                HStack { Text("Rem").textCase(nil) }
             } footer: {
                 Text(ModelsFixture.autoFooter)
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
@@ -106,7 +106,7 @@ public struct SettingsModelsScreen: View {
                 }
                 .accessibilityIdentifier("models.addProviderKey")
             } header: {
-                Text("API keys").textCase(nil)
+                HStack { Text("API keys").textCase(nil) }
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsDestinationList()
@@ -193,7 +193,7 @@ private struct AddProviderKeyView: View {
                         .accessibilityIdentifier("models.keyField")
                 }
             } header: {
-                Text("API key").textCase(nil)
+                HStack { Text("API key").textCase(nil) }
             } footer: {
                 Text(ModelsFixture.keyFooter)
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)

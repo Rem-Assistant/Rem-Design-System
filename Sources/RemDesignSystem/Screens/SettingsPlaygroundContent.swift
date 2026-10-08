@@ -131,18 +131,18 @@ public struct AgentSettingsContent: View {
                 SettingsRowLabel("Automations", subtitle: "Scheduled and triggered work", symbol: "bell.badge.fill")
                     .accessibilityIdentifier("automationsUnavailable")
                     .accessibilityHint("Unavailable. Automations design is awaiting a decision.")
-            } header: { Text("Capabilities").textCase(nil) } footer: {
+            } header: { HStack { Text("Capabilities").textCase(nil) } } footer: {
                 Text("Manage connected surfaces and how your agent can perform.")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 destination(.memory, "Memory", symbol: "brain.head.profile")
                 destination(.models, "Models", subtitle: "Automatic", symbol: "cpu")
                 destination(.wallet, "Wallet", symbol: "wallet.pass")
-            } header: { Text("Intelligence").textCase(nil) }
+            } header: { HStack { Text("Intelligence").textCase(nil) } }
                 .listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 destination(.voice, "Voice", subtitle: "Aria", symbol: "waveform")
-            } header: { Text("Experience").textCase(nil) }
+            } header: { HStack { Text("Experience").textCase(nil) } }
                 .listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsListStyle()

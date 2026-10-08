@@ -63,7 +63,7 @@ private struct CloudBrowserRootList: View {
                                    subtitle: "Ask before Rem opens a new site.",
                                    selection: $model.defaultPermission)
                     .accessibilityIdentifier("cloudBrowser.defaultPermission")
-            } header: { Text("Default access").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Default access").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
                 ForEach(model.recentSites) { site in
@@ -90,7 +90,7 @@ private struct CloudBrowserRootList: View {
                                title: "Clear all site data", tint: .red)
                 }
                 .accessibilityIdentifier("cloudBrowser.clearAllData")
-            } header: { Text("Browser data").textCase(nil) } footer: {
+            } header: { HStack { Text("Browser data").textCase(nil) } } footer: {
                 Text("Saved passwords remain until you remove them.")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
@@ -117,7 +117,7 @@ private struct CloudSitesList: View {
                 ForEach(model.sites) { site in
                     CloudSiteRow(site: site)
                 }
-            } header: { Text("Sites").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Sites").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .cloudListStyle()
         .navigationTitle("Sites")
@@ -157,13 +157,13 @@ private struct CloudAddSiteForm: View {
                 CloudPermissionRow(title: "Permission",
                                    subtitle: "Choose how Rem should handle this site.",
                                    selection: $permission)
-            } header: { Text("Access").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Access").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 CloudTextField(placeholder: "Username or email (optional)", text: $username)
                     .accessibilityIdentifier("cloudBrowser.addSite.username")
                 CloudSecureField(placeholder: "Password (optional)", text: $password)
                     .accessibilityIdentifier("cloudBrowser.addSite.password")
-            } header: { Text("Login details").textCase(nil) } footer: {
+            } header: { HStack { Text("Login details").textCase(nil) } } footer: {
                 Text("Save a login now, or add one later from the site's detail screen.")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
@@ -207,7 +207,7 @@ private struct CloudSiteDetail: View {
                                             get: { site.permission },
                                             set: { model.setPermission($0, for: siteID) }))
                             .accessibilityIdentifier("cloudBrowser.siteDetail.permission")
-                    } header: { Text("Access").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+                    } header: { HStack { Text("Access").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         ForEach(site.logins) { login in
@@ -219,7 +219,7 @@ private struct CloudSiteDetail: View {
                         NavigationLink("Add login", value: CloudBrowserRoute.addLogin(siteID))
                             .cloudLinkStyle()
                             .accessibilityIdentifier("cloudBrowser.siteDetail.addLogin")
-                    } header: { Text("Saved logins").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+                    } header: { HStack { Text("Saved logins").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         NavigationLink(value: CloudBrowserRoute.cookies(siteID)) {
@@ -231,7 +231,7 @@ private struct CloudSiteDetail: View {
                                        title: "Clear site data", tint: .red)
                         }
                         .accessibilityIdentifier("cloudBrowser.siteDetail.clearSiteData")
-                    } header: { Text("Site data").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+                    } header: { HStack { Text("Site data").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
                 }
                 .cloudListStyle()
                 .navigationTitle(site.domain)
@@ -269,13 +269,13 @@ private struct CloudAddLoginForm: View {
         List {
             Section {
                 CloudLabel("Login will be available only for this site.", title: domain)
-            } header: { Text("Website").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            } header: { HStack { Text("Website").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 CloudLoginField(label: "Username or email", text: $username)
                     .accessibilityIdentifier("cloudBrowser.addLogin.username")
                 CloudLoginField(label: "Password", text: $password, secure: true)
                     .accessibilityIdentifier("cloudBrowser.addLogin.password")
-            } header: { Text("Login details").textCase(nil) } footer: {
+            } header: { HStack { Text("Login details").textCase(nil) } } footer: {
                 Text("Rem uses this login only when you authorize access to \(domain).")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
@@ -321,12 +321,12 @@ private struct CloudSavedLoginView: View {
                 List {
                     Section {
                         CloudLabel("This credential is scoped to this site.", title: site.domain)
-                    } header: { Text("Website").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+                    } header: { HStack { Text("Website").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
                         usernameRow(login)
                         passwordRow(login)
-                    } header: { Text("Login details").textCase(nil) } footer: {
+                    } header: { HStack { Text("Login details").textCase(nil) } } footer: {
                         Text("Illustrative values. Saved credentials require secure storage and explicit authorization.")
                     }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
@@ -434,7 +434,7 @@ private struct CloudCookiesView: View {
                     Section {
                         CloudLabel(site.signedIn ? "Signed in" : "Signed out", title: "Session")
                         CloudLabel(site.illustrativeCookies, title: "Cookies")
-                    } header: { Text(site.domain).textCase(nil) } footer: {
+                    } header: { HStack { Text(site.domain).textCase(nil) } } footer: {
                         Text("Clearing cookies signs Rem out of this site. Saved logins are separate.")
                     }.listRowBackground(DesignTokens.Color.backgroundSecondary)
                     Section {
@@ -591,14 +591,15 @@ private struct CloudLoginField: View {
             }
             Group {
                 if secure {
-                    SecureField(showsLabel ? "" : label, text: $text,
+                    SecureField(label, text: $text,
                                 prompt: Text(showsLabel ? "" : label).foregroundStyle(DesignTokens.Color.labelSecondary))
                 } else {
-                    TextField(showsLabel ? "" : label, text: $text,
+                    TextField(label, text: $text,
                               prompt: Text(showsLabel ? "" : label).foregroundStyle(DesignTokens.Color.labelSecondary)).noAutocap()
                 }
             }
             .font(filledResting ? .footnote : .body)
+            .frame(minHeight: 20)
             .foregroundStyle(filledResting ? DesignTokens.Color.labelSecondary : DesignTokens.Color.labelPrimary)
             .focused($focused)
             .onSubmit { focused = false }

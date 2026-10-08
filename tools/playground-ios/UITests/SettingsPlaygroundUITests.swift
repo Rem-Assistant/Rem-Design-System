@@ -636,6 +636,8 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [keyboardDismissed], timeout: 3), .completed)
         XCTAssertTrue(app.staticTexts["Username or email"].exists)
         XCTAssertTrue(app.staticTexts["Password"].exists)
+        XCTAssertGreaterThan(cloudField("cloudBrowser.addLogin.password", secure: true).frame.height, 12,
+                             "The filled secure input must remain visible after keyboard dismissal")
         capture("CloudBrowser-add-login-filled-light")
         save.tap()
         XCTAssertTrue(app.navigationBars["linear.app"].waitForExistence(timeout: 3))

@@ -58,7 +58,7 @@ public struct SettingsPairedDevicesScreen: View {
                     .accessibilityIdentifier("pairedDevices.peer.\(peer.id)")
                 }
             } header: {
-                Text(PairedDevicesCopy.sectionHeader).textCase(nil)
+                HStack { Text(PairedDevicesCopy.sectionHeader).textCase(nil) }
             } footer: {
                 Text(PairedDevicesCopy.listFooter)
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
@@ -198,7 +198,7 @@ struct PairedDeviceDetailView: View {
                     }
                 }
             } header: {
-                Text(PairedDevicesCopy.connectionSectionHeader).textCase(nil)
+                HStack { Text(PairedDevicesCopy.connectionSectionHeader).textCase(nil) }
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {

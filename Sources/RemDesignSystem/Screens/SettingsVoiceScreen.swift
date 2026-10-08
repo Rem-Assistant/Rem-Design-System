@@ -117,7 +117,7 @@ public struct VoiceControlsContent: View {
                 .pickerStyle(.menu)
                 .tint(DesignTokens.Color.labelSecondary)
                 .accessibilityIdentifier("voice.conversationEntry")
-            } header: { Text("Conversation entry").textCase(nil) } footer: { Text(VoiceSettingsFixture.conversationFooter) }
+            } header: { HStack { Text("Conversation entry").textCase(nil) } } footer: { Text(VoiceSettingsFixture.conversationFooter) }
                 .listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         Section {
@@ -125,13 +125,13 @@ public struct VoiceControlsContent: View {
                 SettingsRowLabel("Voice", subtitle: fixture.selected.label, symbol: "waveform")
             }
             .accessibilityIdentifier("voice.chooseVoice")
-        } header: { Text("Spoken responses").textCase(nil) } footer: { Text(VoiceSettingsFixture.spokenFooter) }
+        } header: { HStack { Text("Spoken responses").textCase(nil) } } footer: { Text(VoiceSettingsFixture.spokenFooter) }
             .listRowBackground(DesignTokens.Color.backgroundSecondary)
         Section {
             slider("Speed", minimum: "Slower", maximum: "Faster", value: $fixture.speed, id: "speed")
             slider("Consistency", minimum: "Creative", maximum: "Consistent", value: $fixture.consistency, id: "consistency")
             slider("Likeness", minimum: "Flexible", maximum: "Faithful", value: $fixture.likeness, id: "likeness")
-        } header: { Text("Character & speed").textCase(nil) } footer: { Text(VoiceSettingsFixture.characterFooter) }
+        } header: { HStack { Text("Character & speed").textCase(nil) } } footer: { Text(VoiceSettingsFixture.characterFooter) }
             .listRowBackground(DesignTokens.Color.backgroundSecondary)
     }
 
@@ -211,7 +211,7 @@ public struct VoiceChooserContent: View {
                 }, trailing: { EmptyView() })
             }
         } header: {
-            Text(VoiceSettingsFixture.chooserIntro).font(.subheadline).textCase(nil)
+            HStack { Text(VoiceSettingsFixture.chooserIntro).font(.subheadline).textCase(nil) }
         } footer: {
             Text(VoiceSettingsFixture.chooserFooter).font(.subheadline)
         }.listRowBackground(DesignTokens.Color.backgroundSecondary)
