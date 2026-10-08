@@ -71,7 +71,7 @@ public struct SettingsEntryContent: View {
                     Button(action: onShare) { SettingsRowLabel("Share Rem", symbol: "square.and.arrow.up") }
                         .buttonStyle(.plain).accessibilityIdentifier("shareRem")
                 } else { referenceRow("Share Rem", symbol: "square.and.arrow.up") }
-                referenceRow("Help & Support", symbol: "square.and.arrow.up")
+                referenceRow("Help & Support", symbol: "questionmark.circle.fill")
             }
             Section { referenceAction("Sign Out") }
             Section { referenceAction("Delete Account") }
@@ -80,8 +80,7 @@ public struct SettingsEntryContent: View {
         .accessibilityIdentifier("settingsEntry")
     }
     private var agentLabel: some View {
-        SettingsRowLabel("Rem", subtitle: "Connected", symbol: "info.circle.fill")
-            .frame(minHeight: 58)
+        SettingsRowLabel("Agent settings", subtitle: "Connected", symbol: "info.circle.fill")
     }
     private func referenceRow(_ title: String, symbol: String) -> some View {
         SettingsRowLabel(title, symbol: symbol)

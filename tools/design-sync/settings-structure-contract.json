@@ -14,12 +14,13 @@
   "amendments": [
     "Native SwiftUI List/Section replaces the source custom scroll composition; Android retains canonical Compose sections.",
     "Settings contained icons use Subtle by explicit approval, while the current read-only Figma source remains tinted.",
-    "Automations is visibly unavailable pending an approved design; its source label is retained."
+    "Automations is visibly unavailable pending an approved design; its source label is retained.",
+    "The entry row is titled Agent settings, Help & Support uses a question-mark support icon, and entry-row density matches surrounding rows by explicit user refinement; the retained read-only source labels/icons remain separately verified."
   ],
   "screens": [
     {
       "id": "1964:86819",
-      "name": "Screen/Settings · Working entry",
+      "name": "Screen/Settings \u00b7 Working entry",
       "type": "COMPONENT",
       "instances": [
         {
@@ -55,10 +56,10 @@
           "parent": "I1827:50774;1224:5237;741:314",
           "componentId": "101:18",
           "text": [
-            "􀅵",
+            "\udbc0\udd75",
             "Rem",
             "Connected",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -80,9 +81,9 @@
           "parent": "I1827:50774;1237:92;741:314",
           "componentId": "101:18",
           "text": [
-            "􀍰",
+            "\udbc0\udf70",
             "Billing & Usage",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -98,9 +99,9 @@
           "parent": "I1827:50774;1237:92;741:314",
           "componentId": "101:18",
           "text": [
-            "􀉼",
+            "\udbc0\ude7c",
             "Permissions",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -121,9 +122,9 @@
           "parent": "I1827:50774;1237:154;741:314",
           "componentId": "101:18",
           "text": [
-            "􀅵",
+            "\udbc0\udd75",
             "About",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -144,7 +145,7 @@
           "parent": "I1827:50774;1237:218;741:314",
           "componentId": "101:18",
           "text": [
-            "􀈂",
+            "\udbc0\ude02",
             "Share Rem"
           ]
         },
@@ -161,9 +162,9 @@
           "parent": "I1827:50774;1237:218;741:314",
           "componentId": "101:18",
           "text": [
-            "􀈂",
+            "\udbc0\ude02",
             "Help & Support",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -220,7 +221,7 @@
     },
     {
       "id": "1827:50855",
-      "name": "Screen/Agent settings · Working",
+      "name": "Screen/Agent settings \u00b7 Working",
       "type": "COMPONENT",
       "instances": [
         {
@@ -233,10 +234,10 @@
           "parent": "I1827:50851;741:314",
           "componentId": "101:18",
           "text": [
-            "􀬩",
+            "\udbc2\udf29",
             "Paired Devices",
             "2",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -253,9 +254,9 @@
           "parent": "I1827:50851;741:314",
           "componentId": "101:18",
           "text": [
-            "􀒡",
+            "\udbc1\udca1",
             "Connectors",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -271,9 +272,9 @@
           "parent": "I1827:50851;741:314",
           "componentId": "101:18",
           "text": [
-            "􀆪",
+            "\udbc0\uddaa",
             "Cloud browser",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -289,10 +290,10 @@
           "parent": "I1827:50851;741:314",
           "componentId": "101:18",
           "text": [
-            "􀝗",
+            "\udbc1\udf57",
             "Automations",
             "Scheduled and triggered work",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -314,9 +315,9 @@
           "parent": "I1827:50852;741:314",
           "componentId": "101:18",
           "text": [
-            "􀯏",
+            "\udbc2\udfcf",
             "Memory",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -332,10 +333,10 @@
           "parent": "I1827:50852;741:314",
           "componentId": "101:18",
           "text": [
-            "􀫥",
+            "\udbc2\udee5",
             "Models",
             "Automatic",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -352,9 +353,9 @@
           "parent": "I1827:50852;741:314",
           "componentId": "101:18",
           "text": [
-            "􀟾",
+            "\udbc1\udffe",
             "Wallet",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {
@@ -375,10 +376,10 @@
           "parent": "I1827:50853;741:314",
           "componentId": "101:18",
           "text": [
-            "􀙫",
+            "\udbc1\ude6b",
             "Voice",
             "Aria",
-            "􀆊"
+            "\udbc0\udd8a"
           ]
         },
         {

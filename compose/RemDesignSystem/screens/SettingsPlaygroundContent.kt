@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Help
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +39,7 @@ fun SettingsEntryContent(openAgent: () -> Unit, onShare: (() -> Unit)?) {
                 Text("avery@example.com", style = RemTypography.footnote, color = colors.labelSecondary)
             }, trailing = {})
         }
-        RemSection { SettingsRowLabel("Rem", "Connected", Symbols.Info, minHeight = 82, onClick = openAgent, modifier = Modifier.testTag("openAgent")) }
+        RemSection { SettingsRowLabel("Agent settings", "Connected", Symbols.Info, onClick = openAgent, modifier = Modifier.testTag("openAgent")) }
         RemSection {
             SettingsRowLabel("Billing & Usage", symbol = Symbols.Billing, showsDivider = true)
             SettingsRowLabel("Permissions", symbol = Symbols.Permissions)
@@ -45,7 +47,16 @@ fun SettingsEntryContent(openAgent: () -> Unit, onShare: (() -> Unit)?) {
         RemSection { SettingsRowLabel("About", symbol = Symbols.Info) }
         RemSection {
             SettingsRowLabel("Share Rem", symbol = Symbols.Share, showsDivider = true, disclosure = false, onClick = onShare, modifier = Modifier.testTag("shareRem"))
-            SettingsRowLabel("Help & Support", symbol = Symbols.Share)
+            ListRow(
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = "Help & Support. Visual reference; unavailable in this playground"
+                },
+                leading = {
+                    ContainedIcon(Icons.Filled.Help, modifier = Modifier.clearAndSetSemantics {},
+                        fill = ContainedIconFill.Subtle, size = ContainedIconSize.Settings)
+                },
+                content = { ListRowLabel("Help & Support") }, trailing = {},
+            )
         }
         for (title in listOf("Sign Out", "Delete Account")) {
             RemSection {

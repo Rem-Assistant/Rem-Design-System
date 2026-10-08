@@ -8,6 +8,8 @@ Figma file af4yDqCzp57jds9lkFiIaO, Settings New entry 1964:86819, Agent Settings
 
 Samuel explicitly approved two amendments to the current visual source: iOS uses native SwiftUI List/Section rather than ScrollView/RemSection cards; all Settings ContainedIcon consumers use Subtle fill rather than their current explicit tinted overrides. Samuel subsequently refined Subtle to use semantic labelPrimary glyphs on the verified backgroundSecondary gray container; preserve explicit brand/status/accent exceptions. Preserve icon identities, settings size 29/radius7/glyph17, text, order, grouping and semantic tokens. Native grouped corners/section chrome may follow OS behavior; do not reconstruct custom cards to imitate native List.
 
+Samuel subsequently requested that the entry row be named **Agent settings**, that Help & Support use a question-mark support icon distinct from Share Rem, and that the entry row use the same density as surrounding rows. These are code amendments to the retained read-only Figma snapshot. Remove the extra SwiftUI 58pt content minimum and Compose 82dp row override; native/default row sizing owns the resulting height.
+
 ## Foundation owner
 
 One owner implements this foundation before destination work. Reuse ListRow, ContainedIcon and Compose RemSection. Preserve existing consumers/defaults. SwiftUI row content must support native containers without duplicated horizontal/vertical insets, separators or chevrons; NavigationLink owns navigation disclosure, Button owns direct actions, controls own their semantics. SwiftUI native Section supplies headers/footers; the existing custom RemSection remains available for genuinely custom ScrollView surfaces. Compose retains its canonical section and row slots with matching intent.
@@ -16,7 +18,7 @@ Expose an explicit typed Agent Settings route contract for pairedDevices, connec
 
 ## Behavior to preserve
 
-Gallery -> Settings -> Rem -> Agent settings. Native Back, fixture loading, error/Retry/Cancel, cancellation before a slow fixture completes, fresh load on reopening. Shared controls retain Toggle and display-name draft Save/Cancel semantics. Root non-Agent destinations stay references except Share Rem, whose system-handoff implementation is an integration task. No real sign-out/deletion/pairing/auth/payment/key/service operations.
+Gallery -> Settings -> Agent settings. Native Back, fixture loading, error/Retry/Cancel, cancellation before a slow fixture completes, fresh load on reopening. Shared controls retain Toggle and display-name draft Save/Cancel semantics. Root non-Agent destinations stay references except Share Rem, whose system-handoff implementation is an integration task. No real sign-out/deletion/pairing/auth/payment/key/service operations.
 
 ## Design/code mapping
 
