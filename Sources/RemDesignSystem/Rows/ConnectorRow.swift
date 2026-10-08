@@ -27,6 +27,7 @@ public struct ConnectorRow<Leading: View>: View {
     private let showsDivider: Bool
     private let leading: () -> Leading
     private var customContent: AnyView?
+    private var actionIdentifier: String?
     public init(_ title: String, state: ConnectorRowState, subtitle: String? = nil,
                 accessory: ConnectorRowAccessory, layout: ListRowLayout = .standalone, showsDivider: Bool = false,
                 @ViewBuilder leading: @escaping () -> Leading) {
@@ -40,14 +41,26 @@ public struct ConnectorRow<Leading: View>: View {
         self.title = title; self.subtitle = state.subtitle; self.accessory = accessory
         self.layout = layout; self.showsDivider = showsDivider; self.leading = leading; self.customContent = AnyView(content())
     }
+    /// Identify the native action itself; a composite row identifier can propagate to its brand image.
+    /// Internal to the Settings integration so the shared public variant API stays unchanged.
+    func actionAccessibilityIdentifier(_ identifier: String) -> Self {
+        var row = self
+        row.actionIdentifier = identifier
+        return row
+    }
     public var body: some View {
         ListRow(showsDivider: showsDivider, layout: layout, leading: leading, content: {
             if let customContent { customContent } else { ListRowLabel(title, subtitle: subtitle) }
         }, trailing: {
             switch accessory {
             case .action(let label, let action):
-                Button(label, action: action).remButton(.pillSecondary)
+                let button = Button(label, action: action).remButton(.pillSecondary)
                     .accessibilityLabel("\(label) \(title)")
+                if let actionIdentifier {
+                    button.accessibilityIdentifier(actionIdentifier)
+                } else {
+                    button
+                }
             case .progress:
                 ProgressView().accessibilityLabel("Connecting \(title)")
             case .disclosure:

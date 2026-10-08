@@ -49,7 +49,7 @@ public struct SettingsConnectorsScreen: View {
         ConnectorRow(provider.title, state: .available, accessory: .action("Connect", {
             boundary = "Connecting \(provider.title) requires provider authorization, which is not included in this prototype. No account is connected."
         }), layout: .nativeList) { ConnectorProviderMark(provider) }
-        .accessibilityIdentifier("connectors.provider.\(provider.id)")
+        .actionAccessibilityIdentifier("connectors.provider.\(provider.id)")
     }
 }
 
@@ -83,7 +83,6 @@ private struct GmailSettingsView: View {
                         .accessibilityLabel("Actions for \(account.email)")
                         .accessibilityIdentifier("gmail.accountMenu.\(account.id)")
                     })
-                    .accessibilityIdentifier("gmail.account.\(account.id)")
                 }
                 Button("Connect another account") {
                     boundary = "Adding a Gmail account requires provider authorization, which is not included in this prototype. No account is connected."

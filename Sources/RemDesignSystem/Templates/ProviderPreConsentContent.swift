@@ -94,6 +94,7 @@ public struct ProviderPreConsentContent<ProviderMark: View, BenefitIcon: View>: 
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(DesignTokens.Color.backgroundPrimary)
+        .accessibilityIdentifier(accessibilityIdentifier)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: DesignTokens.Spacing.sm) {
                 Button(payload.connectTitle, action: onConnect)
@@ -108,6 +109,5 @@ public struct ProviderPreConsentContent<ProviderMark: View, BenefitIcon: View>: 
             .frame(maxWidth: .infinity)
             .background(DesignTokens.Color.backgroundPrimary)
         }
-        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }

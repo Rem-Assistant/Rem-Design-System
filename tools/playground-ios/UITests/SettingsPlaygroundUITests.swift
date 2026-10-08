@@ -96,7 +96,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         openDestination("connectors", title: "Connectors")
         capture("Connectors-light")
         for provider in ["gmail", "googleCalendar", "notion", "slack", "googleDrive", "linear", "todoist"] {
-            let row = app.descendants(matching: .any)["connectors.provider.\(provider)"].firstMatch
+            let row = app.buttons["connectors.provider.\(provider)"]
             reveal(row)
         }
         capture("Connectors-brand-rows-bottom-light")
@@ -215,7 +215,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
             app.launch()
             openDestination("connectors", title: "Connectors")
             capture("Connectors-\(suffix)")
-            reveal(app.descendants(matching: .any)["connectors.provider.todoist"].firstMatch)
+            reveal(app.buttons["connectors.provider.todoist"])
             capture("Connectors-bottom-\(suffix)")
             for _ in 0..<6 { app.swipeDown() }
             app.buttons["connectors.provider.gmail"].tap()
@@ -429,10 +429,9 @@ final class SettingsPlaygroundUITests: XCTestCase {
             .descendants(matching: type).firstMatch
     }
     private func editCloudLogin(_ field: String) {
-        let row = app.descendants(matching: .any)
-            .matching(identifier: "cloudBrowser.savedLogin.edit\(field)").firstMatch
-        reveal(row)
-        row.buttons.firstMatch.tap()
+        let edit = app.buttons["cloudBrowser.savedLogin.edit\(field)"]
+        reveal(edit)
+        edit.tap()
     }
     private func openCloudSites() {
         openDestination("cloudBrowser", title: "Cloud browser")

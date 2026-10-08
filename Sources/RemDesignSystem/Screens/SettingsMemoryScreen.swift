@@ -183,7 +183,6 @@ private struct MemorySummaryView: View {
         .background(DesignTokens.Color.backgroundPrimary)
         .navigationTitle("Memory summary")
         .settingsInlineNavigationTitle()
-        .accessibilityIdentifier("memorySummary")
     }
 
     private var composer: some View {

@@ -120,7 +120,6 @@ public struct SettingsPairedDevicesScreen: View {
                 }
                 .padding(.horizontal, DesignTokens.Spacing.xl)
                 .frame(maxWidth: .infinity, minHeight: geometry.size.height)
-                .accessibilityIdentifier("pairedDevices.empty")
             }
         }
     }

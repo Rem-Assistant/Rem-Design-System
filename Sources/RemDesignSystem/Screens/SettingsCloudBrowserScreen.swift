@@ -62,7 +62,6 @@ private struct CloudBrowserRootList: View {
                 CloudPermissionRow(title: "Default permission",
                                    subtitle: "Ask before Rem opens a new site.",
                                    selection: $model.defaultPermission)
-                    .accessibilityIdentifier("cloudBrowser.defaultPermission")
             } header: { HStack { Text("Default access").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
@@ -206,7 +205,6 @@ private struct CloudSiteDetail: View {
                                            selection: Binding(
                                             get: { site.permission },
                                             set: { model.setPermission($0, for: siteID) }))
-                            .accessibilityIdentifier("cloudBrowser.siteDetail.permission")
                     } header: { HStack { Text("Access").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
@@ -381,8 +379,8 @@ private struct CloudSavedLoginView: View {
                 .accessibilityIdentifier("cloudBrowser.savedLogin.usernameField")
         } else {
             CloudEditRow(title: "Username or email", value: login.username,
+                         editIdentifier: "cloudBrowser.savedLogin.editUsername",
                          showsPencil: editing == .none) { start(.username, with: login.username) }
-                .accessibilityIdentifier("cloudBrowser.savedLogin.editUsername")
         }
     }
 
@@ -393,8 +391,8 @@ private struct CloudSavedLoginView: View {
                 .accessibilityIdentifier("cloudBrowser.savedLogin.passwordField")
         } else {
             CloudEditRow(title: "Password", value: login.maskedPassword,
+                         editIdentifier: "cloudBrowser.savedLogin.editPassword",
                          showsPencil: editing == .none) { start(.password, with: "") }
-                .accessibilityIdentifier("cloudBrowser.savedLogin.editPassword")
         }
     }
 
@@ -503,6 +501,7 @@ private struct CloudSiteRow: View {
 private struct CloudEditRow: View {
     let title: String
     let value: String
+    let editIdentifier: String
     let showsPencil: Bool
     let onEdit: () -> Void
     var body: some View {
@@ -515,6 +514,8 @@ private struct CloudEditRow: View {
                         .foregroundStyle(DesignTokens.Color.labelTertiary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Edit \(title.lowercased())")
+                .accessibilityIdentifier(editIdentifier)
             }
         }
         .frame(minHeight: 44)
@@ -599,7 +600,7 @@ private struct CloudLoginField: View {
                 }
             }
             .font(filledResting ? .footnote : .body)
-            .frame(minHeight: 20)
+            .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
             .foregroundStyle(filledResting ? DesignTokens.Color.labelSecondary : DesignTokens.Color.labelPrimary)
             .focused($focused)
             .onSubmit { focused = false }
