@@ -221,7 +221,17 @@ jobs:
           run_meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
           run_attempt=$(jq -r .run_attempt <<<"$run_meta")
           test "$(jq -r .path <<<"$run_meta")" = ".github/workflows/design-drift.yml"
-          test "$(jq -r .event <<<"$run_meta")" = "pull_request_target"
+          run_event=$(jq -r .event <<<"$run_meta")
+          MANUAL_ARGS=()
+          case "$run_event" in
+            pull_request_target) ;;
+            workflow_dispatch)
+              test "$BASE_REF" = codex/settings-integration
+              MANUAL_ARGS=(--allow-settings-manual)
+              ;;
+            *) echo '::error::unsupported Figma evidence event'; exit 1 ;;
+          esac
+          echo "event=$run_event" >> "$GITHUB_OUTPUT"
           test "$(jq -r .status <<<"$run_meta")" = "completed"
           test "$(jq -r .conclusion <<<"$run_meta")" = "success"
           run_meta_path="$RUNNER_TEMP/figma-run-meta.json"
@@ -233,7 +243,7 @@ jobs:
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/validate_figma_run.py" \
             --run-meta "$run_meta_path" --artifact "$artifact_meta_path" \
             --repository "$GITHUB_REPOSITORY" --pr "$PR" \
-            --head-sha "$SHA" --base-sha "$BASE_SHA" --base-ref "$BASE_REF"
+            --head-sha "$SHA" --base-sha "$BASE_SHA" --base-ref "$BASE_REF" "${MANUAL_ARGS[@]}"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "run_attempt=$run_attempt" >> "$GITHUB_OUTPUT"
           echo "artifact_id=$(jq -r .id <<<"$artifact")" >> "$GITHUB_OUTPUT"
@@ -257,6 +267,8 @@ jobs:
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
           FIGMA_RUN_ID: ${{ steps.figma-run.outputs.run_id }}
           FIGMA_RUN_ATTEMPT: ${{ steps.figma-run.outputs.run_attempt }}
+          FIGMA_RUN_EVENT: ${{ steps.figma-run.outputs.event }}
+          BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           TRUSTED_WORKFLOW_SHA: ${{ steps.validate.outputs.trusted_design_workflow_sha }}
           PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
         run: |
@@ -264,13 +276,17 @@ jobs:
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
           figma_file_key=$(jq -r .figmaFileKey "$GITHUB_WORKSPACE/consumer-delivery/tools/design-sync/manifest.json")
           contracts_sha=$(shasum -a 256 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/contracts.json" | awk '{print $1}')
+          MANUAL_ARGS=()
+          if [ "$FIGMA_RUN_EVENT" = workflow_dispatch ]; then
+            MANUAL_ARGS=(--manual-base-sha "$BASE_SHA")
+          fi
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/artifact.py" \
             --root "$FIGMA_ROOT" --pr "$PR" --sha "$SHA" \
             --run-id "$FIGMA_RUN_ID" --run-attempt "$FIGMA_RUN_ATTEMPT" \
             --workflow-sha256 "$TRUSTED_WORKFLOW_SHA" --media-dir reference \
             --figma-file-key "$figma_file_key" --contracts-sha256 "$contracts_sha" \
             --primary-contract "$PRIMARY_CONTRACT" \
-            --require-reference-export --require-structure-verification
+            --require-reference-export --require-structure-verification "${MANUAL_ARGS[@]}"
           mkdir -p "$EVIDENCE_ROOT/reference"
           cp "$FIGMA_ROOT"/reference/*.png "$EVIDENCE_ROOT/reference/"
           mkdir -p "$EVIDENCE_ROOT/structure"
