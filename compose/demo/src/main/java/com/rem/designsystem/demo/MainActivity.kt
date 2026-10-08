@@ -111,6 +111,7 @@ fun Playground() {
                     OutlinedButton(onClick = { route = Route.Controls }) { Text("Shared controls") }
                     Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview plays no audio; Continue and Skip are host callbacks with no downstream screen.", style = RemTypography.footnote)
                     OutlinedButton(onClick = { voiceOutcome = null; route = Route.OnboardingVoice }, modifier = Modifier.testTag("openOnboardingVoice")) { Text("Open Onboarding Voice") }
+                    Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, modifier = Modifier.testTag("playground.build"))
                 }
                 Route.OnboardingVoice -> {
                     val outcome = voiceOutcome

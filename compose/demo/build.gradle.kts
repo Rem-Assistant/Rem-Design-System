@@ -14,10 +14,14 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        val playgroundSha = providers.gradleProperty("playgroundSourceSha").orElse("unversioned").get()
+        require(playgroundSha == "unversioned" || playgroundSha.matches(Regex("[0-9a-f]{40}")))
+        buildConfigField("String", "PLAYGROUND_SOURCE_SHA", "\"$playgroundSha\"")
+        manifestPlaceholders["playgroundSourceSha"] = "git:$playgroundSha"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

@@ -37,6 +37,12 @@ struct PlaygroundHome: View {
                     Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview is local and plays no audio; Continue and Skip are host callbacks with no downstream screen.").font(.footnote)
                     NavigationLink("Open Onboarding Voice", value: PlaygroundRoute.onboardingVoice).accessibilityIdentifier("openOnboardingVoice")
                 }
+                Section("Build") {
+                    let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+                    let sha = Bundle.main.object(forInfoDictionaryKey: "RemPlaygroundSourceSHA") as? String ?? "unversioned"
+                    Text("Version \(version) · \(String(sha.prefix(12)))")
+                        .font(.footnote).accessibilityIdentifier("playground.build")
+                }
             }.navigationTitle("Rem Playground")
                 .navigationDestination(for: PlaygroundRoute.self) { route in
                     switch route {

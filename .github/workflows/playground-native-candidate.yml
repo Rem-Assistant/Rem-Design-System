@@ -1,0 +1,135 @@
+name: Playground native candidate (no distribution)
+
+on:
+  pull_request:
+    branches: [agent-factory/playground-issue-84]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full approved SHA; must equal the selected workflow revision
+        type: string
+        required: true
+
+# Unprivileged candidate validation only; no signing credentials, app uploads, or publisher.
+# The existing screenshots/publisher trust contract is intentionally unchanged.
+permissions:
+  contents: read
+
+concurrency:
+  group: playground-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  preflight:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'codex/playground-local-delivery-draft')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Pin requested candidate to this workflow revision
+        env:
+          REQUESTED_SHA: ${{ inputs.source_sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            test "$REQUESTED_SHA" = "$SOURCE_SHA"
+          fi
+          python3 tools/playground-delivery/delivery.py preflight --sha "$SOURCE_SHA"
+      - run: python3 -m unittest discover -s tools/playground-delivery -p 'test_*.py'
+
+  ios:
+    needs: preflight
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Run every iOS native journey
+        env:
+          IOS_TEST: ''
+        run: bash tools/playground-ios/run-hosted-journeys.sh
+      # run-hosted-journeys.sh tees XCTest output to settings-ios-build.log.
+      - name: Verify every expected method actually passed
+        run: |
+          xcodebuild -version > "$RUNNER_TEMP/toolchain.txt"
+          python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform ios --report "$RUNNER_TEMP/settings-ios-build.log" --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/ios-native.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-native-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/ios-native.json
+          if-no-files-found: error
+
+  android:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify the actual checked-in wrapper
+        working-directory: compose
+        run: |
+          ./gradlew --version > "$RUNNER_TEMP/toolchain.txt"
+          grep -q '^Gradle 8.14.4$' "$RUNNER_TEMP/toolchain.txt"
+          java -version >> "$RUNNER_TEMP/toolchain.txt" 2>&1
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          disable-animations: true
+          working-directory: compose
+          script: ./gradlew :demo:connectedDebugAndroidTest --stacktrace --no-daemon
+      - name: Verify every expected method actually passed
+        run: python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform android --report compose/demo/build/outputs/androidTest-results --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/android-native.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-native-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/android-native.json
+          if-no-files-found: error
+
+  native-evidence:
+    if: always()
+    needs: [preflight, ios, android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject missing, failed, cancelled, or skipped native jobs
+        env:
+          PREFLIGHT: ${{ needs.preflight.result }}
+          IOS: ${{ needs.ios.result }}
+          ANDROID: ${{ needs.android.result }}
+        run: test "$PREFLIGHT" = success && test "$IOS" = success && test "$ANDROID" = success
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-native-${{ env.SOURCE_SHA }}'
+          path: ${{ runner.temp }}/native
+          merge-multiple: true
+      - name: Verify source, scope, and native method sets on both platforms
+        run: |
+          python3 tools/playground-delivery/delivery.py check-tests --sha "$SOURCE_SHA" --platform ios --tests "$RUNNER_TEMP/native/ios-native.json"
+          python3 tools/playground-delivery/delivery.py check-tests --sha "$SOURCE_SHA" --platform android --tests "$RUNNER_TEMP/native/android-native.json"
