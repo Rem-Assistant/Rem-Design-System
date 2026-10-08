@@ -92,12 +92,20 @@ public struct SettingsEntryContent: View {
     }
 }
 
-/// Agent Settings master 1827:50855. The host registers destinations using navigationDestination.
+/// Agent Settings master 1827:50855. Hosts can supply direct destinations or register value routes.
 /// Unavailable routes remain references, without a misleading disclosure or no-op button.
 public struct AgentSettingsContent: View {
     private let availableDestinations: Set<AgentSettingsDestination>
+    private let destinationContent: ((AgentSettingsDestination) -> AnyView)?
     public init(availableDestinations: Set<AgentSettingsDestination> = []) {
         self.availableDestinations = availableDestinations
+        self.destinationContent = nil
+    }
+    /// Use direct native links when this screen is itself reached through view-based navigation.
+    public init<Destination: View>(availableDestinations: Set<AgentSettingsDestination>,
+                                  @ViewBuilder destination: @escaping (AgentSettingsDestination) -> Destination) {
+        self.availableDestinations = availableDestinations
+        self.destinationContent = { AnyView(destination($0)) }
     }
     public var body: some View {
         List {
@@ -126,8 +134,14 @@ public struct AgentSettingsContent: View {
     @ViewBuilder private func destination(_ route: AgentSettingsDestination, _ title: String,
                                          subtitle: String? = nil, symbol: String) -> some View {
         if availableDestinations.contains(route) {
-            NavigationLink(value: route) { SettingsRowLabel(title, subtitle: subtitle, symbol: symbol) }
-                .accessibilityIdentifier("agentDestination.\(route.rawValue)")
+            if let destinationContent {
+                NavigationLink { destinationContent(route) } label: {
+                    SettingsRowLabel(title, subtitle: subtitle, symbol: symbol)
+                }.accessibilityIdentifier("agentDestination.\(route.rawValue)")
+            } else {
+                NavigationLink(value: route) { SettingsRowLabel(title, subtitle: subtitle, symbol: symbol) }
+                    .accessibilityIdentifier("agentDestination.\(route.rawValue)")
+            }
         } else {
             SettingsRowLabel(title, subtitle: subtitle, symbol: symbol)
                 .accessibilityIdentifier("agentDestination.\(route.rawValue).unavailable")
