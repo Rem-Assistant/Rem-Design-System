@@ -15,7 +15,7 @@
     "Native SwiftUI List/Section replaces the source custom scroll composition; Android retains canonical Compose sections.",
     "Settings contained icons use Subtle by explicit approval, while the current read-only Figma source remains tinted.",
     "Automations is visibly unavailable pending an approved design; its source label is retained.",
-    "The entry row is titled Agent settings, Help & Support uses a question-mark support icon, and entry-row density matches surrounding rows by explicit user refinement; the retained read-only source labels/icons remain separately verified."
+    "The approved entry title Agent settings, omitted Connected subtitle, and Help & Support question-mark glyph are now present in the live Figma source. Code removes the inherited extra Agent row minimum; the source row still has a fixed 82-point height, which is not an approved spacing target."
   ],
   "screens": [
     {
@@ -57,8 +57,7 @@
           "componentId": "101:18",
           "text": [
             "\udbc0\udd75",
-            "Rem",
-            "Connected",
+            "Agent settings",
             "\udbc0\udd8a"
           ]
         },
@@ -67,8 +66,7 @@
           "parent": "I1827:50774;1224:5237;741:314;2001:67459;101:13",
           "componentId": "188:2",
           "text": [
-            "Rem",
-            "Connected"
+            "Agent settings"
           ]
         },
         {
@@ -162,7 +160,7 @@
           "parent": "I1827:50774;1237:218;741:314",
           "componentId": "101:18",
           "text": [
-            "\udbc0\ude02",
+            "\udbc0\udd4d",
             "Help & Support",
             "\udbc0\udd8a"
           ]
