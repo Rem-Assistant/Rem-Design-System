@@ -1,29 +1,64 @@
 name: agent-builder
 on:
-  issues:
-    types: [labeled]
   workflow_dispatch:
     inputs:
       issue:
         description: Issue number
         required: true
         type: string
+      base_ref:
+        description: Isolated Settings integration branch
+        required: true
+        type: choice
+        options: [codex/settings-integration]
+        default: codex/settings-integration
 permissions:
   actions: read
   contents: read
+  pull-requests: read
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.base_ref }}
+          persist-credentials: false
+      - name: Require isolated code-only configuration and an existing draft task PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ISSUE: ${{ inputs.issue }}
+          BASE_REF: ${{ inputs.base_ref }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = codex/settings-integration
+          test "$BASE_REF" = codex/settings-integration
+          test -n "$CLAUDE_CODE_OAUTH_TOKEN" || { echo '::error::CLAUDE_CODE_OAUTH_TOKEN is unavailable'; exit 1; }
+          [[ "$ISSUE" =~ ^[0-9]+$ ]]
+          jq -e --arg base "$BASE_REF" '
+            .builder.base_branch == $base and
+            .builder.branch_prefix == "agent-factory/settings-issue-" and
+            .figma.enabled == false and
+            .integration.automatic_promotion == false
+          ' .agent-factory/config.json
+          # Reusing a seeded draft avoids the upstream code-only create-PR path,
+          # which currently creates a ready PR. No upstream Factory patch needed.
+          prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
+            --head "agent-factory/settings-issue-$ISSUE" --json number,isDraft,baseRefName)
+          test "$(jq length <<<"$prs")" = 1
+          jq -e --arg base "$BASE_REF" '.[0].isDraft == true and .[0].baseRefName == $base' <<<"$prs"
   builder:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
-    uses: samuelalake/agent-factory/.github/workflows/builder.yml@bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+    needs: preflight
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@3a767861cebce2f08f21639297ab8693b77f9a4f
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+      factory_ref: 3a767861cebce2f08f21639297ab8693b77f9a4f
       runner: ubuntu-latest
-      base_ref: main
+      base_ref: ${{ inputs.base_ref }}
       app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      FIGMA_MCP_OAUTH_BUNDLE: ${{ secrets.FIGMA_MCP_OAUTH_BUNDLE }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
       AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}
