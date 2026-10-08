@@ -12,7 +12,11 @@
       "docs/contracts/onboarding-sign-in.md",
       "docs/contracts/onboarding-consent.md",
       "SHAPE-OF-A-TASK.md",
-      "docs/figma-delivery.md"
+      "docs/figma-delivery.md",
+      "docs/contracts/settings-playground.md",
+      "docs/contracts/settings-foundation.md",
+      ".claude/skills/rem-design-system/local-policy/product-design-supplement.md",
+      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md"
     ],
     "skill_dirs": [
       ".claude/skills"
@@ -50,8 +54,8 @@
     "model": "claude-opus-4-8",
     "cli_version": "0.55.1",
     "timeout_seconds": 1800,
-    "branch_prefix": "agent-factory/issue-",
-    "base_branch": "main",
+    "branch_prefix": "agent-factory/settings-issue-",
+    "base_branch": "codex/settings-integration",
     "runner": "ubuntu-latest",
     "fallback_provider": null,
     "fallback_model": null,
@@ -66,7 +70,7 @@
   },
   "figma": {
     "marker": "<!-- figma-writer:agent-factory -->",
-    "enabled": true,
+    "enabled": false,
     "lease_key": "figma-oauth/samuel-primary",
     "model": "claude-opus-4-8",
     "timeout_seconds": 1800
@@ -86,7 +90,8 @@
     "visual_evidence_paths": [
       "Sources/**",
       "compose/**",
-      "tokens/generated/**"
+      "tokens/generated/**",
+      "tools/playground-ios/**"
     ],
     "require_builder_delivery": true,
     "delivery_wait_seconds": 1800

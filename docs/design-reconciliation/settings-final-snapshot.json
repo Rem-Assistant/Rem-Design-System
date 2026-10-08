@@ -1,0 +1,1810 @@
+{
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "flow": "1220:2427",
+  "screenCount": 32,
+  "screens": [
+    {
+      "id": "130:44",
+      "name": "Screen/Settings",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:20363",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Settings",
+      "note": "Aligned. SharedSettingsView.swift; SettingsView.swift. Entry to Agent settings. Other global settings remain in their owning documentation flows.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Your agent runtime"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1224:5287",
+      "name": "Screen/Agent settings",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:20840",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Agent settings",
+      "note": "Proposed. SharedGatewayDetailView.swift; SharedRemGatewayHomeView.swift. Proposed simplified settings organized around Capabilities, Intelligence, Automations, and Experience.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Capabilities",
+        "Intelligence",
+        "Experience"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1498:6367",
+      "name": "Screen/Paired Devices · Populated",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:21196",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Paired devices",
+      "note": "Review. SharedGatewayDeviceConnectionsView.swift; SharedLinkedDevicesView.swift. Authenticated-device list with connected status. Verify the active product branch before implementation.",
+      "status": "Review",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Paired devices"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1317:4507",
+      "name": "Screen/Paired Devices",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:21405",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "No paired devices",
+      "note": "Proposed. SharedGatewayDeviceConnectionsView.swift. Gateway-independent empty state using automatic account discovery and Refresh devices.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1498:6478",
+      "name": "Screen/Device detail · Current",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:22167",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "iPhone 16 Pro",
+      "note": "Review. SharedLinkedDevicesView.swift. Current device detail with connection and permission sections; no primary-device or reset-pairing concept.",
+      "status": "Review",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connection",
+        "Permissions"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1498:6551",
+      "name": "Screen/Device detail · Other",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:22587",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Mac Studio",
+      "note": "Review. SharedLinkedDevicesView.swift. Peer device detail with connection, permissions, and destructive Remove device action.",
+      "status": "Review",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connection",
+        "Permissions"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "133:192",
+      "name": "Screen/Connectors",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:24584",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Connectors",
+      "note": "Aligned. SharedComposioConnectionsView.swift. Connected provider opens Manage. Available provider hands off to external authorization and reconciles on return.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connected",
+        "Available"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1250:5166",
+      "name": "Screen/Connectors · Manage sheet",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:25126",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Manage connector",
+      "note": "Aligned. SharedComposioConnectionsView.swift. ComposioConnectionSheet over Connectors. Done dismisses; Disconnect opens confirmation.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connected",
+        "Available"
+      ],
+      "scrims": [
+        {
+          "id": "1250:5284",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1273:5600",
+      "name": "Screen/Connector revoke confirmation",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:26281",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Revoke connector access",
+      "note": "Aligned. SharedComposioConnectionsView.swift. Native confirmation over Manage. Cancel returns; confirmation revokes access and refreshes Connectors.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connected",
+        "Available"
+      ],
+      "scrims": [
+        {
+          "id": "I1273:5601;1250:5284",
+          "opacity": 0.3199999928474426
+        },
+        {
+          "id": "1273:5733",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1347:5360",
+      "name": "Screen/Connectors · Manage sheet · Proposed configuration",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:25688",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Configure connector",
+      "note": "Proposed. SharedComposioConnectionsView.swift. Proposed Configure connection action and external handoff; not currently implemented.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connected",
+        "Available"
+      ],
+      "scrims": [
+        {
+          "id": "1347:5362",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1317:4660",
+      "name": "Screen/Cloud browser",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:26693",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Cloud browser",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed site-centered model replacing global policy and cookie cleanup. Default permission is a local menu.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Default access",
+        "Sites",
+        "Browser data"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1457:253",
+      "name": "Screen/Cloud browser · Site detail",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:26958",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Site detail",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed per-site access, credentials and session management. Permission is local; saved login and cookies open their detail states.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Access",
+        "Saved logins",
+        "Site data"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1457:740",
+      "name": "Screen/Cloud browser · Add login",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:27384",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Add login",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed secure credential editor. Save returns to Site detail; Back cancels. Secure storage and authorization require implementation.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Website",
+        "Login details"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1464:977",
+      "name": "Screen/Cloud browser · Sites",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:27190",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Sites",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed complete sites list. Site opens Site detail; Add opens Add site.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Sites"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1457:511",
+      "name": "Screen/Cloud browser · Add site",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:27598",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Add site",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed site editor with optional credentials. Add saves and returns; Back cancels.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Website",
+        "Access",
+        "Login details"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1317:5109",
+      "name": "Screen/Automations",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:29665",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Automations",
+      "note": "Aligned. SharedAutomationsSettingsView.swift. Daily Brief is the current built-in automation; opens settings and run history.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1382:8421",
+      "name": "Screen/Daily Brief",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:29968",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Daily Brief",
+      "note": "Aligned. SharedAutomationsSettingsView.swift. Settings tab. Time and enabled state update locally; Run History changes the body. Unconnected inputs open Connectors.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Automation",
+        "Triggers",
+        "Agent instructions"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1589:98",
+      "name": "Screen/Memory · Proposed",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:30404",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Memory",
+      "note": "Proposed. Not in current codebase. Hybrid memory controls and generated summary based on current product direction and competitive audit.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Memory controls",
+        "Overview"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1590:266",
+      "name": "Screen/Memory summary · Proposed",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:30873",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Memory summary",
+      "note": "Proposed. Not in current codebase. Generated freeform memory summary with conversational correction through the canonical composer.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1317:5505",
+      "name": "Screen/Models",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:31331",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Models",
+      "note": "Review. SharedModelsSettingsView.swift; SharedBYOKSettingsView.swift. Current model policy plus proposed direct API-key entry. Verify the latest branch route and provider activation behavior.",
+      "status": "Review",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Rem",
+        "API keys"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1085:1248",
+      "name": "Screen/Wallet",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:31557",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Wallet",
+      "note": "Proposed. SharedGatewayDetailView.swift. Proposed Wallet entry and payment-provider handoffs. No owning production Wallet view or verified provider return exists.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1220:2",
+      "name": "Screen/Voice",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:31985",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Voice",
+      "note": "Proposed. SharedVoiceSettingsView.swift. Center-button preference uses a canonical menu-value accessory; Voice remains a navigation row into the chooser.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Conversation entry",
+        "Spoken responses",
+        "Character & speed"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1501:7097",
+      "name": "Screen/Voice · Center action menu",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:32821",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Center action menu",
+      "note": "Proposed. SharedVoiceSettingsView.swift. Proposed local menu invoked by Center button starts; selecting Chat updates the preference.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Conversation entry",
+        "Spoken responses",
+        "Character & speed"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1501:7029",
+      "name": "Screen/Choose a voice",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:33289",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Choose a voice",
+      "note": "Aligned. SharedVoiceSettingsView.swift. Preview is local and does not select a voice. Selection updates Voice; Back returns from the chooser.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1503:7731",
+      "name": "Screen/Voice · Center action Chat",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:34036",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Center action set to Chat",
+      "note": "Proposed. SharedVoiceSettingsView.swift. Proposed selected preference state. Voice selection and tuning remain independent.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Conversation entry",
+        "Spoken responses",
+        "Character & speed"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1550:9696",
+      "name": "Screen/Daily Brief · Run history",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:30196",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Daily Brief",
+      "note": "Aligned. SharedAutomationsSettingsView.swift. Run History tab, empty state. Settings returns to configuration. A run timestamp does not prove output or notification delivery.",
+      "status": "Aligned",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Last scheduled run"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1550:10046",
+      "name": "Screen/Cloud browser · Saved login",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:27788",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Saved login",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed credential detail reached from Site detail. Save returns; Remove login requires confirmation. Production has no credential storage UI.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Website",
+        "Login details"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1550:10215",
+      "name": "Screen/Cloud browser · Cookies and sessions",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:27954",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Cookies & sessions",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed per-site session detail reached from Site detail. Clear site data opens confirmation and preserves saved credentials.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": {
+        "scroll": "VERTICAL",
+        "width": 402,
+        "height": 724,
+        "insetLeft": 16,
+        "insetRight": 16,
+        "transparent": true,
+        "contentWidth": 402
+      },
+      "overlay": false,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "github.com"
+      ],
+      "scrims": [],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1551:32169",
+      "name": "Screen/Unlink device confirmation",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:23715",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Remove device confirmation",
+      "note": "Review. SharedLinkedDevicesView.swift. Confirmation for revoking a peer device access.",
+      "status": "Review",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Connection",
+        "Permissions"
+      ],
+      "scrims": [
+        {
+          "id": "1551:32171",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1551:32539",
+      "name": "Screen/Cloud browser · Clear site data",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:28219",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Cloud browser · Clear site data",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed confirmation. Cancel returns to the backing screen; Clear site data confirms the destructive action.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Access",
+        "Saved logins",
+        "Site data"
+      ],
+      "scrims": [
+        {
+          "id": "1551:32541",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1551:32848",
+      "name": "Screen/Cloud browser · Remove login",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1552:28481",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Cloud browser · Remove login",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed confirmation. Cancel returns to the backing screen; Remove login confirms the destructive action.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Website",
+        "Login details"
+      ],
+      "scrims": [
+        {
+          "id": "1551:32850",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    },
+    {
+      "id": "1561:12422",
+      "name": "Screen/Cloud browser · Clear all site data",
+      "placeholderId": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:34201",
+      "placeholderComponent": "769:169",
+      "width": 402,
+      "height": 874,
+      "title": "Cloud browser · Clear all site data",
+      "note": "Proposed. SharedCloudBrowserSettingsView.swift. Proposed global confirmation. Cancel returns to Cloud browser; Clear all site data removes cookies and sessions across all sites while keeping saved credentials.",
+      "status": "Proposed",
+      "metadataVisible": true,
+      "body": null,
+      "overlay": true,
+      "rawText": [],
+      "unstyledText": [],
+      "wrongFonts": [],
+      "hardcodedPaints": [],
+      "fixedDrift": [],
+      "headers": [
+        "Default access",
+        "Sites",
+        "Browser data"
+      ],
+      "scrims": [
+        {
+          "id": "1561:12424",
+          "opacity": 0.3199999928474426
+        }
+      ],
+      "accessoryOverflow": [],
+      "metadataContained": true
+    }
+  ],
+  "looseConnectors": [],
+  "connectors": [
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37832",
+      "name": "Flow Connector · Rem → Agent settings",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 187,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.727935791015625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37835",
+      "name": "Flow Connector · Paired Devices → Paired devices",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 92,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.727935791015625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37862",
+      "name": "Flow Connector · MacBook Air → Pending device request",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 103,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.727935791015625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37865",
+      "name": "Flow Connector · This iPhone → Current device",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 869,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.7279052734375
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37868",
+      "name": "Flow Connector · Mac Studio → Other device",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 1902,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.72802734375
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37871",
+      "name": "Flow Connector · Pair a New Device → Pairing code handoff",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 2882,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.727783203125
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37874",
+      "name": "Flow Connector · Reset Pairing → Reset pairing confirmation",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 1902,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.727935791015625,
+        "right": 2,
+        "bottom": 1.999969482421875
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37877",
+      "name": "Flow Connector · Unlink Device → Unlink device confirmation",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 1841,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7279052734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37880",
+      "name": "Flow Connector · Scan on receiving device → Scan setup code",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 1050,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.72802734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37883",
+      "name": "Flow Connector · Notion → Manage connector",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 216,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.72802734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37886",
+      "name": "Flow Connector · Disconnect & Revoke Access → Revoke connector access",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 731,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.72802734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37889",
+      "name": "Flow Connector · github.com → Site detail",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 206,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.72802734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37892",
+      "name": "Flow Connector · See all sites → Sites",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 769,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.7275390625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37895",
+      "name": "Flow Connector · Add login → Add login",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 277,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.72802734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37898",
+      "name": "Flow Connector · Add → Add site",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 5,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 9.7275390625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37901",
+      "name": "Flow Connector · samuel@example.com → Saved login",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 1998,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.7275390625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37904",
+      "name": "Flow Connector · Cookies & sessions → Cookies & sessions",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 2938,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.7275390625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37907",
+      "name": "Flow Connector · Clear site data → Cloud browser · Clear site data",
+      "componentId": "1553:12395",
+      "width": 762,
+      "height": 440,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.72802734375,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37910",
+      "name": "Flow Connector · Remove login → Cloud browser · Remove login",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 1511,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37913",
+      "name": "Flow Connector · Browse → Skills",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37916",
+      "name": "Flow Connector · Example skill → Skill detail",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 136,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37919",
+      "name": "Flow Connector · Search → Skills",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 274,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37922",
+      "name": "Flow Connector · Example skill → Review skill",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 152,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37925",
+      "name": "Flow Connector · Daily Brief → Daily Brief",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 96,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37928",
+      "name": "Flow Connector · Run History → Daily Brief",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37931",
+      "name": "Flow Connector · SOUL.md → SOUL.md",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 96,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.7275390625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37934",
+      "name": "Flow Connector · TOOLS.md → TOOLS.md",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 966,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.728515625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37937",
+      "name": "Flow Connector · AGENTS.md → AGENTS.md",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 2012,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.728515625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37940",
+      "name": "Flow Connector · Center button starts → Center action menu",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 199,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.728515625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37943",
+      "name": "Flow Connector · Voice → Choose a voice",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 1256,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.728515625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37946",
+      "name": "Flow Connector · Chat → Center action set to Chat",
+      "componentId": "1553:12395",
+      "width": 180,
+      "height": 296,
+      "renderOverflow": {
+        "left": 0,
+        "top": 14.728515625,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37949",
+      "name": "Flow Connector · Set Up Voice → Set Up Voice",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 906,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.728515625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37952",
+      "name": "Flow Connector · Update Agent → Update Agent",
+      "componentId": "1376:380",
+      "width": 180,
+      "height": 906,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.728515625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1561:37955",
+      "name": "Flow Connector · Clear all site data → Cloud browser · Clear all site data",
+      "componentId": "1376:380",
+      "width": 1344,
+      "height": 1776,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 14.7275390625
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12704",
+      "name": "Flow Connector · Agent settings branch spine",
+      "componentId": "1574:12700",
+      "width": 60,
+      "height": 20585,
+      "renderOverflow": {
+        "left": 0,
+        "top": 2,
+        "right": 2,
+        "bottom": 2
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12707",
+      "name": "Flow Connector · Connectors → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12710",
+      "name": "Flow Connector · branch spine → Connectors",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12713",
+      "name": "Flow Connector · Cloud browser → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12716",
+      "name": "Flow Connector · branch spine → Cloud browser",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12719",
+      "name": "Flow Connector · Skills → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12722",
+      "name": "Flow Connector · branch spine → Skills",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12725",
+      "name": "Flow Connector · Daily Check-in → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12728",
+      "name": "Flow Connector · branch spine → Daily Check-in",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12731",
+      "name": "Flow Connector · Memory → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12734",
+      "name": "Flow Connector · branch spine → Memory",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12737",
+      "name": "Flow Connector · Models → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12740",
+      "name": "Flow Connector · branch spine → Models",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12743",
+      "name": "Flow Connector · Wallet → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12746",
+      "name": "Flow Connector · branch spine → Wallet",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12749",
+      "name": "Flow Connector · Voice → branch spine",
+      "componentId": "1574:12698",
+      "width": 60,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    {
+      "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12752",
+      "name": "Flow Connector · branch spine → Voice",
+      "componentId": "769:176",
+      "width": 120,
+      "height": 64,
+      "renderOverflow": {
+        "left": 0,
+        "top": 0,
+        "right": 2,
+        "bottom": 0
+      }
+    }
+  ],
+  "imageNodes": [],
+  "nodeCounts": {
+    "SLOT": 196,
+    "INSTANCE": 1627,
+    "FRAME": 977,
+    "TEXT": 1047,
+    "RECTANGLE": 319,
+    "VECTOR": 327,
+    "GROUP": 64,
+    "ELLIPSE": 30
+  },
+  "sectionBounds": {
+    "x": 0,
+    "y": 0,
+    "width": 4464,
+    "height": 25632
+  },
+  "flowBounds": {
+    "x": 56,
+    "y": 72,
+    "width": 4352,
+    "height": 25488
+  },
+  "unwrappedScreens": [],
+  "placeholderCollisions": [],
+  "capturedDate": "2026-10-04",
+  "sourceCommit": "274a04ccb69928218d0458d3805238cab1e6eaaa",
+  "oversizedConnectors": [],
+  "branchFanout": {
+    "requiredRoutes": [
+      "Paired devices",
+      "Connectors",
+      "Cloud browser",
+      "Automations",
+      "Memory",
+      "Models",
+      "Wallet",
+      "Voice"
+    ],
+    "directRoutes": [],
+    "spines": [
+      {
+        "id": "I1220:2427;769:329;769:258;769:230;1220:2431;769:212;1220:2433;769:192;1376:26806;769:178;1574:12704",
+        "name": "Flow Connector · Agent settings branch spine",
+        "componentId": "1574:12700",
+        "width": 60,
+        "height": 20585,
+        "renderOverflow": {
+          "left": 0,
+          "top": 2,
+          "right": 2,
+          "bottom": 2
+        }
+      }
+    ],
+    "joins": [
+      "Paired devices",
+      "Connectors",
+      "Cloud browser",
+      "Automations",
+      "Memory",
+      "Models",
+      "Wallet",
+      "Voice"
+    ],
+    "outlets": [
+      "Paired devices",
+      "Connectors",
+      "Cloud browser",
+      "Automations",
+      "Memory",
+      "Models",
+      "Wallet",
+      "Voice"
+    ]
+  }
+}

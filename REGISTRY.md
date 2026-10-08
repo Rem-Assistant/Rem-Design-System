@@ -39,6 +39,7 @@ Fixed:
 |---|---|---|---|---|
 | ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) — swappable leading (ContainedIcon/Avatar), re-based to iOS 26 metrics + variables | Rows & Controls | `101:18` | `SharedSettingsView.swift` insetGrouped rows | ✓ canonical (kept — kit Row leading isn't swappable to ContainedIcon) |
 | ListRowLabel (default Content: Title/Subtitle) | ListRow | `188:2` | the row's text block | ✓ canonical |
+| ConnectorRow — State {Available/Connecting/Connected/Error}, Accessory {Action/Progress/Disclosure/Switch}; nested provider/content overrides | ConnectorRow | `2213:9330` | `Rows/ConnectorRow.swift` + `rows/ConnectorRow.kt` | ✓ shared controlled API; local parserless mappings; Settings uses Disclosure; existing onboarding unchanged |
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | Section (optional Header/Footer + editable Rows slot; background + xlarge radius, no outline) | Rows & Controls | `741:311` | native `SwiftUI.Section` in List/Form; `RemSection.swift` adapter in custom ScrollView; Compose `rows/RemSection.kt` | ✓ canonical · parserless SwiftUI/Compose Code Connect authored · docs `741:309` |
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
@@ -56,7 +57,11 @@ Fixed:
 | PermissionStatusBadge — **Status** = Enabled / Denied / Limited / Not Set (dot + label) | Rows & Controls | `383:14` | `PermissionUtils.swift` `PermissionStatusBadge` | ✓ canonical |
 | StatusChevron (trailing accessory: badge + chevron) | Rows & Controls | `383:15` | permission-row trailing (`SettingsView.swift`) | ✓ canonical |
 | Switch (accessory) | Switch | `110:50` | `Toggle().labelsHidden().tint(.green)` | ✓ canonical |
+| TimePicker — **Platform** = iOS (wheel + AM/PM) / Android (Material dial, Rem blue) | Platform Controls | `939:258` | `DatePicker(displayedComponents:.hourAndMinute)` iOS / Material `TimePicker` Compose | ✓ canonical |
 | Chevron (accessory) | Chevron | `110:52` | NavigationLink disclosure | ✓ canonical |
+| Screen/Connectors · Onboarding (Lockup hero + flip + toggle/Connect rows + Continue/Skip) | Onboarding | `993:3243` | `OnboardingConnectorsTemplate.swift` (SwiftUI) · `ConnectorsScreen.kt` (Compose) · ref `tasks/refs/onboarding/03-connectors.png` | ✓ canonical (settings variant = `Screen/Connectors 133:192`) |
+| Screen/Voice · Onboarding (hero + hear/picker + Character & speed sliders + Continue) | Onboarding | `993:3244` | `OnboardingVoiceTemplate.swift` (SwiftUI) · `VoiceScreen.kt` (Compose) · ref `tasks/refs/onboarding/05-voice.png` | ✓ canonical — **corrected model applied**: back TopBar + `RemSlider` (wrapped iOS 26 kit, plain) + single-row sections divider-free. **Flow complete**: `05A · Voice · Documentation` + `05B · Voice · Prototype` (base `1027:156` → wired → voice-picker sheet `1060:4356`). |
+| RemContentUnavailableView (empty state — symbol · title · message · action) | ContentUnavailableView | `140:1613` | `RemContentUnavailableView.swift` (SwiftUI) · `RemContentUnavailableView.kt` (Compose); reusable piece of Screen/Agenda-Empty | ✓ canonical |
 | ContainedIcon (colored square + white **Symbol** glyph prop) | Rows & Controls | `110:54` | `SettingsIcon` | ✓ canonical |
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
 | Accessory/Value (right-aligned detail text; **Value** text prop) | Rows & Controls | `389:5` | title+value settings rows (e.g. Billing "Plan · Free") | ✓ canonical |
@@ -65,6 +70,44 @@ Fixed:
 | RemComposerBar | RemComposerBar | `53:2` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) | ✓ canonical |
 | ConversationView | ConversationView | `71:35` | folds into Chat screen | consolidating |
 | VoiceBar (MiniPlayerBar, 6 states) | Screens ⑤ | `160:884` | `MiniPlayerBar.swift` | ✓ canonical |
+| Pill (quiet status/metadata chip — kinds neutral / dot(color) / list) | Tasks & Agenda | `490624be…` (component set) | `Primitives/RemPill.swift` · `primitives/RemPill.kt` | ✓ canonical (Wave 2 · CI-verified iOS+Android) |
+| Slider (wraps platform native — forked iOS 26 `Sliders` / Material 3 `Standard slider`, plain: Show Symbols/Ticks off) | Platform Controls | iOS26 set `03734c61…` · M3 `4851d51e…` | `Primitives/RemSlider.swift` · `primitives/RemSlider.kt` (native/Material Slider, brand-tinted) | ✓ canonical (Wave 2 · used in Voice) |
+
+> **Wave 2 — paired DS code added (branch `claude/ds-flows`, CI-verified both platforms).** The Tasks/Chat
+> components above now have canonical Rem Design System code (not just the app-source lineage): `RemPill`,
+> `Rows/TaskEventRow.swift`+`rows/TaskEventRow.kt`, `Chat/MessageBubble.swift`+`chat/MessageBubble.kt`
+> (user bubble = brandBlue+labelOnColor per Figma), `Chat/VoiceBar.swift`+`chat/VoiceBar.kt` (6 states),
+> `Chat/RemComposerBar.swift`+`chat/RemComposerBar.kt` (idle/active/sending), `Agenda/DateNavigationHeader.swift`
+> +`agenda/DateNavigationHeader.kt` (grey chevrons/dashes + brandBlue calendar per Figma). All registered in
+> both render harnesses.
+
+### Screens (Wave 2 — composed from the components; paired SwiftUI + Compose, CI-verified)
+| Screen | Figma | Code | Status |
+|--------|-------|------|--------|
+| AgendaScreen (DateNavigationHeader + divider + TaskEventRow list; content slot) | Agenda page `356:2` / scenarios `530:22` | `Screens/AgendaScreen.swift` · `screens/AgendaScreen.kt` | ✓ code + Doc `1068:573` + Proto `1041:378` + states `③` |
+| InboxScreen (large title + unfiled TaskEventRows, no time / pills hidden) | Inbox page `356:8` | `Screens/InboxScreen.swift` · `screens/InboxScreen.kt` | ✓ code + Doc `1067:171` + Proto `1067:113` |
+| ChatScreen (MessageBubble transcript + optional VoiceBar + RemComposerBar) | Chat `71:533` / composer `527:2` | `Screens/ChatScreen.swift` · `screens/ChatScreen.kt` | ✓ code + Doc `1065:240` + Proto `1064:179` (Chat page) |
+
+### Screens (Wave 3 — Task-detail, Settings; paired SwiftUI + Compose, CI-verified)
+| Screen | Figma | Code | Status |
+|--------|-------|------|--------|
+| TaskDetailScreen (header title/date/meta pills + content slot + pinned RemComposerBar; reuses RemPill/RemSection/RemFaceMark) | master `299:2` · Doc `1071:216` · Proto `1069:145` (Task & Events page) | `Screens/TaskDetailScreen.swift` · `screens/TaskDetailScreen.kt` | ✓ code + Figma doc/proto |
+| SettingsScreen (large title + grouped RemSection/ListRow, iOS-green toggles, single-row-no-divider) | master `130:44` · Doc `1071:8125` · Proto `1070:858` (Settings page) | `Screens/SettingsScreen.swift` · `screens/SettingsScreen.kt` · new `rows/ListRow.kt` (Compose) | ✓ code + Figma doc/proto |
+
+### Wave 4 — Agent surfaces (product bets) + Wallet (paired SwiftUI + Compose, CI-verified)
+> The Muse-informed agentic surfaces, now **graduated from `Proposed` into DS code** — each built from
+> its proposal node as ground truth (new `AgentSurfaces/` folder; Compose `agentsurfaces/`, added to the
+> gather list). They render a **state**, not the wired control (the VoiceBar convention). **Wallet** is a
+> **net-new screen proposal** — no Figma master or shipping source yet; every choice is flagged
+> `// PROPOSAL:` in-code for founder review.
+
+| Surface | Figma (proposal) | Code | Status |
+|--------|------------------|------|--------|
+| AgentStatusPill (glass capsule; **Tone** neutral/attention — attention = brand-blue text per Figma) | `427:21` | `AgentSurfaces/AgentStatusPill.swift` · `agentsurfaces/AgentStatusPill.kt` | ✓ Wave 4 code (CI light+dark) |
+| RunningTaskBanner (Live-Activity glass pill: thumbnail + task + status + Stop; **Tone** working/attention) | `432:39` | `AgentSurfaces/RunningTaskBanner.swift` · `agentsurfaces/RunningTaskBanner.kt` | ✓ Wave 4 code |
+| BrowserLiveCard (in-chat card; **State** Opening/Active/Ended) | `524:31` | `AgentSurfaces/BrowserLiveCard.swift` · `agentsurfaces/BrowserLiveCard.kt` | ✓ Wave 4 code |
+| ExecutionTrace (modal "show your work": status pill + ✕, title/subtitle/ts, MAIN/SUBAGENT step rows, Working footer) | `431:21` (Timeline base `482:56`) | `AgentSurfaces/ExecutionTrace.swift` · `agentsurfaces/ExecutionTrace.kt` | ✓ Wave 4 code |
+| **WalletScreen** (large-title template: balance hero + Add-funds CTA · usage + budget meter · recent activity · payment) — **PROPOSAL** | master `1075:121` · Doc `1079:2` (Proposed · Agent surfaces page) | `Screens/WalletScreen.swift` · `screens/WalletScreen.kt` | ✓ code + Figma master/doc (proposal — built to the verified render; product decisions flagged for founder review) |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
@@ -100,12 +143,12 @@ Fixed:
 
 | Proposed component | Node | Muse pattern |
 |---|---|---|
-| AgentStatusPill — **Tone** = Neutral / Attention · **Status** text prop (Working / Generating PDF / Reviewing guidance / Needs approval / Needs you) | `427:21` | glass status pill under the agent avatar |
+| AgentStatusPill — **Tone** = Neutral / Attention · **Status** text prop (Working / Generating PDF / Reviewing guidance / Needs approval / Needs you) · **✓ graduated → Wave 4 DS code** | `427:21` | glass status pill under the agent avatar |
 | ActionCard — **State** = Active / Completed (agent-initiated input: icon tile + title + subtitle + CTA → "Added") | `428:37` | inline "Secure Store" action card |
 | ApprovalGate — in-chat permission prompt: icon + heading + body + Details JSON block + **Allow (gradient/Commit) / Always allow / Deny** | `429:20` | in-chat approval card ("Allow Arlo to …?") |
 | **Timeline (base component)** — reusable vertical timeline: status node (green ✓ / red ✗ / blue in-progress) on a **connecting rail** + title + right-aligned timestamp + secondary description; tail node has no connector. Founder-directed ("create your own timeline component"). **Used on the Activity screen `413:32`.** | `482:56` | our own timeline (evolves the exec-trace, adds the connecting rail) |
-| Execution trace (pattern reference / modal variant) — "In progress" pill + X, MAIN/SUBAGENT step rows, "Working" footer. **Superseded by the `Timeline` base component `482:56`** as the product pattern; kept as the modal/standalone reference (avatar / in-chat). | `431:21` | agent step-timeline / "show your work" surface |
-| RunningTaskBanner — **Tone** = Working / Attention (glass pill: thumbnail + task + status + Stop) | `432:39` | Live-Activity "Browser · Needs you" banner |
+| Execution trace (pattern reference / modal variant) — "In progress" pill + X, MAIN/SUBAGENT step rows, "Working" footer. **Superseded by the `Timeline` base component `482:56`** as the product pattern; kept as the modal/standalone reference (avatar / in-chat). · **✓ graduated → Wave 4 DS code** (`AgentSurfaces/ExecutionTrace`) | `431:21` | agent step-timeline / "show your work" surface |
+| RunningTaskBanner — **Tone** = Working / Attention (glass pill: thumbnail + task + status + Stop) · **✓ graduated → Wave 4 DS code** | `432:39` | Live-Activity "Browser · Needs you" banner |
 | Connector consent pre-screen (sheet) — logo tile + name + tagline + 3 icon-rows + legal + **gradient Connect** / Cancel | `434:21` | connector consent sheet ("Connect Notion?") |
 | Accessory/MenuValue — value + up/down chevron pull-down (**Value** text prop: Ask / Allow / Deny), on canonical ListRow | `435:22` | per-capability permission menu (Browser perms) |
 | ContentUnavailableView + CTA — empty state with an action slot (icon + title + subtitle + **Button/Standard-blue**) | `436:67` | "No info saved → Add login info" |
@@ -177,3 +220,14 @@ empty state) — see CLEANUP "Founder review 6" for the full gap list + build or
 | View history — Activity (task-scoped timeline) | `413:32` | Task & Events page — pushed screen: back+"Activity" nav → task header (title + subtitle + timestamp, **no modal pill/X**) → the **`Timeline` base component `482:56`** (status nodes on a connecting rail + title/time/description). Replaces the old one-comment-deep Rem/You activity list and the earlier rail-less exec-trace body. Entered from the task detail (and the agent avatar routes here). Backing view `TaskActivityHistoryView`. |
 | Onboarding — Start Using Rem | `414:15` | ⚠ **UP FOR DEPRECATION** (founder) — post-setup activation being retired in favour of the `GuidedFlow` coach-mark overlay. `PostSetupActivationView` |
 | Onboarding — Setting Up (deploying) | `415:15` | ⚠ **UP FOR DEPRECATION** (founder) — `OnboardingFlow.deployingContent`. Don't invest further. **Dropped from the `OnboardingSequencer` path (issue #11)** — the sequencer injects no deploy/provisioning slot; the deploy code itself is retired later with the runtime migration's *Product cleanup* (out of scope for #11). |
+
+
+## Settings New — code-only playground mapping (October 8, 2026)
+
+This mapping describes the current bounded prototype; earlier Settings registry entries above retain their historical identities. Source nodes and exact designed states are recorded in [the destination contract](docs/contracts/settings-destinations.md), with [runtime and variant evidence](docs/playground/verification.md). No Figma masters were created or edited in this code pass.
+
+| Concept | Current source mapping | Contract |
+|---|---|---|
+| Settings entry / Agent settings | `Screens/SettingsPlaygroundContent.swift` and Compose `screens/SettingsPlaygroundContent.kt`; source entry `1964:86819`, Agent `1827:50855` | Native SwiftUI List/Section; shared Rem row content. Seven designed fixture destinations; Automations visibly unavailable. |
+| Utility ContainedIcon | `Primitives/ContainedIcon.swift`, Compose `primitives/ContainedIcon.kt`; variant set `614:8`; both `code-connect/*/ContainedIcon.figma.ts` | Subtle default = backgroundSecondary + labelPrimary; explicit Tinted remains available. Settings glyph17; primitive Small mapping glyph15. Publication is not confirmed. |
+| Provider pre-consent content | `Templates/ProviderPreConsentContent.swift` and Compose `screens/ProviderPreConsentContent.kt`; source composition `1898:54528` | Reused by Wallet's two providers; native actions and scrolling, caller-owned provider content. iOS decorative icon slot scales with Dynamic Type. |

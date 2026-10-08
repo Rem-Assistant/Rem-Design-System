@@ -143,6 +143,12 @@ def _authenticated_structure_proof(root: Path, head: str, contract: dict) -> tup
         lines.append(
             f"| `{key}` | `{canonical_node}` · {canonical_status} | `{instance_node}` · {instance_status} |"
         )
+    amendments = structure.get("sourceAmendments", [])
+    if amendments:
+        if not isinstance(amendments, list) or any(not isinstance(item, str) for item in amendments):
+            return [], ["Authenticated source amendments are malformed"]
+        lines += ["", "Approved implementation amendments to the read-only source:", "",
+                  *[f"- {_markdown_cell(item)}" for item in amendments]]
     if require_prototype:
         lines += [
             "", "Authenticated prototype proof:", "",
@@ -256,6 +262,12 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
              "frame at export scale. Normalize each image to its full logical viewport before "
              "comparing layout; raw PNG dimensions are not layout differences.",
              "Rendering and coverage checks do not establish visual parity; Reviewer must compare the pixels against the approved contracts.", ""]
+    if primary_contract == "settings-foundation":
+        lines = [f"Current head: `{head}`", "",
+                 "Paired actual Settings playground captures: iOS Simulator UI tests | Android emulator instrumentation tests.",
+                 "Comparison basis: each app capture includes its native device chrome; Figma references use the approved source frame. "
+                 "Normalize logical viewports before comparing. Device density, native chrome and the listed approved amendments are not pixel-parity failures.",
+                 "Rendering and coverage checks do not establish visual parity; Reviewer must compare the pixels against the approved contracts.", ""]
     if missing:
         lines += ["**Required evidence missing — delivery blocked:**", "", *[f"- {item}" for item in missing], ""]
     if unexpected:

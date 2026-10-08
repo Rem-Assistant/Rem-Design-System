@@ -1,5 +1,13 @@
 # Fidelity Verification — Figma component library vs. the real Rem app
 
+## Settings New playground — October 8, 2026
+
+This is a code-only fixture prototype, separate from the historical shipping-app verification below. Its current native runs, actual screenshot reviews, unresolved review prerequisites, and precise coverage are recorded in [the Settings verification ledger](docs/playground/verification.md). Both complete native suites passed in hosted run37779992053 at `8c5ed28`: iOS25/25 and Android26/26, plus both library renders. That revision differs from application/test revision `6e00393` only in documentation. No blanket seven-destination visual pass, production integration, Figma update, or iOS26 runtime pass is claimed.
+
+Approved entry amendments rename Rem to Agent settings, give Help & Support a question-mark icon, and remove extra row minimums. Native iOS List/Section structure and Subtle utility icons remain intact. Large-text screenshot findings drove adaptive Connector/Voice rows, true Wallet sheet scaling, and a scaled consent-icon slot. See the ledger for the evidence and remaining limits.
+
+---
+
 This is the record for the **Mac-verify fidelity** step: every Figma component in the
 library was checked against the **real SwiftUI render** of the shipping Rem app, using two
 grounds of truth in combination:

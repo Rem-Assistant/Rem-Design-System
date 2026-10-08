@@ -31,22 +31,55 @@ connecting/listening/speaking/muted/reading/closing).
 to `docs/screenshots/<screen>.png` side by side; fix every mismatch. This is the visual half
 of "verified against the app"; skipping it is how unfaithful screens ship.
 
+## A flow is STATES + DESTINATIONS, not one screen
+
+The single biggest scoping failure is delivering **one screen per step**. A flow is a *system of
+screens*: for every screen you build, enumerate and build **(a) every state it can be in** and **(b)
+every destination its interactive elements lead to** — each as its own 402×874 screen instance, wired
+in the prototype so the transitions are walkable. The founder's Codex flows modeled this (a "save"
+flow, an "edit" flow — the same surface shown moving through its states). Ask of every screen:
+
+- **What states does this screen have?** empty · loading · populated · error · success · in-progress ·
+  the "just acted" state. Build each.
+- **What does every tappable thing open?** A row that opens a sheet, a picker, a detail, a confirm —
+  that destination is another screen in the flow. Build it and wire it.
+
+Worked example — **Voice** is not one screen, it's a mini-flow:
+`Voice (base)` → tap **Voice** row → `Voice Picker (sheet)` (list of voices, one selected) → back;
+tap **Hear this voice** → `playing` state; each slider has an interacting state. **Connectors**:
+`available` → tap Connect → `connecting` → `connected` (toggle on) → and an `error` state; **See more**
+→ the expanded connector list. If you built only the base screen, you built ~30% of the flow.
+
+Deliver these as the flow's **Prototype** section (the wired strip of real screens) with the
+**Documentation** section narrating the transitions. The prototype is the primary artifact; documentation
+explains it.
+
 ## Build native, in auto-layout, on canonical components
 
 - **Screen = a 402×874 component**, `layoutMode="VERTICAL"`, FIXED — the device content size,
   so it drops into the bezel size-safe.
-- **Chrome from the kit:** use canonical navigation/header, `StatusBar`, and
-  `NavigationIndicator` components; every standalone full-device screen includes its platform
-  chrome unless the product state explicitly hides it. Platform switches may change fonts, metrics,
-  and native icons without changing the product layout. Prefer platform-specific nested components
-  or verified semantic icon mappings over an unverified icon-font family swap. A domain header such
-  as `DateNavigationHeader` may replace navigation content, not required status chrome. Put a legal
-  sheet and its scrim above the status bar, while the navigation indicator remains at the bottom of
-  the device surface.
+- **Chrome is a TRIAD — include all three, top to bottom:** `StatusBar` · **`TopBar` (the nav bar)**
+  · body · `NavigationIndicator` (home indicator). The middle one is the miss to guard against: every
+  screen reached *inside a flow* (any step after the first) carries the **`TopBar` with a back
+  affordance** — use the canonical back-only TopBar (Check-in's config: Leading = `Type=Back`, title
+  and trailing hidden). Only the flow's true entry screen (e.g. Sign-in) omits back. A domain header
+  such as `DateNavigationHeader` replaces the TopBar's *content*, not the StatusBar/NavigationIndicator.
+  Onboarding flip screens (Connectors, Voice) are mid-flow → they get the back TopBar too. Platform
+  switches may change fonts, metrics, and native icons without changing the product layout.
+- **Wrap platform-native components — never hand-draw them.** Anything the OS ships natively — sliders,
+  pickers, toggles, nav bars, segmented controls, steppers, date/time pickers — is a **canonical Rem
+  wrapper that instances the forked platform kit** (like `TimePicker` wraps the platform pickers), with
+  a **Platform = iOS / Android** variant. The forked kits are in the file's libraries: **iOS 26**
+  (`zPQph1huwOBLDBj5ZchpQE`) and **Material 3** (`tR9wwAVGtwT5s1IJyWqHL9`). Instance the kit's native
+  control; do NOT reconstruct a slider from a track rect + ellipse. If a wrapper doesn't exist yet,
+  building it is part of the work — do not hand-draw a stand-in. (This is why the Voice sliders were
+  wrong: hand-drawn instead of a wrapped `Slider`.)
 - **Body from canonical instances only** — `ListRow` (as grouped `Section`s: SectionHeader +
   rows + SectionFooter), `TaskEventRow`, `SuggestedTaskRow`, `MessageBubble`, `ComposerBar`,
   the cards. Set per-row content on the nested Content/Label (see figma-gotchas). Never
   hand-draw a row that a component covers.
+- **A single-row `Section` shows NO divider.** Dividers separate sibling rows; a section with one row
+  has no sibling to separate, so the divider is noise. Only show row separators between 2+ rows.
 - **Everything auto-layout.** If you must reuse an existing absolute-positioned frame,
   `detachInstance()`/clone it and convert to auto-layout — don't ship absolute positioning
   (it can't reflow and it's why the first Agenda had to be rebuilt native).
@@ -57,6 +90,18 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
 - **Use auto spacing, not empty spacer frames.** Group the top and bottom regions semantically and
   use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
   space are invalid because they obscure intent and break when content changes.
+
+## Evaluate flow consistency (think in systems, not per-screen rules)
+
+A flow is a system: every step should share the same structural pattern, and the job is to **evaluate
+consistency across steps**, not to memorize per-screen exceptions. Before a flow is done, check each
+step against its neighbors on the system's shared dimensions — header/`Lockup` presence and order, the
+background↔content relationship, spacing rhythm, and canonical component reuse — and flag or fix any
+step that deviates. **The deviation is the signal, not a named screen.** A screen reused from another
+context (e.g. a Settings surface pulled into onboarding) is the usual culprit: it arrives carrying its
+original skin (grey bg + white cards, no Lockup) and breaks the pattern its neighbors hold (white bg +
+grey content + Lockup) — restore consistency with the system rather than applying a screen-specific
+recipe.
 
 ## Use the file's documentation templates
 

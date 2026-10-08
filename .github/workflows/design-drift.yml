@@ -5,9 +5,15 @@ name: design-drift
 
 on:
   workflow_dispatch:
+    inputs:
+      pr:
+        description: Open draft Settings child PR requiring read-only Figma evidence
+        required: true
+        type: string
   pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
+      - 'tools/playground-ios/**'
       - 'Sources/**'
       - 'compose/**'
       - 'tokens/generated/**'
@@ -21,15 +27,46 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   drift:
     runs-on: macos-14
     steps:
+      - name: Resolve and constrain manual Settings evidence target
+        id: manual
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = codex/settings-integration
+          [[ "$PR" =~ ^[1-9][0-9]*$ ]]
+          meta=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}")
+          test "$(jq -r .state <<<"$meta")" = open
+          test "$(jq -r .draft <<<"$meta")" = true
+          test "$(jq -r .base.ref <<<"$meta")" = codex/settings-integration
+          # pull.base.sha can remain the PR creation snapshot after the base
+          # branch advances. Resolve the admitted integration ref directly.
+          encoded_ref=$(jq -rn --arg ref codex/settings-integration '$ref | @uri')
+          trusted_base_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded_ref}" --jq .object.sha)
+          test "$trusted_base_sha" = "$GITHUB_SHA"
+          test "$(jq -r .base.repo.full_name <<<"$meta")" = "$GITHUB_REPOSITORY"
+          test "$(jq -r .head.repo.full_name <<<"$meta")" = "$GITHUB_REPOSITORY"
+          head_ref=$(jq -r .head.ref <<<"$meta")
+          [[ "$head_ref" =~ ^agent-factory/settings-issue-[0-9]+$ ]]
+          scopes=$(jq -c '[.labels[].name | select(startswith("delivery-scope:")) | sub("^delivery-scope:"; "")]' <<<"$meta")
+          test "$(jq length <<<"$scopes")" = 1
+          test "$(jq -r '.[0]' <<<"$scopes")" = settings-foundation
+          echo "pr=$PR" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(jq -r .head.sha <<<"$meta")" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
       - name: Checkout trusted control plane
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          ref: ${{ steps.manual.outputs.base_sha || github.event.pull_request.base.sha || github.sha }}
           persist-credentials: false
 
       - uses: actions/setup-node@v4
@@ -37,16 +74,16 @@ jobs:
 
       - name: Select explicit delivery scope
         id: scope
-        if: ${{ github.event_name == 'pull_request_target' }}
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch' }}
         run: |
           python3 - <<'PY'
           import json, os
           event = json.loads(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8").read())
-          scopes = [
+          scopes = (["settings-foundation"] if os.environ["GITHUB_EVENT_NAME"] == "workflow_dispatch" else [
               label["name"].removeprefix("delivery-scope:")
               for label in event["pull_request"].get("labels", [])
               if label.get("name", "").startswith("delivery-scope:")
-          ]
+          ])
           if len(scopes) > 1:
               raise SystemExit("at most one delivery-scope label is allowed")
           primary = scopes[0] if scopes else ""
@@ -55,11 +92,11 @@ jobs:
           PY
 
       - name: Fetch and validate exact-head declarative contract data
-        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && steps.scope.outputs.primary_contract != 'settings-foundation' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ steps.manual.outputs.head_sha || github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           node tools/design-sync/fetch-head-data.mjs \
@@ -77,7 +114,7 @@ jobs:
           PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
+          if [ "$GITHUB_EVENT_NAME" != schedule ]; then
             args=(--references-only)
             if [ -n "$PRIMARY_CONTRACT" ]; then args+=(--primary-contract="$PRIMARY_CONTRACT"); fi
             node tools/design-sync/export-figma.mjs artifacts/figma "${args[@]}"
@@ -91,9 +128,15 @@ jobs:
         continue-on-error: true
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_SHA: ${{ steps.manual.outputs.head_sha || github.event.pull_request.head.sha || github.sha }}
+          PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
         run: |
           set -euo pipefail
+          if [ "$PRIMARY_CONTRACT" = settings-foundation ]; then
+            node tools/design-sync/verify-settings-structure.mjs \
+              --output=artifacts/figma-structure-report.json --head="$HEAD_SHA"
+            exit 0
+          fi
           file_key=$(jq -r .figmaFileKey tools/design-sync/manifest.json)
           contract=tools/design-sync/structure-contract.json
           if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
@@ -108,7 +151,7 @@ jobs:
       - name: Preserve structure diagnostics
         if: ${{ always() && (github.event_name != 'pull_request_target' || steps.scope.outputs.primary_contract != '') }}
         env:
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_SHA: ${{ steps.manual.outputs.head_sha || github.event.pull_request.head.sha || github.sha }}
           STRUCTURE_OUTCOME: ${{ steps.structure.outcome }}
         run: |
           if [ ! -s artifacts/figma-structure-report.json ]; then
@@ -127,12 +170,14 @@ jobs:
           fi
 
       - name: Assemble exact-head Figma reference evidence
-        if: ${{ always() && github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        if: ${{ always() && github.event_name != 'schedule' && steps.scope.outputs.primary_contract != '' }}
         env:
-          PR: ${{ github.event.pull_request.number }}
-          SHA: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ steps.manual.outputs.pr || github.event.pull_request.number }}
+          SHA: ${{ steps.manual.outputs.head_sha || github.event.pull_request.head.sha }}
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
+          MANUAL_BASE_SHA: ${{ steps.manual.outputs.base_sha }}
+          MANUAL_HEAD_REF: ${{ steps.manual.outputs.head_ref }}
           REFERENCE_EXPORT_STATUS: ${{ steps.figma-export.outcome }}
           STRUCTURE_VERIFICATION_STATUS: ${{ steps.structure.outcome }}
           PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
@@ -145,8 +190,13 @@ jobs:
             --source artifacts/figma --destination figma-reference/reference \
             --contracts tools/render-evidence/contracts.json "${SCOPE_ARGS[@]}"
           cp artifacts/figma-structure-report.json figma-reference/structure/report.json
-          cp "$RUNNER_TEMP/head-data/structure-contract.json" figma-reference/structure/contract.json
-          cp "$RUNNER_TEMP/head-data/manifest.json" figma-reference/structure/manifest.json
+          if [ "$PRIMARY_CONTRACT" = settings-foundation ]; then
+            cp tools/design-sync/settings-structure-contract.json figma-reference/structure/contract.json
+            cp tools/design-sync/manifest.json figma-reference/structure/manifest.json
+          else
+            cp "$RUNNER_TEMP/head-data/structure-contract.json" figma-reference/structure/contract.json
+            cp "$RUNNER_TEMP/head-data/manifest.json" figma-reference/structure/manifest.json
+          fi
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
@@ -163,6 +213,10 @@ jobs:
           manifest = json.loads(Path("tools/design-sync/manifest.json").read_text(encoding="utf-8"))
           (root / "delivery/manifest.json").write_text(json.dumps({
               "version": 1,
+              "event": os.environ["GITHUB_EVENT_NAME"],
+              "manual_base_sha": os.environ.get("MANUAL_BASE_SHA") or None,
+              "manual_base_ref": "codex/settings-integration" if os.environ.get("MANUAL_BASE_SHA") else None,
+              "manual_head_ref": os.environ.get("MANUAL_HEAD_REF") or None,
               "pr": int(os.environ["PR"]),
               "sha": os.environ["SHA"],
               "run_id": int(os.environ["RUN_ID"]),
@@ -181,24 +235,24 @@ jobs:
           PY
 
       - name: Upload exact-head Figma reference evidence
-        if: ${{ always() && github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        if: ${{ always() && github.event_name != 'schedule' && steps.scope.outputs.primary_contract != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: figma-reference-evidence-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          name: figma-reference-evidence-${{ steps.manual.outputs.pr || github.event.pull_request.number }}-${{ steps.manual.outputs.head_sha || github.event.pull_request.head.sha }}
           path: figma-reference/
           if-no-files-found: error
           retention-days: 7
 
       - name: Require authenticated Figma evidence
-        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && (steps.figma-export.outcome != 'success' || steps.structure.outcome != 'success') }}
+        if: ${{ github.event_name != 'schedule' && steps.scope.outputs.primary_contract != '' && (steps.figma-export.outcome != 'success' || steps.structure.outcome != 'success') }}
         run: |
           echo '::error::Figma reference export and structure verification must both succeed'
           exit 1
 
-      # Scheduled/manual drift remains a legacy staging-app health check. It is intentionally not
+      # Scheduled drift remains a legacy staging-app health check. It is intentionally not
       # presented as exact-head PR evidence.
       - name: Checkout app source for legacy drift check
-        if: ${{ github.event_name != 'pull_request_target' }}
+        if: ${{ github.event_name == 'schedule' }}
         uses: actions/checkout@v4
         with:
           repository: Rem-Assistant/RemClaw
@@ -207,7 +261,7 @@ jobs:
           token: ${{ secrets.APP_REPO_TOKEN }}
 
       - name: SwiftUI snapshots for legacy drift check
-        if: ${{ github.event_name != 'pull_request_target' }}
+        if: ${{ github.event_name == 'schedule' }}
         working-directory: app
         env:
           SNAPSHOT_OUT_DIR: ${{ github.workspace }}/artifacts/swiftui
@@ -219,14 +273,14 @@ jobs:
             -only-testing:RemTests/RemDesignSnapshots | xcpretty || true
 
       - name: Compare legacy staging-app snapshots
-        if: ${{ github.event_name != 'pull_request_target' }}
+        if: ${{ github.event_name == 'schedule' }}
         run: |
           cd tools/design-sync && npm ci
           cd "$GITHUB_WORKSPACE"
           node tools/design-sync/compare.mjs artifacts/swiftui artifacts/figma --maxDiffRatio=0.02
 
       - name: Upload scheduled/manual diagnostics
-        if: ${{ always() && github.event_name != 'pull_request_target' }}
+        if: ${{ always() && github.event_name == 'schedule' }}
         uses: actions/upload-artifact@v4
         with:
           name: design-drift-report

@@ -1,0 +1,4 @@
+<resources>
+    <!-- Avatar185:2 unbound source fill, retained independently of utility icon tokens. -->
+    <color name="connector_avatar_neutral">#DBDBE5</color>
+</resources>

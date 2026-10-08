@@ -1,0 +1,394 @@
+[
+  {
+    "path": "Sources/RemDesignSystem/Agenda/DateNavigationHeader.swift",
+    "sha256": "f88240ceb27545db73ad46c95f80ff3534775ef2a257b707098ed667552c1d9b"
+  },
+  {
+    "path": "Sources/RemDesignSystem/AgentSurfaces/AgentStatusPill.swift",
+    "sha256": "4a491c6bb58f6990e1d7c3176f637bb11467e8135586a64d2c680afebd7e175f"
+  },
+  {
+    "path": "Sources/RemDesignSystem/AgentSurfaces/BrowserLiveCard.swift",
+    "sha256": "d0281392c50d1c55fb77d5df0a417d618e4808915b71d0f5d3633f9d394e2fcf"
+  },
+  {
+    "path": "Sources/RemDesignSystem/AgentSurfaces/ExecutionTrace.swift",
+    "sha256": "8fbe42578a1b9c333c3d4c06a72c04a5380733d73aeb9f6ee43abb40861b9212"
+  },
+  {
+    "path": "Sources/RemDesignSystem/AgentSurfaces/RunningTaskBanner.swift",
+    "sha256": "7e29d87773d2bfb52f064b0ca52cd2dc916396a5f548c78557527935c8527056"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Brand/RemAppIcon.swift",
+    "sha256": "ea10254cd186b0bf05f15c030a35cc6891b87459e9b6968c90cb13e8b95b1514"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Brand/RemFaceMark.figma.swift",
+    "sha256": "d44c237bc2663c4f46a5e3469cd77e3b45728c915b4b1faf0c4c3bfc7e43d92e"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Brand/RemFaceMark.swift",
+    "sha256": "e306774dce8e936b36ee056ea32a481e0e2d3e429e6fee1ef6fcddcd57366b4a"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Brand/RemGoogleGlyph.swift",
+    "sha256": "7b56dc97217d574690feb4d820a71e027704ed4bf92de4f218e7129448a1ff88"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Buttons/RemButton.figma.swift",
+    "sha256": "e42bf8817e9b229b70881e3bae183fd4336903e30086d52f274c39c8dc9ccd8c"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Buttons/RemButtonStyle.swift",
+    "sha256": "d4b12873ab0fec42dcd629c11d058c1761725aafda63897c98af0fb6aeb26eb4"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Buttons/RemButtonTokenSet.swift",
+    "sha256": "d37d14a14d3cf0ac4e450c1b8a1d8691f2a6bdc32f52e2b23088d55a9c6107a9"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Chat/MessageBubble.swift",
+    "sha256": "0a8b5d5ab2cef6d05d0266171ecf173a1b069f2140fd6333a63d76a1880bd0d2"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Chat/RemComposerBar.swift",
+    "sha256": "e508a6d8c7af1f498e3843203810014aca0e0a0cf9bcdee8f54f7a17ff893286"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Chat/VoiceBar.swift",
+    "sha256": "1586acbb1436e923be4fdaa9c8b9b3993f26f4802ea10d2130f529cdc1498026"
+  },
+  {
+    "path": "Sources/RemDesignSystem/DesignTokens.generated.swift",
+    "sha256": "1c1b13c117827f603e50f2f2a2b12595287d18050a27b12097b7974ce56447b2"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Primitives/ContainedIcon.figma.swift",
+    "sha256": "03539c89a4874010756dc0c2263e5b843ca5c9eb1b93b74c74b901732bd5c73b"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Primitives/ContainedIcon.swift",
+    "sha256": "fdb5b9f9b5d9085ed20348238db7e828b2a98b7a58d151040cc8ac9165733c0b"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Primitives/ContainedIconTokenSet.swift",
+    "sha256": "2bbd848cba836bf11b964e980d8a5eba9df59a89c8abd5de435c258135809380"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Primitives/RemPill.swift",
+    "sha256": "f430a23b1e52f129eaadcd27991be7376f79025af0ba33b02cc445ef48dd8b1e"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Primitives/RemSlider.swift",
+    "sha256": "53f00d7ed0c0043fde7450d4cce8bd1797de5b7b4f5607c0be01a022f573159f"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Rows/ListRow.swift",
+    "sha256": "9a5ab1bf626a59f4695bf464acf322594da9ea7fba044c1d16226dbca68e8ddc"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Rows/RemSection.swift",
+    "sha256": "29971fb946280123bdfccd39166db69d510774a117637ab3e5feb11a924fef71"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Rows/TaskEventRow.swift",
+    "sha256": "5fff690a69fadb3b5bd4af0d463bfc0d59fee8dedf97f9e43f19413a1fa6960c"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/AgendaScreen.swift",
+    "sha256": "6c0c1a91b0d1dcf87a081b8ca6c04dd17474bb23d96d5d626bc8bec90a5619e5"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/ChatScreen.swift",
+    "sha256": "ffd83e9592a78793368ae67d12cee1dd105bff1b95e97f59dea69d73cd44602b"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/InboxScreen.swift",
+    "sha256": "9fb2d2451218f714df55ac5da12192a9bb33eccdfd82ebcaddfec2d0eb219318"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/SettingsPlaygroundContent.swift",
+    "sha256": "40b2f03b7e8ce090b12fcc2188035acd03432868fd32e21c4e6faa1f5d74594d"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/SettingsScreen.swift",
+    "sha256": "434ebf8ffa3b6a232b7ddc78b2fc22d3724b4f1840ea1868c84cb7fe2a8d03eb"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/TaskDetailScreen.swift",
+    "sha256": "65d4c1fa356099488b83f9adfa07d61b5d3f57dd6b6ace12788c2b8f9477aad0"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Screens/WalletScreen.swift",
+    "sha256": "f0c15c6317f4761bad5203edec7da247914d2671b0a07ff096aa3940cf8c6e9b"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift",
+    "sha256": "6cb79e226e2e5bc83a4feef676fc30ca4d04b1ca73b092710ae407e0fcc03a9e"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Templates/OnboardingConnectorsTemplate.swift",
+    "sha256": "b3597d2bc6dadbd2165d0b3992755839f76107b145d3e1679ec22e00c9697829"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift",
+    "sha256": "c6581a4af3399aa5e7d2c6ffac685579c69f0f8b69a78d4f50815bf8d81857b8"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift",
+    "sha256": "c3e8ae1cb8262a335e36903b93908a3d525a01daa80fcab7c0763d1caa1217ce"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Templates/OnboardingVoiceTemplate.swift",
+    "sha256": "867ff07cb561fb32d9f555c7e4dccf755bde6a0d30dbf75072b2f6cb6144db0a"
+  },
+  {
+    "path": "Sources/RemDesignSystem/Views/RemContentUnavailableView.swift",
+    "sha256": "997cea2affdf8d9a7cd5b0fc4be324db8a37cf2ae03060b4eb03439b65f9b871"
+  },
+  {
+    "path": "compose/RemDesignSystem/agenda/DateNavigationHeader.kt",
+    "sha256": "c247ba1da5ed424b3fb87a1acc300fc983cc3281e503b59cacf69af515d211f7"
+  },
+  {
+    "path": "compose/RemDesignSystem/agentsurfaces/AgentStatusPill.kt",
+    "sha256": "dbcb9a86e588f630a645838bfabd4983ad1482899c6622c5d7f5447d80b7a868"
+  },
+  {
+    "path": "compose/RemDesignSystem/agentsurfaces/BrowserLiveCard.kt",
+    "sha256": "1871ea7b93435823c260b74f10defad2b18ae6c51ff1477f4165950ed0b52277"
+  },
+  {
+    "path": "compose/RemDesignSystem/agentsurfaces/DailyBriefCard.kt",
+    "sha256": "6d358b45aac0523835186f74fa4eb9b2e0be4f4e24e972366596f99d959a1559"
+  },
+  {
+    "path": "compose/RemDesignSystem/agentsurfaces/ExecutionTrace.kt",
+    "sha256": "ac033ed08991b990042973a9b0b3c5de556f30c7c0c2af526c35ec043513d729"
+  },
+  {
+    "path": "compose/RemDesignSystem/agentsurfaces/RunningTaskBanner.kt",
+    "sha256": "7fd228e253814224a2cd7bb5489bce99affcfc655ebcf2f20556bb07220072ca"
+  },
+  {
+    "path": "compose/RemDesignSystem/brand/RemAppIcon.kt",
+    "sha256": "646e8b032844f0482aa77982894be28f40c4e16dfab107694486a8602ad4b9e4"
+  },
+  {
+    "path": "compose/RemDesignSystem/brand/RemFaceMark.figma.kt",
+    "sha256": "4247ebfa050e559b493f5ea9ad71ca81689b254673d34f9834e2a74b67204932"
+  },
+  {
+    "path": "compose/RemDesignSystem/brand/RemFaceMark.kt",
+    "sha256": "7a77deed755d4c9722f5312dccae7ed515f0b551c5de7044060258e5aa839e24"
+  },
+  {
+    "path": "compose/RemDesignSystem/build.gradle.kts",
+    "sha256": "08044ee1394f10411695eba063867f62ae60b6951e342537224baacadefbf868"
+  },
+  {
+    "path": "compose/RemDesignSystem/chat/MessageBubble.kt",
+    "sha256": "2ad37cad6b6014649bf6565de1a179b8a50f34dcd9a181b8c2c45b6b01d3e9f0"
+  },
+  {
+    "path": "compose/RemDesignSystem/chat/RemComposerBar.kt",
+    "sha256": "9be3f14f268e8c62d132e9562502745a329c7cae72ba455f627c1b23fba317bb"
+  },
+  {
+    "path": "compose/RemDesignSystem/chat/VoiceBar.kt",
+    "sha256": "64ddf260339f01eab9b9b0b09894ecc5d6a7e4d90151071e359e1e6bc43b5a08"
+  },
+  {
+    "path": "compose/RemDesignSystem/icons/RemMaterialSymbols.kt",
+    "sha256": "2c1ed6d7d7ef1ee585717bb40b37fe4371359f26573014c267cdaed415ca442d"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/ConnectorsScreen.kt",
+    "sha256": "7f56472a0027d1843884dc3dcd2d5664730411ede5ce099e71db8ec9acb8df8e"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/ConsentStep.kt",
+    "sha256": "901ab7bd2a47e62171b90e83d24ca2177e9a60a45df2bd470e61bcda99605428"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/LegalDocument.kt",
+    "sha256": "0e74801897b30c234f704831a872d3c4eb7dfe2900cda32d8f5455f2468d14b4"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/Onboarding.figma.kt",
+    "sha256": "b131a4dfab4b2f4017bbfd8432d4c18d57bfd8c502802c721a065bed8451c66a"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/OnboardingFlow.kt",
+    "sha256": "534c8993d3edc6909ec3e83aacf4fe9057e1c130fccf954cc7919b008c12d75f"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/OnboardingScaffold.kt",
+    "sha256": "b6bdce56b565ad20f058c74887254213d16236c1afd9682246ee6c9e90f5cdff"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/OnboardingSequencer.kt",
+    "sha256": "3240e2d50bd6b9ca3273d3850f70d38d08079e003dec7faf6689a4915545188e"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/OnboardingSupport.kt",
+    "sha256": "6c6fc867a3ae2aa6a475ebed2a526579801e9088e9e547589057931bf055894a"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/RemBrandGlyphs.kt",
+    "sha256": "a614cec8a6af450a838f5c103b895603841711d1b3cd1651fca57d9653b61a3d"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/SignInStep.kt",
+    "sha256": "5718ba0a2a47f0af9ebfefffa6750d322a359a695abbd68c80889791fef92968"
+  },
+  {
+    "path": "compose/RemDesignSystem/onboarding/VoiceScreen.kt",
+    "sha256": "2a0ffabd2fa9d8ad218f2a4577ea255c3f1374018b6f45549885f6ca2d8eaf86"
+  },
+  {
+    "path": "compose/RemDesignSystem/primitives/ContainedIcon.figma.kt",
+    "sha256": "417eeb97187602da54864c33f465aea45330fcb190d6977a9435c840c1adcee7"
+  },
+  {
+    "path": "compose/RemDesignSystem/primitives/ContainedIcon.kt",
+    "sha256": "44827426be5831f94af70912ebc8a0ca54e571d35d9ad67f720d6ff1282f2952"
+  },
+  {
+    "path": "compose/RemDesignSystem/primitives/ContainedIconTokenSet.kt",
+    "sha256": "e7ca1ed369ab13da42cb085d045321ab00e3abefa99031b751795a39aa3920b2"
+  },
+  {
+    "path": "compose/RemDesignSystem/primitives/RemContentUnavailableView.kt",
+    "sha256": "b3abcbf925095083ecc5a9b2b4983758755130bf6a167e4672f90138a33f5e3c"
+  },
+  {
+    "path": "compose/RemDesignSystem/primitives/RemPill.kt",
+    "sha256": "138e3269ee6fe3f03c16f7f29ce39c5da44a90a8ec08c8d650b9a20b4324aaa5"
+  },
+  {
+    "path": "compose/RemDesignSystem/primitives/RemSlider.kt",
+    "sha256": "34959559e0381afb122c0fab89d804b80fc2522b6155a1e82fb18fe30ec4c86a"
+  },
+  {
+    "path": "compose/RemDesignSystem/rows/ListRow.kt",
+    "sha256": "4ffdc462fa2475e521616fb24214ce6c09b3066268dc7c1cf11091e0f7217068"
+  },
+  {
+    "path": "compose/RemDesignSystem/rows/RemSection.kt",
+    "sha256": "7e26cbc78bb1a5a345901cc470f286df4e369e8a6297a41639f063739068eec0"
+  },
+  {
+    "path": "compose/RemDesignSystem/rows/SuggestedTaskRow.kt",
+    "sha256": "10a797cdcbbbbf1d94c900db7d4f06fd763fc374c0f02ba45f276e751eefcd97"
+  },
+  {
+    "path": "compose/RemDesignSystem/rows/SuggestionSection.kt",
+    "sha256": "a0aef131c9f6e72035adca587acb59d572ec709891debe45f3c91ba193c33854"
+  },
+  {
+    "path": "compose/RemDesignSystem/rows/TaskEventRow.kt",
+    "sha256": "d5f0ef55781d6d4458ff4408e6b152b26b73ca3a1828db87e2472716b342e02b"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/AgendaScreen.kt",
+    "sha256": "aece10f1c6e40725640f0793d64bc98d3a48bc4c4a712efdd950653b7be6a7e1"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/ChatScreen.kt",
+    "sha256": "f65e749cb0b69f0e5b991341e7373e6aa1d21f5dc24255bde8f62a233477eef7"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/InboxScreen.kt",
+    "sha256": "3733d54426f46c1b84375cda8a32a3515dcddf191bb41d4d131e47b4478ceaca"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/SettingsPlaygroundContent.kt",
+    "sha256": "2b7814cb058c244bb55794d55bb64ed8aa6e278c260879ac15f69a41482a3f5c"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/SettingsScreen.kt",
+    "sha256": "a499b36a8dfd38bfe09dd4f88eac5d6dc162887cea30b51627a4b3f5bbbbf4e9"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/TaskDetailScreen.kt",
+    "sha256": "bc97eedb3289cd4507430f4a873cacc8329cfbcffd49af3724a30ca32f912334"
+  },
+  {
+    "path": "compose/RemDesignSystem/screens/WalletScreen.kt",
+    "sha256": "3f9af8acc37318102dc36bcc9064eeacb51860f8bb72de375bddc717aa724370"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/main/AndroidManifest.xml",
+    "sha256": "daa0fb1f32ba7ea85a07ef6302ab3d58c3407d7fd2aa03ec132cb9e38e8d9849"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/main/res/font/inter_bold.ttf",
+    "sha256": "75a68af9f48231376f88542c9b05bc6df83558f69ae945dbe67a978ec821b8fe"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/main/res/font/inter_regular.ttf",
+    "sha256": "77531fc6587481443cc45452f0597ba7afcba000139cbde1d513ac861bbcce38"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/main/res/font/material_symbols_filled.ttf",
+    "sha256": "462570bdefd1df95c124cced4c57ee3a48454af59ada08c28ca7e1a0907f2056"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/main/res/font/material_symbols_outlined.ttf",
+    "sha256": "51afa7ae3183437c2cab41d10798a338cb65bc16d446b4165777c2e3e5487441"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/test/kotlin/com/rem/designsystem/EvidenceSnapshots.kt",
+    "sha256": "f5007d462fdd79c1f43e9bab472d9964e95d9476d7f36100c1c4df16e4fb5986"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/test/kotlin/com/rem/designsystem/LegalDocumentFixtures.kt",
+    "sha256": "65aa949f04207b331162005c6680424324c8ae01a0d3c1969628e48612895189"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/test/kotlin/com/rem/designsystem/RemMaterialSymbolsFillTest.kt",
+    "sha256": "866802d541c48badf0ff318383dec166989c331f3623faf7cbd74b2cac0f8070"
+  },
+  {
+    "path": "compose/RemDesignSystem/src/test/kotlin/com/rem/designsystem/SignInInterruptionPresentationTest.kt",
+    "sha256": "902c1de49c2a723c129d82f2eaa5a2f7034a1edd14597677e76027cc14bba9da"
+  },
+  {
+    "path": "compose/demo/build.gradle.kts",
+    "sha256": "18917c84a6854328dd4f82afb1f6fdbbeeb8dddbb8c01f6481a6e6e07fcf51d9"
+  },
+  {
+    "path": "compose/demo/src/androidTest/java/com/rem/designsystem/demo/SettingsPlaygroundTest.kt",
+    "sha256": "9f766d7b0237d0c57cce42938b310f6c03183490b011ac85fee3c008ba187102"
+  },
+  {
+    "path": "compose/demo/src/main/AndroidManifest.xml",
+    "sha256": "c3422788d8cda442f1eac0edb3389fcc7667a6fc206200dce480e080ad0f8201"
+  },
+  {
+    "path": "compose/demo/src/main/java/com/rem/designsystem/demo/MainActivity.kt",
+    "sha256": "fc19a3a46825a93d0371021daac2a2e340a47db08785ba5bde4aa2f6bd706c43"
+  },
+  {
+    "path": "compose/demo/src/main/res/values/styles.xml",
+    "sha256": "9182c4e28be06284d1d228ac6f52cb09e2b6a0586e2d94edb5b6216c23b79444"
+  },
+  {
+    "path": "tools/playground-ios/App/RemSettingsPlaygroundApp.swift",
+    "sha256": "d33d449911f66eea535a02c31524fb2abc0b9922089b8783315d03ea042fc687"
+  },
+  {
+    "path": "tools/playground-ios/RemSettingsPlayground.xcodeproj/project.pbxproj",
+    "sha256": "3510f776abe51181eacc4ceb39da027897d8c41d4b26b67889b214e2fffbd6fe"
+  },
+  {
+    "path": "tools/playground-ios/UITests/SettingsPlaygroundUITests.swift",
+    "sha256": "c693f97a0c6b53ba701da07132b37d7ad862a7bb89814ae15a93a67dca7b9448"
+  },
+  {
+    "path": "tools/playground-ios/project.yml",
+    "sha256": "e0f2666c0de324686ed0bfdd78dd2b0c68d703ffefc762c30e86a391de4f42a4"
+  }
+]
