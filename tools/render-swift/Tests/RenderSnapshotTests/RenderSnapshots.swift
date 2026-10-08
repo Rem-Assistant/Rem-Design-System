@@ -90,7 +90,9 @@ final class RenderSnapshots: XCTestCase {
         }
         // Wave 1 onboarding flows — paired with the Compose `Connectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
         render("Connectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
-        render("Voice-light", width: 393, height: 852, dark: false) { voiceScreen() }
+        // Onboarding Voice now has its own interactive native journey (OnboardingVoice-* captures)
+        // that reuses the shared VoiceControlsContent/VoiceChooserContent cores; the legacy static
+        // gallery render was retired so it cannot drift from, or collide with, those journey shots.
         render("AgendaEmpty-light", width: 393, height: 852, dark: false) {
             RemContentUnavailableView(
                 symbol: "calendar.badge.plus",
@@ -449,19 +451,6 @@ final class RenderSnapshots: XCTestCase {
                 .init(symbol: "number", tint: DesignTokens.Color.systemPurple, name: "Slack", status: "Not connected", isConnected: false, action: {}),
             ],
             onContinue: {}, onSkip: {}
-        )
-    }
-
-    // Voice setup — hero + hear/picker rows + Character & speed sliders + Continue (constant bindings).
-    private func voiceScreen() -> some View {
-        OnboardingVoiceTemplate(
-            selectedVoice: "Aria (Warm)",
-            onHearVoice: {},
-            onSelectVoice: {},
-            speed: .constant(0.45),
-            consistency: .constant(0.7),
-            likeness: .constant(0.6),
-            onContinue: {}
         )
     }
 

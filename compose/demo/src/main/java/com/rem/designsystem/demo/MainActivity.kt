@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.onboarding.OnboardingVoiceScreen
 import com.rem.designsystem.primitives.*
 import com.rem.designsystem.screens.*
 import com.rem.designsystem.tokens.*
@@ -73,7 +74,7 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class LoadFixture { Success, Slow, Error }
-private enum class Route { Home, Settings, Agent, Controls }
+private enum class Route { Home, Settings, Agent, Controls, OnboardingVoice }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,11 +83,14 @@ fun Playground() {
     var route by rememberSaveable { mutableStateOf(Route.Home) }
     var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
+    var voiceOutcome by rememberSaveable { mutableStateOf<String?>(null) }
+    // OnboardingVoiceScreen owns its own chrome and Back handling, like the Agent destinations.
+    val fullScreen = destination != null || route == Route.OnboardingVoice
     val back = { route = if (route == Route.Agent) Route.Settings else Route.Home }
-    BackHandler(route != Route.Home && destination == null) { back() }
-    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls" }
+    BackHandler(route != Route.Home && !fullScreen) { back() }
+    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls"; Route.OnboardingVoice -> "Onboarding Voice" }
     Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
-        if (destination == null) {
+        if (!fullScreen) {
         CenterAlignedTopAppBar(title = { Text(title, style = RemTypography.bodyBold) }, navigationIcon = {
             if (route != Route.Home) IconButton(onClick = back, modifier = Modifier.testTag("back")) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -94,7 +98,7 @@ fun Playground() {
         }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = RemColors.current.backgroundPrimary))
         }
     }) { padding ->
-        Box(Modifier.then(if (destination == null) Modifier.padding(padding) else Modifier).fillMaxSize()) {
+        Box(Modifier.then(if (!fullScreen) Modifier.padding(padding) else Modifier).fillMaxSize()) {
             when (route) {
                 Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text("Settings New · Android", style = RemTypography.title3Bold)
@@ -105,6 +109,25 @@ fun Playground() {
                     }
                     Button(onClick = { route = Route.Settings }, modifier = Modifier.testTag("openSettings")) { Text("Open Settings") }
                     OutlinedButton(onClick = { route = Route.Controls }) { Text("Shared controls") }
+                    Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview plays no audio; Continue and Skip are host callbacks with no downstream screen.", style = RemTypography.footnote)
+                    OutlinedButton(onClick = { voiceOutcome = null; route = Route.OnboardingVoice }, modifier = Modifier.testTag("openOnboardingVoice")) { Text("Open Onboarding Voice") }
+                }
+                Route.OnboardingVoice -> {
+                    val outcome = voiceOutcome
+                    if (outcome != null) {
+                        BackHandler { voiceOutcome = null; route = Route.Home }
+                        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)) {
+                            Text("Host callback: $outcome", style = RemTypography.title3Bold, modifier = Modifier.testTag("onboardingVoice.outcome"))
+                            Text("The onboarding masters wire no next screen; this is the bounded playground boundary.", style = RemTypography.footnote, textAlign = TextAlign.Center)
+                            Button(onClick = { voiceOutcome = null }, modifier = Modifier.testTag("onboardingVoice.restart")) { Text("Restart") }
+                        }
+                    } else {
+                        OnboardingVoiceScreen(
+                            onBack = { route = Route.Home },
+                            onContinue = { voiceOutcome = "continue" },
+                            onSkip = { voiceOutcome = "skip" },
+                        )
+                    }
                 }
                 Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) {
                     SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {

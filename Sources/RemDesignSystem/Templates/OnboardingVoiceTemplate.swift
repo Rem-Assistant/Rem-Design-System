@@ -1,152 +1,158 @@
 import SwiftUI
 
-/// Presentational template for the onboarding **"Set up your voice"** (Voice) screen.
-/// Pure: no speech engine, no persistence — the app supplies the current voice, slider bindings, and
-/// the hear/select actions, and owns navigation + the first-run coach-mark. Figma: `Screen/Voice`
-/// (`488:251`). Composes design-system components: `RemSection` (grouped surfaces), `ListRow`
-/// (hear-voice + picker rows), `ContainedIcon` (row leadings), and native `Slider` (the platform
-/// control for Character & speed — shared intent, native form). iOS-canonical; adapts on iPadOS/macOS.
+/// Onboarding **"Choose how Rem sounds"** (Voice) shell. Source: Figma `Screen/Voice · Onboarding`
+/// (`2219:22520`), `Screen/Voice · Choose a voice` (`2221:83686`) and `Screen/Voice · Voice selected`
+/// (`2219:23081`) on the Onboarding New page `2213:9168`, Voice section `2213:9346`.
+///
+/// This is a bounded playground slice, not the production voice integration or the onboarding
+/// sequencer. It **reuses the shared Settings cores** — `VoiceControlsContent` (`2217:1571`) with
+/// `showConversationEntry: false` and `VoiceChooserContent` (`2217:1901`) — so there is a single
+/// controlled Voice control tree across Settings and Onboarding. Onboarding owns only its surrounding
+/// navigation and actions: a centered `Lockup` (`773:22`) and a safe-area `ActionArea` (`773:28`)
+/// with Continue + Skip. No audio, speech engine, persistence, or downstream product screen exists
+/// here: preview is the Settings fixture's local no-audio play/pause state, and Continue / Skip call
+/// separately observable host callbacks.
 public struct OnboardingVoiceTemplate: View {
-    var heroSymbol: String
-    var voiceName: String
-    var selectedVoice: String
-    var onHearVoice: () -> Void
-    var onSelectVoice: () -> Void
-    @Binding var speed: Double
-    @Binding var consistency: Double
-    @Binding var likeness: Double
-    var onContinue: () -> Void
+    @Binding private var fixture: VoiceSettingsFixture
+    private let onPreview: (VoiceChoice) -> Void
+    private let onContinue: () -> Void
+    private let onSkip: () -> Void
+
+    /// Authored lockup copy (`2219:22520` · `773:20` / `773:21`).
+    public static let title = "Choose how Rem sounds"
+    public static let subtitle = "Preview a voice, choose the one Rem uses, then fine-tune its delivery."
 
     public init(
-        heroSymbol: String = "waveform",
-        voiceName: String = "Aria",
-        selectedVoice: String,
-        onHearVoice: @escaping () -> Void,
-        onSelectVoice: @escaping () -> Void,
-        speed: Binding<Double>,
-        consistency: Binding<Double>,
-        likeness: Binding<Double>,
-        onContinue: @escaping () -> Void = {}
+        fixture: Binding<VoiceSettingsFixture>,
+        onPreview: @escaping (VoiceChoice) -> Void,
+        onContinue: @escaping () -> Void = {},
+        onSkip: @escaping () -> Void = {}
     ) {
-        self.heroSymbol = heroSymbol
-        self.voiceName = voiceName
-        self.selectedVoice = selectedVoice
-        self.onHearVoice = onHearVoice
-        self.onSelectVoice = onSelectVoice
-        self._speed = speed
-        self._consistency = consistency
-        self._likeness = likeness
+        self._fixture = fixture
+        self.onPreview = onPreview
         self.onContinue = onContinue
+        self.onSkip = onSkip
     }
 
     public var body: some View {
         VStack(spacing: 0) {
-        ScrollView {
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                // Hero — matches the onboarding hero-lockup pattern (Consent/Connectors): a blue
-                // ContainedIcon tile at the top of the step.
-                ContainedIcon(heroSymbol, fill: .tint(DesignTokens.Color.brandBlue), size: .large)
-                    .padding(.top, DesignTokens.Spacing.md)
-                RemSection {
-                    ListRow(
-                        "Hear this voice",
-                        subtitle: voiceName,
-                        action: onHearVoice,
-                        leading: { ContainedIcon("play.fill", fill: .tint(DesignTokens.Color.brandBlue)) },
-                        trailing: { EmptyView() }
-                    )
-                }
-
-                RemSection(
-                    header: "Spoken responses",
-                    footer: "Choose how Rem sounds when reading a response or talking with you."
-                ) {
-                    ListRow(
-                        "Voice",
-                        action: onSelectVoice,
-                        leading: { ContainedIcon("speaker.wave.2.fill", fill: .tint(DesignTokens.Color.brandBlue)) },
-                        trailing: {
-                            HStack(spacing: DesignTokens.Spacing.xs) {
-                                Text(selectedVoice)
-                                    .font(DesignTokens.Typography.body)
-                                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                                DisclosureChevron()
-                            }
-                        }
-                    )
-                }
-
-                RemSection(
-                    header: "Character & speed",
-                    footer: "Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."
-                ) {
-                    VStack(spacing: 0) {
-                        sliderRow("Speed", min: "Slower", max: "Faster", value: $speed)
-                        rowSeparator
-                        sliderRow("Consistency", min: "More expressive", max: "More consistent", value: $consistency)
-                        rowSeparator
-                        sliderRow("Likeness", min: "Looser", max: "Closer", value: $likeness)
-                    }
-                }
+            List {
+                lockup
+                VoiceControlsContent(
+                    fixture: $fixture,
+                    showConversationEntry: false,
+                    onPreview: onPreview,
+                    voiceDestination: { OnboardingVoiceChooser(fixture: $fixture) }
+                )
             }
-            .padding(DesignTokens.Spacing.lg)
-            .frame(maxWidth: 560)
-        }
-        bottomBar
+            .settingsDestinationList()
+            actionArea
         }
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
+        .navigationTitle("")
+        .settingsInlineNavigationTitle()
+        .accessibilityIdentifier("onboardingVoice")
+        .accessibilityHint(PlaygroundMockData.hint)
+        .onDisappear { fixture.stopPreview() }
     }
 
-    private var bottomBar: some View {
-        Button("Continue", action: onContinue)
-            .remPrimaryActionButton()
-            .frame(maxWidth: 560)
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, DesignTokens.Spacing.lg)
-            .padding(.top, DesignTokens.Spacing.sm)
-            .padding(.bottom, DesignTokens.Spacing.md)
-            .background(DesignTokens.Color.backgroundPrimary)
-    }
-
-    private var rowSeparator: some View {
-        Divider()
-            .overlay(DesignTokens.Color.separator)
-            .padding(.horizontal, DesignTokens.Spacing.md)
-    }
-
-    private func sliderRow(_ label: String, min: String, max: String, value: Binding<Double>) -> some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-            Text(label)
-                .font(DesignTokens.Typography.body.weight(.semibold))
-                .foregroundStyle(DesignTokens.Color.labelPrimary)
-            RemSlider(value: value, in: 0...1)
-            HStack {
-                Text(min)
-                Spacer()
-                Text(max)
+    /// Centered hero + title + subtitle on the plain primary surface (no grouped card).
+    private var lockup: some View {
+        Section {
+            VStack(spacing: DesignTokens.Spacing.md) {
+                ContainedIcon("waveform", fill: .tint(DesignTokens.Color.brandBlue), size: .large)
+                    .accessibilityHidden(true)
+                VStack(spacing: DesignTokens.Spacing.xs) {
+                    Text(Self.title)
+                        .font(DesignTokens.Typography.largeTitle.weight(.semibold))
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    Text(Self.subtitle)
+                        .font(DesignTokens.Typography.body)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                }
+                .multilineTextAlignment(.center)
             }
-            .font(DesignTokens.Typography.caption1)
-            .foregroundStyle(DesignTokens.Color.labelSecondary)
+            .frame(maxWidth: .infinity)
+            .padding(.top, DesignTokens.Spacing.sm)
+            .padding(.bottom, DesignTokens.Spacing.xs)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: DesignTokens.Spacing.md,
+                                      bottom: 0, trailing: DesignTokens.Spacing.md))
+            .listRowSeparator(.hidden)
         }
-        .padding(.horizontal, DesignTokens.Spacing.md)
-        .padding(.vertical, DesignTokens.Spacing.sm)
+    }
+
+    /// Bottom, safe-area-pinned actions. Continue is the primary (Rect · Black); Skip is a quiet
+    /// accent text link. Both scroll independently of the content above and stay reachable at large
+    /// Dynamic Type because they live outside the scrolling `List`.
+    private var actionArea: some View {
+        VStack(spacing: DesignTokens.Spacing.xs) {
+            Button(action: onContinue) {
+                Text("Continue").frame(maxWidth: .infinity)
+            }
+            .remPrimaryActionButton()
+            .accessibilityIdentifier("onboardingVoice.continue")
+            Button("Skip", action: onSkip)
+                .remButton(.textAccent)
+                .accessibilityIdentifier("onboardingVoice.skip")
+        }
+        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, DesignTokens.Spacing.lg)
+        .padding(.top, DesignTokens.Spacing.sm)
+        .padding(.bottom, DesignTokens.Spacing.sm)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+}
+
+/// Host-facing onboarding Voice screen. Owns the controlled fixture and forwards the host's
+/// Continue / Skip callbacks. The hosting app supplies the `NavigationStack` (its back button is the
+/// outer Back that exits to the playground host); the chooser is pushed inside that same stack.
+public struct OnboardingVoicePlaygroundScreen: View {
+    @State private var fixture = VoiceSettingsFixture()
+    private let onContinue: () -> Void
+    private let onSkip: () -> Void
+
+    public init(onContinue: @escaping () -> Void = {}, onSkip: @escaping () -> Void = {}) {
+        self.onContinue = onContinue
+        self.onSkip = onSkip
+    }
+
+    public var body: some View {
+        OnboardingVoiceTemplate(
+            fixture: $fixture,
+            onPreview: { fixture.togglePreview($0) },
+            onContinue: onContinue,
+            onSkip: onSkip
+        )
+    }
+}
+
+/// Onboarding chooser destination. Reuses the public `VoiceChooserContent` core; selection stays
+/// controlled here until native Back returns to the shell, and preview stops when the chooser leaves.
+private struct OnboardingVoiceChooser: View {
+    @Binding var fixture: VoiceSettingsFixture
+    var body: some View {
+        List {
+            VoiceChooserContent(fixture: $fixture, onPreview: { fixture.togglePreview($0) })
+        }
+        .settingsDestinationList()
+        .navigationTitle("Choose a voice")
+        .settingsInlineNavigationTitle()
+        .accessibilityIdentifier("onboardingVoiceChooser")
+        .accessibilityHint(PlaygroundMockData.hint)
+        .onDisappear { fixture.stopPreview() }
     }
 }
 
 #if DEBUG
 private struct OnboardingVoiceTemplatePreviewHost: View {
-    @State private var speed = 0.45
-    @State private var consistency = 0.7
-    @State private var likeness = 0.6
+    @State private var fixture = VoiceSettingsFixture()
     var body: some View {
         NavigationStack {
             OnboardingVoiceTemplate(
-                selectedVoice: "Aria (Warm)",
-                onHearVoice: {},
-                onSelectVoice: {},
-                speed: $speed,
-                consistency: $consistency,
-                likeness: $likeness
+                fixture: $fixture,
+                onPreview: { fixture.togglePreview($0) }
             )
         }
     }

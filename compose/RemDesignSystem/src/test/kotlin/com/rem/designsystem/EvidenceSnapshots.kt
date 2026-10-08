@@ -75,7 +75,6 @@ import com.rem.designsystem.rows.TaskEventKind
 import com.rem.designsystem.rows.TaskEventLeading
 import com.rem.designsystem.onboarding.Connector
 import com.rem.designsystem.onboarding.OnboardingConnectorsScreen
-import com.rem.designsystem.onboarding.OnboardingVoiceScreen
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
@@ -237,19 +236,9 @@ class EvidenceSnapshots {
         }
     }
 
-    @Test
-    fun voice() = shot("Voice-light") {
-        RemTheme {
-            OnboardingVoiceScreen(
-                voiceName = "Aria",
-                selectedVoice = "Aria (Warm)",
-                onHearVoice = {}, onSelectVoice = {},
-                speed = 0.45f, onSpeedChange = {},
-                consistency = 0.7f, onConsistencyChange = {},
-                likeness = 0.6f, onLikenessChange = {},
-            )
-        }
-    }
+    // Onboarding Voice now has its own interactive native journey (OnboardingVoice-* captures) that
+    // reuses the shared VoiceControlsContent/VoiceChooserContent cores. The legacy static Paparazzi
+    // render was retired so it cannot drift from, or collide with, those journey shots.
 
     @Test
     fun pill() {
