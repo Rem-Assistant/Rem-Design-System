@@ -152,8 +152,13 @@ jobs:
             --source artifacts/figma --destination figma-reference/reference \
             --contracts tools/render-evidence/contracts.json "${SCOPE_ARGS[@]}"
           cp artifacts/figma-structure-report.json figma-reference/structure/report.json
-          cp "$RUNNER_TEMP/head-data/structure-contract.json" figma-reference/structure/contract.json
-          cp "$RUNNER_TEMP/head-data/manifest.json" figma-reference/structure/manifest.json
+          if [ "$PRIMARY_CONTRACT" = settings-foundation ]; then
+            cp tools/design-sync/settings-structure-contract.json figma-reference/structure/contract.json
+            cp tools/design-sync/manifest.json figma-reference/structure/manifest.json
+          else
+            cp "$RUNNER_TEMP/head-data/structure-contract.json" figma-reference/structure/contract.json
+            cp "$RUNNER_TEMP/head-data/manifest.json" figma-reference/structure/manifest.json
+          fi
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
