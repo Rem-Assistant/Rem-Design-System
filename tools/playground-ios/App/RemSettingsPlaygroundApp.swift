@@ -60,7 +60,8 @@ struct AgentPreview: View {
     @State private var status = "loading"
     @State private var attempt = 0
     var body: some View {
-        Group {
+        // A stable container owns the load task while its loading/ready child changes.
+        ZStack {
             if status == "ready" {
                 AgentSettingsContent(availableDestinations: [.pairedDevices, .cloudBrowser, .memory, .models])
                     .navigationDestination(for: AgentSettingsDestination.self) { route in

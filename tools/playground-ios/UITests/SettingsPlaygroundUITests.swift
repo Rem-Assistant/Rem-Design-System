@@ -15,15 +15,21 @@ final class SettingsPlaygroundUITests: XCTestCase {
         add(attachment)
     }
     private func openSettings(_ fixture: String = "Success") {
-        app.segmentedControls.buttons[fixture].tap()
-        app.buttons["openSettings"].tap()
+        if fixture != "Success" {
+            let choice = app.segmentedControls.buttons[fixture]
+            reveal(choice)
+            choice.tap()
+        }
+        let open = app.buttons["openSettings"]
+        reveal(open)
+        open.tap()
         XCTAssertTrue(app.buttons["openAgent"].waitForExistence(timeout: 3))
     }
     func testSettingsNavigationAndBack() {
         openSettings()
         capture("SettingsEntry-light")
         app.buttons["openAgent"].tap()
-        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        waitForAgent()
         XCTAssertTrue(app.staticTexts["Scheduled and triggered work"].exists)
         capture("AgentSettings-light")
         app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -36,7 +42,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         openSettings()
         capture("SettingsEntry-dark")
         app.buttons["openAgent"].tap()
-        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        waitForAgent()
         capture("AgentSettings-dark")
     }
     func testLargeTextSettingsScrolls() {
@@ -46,7 +52,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         openSettings()
         capture("SettingsEntry-large-text")
         app.buttons["openAgent"].tap()
-        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        waitForAgent()
         capture("AgentSettings-large-text")
         for _ in 0..<5 where !app.staticTexts["Voice"].isHittable { app.swipeUp() }
         XCTAssertTrue(app.staticTexts["Voice"].isHittable)
@@ -55,7 +61,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     func testAutomationsHasNoNavigationAction() {
         openSettings()
         app.buttons["openAgent"].tap()
-        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        waitForAgent()
         XCTAssertFalse(app.buttons["automationsUnavailable"].exists)
         let row = app.descendants(matching: .any)["automationsUnavailable"].firstMatch
         XCTAssertTrue(row.exists)
@@ -72,7 +78,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         app.buttons["openAgent"].tap()
         XCTAssertTrue(app.buttons["retry"].waitForExistence(timeout: 5))
         app.buttons["retry"].tap()
-        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        waitForAgent()
     }
     func testCancelLoadingDoesNotNavigateLater() {
         openSettings("Slow")
@@ -82,7 +88,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         app.buttons["cancelLoad"].tap()
         // After the original load deadline, the destination must still be dismissed.
         RunLoop.current.run(until: Date().addingTimeInterval(10.3))
-        XCTAssertFalse(app.staticTexts["Capabilities"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["agentSettings"].firstMatch.exists)
         XCTAssertTrue(app.buttons["openAgent"].exists)
         capture("ios-cancelled-load")
     }
@@ -105,10 +111,22 @@ final class SettingsPlaygroundUITests: XCTestCase {
     }
     // These journeys run through the public playground routes. All entered text is
     // an intentionally non-secret prototype placeholder; no service is contacted.
+    private func waitForAgent() {
+        let ready = app.descendants(matching: .any)["agentSettings"].firstMatch.waitForExistence(timeout: 5)
+        if !ready {
+            capture("AgentSettings-not-ready")
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "AgentSettings-not-ready-hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+            print(app.debugDescription)
+        }
+        XCTAssertTrue(ready, "Agent settings must finish loading")
+    }
     private func openDestination(_ destination: String, title: String) {
         openSettings()
         app.buttons["openAgent"].tap()
-        XCTAssertTrue(app.staticTexts["Capabilities"].waitForExistence(timeout: 5))
+        waitForAgent()
         let route = app.buttons["agentDestination.\(destination)"]
         reveal(route)
         route.tap()
