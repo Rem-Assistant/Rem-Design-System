@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
@@ -61,6 +62,8 @@ fun SuggestedTaskRow(
     onAccept: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    acceptTag: String? = null,
+    dismissTag: String? = null,
 ) {
     val colors = RemColors.current
     Row(
@@ -85,6 +88,7 @@ fun SuggestedTaskRow(
             modifier = Modifier
                 .width(LeftSlotWidth)
                 .heightIn(min = 44.dp)
+                .then(acceptTag?.let { Modifier.testTag(it) } ?: Modifier)
                 .clickable(onClick = onAccept),
             verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -130,6 +134,7 @@ fun SuggestedTaskRow(
             tint = colors.labelSecondary,
             modifier = Modifier
                 .size(30.dp)
+                .then(dismissTag?.let { Modifier.testTag(it) } ?: Modifier)
                 .clickable(onClick = onDismiss)
                 .padding(8.dp),
         )

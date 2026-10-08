@@ -106,6 +106,16 @@ final class RenderSnapshots: XCTestCase {
         render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
         render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+        // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
+        render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .loaded)
+        }
+        render("AgendaSuggestions-overflow-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsOverflowSheet(suggestions: AgendaSuggestionItem.referenceSuggestions)
+        }
+        render("AgendaSuggestions-none-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .none)
+        }
         // Wave 2 screens — components composed into surfaces.
         render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
         render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
