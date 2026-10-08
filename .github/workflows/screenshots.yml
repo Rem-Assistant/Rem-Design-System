@@ -14,6 +14,10 @@ on:
         type: choice
         default: both
         options: [both, ios, android]
+      ios_test:
+        description: Optional iOS test method for a focused diagnostic run
+        type: string
+        default: ''
   pull_request:
     paths:
       - "tools/playground-ios/**"
@@ -116,18 +120,9 @@ jobs:
           persist-credentials: false
       - name: Run the actual playground journeys
         timeout-minutes: 40
-        run: |
-          set -eo pipefail
-          xcodebuild test \
-            -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
-            -scheme RemSettingsPlayground \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -maximum-test-execution-time-allowance 300 \
-            -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log"
+        env:
+          IOS_TEST: ${{ inputs.ios_test }}
+        run: bash tools/playground-ios/run-hosted-journeys.sh
       - name: Extract actual playground screenshots
         if: always()
         run: |
@@ -149,7 +144,9 @@ jobs:
         if: always()
         with:
           name: settings-ios-build-log
-          path: ${{ runner.temp }}/settings-ios-build.log
+          path: |
+            ${{ runner.temp }}/settings-ios-build.log
+            ${{ runner.temp }}/settings-ios-main-thread*.txt
           if-no-files-found: error
       - name: Package iOS journey diagnostics
         if: always()
