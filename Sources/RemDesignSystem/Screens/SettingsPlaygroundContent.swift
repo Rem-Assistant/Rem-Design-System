@@ -60,7 +60,7 @@ public struct SettingsEntryContent: View {
                         Text(verbatim: "avery@example.com").font(.footnote).foregroundStyle(.secondary)
                     }
                 }, trailing: { EmptyView() })
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 if let agentRoute {
                     NavigationLink(value: agentRoute) { agentLabel }
@@ -72,21 +72,24 @@ public struct SettingsEntryContent: View {
                     Button(action: openAgent) { agentLabel }
                         .buttonStyle(.plain).accessibilityIdentifier("openAgent")
                 }
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 referenceRow("Billing & Usage", symbol: "creditcard.fill")
                 referenceRow("Permissions", symbol: "hand.raised.fill")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section { referenceRow("About", symbol: "info.circle.fill") }
+                .listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 if let onShare {
                     Button(action: onShare) { SettingsRowLabel("Share Rem", symbol: "square.and.arrow.up") }
                         .buttonStyle(.plain).accessibilityIdentifier("shareRem")
                 } else { referenceRow("Share Rem", symbol: "square.and.arrow.up") }
                 referenceRow("Help & Support", symbol: "questionmark.circle.fill")
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section { referenceAction("Sign Out") }
+                .listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section { referenceAction("Delete Account") }
+                .listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsListStyle()
         .accessibilityIdentifier("settingsEntry")
@@ -128,17 +131,19 @@ public struct AgentSettingsContent: View {
                 SettingsRowLabel("Automations", subtitle: "Scheduled and triggered work", symbol: "bell.badge.fill")
                     .accessibilityIdentifier("automationsUnavailable")
                     .accessibilityHint("Unavailable. Automations design is awaiting a decision.")
-            } header: { Text("Capabilities") } footer: {
+            } header: { Text("Capabilities").textCase(nil) } footer: {
                 Text("Manage connected surfaces and how your agent can perform.")
-            }
-            Section("Intelligence") {
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
+            Section {
                 destination(.memory, "Memory", symbol: "brain.head.profile")
                 destination(.models, "Models", subtitle: "Automatic", symbol: "cpu")
                 destination(.wallet, "Wallet", symbol: "wallet.pass")
-            }
-            Section("Experience") {
+            } header: { Text("Intelligence").textCase(nil) }
+                .listRowBackground(DesignTokens.Color.backgroundSecondary)
+            Section {
                 destination(.voice, "Voice", subtitle: "Aria", symbol: "waveform")
-            }
+            } header: { Text("Experience").textCase(nil) }
+                .listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsListStyle()
         .accessibilityIdentifier("agentSettings")
@@ -165,9 +170,13 @@ public struct AgentSettingsContent: View {
 private extension View {
     @ViewBuilder func settingsListStyle() -> some View {
         #if os(iOS)
-        self.listStyle(.insetGrouped).environment(\.defaultMinListRowHeight, 60).textCase(nil)
+        self.listStyle(.insetGrouped).scrollContentBackground(.hidden)
+            .background(DesignTokens.Color.backgroundPrimary)
+            .environment(\.defaultMinListRowHeight, 60).textCase(nil)
         #else
-        self.listStyle(.inset).environment(\.defaultMinListRowHeight, 60).textCase(nil)
+        self.listStyle(.inset).scrollContentBackground(.hidden)
+            .background(DesignTokens.Color.backgroundPrimary)
+            .environment(\.defaultMinListRowHeight, 60).textCase(nil)
         #endif
     }
 }

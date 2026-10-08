@@ -103,10 +103,10 @@ public struct SettingsMemoryScreen: View {
                 toggleRow(.generateMemory, "Generate memory", "Update the summary from chats")
                 toggleRow(.sensitiveTopics, "Sensitive topics", "Allow sensitive details")
             } header: {
-                Text("Memory controls")
+                Text("Memory controls").textCase(nil)
             } footer: {
                 Text(MemoryFixture.controlsFooter)
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
                 NavigationLink(value: MemoryRoute.summary) {
@@ -114,10 +114,10 @@ public struct SettingsMemoryScreen: View {
                 }
                 .accessibilityIdentifier("memory.summaryRow")
             } header: {
-                Text("Overview")
+                Text("Overview").textCase(nil)
             } footer: {
                 Text(MemoryFixture.overviewFooter)
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsDestinationList()
         .navigationTitle("Memory")

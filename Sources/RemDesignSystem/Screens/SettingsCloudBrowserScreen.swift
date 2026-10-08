@@ -6,8 +6,8 @@ import SwiftUI
 /// a default permission, a recent-sites list, per-site access, saved logins (view / add / edit /
 /// remove), cookies & sessions, and the destructive clear-data paths — each with the authored
 /// confirmation. Every nested screen is owned here through the **outer host `NavigationStack`**: this
-/// view never nests its own `NavigationStack`; it declares its pushes with
-/// `navigationDestination(item:)` / `navigationDestination(isPresented:)` so the host chrome supplies
+/// view never nests its own `NavigationStack`; all nested screens use typed value routes
+/// registered once at this stable root, so the host chrome supplies
 /// native Back, and edit mode swaps the toolbar for Cancel / Save in place.
 ///
 /// Authority: `docs/playground/settings-design/settings-destinations.md` (Cloud browser) and the raw
@@ -30,16 +30,30 @@ public struct SettingsCloudBrowserScreen: View {
             .navigationTitle("Cloud browser")
             .inlineNavTitle()
             .accessibilityIdentifier("cloudBrowser.root")
+            .navigationDestination(for: CloudBrowserRoute.self) { route in
+                switch route {
+                case .sites: CloudSitesList(model: model)
+                case .addSite: CloudAddSiteForm(model: model)
+                case let .site(id): CloudSiteDetail(model: model, siteID: id)
+                case let .addLogin(id): CloudAddLoginForm(model: model, siteID: id)
+                case let .cookies(id): CloudCookiesView(model: model, siteID: id)
+                case let .savedLogin(siteID, loginID):
+                    CloudSavedLoginView(model: model, siteID: siteID, loginID: loginID)
+                }
+            }
     }
+}
+
+private enum CloudBrowserRoute: Hashable {
+    case sites, addSite
+    case site(UUID), addLogin(UUID), cookies(UUID)
+    case savedLogin(siteID: UUID, loginID: UUID)
 }
 
 // MARK: - Root
 
 private struct CloudBrowserRootList: View {
     @ObservedObject var model: CloudBrowserModel
-    @State private var openedSiteID: UUID?
-    @State private var showAllSites = false
-    @State private var showAddSite = false
     @State private var confirmClearAll = false
 
     var body: some View {
@@ -53,13 +67,18 @@ private struct CloudBrowserRootList: View {
 
             Section {
                 ForEach(model.recentSites) { site in
-                    CloudSiteRow(site: site) { openedSiteID = site.id }
+                    CloudSiteRow(site: site)
                 }
-                Button("See all sites") { showAllSites = true }
+                NavigationLink("See all sites", value: CloudBrowserRoute.sites)
                     .cloudLinkStyle()
                     .accessibilityIdentifier("cloudBrowser.seeAllSites")
             } header: {
-                CloudSectionHeader("Sites", actionTitle: "Add site") { showAddSite = true }
+                HStack {
+                    Text("Sites").textCase(nil)
+                    Spacer()
+                    NavigationLink("Add site", value: CloudBrowserRoute.addSite)
+                        .font(.body).foregroundStyle(DesignTokens.Color.brandBlue).textCase(nil)
+                }
                     .accessibilityIdentifier("cloudBrowser.addSite")
             } footer: {
                 Text("Recent sites appear here. Add a site to configure its access.")
@@ -76,15 +95,6 @@ private struct CloudBrowserRootList: View {
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .cloudListStyle()
-        .navigationDestination(item: $openedSiteID) { id in
-            CloudSiteDetail(model: model, siteID: id)
-        }
-        .navigationDestination(isPresented: $showAllSites) {
-            CloudSitesList(model: model)
-        }
-        .navigationDestination(isPresented: $showAddSite) {
-            CloudAddSiteForm(model: model)
-        }
         .confirmationDialog("Clear data for all sites?", isPresented: $confirmClearAll,
                             titleVisibility: .visible) {
             Button("Clear all site data", role: .destructive) { model.clearAllSiteData() }
@@ -100,14 +110,12 @@ private struct CloudBrowserRootList: View {
 
 private struct CloudSitesList: View {
     @ObservedObject var model: CloudBrowserModel
-    @State private var openedSiteID: UUID?
-    @State private var showAddSite = false
 
     var body: some View {
         List {
             Section {
                 ForEach(model.sites) { site in
-                    CloudSiteRow(site: site) { openedSiteID = site.id }
+                    CloudSiteRow(site: site)
                 }
             } header: { Text("Sites").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
@@ -117,15 +125,9 @@ private struct CloudSitesList: View {
         .accessibilityIdentifier("cloudBrowser.sitesList")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Add") { showAddSite = true }
+                NavigationLink("Add", value: CloudBrowserRoute.addSite)
                     .accessibilityIdentifier("cloudBrowser.sites.addSite")
             }
-        }
-        .navigationDestination(item: $openedSiteID) { id in
-            CloudSiteDetail(model: model, siteID: id)
-        }
-        .navigationDestination(isPresented: $showAddSite) {
-            CloudAddSiteForm(model: model)
         }
     }
 }
@@ -191,9 +193,6 @@ private struct CloudSiteDetail: View {
     @ObservedObject var model: CloudBrowserModel
     let siteID: UUID
 
-    @State private var openedLoginID: UUID?
-    @State private var showAddLogin = false
-    @State private var showCookies = false
     @State private var confirmClearSite = false
     @Environment(\.dismiss) private var dismiss
 
@@ -212,20 +211,20 @@ private struct CloudSiteDetail: View {
 
                     Section {
                         ForEach(site.logins) { login in
-                            CloudNavRow {
+                            NavigationLink(value: CloudBrowserRoute.savedLogin(siteID: siteID, loginID: login.id)) {
                                 CloudLabel("Password saved securely", title: login.username)
-                            } action: { openedLoginID = login.id }
+                            }
                                 .accessibilityIdentifier("cloudBrowser.siteDetail.login")
                         }
-                        Button("Add login") { showAddLogin = true }
+                        NavigationLink("Add login", value: CloudBrowserRoute.addLogin(siteID))
                             .cloudLinkStyle()
                             .accessibilityIdentifier("cloudBrowser.siteDetail.addLogin")
                     } header: { Text("Saved logins").textCase(nil) }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
                     Section {
-                        CloudNavRow {
+                        NavigationLink(value: CloudBrowserRoute.cookies(siteID)) {
                             CloudLabel(site.cookieSummary, title: "Cookies & sessions")
-                        } action: { showCookies = true }
+                        }
                             .accessibilityIdentifier("cloudBrowser.siteDetail.cookies")
                         Button(role: .destructive) { confirmClearSite = true } label: {
                             CloudLabel("Signs Rem out of \(site.domain).",
@@ -238,15 +237,6 @@ private struct CloudSiteDetail: View {
                 .navigationTitle(site.domain)
                 .inlineNavTitle()
                 .accessibilityIdentifier("cloudBrowser.siteDetail")
-                .navigationDestination(item: $openedLoginID) { loginID in
-                    CloudSavedLoginView(model: model, siteID: siteID, loginID: loginID)
-                }
-                .navigationDestination(isPresented: $showAddLogin) {
-                    CloudAddLoginForm(model: model, siteID: siteID)
-                }
-                .navigationDestination(isPresented: $showCookies) {
-                    CloudCookiesView(model: model, siteID: siteID)
-                }
                 .confirmationDialog("Clear data for \(site.domain)?", isPresented: $confirmClearSite,
                                     titleVisibility: .visible) {
                     Button("Clear site data", role: .destructive) { model.clearSiteData(siteID: siteID) }
@@ -497,35 +487,14 @@ private struct CloudLabel: View {
     }
 }
 
-/// A site row: domain title + derived `permission · status` subtitle, pushed by a full-row tap with a
-/// native-style disclosure chevron.
+/// Native value link; the List supplies its disclosure and the root resolves the route.
 private struct CloudSiteRow: View {
     let site: CloudSite
-    let action: () -> Void
     var body: some View {
-        CloudNavRow { ListRowLabel(site.domain, subtitle: site.rowSubtitle) }
-            action: { action() }
-            .accessibilityIdentifier("cloudBrowser.site.\(site.domain)")
-    }
-}
-
-/// A full-row button that pushes a nested screen, with a trailing disclosure chevron (the authored
-/// `chevron.right`). Used where the outer `NavigationStack` is driven by local state rather than a
-/// value link, so the chevron is drawn explicitly.
-private struct CloudNavRow<Label: View>: View {
-    @ViewBuilder let label: () -> Label
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                label().frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(DesignTokens.Color.labelTertiary)
-            }
-            .contentShape(Rectangle())
+        NavigationLink(value: CloudBrowserRoute.site(site.id)) {
+            ListRowLabel(site.domain, subtitle: site.rowSubtitle)
         }
-        .buttonStyle(.plain)
+        .accessibilityIdentifier("cloudBrowser.site.\(site.domain)")
     }
 }
 
@@ -672,27 +641,6 @@ private struct CloudPermissionRow: View {
             .accessibilityIdentifier("cloudBrowser.permissionMenu")
         }
         .frame(minHeight: 44)
-    }
-}
-
-/// A grouped-section header with a trailing blue action (e.g. "Sites" + "Add site"). Reuses the native
-/// Section header slot; the parent `List` owns the inset.
-private struct CloudSectionHeader: View {
-    let title: String
-    let actionTitle: String
-    let action: () -> Void
-    init(_ title: String, actionTitle: String, action: @escaping () -> Void) {
-        self.title = title; self.actionTitle = actionTitle; self.action = action
-    }
-    var body: some View {
-        HStack {
-            Text(title).textCase(nil)
-            Spacer()
-            Button(actionTitle, action: action)
-                .font(.body)
-                .foregroundStyle(DesignTokens.Color.brandBlue)
-                .textCase(nil)
-        }
     }
 }
 

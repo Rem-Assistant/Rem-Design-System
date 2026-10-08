@@ -26,10 +26,14 @@ extension View {
     @ViewBuilder func settingsDestinationList() -> some View {
         #if os(iOS)
         self.listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(DesignTokens.Color.backgroundPrimary)
             .environment(\.defaultMinListRowHeight, 60)
             .textCase(nil)
         #else
         self.listStyle(.inset)
+            .scrollContentBackground(.hidden)
+            .background(DesignTokens.Color.backgroundPrimary)
             .environment(\.defaultMinListRowHeight, 60)
             .textCase(nil)
         #endif

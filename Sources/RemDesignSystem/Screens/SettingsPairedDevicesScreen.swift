@@ -58,10 +58,10 @@ public struct SettingsPairedDevicesScreen: View {
                     .accessibilityIdentifier("pairedDevices.peer.\(peer.id)")
                 }
             } header: {
-                Text(PairedDevicesCopy.sectionHeader)
+                Text(PairedDevicesCopy.sectionHeader).textCase(nil)
             } footer: {
                 Text(PairedDevicesCopy.listFooter)
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsDestinationList()
     }
@@ -185,7 +185,7 @@ struct PairedDeviceDetailView: View {
                 .listRowSeparator(.hidden)
             }
 
-            Section(PairedDevicesCopy.connectionSectionHeader) {
+            Section {
                 ForEach(peer.connectionRows) { row in
                     HStack {
                         Text(row.label)
@@ -197,7 +197,9 @@ struct PairedDeviceDetailView: View {
                             .foregroundStyle(DesignTokens.Color.labelSecondary)
                     }
                 }
-            }
+            } header: {
+                Text(PairedDevicesCopy.connectionSectionHeader).textCase(nil)
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
                 Button(role: .destructive) {
@@ -209,7 +211,7 @@ struct PairedDeviceDetailView: View {
                 .accessibilityIdentifier("pairedDevices.removeAccess")
             } footer: {
                 Text(PairedDevicesCopy.detailFooter)
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsDestinationList()
         .navigationTitle(peer.name)

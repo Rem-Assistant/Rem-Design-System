@@ -77,10 +77,10 @@ public struct SettingsModelsScreen: View {
                 .tint(DesignTokens.Color.systemGreen)
                 .accessibilityIdentifier("models.toggle.auto")
             } header: {
-                Text("Rem")
+                Text("Rem").textCase(nil)
             } footer: {
                 Text(ModelsFixture.autoFooter)
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
 
             Section {
                 // Navigable content (opens the key editor) paired with its disclosure chevron, with the
@@ -106,8 +106,8 @@ public struct SettingsModelsScreen: View {
                 }
                 .accessibilityIdentifier("models.addProviderKey")
             } header: {
-                Text("API keys")
-            }
+                Text("API keys").textCase(nil)
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsDestinationList()
         .navigationTitle("Models")
@@ -193,10 +193,10 @@ private struct AddProviderKeyView: View {
                         .accessibilityIdentifier("models.keyField")
                 }
             } header: {
-                Text("API key")
+                Text("API key").textCase(nil)
             } footer: {
                 Text(ModelsFixture.keyFooter)
-            }
+            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         .settingsDestinationList()
         .navigationTitle("Add provider key")

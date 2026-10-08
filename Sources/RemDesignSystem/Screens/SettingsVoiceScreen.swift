@@ -101,7 +101,7 @@ public struct VoiceControlsContent: View {
                 .accessibilityHint(VoiceSettingsFixture.previewHint)
                 .accessibilityIdentifier("voice.previewSelected")
             })
-        }
+        }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         if showConversationEntry {
             Section {
                 Picker(selection: $fixture.conversationEntry) {
@@ -117,19 +117,22 @@ public struct VoiceControlsContent: View {
                 .pickerStyle(.menu)
                 .tint(DesignTokens.Color.labelSecondary)
                 .accessibilityIdentifier("voice.conversationEntry")
-            } header: { Text("Conversation entry") } footer: { Text(VoiceSettingsFixture.conversationFooter) }
+            } header: { Text("Conversation entry").textCase(nil) } footer: { Text(VoiceSettingsFixture.conversationFooter) }
+                .listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
         Section {
             NavigationLink { voiceDestination } label: {
                 SettingsRowLabel("Voice", subtitle: fixture.selected.label, symbol: "waveform")
             }
             .accessibilityIdentifier("voice.chooseVoice")
-        } header: { Text("Spoken responses") } footer: { Text(VoiceSettingsFixture.spokenFooter) }
+        } header: { Text("Spoken responses").textCase(nil) } footer: { Text(VoiceSettingsFixture.spokenFooter) }
+            .listRowBackground(DesignTokens.Color.backgroundSecondary)
         Section {
             slider("Speed", minimum: "Slower", maximum: "Faster", value: $fixture.speed, id: "speed")
             slider("Consistency", minimum: "Creative", maximum: "Consistent", value: $fixture.consistency, id: "consistency")
             slider("Likeness", minimum: "Flexible", maximum: "Faithful", value: $fixture.likeness, id: "likeness")
-        } header: { Text("Character & speed") } footer: { Text(VoiceSettingsFixture.characterFooter) }
+        } header: { Text("Character & speed").textCase(nil) } footer: { Text(VoiceSettingsFixture.characterFooter) }
+            .listRowBackground(DesignTokens.Color.backgroundSecondary)
     }
 
     private var isPreviewingSelected: Bool { fixture.previewing == fixture.selected }
@@ -211,6 +214,6 @@ public struct VoiceChooserContent: View {
             Text(VoiceSettingsFixture.chooserIntro).font(.subheadline).textCase(nil)
         } footer: {
             Text(VoiceSettingsFixture.chooserFooter).font(.subheadline)
-        }
+        }.listRowBackground(DesignTokens.Color.backgroundSecondary)
     }
 }
