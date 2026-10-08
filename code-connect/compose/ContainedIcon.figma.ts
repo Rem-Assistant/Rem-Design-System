@@ -17,6 +17,10 @@ const symbols: Record<string, string> = {
     '\u{100ae5}': 'RemMaterialSymbols.Models',
     '\u{1007fe}': 'RemMaterialSymbols.Wallet',
     '\u{10066b}': 'RemMaterialSymbols.Voice',
+    // Same semantic ImageVector overloads used by the verified native Voice screen.
+    '\u{1002a0}': 'Icons.AutoMirrored.Filled.VolumeMute',
+    '\u{100284}': 'Icons.Filled.PlayArrow',
+    '\u{100286}': 'Icons.Filled.Pause',
 }
 const symbol = symbols[instance.getString('Symbol')]
 const style = instance.getEnum('Style', { 'Tinted': 'ContainedIconFill.Tint(RemColors.current.systemBlue)', 'Subtle': 'ContainedIconFill.Subtle' })
@@ -30,6 +34,6 @@ const size = instance.getEnum('Size', { 'Small': 'ContainedIconSize.Settings', '
 const glyphSize = instance.getEnum('Size', { 'Small': 15, 'Large': 30 })
 export default {
     example: symbol ? figma.code`ContainedIcon(${symbol}, fill = ${style}, size = ${size}, glyphSize = ${glyphSize}.dp)` : figma.code`// Unmapped Figma SF Symbol glyph. Verify its semantic registry identity before implementation.`,
-    imports: ['import com.rem.designsystem.primitives.*', 'import com.rem.designsystem.icons.RemMaterialSymbols', 'import com.rem.designsystem.tokens.RemColors', 'import androidx.compose.ui.unit.dp'],
+    imports: ['import com.rem.designsystem.primitives.*', 'import com.rem.designsystem.icons.RemMaterialSymbols', 'import com.rem.designsystem.tokens.RemColors', 'import androidx.compose.ui.unit.dp', 'import androidx.compose.material.icons.Icons', 'import androidx.compose.material.icons.automirrored.filled.VolumeMute', 'import androidx.compose.material.icons.filled.PlayArrow', 'import androidx.compose.material.icons.filled.Pause'],
     id: 'rem-contained-icon-compose', metadata: { nestable: true, props: { symbol, style, size, foregroundToken, backgroundToken } },
 }

@@ -17,6 +17,10 @@ const symbols: Record<string, string> = {
     '\u{100ae5}': 'cpu',
     '\u{1007fe}': 'wallet.pass',
     '\u{10066b}': 'waveform',
+    // Read-only shared-final/VOICE.md pairs these exact glyphs with their SF names.
+    '\u{1002a0}': 'speaker',
+    '\u{100284}': 'play.fill',
+    '\u{100286}': 'pause.fill',
 }
 const symbol = symbols[instance.getString('Symbol')]
 const style = instance.getEnum('Style', { 'Tinted': '.tint(DesignTokens.Color.systemBlue)', 'Subtle': '.subtle' })
