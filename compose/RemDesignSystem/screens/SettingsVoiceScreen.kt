@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -138,7 +139,6 @@ fun VoiceControlsContent(
 ) {
     val colors = RemColors.current
     val previewingSelected = fixture.previewing == fixture.selected
-    var entryMenuExpanded by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         RemSection {
             ListRow(leading = {}, content = {
@@ -158,25 +158,9 @@ fun VoiceControlsContent(
         }
         if (showConversationEntry) {
             RemSection(header = "Conversation entry", footer = VoiceSettingsFixture.conversationFooter, settingsHeader = true) {
-                ListRow(leading = {
-                    ContainedIcon(Icons.AutoMirrored.Filled.VolumeMute, fill = ContainedIconFill.Subtle, size = ContainedIconSize.Settings)
-                }, content = { ListRowLabel("Center button starts") }, trailing = {
-                    Box {
-                        TextButton(onClick = { entryMenuExpanded = true }, modifier = Modifier.testTag("voice.conversationEntry")) {
-                            Text(fixture.conversationEntry.title, style = RemTypography.body, color = colors.labelSecondary)
-                            Icon(Icons.Filled.UnfoldMore, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(18.dp))
-                        }
-                        DropdownMenu(expanded = entryMenuExpanded, onDismissRequest = { entryMenuExpanded = false }) {
-                            VoiceConversationEntry.entries.forEach { entry ->
-                                DropdownMenuItem(
-                                    text = { Text(entry.title) },
-                                    onClick = { onFixtureChange(fixture.copy(conversationEntry = entry)); entryMenuExpanded = false },
-                                    modifier = Modifier.testTag("voice.entry.${entry.name}"),
-                                )
-                            }
-                        }
-                    }
-                })
+                ConversationEntryRow(fixture.conversationEntry) { entry ->
+                    onFixtureChange(fixture.copy(conversationEntry = entry))
+                }
             }
         }
         RemSection(header = "Spoken responses", footer = VoiceSettingsFixture.spokenFooter, settingsHeader = true) {
@@ -189,6 +173,41 @@ fun VoiceControlsContent(
             VoiceSliderRow("Consistency", "Creative", "Consistent", "consistency", fixture.consistency, { onFixtureChange(fixture.copy(consistency = it)) }, true)
             VoiceSliderRow("Likeness", "Flexible", "Faithful", "likeness", fixture.likeness, { onFixtureChange(fixture.copy(likeness = it)) }, false)
         }
+    }
+}
+
+/** Keep the value control from starving its label on narrow screens or with large text. */
+@Composable
+private fun ConversationEntryRow(value: VoiceConversationEntry, onChange: (VoiceConversationEntry) -> Unit) {
+    val colors = RemColors.current
+    val fontScale = LocalDensity.current.fontScale
+    var expanded by remember { mutableStateOf(false) }
+    val menu: @Composable () -> Unit = {
+        Box {
+            TextButton(onClick = { expanded = true }, modifier = Modifier.testTag("voice.conversationEntry"),
+                contentPadding = PaddingValues(0.dp)) {
+                Text(value.title, style = RemTypography.body, color = colors.labelSecondary)
+                Icon(Icons.Filled.UnfoldMore, contentDescription = null, tint = colors.labelSecondary,
+                    modifier = Modifier.size(18.dp))
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                VoiceConversationEntry.entries.forEach { entry ->
+                    DropdownMenuItem(text = { Text(entry.title) },
+                        onClick = { onChange(entry); expanded = false },
+                        modifier = Modifier.testTag("voice.entry.${entry.name}"))
+                }
+            }
+        }
+    }
+    BoxWithConstraints {
+        val stackValue = maxWidth < (380 * fontScale).dp
+        ListRow(leading = {
+            ContainedIcon(Icons.AutoMirrored.Filled.VolumeMute, fill = ContainedIconFill.Subtle,
+                size = ContainedIconSize.Settings)
+        }, content = {
+            ListRowLabel("Center button starts")
+            if (stackValue) menu()
+        }, trailing = { if (!stackValue) menu() })
     }
 }
 

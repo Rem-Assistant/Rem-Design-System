@@ -896,7 +896,9 @@ class SettingsPlaygroundTest {
                 .performScrollTo().assertIsDisplayed()
             if (largeText) capture("Wallet-$provider-consent-large-text-footer")
             compose.onNodeWithTag("wallet.consent.connect").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithTag("wallet.consent.cancel").performScrollTo().performClick()
+            compose.onNodeWithTag("wallet.consent.cancel").performScrollTo().assertIsDisplayed()
+            capture("Wallet-$provider-consent-$suffix-actions")
+            compose.onNodeWithTag("wallet.consent.cancel").performClick()
             waitForWalletModalDismissed()
         }
         compose.onNodeWithTag("wallet.back").performClick()

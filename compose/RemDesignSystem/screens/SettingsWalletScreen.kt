@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -97,17 +98,21 @@ fun SettingsWalletScreen(onBack: () -> Unit) {
             }
         }
     }
+    val contentDensity = LocalDensity.current
     fixture.provider?.let { provider ->
         ModalBottomSheet(
             onDismissRequest = { fixture = fixture.dismiss() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             containerColor = colors.backgroundPrimary,
         ) {
-            if (fixture.stage == SettingsWalletStage.External) {
-                WalletExternalBoundary(provider, onClose = { fixture = fixture.dismiss() })
-            } else {
-                WalletProviderConsent(provider, onConnect = { fixture = fixture.connect() },
-                    onCancel = { fixture = fixture.dismiss() })
+            // Dialog windows establish their own density. Preserve the host's accessibility scale.
+            CompositionLocalProvider(LocalDensity provides contentDensity) {
+                if (fixture.stage == SettingsWalletStage.External) {
+                    WalletExternalBoundary(provider, onClose = { fixture = fixture.dismiss() })
+                } else {
+                    WalletProviderConsent(provider, onConnect = { fixture = fixture.connect() },
+                        onCancel = { fixture = fixture.dismiss() })
+                }
             }
         }
     }

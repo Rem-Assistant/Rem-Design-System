@@ -51,7 +51,18 @@ class MainActivity : ComponentActivity() {
                             isAppearanceLightNavigationBars = !dark
                         }
                     }
-                    MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) { Playground() }
+                    val rem = RemColors.current
+                    val nativeColors = (if (dark) darkColorScheme() else lightColorScheme()).copy(
+                        primary = rem.brandBlue, onPrimary = rem.labelOnColor,
+                        primaryContainer = rem.backgroundSecondary, onPrimaryContainer = rem.labelPrimary,
+                        secondary = rem.brandBlue, onSecondary = rem.labelOnColor,
+                        secondaryContainer = rem.backgroundSecondary, onSecondaryContainer = rem.labelPrimary,
+                        surface = rem.backgroundPrimary, onSurface = rem.labelPrimary,
+                        surfaceVariant = rem.backgroundSecondary, onSurfaceVariant = rem.labelSecondary,
+                        background = rem.backgroundPrimary, onBackground = rem.labelPrimary,
+                        error = rem.systemRed,
+                    )
+                    MaterialTheme(colorScheme = nativeColors) { Playground() }
                 }
             }
         }
