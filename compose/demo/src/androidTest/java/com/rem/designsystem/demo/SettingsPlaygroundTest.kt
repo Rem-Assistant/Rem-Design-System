@@ -1,12 +1,13 @@
 package com.rem.designsystem.demo
 
 import android.graphics.Bitmap
+import android.content.ContentValues
+import android.provider.MediaStore
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class SettingsPlaygroundTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
@@ -14,12 +15,24 @@ class SettingsPlaygroundTest {
         compose.waitForIdle()
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
-        val file = File(compose.activity.getExternalFilesDir(null), "$name.png")
-        file.outputStream().use { automation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it) }
+        // AGP uninstalls the app after connected tests, removing app-scoped files.
+        // Test-owned MediaStore output survives that cleanup on the dedicated emulator.
+        val resolver = compose.activity.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RemSettingsPlayground")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = checkNotNull(resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+        checkNotNull(resolver.openOutputStream(uri)).use {
+            check(automation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it))
+        }
+        resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
     }
     private fun openSettings(fixture: String = "Success") {
-        compose.onNodeWithText(fixture).performClick()
-        compose.onNodeWithTag("openSettings").performClick()
+        compose.onNodeWithText(fixture).performScrollTo().performClick()
+        compose.onNodeWithTag("openSettings").performScrollTo().performClick()
         compose.onNodeWithTag("openAgent").assertExists()
     }
     private fun waitForText(text: String) {

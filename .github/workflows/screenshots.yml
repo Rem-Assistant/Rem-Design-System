@@ -172,7 +172,7 @@ jobs:
             result=0;
             gradle :demo:connectedDebugAndroidTest --stacktrace --no-daemon || result=$?;
             mkdir -p ../artifacts/settings-compose;
-            adb pull /sdcard/Android/data/com.rem.designsystem.demo/files/. ../artifacts/settings-compose/ || true;
+            adb pull /sdcard/Pictures/RemSettingsPlayground/. ../artifacts/settings-compose/ || true;
             exit "$result"
       - uses: actions/upload-artifact@v4
         if: always()
