@@ -13,7 +13,8 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
              figma_file_key: str | None = None, contracts_sha256: str | None = None,
              primary_contract: str | None = None,
              require_reference_export: bool = False,
-             require_structure_verification: bool = False) -> dict:
+             require_structure_verification: bool = False,
+             manual_base_sha: str | None = None) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("full lowercase head SHA required")
     if not re.fullmatch(r"[0-9a-f]{64}", workflow_sha256):
@@ -68,6 +69,16 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
         if figma_file_key is not None and candidate_manifest.get("figmaFileKey") != figma_file_key:
             raise ValueError("candidate manifest names an unexpected file")
 
+    if manual_base_sha is not None:
+        if not re.fullmatch(r"[0-9a-f]{40}", manual_base_sha):
+            raise ValueError("full trusted manual base SHA required")
+        if (manifest.get("event") != "workflow_dispatch" or
+                manifest.get("manual_base_sha") != manual_base_sha or
+                manifest.get("manual_base_ref") != "codex/settings-integration" or
+                not re.fullmatch(r"agent-factory/settings-issue-[0-9]+", str(manifest.get("manual_head_ref", ""))) or
+                primary_contract != "settings-foundation"):
+            raise ValueError("manual Figma manifest is not bound to the isolated Settings candidate")
+
     media = manifest.get("media_sha256")
     if not isinstance(media, dict) or not media:
         raise ValueError("evidence declares no media")
@@ -108,6 +119,7 @@ def main() -> None:
     parser.add_argument("--primary-contract", required=True)
     parser.add_argument("--require-reference-export", action="store_true")
     parser.add_argument("--require-structure-verification", action="store_true")
+    parser.add_argument("--manual-base-sha")
     args = parser.parse_args()
     validate(
         args.root,
@@ -122,6 +134,7 @@ def main() -> None:
         primary_contract=args.primary_contract or None,
         require_reference_export=args.require_reference_export,
         require_structure_verification=args.require_structure_verification,
+        manual_base_sha=args.manual_base_sha,
     )
 
 

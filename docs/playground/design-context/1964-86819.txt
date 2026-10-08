@@ -1,0 +1,319 @@
+const assetPathPrefix = "[temporary asset URL omitted]";
+type NavigationIndicatorProps = {
+  className?: string;
+  content?: "Dark";
+  platform?: "iOS";
+  showBackground?: boolean;
+  surface?: "Primary";
+};
+
+function NavigationIndicator({ className, content = "Dark", platform = "iOS", showBackground = false, surface = "Primary" }: NavigationIndicatorProps) {
+  return (
+    <div className={className || "h-[34px] relative w-[402px]"} data-node-id="793:369">
+      {showBackground && <div className="absolute bg-[var(--rem-color-background-primary,white)] inset-0" data-node-id="1936:56124" data-name="Optional surface" />}
+      <div className="absolute h-[34px] left-0 top-0 w-[402px]" data-node-id="793:370" data-name="HomeIndicator">
+        <div className="absolute bg-black h-[5px] left-[129px] rounded-[2.5px] top-[21px] w-[144px]" data-node-id="I793:370;333:101" data-name="Rectangle" />
+      </div>
+    </div>
+  );
+}
+
+function Chevron({ className }: { className?: string }) {
+  return (
+    <div className={className || "content-stretch flex items-start relative"} data-node-id="110:52" data-name="Chevron">
+      <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+    </div>
+  );
+}
+
+export default function ScreenSettingsWorkingEntry({ className }: { className?: string }) {
+  return (
+    <div className={className || "bg-[var(--rem-color-background-primary,white)] content-stretch flex flex-col h-[874px] items-start overflow-clip relative w-[402px]"} data-node-id="1964:86819" data-name="Screen/Settings · Working entry">
+      <CodeConnectSnippet data-node-id="1827:50771" data-name="Status bar - iPhone">
+        {/* iOS and iPadOS 26 component */}
+        <StatusBarIPhone textTime="9:41" time="9:41" />
+      </CodeConnectSnippet>
+      <CodeConnectSnippet data-node-id="1827:50772" data-name="Toolbar - Top - iPhone">
+        {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/navigation-bars */}
+        <ToolbarTopIPhone booleanShowSubtitle={false} showSubtitle={false} variantStyle="Default" style="Default">
+          <Title textTitle="Settings" title="Settings" variantMode="Light" mode="Light" />
+        </ToolbarTopIPhone>
+      </CodeConnectSnippet>
+      <div className="h-[724px] overflow-x-clip overflow-y-auto relative shrink-0 w-full" data-node-id="1827:50773" data-name="Body">
+        <div className="absolute content-stretch flex flex-col gap-[22px] items-start left-0 pb-[24px] pt-[10px] px-[16px] top-0 w-[402px]" data-node-id="1827:50774" data-name="Settings/Content · Top">
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1237:14" data-name="Section/Profile">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1237:14;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1237:14;741:314;2001:67451" data-name="ListRow">
+                <div className="bg-[#dbdbe5] relative rounded-[15px] shrink-0 size-[29px]" data-node-id="I1827:50774;1237:14;741:314;2001:67451;111:79" data-name="leading" />
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1237:14;741:314;2001:67451;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1237:14;741:314;2001:67451;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1237:14;741:314;2001:67451;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Bold'] font-bold h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Avery Diaz
+                      </p>
+                    </div>
+                    <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--label\/secondary-strong,rgba(60,60,67,0.8))] tracking-[-0.08px] w-full" data-node-id="I1827:50774;1237:14;741:314;2001:67451;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      avery@example.com
+                    </p>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1237:14;741:314;2001:67451;121:38" data-name="trailing">
+                  <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1827:50774;1237:14;741:314;2001:67451;111:80" data-name="right" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1224:5237" data-name="Section/Agent runtime">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1224:5237;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] h-[82px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1224:5237;741:314;2001:67459" data-name="ListRow">
+                <div className="bg-[var(--rem-color-system-blue,#007aff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;111:79" data-name="leading">
+                  <SFSymbol>{`Image(systemName: "info.circle.fill")`}</SFSymbol>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Rem
+                      </p>
+                    </div>
+                    <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--label\/secondary-strong,rgba(60,60,67,0.8))] tracking-[-0.08px] w-full" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Connected
+                    </p>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;121:38" data-name="trailing">
+                  <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1827:50774;1224:5237;741:314;2001:67459;111:80" data-name="right">
+                    <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1237:92" data-name="Section/Billing & Permissions">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314;2001:67462" data-name="ListRow">
+                <div className="bg-[var(--rem-color-system-blue,#007aff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1827:50774;1237:92;741:314;2001:67462;111:79" data-name="leading">
+                  <SFSymbol>{`Image(systemName: "creditcard.fill")`}</SFSymbol>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1237:92;741:314;2001:67462;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314;2001:67462;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314;2001:67462;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>{`Billing & Usage`}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1827:50774;1237:92;741:314;2001:67462;101:17" data-name="separator" />
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1237:92;741:314;2001:67462;121:38" data-name="trailing">
+                  <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1827:50774;1237:92;741:314;2001:67462;111:80" data-name="right">
+                    <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex gap-[12px] h-[65px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314;2001:67463" data-name="ListRow">
+                <div className="bg-[var(--rem-color-system-blue,#007aff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1827:50774;1237:92;741:314;2001:67463;111:79" data-name="leading">
+                  <SFSymbol>{`Image(systemName: "hand.raised.fill")`}</SFSymbol>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1237:92;741:314;2001:67463;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314;2001:67463;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1237:92;741:314;2001:67463;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Permissions
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1237:92;741:314;2001:67463;121:38" data-name="trailing">
+                  <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1827:50774;1237:92;741:314;2001:67463;111:80" data-name="right">
+                    <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1237:154" data-name="Section/About">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1237:154;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1237:154;741:314;2001:67453" data-name="ListRow">
+                <div className="bg-[#8f8f94] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1827:50774;1237:154;741:314;2001:67453;111:79" data-name="leading">
+                  <SFSymbol>{`Image(systemName: "info.circle.fill")`}</SFSymbol>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1237:154;741:314;2001:67453;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1237:154;741:314;2001:67453;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1237:154;741:314;2001:67453;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        About
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1237:154;741:314;2001:67453;121:38" data-name="trailing">
+                  <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1827:50774;1237:154;741:314;2001:67453;111:80" data-name="right">
+                    <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1237:218" data-name="Section/Feedback">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314;2001:67447" data-name="ListRow">
+                <div className="bg-[#33c759] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1827:50774;1237:218;741:314;2001:67447;111:79" data-name="leading">
+                  <SFSymbol>{`Image(systemName: "square.and.arrow.up")`}</SFSymbol>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1237:218;741:314;2001:67447;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314;2001:67447;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314;2001:67447;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Share Rem
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1827:50774;1237:218;741:314;2001:67447;101:17" data-name="separator" />
+              </div>
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314;2001:67477" data-name="ListRow">
+                <div className="bg-[var(--rem-color-system-blue,#007aff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1827:50774;1237:218;741:314;2001:67477;111:79" data-name="leading">
+                  <SFSymbol>{`Image(systemName: "square.and.arrow.up")`}</SFSymbol>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1237:218;741:314;2001:67477;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314;2001:67477;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1237:218;741:314;2001:67477;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>{`Help & Support`}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1237:218;741:314;2001:67477;121:38" data-name="trailing">
+                  <Chevron className="content-stretch flex items-start relative shrink-0" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1618:38432" data-name="Section/Sign Out">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1618:38432;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1618:38432;741:314;2001:67455" data-name="ListRow">
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1618:38432;741:314;2001:67455;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1618:38432;741:314;2001:67455;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1618:38432;741:314;2001:67455;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--label\/destructive,#b42318)] text-center tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Sign Out
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1618:38432;741:314;2001:67455;121:38" data-name="trailing">
+                  <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1827:50774;1618:38432;741:314;2001:67455;111:80" data-name="right" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1827:50774;1618:38449" data-name="Section/Delete Account">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1827:50774;1618:38449;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1827:50774;1618:38449;741:314;2001:67457" data-name="ListRow">
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1827:50774;1618:38449;741:314;2001:67457;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1827:50774;1618:38449;741:314;2001:67457;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1827:50774;1618:38449;741:314;2001:67457;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--label\/destructive,#b42318)] text-center tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Delete Account
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1827:50774;1618:38449;741:314;2001:67457;121:38" data-name="trailing">
+                  <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1827:50774;1618:38449;741:314;2001:67457;111:80" data-name="right" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <NavigationIndicator className="h-[34px] relative shrink-0 w-[402px]" />
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Rem/Platform text/Semibold/17/0: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: 0), Headline/Regular: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Body/Bold: Font(family: "SF Pro", style: Bold, size: 17, weight: 700, lineHeight: 22, letterSpacing: -0.4300000071525574), Footnote/Regular: Font(family: "SF Pro", style: Regular, size: 13, weight: 400, lineHeight: 18, letterSpacing: -0.07999999821186066), Rem/Platform text/Semibold/15/2: Font(family: "SF Pro", style: Semibold, size: 15, weight: 590, lineHeight: 100, letterSpacing: 0), Body/Regular: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 22, letterSpacing: -0.4300000071525574), Rem/Platform text/Regular/17/3: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 100, letterSpacing: 0).
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## Toolbar - Top - iPhone
+**Node ID:** 277:947
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/navigation-bars](https://developer.apple.com/design/human-interface-guidelines/navigation-bars)
+
+## Settings/Content
+**Node ID:** 1624:15803
+
+Shared Settings body content. Screen/Settings and its scrolled account-action state reuse this component so Section and ListRow changes cascade consistently. The parent Body owns the 402 pt viewport, clipping, and vertical scroll position.
+
+## Style=Inset Grouped
+**Node ID:** 741:311
+
+Inset Grouped Section. The parent Body or List owns the screen horizontal inset; slotted ListRows own their Show Divider behavior.
+
+## Section
+**Node ID:** 1307:667
+
+Section styles and spacing. Inset Grouped and Plain control surface treatment; Spacing controls section header/footer rhythm. Screen inset belongs to the parent Body/List. Divider visibility belongs to each slotted ListRow.
+
+## ListRow
+**Node ID:** 101:18
+
+Canonical row with Leading Accessory, Content and Trailing Accessory swaps. Content defaults to ListRowLabel, now with optional Title accessory slot. Trailing wrapper hugs the accessory’s intrinsic dimensions instead of a fixed chevron width.
+
+## Avatar
+**Node ID:** 185:2
+
+Avatar — 29×29 circular leading (photo/initials). Leading-accessory alternative to ContainedIcon.
+
+## Title layout=Fill
+**Node ID:** 188:2
+
+Canonical ListRowLabel. Title and Subtitle preserved. Optional Title accessory slot owns an inline Pill, icon or other small component; enable Show title accessory. No floating overlay badges.
+
+## ListRowLabel
+**Node ID:** 1966:60442
+
+ListRowLabel: Title layout=Fill preserves existing rows. Title layout=Hug keeps badges immediately beside the title. Title/Subtitle and optional Title accessory slot remain configurable.
+
+## Accessory/None
+**Node ID:** 157:43
+
+None accessory — empty 1×1 trailing filler for rows with no control (e.g. Settings Share/Feedback rows). ↔ SwiftUI: plain row, no accessory.
+
+## Chevron
+**Node ID:** 110:52
+
+Chevron accessory — trailing disclosure (chevron.right). Default Accessory for ListRow. ↔ SwiftUI: NavigationLink disclosure.
+
+## Platform=iOS, Content=Dark, Surface=Primary
+**Node ID:** 793:369
+
+NavigationIndicator inherits the screen/background by default. Show background=false; enable only when an explicit Surface is intended. Content controls handle contrast independently.
+
+## NavigationIndicator
+**Node ID:** 793:379
+
+Native navigation/gesture indicator with transparent default surface. Optional Show background boolean retains explicit Surface choices when needed.
+
+## HomeIndicator
+**Node ID:** 333:102
+
+iOS home indicator (bottom safe-area handle). Transparent band so its background inherits the docked element behind it (voice bar / composer / screen bg). Pill 144×5, labelPrimary. Source: system safe-area overlay.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

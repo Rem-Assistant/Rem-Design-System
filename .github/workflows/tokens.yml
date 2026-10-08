@@ -46,6 +46,8 @@ jobs:
       - name: manifest.json in sync with props + docs
         run: node tools/build-manifest.mjs --check
       - name: Component architecture contract (baseline-ratcheted)
-        run: node tools/lint-components.mjs
+        run: |
+          node --test tools/test-component-code-connect.mjs
+          node tools/lint-components.mjs
       - name: Paired evidence delivery contract
         run: python3 -m unittest discover -s tools/render-evidence -p 'test_*.py'

@@ -1,0 +1,42 @@
+{
+  "source_repository": "https://github.com/samuelalake/agent-skills",
+  "source_pin": "8f0ae6c7a74e60353db71e75687a2a4d2c23eb1f",
+  "local_origin_commit": "93d8588",
+  "upstream_skill_sha256": "6e0d5354d06b7721373c0d90a6505f655b5a964fac65e7191b5875b64268f356",
+  "extended_skill_sha256": "6ee195a6c0fe3dafa1e932ce0cf904e1e783e1854c5f81902133ec3b0ef95ea2",
+  "preserved_added_lines": 135,
+  "blocks": [
+    {
+      "after_upstream_line": 16,
+      "sha256": "a71c2437d4688ce9a150b2c794ef166956b6587cb9ab596d633b779b5e1c375c",
+      "line_count": 14
+    },
+    {
+      "after_upstream_line": 29,
+      "sha256": "5f9fa5d4927887247928071147b992d4964d13bc26a5c78a8417b30d94c5826a",
+      "line_count": 26
+    },
+    {
+      "after_upstream_line": 95,
+      "sha256": "1f677beee9ef64df37b1d1e938fa6f3ddfb8ed74eed721910f59c817489badf9",
+      "line_count": 80
+    },
+    {
+      "after_upstream_line": 147,
+      "sha256": "ca3bf0b70fac449dcb08dc93ebc7827819406d19a6fc2ac21a737f2b817da970",
+      "line_count": 4
+    },
+    {
+      "after_upstream_line": 150,
+      "sha256": "60f88aee36dffe2d1dee70badde195d8b31b6d6c7740e5f91d0520acf39c6449",
+      "line_count": 8
+    },
+    {
+      "after_upstream_line": 161,
+      "sha256": "daa48ac29434c0b27044db0bb46c300fd181d686ab3decd8adde7ef4c084fceb",
+      "line_count": 3
+    }
+  ],
+  "reference_sha256": "65ff4b92d1625ae471d4302934c410d721e6f4442d79f554d6b089a2fb13d21f",
+  "reference_bytes": 38535
+}

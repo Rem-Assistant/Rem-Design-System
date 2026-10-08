@@ -55,6 +55,19 @@ GLYPHS = {
     "shield": 0xE9E0,
     "description": 0xE873,
     "chevron_right": 0xE5CC,
+    "info": 0xE88E,
+    "credit_card": 0xE8A1,
+    "pan_tool": 0xE925,
+    "ios_share": 0xE6B8,
+    "devices": 0xE326,
+    "link": 0xE250,
+    "language": 0xEA07,
+    "notifications_active": 0xE7F7,
+    "psychology": 0xEA4A,
+    "memory": 0xE322,
+    "wallet": 0xF8FF,
+    "graphic_eq": 0xE1B8,
+
 }
 
 # Both outputs carry ALL registry codepoints so an off-fill request still renders the

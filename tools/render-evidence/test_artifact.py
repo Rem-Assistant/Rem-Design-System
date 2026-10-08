@@ -63,6 +63,27 @@ class ArtifactValidationTests(unittest.TestCase):
             require_structure_verification=True,
         )
 
+    def test_manual_manifest_binds_settings_base_head_and_event(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); manifest = self.fixture(root)
+            manifest.update(event="workflow_dispatch", manual_base_sha="d" * 40,
+                            manual_base_ref="codex/settings-integration",
+                            manual_head_ref="agent-factory/settings-issue-74",
+                            primary_contract="settings-foundation")
+            path = root / "delivery/manifest.json"
+            kwargs = dict(pr=31, sha="a" * 40, run_id=123, run_attempt=2,
+                          workflow_sha256="b" * 64, media_dirs=("reference",),
+                          primary_contract="settings-foundation", manual_base_sha="d" * 40)
+            path.write_text(json.dumps(manifest))
+            self.assertEqual(artifact.validate(root, **kwargs), manifest)
+            for field, value in (("event", "pull_request_target"), ("manual_base_sha", "e" * 40),
+                                 ("manual_base_ref", "main"), ("manual_head_ref", "unrelated"),
+                                 ("sha", "e" * 40), ("pr", 99)):
+                broken = dict(manifest); broken[field] = value
+                path.write_text(json.dumps(broken))
+                with self.subTest(field=field), self.assertRaises(ValueError):
+                    artifact.validate(root, **kwargs)
+
     def test_accepts_exact_head_exact_attempt_and_exact_digests(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); expected = self.fixture(root)

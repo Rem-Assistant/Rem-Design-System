@@ -3,7 +3,8 @@
 Two kinds live here. Know which before you edit.
 
 ## Native to this repo — edit freely
-- **`rem-design-system/`** — the Figma/design-system skill authored and maintained here.
+- **`rem-design-system/`** — the Figma/design-system adapter, including the local policy supplement and provenance under `local-policy/`.
+- **`design-system-delivery/`** — the locally maintained design-system delivery workflow, including its competitive-audit guidance.
 
 ## Vendored (synced) — DO NOT hand-edit
 - **`product-design-delivery/`** — how to produce design-ready task packets.
@@ -23,7 +24,7 @@ trees. A hand-edit will be reverted by the next sync and will fail CI in the mea
 This repo is the Agent Factory harness. The Factory's `catalog_skills(root, skill_dirs)` reads skill
 directories **off disk from the checkout** — it does not install skills. So the process skills must
 physically exist here. Claude Code also reads `.claude/skills/`, so one copy serves both consumers,
-and all three skills above are cataloged together (fits `max_skills = 3`).
+and the catalog selects up to `max_skills = 3`. Local policy context files are listed explicitly in `.agent-factory/config.json`, because the Factory does not automatically follow reference links.
 
 > **Factory-side, out of this repo:** Agent Factory's `skill_dirs` must include `.claude/skills/`
 > for it to catalog these (its defaults are `skills/` / `skill/`).
