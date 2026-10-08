@@ -92,6 +92,157 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertTrue(app.buttons["openAgent"].exists)
         capture("ios-cancelled-load")
     }
+    func testConnectorsGmailMenusAndScopedPermissions() {
+        openDestination("connectors", title: "Connectors")
+        capture("Connectors-light")
+        for provider in ["gmail", "googleCalendar", "notion", "slack", "googleDrive", "linear", "todoist"] {
+            let row = app.descendants(matching: .any)["connectors.provider.\(provider)"].firstMatch
+            reveal(row)
+        }
+        capture("Connectors-brand-rows-bottom-light")
+        for _ in 0..<3 { app.swipeDown() }
+        let notion = app.buttons["connectors.provider.notion"]
+        reveal(notion)
+        notion.tap()
+        XCTAssertTrue(app.alerts["Prototype boundary"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Notion account details are not included in this prototype. No connection is changed."].exists)
+        capture("Connectors-unsupported-provider-light")
+        app.alerts.buttons["Done"].tap()
+        app.buttons["connectors.provider.gmail"].tap()
+        XCTAssertTrue(app.navigationBars["Gmail"].waitForExistence(timeout: 3))
+        capture("Gmail-default-light")
+        app.buttons["gmail.accountMenu.avery"].tap()
+        XCTAssertTrue(app.buttons["gmail.accountSettings.avery"].waitForExistence(timeout: 3))
+        capture("Gmail-account-menu-light")
+        app.buttons["gmail.accountSettings.avery"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["gmail.permission.avery.lowRisk"].isSelected)
+        capture("Gmail-account-permissions-light")
+        navigateBack(from: "Settings", to: "Gmail")
+        app.buttons["gmail.connectorMenu"].tap()
+        XCTAssertTrue(app.buttons["gmail.disconnectAll"].waitForExistence(timeout: 3))
+        capture("Gmail-connector-menu-light")
+        app.navigationBars["Gmail"].staticTexts["Gmail"].tap() // Native outside-menu dismissal.
+        let permissions = app.buttons["gmail.permissions"]
+        reveal(permissions)
+        permissions.tap()
+        XCTAssertTrue(app.navigationBars["Permissions"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["gmail.permission.connector.lowRisk"].isSelected)
+        capture("Gmail-connector-permissions-light")
+        for policy in ["alwaysAsk", "lowRisk", "alwaysAllow", "neverAllow"] {
+            let choice = app.buttons["gmail.permission.connector.\(policy)"]
+            reveal(choice)
+            choice.tap()
+            XCTAssertTrue(choice.isSelected)
+            for other in ["alwaysAsk", "lowRisk", "alwaysAllow", "neverAllow"] where other != policy {
+                XCTAssertFalse(app.buttons["gmail.permission.connector.\(other)"].isSelected)
+            }
+            capture("Gmail-connector-policy-\(policy)-light")
+        }
+        navigateBack(from: "Permissions", to: "Gmail")
+        for _ in 0..<2 { app.swipeDown() }
+        app.buttons["gmail.accountMenu.avery"].tap()
+        XCTAssertTrue(app.buttons["gmail.accountSettings.avery"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["gmail.disconnectAccount.avery"].exists)
+        capture("Gmail-account-menu-after-policy-light")
+        app.buttons["gmail.accountSettings.avery"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["gmail.permission.avery.neverAllow"].isSelected, "Unset account policy inherits connector policy")
+        capture("Gmail-account-permissions-inherited-light")
+        for policy in ["alwaysAsk", "lowRisk", "alwaysAllow", "neverAllow"] {
+            let choice = app.buttons["gmail.permission.avery.\(policy)"]
+            reveal(choice)
+            choice.tap()
+            XCTAssertTrue(choice.isSelected)
+            for other in ["alwaysAsk", "lowRisk", "alwaysAllow", "neverAllow"] where other != policy {
+                XCTAssertFalse(app.buttons["gmail.permission.avery.\(other)"].isSelected)
+            }
+        }
+        for _ in 0..<3 { app.swipeDown() }
+        app.buttons["gmail.permission.avery.alwaysAsk"].tap()
+        navigateBack(from: "Settings", to: "Gmail")
+        reveal(permissions)
+        permissions.tap()
+        XCTAssertTrue(app.buttons["gmail.permission.connector.neverAllow"].isSelected, "Account override must not change connector policy")
+        app.buttons["gmail.permission.connector.alwaysAllow"].tap()
+        navigateBack(from: "Permissions", to: "Gmail")
+        for _ in 0..<2 { app.swipeDown() }
+        app.buttons["gmail.accountMenu.avery"].tap()
+        app.buttons["gmail.accountSettings.avery"].tap()
+        XCTAssertTrue(app.buttons["gmail.permission.avery.alwaysAsk"].isSelected, "Connector changes must retain an explicit account override")
+        capture("Gmail-account-override-retained-light")
+        navigateBack(from: "Settings", to: "Gmail")
+        navigateBack(from: "Gmail", to: "Connectors")
+        navigateBack(from: "Connectors", to: "Agent settings")
+    }
+
+    func testGmailSingleAndAllDisconnectCancelThenConfirm() {
+        for all in [false, true] {
+            if all { app.terminate(); app.launch() }
+            openDestination("connectors", title: "Connectors")
+            app.buttons["connectors.provider.gmail"].tap()
+            XCTAssertTrue(app.navigationBars["Gmail"].waitForExistence(timeout: 3))
+            let menu = app.buttons[all ? "gmail.connectorMenu" : "gmail.accountMenu.avery"]
+            let action = app.buttons[all ? "gmail.disconnectAll" : "gmail.disconnectAccount.avery"]
+            menu.tap()
+            XCTAssertTrue(action.waitForExistence(timeout: 3))
+            action.tap()
+            let confirm = app.buttons["gmail.confirmDisconnect"]
+            XCTAssertTrue(confirm.waitForExistence(timeout: 3))
+            let title = all ? "Disconnect all Gmail accounts?" : "Disconnect avery@example.com?"
+            XCTAssertTrue(app.staticTexts[title].exists)
+            capture(all ? "Gmail-disconnect-accounts-light" : "Gmail-disconnect-account-light")
+            app.buttons["Cancel"].tap()
+            XCTAssertTrue(app.navigationBars["Gmail"].exists)
+            XCTAssertTrue(app.staticTexts["avery@example.com"].exists, "Cancel must retain membership")
+            menu.tap()
+            action.tap()
+            XCTAssertTrue(confirm.waitForExistence(timeout: 3))
+            confirm.tap()
+            XCTAssertTrue(app.navigationBars["Connectors"].waitForExistence(timeout: 3))
+            XCTAssertTrue(app.buttons["Connect Gmail"].exists)
+            XCTAssertTrue(app.buttons["connectors.provider.googleCalendar"].exists)
+            XCTAssertTrue(app.buttons["connectors.provider.notion"].exists)
+            XCTAssertTrue(app.buttons["connectors.provider.slack"].exists)
+            capture(all ? "Gmail-disconnect-all-result-light" : "Gmail-disconnect-one-result-light")
+        }
+    }
+
+    func testConnectorsGmailDarkAndLargeTextReachability() {
+        for (arguments, suffix) in [(["--settings-dark"], "dark"), (["--settings-light", "--settings-large-text"], "large-text")] {
+            app.terminate()
+            app.launchArguments = arguments
+            app.launch()
+            openDestination("connectors", title: "Connectors")
+            capture("Connectors-\(suffix)")
+            reveal(app.descendants(matching: .any)["connectors.provider.todoist"].firstMatch)
+            capture("Connectors-bottom-\(suffix)")
+            for _ in 0..<6 { app.swipeDown() }
+            app.buttons["connectors.provider.gmail"].tap()
+            XCTAssertTrue(app.navigationBars["Gmail"].waitForExistence(timeout: 3))
+            capture("Gmail-default-\(suffix)")
+            reveal(app.buttons["gmail.info.Report an issue"])
+            capture("Gmail-information-\(suffix)")
+            for _ in 0..<7 { app.swipeDown() }
+            let permissions = app.buttons["gmail.permissions"]
+            reveal(permissions)
+            permissions.tap()
+            XCTAssertTrue(app.navigationBars["Permissions"].waitForExistence(timeout: 3))
+            capture("Gmail-connector-permissions-\(suffix)")
+            reveal(app.buttons["gmail.permission.connector.neverAllow"])
+            reveal(app.staticTexts["Controls the level of access Rem has across all Gmail accounts connected to this connector."])
+            capture("Gmail-connector-permissions-bottom-\(suffix)")
+            navigateBack(from: "Permissions", to: "Gmail")
+            for _ in 0..<7 { app.swipeDown() }
+            reveal(app.buttons["gmail.accountMenu.avery"])
+            app.buttons["gmail.accountMenu.avery"].tap()
+            app.buttons["gmail.accountSettings.avery"].tap()
+            XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+            reveal(app.staticTexts["Controls what Rem can do with avery@example.com. Overrides the connector-wide setting for this account."])
+            capture("Gmail-account-permissions-bottom-\(suffix)")
+        }
+    }
+
     func testControlsCancelRollbackAndSave() {
         app.buttons["Shared controls"].tap()
         app.buttons["editName"].tap()

@@ -105,6 +105,182 @@ class SettingsPlaygroundTest {
         compose.onNodeWithTag("openAgent").assertExists()
         compose.onNodeWithText("Capabilities").assertDoesNotExist()
     }
+    @Test fun connectorsGmailMenusAndScopedPermissionsSurviveRecreation() {
+        openDestination("Connectors", "settingsConnectors")
+        capture("Connectors-light")
+        listOf("Gmail", "GoogleCalendar", "Notion", "Slack", "GoogleDrive", "Linear", "Todoist").forEach {
+            compose.onNodeWithTag("connectors.provider.$it").performScrollTo().assertIsDisplayed()
+        }
+        capture("Connectors-brand-rows-bottom-light")
+        compose.onNodeWithTag("connectors.provider.Notion").performScrollTo().performClick()
+        compose.onNodeWithTag("connectors.boundary").assertExists()
+        compose.onNodeWithText("Notion account details are not included in this prototype. No connection is changed.").assertExists()
+        capture("Connectors-unsupported-provider-light")
+        systemBack() // Dismisses only the native dialog.
+        waitForTag("settingsConnectors")
+        compose.onNodeWithTag("connectors.boundary").assertDoesNotExist()
+        compose.onNodeWithTag("connectors.provider.Gmail").performScrollTo().performClick()
+        waitForTag("gmail.detail")
+        capture("Gmail-default-light")
+        compose.onNodeWithTag("gmail.accountMenu.avery").performScrollTo().performClick()
+        compose.onNodeWithTag("gmail.accountSettings.avery").assertExists()
+        capture("Gmail-account-menu-light")
+        compose.onNodeWithTag("gmail.accountSettings.avery").performClick()
+        waitForTag("gmail.permissions.avery")
+        compose.onNodeWithTag("gmail.permission.avery.LowRisk").assertIsSelected()
+        capture("Gmail-account-permissions-light")
+        systemBack()
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.connectorMenu").performClick()
+        compose.onNodeWithTag("gmail.disconnectAll").assertExists()
+        capture("Gmail-connector-menu-light")
+        systemBack() // Dismisses the popup without leaving Gmail.
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.disconnectAll").assertDoesNotExist()
+        compose.onNodeWithTag("gmail.permissions").performScrollTo().performClick()
+        waitForTag("gmail.permissions.connector")
+        compose.onNodeWithTag("gmail.permission.connector.LowRisk").assertIsSelected()
+        capture("Gmail-connector-permissions-light")
+        val policies = listOf("AlwaysAsk", "LowRisk", "AlwaysAllow", "NeverAllow")
+        policies.forEach { policy ->
+            compose.onNodeWithTag("gmail.permission.connector.$policy").performScrollTo().performClick().assertIsSelected()
+            policies.filter { it != policy }.forEach {
+                compose.onNodeWithTag("gmail.permission.connector.$it").assertIsNotSelected()
+            }
+            capture("Gmail-connector-policy-$policy-light")
+        }
+        systemBack()
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.accountMenu.avery").performScrollTo().performClick()
+        compose.onNodeWithTag("gmail.accountSettings.avery").assertExists()
+        compose.onNodeWithTag("gmail.disconnectAccount.avery").assertExists()
+        capture("Gmail-account-menu-after-policy-light")
+        compose.onNodeWithTag("gmail.accountSettings.avery").performClick()
+        waitForTag("gmail.permissions.avery")
+        compose.onNodeWithTag("gmail.permission.avery.NeverAllow").assertIsSelected()
+        capture("Gmail-account-permissions-inherited-light")
+        policies.forEach { policy ->
+            compose.onNodeWithTag("gmail.permission.avery.$policy").performScrollTo().performClick().assertIsSelected()
+            policies.filter { it != policy }.forEach {
+                compose.onNodeWithTag("gmail.permission.avery.$it").assertIsNotSelected()
+            }
+        }
+        compose.onNodeWithTag("gmail.permission.avery.AlwaysAsk").performScrollTo().performClick()
+        compose.activityRule.scenario.recreate()
+        waitForTag("gmail.permissions.avery")
+        compose.onNodeWithTag("gmail.permission.avery.AlwaysAsk").assertIsSelected()
+        capture("Gmail-account-permissions-recreated-light")
+        systemBack()
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.permissions").performScrollTo().performClick()
+        compose.onNodeWithTag("gmail.permission.connector.NeverAllow").assertIsSelected()
+        compose.onNodeWithTag("gmail.permission.connector.AlwaysAllow").performScrollTo().performClick()
+        systemBack()
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.accountMenu.avery").performScrollTo().performClick()
+        compose.onNodeWithTag("gmail.accountSettings.avery").performClick()
+        compose.onNodeWithTag("gmail.permission.avery.AlwaysAsk").assertIsSelected()
+        capture("Gmail-account-override-retained-light")
+        systemBack()
+        waitForTag("gmail.detail")
+        systemBack()
+        waitForTag("settingsConnectors")
+        systemBack()
+        waitForTag("agentSettings")
+    }
+
+    @Test fun gmailSingleDisconnectCancelConfirmAndRecreation() {
+        openDestination("Connectors", "settingsConnectors")
+        compose.onNodeWithTag("connectors.provider.Gmail").performScrollTo().performClick()
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.accountMenu.avery").performScrollTo().performClick()
+        compose.onNodeWithTag("gmail.disconnectAccount.avery").performClick()
+        compose.onNodeWithText("Disconnect avery@example.com?").assertExists()
+        capture("Gmail-disconnect-account-light")
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithTag("gmail.account.avery").assertExists()
+        compose.onNodeWithTag("gmail.accountMenu.avery").performClick()
+        compose.onNodeWithTag("gmail.disconnectAccount.avery").performClick()
+        systemBack() // Native dialog Back must cancel without popping the Gmail route.
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.disconnectConfirmation").assertDoesNotExist()
+        compose.onNodeWithTag("gmail.account.avery").assertExists()
+        compose.onNodeWithTag("gmail.accountMenu.avery").performClick()
+        compose.onNodeWithTag("gmail.disconnectAccount.avery").performClick()
+        compose.onNodeWithTag("gmail.confirmDisconnect").performClick()
+        waitForTag("settingsConnectors")
+        compose.onNodeWithContentDescription("Connect Gmail").assertExists()
+        listOf("GoogleCalendar", "Notion", "Slack").forEach {
+            compose.onNodeWithTag("connectors.provider.$it").assertHasClickAction()
+        }
+        capture("Gmail-disconnect-one-result-light")
+        compose.activityRule.scenario.recreate()
+        waitForTag("settingsConnectors")
+        compose.onNodeWithContentDescription("Connect Gmail").assertExists()
+        capture("Gmail-disconnect-one-recreated-light")
+    }
+
+    @Test fun gmailAllDisconnectCancelThenConfirm() {
+        openDestination("Connectors", "settingsConnectors")
+        compose.onNodeWithTag("connectors.provider.Gmail").performScrollTo().performClick()
+        waitForTag("gmail.detail")
+        compose.onNodeWithTag("gmail.connectorMenu").performClick()
+        compose.onNodeWithTag("gmail.disconnectAll").performClick()
+        compose.onNodeWithText("Disconnect all Gmail accounts?").assertExists()
+        capture("Gmail-disconnect-accounts-light")
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithTag("gmail.account.avery").assertExists()
+        compose.onNodeWithTag("gmail.connectorMenu").performClick()
+        compose.onNodeWithTag("gmail.disconnectAll").performClick()
+        compose.onNodeWithTag("gmail.confirmDisconnect").performClick()
+        waitForTag("settingsConnectors")
+        compose.onNodeWithContentDescription("Connect Gmail").assertExists()
+        listOf("GoogleCalendar", "Notion", "Slack").forEach {
+            compose.onNodeWithTag("connectors.provider.$it").assertHasClickAction()
+        }
+        capture("Gmail-disconnect-all-result-light")
+        compose.activityRule.scenario.recreate()
+        waitForTag("settingsConnectors")
+        compose.onNodeWithContentDescription("Connect Gmail").assertExists()
+    }
+
+    @Test fun connectorsGmailDarkAndLargeTextReachability() {
+        listOf(false, true).forEach { large ->
+            appearance(dark = !large, largeText = large)
+            val suffix = if (large) "large-text" else "dark"
+            openDestination("Connectors", "settingsConnectors")
+            capture("Connectors-$suffix")
+            compose.onNodeWithTag("connectors.provider.Todoist").performScrollTo().assertIsDisplayed()
+            capture("Connectors-bottom-$suffix")
+            compose.onNodeWithTag("connectors.provider.Gmail").performScrollTo().performClick()
+            waitForTag("gmail.detail")
+            capture("Gmail-default-$suffix")
+            compose.onNodeWithTag("gmail.info.Report an issue").performScrollTo().assertIsDisplayed()
+            capture("Gmail-information-$suffix")
+            compose.onNodeWithTag("gmail.permissions").performScrollTo().performClick()
+            waitForTag("gmail.permissions.connector")
+            capture("Gmail-connector-permissions-$suffix")
+            compose.onNodeWithTag("gmail.permission.connector.NeverAllow").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("Controls the level of access Rem has across all Gmail accounts connected to this connector.")
+                .performScrollTo().assertIsDisplayed()
+            capture("Gmail-connector-permissions-bottom-$suffix")
+            systemBack()
+            waitForTag("gmail.detail")
+            compose.onNodeWithTag("gmail.accountMenu.avery").performScrollTo().performClick()
+            compose.onNodeWithTag("gmail.accountSettings.avery").performClick()
+            compose.onNodeWithText("Controls what Rem can do with avery@example.com. Overrides the connector-wide setting for this account.")
+                .performScrollTo().assertIsDisplayed()
+            capture("Gmail-account-permissions-bottom-$suffix")
+            systemBack() // Account permissions -> Gmail.
+            systemBack() // Gmail -> Connectors.
+            systemBack() // Connectors -> Agent settings.
+            waitForTag("agentSettings")
+            compose.onNodeWithTag("back").performClick() // Agent settings -> Settings.
+            compose.onNodeWithTag("back").performClick() // Settings -> gallery.
+            waitForTag("openSettings")
+        }
+    }
+
     @Test fun controlCancelRollbackAndSave() {
         compose.onNodeWithText("Shared controls").performClick()
         compose.onNodeWithTag("editName").performClick()
