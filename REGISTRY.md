@@ -39,6 +39,7 @@ Fixed:
 |---|---|---|---|---|
 | ListRow (3 slots: **Leading Accessory · Content · Trailing Accessory**) — swappable leading (ContainedIcon/Avatar), re-based to iOS 26 metrics + variables | Rows & Controls | `101:18` | `SharedSettingsView.swift` insetGrouped rows | ✓ canonical (kept — kit Row leading isn't swappable to ContainedIcon) |
 | ListRowLabel (default Content: Title/Subtitle) | ListRow | `188:2` | the row's text block | ✓ canonical |
+| ConnectorRow — State {Available/Connecting/Connected/Error}, Accessory {Action/Progress/Disclosure/Switch}; nested provider/content overrides | ConnectorRow | `2213:9330` | `Rows/ConnectorRow.swift` + `rows/ConnectorRow.kt` | ✓ shared controlled API; local parserless mappings; Settings uses Disclosure; existing onboarding unchanged |
 | Avatar (29×29 leading option) | ContainedIcon | `185:2` | circular photo/initials leading | ✓ canonical |
 | Section (optional Header/Footer + editable Rows slot; background + xlarge radius, no outline) | Rows & Controls | `741:311` | native `SwiftUI.Section` in List/Form; `RemSection.swift` adapter in custom ScrollView; Compose `rows/RemSection.kt` | ✓ canonical · parserless SwiftUI/Compose Code Connect authored · docs `741:309` |
 | SectionHeader | Section | `161:68` | `Section { } header: { Text }` | ✓ canonical |
