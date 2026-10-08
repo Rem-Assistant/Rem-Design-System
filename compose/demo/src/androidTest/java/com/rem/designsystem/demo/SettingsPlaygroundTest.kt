@@ -753,6 +753,7 @@ class SettingsPlaygroundTest {
                 waitForTag("cloudBrowser.savedLogin")
                 compose.onNodeWithText(username).assertExists()
                 compose.onNodeWithText("•".repeat(12)).assertExists()
+                capture("CloudBrowser-clear-all-retained-login-$domain-light")
                 systemBack()
                 waitForTag("cloudBrowser.siteDetail")
                 systemBack()
@@ -763,7 +764,7 @@ class SettingsPlaygroundTest {
         compose.onNodeWithTag("cloudBrowser.site.openai.com").performScrollTo().performClick()
         waitForTag("cloudBrowser.siteDetail")
         compose.onNodeWithTag("cloudBrowser.siteDetail.cookies").assertTextContains("0 cookies · Signed out")
-        capture("CloudBrowser-clear-all-retains-credentials-light")
+        capture("CloudBrowser-clear-all-empty-site-light")
     }
 
     private fun captureDestinationAppearance(dark: Boolean = false, largeText: Boolean = false) {
@@ -918,6 +919,12 @@ class SettingsPlaygroundTest {
             compose.onNodeWithTag("wallet.provider.$provider").performClick()
             waitForTag("wallet.consent.$provider")
             capture("Wallet-$provider-consent-$suffix")
+            if (largeText) {
+                compose.onNodeWithText("You choose what Rem can do").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Rem asks before actions that need review. Disconnect anytime in Settings.")
+                    .performScrollTo().assertIsDisplayed()
+                capture("Wallet-$provider-consent-large-text-benefit")
+            }
             compose.onNodeWithText("Next, continue to $name to sign in and review access. Rem will exchange info with $name; see its terms and privacy policy.")
                 .performScrollTo().assertIsDisplayed()
             if (largeText) capture("Wallet-$provider-consent-large-text-footer")
@@ -932,6 +939,12 @@ class SettingsPlaygroundTest {
         compose.onNodeWithTag("agentDestination.Voice").performScrollTo().performClick()
         waitForTag("settingsVoice")
         capture("Voice-$suffix")
+        if (largeText) {
+            compose.onNodeWithTag("voice.chooseVoice").performScrollTo().assertIsDisplayed()
+            capture("Voice-large-text-choice-row")
+            compose.onNodeWithTag("voice.slider.speed").performScrollTo().assertIsDisplayed()
+            capture("Voice-large-text-speed")
+        }
         compose.onNodeWithText("Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice.")
             .performScrollTo().assertIsDisplayed()
         capture("Voice-$suffix-footer")

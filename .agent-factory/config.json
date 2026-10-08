@@ -14,7 +14,9 @@
       "SHAPE-OF-A-TASK.md",
       "docs/figma-delivery.md",
       "docs/contracts/settings-playground.md",
-      "docs/contracts/settings-foundation.md"
+      "docs/contracts/settings-foundation.md",
+      ".claude/skills/rem-design-system/local-policy/product-design-supplement.md",
+      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md"
     ],
     "skill_dirs": [
       ".claude/skills"

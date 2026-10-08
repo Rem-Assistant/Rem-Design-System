@@ -771,6 +771,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
             app.buttons["cloudBrowser.siteDetail.login"].tap()
             XCTAssertTrue(app.staticTexts[username].waitForExistence(timeout: 3))
             XCTAssertTrue(app.staticTexts[String(repeating: "•", count: 12)].exists)
+            capture("CloudBrowser-clear-all-retained-login-\(domain)-light")
             navigateBack(from: "Saved login", to: domain)
             navigateBack(from: domain, to: "Cloud browser")
         }
@@ -782,7 +783,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         openAI.tap()
         XCTAssertTrue(app.navigationBars["openai.com"].waitForExistence(timeout: 3))
         XCTAssertTrue(cookies.label.contains("0 cookies · Signed out"))
-        capture("CloudBrowser-clear-all-retains-credentials-light")
+        capture("CloudBrowser-clear-all-empty-site-light")
     }
 
     private func captureDestinationAppearance(arguments: [String], suffix: String) {
@@ -942,6 +943,11 @@ final class SettingsPlaygroundUITests: XCTestCase {
             app.buttons["wallet.provider.\(provider)"].tap()
             XCTAssertTrue(app.buttons["wallet.consent.connect"].waitForExistence(timeout: 3))
             capture("Wallet-\(provider)-consent-\(suffix)")
+            if suffix == "large-text" {
+                reveal(app.staticTexts["You choose what Rem can do"])
+                reveal(app.staticTexts["Rem asks before actions that need review. Disconnect anytime in Settings."])
+                capture("Wallet-\(provider)-consent-large-text-benefit")
+            }
             let disclosure = app.staticTexts["Next, continue to \(name) to sign in and review access. Rem will exchange info with \(name); see its terms and privacy policy."]
             reveal(disclosure)
             XCTAssertTrue(app.buttons["wallet.consent.connect"].isHittable)
@@ -953,6 +959,12 @@ final class SettingsPlaygroundUITests: XCTestCase {
         app.launch()
         openDestination("voice", title: "Voice")
         capture("Voice-\(suffix)")
+        if suffix == "large-text" {
+            reveal(app.buttons["voice.chooseVoice"])
+            capture("Voice-large-text-choice-row")
+            reveal(app.sliders["voice.slider.speed"])
+            capture("Voice-large-text-speed")
+        }
         let footer = app.staticTexts["Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."]
         reveal(footer)
         capture("Voice-\(suffix)-footer")
