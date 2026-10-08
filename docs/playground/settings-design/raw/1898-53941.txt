@@ -1,0 +1,309 @@
+const assetPathPrefix = "[temporary asset URL omitted]";
+const imgRows = `${assetPathPrefix}/02cf3.png`;
+const imgRows1 = `${assetPathPrefix}/6b4eb.png`;
+
+export default function WalletLinkPreConsent() {
+  return (
+    <div className="bg-[var(--rem-color-background-primary,white)] relative size-full" data-node-id="1898:53941" data-name="Wallet · Link pre-consent">
+      <div className="absolute bg-[var(--rem-color-background-primary,white)] content-stretch flex flex-col h-[874px] items-start left-0 overflow-clip top-0 w-[402px]" data-node-id="1898:54021" data-name="Wallet backdrop">
+        <CodeConnectSnippet data-node-id="I1898:54021;1833:51806" data-name="Status bar - iPhone">
+          {/* iOS and iPadOS 26 component */}
+          <StatusBarIPhone textTime="9:41" time="9:41" />
+        </CodeConnectSnippet>
+        <CodeConnectSnippet data-node-id="I1898:54021;1833:51807" data-name="Toolbar - Top - iPhone">
+          {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/navigation-bars */}
+          <ToolbarTopIPhone booleanShowSubtitle={true} showSubtitle={true} variantStyle="Default" style="Default">
+            <ButtonGroup1 variantType="Back" type="Back">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Text booleanShowLabel={false} showLabel={false} textLabel="Label" label="Label" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup1>
+            <Title textTitle="Wallet" title="Wallet" variantMode="Light" mode="Light" />
+          </ToolbarTopIPhone>
+        </CodeConnectSnippet>
+        <div className="content-stretch flex flex-col gap-[22px] h-[724px] items-center overflow-x-clip overflow-y-auto pb-[24px] pt-[10px] px-[16px] relative shrink-0 w-full" data-node-id="I1898:54021;1833:51808" data-name="Body">
+          <div className="content-stretch flex flex-col gap-[12px] items-center max-w-[560px] overflow-clip relative shrink-0 w-full" data-node-id="I1898:54021;1833:51809" data-name="Lockup/Wallet">
+            <div className="content-stretch flex items-center justify-center overflow-clip relative shrink-0 size-[64px]" data-node-id="I1898:54021;1833:51809;773:24" data-name="Visual">
+              <div className="bg-[var(--rem-color-brand-blue,#0c50ff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[18px] shrink-0 size-[64px]" data-node-id="I1898:54021;1833:51809;773:24;1833:51813" data-name="ContainedIcon/Wallet">
+                <SFSymbol>{`Image(systemName: "wallet.pass")`}</SFSymbol>
+              </div>
+            </div>
+            <p className="[word-break:break-word] font-['SF_Pro:Bold'] font-bold leading-[34px] min-w-full relative shrink-0 text-[28px] text-[color:var(--rem-color-label-primary,black)] text-center tracking-[0.38px] w-[min-content]" data-node-id="I1898:54021;1833:51809;773:20" style={{ fontVariationSettings: '"wdth" 100' }}>
+              Wallet
+            </p>
+            <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[22px] min-w-full relative shrink-0 text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] text-center tracking-[-0.43px] w-[min-content]" data-node-id="I1898:54021;1833:51809;773:21" style={{ fontVariationSettings: '"wdth" 100' }}>
+              Securely save payment methods for Rem to use when making purchases for you.
+            </p>
+          </div>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810" data-name="Section/Payment methods">
+            <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314" data-name="Rows">
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314;1833:51815" data-name="ListRow">
+                <div className="content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;111:79" data-name="leading">
+                  <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[7px]">
+                    <div className="absolute bg-[#00d66f] inset-0 rounded-[7px]" />
+                    <img alt="" className="absolute max-w-none object-cover rounded-[7px] size-full" src={imgRows} />
+                  </div>
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Link by Stripe
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;101:17" data-name="separator" />
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;121:38" data-name="trailing">
+                  <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1898:54021;1833:51810;741:314;1833:51815;111:80" data-name="right">
+                    <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314;1833:51816" data-name="ListRow">
+                <div className="content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" data-node-id="I1898:54021;1833:51810;741:314;1833:51816;111:79" data-name="leading">
+                  <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[7px] size-full" src={imgRows1} />
+                </div>
+                <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1898:54021;1833:51810;741:314;1833:51816;101:13" data-name="content">
+                  <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314;1833:51816;188:192" data-name="Title layout=Fill">
+                    <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1898:54021;1833:51810;741:314;1833:51816;188:192;1933:8542" data-name="HStack/Title and accessory">
+                      <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Shop Pay
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1898:54021;1833:51810;741:314;1833:51816;121:38" data-name="trailing">
+                  <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1898:54021;1833:51810;741:314;1833:51816;111:80" data-name="right">
+                    <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="h-[34px] relative shrink-0 w-[402px]" data-node-id="I1898:54021;1833:51811" data-name="NavigationIndicator">
+          <div className="absolute h-[34px] left-0 top-0 w-[402px]" data-node-id="I1898:54021;1833:51811;793:370" data-name="HomeIndicator">
+            <div className="absolute bg-[var(--rem-color-label-primary,black)] h-[5px] left-[129px] rounded-[2.5px] top-[21px] w-[144px]" data-node-id="I1898:54021;1833:51811;793:370;333:101" data-name="Rectangle" />
+          </div>
+        </div>
+      </div>
+      <div className="absolute bg-[var(--overlay-scrim,black)] h-[874px] left-0 opacity-32 top-0 w-[402px]" data-node-id="1898:54020" data-name="Wallet dimming" />
+      <div className="absolute content-stretch flex flex-col gap-[var(--rem-space-lg,16px)] items-start left-0 pb-[30px] pt-[27px] px-[26px] top-[247px] w-[402px]" data-node-id="1898:54430" data-name="Pre-consent inspector · Link">
+        <CodeConnectSnippet data-node-id="I1898:54430;1898:53943" data-name="Inspector sheet foundation">
+          {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/sheets */}
+          <SheetInspectorIPhone>
+            <BG variantMode="Light" mode="Light" />
+            <Toolbar booleanShowSubtitle={true} showSubtitle={true} variantMode="Light" mode="Light" variantStyle="Default" style="Default">
+              <Grabber variantMode="Light" mode="Light" />
+            </Toolbar>
+          </SheetInspectorIPhone>
+        </CodeConnectSnippet>
+        <div className="content-stretch flex flex-col gap-[var(--rem-space-sm,8px)] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1898:54430;1898:53960" data-name="Provider identity">
+          <div className="content-stretch flex h-[60px] items-center justify-center overflow-clip relative shrink-0 w-full" data-node-id="I1898:54430;1898:53961" data-name="Brand mark">
+            <div className="relative rounded-[14px] shrink-0 size-[60px]" data-node-id="I1898:54430;1898:53962" data-name="Official provider brand">
+              <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[14px]">
+                <div className="absolute bg-[#00d66f] inset-0 rounded-[14px]" />
+                <img alt="" className="absolute max-w-none object-cover rounded-[14px] size-full" src={imgRows} />
+              </div>
+            </div>
+          </div>
+          <p className="[word-break:break-word] font-['SF_Pro:Bold'] font-bold leading-[34px] relative shrink-0 text-[28px] text-[color:var(--rem-color-label-primary,black)] text-center tracking-[0.38px] w-full" data-node-id="I1898:54430;1898:53963" style={{ fontVariationSettings: '"wdth" 100' }}>
+            Link by Stripe
+          </p>
+          <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] text-center tracking-[-0.43px] w-full" data-node-id="I1898:54430;1898:53964" style={{ fontVariationSettings: '"wdth" 100' }}>
+            Connect your Link wallet for purchases you ask Rem to make.
+          </p>
+        </div>
+        <div className="content-stretch flex flex-col gap-[14px] items-start relative shrink-0 w-full" data-node-id="I1898:54430;1898:53965" data-name="Benefits and permissions">
+          <div className="content-stretch flex gap-[14px] items-start overflow-clip relative shrink-0 w-full" data-node-id="I1898:54430;1898:53965;1263:19712" data-name="Frame">
+            <div className="content-stretch flex items-center justify-center relative shrink-0 size-[26px]" data-node-id="I1898:54430;1898:53965;1263:19713" data-name="Frame">
+              <SFSymbol>{`Image(systemName: "list.bullet")`}</SFSymbol>
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-[1_0_0] flex-col gap-[2px] items-start min-w-px overflow-clip relative" data-node-id="I1898:54430;1898:53965;1263:19715" data-name="Frame">
+              <p className="font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px] w-full" data-node-id="I1898:54430;1898:53965;1263:19716" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Use your saved wallet
+              </p>
+              <p className="font-['SF_Pro:Regular'] font-normal leading-[20px] relative shrink-0 text-[15px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.23px] w-full" data-node-id="I1898:54430;1898:53965;1263:19717" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Use payment methods and checkout details you authorize through Link.
+              </p>
+            </div>
+          </div>
+          <div className="content-stretch flex gap-[14px] items-start overflow-clip relative shrink-0 w-full" data-node-id="I1898:54430;1898:53965;1263:19718" data-name="Frame">
+            <div className="content-stretch flex items-center justify-center relative shrink-0 size-[26px]" data-node-id="I1898:54430;1898:53965;1263:19719" data-name="Frame">
+              <SFSymbol>{`Image(systemName: "hand.raised.fill")`}</SFSymbol>
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-[1_0_0] flex-col gap-[2px] items-start min-w-px overflow-clip relative" data-node-id="I1898:54430;1898:53965;1263:19721" data-name="Frame">
+              <p className="font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px] w-full" data-node-id="I1898:54430;1898:53965;1263:19722" style={{ fontVariationSettings: '"wdth" 100' }}>
+                You choose what Rem can do
+              </p>
+              <p className="font-['SF_Pro:Regular'] font-normal leading-[20px] relative shrink-0 text-[15px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.23px] w-full" data-node-id="I1898:54430;1898:53965;1263:19723" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Rem asks before actions that need review. Disconnect anytime in Settings.
+              </p>
+            </div>
+          </div>
+          <div className="content-stretch flex gap-[14px] items-start overflow-clip relative shrink-0 w-full" data-node-id="I1898:54430;1898:53965;1263:19724" data-name="Frame">
+            <div className="content-stretch flex items-center justify-center relative shrink-0 size-[26px]" data-node-id="I1898:54430;1898:53965;1263:19725" data-name="Frame">
+              <SFSymbol>{`Image(systemName: "eye")`}</SFSymbol>
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-[1_0_0] flex-col gap-[2px] items-start min-w-px overflow-clip relative" data-node-id="I1898:54430;1898:53965;1263:19727" data-name="Frame">
+              <p className="font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px] w-full" data-node-id="I1898:54430;1898:53965;1263:19728" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Keep an eye on things
+              </p>
+              <p className="font-['SF_Pro:Regular'] font-normal leading-[20px] relative shrink-0 text-[15px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.23px] w-full" data-node-id="I1898:54430;1898:53965;1263:19729" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Rem may take unexpected actions. Review purchases carefully.
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] min-w-full relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] text-center tracking-[-0.08px] w-[min-content]" data-node-id="I1898:54430;1898:53984" style={{ fontVariationSettings: '"wdth" 100' }}>
+          Next, continue to Link to sign in and review access. Rem will exchange info with Link; see its terms and privacy policy.
+        </p>
+        <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="I1898:54430;1898:53985" data-name="Consent actions">
+          <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full" data-node-id="I1898:54430;1898:53985;773:8" data-name="Actions">
+            <div className="bg-[var(--rem-color-brand-blue,#0c50ff)] content-stretch flex gap-[8px] h-[48px] items-center justify-center overflow-clip px-[22px] py-[13px] relative rounded-[10px] shrink-0 w-full" data-node-id="I1898:54430;1898:53985;773:8;1898:53996" data-name="Connect">
+              <p className="[word-break:break-word] font-['SF_Pro:Bold'] font-bold leading-[22px] relative shrink-0 text-[17px] text-[color:var(--label\/on-color,white)] text-center tracking-[-0.43px] whitespace-nowrap" data-node-id="I1898:54430;1898:53985;773:8;1898:53996;408:16" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Connect
+              </p>
+            </div>
+            <div className="content-stretch flex gap-[8px] h-[34px] items-center justify-center overflow-clip px-[4px] py-[6px] relative shrink-0 w-full" data-node-id="I1898:54430;1898:53985;773:8;1898:54010" data-name="Cancel">
+              <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-brand-blue,#0c50ff)] text-center tracking-[-0.43px] whitespace-nowrap" data-node-id="I1898:54430;1898:53985;773:8;1898:54010;377:3" style={{ fontVariationSettings: '"wdth" 100' }}>
+                Cancel
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Rem/Platform text/Semibold/17/0: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: 0), Rem/Platform text/Medium/17/4: Font(family: "SF Pro", style: Medium, size: 17, weight: 510, lineHeight: 100, letterSpacing: 0), Headline/Regular: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Rem/Platform text/Semibold/30/5: Font(family: "SF Pro", style: Semibold, size: 30, weight: 590, lineHeight: 100, letterSpacing: 0), Title 1/Emphasized: Font(family: "SF Pro", style: Bold, size: 28, weight: 700, lineHeight: 34, letterSpacing: 0.3799999952316284), Body/Regular: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 22, letterSpacing: -0.4300000071525574), Body/Emphasized: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Subheadline/Regular: Font(family: "SF Pro", style: Regular, size: 15, weight: 400, lineHeight: 20, letterSpacing: -0.23000000417232513), Footnote/Regular: Font(family: "SF Pro", style: Regular, size: 13, weight: 400, lineHeight: 18, letterSpacing: -0.07999999821186066), Body/Bold: Font(family: "SF Pro", style: Bold, size: 17, weight: 700, lineHeight: 22, letterSpacing: -0.4300000071525574).
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## Screen/Wallet · Working
+**Node ID:** 1833:51817
+
+Independent working master derived from 1085:1248. Original shared source remains unchanged. Existing proposal status and screen content are preserved.
+
+## Toolbar - Top - iPhone
+**Node ID:** 277:947
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/navigation-bars](https://developer.apple.com/design/human-interface-guidelines/navigation-bars)
+
+## Alignment=Center
+**Node ID:** 773:22
+
+Responsive visual, title, and body composition. Fill the parent up to a 560 pt maximum; text fills and wraps while the visual keeps its intrinsic size. The root inherits its parent surface.
+
+## Lockup
+**Node ID:** 1861:54960
+
+Canonical vertical Lockup. Alignment=Center preserves existing usage; Alignment=Left aligns visual, title and body to the leading edge. Transparent; use inside canonical Section for containment. Preserves Visual slot and Title/Body text properties.
+
+## Style=Inset Grouped
+**Node ID:** 741:311
+
+Inset Grouped Section. The parent Body or List owns the screen horizontal inset; slotted ListRows own their Show Divider behavior.
+
+## Section
+**Node ID:** 1307:667
+
+Section styles and spacing. Inset Grouped and Plain control surface treatment; Spacing controls section header/footer rhythm. Screen inset belongs to the parent Body/List. Divider visibility belongs to each slotted ListRow.
+
+## ListRow
+**Node ID:** 101:18
+
+Canonical row with Leading Accessory, Content and Trailing Accessory swaps. Content defaults to ListRowLabel, now with optional Title accessory slot. Trailing wrapper hugs the accessory’s intrinsic dimensions instead of a fixed chevron width.
+
+## Title layout=Fill
+**Node ID:** 188:2
+
+Canonical ListRowLabel. Title and Subtitle preserved. Optional Title accessory slot owns an inline Pill, icon or other small component; enable Show title accessory. No floating overlay badges.
+
+## ListRowLabel
+**Node ID:** 1966:60442
+
+ListRowLabel: Title layout=Fill preserves existing rows. Title layout=Hug keeps badges immediately beside the title. Title/Subtitle and optional Title accessory slot remain configurable.
+
+## Chevron
+**Node ID:** 110:52
+
+Chevron accessory — trailing disclosure (chevron.right). Default Accessory for ListRow. ↔ SwiftUI: NavigationLink disclosure.
+
+## Platform=iOS, Content=Dark, Surface=Primary
+**Node ID:** 793:369
+
+NavigationIndicator inherits the screen/background by default. Show background=false; enable only when an explicit Surface is intended. Content controls handle contrast independently.
+
+## NavigationIndicator
+**Node ID:** 793:379
+
+Native navigation/gesture indicator with transparent default surface. Optional Show background boolean retains explicit Surface choices when needed.
+
+## HomeIndicator
+**Node ID:** 333:102
+
+iOS home indicator (bottom safe-area handle). Transparent band so its background inherits the docked element behind it (voice bar / composer / screen bg). Pill 144×5, labelPrimary. Source: system safe-area overlay.
+
+## Pre-consent/Wallet
+**Node ID:** 1898:54528
+
+Reusable provider pre-consent pattern, inspired by the Muse Link wallet audit and iOS 26 glassy inspector sheets. Use before provider authentication. Variants retain the authentic Link and Shop Pay brand assets.
+
+## Sheet - Inspector - iPhone
+**Node ID:** 493:3196
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/sheets](https://developer.apple.com/design/human-interface-guidelines/sheets)
+
+## Toolbar - Top - Sheet
+**Node ID:** 493:3152
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/navigation-bars](https://developer.apple.com/design/human-interface-guidelines/navigation-bars)
+
+## ConnectorConsentRows
+**Node ID:** 1263:19711
+
+Reusable benefit rows for connector consent. Configure provider-specific copy in the parent screen.
+
+## ButtonGroup
+**Node ID:** 773:17
+
+Groups onboarding actions. Direction supports Vertical or Horizontal; Actions is a slot restricted to Rem Button components.
+
+## Style=Rect · Blue, State=Enabled, Size=Regular
+**Node ID:** 408:15
+
+Button accessory — tinted pill (Label TEXT prop). Used for row actions like 'Connect'. ↔ SwiftUI: Button(.borderedProminent) small / brandBlue capsule.
+
+## Button
+**Node ID:** 377:8
+
+Canonical Button family. Style selects hierarchy and surface, State selects availability, and Size selects control scale. Use Leading and Trailing slots for symbols; icon-only remains a Button configuration.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

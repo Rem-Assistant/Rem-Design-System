@@ -1,8 +1,10 @@
 package com.rem.designsystem.demo
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Density
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -51,6 +53,7 @@ private enum class Route { Home, Settings, Agent, Controls }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Playground() {
+    val context = LocalContext.current
     var route by rememberSaveable { mutableStateOf(Route.Home) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     val back = { route = if (route == Route.Agent) Route.Settings else Route.Home }
@@ -75,7 +78,15 @@ fun Playground() {
                     Button(onClick = { route = Route.Settings }, modifier = Modifier.testTag("openSettings")) { Text("Open Settings") }
                     OutlinedButton(onClick = { route = Route.Controls }) { Text("Shared controls") }
                 }
-                Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) { SettingsEntryContent { route = Route.Agent } }
+                Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) {
+                    SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {
+                        val share = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, "Rem — a personal AI assistant. Shared from the local Settings playground.")
+                        }
+                        context.startActivity(Intent.createChooser(share, null))
+                    })
+                }
                 Route.Agent -> AgentPreview(fixture, onCancel = { route = Route.Settings })
                 Route.Controls -> ControlsPreview()
             }

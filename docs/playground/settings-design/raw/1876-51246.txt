@@ -1,0 +1,26 @@
+export default function IOsMenuAccount() {
+  return (
+    <CodeConnectSnippet data-node-id="1876:51246" data-name="iOS Menu/Account">
+      {/* iOS and iPadOS 26 component */}
+      <MenuIPhone variantMode="Light" mode="Light">
+        <LiquidGlassRegularMedium variantMode="Light" mode="Light" />
+        <Item textLetter="D" letter="D" booleanShowShortcut={false} showShortcut={false} booleanShowCheckmark={false} showCheckmark={false} booleanShowCommand={false} showCommand={false} booleanShowShift={false} showShift={false} booleanShowControl={false} showControl={false} textSymbol="ellipsis" symbol="ellipsis" booleanShowSubtitle={false} showSubtitle={false} textSubtitle="" subtitle="" textLabel="Settings" label="Settings" booleanShowOption={false} showOption={false} booleanShowSymbol={false} showSymbol={false} variantMode="Light" mode="Light" variantState="Default" state="Default" variantMenuHasSelection="False" menuHasSelection="False" />
+        <Item textLetter="R" letter="R" booleanShowSubtitle={false} showSubtitle={false} booleanShowCheckmark={false} showCheckmark={false} booleanShowShift={false} showShift={false} textSubtitle="" subtitle="" booleanShowCommand={false} showCommand={false} booleanShowOption={false} showOption={false} textSymbol="ellipsis" symbol="ellipsis" booleanShowSymbol={false} showSymbol={false} booleanShowControl={false} showControl={false} textLabel="Disconnect account" label="Disconnect account" booleanShowShortcut={false} showShortcut={false} variantMode="Light" mode="Light" variantState="Destructive" state="Destructive" variantMenuHasSelection="False" menuHasSelection="False" />
+      </MenuIPhone>
+    </CodeConnectSnippet>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

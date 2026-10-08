@@ -1,0 +1,99 @@
+const assetPathPrefix = "[temporary asset URL omitted]";
+export default function LinkByStripeExternalBrowser() {
+  return (
+    <div className="bg-[var(--rem-color-background-primary,white)] content-stretch flex flex-col items-start overflow-clip relative rounded-[48px] size-full" data-node-id="1926:53854" data-name="Link by Stripe · External browser">
+      <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1926:53855" data-name="Browser header">
+        <CodeConnectSnippet data-node-id="1926:53856" data-name="System status">
+          {/* iOS and iPadOS 26 component */}
+          <StatusBarIPhone textTime="9:41" time="9:41" />
+        </CodeConnectSnippet>
+        <CodeConnectSnippet data-node-id="1926:53866" data-name="Provider navigation">
+          {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/navigation-bars */}
+          <ToolbarTopIPhone booleanShowSubtitle={false} showSubtitle={false} variantStyle="Default" style="Default">
+            <ButtonGroup1 variantType="1 Symbol" type="1 Symbol">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Symbol1 textSymbol="xmark" symbol="xmark" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup1>
+            <ButtonGroup1 variantType="1 Symbol" type="1 Symbol">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Symbol1 textSymbol="aA" symbol="aA" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup1>
+            <Title textTitle="app.link.com" title="app.link.com" variantMode="Light" mode="Light" />
+          </ToolbarTopIPhone>
+        </CodeConnectSnippet>
+      </div>
+      <div className="flex-[1_0_0] min-h-px relative w-full" data-node-id="1926:53899" data-name="Provider web content" />
+      <div className="content-stretch flex flex-col h-[84px] items-start relative shrink-0 w-full" data-node-id="1926:53900" data-name="Browser tools">
+        <CodeConnectSnippet data-node-id="1926:53901" data-name="Browsing toolbar">
+          {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/toolbars */}
+          <ToolbarBottomIPhone variantType="Buttons" type="Buttons">
+            <ButtonGroup1 variantState="1 Symbol" state="1 Symbol">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Symbol1 textSymbol="chevron.left" symbol="chevron.left" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup1>
+            <ButtonGroup2 variantState="1 Symbol" state="1 Symbol">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Symbol1 textSymbol="chevron.right" symbol="chevron.right" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup2>
+            <ButtonGroup1 variantState="1 Symbol" state="1 Symbol">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Symbol1 textSymbol="square.and.arrow.up" symbol="square.and.arrow.up" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup1>
+            <ButtonGroup2 variantState="1 Symbol" state="1 Symbol">
+              <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+              <Symbol1 textSymbol="arrow.clockwise" symbol="arrow.clockwise" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            </ButtonGroup2>
+          </ToolbarBottomIPhone>
+        </CodeConnectSnippet>
+        <CodeConnectSnippet data-node-id="1926:53928" data-name="Home indicator">
+          {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/going-full-screen */}
+          <HomeIndicator booleanShowHomeIndicator={true} showHomeIndicator={true} variantDevice="iPhone" device="iPhone" variantOrientation="Portrait" orientation="Portrait" />
+        </CodeConnectSnippet>
+      </div>
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Subheadline/Regular: Font(family: "SF Pro", style: Regular, size: 15, weight: 400, lineHeight: 20, letterSpacing: -0.23000000417232513).
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## Toolbar - Top - iPhone
+**Node ID:** 277:947
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/navigation-bars](https://developer.apple.com/design/human-interface-guidelines/navigation-bars)
+
+## Toolbar - Bottom - iPhone
+**Node ID:** 58:667
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars)
+
+## Home Indicator
+**Node ID:** 58:690
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/going-full-screen](https://developer.apple.com/design/human-interface-guidelines/going-full-screen)
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

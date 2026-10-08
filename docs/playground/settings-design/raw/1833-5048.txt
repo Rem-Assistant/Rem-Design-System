@@ -1,0 +1,383 @@
+const assetPathPrefix = "[temporary asset URL omitted]";
+const imgLogoGmail = `${assetPathPrefix}/dce5c.svg`;
+const imgPath1 = `${assetPathPrefix}/7e981.svg`;
+const imgPath2 = `${assetPathPrefix}/7541c.svg`;
+const imgG4 = `${assetPathPrefix}/e5e68.svg`;
+const imgG5 = `${assetPathPrefix}/f5f08.svg`;
+const imgG6 = `${assetPathPrefix}/386bb.svg`;
+const imgG7 = `${assetPathPrefix}/fbc6e.svg`;
+const imgPath7 = `${assetPathPrefix}/ec5f9.svg`;
+const imgGroup = `${assetPathPrefix}/c5244.svg`;
+const imgGroup1 = `${assetPathPrefix}/0aa83.svg`;
+const imgGroup2 = `${assetPathPrefix}/cb870.svg`;
+const imgGroup3 = `${assetPathPrefix}/2071e.svg`;
+const imgLogoGoogleDriveMark = `${assetPathPrefix}/41199.svg`;
+const imgLogoLinear = `${assetPathPrefix}/541bf.svg`;
+const imgLogoTodoist = `${assetPathPrefix}/a486c.svg`;
+
+type NavigationIndicatorProps = {
+  className?: string;
+  content?: "Dark";
+  platform?: "iOS";
+  showBackground?: boolean;
+  surface?: "Primary";
+};
+
+function NavigationIndicator({ className, content = "Dark", platform = "iOS", showBackground = false, surface = "Primary" }: NavigationIndicatorProps) {
+  return (
+    <div className={className || "h-[34px] relative w-[402px]"} data-node-id="793:369">
+      {showBackground && <div className="absolute bg-[var(--rem-color-background-primary,white)] inset-0" data-node-id="1936:56124" data-name="Optional surface" />}
+      <div className="absolute h-[34px] left-0 top-0 w-[402px]" data-node-id="793:370" data-name="HomeIndicator">
+        <div className="absolute bg-black h-[5px] left-[129px] rounded-[2.5px] top-[21px] w-[144px]" data-node-id="I793:370;333:101" data-name="Rectangle" />
+      </div>
+    </div>
+  );
+}
+
+export default function ScreenConnectorsWorking({ className }: { className?: string }) {
+  return (
+    <div className={className || "bg-[var(--rem-color-background-primary,white)] content-stretch flex flex-col h-[874px] items-start overflow-clip relative w-[402px]"} data-node-id="1833:5048" data-name="Screen/Connectors · Working">
+      <CodeConnectSnippet data-node-id="1833:5033" data-name="Status bar - iPhone">
+        {/* iOS and iPadOS 26 component */}
+        <StatusBarIPhone textTime="9:41" time="9:41" />
+      </CodeConnectSnippet>
+      <CodeConnectSnippet data-node-id="1833:5034" data-name="Toolbar - Top - iPhone / Inline">
+        {/* iOS and iPadOS 26 component
+Docs:
+  https://developer.apple.com/design/human-interface-guidelines/navigation-bars */}
+        <ToolbarTopIPhone booleanShowSubtitle={false} showSubtitle={false} variantStyle="Default" style="Default">
+          <ButtonGroup1 variantType="Back" type="Back">
+            <BG variantMode="Light" mode="Light" variantState="Default" state="Default" />
+            <Text booleanShowLabel={false} showLabel={false} textLabel="Label" label="Label" variantMode="Light" mode="Light" variantState="Default" state="Default" />
+          </ButtonGroup1>
+          <Title textTitle="Connectors" title="Connectors" variantMode="Light" mode="Light" />
+        </ToolbarTopIPhone>
+      </CodeConnectSnippet>
+      <div className="content-stretch flex flex-col gap-[28px] h-[724px] items-center overflow-x-clip overflow-y-auto pb-[24px] pt-[8px] px-[16px] relative shrink-0 w-full" data-node-id="1833:5035" data-name="Body">
+        <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1833:5036" data-name="Section/Connected">
+          <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1833:5036;741:312" data-name="Header">
+            <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1833:5036;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+              Connected
+            </p>
+          </div>
+          <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1833:5036;741:314" data-name="Rows">
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5040" data-name="ListRow">
+              <div className="content-stretch flex h-[29px] items-center justify-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5040;111:79" data-name="leading">
+                <div className="relative shrink-0 size-[26px]" data-node-id="I1833:5036;741:314;1833:5040;111:79;1328:375" data-name="Logo/Gmail">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLogoGmail} />
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5036;741:314;1833:5040;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5040;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5040;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Gmail
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5036;741:314;1833:5040;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connected • Active
+                  </p>
+                </div>
+              </div>
+              <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1833:5036;741:314;1833:5040;101:17" data-name="separator" />
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5040;121:38" data-name="trailing">
+                <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1833:5036;741:314;1833:5040;111:80" data-name="right">
+                  <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5041" data-name="ListRow">
+              <div className="content-stretch flex h-[29px] items-center justify-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5041;111:79" data-name="leading">
+                <div className="overflow-clip relative shrink-0 size-[26px]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:380" data-name="Logo/Google Calendar">
+                  <div className="absolute inset-[0_10.98%_46.34%_10.98%]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:381" data-name="path1">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgPath1} />
+                  </div>
+                  <div className="absolute inset-[7.32%_3.44%_0_3.44%]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:382" data-name="path2">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgPath2} />
+                  </div>
+                  <div className="absolute contents inset-[2.33%_76.5%_79.98%_5.73%]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:387" data-name="Mask group">
+                    <div className="absolute inset-[53.66%_-0.61%_0_-0.61%] mask-intersect mask-luminance mask-no-clip mask-no-repeat mask-position-[1.647px_-13.346px] mask-size-[4.622px_4.6px]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:383" style={{ maskImage: `url("${imgG4}")` }} data-name="g4">
+                      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgG5} />
+                    </div>
+                  </div>
+                  <div className="absolute contents inset-[2.33%_76.5%_79.98%_5.73%]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:392" data-name="Mask group">
+                    <div className="absolute inset-[0_10.98%_46.34%_10.98%] mask-intersect mask-luminance mask-no-clip mask-no-repeat mask-position-[-1.365px_0.605px] mask-size-[4.622px_4.6px]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:388" style={{ maskImage: `url("${imgG6}")` }} data-name="g6">
+                      <div className="absolute inset-[-67.13%_-46.15%]">
+                        <img alt="" className="block max-w-none size-full" src={imgG7} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute inset-[30.08%_26.01%_23.58%_22.9%]" data-node-id="I1833:5036;741:314;1833:5041;111:79;1328:393" data-name="path7">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgPath7} />
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5036;741:314;1833:5041;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5041;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5041;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Google Calendar
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5036;741:314;1833:5041;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connected • Active
+                  </p>
+                </div>
+              </div>
+              <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1833:5036;741:314;1833:5041;101:17" data-name="separator" />
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5041;121:38" data-name="trailing">
+                <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1833:5036;741:314;1833:5041;111:80" data-name="right">
+                  <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5042" data-name="ListRow">
+              <div className="content-stretch flex h-[29px] items-center justify-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5042;111:79" data-name="leading">
+                <div className="overflow-clip relative shrink-0 size-[26px]" data-node-id="I1833:5036;741:314;1833:5042;111:79;1328:395" data-name="Logo/Notion">
+                  <div className="absolute contents inset-[0_2.14%_0.01%_2.14%]" data-node-id="I1833:5036;741:314;1833:5042;111:79;1328:401" data-name="Clip path group">
+                    <div className="absolute inset-[0_2.15%_0.24%_2.14%] mask-alpha mask-intersect mask-no-clip mask-no-repeat mask-size-[24.886px_25.996px]" data-node-id="I1833:5036;741:314;1833:5042;111:79;1328:396" style={{ maskImage: `url("${imgGroup}")` }} data-name="Group">
+                      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgGroup1} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5036;741:314;1833:5042;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5042;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5042;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Notion
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5036;741:314;1833:5042;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connected • Active
+                  </p>
+                </div>
+              </div>
+              <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1833:5036;741:314;1833:5042;101:17" data-name="separator" />
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5042;121:38" data-name="trailing">
+                <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1833:5036;741:314;1833:5042;111:80" data-name="right">
+                  <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5043" data-name="ListRow">
+              <div className="content-stretch flex h-[29px] items-center justify-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5043;111:79" data-name="leading">
+                <div className="overflow-clip relative shrink-0 size-[26px]" data-node-id="I1833:5036;741:314;1833:5043;111:79;1328:403" data-name="Logo/Slack">
+                  <div className="absolute contents inset-0" data-node-id="I1833:5036;741:314;1833:5043;111:79;1328:419" data-name="Clip path group">
+                    <div className="absolute contents inset-0" data-node-id="I1833:5036;741:314;1833:5043;111:79;1328:404" data-name="Group">
+                      <div className="absolute contents inset-0" data-node-id="I1833:5036;741:314;1833:5043;111:79;1328:416" data-name="Clip path group">
+                        <div className="absolute inset-0 mask-position-[0px_0px,_0px_0px] mask-size-[26px_26px,_26px_26px]" data-node-id="I1833:5036;741:314;1833:5043;111:79;1328:405" style={{ maskImage: `url("${imgGroup2}"), url("${imgGroup2}")` }} data-name="Group">
+                          <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgGroup3} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5036;741:314;1833:5043;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5043;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5036;741:314;1833:5043;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Slack
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5036;741:314;1833:5043;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connected • Paused
+                  </p>
+                </div>
+              </div>
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5036;741:314;1833:5043;121:38" data-name="trailing">
+                <div className="content-stretch flex items-start relative shrink-0" data-node-id="I1833:5036;741:314;1833:5043;111:80" data-name="right">
+                  <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1833:5037" data-name="Section/Available">
+          <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1833:5037;741:312" data-name="Header">
+            <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1833:5037;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+              Available
+            </p>
+          </div>
+          <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1833:5037;741:314" data-name="Rows">
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5045" data-name="ListRow">
+              <div className="content-stretch flex h-[29px] items-center justify-center relative shrink-0" data-node-id="I1833:5037;741:314;1833:5045;111:79" data-name="leading">
+                <div className="overflow-clip relative shrink-0 size-[26px]" data-node-id="I1833:5037;741:314;1833:5045;111:79;1328:421" data-name="Logo/Google Drive">
+                  <div className="absolute inset-[6.69%_0]" data-node-id="I1833:5037;741:314;1833:5045;111:79;1370:25711" data-name="Logo/Google Drive mark">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLogoGoogleDriveMark} />
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5037;741:314;1833:5045;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5045;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5045;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Google Drive
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5037;741:314;1833:5045;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Not connected
+                  </p>
+                </div>
+              </div>
+              <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1833:5037;741:314;1833:5045;101:17" data-name="separator" />
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5037;741:314;1833:5045;121:38" data-name="trailing">
+                <div className="bg-[var(--rem-color-fill-tertiary,rgba(118,118,128,0.12))] content-stretch flex gap-[8px] h-[20px] items-center justify-center overflow-clip px-[16px] py-[5px] relative rounded-[100px] shrink-0" data-node-id="I1833:5037;741:314;1833:5045;111:80" data-name="right">
+                  <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[20px] relative shrink-0 text-[15px] text-[color:var(--rem-color-brand-blue,#0c50ff)] text-center tracking-[-0.23px] whitespace-nowrap" data-node-id="I1833:5037;741:314;1833:5045;111:80;377:6" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connect
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5046" data-name="ListRow">
+              <div className="content-stretch flex h-[29px] items-center justify-center relative shrink-0" data-node-id="I1833:5037;741:314;1833:5046;111:79" data-name="leading">
+                <div className="relative shrink-0 size-[26px]" data-node-id="I1833:5037;741:314;1833:5046;111:79;1328:430" data-name="Logo/Linear">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLogoLinear} />
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5037;741:314;1833:5046;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5046;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5046;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Linear
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5037;741:314;1833:5046;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Not connected
+                  </p>
+                </div>
+              </div>
+              <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1833:5037;741:314;1833:5046;101:17" data-name="separator" />
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5037;741:314;1833:5046;121:38" data-name="trailing">
+                <div className="bg-[var(--rem-color-fill-tertiary,rgba(118,118,128,0.12))] content-stretch flex gap-[8px] h-[20px] items-center justify-center overflow-clip px-[16px] py-[5px] relative rounded-[100px] shrink-0" data-node-id="I1833:5037;741:314;1833:5046;111:80" data-name="right">
+                  <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[20px] relative shrink-0 text-[15px] text-[color:var(--rem-color-brand-blue,#0c50ff)] text-center tracking-[-0.23px] whitespace-nowrap" data-node-id="I1833:5037;741:314;1833:5046;111:80;377:6" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connect
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5047" data-name="ListRow">
+              <div className="relative shrink-0 size-[29px]" data-node-id="I1833:5037;741:314;1833:5047;111:79" data-name="leading">
+                <div className="absolute left-[3px] size-[20px] top-[6px]" data-node-id="I1833:5037;741:314;1833:5047;111:79;1370:3" data-name="Logo/Todoist">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgLogoTodoist} />
+                </div>
+              </div>
+              <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1833:5037;741:314;1833:5047;101:13" data-name="content">
+                <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5047;188:192" data-name="Title layout=Fill">
+                  <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1833:5037;741:314;1833:5047;188:192;1933:8542" data-name="HStack/Title and accessory">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                      Todoist
+                    </p>
+                  </div>
+                  <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1833:5037;741:314;1833:5047;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Not connected
+                  </p>
+                </div>
+              </div>
+              <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1833:5037;741:314;1833:5047;121:38" data-name="trailing">
+                <div className="bg-[var(--rem-color-fill-tertiary,rgba(118,118,128,0.12))] content-stretch flex gap-[8px] h-[20px] items-center justify-center overflow-clip px-[16px] py-[5px] relative rounded-[100px] shrink-0" data-node-id="I1833:5037;741:314;1833:5047;111:80" data-name="right">
+                  <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[20px] relative shrink-0 text-[15px] text-[color:var(--rem-color-brand-blue,#0c50ff)] text-center tracking-[-0.23px] whitespace-nowrap" data-node-id="I1833:5037;741:314;1833:5047;111:80;377:6" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Connect
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <NavigationIndicator className="h-[34px] relative shrink-0 w-[402px]" />
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Rem/Platform text/Semibold/17/0: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: 0), Rem/Platform text/Medium/17/4: Font(family: "SF Pro", style: Medium, size: 17, weight: 510, lineHeight: 100, letterSpacing: 0), Headline/Regular: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Headline: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Body/Regular: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 22, letterSpacing: -0.4300000071525574), Footnote/Regular: Font(family: "SF Pro", style: Regular, size: 13, weight: 400, lineHeight: 18, letterSpacing: -0.07999999821186066), Rem/Platform text/Regular/17/3: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 100, letterSpacing: 0), Subheadline/Emphasized: Font(family: "SF Pro", style: Semibold, size: 15, weight: 590, lineHeight: 20, letterSpacing: -0.23000000417232513).
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## Screen/Connectors · Working
+**Node ID:** 1833:5048
+
+Independent working master derived from 133:192. Original shared source remains unchanged. Preserves the selected screen’s content and proposal/review status.
+
+## Toolbar - Top - iPhone
+**Node ID:** 277:947
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/navigation-bars](https://developer.apple.com/design/human-interface-guidelines/navigation-bars)
+
+## Style=Inset Grouped
+**Node ID:** 741:311
+
+Inset Grouped Section. The parent Body or List owns the screen horizontal inset; slotted ListRows own their Show Divider behavior.
+
+## Section
+**Node ID:** 1307:667
+
+Section styles and spacing. Inset Grouped and Plain control surface treatment; Spacing controls section header/footer rhythm. Screen inset belongs to the parent Body/List. Divider visibility belongs to each slotted ListRow.
+
+## SectionHeader
+**Node ID:** 161:68
+
+Section title with an optional trailing action slot. Show trailing action defaults to false, preserving the existing title-only header. Use an attached canonical pill/text Button for contextual actions such as Add site; never detach the Section or header. Section-title typography uses the 17pt semibold Headline token. SectionFooter remains unchanged.
+
+## ListRow
+**Node ID:** 101:18
+
+Canonical row with Leading Accessory, Content and Trailing Accessory swaps. Content defaults to ListRowLabel, now with optional Title accessory slot. Trailing wrapper hugs the accessory’s intrinsic dimensions instead of a fixed chevron width.
+
+## ConnectorLogo
+**Node ID:** 1328:440
+
+Official provider marks for connector surfaces. Brand selects the provider. Do not substitute SF Symbols or hand-drawn approximations.
+
+## Title layout=Fill
+**Node ID:** 188:2
+
+Canonical ListRowLabel. Title and Subtitle preserved. Optional Title accessory slot owns an inline Pill, icon or other small component; enable Show title accessory. No floating overlay badges.
+
+## ListRowLabel
+**Node ID:** 1966:60442
+
+ListRowLabel: Title layout=Fill preserves existing rows. Title layout=Hug keeps badges immediately beside the title. Title/Subtitle and optional Title accessory slot remain configurable.
+
+## Chevron
+**Node ID:** 110:52
+
+Chevron accessory — trailing disclosure (chevron.right). Default Accessory for ListRow. ↔ SwiftUI: NavigationLink disclosure.
+
+## Button
+**Node ID:** 377:8
+
+Canonical Button family. Style selects hierarchy and surface, State selects availability, and Size selects control scale. Use Leading and Trailing slots for symbols; icon-only remains a Button configuration.
+
+## Platform=iOS, Content=Dark, Surface=Primary
+**Node ID:** 793:369
+
+NavigationIndicator inherits the screen/background by default. Show background=false; enable only when an explicit Surface is intended. Content controls handle contrast independently.
+
+## NavigationIndicator
+**Node ID:** 793:379
+
+Native navigation/gesture indicator with transparent default surface. Optional Show background boolean retains explicit Surface choices when needed.
+
+## HomeIndicator
+**Node ID:** 333:102
+
+iOS home indicator (bottom safe-area handle). Transparent band so its background inherits the docked element behind it (voice bar / composer / screen bg). Pill 144×5, labelPrimary. Source: system safe-area overlay.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

@@ -1,0 +1,557 @@
+const assetPathPrefix = "[temporary asset URL omitted]";
+type TopBarActionLabelProps = {
+  className?: string;
+  label?: string;
+};
+
+function TopBarActionLabel({ className, label = "Action" }: TopBarActionLabelProps) {
+  return (
+    <div className={className || "bg-[var(--rem-color-brand-blue,#0c50ff)] content-stretch flex h-[44px] items-center justify-center px-[16px] relative rounded-[22px]"} data-node-id="1462:28282" data-name="TopBarAction/Label">
+      <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--label\/on-color,white)] tracking-[-0.43px] whitespace-nowrap" data-node-id="1462:28283" style={{ fontVariationSettings: '"wdth" 100' }}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
+type TopBarProps = {
+  className?: string;
+  leading?: React.ReactNode | null;
+  title?: string;
+  trailing?: React.ReactNode | null;
+};
+
+function TopBar({ className, leading = null, title = "Title", trailing = null }: TopBarProps) {
+  return (
+    <div className={className || "content-stretch flex h-[54px] items-center justify-between px-[16px] py-[5px] relative w-[402px]"} data-node-id="1298:2287" data-name="TopBar">
+      <div className="content-stretch flex h-full items-start relative rounded-[24px] shrink-0 w-[84px]" data-node-id="1298:2295" data-name="Leading">
+        {leading || (
+          <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center min-w-[44px] px-[2px] relative rounded-[296px] shrink-0" data-node-id="1298:2288" data-name="_Buttons - Top">
+            <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+            <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1298:2288;6491:22565" data-name="BG">
+              <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1298:2288;6491:22565;6491:20172" data-name="Fill + Shadow">
+                <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                  <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                  <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                  <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-[296px]" data-node-id="I1298:2288;6491:22565;6491:20173" data-name="Glass Effect" />
+            </div>
+            <div className="[word-break:break-word] content-stretch flex gap-[2px] h-[36px] items-center justify-center leading-[0] min-w-[36px] px-[8px] relative rounded-[100px] shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)] text-center whitespace-nowrap" data-node-id="I1298:2288;6491:22970" data-name="Text">
+              <div className="flex flex-col font-['SF_Pro:Medium'] font-[510] justify-center relative shrink-0" data-node-id="I1298:2288;6491:22970;5431:837" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                <SFSymbol>{`Image(systemName: "chevron.backward")`}</SFSymbol>
+              </div>
+              <div className="flex flex-col font-['SF_Pro:Regular'] font-normal justify-center relative shrink-0 tracking-[-0.43px]" data-node-id="I1298:2288;6491:22970;5431:840" style={{ fontVariationSettings: '"wdth" 100' }}>
+                <p className="leading-[22px]">Back</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="content-stretch flex h-full items-start relative rounded-[24px] shrink-0 w-[71px]" data-node-id="1298:2328" data-name="Trailing">
+        {trailing || (
+          <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center px-[8px] relative rounded-[296px] shrink-0" data-node-id="1298:2320" data-name="_Buttons - Top">
+            <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+            <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1298:2320;6491:22958" data-name="BG">
+              <div className="absolute inset-0 rounded-[1000px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1298:2320;6491:22958;5607:78140" data-name="Tint + Shadow">
+                <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[1000px]">
+                  <div className="absolute bg-[rgba(255,255,255,0.75)] inset-0 rounded-[1000px]" />
+                  <div className="absolute bg-white inset-0 mix-blend-saturation rounded-[1000px]" />
+                  <div className="absolute bg-[#999] inset-0 mix-blend-overlay rounded-[1000px]" />
+                  <div className="absolute bg-[#0091ff] inset-0 rounded-[1000px]" />
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-[296px]" data-node-id="I1298:2320;6491:22958;5607:77747" data-name="Glass Effect" />
+            </div>
+            <div className="content-stretch flex h-[36px] items-center justify-center mix-blend-plus-lighter px-[6px] relative rounded-[100px] shrink-0" data-node-id="I1298:2320;6491:23130" data-name="Text">
+              <div className="[word-break:break-word] flex flex-col font-['SF_Pro:Semibold'] font-[590] justify-center leading-[0] relative shrink-0 text-[17px] text-center text-white tracking-[-0.43px] whitespace-nowrap" data-node-id="I1298:2320;6491:23131" style={{ fontVariationSettings: '"wdth" 100' }}>
+                <p className="leading-[22px]">Done</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['SF_Pro:Semibold'] font-[590] leading-[22px] left-[201px] text-[17px] text-[color:var(--labels---vibrant\/primary,#1a1a1a)] text-center top-[16px] tracking-[-0.43px] whitespace-nowrap" data-node-id="1298:2349" style={{ fontVariationSettings: '"wdth" 100' }}>
+        {title}
+      </p>
+    </div>
+  );
+}
+
+type NavigationIndicatorProps = {
+  className?: string;
+  content?: "Dark";
+  platform?: "iOS";
+  showBackground?: boolean;
+  surface?: "Primary";
+};
+
+function NavigationIndicator({ className, content = "Dark", platform = "iOS", showBackground = false, surface = "Primary" }: NavigationIndicatorProps) {
+  return (
+    <div className={className || "h-[34px] relative w-[402px]"} data-node-id="793:369">
+      {showBackground && <div className="absolute bg-[var(--rem-color-background-primary,white)] inset-0" data-node-id="1936:56124" data-name="Optional surface" />}
+      <div className="absolute h-[34px] left-0 top-0 w-[402px]" data-node-id="793:370" data-name="HomeIndicator">
+        <div className="absolute bg-black h-[5px] left-[129px] rounded-[2.5px] top-[21px] w-[144px]" data-node-id="I793:370;333:101" data-name="Rectangle" />
+      </div>
+    </div>
+  );
+}
+
+type ButtonProps = {
+  className?: string;
+  label?: string;
+  leading?: React.ReactNode | null;
+  showLabel?: boolean;
+  showLeading?: boolean;
+  showTrailing?: boolean;
+  size?: "Regular";
+  state?: "Enabled";
+  style?: "Rect · Black" | "Text · Destructive";
+  trailing?: React.ReactNode | null;
+};
+
+function Button({ className, label = "Continue", leading = null, showLabel = true, showLeading = false, showTrailing = false, size = "Regular", state = "Enabled", style = "Rect · Black", trailing = null }: ButtonProps) {
+  const isRectBlackAndEnabledAndRegular = style === "Rect · Black" && state === "Enabled" && size === "Regular";
+  const isTextDestructiveAndEnabledAndRegular = style === "Text · Destructive" && state === "Enabled" && size === "Regular";
+  return (
+    <div className={className || `content-stretch flex gap-[8px] items-center justify-center overflow-clip relative ${isTextDestructiveAndEnabledAndRegular ? "h-[34px] px-[4px] py-[6px]" : "bg-[var(--rem-color-label-primary,black)] h-[48px] px-[22px] py-[13px] rounded-[10px]"}`} id={isTextDestructiveAndEnabledAndRegular ? "node-381_2" : "node-110_47"}>
+      {showLeading && (
+        <div className="relative shrink-0 size-[36px]" data-node-id="1300:1622" data-name="Leading">
+          {leading}
+        </div>
+      )}
+      {isRectBlackAndEnabledAndRegular && showLabel && (
+        <p className="[word-break:break-word] font-['SF_Pro:Bold'] font-bold leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-background-primary,white)] text-center tracking-[-0.43px] whitespace-nowrap" data-node-id="110:46" style={{ fontVariationSettings: '"wdth" 100' }}>
+          {label}
+        </p>
+      )}
+      {isRectBlackAndEnabledAndRegular && showTrailing && (
+        <div className="relative shrink-0 size-[36px]" data-node-id="1300:1623" data-name="Trailing">
+          {trailing}
+        </div>
+      )}
+      {isTextDestructiveAndEnabledAndRegular && showLabel && (
+        <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--rem-color-system-red,#ff3b30)] text-center tracking-[-0.43px] whitespace-nowrap" data-node-id="381:3" style={{ fontVariationSettings: '"wdth" 100' }}>
+          {label}
+        </p>
+      )}
+      {isTextDestructiveAndEnabledAndRegular && showTrailing && (
+        <div className="relative shrink-0 size-[36px]" data-node-id="1300:1629" data-name="Trailing">
+          {trailing}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type ButtonGroupProps = {
+  className?: string;
+  children?: React.ReactNode | null;
+  direction?: "Vertical";
+};
+
+function ButtonGroup({ className, children = null, direction = "Vertical" }: ButtonGroupProps) {
+  return (
+    <div className={className || "content-stretch flex flex-col items-start relative w-[560px]"} data-node-id="773:7">
+      <div className="content-stretch flex flex-col h-[46px] items-start relative shrink-0 w-full" data-node-id="773:8" data-name="Actions">
+        {children || <Button className="bg-[var(--rem-color-label-primary,black)] content-stretch flex flex-[1_0_0] gap-[8px] items-center justify-center min-h-px overflow-clip px-[22px] py-[13px] relative rounded-[10px] w-full" />}
+      </div>
+    </div>
+  );
+}
+
+type ScreenCloudBrowserSavedLoginWorkingStatesProps = {
+  className?: string;
+  state?: "View" | "Editing username" | "Editing password";
+};
+
+export default function ScreenCloudBrowserSavedLoginWorkingStates({ className, state = "View" }: ScreenCloudBrowserSavedLoginWorkingStatesProps) {
+  const isEditingPassword = state === "Editing password";
+  const isEditingUsername = state === "Editing username";
+  const isEditingUsernameOrEditingPassword = ["Editing username", "Editing password"].includes(state);
+  const isView = state === "View";
+  return (
+    <div className={className || "bg-[var(--rem-color-background-primary,white)] content-stretch flex flex-col h-[874px] items-start overflow-clip relative w-[402px]"} id={isEditingPassword ? "node-1875_6711" : isEditingUsername ? "node-1875_6710" : "node-1868_6214"}>
+      {isEditingUsernameOrEditingPassword && (
+        <>
+          <TopBar
+            className="content-stretch flex h-[54px] items-center justify-between px-[16px] py-[5px] relative shrink-0 w-[402px]"
+            leading={
+              isEditingPassword ? (
+                <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center px-[8px] relative rounded-[296px] shrink-0" data-node-id="1868:58864" data-name="Cancel">
+                  <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+                  <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1868:58864;6491:22564" data-name="BG">
+                    <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1868:58864;6491:22564;6491:20172" data-name="Fill + Shadow">
+                      <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                        <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                        <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                        <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 rounded-[296px]" data-node-id="I1868:58864;6491:22564;6491:20173" data-name="Glass Effect" />
+                  </div>
+                  <div className="content-stretch flex h-[36px] items-center justify-center px-[6px] relative rounded-[100px] shrink-0" data-node-id="I1868:58864;6491:22550" data-name="Text">
+                    <div className="[word-break:break-word] flex flex-col font-['SF_Pro:Medium'] font-[510] justify-center leading-[0] relative shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)] text-center whitespace-nowrap" data-node-id="I1868:58864;6491:22550;5429:7008" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                      <p className="leading-[normal]">Cancel</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center px-[8px] relative rounded-[296px] shrink-0" data-node-id="1868:58562" data-name="Cancel">
+                  <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+                  <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1868:58562;6491:22564" data-name="BG">
+                    <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1868:58562;6491:22564;6491:20172" data-name="Fill + Shadow">
+                      <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                        <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                        <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                        <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 rounded-[296px]" data-node-id="I1868:58562;6491:22564;6491:20173" data-name="Glass Effect" />
+                  </div>
+                  <div className="content-stretch flex h-[36px] items-center justify-center px-[6px] relative rounded-[100px] shrink-0" data-node-id="I1868:58562;6491:22550" data-name="Text">
+                    <div className="[word-break:break-word] flex flex-col font-['SF_Pro:Medium'] font-[510] justify-center leading-[0] relative shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)] text-center whitespace-nowrap" data-node-id="I1868:58562;6491:22550;5429:7008" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                      <p className="leading-[normal]">Cancel</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            title="Saved login"
+            trailing={<TopBarActionLabel className="bg-[var(--rem-color-brand-blue,#0c50ff)] content-stretch flex h-[44px] items-center justify-center px-[16px] relative rounded-[22px] shrink-0" label="Save" />}
+          />
+          <div className="content-stretch flex flex-col h-[440px] items-start overflow-clip relative shrink-0 w-full" id={isEditingPassword ? "node-1868_58880" : "node-1868_58578"} data-name="Body viewport">
+            <div className="content-stretch flex flex-col gap-[24px] items-start pb-[24px] pt-[16px] px-[16px] relative shrink-0 w-full" id={isEditingPassword ? "node-1868_58881" : "node-1868_58579"} data-name="Form content">
+              <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" id={isEditingPassword ? "node-1868_58882" : "node-1868_58580"} data-name="Website">
+                <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58882-741_312" : "node-I1868_58580-741_312"} data-name="Header">
+                  <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" id={isEditingPassword ? "node-I1868_58882-741_312-161_69" : "node-I1868_58580-741_312-161_69"} style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Website
+                  </p>
+                </div>
+                <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" id={isEditingPassword ? "node-I1868_58882-741_314" : "node-I1868_58580-741_314"} data-name="Rows">
+                  <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922" : "node-I1868_58580-741_314-1868_58620"} data-name="Read-only row">
+                    <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922-101_13" : "node-I1868_58580-741_314-1868_58620-101_13"} data-name="content">
+                      <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922-188_192" : "node-I1868_58580-741_314-1868_58620-188_192"} data-name="Title layout=Fill">
+                        <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922-188_192-1933_8542" : "node-I1868_58580-741_314-1868_58620-188_192-1933_8542"} data-name="HStack/Title and accessory">
+                          <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                            github.com
+                          </p>
+                        </div>
+                        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922-188_192-188_4" : "node-I1868_58580-741_314-1868_58620-188_192-188_4"} style={{ fontVariationSettings: '"wdth" 100' }}>
+                          This credential is scoped to this site.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="content-stretch flex items-center relative shrink-0" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922-121_38" : "node-I1868_58580-741_314-1868_58620-121_38"} data-name="trailing">
+                      <div className="h-[20px] relative shrink-0 w-[13px]" id={isEditingPassword ? "node-I1868_58882-741_314-1868_58922-111_80" : "node-I1868_58580-741_314-1868_58620-111_80"} data-name="right" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" id={isEditingPassword ? "node-1868_58934" : "node-1868_58632"} data-name="Login details">
+                <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58934-741_312" : "node-I1868_58632-741_312"} data-name="Header">
+                  <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" id={isEditingPassword ? "node-I1868_58934-741_312-161_69" : "node-I1868_58632-741_312-161_69"} style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Login details
+                  </p>
+                </div>
+                <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" id={isEditingPassword ? "node-I1868_58934-741_314" : "node-I1868_58632-741_314"} data-name="Rows">
+                  {isEditingUsername && (
+                    <div className="content-stretch flex flex-col gap-[4px] items-start overflow-clip py-[9px] relative shrink-0 w-full" data-node-id="I1868:58632;741:314;1868:58662" data-name="Editing row">
+                      <div className="content-stretch flex items-start overflow-clip px-[16px] relative shrink-0 w-full" data-node-id="I1868:58632;741:314;1868:58664" data-name="Label inset">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['Inter:Regular'] font-normal leading-[normal] min-w-px not-italic relative text-[12px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))]" data-node-id="I1868:58632;741:314;1868:58666">
+                          Username or email
+                        </p>
+                      </div>
+                      <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-0 h-[0.5px] left-[16px] right-0" data-node-id="I1868:58632;741:314;1868:58690" data-name="Row divider" />
+                    </div>
+                  )}
+                  <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58934-741_314-1868_58974" : "node-I1868_58632-741_314-1868_58702"} data-name="Read-only row">
+                    <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" id={isEditingPassword ? "node-I1868_58934-741_314-1868_58974-101_13" : "node-I1868_58632-741_314-1868_58702-101_13"} data-name="content">
+                      <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58934-741_314-1868_58974-188_192" : "node-I1868_58632-741_314-1868_58702-188_192"} data-name="Title layout=Fill">
+                        <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58934-741_314-1868_58974-188_192-1933_8542" : "node-I1868_58632-741_314-1868_58702-188_192-1933_8542"} data-name="HStack/Title and accessory">
+                          <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                            {isEditingPassword ? "Username or email" : isEditingUsername ? "Password" : ""}
+                          </p>
+                        </div>
+                        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" id={isEditingPassword ? "node-I1868_58934-741_314-1868_58974-188_192-188_4" : "node-I1868_58632-741_314-1868_58702-188_192-188_4"} style={{ fontVariationSettings: '"wdth" 100' }}>
+                          {isEditingPassword ? "samuel@example.com" : isEditingUsername ? "••••••••••••" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    {isEditingUsername && (
+                      <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:58632;741:314;1868:58702;121:38" data-name="trailing">
+                        <div className="content-stretch flex items-start relative shrink-0 w-[13px]" data-node-id="I1868:58632;741:314;1868:58702;111:80" data-name="right">
+                          <SFSymbol />
+                        </div>
+                      </div>
+                    )}
+                    {isEditingPassword && (
+                      <>
+                        <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1868:58934;741:314;1868:58974;101:17" data-name="separator" />
+                        <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:58934;741:314;1868:58974;121:38" data-name="trailing">
+                          <div className="content-stretch flex items-start relative shrink-0 w-[13px]" data-node-id="I1868:58934;741:314;1868:58974;111:80" data-name="right">
+                            <SFSymbol />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {isEditingPassword && (
+                    <div className="content-stretch flex flex-col gap-[4px] items-start overflow-clip py-[9px] relative shrink-0 w-full" data-node-id="I1868:58934;741:314;1868:58988" data-name="Secure editing row">
+                      <div className="content-stretch flex items-start overflow-clip px-[16px] relative shrink-0 w-full" data-node-id="I1868:58934;741:314;1868:58990" data-name="Label inset">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['Inter:Regular'] font-normal leading-[normal] min-w-px not-italic relative text-[12px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))]" data-node-id="I1868:58934;741:314;1868:58992">
+                          Password
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="content-stretch flex h-[32px] items-start pt-[6px] px-[16px] relative shrink-0 w-full" id={isEditingPassword ? "node-I1868_58934-741_337" : "node-I1868_58632-741_337"} data-name="Footer">
+                  <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal leading-[18px] min-w-px relative text-[#8f8f94] text-[13px] tracking-[-0.08px]" id={isEditingPassword ? "node-I1868_58934-741_337-161_71" : "node-I1868_58632-741_337-161_71"} style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Illustrative values. Saved credentials require secure storage and explicit authorization.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {isView && (
+        <>
+          <div className="content-stretch flex flex-col gap-[24px] h-[724px] items-center overflow-x-clip overflow-y-auto pb-[24px] pt-[16px] px-[16px] relative shrink-0 w-full" data-node-id="1868:6201" data-name="Body">
+            <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1868:6202" data-name="Section/Website">
+              <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:6202;741:312" data-name="Header">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1868:6202;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Website
+                </p>
+              </div>
+              <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1868:6202;741:314" data-name="Rows">
+                <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:6202;741:314;1868:6207" data-name="ListRow">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:6202;741:314;1868:6207;101:13" data-name="content">
+                    <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:6202;741:314;1868:6207;188:192" data-name="Title layout=Fill">
+                      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:6202;741:314;1868:6207;188:192;1933:8542" data-name="HStack/Title and accessory">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          github.com
+                        </p>
+                      </div>
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:6202;741:314;1868:6207;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        This credential is scoped to this site.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6202;741:314;1868:6207;121:38" data-name="trailing">
+                    <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6202;741:314;1868:6207;111:80" data-name="right">
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[21px] relative shrink-0 text-[16px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.31px] whitespace-nowrap" data-node-id="I1868:6202;741:314;1868:6207;111:80;389:6" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        ​
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1868:6203" data-name="Section/Login details">
+              <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:6203;741:312" data-name="Header">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1868:6203;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Login details
+                </p>
+              </div>
+              <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1868:6203;741:314" data-name="Rows">
+                <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:6203;741:314;1868:6209" data-name="ListRow">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:6203;741:314;1868:6209;101:13" data-name="content">
+                    <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:6203;741:314;1868:6209;188:192" data-name="Title layout=Fill">
+                      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:6203;741:314;1868:6209;188:192;1933:8542" data-name="HStack/Title and accessory">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          Username or email
+                        </p>
+                      </div>
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:6203;741:314;1868:6209;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        samuel@example.com
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1868:6203;741:314;1868:6209;101:17" data-name="separator" />
+                  <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6203;741:314;1868:6209;121:38" data-name="trailing">
+                    <div className="content-stretch flex items-start relative shrink-0 w-[13px]" data-node-id="I1868:6203;741:314;1868:6209;111:80" data-name="right">
+                      <SFSymbol />
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:6203;741:314;1868:6210" data-name="ListRow">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:6203;741:314;1868:6210;101:13" data-name="content">
+                    <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:6203;741:314;1868:6210;188:192" data-name="Title layout=Fill">
+                      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:6203;741:314;1868:6210;188:192;1933:8542" data-name="HStack/Title and accessory">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          Password
+                        </p>
+                      </div>
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:6203;741:314;1868:6210;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        ••••••••••••
+                      </p>
+                    </div>
+                  </div>
+                  <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6203;741:314;1868:6210;121:38" data-name="trailing">
+                    <div className="content-stretch flex items-start relative shrink-0 w-[13px]" data-node-id="I1868:6203;741:314;1868:6210;111:80" data-name="right">
+                      <SFSymbol />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex h-[32px] items-start pt-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:6203;741:337" data-name="Footer">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal leading-[18px] min-w-px relative text-[#8f8f94] text-[13px] tracking-[-0.08px]" data-node-id="I1868:6203;741:337;161:71" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Illustrative values. Saved credentials require secure storage and explicit authorization.
+                </p>
+              </div>
+            </div>
+            <ButtonGroup className="content-stretch flex flex-col items-start relative shrink-0 w-full" />
+          </div>
+          <NavigationIndicator className="h-[34px] relative shrink-0 w-[402px]" />
+        </>
+      )}
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Rem/Platform text/Semibold/17/0: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: 0), Rem/Platform text/Medium/17/4: Font(family: "SF Pro", style: Medium, size: 17, weight: 510, lineHeight: 100, letterSpacing: 0), Headline/Regular: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Headline: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Body/Regular: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 22, letterSpacing: -0.4300000071525574), Footnote/Regular: Font(family: "SF Pro", style: Regular, size: 13, weight: 400, lineHeight: 18, letterSpacing: -0.07999999821186066), Callout/Regular: Font(family: "SF Pro", style: Regular, size: 16, weight: 400, lineHeight: 21, letterSpacing: -0.3100000023841858), Body/Emphasized: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574).
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## Screen/Cloud browser · Saved login · Working states
+**Node ID:** 1956:8161
+
+One semantic screen with observed view/draft/focus variants. State exposes the authored alternatives; different route destinations remain separate components. Working design proposals retain their source/implementation caveats.
+
+## State=View
+**Node ID:** 1868:6214
+
+Working proposed Cloud browser flow derived from 1550:10046. Current implementation does not yet provide the saved-login/per-site management model shown here. Keep desired behavior distinct from shipped evidence. View state: no Save action. Credential rows expose a trailing pencil; activating one enters an explicit editing state with a top-right Save, subordinate label, prominent native text field, keyboard and caret. Password remains masked. State variant of Screen/Cloud browser · Saved login. Screen placement and component identity are preserved.
+
+## Toolbar - Top - iPhone
+**Node ID:** 277:947
+
+Guidelines: Feedback: http://feedbackassistant.apple.com/new?form=developertools.fba&answers%5B:area%5D=seedx:appledesignresources
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/navigation-bars](https://developer.apple.com/design/human-interface-guidelines/navigation-bars)
+
+## Style=Inset Grouped
+**Node ID:** 741:311
+
+Inset Grouped Section. The parent Body or List owns the screen horizontal inset; slotted ListRows own their Show Divider behavior.
+
+## Section
+**Node ID:** 1307:667
+
+Section styles and spacing. Inset Grouped and Plain control surface treatment; Spacing controls section header/footer rhythm. Screen inset belongs to the parent Body/List. Divider visibility belongs to each slotted ListRow.
+
+## SectionHeader
+**Node ID:** 161:68
+
+Section title with an optional trailing action slot. Show trailing action defaults to false, preserving the existing title-only header. Use an attached canonical pill/text Button for contextual actions such as Add site; never detach the Section or header. Section-title typography uses the 17pt semibold Headline token. SectionFooter remains unchanged.
+
+## ListRow
+**Node ID:** 101:18
+
+Canonical row with Leading Accessory, Content and Trailing Accessory swaps. Content defaults to ListRowLabel, now with optional Title accessory slot. Trailing wrapper hugs the accessory’s intrinsic dimensions instead of a fixed chevron width.
+
+## Title layout=Fill
+**Node ID:** 188:2
+
+Canonical ListRowLabel. Title and Subtitle preserved. Optional Title accessory slot owns an inline Pill, icon or other small component; enable Show title accessory. No floating overlay badges.
+
+## ListRowLabel
+**Node ID:** 1966:60442
+
+ListRowLabel: Title layout=Fill preserves existing rows. Title layout=Hug keeps badges immediately beside the title. Title/Subtitle and optional Title accessory slot remain configurable.
+
+## Models/Accessory · Pencil
+**Node ID:** 1716:16683
+
+Chevron accessory — trailing disclosure (chevron.right). Default Accessory for ListRow. ↔ SwiftUI: NavigationLink disclosure.
+
+## SectionFooter
+**Node ID:** 161:70
+
+SectionFooter — grouped-list section footer copy (Footnote, secondaryLabel, wraps). ↔ SwiftUI: Section { … } footer: { Text("…") }.
+
+## ButtonGroup
+**Node ID:** 773:17
+
+Groups onboarding actions. Direction supports Vertical or Horizontal; Actions is a slot restricted to Rem Button components.
+
+## Button
+**Node ID:** 377:8
+
+Canonical Button family. Style selects hierarchy and surface, State selects availability, and Size selects control scale. Use Leading and Trailing slots for symbols; icon-only remains a Button configuration.
+
+## Platform=iOS, Content=Dark, Surface=Primary
+**Node ID:** 793:369
+
+NavigationIndicator inherits the screen/background by default. Show background=false; enable only when an explicit Surface is intended. Content controls handle contrast independently.
+
+## NavigationIndicator
+**Node ID:** 793:379
+
+Native navigation/gesture indicator with transparent default surface. Optional Show background boolean retains explicit Surface choices when needed.
+
+## HomeIndicator
+**Node ID:** 333:102
+
+iOS home indicator (bottom safe-area handle). Transparent band so its background inherits the docked element behind it (voice bar / composer / screen bg). Pill 144×5, labelPrimary. Source: system safe-area overlay.
+
+## State=Editing username
+**Node ID:** 1875:6710
+
+Proposed static inline-editing state: native text field and keyboard, secondary label above primary editable value, visible caret, top-right Save. No functioning input or prototype behavior is claimed. Passwords stay masked. State variant of Screen/Cloud browser · Saved login. Screen placement and component identity are preserved.
+
+## TopBar
+**Node ID:** 1298:2287
+
+Product top bar built from official platform button groups. Leading and trailing slots accept label or symbol actions symmetrically; the title stays centered as action widths change.
+
+## TopBarAction/Label
+**Node ID:** 1462:28282
+
+Local iOS top-bar label action. Uses semantic brand fill and label/on-color.
+
+## Accessory/None
+**Node ID:** 157:43
+
+None accessory — empty 1×1 trailing filler for rows with no control (e.g. Settings Share/Feedback rows). ↔ SwiftUI: plain row, no accessory.
+
+## Text Field
+**Node ID:** 1646:31215
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/lists-and-tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
+
+## Keyboard
+**Node ID:** 1868:52301
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/onscreen-keyboards](https://developer.apple.com/design/human-interface-guidelines/onscreen-keyboards)
+
+## Home Indicator
+**Node ID:** 58:690
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/going-full-screen](https://developer.apple.com/design/human-interface-guidelines/going-full-screen)
+
+## State=Editing password
+**Node ID:** 1875:6711
+
+Proposed static inline-editing state: native text field and keyboard, secondary label above primary editable value, visible caret, top-right Save. No functioning input or prototype behavior is claimed. Passwords stay masked. State variant of Screen/Cloud browser · Saved login. Screen placement and component identity are preserved.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

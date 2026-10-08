@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import RemDesignSystem
 
 @main
@@ -36,11 +37,21 @@ struct PlaygroundHome: View {
 
 struct SettingsPreview: View {
     let fixture: LoadFixture
+    @State private var sharing = false
     var body: some View {
-        SettingsEntryContent(agentDestination: { AgentPreview(fixture: fixture) })
+        SettingsEntryContent(onShare: { sharing = true }, agentDestination: { AgentPreview(fixture: fixture) })
             .background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $sharing) { PlaygroundShareSheet() }
     }
+}
+
+/// The operating system owns recipient selection and sending. Opening this sheet sends nothing.
+private struct PlaygroundShareSheet: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: ["Rem — a personal AI assistant. Shared from the local Settings playground."], applicationActivities: nil)
+    }
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 struct AgentPreview: View {

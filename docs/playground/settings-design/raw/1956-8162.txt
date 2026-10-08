@@ -1,0 +1,545 @@
+const assetPathPrefix = "[temporary asset URL omitted]";
+type TopBarActionLabelProps = {
+  className?: string;
+  label?: string;
+};
+
+function TopBarActionLabel({ className, label = "Action" }: TopBarActionLabelProps) {
+  return (
+    <div className={className || "bg-[var(--rem-color-brand-blue,#0c50ff)] content-stretch flex h-[44px] items-center justify-center px-[16px] relative rounded-[22px]"} data-node-id="1462:28282" data-name="TopBarAction/Label">
+      <p className="[word-break:break-word] font-['SF_Pro:Semibold'] font-[590] leading-[22px] relative shrink-0 text-[17px] text-[color:var(--label\/on-color,white)] tracking-[-0.43px] whitespace-nowrap" data-node-id="1462:28283" style={{ fontVariationSettings: '"wdth" 100' }}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
+type TopBarProps = {
+  className?: string;
+  leading?: React.ReactNode | null;
+  title?: string;
+  trailing?: React.ReactNode | null;
+};
+
+function TopBar({ className, leading = null, title = "Title", trailing = null }: TopBarProps) {
+  return (
+    <div className={className || "content-stretch flex h-[54px] items-center justify-between px-[16px] py-[5px] relative w-[402px]"} data-node-id="1298:2287" data-name="TopBar">
+      <div className="content-stretch flex h-full items-start relative rounded-[24px] shrink-0 w-[84px]" data-node-id="1298:2295" data-name="Leading">
+        {leading || (
+          <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center min-w-[44px] px-[2px] relative rounded-[296px] shrink-0" data-node-id="1298:2288" data-name="_Buttons - Top">
+            <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+            <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1298:2288;6491:22565" data-name="BG">
+              <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1298:2288;6491:22565;6491:20172" data-name="Fill + Shadow">
+                <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                  <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                  <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                  <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-[296px]" data-node-id="I1298:2288;6491:22565;6491:20173" data-name="Glass Effect" />
+            </div>
+            <div className="[word-break:break-word] content-stretch flex gap-[2px] h-[36px] items-center justify-center leading-[0] min-w-[36px] px-[8px] relative rounded-[100px] shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)] text-center whitespace-nowrap" data-node-id="I1298:2288;6491:22970" data-name="Text">
+              <div className="flex flex-col font-['SF_Pro:Medium'] font-[510] justify-center relative shrink-0" data-node-id="I1298:2288;6491:22970;5431:837" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                <SFSymbol>{`Image(systemName: "chevron.backward")`}</SFSymbol>
+              </div>
+              <div className="flex flex-col font-['SF_Pro:Regular'] font-normal justify-center relative shrink-0 tracking-[-0.43px]" data-node-id="I1298:2288;6491:22970;5431:840" style={{ fontVariationSettings: '"wdth" 100' }}>
+                <p className="leading-[22px]">Back</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="content-stretch flex h-full items-start relative rounded-[24px] shrink-0 w-[71px]" data-node-id="1298:2328" data-name="Trailing">
+        {trailing || (
+          <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center px-[8px] relative rounded-[296px] shrink-0" data-node-id="1298:2320" data-name="_Buttons - Top">
+            <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+            <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1298:2320;6491:22958" data-name="BG">
+              <div className="absolute inset-0 rounded-[1000px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1298:2320;6491:22958;5607:78140" data-name="Tint + Shadow">
+                <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[1000px]">
+                  <div className="absolute bg-[rgba(255,255,255,0.75)] inset-0 rounded-[1000px]" />
+                  <div className="absolute bg-white inset-0 mix-blend-saturation rounded-[1000px]" />
+                  <div className="absolute bg-[#999] inset-0 mix-blend-overlay rounded-[1000px]" />
+                  <div className="absolute bg-[#0091ff] inset-0 rounded-[1000px]" />
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-[296px]" data-node-id="I1298:2320;6491:22958;5607:77747" data-name="Glass Effect" />
+            </div>
+            <div className="content-stretch flex h-[36px] items-center justify-center mix-blend-plus-lighter px-[6px] relative rounded-[100px] shrink-0" data-node-id="I1298:2320;6491:23130" data-name="Text">
+              <div className="[word-break:break-word] flex flex-col font-['SF_Pro:Semibold'] font-[590] justify-center leading-[0] relative shrink-0 text-[17px] text-center text-white tracking-[-0.43px] whitespace-nowrap" data-node-id="I1298:2320;6491:23131" style={{ fontVariationSettings: '"wdth" 100' }}>
+                <p className="leading-[22px]">Done</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['SF_Pro:Semibold'] font-[590] leading-[22px] left-[201px] text-[17px] text-[color:var(--labels---vibrant\/primary,#1a1a1a)] text-center top-[16px] tracking-[-0.43px] whitespace-nowrap" data-node-id="1298:2349" style={{ fontVariationSettings: '"wdth" 100' }}>
+        {title}
+      </p>
+    </div>
+  );
+}
+
+type NavigationIndicatorProps = {
+  className?: string;
+  content?: "Dark";
+  platform?: "iOS";
+  showBackground?: boolean;
+  surface?: "Primary";
+};
+
+function NavigationIndicator({ className, content = "Dark", platform = "iOS", showBackground = false, surface = "Primary" }: NavigationIndicatorProps) {
+  return (
+    <div className={className || "h-[34px] relative w-[402px]"} data-node-id="793:369">
+      {showBackground && <div className="absolute bg-[var(--rem-color-background-primary,white)] inset-0" data-node-id="1936:56124" data-name="Optional surface" />}
+      <div className="absolute h-[34px] left-0 top-0 w-[402px]" data-node-id="793:370" data-name="HomeIndicator">
+        <div className="absolute bg-black h-[5px] left-[129px] rounded-[2.5px] top-[21px] w-[144px]" data-node-id="I793:370;333:101" data-name="Rectangle" />
+      </div>
+    </div>
+  );
+}
+
+type ScreenCloudBrowserAddLoginWorkingStatesProps = {
+  className?: string;
+  state?: "Empty draft" | "Filled draft" | "Editing username";
+};
+
+export default function ScreenCloudBrowserAddLoginWorkingStates({ className, state = "Empty draft" }: ScreenCloudBrowserAddLoginWorkingStatesProps) {
+  const isEditingUsername = state === "Editing username";
+  const isEmptyDraft = state === "Empty draft";
+  const isFilledDraft = state === "Filled draft";
+  return (
+    <div className={className || "bg-[var(--rem-color-background-primary,white)] content-stretch flex flex-col h-[874px] items-start overflow-clip relative w-[402px]"} id={isEmptyDraft ? "node-1934_9071" : isEditingUsername ? "node-1875_6713" : "node-1868_6245"}>
+      {["Filled draft", "Editing username"].includes(state) && (
+        <TopBar
+          className="content-stretch flex h-[54px] items-center justify-between px-[16px] py-[5px] relative shrink-0 w-[402px]"
+          leading={
+            isEditingUsername ? (
+              <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center min-w-[44px] px-[2px] relative rounded-[296px] shrink-0" data-node-id="1868:59517" data-name="Back">
+                <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+                <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1868:59517;6491:22565" data-name="BG">
+                  <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1868:59517;6491:22565;6491:20172" data-name="Fill + Shadow">
+                    <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                      <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                      <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                      <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 rounded-[296px]" data-node-id="I1868:59517;6491:22565;6491:20173" data-name="Glass Effect" />
+                </div>
+                <div className="[word-break:break-word] content-stretch flex font-['SF_Pro:Medium'] font-[510] gap-[2px] h-[36px] items-center justify-center leading-[0] min-w-[36px] px-[8px] relative rounded-[100px] shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)] text-center whitespace-nowrap" data-node-id="I1868:59517;6491:22970" data-name="Text">
+                  <div className="flex flex-col justify-center relative shrink-0" data-node-id="I1868:59517;6491:22970;5431:837" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                    <SFSymbol>{`Image(systemName: "chevron.backward")`}</SFSymbol>
+                  </div>
+                  <div className="flex flex-col justify-center relative shrink-0" data-node-id="I1868:59517;6491:22970;5431:840" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                    <p className="leading-[normal]">Back</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center min-w-[44px] px-[2px] relative rounded-[296px] shrink-0" data-node-id="1868:6239" data-name="_Buttons - Top">
+                <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+                <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1868:6239;6491:22565" data-name="BG">
+                  <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1868:6239;6491:22565;6491:20172" data-name="Fill + Shadow">
+                    <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                      <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                      <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                      <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 rounded-[296px]" data-node-id="I1868:6239;6491:22565;6491:20173" data-name="Glass Effect" />
+                </div>
+                <div className="[word-break:break-word] content-stretch flex gap-[2px] h-[36px] items-center justify-center leading-[0] min-w-[36px] px-[8px] relative rounded-[100px] shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)] text-center whitespace-nowrap" data-node-id="I1868:6239;6491:22970" data-name="Text">
+                  <div className="flex flex-col font-['SF_Pro:Medium'] font-[510] justify-center relative shrink-0" data-node-id="I1868:6239;6491:22970;5431:837" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    <SFSymbol>{`Image(systemName: "chevron.backward")`}</SFSymbol>
+                  </div>
+                  <div className="flex flex-col font-['SF_Pro:Regular'] font-normal justify-center relative shrink-0 tracking-[-0.43px]" data-node-id="I1868:6239;6491:22970;5431:840" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    <p className="leading-[22px]">Back</p>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+          title="Add login"
+          trailing={<TopBarActionLabel className="bg-[var(--rem-color-brand-blue,#0c50ff)] content-stretch flex h-[44px] items-center justify-center px-[16px] relative rounded-[22px] shrink-0" label="Save" />}
+        />
+      )}
+      {isFilledDraft && (
+        <>
+          <div className="content-stretch flex flex-col h-[724px] items-start overflow-x-clip overflow-y-auto relative shrink-0 w-full" data-node-id="1868:6231" data-name="Body">
+            <div className="content-stretch flex flex-col gap-[20px] items-start pb-[24px] pt-[16px] px-[16px] relative shrink-0 w-full" data-node-id="1868:6232" data-name="Auto Layout Content">
+              <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1868:6233" data-name="Section/WEBSITE">
+                <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:6233;741:312" data-name="Header">
+                  <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1868:6233;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Website
+                  </p>
+                </div>
+                <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1868:6233;741:314" data-name="Rows">
+                  <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:6233;741:314;1868:6241" data-name="ListRow/github.com">
+                    <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:6233;741:314;1868:6241;101:13" data-name="content">
+                      <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:6233;741:314;1868:6241;188:192" data-name="Title layout=Fill">
+                        <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:6233;741:314;1868:6241;188:192;1933:8542" data-name="HStack/Title and accessory">
+                          <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                            github.com
+                          </p>
+                        </div>
+                        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:6233;741:314;1868:6241;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          Login will be available only for this site.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6233;741:314;1868:6241;121:38" data-name="trailing">
+                      <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1868:6233;741:314;1868:6241;111:80" data-name="right" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1868:6234" data-name="Section/LOGIN DETAILS">
+                <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:6234;741:312" data-name="Header">
+                  <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1868:6234;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Login details
+                  </p>
+                </div>
+                <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1868:6234;741:314" data-name="Rows">
+                  <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:6234;741:314;1868:6243" data-name="ListRow/Username or email">
+                    <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:6234;741:314;1868:6243;101:13" data-name="content">
+                      <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:6234;741:314;1868:6243;188:192" data-name="Title layout=Fill">
+                        <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:6234;741:314;1868:6243;188:192;1933:8542" data-name="HStack/Title and accessory">
+                          <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                            Username or email
+                          </p>
+                        </div>
+                        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:6234;741:314;1868:6243;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          samuel@example.com
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1868:6234;741:314;1868:6243;101:17" data-name="separator" />
+                    <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6234;741:314;1868:6243;121:38" data-name="trailing">
+                      <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1868:6234;741:314;1868:6243;111:80" data-name="right" />
+                    </div>
+                  </div>
+                  <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:6234;741:314;1868:6244" data-name="ListRow/Password">
+                    <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:6234;741:314;1868:6244;101:13" data-name="content">
+                      <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:6234;741:314;1868:6244;188:192" data-name="Title layout=Fill">
+                        <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:6234;741:314;1868:6244;188:192;1933:8542" data-name="HStack/Title and accessory">
+                          <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                            Password
+                          </p>
+                        </div>
+                        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:6234;741:314;1868:6244;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          ••••••••••••
+                        </p>
+                      </div>
+                    </div>
+                    <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:6234;741:314;1868:6244;121:38" data-name="trailing">
+                      <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1868:6234;741:314;1868:6244;111:80" data-name="right" />
+                    </div>
+                  </div>
+                </div>
+                <div className="content-stretch flex h-[32px] items-start pt-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:6234;741:337" data-name="Footer">
+                  <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal leading-[18px] min-w-px relative text-[#8f8f94] text-[13px] tracking-[-0.08px]" data-node-id="I1868:6234;741:337;161:71" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    Rem uses this login only when you authorize access to github.com.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <NavigationIndicator className="h-[34px] relative shrink-0 w-[402px]" />
+        </>
+      )}
+      {isEditingUsername && (
+        <div className="content-stretch flex flex-col h-[440px] items-start overflow-clip relative shrink-0 w-full" data-node-id="1868:59535" data-name="Body viewport">
+          <div className="content-stretch flex flex-col gap-[20px] items-start pb-[24px] pt-[16px] px-[16px] relative shrink-0 w-full" data-node-id="1868:59536" data-name="Form content">
+            <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1868:59537" data-name="Website">
+              <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:59537;741:312" data-name="Header">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1868:59537;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Website
+                </p>
+              </div>
+              <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1868:59537;741:314" data-name="Rows">
+                <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:59537;741:314;1868:59577" data-name="Read-only row">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:59537;741:314;1868:59577;101:13" data-name="content">
+                    <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:59537;741:314;1868:59577;188:192" data-name="Title layout=Fill">
+                      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:59537;741:314;1868:59577;188:192;1933:8542" data-name="HStack/Title and accessory">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          github.com
+                        </p>
+                      </div>
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:59537;741:314;1868:59577;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Login will be available only for this site.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:59537;741:314;1868:59577;121:38" data-name="trailing">
+                    <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1868:59537;741:314;1868:59577;111:80" data-name="right" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1868:59589" data-name="Login details">
+              <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:59589;741:312" data-name="Header">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1868:59589;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Login details
+                </p>
+              </div>
+              <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1868:59589;741:314" data-name="Rows">
+                <div className="content-stretch flex flex-col gap-[4px] items-start overflow-clip py-[9px] relative shrink-0 w-full" data-node-id="I1868:59589;741:314;1868:59619" data-name="Editing row">
+                  <div className="content-stretch flex items-start overflow-clip px-[16px] relative shrink-0 w-full" data-node-id="I1868:59589;741:314;1868:59621" data-name="Label inset">
+                    <p className="[word-break:break-word] flex-[1_0_0] font-['Inter:Regular'] font-normal leading-[normal] min-w-px not-italic relative text-[12px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))]" data-node-id="I1868:59589;741:314;1868:59623">
+                      Username or email
+                    </p>
+                  </div>
+                  <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-0 h-[0.5px] left-[16px] right-0" data-node-id="I1868:59589;741:314;1868:59647" data-name="Row divider" />
+                </div>
+                <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1868:59589;741:314;1868:59659" data-name="Read-only row">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1868:59589;741:314;1868:59659;101:13" data-name="content">
+                    <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1868:59589;741:314;1868:59659;188:192" data-name="Title layout=Fill">
+                      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1868:59589;741:314;1868:59659;188:192;1933:8542" data-name="HStack/Title and accessory">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          Password
+                        </p>
+                      </div>
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1868:59589;741:314;1868:59659;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        ••••••••••••
+                      </p>
+                    </div>
+                  </div>
+                  <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1868:59589;741:314;1868:59659;121:38" data-name="trailing">
+                    <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1868:59589;741:314;1868:59659;111:80" data-name="right" />
+                  </div>
+                </div>
+              </div>
+              <div className="content-stretch flex h-[32px] items-start pt-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1868:59589;741:337" data-name="Footer">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal leading-[18px] min-w-px relative text-[#8f8f94] text-[13px] tracking-[-0.08px]" data-node-id="I1868:59589;741:337;161:71" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Rem uses this login only when you authorize access to github.com.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isEmptyDraft && (
+        <>
+          <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1914:54912" data-name="Navigation">
+            <TopBar
+              className="content-stretch flex h-[54px] items-center justify-between px-[16px] py-[5px] relative shrink-0 w-full"
+              leading={
+                <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center min-w-[44px] px-[2px] relative rounded-[296px] shrink-0" data-node-id="1914:54952" data-name="Back">
+                  <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+                  <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1914:54952;6491:22565" data-name="BG">
+                    <div className="absolute bg-[var(--rem-color-background-secondary,#f2f2f7)] inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1914:54952;6491:22565;6491:20172" data-name="Fill + Shadow" />
+                    <div className="absolute inset-0 rounded-[296px]" data-node-id="I1914:54952;6491:22565;6491:20173" data-name="Glass Effect" />
+                  </div>
+                  <div className="[word-break:break-word] content-stretch flex font-['SF_Pro:Medium'] font-[510] gap-[2px] h-[36px] items-center justify-center leading-[0] min-w-[36px] px-[8px] relative rounded-[100px] shrink-0 text-[17px] text-center whitespace-nowrap" data-node-id="I1914:54952;6491:22970" data-name="Text">
+                    <div className="flex flex-col justify-center relative shrink-0 text-[color:var(--rem-color-label-primary,black)]" data-node-id="I1914:54952;6491:22970;5431:837" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                      <SFSymbol>{`Image(systemName: "chevron.left")`}</SFSymbol>
+                    </div>
+                    <div className="flex flex-col justify-center relative shrink-0 text-[color:var(--labels---vibrant---controls\/primary,#1a1a1a)]" data-node-id="I1914:54952;6491:22970;5431:840" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                      <p className="leading-[normal]">Back</p>
+                    </div>
+                  </div>
+                </div>
+              }
+              title="Add login"
+              trailing={
+                <div className="content-stretch flex gap-[12px] h-[44px] items-center justify-center px-[8px] relative rounded-[296px] shrink-0" data-node-id="1914:54943" data-name="Save disabled">
+                  <div aria-hidden className="absolute bg-white inset-0 mix-blend-multiply pointer-events-none rounded-[296px]" />
+                  <div className="-translate-y-1/2 absolute h-[44px] left-0 right-0 top-1/2" data-node-id="I1914:54943;6491:22564" data-name="BG">
+                    <div className="absolute inset-0 rounded-[296px] shadow-[0px_8px_40px_0px_rgba(0,0,0,0.12)]" data-node-id="I1914:54943;6491:22564;6491:20172" data-name="Fill + Shadow">
+                      <div aria-hidden className="absolute inset-0 pointer-events-none rounded-[296px]">
+                        <div className="absolute bg-[rgba(255,255,255,0.65)] inset-0 rounded-[296px]" />
+                        <div className="absolute bg-[#ddd] inset-0 mix-blend-color-burn rounded-[296px]" />
+                        <div className="absolute bg-[#f7f7f7] inset-0 mix-blend-darken rounded-[296px]" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 rounded-[296px]" data-node-id="I1914:54943;6491:22564;6491:20173" data-name="Glass Effect" />
+                  </div>
+                  <div className="content-stretch flex h-[36px] items-center justify-center px-[6px] relative rounded-[100px] shrink-0" data-node-id="I1914:54943;6491:22550" data-name="Text">
+                    <div className="[word-break:break-word] flex flex-col font-['SF_Pro:Medium'] font-[510] justify-center leading-[0] relative shrink-0 text-[17px] text-[color:var(--labels---vibrant---controls\/tertiary,#bfbfbf)] text-center whitespace-nowrap" data-node-id="I1914:54943;6491:22550;5429:7002" style={{ fontVariationSettings: '"wdth" 100', fontFeatureSettings: '"ss16" 1' }}>
+                      <p className="leading-[normal]">Save</p>
+                    </div>
+                  </div>
+                </div>
+              }
+            />
+          </div>
+          <div className="content-stretch flex flex-col gap-[20px] h-[724px] items-start overflow-clip pb-[24px] pt-[16px] px-[16px] relative shrink-0 w-full" data-node-id="1914:54970" data-name="Body">
+            <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1914:54971" data-name="Website">
+              <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1914:54971;741:312" data-name="Header">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1914:54971;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Website
+                </p>
+              </div>
+              <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1914:54971;741:314" data-name="Rows">
+                <div className="content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1914:54971;741:314;1914:55011" data-name="Website scope">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="I1914:54971;741:314;1914:55011;101:13" data-name="content">
+                    <div className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" data-node-id="I1914:54971;741:314;1914:55011;188:192" data-name="Title layout=Fill">
+                      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I1914:54971;741:314;1914:55011;188:192;1933:8542" data-name="HStack/Title and accessory">
+                        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+                          github.com
+                        </p>
+                      </div>
+                      <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="I1914:54971;741:314;1914:55011;188:192;188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+                        Login will be available only for this site.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="content-stretch flex items-center relative shrink-0" data-node-id="I1914:54971;741:314;1914:55011;121:38" data-name="trailing">
+                    <div className="h-[20px] relative shrink-0 w-[13px]" data-node-id="I1914:54971;741:314;1914:55011;111:80" data-name="right" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="content-stretch flex flex-col items-start relative shrink-0 w-full" data-node-id="1914:55023" data-name="Login details">
+              <div className="content-stretch flex gap-[8px] items-center pb-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1914:55023;741:312" data-name="Header">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Semibold'] font-[590] leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.43px]" data-node-id="I1914:55023;741:312;161:69" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Login details
+                </p>
+              </div>
+              <div className="bg-[var(--rem-color-background-secondary,#f2f2f7)] content-stretch flex flex-col items-start overflow-clip p-px relative rounded-[24px] shrink-0 w-full" data-node-id="I1914:55023;741:314" data-name="Rows">
+                <div className="content-stretch flex gap-[12px] h-[64px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1914:55023;741:314;1914:55063" data-name="Empty field row">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col h-[40px] items-start min-w-px relative" data-node-id="I1914:55023;741:314;1914:55063;101:13" data-name="content" />
+                  <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="I1914:55023;741:314;1914:55063;101:17" data-name="separator" />
+                </div>
+                <div className="content-stretch flex gap-[12px] h-[64px] items-center min-h-[60px] px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="I1914:55023;741:314;1914:55092" data-name="Empty field row">
+                  <div className="content-stretch flex flex-[1_0_0] flex-col h-[40px] items-start min-w-px relative" data-node-id="I1914:55023;741:314;1914:55092;101:13" data-name="content" />
+                </div>
+              </div>
+              <div className="content-stretch flex h-[32px] items-start pt-[6px] px-[16px] relative shrink-0 w-full" data-node-id="I1914:55023;741:337" data-name="Footer">
+                <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal leading-[18px] min-w-px relative text-[#8f8f94] text-[13px] tracking-[-0.08px]" data-node-id="I1914:55023;741:337;161:71" style={{ fontVariationSettings: '"wdth" 100' }}>
+                  Rem uses this login only when you authorize access to github.com.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute bottom-0 h-[34px] left-0 w-[402px]" data-node-id="1914:55110" data-name="Home indicator">
+            <div className="absolute h-[34px] left-0 top-0 w-[402px]" data-node-id="I1914:55110;793:370" data-name="HomeIndicator">
+              <div className="absolute bg-black h-[5px] left-[129px] rounded-[2.5px] top-[21px] w-[144px]" data-node-id="I1914:55110;793:370;333:101" data-name="Rectangle" />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Rem/Platform text/Semibold/17/0: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: 0), Rem/Platform text/Medium/17/4: Font(family: "SF Pro", style: Medium, size: 17, weight: 510, lineHeight: 100, letterSpacing: 0), Body/Regular: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 22, letterSpacing: -0.4300000071525574), Body/Emphasized: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Headline/Regular: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Headline: Font(family: "SF Pro", style: Semibold, size: 17, weight: 590, lineHeight: 22, letterSpacing: -0.4300000071525574), Footnote/Regular: Font(family: "SF Pro", style: Regular, size: 13, weight: 400, lineHeight: 18, letterSpacing: -0.07999999821186066).
+
+If the node is connected to a code component in the users codebase via Code Connect, the connected component will be included in the final markup wrapped in a CodeConnectSnippet element, with relevant imports at the top of the file. There are two formats: 1. Single snippet: <CodeConnectSnippet data-snippet-language="React"><TitleComponent>Hello World</TitleComponent></CodeConnectSnippet> 2. Multiple options: <CodeConnectSnippet data-snippet-language="React" options={[<Button variant="primary" />, <Button variant="secondary" />]} /> IMPORTANT: the CodeConnectSnippet wrapper element should not be part of the final code. For the options format, choose the single most appropriate option to use in your implementation. The source of the code component will be in the import path, e.g. import {ComponentName } from 'path/to/component'; IMPORTANT: the import path may not be relative/may point to a URL, so you should search for the component in the codebase and MUST use it if possible.
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## Screen/Cloud browser · Add login · Working states
+**Node ID:** 1956:8162
+
+One semantic screen with observed view/draft/focus variants. State exposes the authored alternatives; different route destinations remain separate components. Working design proposals retain their source/implementation caveats.
+
+## State=Filled draft
+**Node ID:** 1868:6245
+
+Working proposed Cloud browser flow derived from 1457:740. Current implementation does not yet provide the saved-login/per-site management model shown here. Keep desired behavior distinct from shipped evidence. State variant of Screen/Cloud browser · Add login. Screen placement and component identity are preserved.
+
+## TopBar
+**Node ID:** 1298:2287
+
+Product top bar built from official platform button groups. Leading and trailing slots accept label or symbol actions symmetrically; the title stays centered as action widths change.
+
+## TopBarAction/Label
+**Node ID:** 1462:28282
+
+Local iOS top-bar label action. Uses semantic brand fill and label/on-color.
+
+## Style=Inset Grouped
+**Node ID:** 741:311
+
+Inset Grouped Section. The parent Body or List owns the screen horizontal inset; slotted ListRows own their Show Divider behavior.
+
+## Section
+**Node ID:** 1307:667
+
+Section styles and spacing. Inset Grouped and Plain control surface treatment; Spacing controls section header/footer rhythm. Screen inset belongs to the parent Body/List. Divider visibility belongs to each slotted ListRow.
+
+## SectionHeader
+**Node ID:** 161:68
+
+Section title with an optional trailing action slot. Show trailing action defaults to false, preserving the existing title-only header. Use an attached canonical pill/text Button for contextual actions such as Add site; never detach the Section or header. Section-title typography uses the 17pt semibold Headline token. SectionFooter remains unchanged.
+
+## ListRow
+**Node ID:** 101:18
+
+Canonical row with Leading Accessory, Content and Trailing Accessory swaps. Content defaults to ListRowLabel, now with optional Title accessory slot. Trailing wrapper hugs the accessory’s intrinsic dimensions instead of a fixed chevron width.
+
+## Title layout=Fill
+**Node ID:** 188:2
+
+Canonical ListRowLabel. Title and Subtitle preserved. Optional Title accessory slot owns an inline Pill, icon or other small component; enable Show title accessory. No floating overlay badges.
+
+## ListRowLabel
+**Node ID:** 1966:60442
+
+ListRowLabel: Title layout=Fill preserves existing rows. Title layout=Hug keeps badges immediately beside the title. Title/Subtitle and optional Title accessory slot remain configurable.
+
+## Accessory/None
+**Node ID:** 157:43
+
+None accessory — empty 1×1 trailing filler for rows with no control (e.g. Settings Share/Feedback rows). ↔ SwiftUI: plain row, no accessory.
+
+## SectionFooter
+**Node ID:** 161:70
+
+SectionFooter — grouped-list section footer copy (Footnote, secondaryLabel, wraps). ↔ SwiftUI: Section { … } footer: { Text("…") }.
+
+## Platform=iOS, Content=Dark, Surface=Primary
+**Node ID:** 793:369
+
+NavigationIndicator inherits the screen/background by default. Show background=false; enable only when an explicit Surface is intended. Content controls handle contrast independently.
+
+## NavigationIndicator
+**Node ID:** 793:379
+
+Native navigation/gesture indicator with transparent default surface. Optional Show background boolean retains explicit Surface choices when needed.
+
+## HomeIndicator
+**Node ID:** 333:102
+
+iOS home indicator (bottom safe-area handle). Transparent band so its background inherits the docked element behind it (voice bar / composer / screen bg). Pill 144×5, labelPrimary. Source: system safe-area overlay.
+
+## State=Editing username
+**Node ID:** 1875:6713
+
+Proposed static inline-editing state: native text field and keyboard, secondary label above primary editable value, visible caret, top-right Save. No functioning input or prototype behavior is claimed. Passwords stay masked. State variant of Screen/Cloud browser · Add login. Screen placement and component identity are preserved.
+
+## Text Field
+**Node ID:** 1646:31215
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/lists-and-tables](https://developer.apple.com/design/human-interface-guidelines/lists-and-tables)
+
+## Keyboard
+**Node ID:** 1868:52301
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/onscreen-keyboards](https://developer.apple.com/design/human-interface-guidelines/onscreen-keyboards)
+
+## Home Indicator
+**Node ID:** 58:690
+
+**Documentation:**
+- [https://developer.apple.com/design/human-interface-guidelines/going-full-screen](https://developer.apple.com/design/human-interface-guidelines/going-full-screen)
+
+## State=Empty draft
+**Node ID:** 1934:9071
+
+Static working draft/focus state. Empty placeholder, filled draft and keyboard focus are separate states. Provider-key persistence is a proposed gateway contract; no credential installation or validation is claimed. State variant of Screen/Cloud browser · Add login. Screen placement and component identity are preserved.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.
