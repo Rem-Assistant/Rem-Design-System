@@ -1,0 +1,124 @@
+name: Playground native candidate (no distribution)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full approved SHA; must equal the selected workflow revision
+        type: string
+        required: true
+
+# No signing/upload credentials, PR triggers, APK uploads, or latest-ready pointer.
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Pin requested candidate to this workflow revision
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          test "$SOURCE_SHA" = "$WORKFLOW_SHA"
+          python3 tools/playground-delivery/delivery.py preflight --sha "$SOURCE_SHA"
+      - run: python3 -m unittest discover -s tools/playground-delivery -p 'test_*.py'
+
+  ios:
+    needs: preflight
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Run every iOS native journey
+        env:
+          IOS_TEST: ''
+        run: bash tools/playground-ios/run-hosted-journeys.sh
+      - name: Verify every expected method actually passed
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          xcodebuild -version > "$RUNNER_TEMP/toolchain.txt"
+          python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform ios --report "$RUNNER_TEMP/settings-ios-build.log" --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/ios-native.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-native-${{ github.sha }}
+          path: ${{ runner.temp }}/ios-native.json
+          if-no-files-found: error
+
+  android:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify the actual checked-in wrapper
+        working-directory: compose
+        run: |
+          ./gradlew --version > "$RUNNER_TEMP/toolchain.txt"
+          grep -q '^Gradle 8.14.4$' "$RUNNER_TEMP/toolchain.txt"
+          java -version >> "$RUNNER_TEMP/toolchain.txt" 2>&1
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          disable-animations: true
+          working-directory: compose
+          script: ./gradlew :demo:connectedDebugAndroidTest --stacktrace --no-daemon
+      - name: Verify every expected method actually passed
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform android --report compose/demo/build/outputs/androidTest-results --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/android-native.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-native-${{ github.sha }}
+          path: ${{ runner.temp }}/android-native.json
+          if-no-files-found: error
+
+  native-evidence:
+    if: always()
+    needs: [preflight, ios, android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject missing, failed, cancelled, or skipped native jobs
+        env:
+          PREFLIGHT: ${{ needs.preflight.result }}
+          IOS: ${{ needs.ios.result }}
+          ANDROID: ${{ needs.android.result }}
+        run: test "$PREFLIGHT" = success && test "$IOS" = success && test "$ANDROID" = success
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-native-${{ github.sha }}'
+          path: ${{ runner.temp }}/native
+          merge-multiple: true
+      - name: Verify source, scope, and native method sets on both platforms
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          python3 tools/playground-delivery/delivery.py check-tests --sha "$SOURCE_SHA" --platform ios --tests "$RUNNER_TEMP/native/ios-native.json"
+          python3 tools/playground-delivery/delivery.py check-tests --sha "$SOURCE_SHA" --platform android --tests "$RUNNER_TEMP/native/android-native.json"

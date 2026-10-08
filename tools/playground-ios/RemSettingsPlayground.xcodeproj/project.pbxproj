@@ -350,6 +350,8 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rem.playground.settings;
+				INFOPLIST_FILE = App/Info.plist;
+				REM_PLAYGROUND_SOURCE_SHA = unversioned;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -367,6 +369,8 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rem.playground.settings;
+				INFOPLIST_FILE = App/Info.plist;
+				REM_PLAYGROUND_SOURCE_SHA = unversioned;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
