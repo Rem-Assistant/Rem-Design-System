@@ -130,7 +130,12 @@ final class SettingsPlaygroundUITests: XCTestCase {
         let route = app.buttons["agentDestination.\(destination)"]
         reveal(route)
         route.tap()
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5))
+        let arrived = app.navigationBars[title].waitForExistence(timeout: 5)
+        if !arrived {
+            capture("Destination-\(destination)-unexpected")
+            print(app.debugDescription)
+        }
+        XCTAssertTrue(arrived, "Expected destination: \(title)")
     }
     private func reveal(_ element: XCUIElement) {
         for _ in 0..<7 where !element.isHittable {

@@ -31,6 +31,17 @@ struct PlaygroundHome: View {
                     NavigationLink("Shared controls") { ControlsPreview() }
                 }
             }.navigationTitle("Rem Playground")
+            .navigationDestination(for: AgentSettingsDestination.self) { route in
+                switch route {
+                case .pairedDevices: SettingsPairedDevicesScreen()
+                case .memory: SettingsMemoryScreen()
+                case .models: SettingsModelsScreen()
+                case .cloudBrowser: SettingsCloudBrowserScreen()
+                case .wallet: SettingsWalletScreen()
+                case .voice: SettingsVoiceScreen()
+                case .connectors: SettingsConnectorsScreen()
+                }
+            }
         }
     }
 }
@@ -64,17 +75,7 @@ struct AgentPreview: View {
         ZStack {
             if status == "ready" {
                 AgentSettingsContent(availableDestinations: [.pairedDevices, .connectors, .cloudBrowser, .memory, .models, .wallet, .voice])
-                    .navigationDestination(for: AgentSettingsDestination.self) { route in
-                        switch route {
-                        case .pairedDevices: SettingsPairedDevicesScreen()
-                        case .memory: SettingsMemoryScreen()
-                        case .models: SettingsModelsScreen()
-                        case .cloudBrowser: SettingsCloudBrowserScreen()
-                        case .wallet: SettingsWalletScreen()
-                        case .voice: SettingsVoiceScreen()
-                        case .connectors: SettingsConnectorsScreen()
-                        }
-                    }
+
             } else {
                 VStack(spacing: 20) {
                     if status == "loading" {
