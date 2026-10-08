@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.Density
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.core.view.WindowCompat
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -40,6 +42,15 @@ class MainActivity : ComponentActivity() {
             val scale = if (intent.getBooleanExtra("settingsLargeText", false)) 2f else density.fontScale
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
                 RemTheme(darkTheme = dark) {
+                    val background = RemColors.current.backgroundPrimary
+                    SideEffect {
+                        window.statusBarColor = background.toArgb()
+                        window.navigationBarColor = background.toArgb()
+                        WindowCompat.getInsetsController(window, window.decorView).apply {
+                            isAppearanceLightStatusBars = !dark
+                            isAppearanceLightNavigationBars = !dark
+                        }
+                    }
                     MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) { Playground() }
                 }
             }
