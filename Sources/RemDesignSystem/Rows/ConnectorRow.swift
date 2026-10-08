@@ -20,6 +20,7 @@ public enum ConnectorRowAccessory {
     case toggle(Binding<Bool>)
 }
 public struct ConnectorRow<Leading: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private let title: String
     private let subtitle: String
     private let accessory: ConnectorRowAccessory
@@ -49,28 +50,51 @@ public struct ConnectorRow<Leading: View>: View {
         return row
     }
     public var body: some View {
-        ListRow(showsDivider: showsDivider, layout: layout, leading: leading, content: {
-            if let customContent { customContent } else { ListRowLabel(title, subtitle: subtitle) }
-        }, trailing: {
-            switch accessory {
-            case .action(let label, let action):
-                let button = Button(label, action: action).remButton(.pillSecondary)
-                    .accessibilityLabel("\(label) \(title)")
-                if let actionIdentifier {
-                    button.accessibilityIdentifier(actionIdentifier)
-                } else {
-                    button
-                }
-            case .progress:
-                ProgressView().accessibilityLabel("Connecting \(title)")
-            case .disclosure:
-                // The wrapping NavigationLink supplies the native List chevron.
-                if layout == .standalone { DisclosureChevron() }
-            case .toggle(let value):
-                Toggle(title, isOn: value).labelsHidden().tint(DesignTokens.Color.systemGreen)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize, case .action(let label, let action) = accessory {
+                // Give the label and native action separate lines at accessibility sizes,
+                // retaining a single List row and its native insets/separator.
+                ListRow(showsDivider: showsDivider, layout: layout, leading: { EmptyView() }, content: {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                        HStack(spacing: DesignTokens.Spacing.md) {
+                            leading()
+                            rowLabel.frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        actionButton(label, action: action)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                }, trailing: { EmptyView() })
+            } else {
+                ListRow(showsDivider: showsDivider, layout: layout, leading: leading, content: {
+                    rowLabel
+                }, trailing: {
+                    switch accessory {
+                    case .action(let label, let action):
+                        actionButton(label, action: action)
+                    case .progress:
+                        ProgressView().accessibilityLabel("Connecting \(title)")
+                    case .disclosure:
+                        // The wrapping NavigationLink supplies the native List chevron.
+                        if layout == .standalone { DisclosureChevron() }
+                    case .toggle(let value):
+                        Toggle(title, isOn: value).labelsHidden().tint(DesignTokens.Color.systemGreen)
+                    }
+                })
             }
-        })
+        }
         .frame(minHeight: layout == .nativeList ? 40 : 64)
+    }
+    @ViewBuilder private var rowLabel: some View {
+        if let customContent { customContent } else { ListRowLabel(title, subtitle: subtitle) }
+    }
+    @ViewBuilder private func actionButton(_ label: String, action: @escaping () -> Void) -> some View {
+        let button = Button(label, action: action).remButton(.pillSecondary)
+            .accessibilityLabel("\(label) \(title)")
+        if let actionIdentifier {
+            button.accessibilityIdentifier(actionIdentifier)
+        } else {
+            button
+        }
     }
 }
 

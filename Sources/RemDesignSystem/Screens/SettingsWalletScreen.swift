@@ -8,6 +8,7 @@ import SwiftUI
 /// keep their source colors. No external URL opens,
 /// authentication, payment, storage, or successful connection is performed by this prototype.
 public struct SettingsWalletScreen: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var fixture = SettingsWalletFixture()
     public init() {}
 
@@ -69,6 +70,9 @@ public struct SettingsWalletScreen: View {
                                               onCancel: { fixture.dismiss() })
                     }
                 }
+                // Carry the presenting screen's text-size environment across the native
+                // sheet boundary, including accessibility-sized playground fixtures.
+                .environment(\.dynamicTypeSize, dynamicTypeSize)
                 .walletSheetStyle()
             }
         }

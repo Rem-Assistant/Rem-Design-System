@@ -15,7 +15,7 @@ on:
         default: both
         options: [both, ios, android]
       ios_test:
-        description: Optional iOS test method for a focused diagnostic run
+        description: Optional comma-separated iOS test methods for a focused run
         type: string
         default: ''
   pull_request:

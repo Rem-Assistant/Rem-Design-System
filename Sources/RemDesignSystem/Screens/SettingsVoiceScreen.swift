@@ -70,6 +70,7 @@ public struct SettingsVoiceScreen: View {
 /// Controlled shared core: native Section children, intended for a List/Form owned by the shell.
 /// Onboarding can hide the entire conversation-entry section; no onboarding shell is created here.
 public struct VoiceControlsContent: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Binding private var fixture: VoiceSettingsFixture
     private let showConversationEntry: Bool
     private let onPreview: (VoiceChoice) -> Void
@@ -104,19 +105,17 @@ public struct VoiceControlsContent: View {
         }.listRowBackground(DesignTokens.Color.backgroundSecondary)
         if showConversationEntry {
             Section {
-                Picker(selection: $fixture.conversationEntry) {
-                    ForEach(VoiceConversationEntry.allCases, id: \.self) { entry in
-                        Text(entry.rawValue).tag(entry)
+                if dynamicTypeSize.isAccessibilitySize {
+                    // Let both the prompt and the selected value use the row width at
+                    // accessibility sizes instead of fragmenting them into two columns.
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                        conversationEntryLabel.accessibilityHidden(true)
+                        conversationEntryPicker.labelsHidden()
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                } label: {
-                    ListRow(layout: .nativeList, leading: {
-                        ContainedIcon("speaker", fill: .subtle, size: .settings, glyphWeight: .regular)
-                            .accessibilityHidden(true)
-                    }, content: { ListRowLabel("Center button starts") }, trailing: { EmptyView() })
+                } else {
+                    conversationEntryPicker
                 }
-                .pickerStyle(.menu)
-                .tint(DesignTokens.Color.labelSecondary)
-                .accessibilityIdentifier("voice.conversationEntry")
             } header: { HStack { Text("Conversation entry").textCase(nil) } } footer: { Text(VoiceSettingsFixture.conversationFooter) }
                 .listRowBackground(DesignTokens.Color.backgroundSecondary)
         }
@@ -133,6 +132,26 @@ public struct VoiceControlsContent: View {
             slider("Likeness", minimum: "Flexible", maximum: "Faithful", value: $fixture.likeness, id: "likeness")
         } header: { HStack { Text("Character & speed").textCase(nil) } } footer: { Text(VoiceSettingsFixture.characterFooter) }
             .listRowBackground(DesignTokens.Color.backgroundSecondary)
+    }
+
+    private var conversationEntryLabel: some View {
+        ListRow(layout: .nativeList, leading: {
+            ContainedIcon("speaker", fill: .subtle, size: .settings, glyphWeight: .regular)
+                .accessibilityHidden(true)
+        }, content: { ListRowLabel("Center button starts") }, trailing: { EmptyView() })
+    }
+
+    private var conversationEntryPicker: some View {
+        Picker(selection: $fixture.conversationEntry) {
+            ForEach(VoiceConversationEntry.allCases, id: \.self) { entry in
+                Text(entry.rawValue).tag(entry)
+            }
+        } label: {
+            conversationEntryLabel
+        }
+        .pickerStyle(.menu)
+        .tint(DesignTokens.Color.labelSecondary)
+        .accessibilityIdentifier("voice.conversationEntry")
     }
 
     private var isPreviewingSelected: Bool { fixture.previewing == fixture.selected }

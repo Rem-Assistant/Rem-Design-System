@@ -128,6 +128,30 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTFail("Expected visible Gmail menu: \(identifier)")
     }
 
+    /// The menu overlay can make a visible navigation title fail AXScrollToVisible.
+    /// Use its measured center for the same native outside tap, then prove dismissal.
+    private func dismissGmailMenuOutside(visibleItem: XCUIElement) {
+        XCTAssertTrue(visibleItem.waitForExistence(timeout: 3))
+        let bar = app.navigationBars["Gmail"]
+        let title = bar.staticTexts["Gmail"]
+        guard title.exists else {
+            XCTFail("Expected Gmail navigation title behind the open menu")
+            return
+        }
+        let frame = title.frame
+        guard !frame.isEmpty, !frame.isInfinite,
+              app.frame.contains(frame), bar.frame.contains(frame) else {
+            XCTFail("Expected a visible Gmail navigation title for the outside-menu tap")
+            return
+        }
+        title.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
+                                               object: visibleItem)
+        XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 3), .completed,
+                       "The outside tap must dismiss the native Gmail menu")
+        XCTAssertTrue(bar.exists, "Dismissing the menu must retain Gmail detail")
+    }
+
     func testConnectorsGmailMenusAndScopedPermissions() {
         openDestination("connectors", title: "Connectors")
         capture("Connectors-light")
@@ -158,7 +182,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         tapGmailMenu("gmail.connectorMenu", toolbar: true)
         XCTAssertTrue(app.buttons["gmail.disconnectAll"].waitForExistence(timeout: 3))
         capture("Gmail-connector-menu-light")
-        app.navigationBars["Gmail"].staticTexts["Gmail"].tap() // Native outside-menu dismissal.
+        dismissGmailMenuOutside(visibleItem: app.buttons["gmail.disconnectAll"])
         let permissions = app.buttons["gmail.permissions"]
         reveal(permissions)
         permissions.tap()
@@ -235,7 +259,12 @@ final class SettingsPlaygroundUITests: XCTestCase {
             action.tap()
             XCTAssertTrue(confirm.waitForExistence(timeout: 3))
             confirm.tap()
-            XCTAssertTrue(app.navigationBars["Connectors"].waitForExistence(timeout: 3))
+            let returned = app.navigationBars["Connectors"].waitForExistence(timeout: 3)
+            if !returned {
+                capture("Gmail-disconnect-unexpected")
+                print(app.debugDescription)
+            }
+            XCTAssertTrue(returned)
             XCTAssertTrue(app.buttons["Connect Gmail"].exists)
             XCTAssertTrue(app.buttons["connectors.provider.googleCalendar"].exists)
             XCTAssertTrue(app.buttons["connectors.provider.notion"].exists)
@@ -330,6 +359,30 @@ final class SettingsPlaygroundUITests: XCTestCase {
         }
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
     }
+    private func revealFully(_ element: XCUIElement, above footer: XCUIElement? = nil) {
+        for _ in 0..<12 {
+            let bounds = app.frame
+            let bar = app.navigationBars.firstMatch
+            let top = bar.exists ? bar.frame.maxY : bounds.minY + 60
+            let bottom = footer.map { $0.exists ? $0.frame.minY - 8 : bounds.maxY - 34 } ?? bounds.maxY - 34
+            let viewport = CGRect(x: bounds.minX, y: top, width: bounds.width, height: max(0, bottom - top))
+            if element.exists {
+                let frame = element.frame
+                if !frame.isEmpty && viewport.contains(frame) { return }
+                let overflow = frame.maxY > bottom ? frame.maxY - bottom + 8 : frame.minY - top - 8
+                let distance = min(abs(overflow), viewport.height * 0.4)
+                let direction: CGFloat = overflow > 0 ? 1 : -1
+                let origin = app.coordinate(withNormalizedOffset: .zero)
+                let start = origin.withOffset(CGVector(dx: bounds.width / 2, dy: viewport.midY + direction * distance / 2))
+                let end = origin.withOffset(CGVector(dx: bounds.width / 2, dy: viewport.midY - direction * distance / 2))
+                start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.2)
+            } else {
+                app.swipeUp()
+            }
+        }
+        capture("Fully-visible-target-unexpected")
+        XCTFail("Expected the complete capture target inside the visible content area: \(element.identifier)")
+    }
     private func navigateBack(from title: String, to expectedTitle: String) {
         app.navigationBars[title].buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.navigationBars[expectedTitle].waitForExistence(timeout: 5))
@@ -338,6 +391,26 @@ final class SettingsPlaygroundUITests: XCTestCase {
         let toggle = app.switches[identifier]
         XCTAssertTrue(toggle.exists)
         XCTAssertEqual(toggle.value as? String, isOn ? "1" : "0")
+    }
+
+    private func setMemoryToggle(_ identifier: String, isOn: Bool) {
+        let toggle = app.switches[identifier]
+        XCTAssertTrue(toggle.exists)
+        let expected = isOn ? "1" : "0"
+        guard toggle.value as? String != expected else { return }
+        toggle.tap()
+        if toggle.value as? String != expected {
+            // SwiftUI can expose the whole labeled row as the switch's AX frame.
+            // Its trailing native control is the interactive target, not the label center.
+            let frame = toggle.frame
+            guard !frame.isEmpty, !frame.isInfinite, app.frame.contains(frame) else {
+                XCTFail("Expected a visible native Memory switch: \(identifier)")
+                return
+            }
+            print("Memory switch trailing-control fallback: \(toggle.debugDescription)")
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        }
+        assertToggle(identifier, isOn: isOn)
     }
 
     func testPairedDevicesBoundaryCancelRemovalAndEmptyRefresh() {
@@ -382,9 +455,10 @@ final class SettingsPlaygroundUITests: XCTestCase {
         assertToggle("memory.toggle.generateMemory", isOn: true)
         assertToggle("memory.toggle.sensitiveTopics", isOn: false)
         capture("Memory-light")
-        app.switches["memory.toggle.searchAndReference"].tap()
-        app.switches["memory.toggle.generateMemory"].tap()
-        app.switches["memory.toggle.sensitiveTopics"].tap()
+        setMemoryToggle("memory.toggle.searchAndReference", isOn: false)
+        setMemoryToggle("memory.toggle.generateMemory", isOn: false)
+        setMemoryToggle("memory.toggle.sensitiveTopics", isOn: true)
+        capture("Memory-controls-changed-light")
         let summary = app.buttons["memory.summaryRow"]
         reveal(summary)
         summary.tap()
@@ -987,11 +1061,11 @@ final class SettingsPlaygroundUITests: XCTestCase {
                     "You choose what Rem can do",
                     "Rem asks before actions that need review. Disconnect anytime in Settings."
                 )).firstMatch
-                reveal(benefit)
+                revealFully(benefit, above: app.buttons["wallet.consent.connect"])
                 capture("Wallet-\(provider)-consent-large-text-benefit")
             }
             let disclosure = app.staticTexts["Next, continue to \(name) to sign in and review access. Rem will exchange info with \(name); see its terms and privacy policy."]
-            reveal(disclosure)
+            revealFully(disclosure, above: app.buttons["wallet.consent.connect"])
             XCTAssertTrue(app.buttons["wallet.consent.connect"].isHittable)
             if suffix == "large-text" { capture("Wallet-\(provider)-consent-large-text-footer") }
             app.buttons["wallet.consent.cancel"].tap()
@@ -1002,7 +1076,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         openDestination("voice", title: "Voice")
         capture("Voice-\(suffix)")
         if suffix == "large-text" {
-            reveal(app.buttons["voice.chooseVoice"])
+            revealFully(app.buttons["voice.chooseVoice"])
             capture("Voice-large-text-choice-row")
             reveal(app.sliders["voice.slider.speed"])
             capture("Voice-large-text-speed")
@@ -1019,7 +1093,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Choose a voice"].waitForExistence(timeout: 3))
         capture("Voice-chooser-\(suffix)")
         let chooserFooter = app.staticTexts["Your choice follows this agent across your devices. Tap a play button to hear a preview."]
-        reveal(chooserFooter)
+        revealFully(chooserFooter)
         capture("Voice-chooser-\(suffix)-footer")
     }
     func testWalletVoiceDarkAppearance() {

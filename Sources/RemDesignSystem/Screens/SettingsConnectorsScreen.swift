@@ -13,12 +13,10 @@ public struct SettingsConnectorsScreen: View {
         List {
             Section {
                 // Keep the presentation anchor until its destination finishes disappearing.
-                // Last-account removal and the isActive pop happen in the same update.
+                // Last-account removal and native dismissal happen in the same update.
                 if fixture.isConnected || gmailDestinationIsVisible {
                     NavigationLink(isActive: $showingGmail) {
-                        GmailSettingsView(fixture: $fixture, onDisconnected: {
-                            if !fixture.isConnected { showingGmail = false }
-                        })
+                        GmailSettingsView(fixture: $fixture)
                         .onAppear { gmailDestinationIsVisible = true }
                         .onDisappear { gmailDestinationIsVisible = false }
                     } label: {
@@ -60,7 +58,7 @@ public struct SettingsConnectorsScreen: View {
 
 private struct GmailSettingsView: View {
     @Binding var fixture: GmailFixture
-    let onDisconnected: () -> Void
+    @Environment(\.dismiss) private var dismiss
     @State private var confirmation: GmailDisconnect?
     @State private var accountSettings: GmailAccountFixture?
     @State private var boundary: String?
@@ -137,7 +135,7 @@ private struct GmailSettingsView: View {
                     case .account(let account): fixture.disconnect(accountID: account.id)
                     }
                     confirmation = nil
-                    onDisconnected()
+                    if !fixture.isConnected { dismiss() }
                 }.accessibilityIdentifier("gmail.confirmDisconnect")
                 Button("Cancel", role: .cancel) { confirmation = nil }
             } message: { Text($0.message) }

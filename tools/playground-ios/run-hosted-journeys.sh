@@ -4,8 +4,11 @@ set -euo pipefail
 [[ "${GITHUB_ACTIONS:-}" == true ]] || { echo 'Run this helper on GitHub Actions only.' >&2; exit 2; }
 test_args=(test)
 if [[ -n "${IOS_TEST:-}" ]]; then
-  [[ "$IOS_TEST" =~ ^test[A-Za-z0-9_]+$ ]] || { echo 'Invalid iOS test method.' >&2; exit 2; }
-  test_args+=("-only-testing:RemSettingsPlaygroundUITests/SettingsPlaygroundUITests/$IOS_TEST")
+  [[ "$IOS_TEST" =~ ^test[A-Za-z0-9_]+(,test[A-Za-z0-9_]+)*$ ]] || { echo 'Invalid iOS test method list.' >&2; exit 2; }
+  IFS=',' read -r -a selected_methods <<< "$IOS_TEST"
+  for selected_method in "${selected_methods[@]}"; do
+    test_args+=("-only-testing:RemSettingsPlaygroundUITests/SettingsPlaygroundUITests/$selected_method")
+  done
 fi
 
 # Read only this run's log and sample only the playground process on this disposable runner.
