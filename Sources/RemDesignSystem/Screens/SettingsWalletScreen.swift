@@ -95,67 +95,21 @@ private struct WalletProviderConsent: View {
     let onConnect: () -> Void
     let onCancel: () -> Void
     var body: some View {
-        List {
-            Section {
-                VStack(spacing: DesignTokens.Spacing.md) {
-                    WalletProviderMark(provider: provider, isHero: true)
-                    Text(provider.title)
-                        .font(DesignTokens.Typography.title1Bold)
-                        .foregroundStyle(DesignTokens.Color.labelPrimary)
-                        .accessibilityAddTraits(.isHeader)
-                    Text(provider.consentBody)
-                        .font(DesignTokens.Typography.body)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
+        ProviderPreConsentContent(
+            payload: ProviderPreConsentPayload(
+                title: provider.title, purpose: provider.consentBody,
+                benefits: provider.benefits.map { .init(id: $0.id, title: $0.title, body: $0.body) },
+                disclosure: provider.disclosure
+            ),
+            accessibilityIdentifier: "wallet.consent.\(provider.rawValue)",
+            actionAccessibilityPrefix: "wallet.consent", onConnect: onConnect, onCancel: onCancel,
+            providerMark: { WalletProviderMark(provider: provider, isHero: true) },
+            benefitIcon: { benefit in
+                if let source = provider.benefits.first(where: { $0.id == benefit.id }) {
+                    Image(systemName: source.symbol)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, DesignTokens.Spacing.md)
-                ForEach(provider.benefits) { benefit in
-                    HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
-                        Image(systemName: benefit.symbol)
-                            .font(.body)
-                            .frame(width: 26, height: 26)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                            Text(benefit.title).font(DesignTokens.Typography.body.weight(.semibold))
-                            Text(benefit.body)
-                                .font(DesignTokens.Typography.subheadline)
-                                .foregroundStyle(DesignTokens.Color.labelSecondary)
-                        }
-                        .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .foregroundStyle(DesignTokens.Color.labelPrimary)
-                    .accessibilityElement(children: .combine)
-                }
-                Text(provider.disclosure)
-                    .font(DesignTokens.Typography.footnote)
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity)
             }
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(DesignTokens.Color.backgroundPrimary)
-        .safeAreaInset(edge: .bottom) {
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                Button("Connect", action: onConnect)
-                    .remButton(.rectBlue)
-                    .accessibilityIdentifier("wallet.consent.connect")
-                Button("Cancel", action: onCancel)
-                    .remSettingsCTA()
-                    .accessibilityIdentifier("wallet.consent.cancel")
-            }
-            .padding(DesignTokens.Spacing.lg)
-            .frame(maxWidth: 560)
-            .frame(maxWidth: .infinity)
-            .background(DesignTokens.Color.backgroundPrimary)
-        }
-        .accessibilityIdentifier("wallet.consent.\(provider.rawValue)")
+        )
     }
 }
 

@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -126,41 +125,21 @@ private fun WalletProviderMark(provider: SettingsWalletProvider, isHero: Boolean
 @Composable
 private fun WalletProviderConsent(provider: SettingsWalletProvider, onConnect: () -> Unit, onCancel: () -> Unit) {
     val colors = RemColors.current
-    // All content, including the actions, can scroll at large font sizes or in a short viewport.
-    Column(
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 26.dp)
-            .padding(bottom = RemSpacing.lg).testTag("wallet.consent.${provider.id}"),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
-    ) {
-        WalletProviderMark(provider, isHero = true)
-        Text(provider.title, style = RemTypography.title1.copy(fontWeight = FontWeight.Bold), color = colors.labelPrimary,
-            textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
-        Text(provider.consentBody, style = RemTypography.body, color = colors.labelSecondary, textAlign = TextAlign.Center)
-        provider.benefits.forEach { benefit ->
-            Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(RemSpacing.md), verticalAlignment = Alignment.Top) {
-                when (benefit.id) {
-                    "wallet" -> Icon(Icons.AutoMirrored.Outlined.FormatListBulleted, null, Modifier.size(26.dp), tint = colors.labelPrimary)
-                    "control" -> Text(RemMaterialSymbols.Permissions.glyph, fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.Permissions),
-                        fontSize = 24.sp, color = colors.labelPrimary, modifier = Modifier.size(26.dp).clearAndSetSemantics {})
-                    else -> Icon(Icons.Outlined.Visibility, null, Modifier.size(26.dp), tint = colors.labelPrimary)
-                }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(RemSpacing.xs)) {
-                    Text(benefit.title, style = RemTypography.body.copy(fontWeight = FontWeight.SemiBold), color = colors.labelPrimary)
-                    Text(benefit.body, style = RemTypography.subheadline, color = colors.labelSecondary)
-                }
+    ProviderPreConsentContent(
+        payload = ProviderPreConsentPayload(provider.title, provider.consentBody,
+            provider.benefits.map { ProviderPreConsentBenefit(it.id, it.title, it.body) }, provider.disclosure),
+        onConnect = onConnect, onCancel = onCancel,
+        modifier = Modifier.testTag("wallet.consent.${provider.id}"), actionAccessibilityPrefix = "wallet.consent",
+        providerMark = { WalletProviderMark(provider, isHero = true) },
+        benefitIcon = { benefit ->
+            when (benefit.id) {
+                "wallet" -> Icon(Icons.AutoMirrored.Outlined.FormatListBulleted, null, Modifier.size(26.dp), tint = colors.labelPrimary)
+                "control" -> Text(RemMaterialSymbols.Permissions.glyph, fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.Permissions),
+                    fontSize = 24.sp, color = colors.labelPrimary, modifier = Modifier.size(26.dp).clearAndSetSemantics {})
+                else -> Icon(Icons.Outlined.Visibility, null, Modifier.size(26.dp), tint = colors.labelPrimary)
             }
-        }
-        Text(provider.disclosure, style = RemTypography.footnote, color = colors.labelSecondary, textAlign = TextAlign.Center)
-        Button(onClick = onConnect, modifier = Modifier.fillMaxWidth().testTag("wallet.consent.connect"),
-            shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = colors.brandBlue, contentColor = colors.labelOnColor),
-            contentPadding = PaddingValues(horizontal = 22.dp, vertical = 13.dp)) {
-            Text("Connect", style = RemTypography.bodyBold)
-        }
-        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth().testTag("wallet.consent.cancel")) {
-            Text("Cancel", style = RemTypography.body, color = colors.brandBlue)
-        }
-    }
+        },
+    )
 }
 
 @Composable
