@@ -8,6 +8,7 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
+      - 'tools/playground-ios/**'
       - 'Sources/**'
       - 'compose/**'
       - 'tokens/generated/**'
@@ -55,7 +56,7 @@ jobs:
           PY
 
       - name: Fetch and validate exact-head declarative contract data
-        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' }}
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && steps.scope.outputs.primary_contract != 'settings-foundation' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
@@ -92,8 +93,14 @@ jobs:
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PRIMARY_CONTRACT: ${{ steps.scope.outputs.primary_contract }}
         run: |
           set -euo pipefail
+          if [ "$PRIMARY_CONTRACT" = settings-foundation ]; then
+            node tools/design-sync/verify-settings-structure.mjs \
+              --output=artifacts/figma-structure-report.json --head="$HEAD_SHA"
+            exit 0
+          fi
           file_key=$(jq -r .figmaFileKey tools/design-sync/manifest.json)
           contract=tools/design-sync/structure-contract.json
           if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
