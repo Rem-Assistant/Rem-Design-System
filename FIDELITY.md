@@ -21,8 +21,19 @@ Suggestions section `2336:19584` (archive verified by SHA-256
 **New / changed code**
 - `AgendaSuggestionRow` (SwiftUI `Agenda/AgendaSuggestionRow.swift`) implements the current
   `2336:19583` contract — dashed tile, leading Add/Move CTA, title + field-owned reason, dismiss ✕;
-  no spinner / success badge / error card / Retry. Compose reuses the matching `SuggestedTaskRow`
-  (testTags added).
+  no spinner / success badge / error card / Retry.
+- **Component-architecture contract (2026-10-08 revision):** the canonical Compose twin now lives in
+  `compose/RemDesignSystem/rows/AgendaSuggestionRow.kt` with an API mirroring the SwiftUI row
+  (`action` add/move, `title`, `metadata`, accept/dismiss, test tags); `rows/SuggestedTaskRow.kt`
+  remains as a `TaskSuggestion`-based wrapper that delegates to it, so existing call sites
+  (`SuggestionSection`, `AgendaSuggestionsPlayground`, `AgendaScreen`, evidence snapshots) and the
+  rendered behaviour are unchanged. Parserless Code Connect source mappings were authored for both
+  platforms (`code-connect/swiftui/AgendaSuggestionRow.figma.ts`,
+  `code-connect/compose/AgendaSuggestionRow.figma.ts`) binding the canonical Figma component
+  `2336:19583` (variant property `action` add `2336:19561` / move `2336:19572`, Title/Metadata text
+  props) to the SwiftUI and Compose rows. `node tools/lint-components.mjs` and
+  `npm run check-code-connect` (types + SwiftUI + Compose parse) pass. Live Code Connect publication
+  stays plan-blocked (Dev/Org seat); the templates and `REGISTRY.md` record the source binding.
 - `AgendaSuggestionsPlaygroundView` (SwiftUI) and `AgendaSuggestionsPlayground` (Compose) compose the
   reused `DateNavigationHeader`, `TaskEventRow` (a `pending` dashed-ring option was added), the empty
   `RemContentUnavailableView`, a sort trigger, and the Add New / Schedule bar. The Suggestions slot

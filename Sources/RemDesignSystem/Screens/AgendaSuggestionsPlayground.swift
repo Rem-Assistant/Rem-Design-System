@@ -304,7 +304,10 @@ public struct AgendaSuggestionsOverflowSheet: View {
             }
         }
         .background(DesignTokens.Color.backgroundPrimary)
-        .accessibilityIdentifier("agendaSuggestions.overflow")
+        // NOTE: no container-level `.accessibilityIdentifier` here. Applying an accessibility
+        // modifier to this multi-child VStack can promote it to a single accessibility element and
+        // hide the Done / per-suggestion buttons from XCUITest, which breaks the overflow journeys.
+        // The sheet's queryable identities live on the child controls (Done, accept/dismiss).
     }
 }
 
