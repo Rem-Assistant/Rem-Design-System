@@ -7,6 +7,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso
+import androidx.compose.ui.text.AnnotatedString
 import org.junit.Rule
 import org.junit.Test
 
@@ -185,10 +187,10 @@ class SettingsPlaygroundTest {
         compose.onNodeWithTag("memory.composerFeedback")
             .assertTextEquals("Noted in this prototype session. Rem doesn’t reply or change memory here.")
             .performScrollTo().assertIsDisplayed()
-        compose.onNodeWithTag("memory.composerField").assertTextEquals("")
+        assertEmptyInput("memory.composerField")
         compose.onNodeWithTag("memory.composerSend").assertIsNotEnabled()
         capture("Memory-composer-feedback-light")
-        compose.onNodeWithTag("back").performClick()
+        systemBack()
         waitForTag("settingsMemory")
         compose.onNodeWithTag("memory.toggle.SearchAndReference").assertIsOff()
         compose.onNodeWithTag("memory.toggle.GenerateMemory").assertIsOff()
@@ -219,10 +221,10 @@ class SettingsPlaygroundTest {
             .performTextInput("prototype-only-placeholder")
         compose.onNodeWithTag("models.saveKey").assertIsEnabled()
         capture("Models-key-masked-light")
-        compose.onNodeWithTag("back").performClick()
+        systemBack()
         waitForTag("settingsModels")
         compose.onNodeWithTag("models.addProviderKey").performScrollTo().performClick()
-        compose.onNodeWithTag("models.keyField").assertTextEquals("")
+        assertEmptyInput("models.keyField")
         compose.onNodeWithTag("models.saveKey").assertIsNotEnabled()
         compose.onNodeWithTag("models.keyField").performTextInput("another-prototype-placeholder")
         compose.onAllNodesWithTag("models.saveKey").assertCountEquals(1)
@@ -230,11 +232,120 @@ class SettingsPlaygroundTest {
         compose.onNodeWithTag("models.saveKey").performClick()
         waitForTag("settingsModels")
         compose.onNodeWithTag("models.addProviderKey").performScrollTo().performClick()
-        compose.onNodeWithTag("models.keyField").assertTextEquals("")
+        assertEmptyInput("models.keyField")
         compose.onNodeWithTag("models.saveKey").assertIsNotEnabled()
         compose.onNodeWithTag("back").performClick()
         compose.onNodeWithTag("back").performClick()
         waitForTag("agentSettings")
+    }
+
+    private fun systemBack() {
+        // The first platform Back would otherwise only hide the keyboard.
+        Espresso.closeSoftKeyboard()
+        Espresso.pressBack()
+        compose.waitForIdle()
+    }
+    private fun assertEmptyInput(tag: String) {
+        compose.onNodeWithTag(tag).assert(
+            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
+        )
+    }
+    private fun openCloudSites() {
+        openDestination("CloudBrowser", "cloudBrowser.root")
+        compose.onNodeWithTag("cloudBrowser.seeAllSites").performScrollTo().performClick()
+        waitForTag("cloudBrowser.sitesList")
+    }
+
+    @Test fun cloudAddSiteEmptyFocusAndSystemBackDiscards() {
+        openCloudSites()
+        capture("CloudBrowser-sites-light")
+        compose.onNodeWithTag("cloudBrowser.sites.addSite").performClick()
+        waitForTag("cloudBrowser.addSiteForm")
+        compose.onNodeWithTag("cloudBrowser.addSite.save").assertIsNotEnabled()
+        compose.onNodeWithTag("cloudBrowser.addSite.domainField").assertIsNotFocused()
+        capture("CloudBrowser-add-site-empty-light")
+        compose.onNodeWithTag("cloudBrowser.addSite.domainField").performClick().assertIsFocused()
+        capture("CloudBrowser-add-site-focused-light")
+        compose.onNodeWithTag("cloudBrowser.addSite.domainField").performTextInput("discarded.example")
+        compose.onNodeWithTag("cloudBrowser.addSite.save").assertIsEnabled()
+        systemBack()
+        waitForTag("cloudBrowser.sitesList")
+        compose.onNodeWithTag("cloudBrowser.site.discarded.example").assertDoesNotExist()
+        listOf("github.com", "notion.so", "linear.app", "openai.com").forEach {
+            compose.onNodeWithTag("cloudBrowser.site.$it").assertExists()
+        }
+        compose.onNodeWithTag("cloudBrowser.sites.addSite").performClick()
+        assertEmptyInput("cloudBrowser.addSite.domainField")
+        compose.onNodeWithTag("cloudBrowser.addSite.save").assertIsNotEnabled()
+        systemBack()
+        waitForTag("cloudBrowser.sitesList")
+        systemBack()
+        waitForTag("cloudBrowser.root")
+        systemBack()
+        waitForTag("agentSettings")
+    }
+
+    @Test fun cloudLoginEditsCookieClearAndRecreationPreserveLocalMutation() {
+        openCloudSites()
+        compose.onNodeWithTag("cloudBrowser.site.github.com").performClick()
+        waitForTag("cloudBrowser.siteDetail")
+        capture("CloudBrowser-site-detail-light")
+        compose.onNodeWithTag("cloudBrowser.siteDetail.login").performScrollTo().performClick()
+        waitForTag("cloudBrowser.savedLogin")
+        compose.onNodeWithText("samuel@example.com").assertExists()
+        capture("CloudBrowser-saved-login-light")
+        compose.onNodeWithTag("cloudBrowser.savedLogin.editUsername.pencil").performClick()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.usernameField").performTextReplacement("discarded@example.com")
+        capture("CloudBrowser-login-edit-username-light")
+        compose.onNodeWithTag("cloudBrowser.savedLogin.cancel").performClick()
+        compose.onNodeWithText("samuel@example.com").assertExists()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.editUsername.pencil").performClick()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.usernameField").performTextReplacement("prototype@example.com")
+        compose.onNodeWithTag("cloudBrowser.savedLogin.save").performClick()
+        compose.onNodeWithText("prototype@example.com").assertExists()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.save").assertDoesNotExist()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.editPassword.pencil").performClick()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.passwordField")
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Password))
+            .performTextInput("discarded-password-placeholder")
+        systemBack() // Cancels editing before it may pop Saved login.
+        waitForTag("cloudBrowser.savedLogin")
+        compose.onNodeWithTag("cloudBrowser.savedLogin.save").assertDoesNotExist()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.editPassword.pencil").performClick()
+        assertEmptyInput("cloudBrowser.savedLogin.passwordField")
+        compose.onNodeWithTag("cloudBrowser.savedLogin.save").assertIsNotEnabled()
+        compose.onNodeWithTag("cloudBrowser.savedLogin.passwordField").performTextInput("prototype-password-placeholder")
+        capture("CloudBrowser-login-edit-password-masked-light")
+        compose.onNodeWithTag("cloudBrowser.savedLogin.save").performClick()
+        compose.onNodeWithText("•".repeat(12)).assertExists()
+        systemBack()
+        waitForTag("cloudBrowser.siteDetail")
+        compose.onNodeWithTag("cloudBrowser.siteDetail.cookies").performScrollTo().performClick()
+        waitForTag("cloudBrowser.cookies")
+        compose.onNodeWithText("12 illustrative cookies").assertExists()
+        capture("CloudBrowser-cookies-light")
+        compose.onNodeWithTag("cloudBrowser.cookies.clearSiteData").performScrollTo().performClick()
+        compose.onNodeWithTag("cloudBrowser.cookies.confirmClear").assertExists()
+        capture("CloudBrowser-cookies-confirmation-light")
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithText("12 illustrative cookies").assertExists()
+        compose.onNodeWithText("Signed in").assertExists()
+        compose.onNodeWithTag("cloudBrowser.cookies.clearSiteData").performClick()
+        compose.onNodeWithTag("cloudBrowser.cookies.confirmClear").performClick()
+        compose.onNodeWithText("0 illustrative cookies").assertExists()
+        compose.onNodeWithText("Signed out").assertExists()
+        capture("CloudBrowser-cookies-cleared-light")
+        compose.activityRule.scenario.recreate()
+        waitForTag("cloudBrowser.cookies")
+        compose.onNodeWithText("0 illustrative cookies").assertExists()
+        compose.onNodeWithText("Signed out").assertExists()
+        capture("CloudBrowser-cookies-cleared-recreated-light")
+        systemBack()
+        waitForTag("cloudBrowser.siteDetail")
+        compose.onNodeWithTag("cloudBrowser.siteDetail.login").performScrollTo().performClick()
+        compose.onNodeWithText("prototype@example.com").assertExists()
+        compose.onNodeWithText("•".repeat(12)).assertExists()
+        capture("CloudBrowser-login-retained-light")
     }
 
     private fun captureDestinationAppearance(dark: Boolean = false, largeText: Boolean = false) {

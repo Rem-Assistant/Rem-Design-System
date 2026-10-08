@@ -247,6 +247,119 @@ final class SettingsPlaygroundUITests: XCTestCase {
         navigateBack(from: "Models", to: "Agent settings")
     }
 
+    private func cloudField(_ identifier: String, secure: Bool = false) -> XCUIElement {
+        let type: XCUIElement.ElementType = secure ? .secureTextField : .textField
+        let direct = app.descendants(matching: type).matching(identifier: identifier).firstMatch
+        if direct.exists { return direct }
+        return app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+            .descendants(matching: type).firstMatch
+    }
+    private func editCloudLogin(_ field: String) {
+        let row = app.descendants(matching: .any)
+            .matching(identifier: "cloudBrowser.savedLogin.edit\(field)").firstMatch
+        reveal(row)
+        row.buttons.firstMatch.tap()
+    }
+    private func openCloudSites() {
+        openDestination("cloudBrowser", title: "Cloud browser")
+        let sites = app.buttons["cloudBrowser.seeAllSites"]
+        reveal(sites)
+        sites.tap()
+        XCTAssertTrue(app.navigationBars["Sites"].waitForExistence(timeout: 3))
+    }
+
+    func testCloudAddSiteEmptyFocusAndBackDiscards() {
+        openCloudSites()
+        capture("CloudBrowser-sites-light")
+        app.buttons["cloudBrowser.sites.addSite"].tap()
+        XCTAssertTrue(app.navigationBars["Add site"].waitForExistence(timeout: 3))
+        let save = app.buttons["cloudBrowser.addSite.save"]
+        XCTAssertFalse(save.isEnabled)
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        capture("CloudBrowser-add-site-empty-light")
+        let domain = cloudField("cloudBrowser.addSite.domainField")
+        domain.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        capture("CloudBrowser-add-site-focused-light")
+        domain.typeText("discarded.example")
+        XCTAssertTrue(save.isEnabled)
+        navigateBack(from: "Add site", to: "Sites")
+        XCTAssertFalse(app.buttons["cloudBrowser.site.discarded.example"].exists)
+        for site in ["github.com", "notion.so", "linear.app", "openai.com"] {
+            XCTAssertTrue(app.buttons["cloudBrowser.site.\(site)"].exists)
+        }
+        app.buttons["cloudBrowser.sites.addSite"].tap()
+        XCTAssertTrue(app.navigationBars["Add site"].waitForExistence(timeout: 3))
+        XCTAssertFalse(save.isEnabled)
+        XCTAssertFalse((cloudField("cloudBrowser.addSite.domainField").value as? String ?? "").contains("discarded.example"))
+        navigateBack(from: "Add site", to: "Sites")
+        navigateBack(from: "Sites", to: "Cloud browser")
+        navigateBack(from: "Cloud browser", to: "Agent settings")
+    }
+
+    func testCloudSavedLoginCancelSaveMaskAndCookieClearKeepsLogin() {
+        openCloudSites()
+        app.buttons["cloudBrowser.site.github.com"].tap()
+        XCTAssertTrue(app.navigationBars["github.com"].waitForExistence(timeout: 3))
+        capture("CloudBrowser-site-detail-light")
+        app.buttons["cloudBrowser.siteDetail.login"].tap()
+        XCTAssertTrue(app.navigationBars["Saved login"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["samuel@example.com"].exists)
+        capture("CloudBrowser-saved-login-light")
+        editCloudLogin("Username")
+        let username = cloudField("cloudBrowser.savedLogin.usernameField")
+        username.tap()
+        username.typeText(".discarded")
+        capture("CloudBrowser-login-edit-username-light")
+        app.buttons["cloudBrowser.savedLogin.cancel"].tap()
+        XCTAssertTrue(app.staticTexts["samuel@example.com"].exists)
+        XCTAssertFalse(app.buttons["cloudBrowser.savedLogin.save"].exists)
+        editCloudLogin("Username")
+        let current = cloudField("cloudBrowser.savedLogin.usernameField")
+        current.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).tap()
+        current.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "samuel@example.com".count))
+        current.typeText("prototype@example.com")
+        app.buttons["cloudBrowser.savedLogin.save"].tap()
+        XCTAssertTrue(app.staticTexts["prototype@example.com"].waitForExistence(timeout: 3))
+        editCloudLogin("Password")
+        let password = cloudField("cloudBrowser.savedLogin.passwordField", secure: true)
+        XCTAssertTrue(password.exists, "Password editor must use a native secure field")
+        XCTAssertFalse(app.buttons["cloudBrowser.savedLogin.save"].isEnabled)
+        password.tap()
+        password.typeText("prototype-password-placeholder")
+        XCTAssertFalse(app.staticTexts["prototype-password-placeholder"].exists)
+        capture("CloudBrowser-login-edit-password-masked-light")
+        app.buttons["cloudBrowser.savedLogin.save"].tap()
+        XCTAssertTrue(app.staticTexts[String(repeating: "•", count: 12)].exists)
+        editCloudLogin("Password")
+        XCTAssertFalse(app.buttons["cloudBrowser.savedLogin.save"].isEnabled)
+        app.buttons["cloudBrowser.savedLogin.cancel"].tap()
+        navigateBack(from: "Saved login", to: "github.com")
+        let cookies = app.buttons["cloudBrowser.siteDetail.cookies"]
+        reveal(cookies)
+        cookies.tap()
+        XCTAssertTrue(app.navigationBars["Cookies & sessions"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["12 illustrative cookies"].exists)
+        capture("CloudBrowser-cookies-light")
+        let clear = app.buttons["cloudBrowser.cookies.clearSiteData"]
+        reveal(clear)
+        clear.tap()
+        XCTAssertTrue(app.buttons["cloudBrowser.cookies.confirmClear"].waitForExistence(timeout: 3))
+        capture("CloudBrowser-cookies-confirmation-light")
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["12 illustrative cookies"].exists)
+        XCTAssertTrue(app.staticTexts["Signed in"].exists)
+        clear.tap()
+        app.buttons["cloudBrowser.cookies.confirmClear"].tap()
+        XCTAssertTrue(app.staticTexts["0 illustrative cookies"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Signed out"].exists)
+        capture("CloudBrowser-cookies-cleared-light")
+        navigateBack(from: "Cookies & sessions", to: "github.com")
+        app.buttons["cloudBrowser.siteDetail.login"].tap()
+        XCTAssertTrue(app.staticTexts["prototype@example.com"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts[String(repeating: "•", count: 12)].exists)
+    }
+
     private func captureDestinationAppearance(arguments: [String], suffix: String) {
         for (route, title, name, finalControl) in [
             ("pairedDevices", "Paired devices", "PairedDevices", "pairedDevices.peer.mac-studio"),
