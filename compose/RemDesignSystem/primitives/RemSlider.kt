@@ -38,6 +38,7 @@ fun RemSlider(
         colors = SliderDefaults.colors(
             thumbColor = colors.brandBlue,
             activeTrackColor = colors.brandBlue,
+            inactiveTrackColor = colors.fillTertiary,
         ),
     )
 }

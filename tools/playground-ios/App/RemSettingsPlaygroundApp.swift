@@ -90,6 +90,10 @@ struct AgentPreview: View {
         }.background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle("Agent settings").navigationBarTitleDisplayMode(.inline)
             .task(id: attempt) {
+                // Native pushes can reattach this host's task. Once loaded, keep the
+                // source links stable while a child destination is being presented.
+                print("Settings loader: attempt=\(attempt), status=\(status)")
+                guard status != "ready" else { return }
                 status = "loading"
                 do {
                     try await Task.sleep(for: .seconds(fixture == .slow && attempt == 0 ? 10 : 0.2))

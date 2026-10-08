@@ -2,7 +2,7 @@
 # Hosted-only native journey execution with a targeted main-thread hang diagnostic.
 set -euo pipefail
 [[ "${GITHUB_ACTIONS:-}" == true ]] || { echo 'Run this helper on GitHub Actions only.' >&2; exit 2; }
-test_args=()
+test_args=(test)
 if [[ -n "${IOS_TEST:-}" ]]; then
   [[ "$IOS_TEST" =~ ^test[A-Za-z0-9_]+$ ]] || { echo 'Invalid iOS test method.' >&2; exit 2; }
   test_args+=("-only-testing:RemSettingsPlaygroundUITests/SettingsPlaygroundUITests/$IOS_TEST")
@@ -25,7 +25,7 @@ fi
 sampler_pid=$!
 trap 'kill "$sampler_pid" 2>/dev/null || true' EXIT
 
-xcodebuild test \
+xcodebuild "${test_args[@]}" \
   -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
   -scheme RemSettingsPlayground \
   -sdk iphonesimulator \
@@ -33,6 +33,5 @@ xcodebuild test \
   -parallel-testing-enabled NO \
   -test-timeouts-enabled YES \
   -maximum-test-execution-time-allowance 300 \
-  "${test_args[@]}" \
   -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
   CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log"
