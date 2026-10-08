@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
 
 /**
  * In-memory fixture state behind [SettingsCloudBrowserScreen] — the Compose twin of the SwiftUI
@@ -85,7 +86,7 @@ class CloudBrowserState(
 
     /** Add a fixture login to one site, or return null when validation fails. */
     fun addLogin(siteId: String, username: String, password: String): String? {
-        if (!canAddLogin(username, password)) return null
+        if (site(siteId) == null || !canAddLogin(username, password)) return null
         val login = CloudSavedLogin(nextId("login"), username.trim(), password)
         replace(siteId) { it.copy(logins = it.logins + login) }
         return login.id
@@ -157,5 +158,76 @@ class CloudBrowserState(
         /** Both "Add login" fields must be nonempty fixture data. */
         fun canAddLogin(username: String, password: String): Boolean =
             username.trim().isNotEmpty() && password.isNotEmpty()
+    }
+}
+
+/** Activity/navigation-owner retained fixture session. No SavedStateHandle or serialization: even
+ * passwords entered in drafts remain only in memory and disappear with this owner/process. */
+class CloudBrowserViewModel : ViewModel() {
+    val state = CloudBrowserState()
+    val stack = mutableStateListOf<CloudNav>(CloudNav.Root)
+    val addSiteDraft = CloudSiteDraft()
+    val addLoginDraft = CloudLoginDraft()
+    val loginEditor = CloudLoginEditor()
+
+    fun push(route: CloudNav) {
+        clearDrafts()
+        stack.add(route)
+    }
+
+    /** Returns false at root so the host can leave this destination. */
+    fun pop(): Boolean {
+        clearDrafts()
+        if (stack.size == 1) return false
+        stack.removeAt(stack.lastIndex)
+        return true
+    }
+
+    private fun clearDrafts() {
+        addSiteDraft.clear()
+        addLoginDraft.clear()
+        loginEditor.cancel()
+    }
+}
+
+sealed interface CloudNav {
+    data object Root : CloudNav
+    data object Sites : CloudNav
+    data object AddSite : CloudNav
+    data class SiteDetail(val siteId: String) : CloudNav
+    data class AddLogin(val siteId: String) : CloudNav
+    data class SavedLogin(val siteId: String, val loginId: String) : CloudNav
+    data class Cookies(val siteId: String) : CloudNav
+}
+
+class CloudSiteDraft {
+    var url by mutableStateOf("")
+    var permission by mutableStateOf(CloudSitePermission.Ask)
+    var username by mutableStateOf("")
+    var password by mutableStateOf("")
+    fun clear() { url = ""; permission = CloudSitePermission.Ask; username = ""; password = "" }
+}
+
+class CloudLoginDraft {
+    var username by mutableStateOf("")
+    var password by mutableStateOf("")
+    fun clear() { username = ""; password = "" }
+}
+
+class CloudLoginEditor {
+    // 0 = view, 1 = username, 2 = password; password editing always starts empty.
+    var field by mutableStateOf(0)
+        private set
+    var draft by mutableStateOf("")
+    fun startUsername(username: String) { draft = username; field = 1 }
+    fun startPassword() { draft = ""; field = 2 }
+    fun cancel() { draft = ""; field = 0 }
+    fun save(state: CloudBrowserState, siteId: String, loginId: String) {
+        if (draft.trim().isEmpty()) return
+        when (field) {
+            1 -> state.updateUsername(siteId, loginId, draft)
+            2 -> state.updatePassword(siteId, loginId, draft)
+        }
+        cancel()
     }
 }

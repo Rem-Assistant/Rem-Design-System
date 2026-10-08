@@ -2,11 +2,16 @@ package com.rem.designsystem
 
 import com.rem.designsystem.screens.CloudBrowserState
 import com.rem.designsystem.screens.CloudSitePermission
+import com.rem.designsystem.screens.CloudBrowserViewModel
+import com.rem.designsystem.screens.CloudNav
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 /**
@@ -83,6 +88,69 @@ class SettingsCloudBrowserFixtureTest {
         val id = s.addLogin("linear", "dev@linear.app", "pw")
         assertNotNull(id)
         assertEquals(1, s.site("linear")!!.logins.size)
+    }
+
+    @Test fun addLoginRejectsMissingSiteWithoutMutatingOrConsumingId() {
+        val s = state()
+        val before = s.sites.toList()
+        assertNull(s.addLogin("absent", "fixture@example.com", "fixture-only"))
+        assertEquals(before, s.sites.toList())
+        assertEquals("login-1", s.addLogin("linear", "fixture@example.com", "fixture-only"))
+    }
+
+    @Test fun retainedOwnerKeepsSitesIdsCounterStackAndInMemoryDrafts() {
+        val store = ViewModelStore()
+        try {
+            fun session(): CloudBrowserViewModel =
+                ViewModelProvider(store, ViewModelProvider.NewInstanceFactory()).get(CloudBrowserViewModel::class.java)
+            val first = session()
+            val id = first.state.addSite("fixture.example", CloudSitePermission.Allow)!!
+            first.push(CloudNav.AddLogin(id))
+            first.addLoginDraft.username = "fixture@example.com"
+            first.addLoginDraft.password = "memory-only-fixture"
+            // A recreated host retrieves from its retained store; no Bundle or SavedStateHandle.
+            val recreated = session()
+            assertSame(first, recreated)
+            assertEquals(CloudNav.AddLogin(id), recreated.stack.last())
+            assertEquals("fixture.example", recreated.state.site(id)!!.domain)
+            assertEquals("memory-only-fixture", recreated.addLoginDraft.password)
+            assertEquals("login-2", recreated.state.addLogin(id, "fixture@example.com", "fixture-only"))
+        } finally { store.clear() }
+    }
+
+    @Test fun backDiscardsDraftAndPopsExactlyOneRoute() {
+        val session = CloudBrowserViewModel()
+        session.push(CloudNav.Sites)
+        session.push(CloudNav.AddSite)
+        session.addSiteDraft.url = "discard.example"
+        session.addSiteDraft.password = "discard-fixture"
+        assertTrue(session.pop())
+        assertEquals(CloudNav.Sites, session.stack.last())
+        assertEquals("", session.addSiteDraft.password)
+        assertEquals("", session.addSiteDraft.url)
+        assertEquals(4, session.state.sites.size)
+        assertTrue(session.pop())
+        assertFalse(session.pop())
+        assertEquals(listOf(CloudNav.Root), session.stack.toList())
+    }
+
+    @Test fun editCancelAndSaveClearDraftWithoutPoppingSavedLogin() {
+        val session = CloudBrowserViewModel()
+        session.push(CloudNav.SavedLogin("github", "github-login"))
+        val editor = session.loginEditor
+        editor.startPassword()
+        editor.draft = "discard-fixture"
+        editor.cancel()
+        assertEquals("fixture-only", session.state.site("github")!!.logins.first().password)
+        assertEquals("", editor.draft)
+        assertEquals(0, editor.field)
+        assertEquals(CloudNav.SavedLogin("github", "github-login"), session.stack.last())
+        editor.startPassword()
+        editor.draft = "updated-fixture"
+        editor.save(session.state, "github", "github-login")
+        assertEquals("updated-fixture", session.state.site("github")!!.logins.first().password)
+        assertEquals("", editor.draft)
+        assertEquals(0, editor.field)
     }
 
     @Test fun editUsernameUpdatesOnlySelectedCredential() {

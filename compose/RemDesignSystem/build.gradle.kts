@@ -185,6 +185,8 @@ dependencies {
     // activity-compose supplies BackHandler, used by nested-stack destinations (e.g. Paired devices
     // list ↔ detail) to own their own system-back behaviour rather than exiting to the host.
     implementation("androidx.activity:activity-compose:1.9.2")
+    // Retain Cloud browser fixture state in memory through Activity recreation; never save credentials.
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")

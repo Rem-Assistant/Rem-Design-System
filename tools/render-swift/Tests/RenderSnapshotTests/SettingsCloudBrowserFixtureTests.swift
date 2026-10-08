@@ -1,9 +1,8 @@
 import XCTest
 @testable import RemDesignSystem
 
-/// Fixture-state proof for the SwiftUI Cloud browser destination. These assert the scope/cancel/save
-/// rules the authored masters require, without a simulator — the same contract the Compose
-/// `SettingsCloudBrowserFixtureTest` proves on Android.
+/// Fixture-state coverage for Cloud browser mutation scope and validation. Native focus, cancel,
+/// navigation and confirmation journeys require separate runtime UI evidence.
 @MainActor
 final class SettingsCloudBrowserFixtureTests: XCTestCase {
 
@@ -75,6 +74,13 @@ final class SettingsCloudBrowserFixtureTests: XCTestCase {
         XCTAssertTrue(CloudBrowserModel.canAddLogin(username: "dev@linear.app", password: "pw"))
         XCTAssertNotNil(model.addLogin(siteID: linear, username: "dev@linear.app", password: "pw"))
         XCTAssertEqual(model.site(linear)!.logins.count, 1)
+    }
+
+    func testAddLoginRejectsMissingSiteWithoutMutation() {
+        let model = CloudBrowserModel()
+        let before = model.sites
+        XCTAssertNil(model.addLogin(siteID: UUID(), username: "fixture@example.com", password: "fixture-only"))
+        XCTAssertEqual(model.sites, before)
     }
 
     func testEditUpdatesOnlySelectedCredential() {

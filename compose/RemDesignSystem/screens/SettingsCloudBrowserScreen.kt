@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -12,13 +13,16 @@ import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,40 +53,30 @@ import com.rem.designsystem.tokens.RemTypography
  * beyond the in-memory [CloudBrowserState] for this playground session.
  */
 @Composable
-fun SettingsCloudBrowserScreen(onBack: () -> Unit) {
-    val state = remember { CloudBrowserState() }
-    val stack = remember { mutableStateListOf<CloudNav>(CloudNav.Root) }
-    fun push(nav: CloudNav) { stack.add(nav) }
-    fun pop() { if (stack.size > 1) stack.removeAt(stack.lastIndex) else onBack() }
+fun SettingsCloudBrowserScreen(onBack: () -> Unit, session: CloudBrowserViewModel = viewModel()) {
+    val state = session.state
+    val stack = session.stack
+    fun push(nav: CloudNav) { session.push(nav) }
+    fun pop() { if (!session.pop()) onBack() }
+    BackHandler { pop() }
 
     when (val top = stack.last()) {
-        CloudNav.Root -> CloudRootScreen(state, onBack = onBack,
+        CloudNav.Root -> CloudRootScreen(state, onBack = ::pop,
             onOpenSite = { push(CloudNav.SiteDetail(it)) },
             onSeeAll = { push(CloudNav.Sites) },
             onAddSite = { push(CloudNav.AddSite) })
         CloudNav.Sites -> CloudSitesScreen(state, onBack = ::pop,
             onOpenSite = { push(CloudNav.SiteDetail(it)) }, onAddSite = { push(CloudNav.AddSite) })
-        CloudNav.AddSite -> CloudAddSiteScreen(state, onBack = ::pop, onSaved = ::pop)
+        CloudNav.AddSite -> CloudAddSiteScreen(state, session.addSiteDraft, onBack = ::pop, onSaved = ::pop)
         is CloudNav.SiteDetail -> CloudSiteDetailScreen(state, top.siteId, onBack = ::pop,
             onOpenLogin = { push(CloudNav.SavedLogin(top.siteId, it)) },
             onAddLogin = { push(CloudNav.AddLogin(top.siteId)) },
             onCookies = { push(CloudNav.Cookies(top.siteId)) })
-        is CloudNav.AddLogin -> CloudAddLoginScreen(state, top.siteId, onBack = ::pop, onSaved = ::pop)
-        is CloudNav.SavedLogin -> CloudSavedLoginScreen(state, top.siteId, top.loginId,
+        is CloudNav.AddLogin -> CloudAddLoginScreen(state, session.addLoginDraft, top.siteId, onBack = ::pop, onSaved = ::pop)
+        is CloudNav.SavedLogin -> CloudSavedLoginScreen(state, session.loginEditor, top.siteId, top.loginId,
             onBack = ::pop, onRemoved = ::pop)
         is CloudNav.Cookies -> CloudCookiesScreen(state, top.siteId, onBack = ::pop)
     }
-}
-
-/** The internal navigation stack entries owned by [SettingsCloudBrowserScreen]. */
-sealed interface CloudNav {
-    data object Root : CloudNav
-    data object Sites : CloudNav
-    data object AddSite : CloudNav
-    data class SiteDetail(val siteId: String) : CloudNav
-    data class AddLogin(val siteId: String) : CloudNav
-    data class SavedLogin(val siteId: String, val loginId: String) : CloudNav
-    data class Cookies(val siteId: String) : CloudNav
 }
 
 // MARK: - Screens
@@ -109,7 +103,7 @@ private fun CloudRootScreen(state: CloudBrowserState, onBack: () -> Unit,
             CloudRowDivider()
             CloudLinkRow("See all sites", onClick = onSeeAll, testTag = "cloudBrowser.seeAllSites")
         }
-        CloudSection(footer = "Saved passwords remain until you remove them.") {
+        CloudSection(header = "Browser data", footer = "Saved passwords remain until you remove them.") {
             CloudDestructiveRow("Clear all site data", "Cookies and sessions across every site.",
                 onClick = { confirmClearAll = true }, testTag = "cloudBrowser.clearAllData")
         }
@@ -126,9 +120,9 @@ private fun CloudRootScreen(state: CloudBrowserState, onBack: () -> Unit,
 @Composable
 private fun CloudSitesScreen(state: CloudBrowserState, onBack: () -> Unit,
                              onOpenSite: (String) -> Unit, onAddSite: () -> Unit) {
-    CloudScaffold("Sites", onBack = onBack, testTag = "cloudBrowser.sitesList") {
-        CloudSection(header = "Sites", headerAction = "Add site", onHeaderAction = onAddSite,
-            headerActionTag = "cloudBrowser.sites.addSite") {
+    CloudScaffold("Sites", onBack = onBack, testTag = "cloudBrowser.sitesList",
+        actionTitle = "Add", actionTag = "cloudBrowser.sites.addSite", onAction = onAddSite) {
+        CloudSection(header = "Sites") {
             state.sites.forEachIndexed { index, site ->
                 CloudSiteRow(site, onClick = { onOpenSite(site.id) })
                 if (index != state.sites.lastIndex) CloudRowDivider()
@@ -138,29 +132,26 @@ private fun CloudSitesScreen(state: CloudBrowserState, onBack: () -> Unit,
 }
 
 @Composable
-private fun CloudAddSiteScreen(state: CloudBrowserState, onBack: () -> Unit, onSaved: () -> Unit) {
-    var url by rememberSaveable { mutableStateOf("") }
-    var permission by remember { mutableStateOf(CloudSitePermission.Ask) }
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    val canSave = CloudBrowserState.canAddSite(url)
+private fun CloudAddSiteScreen(state: CloudBrowserState, form: CloudSiteDraft,
+                               onBack: () -> Unit, onSaved: () -> Unit) {
+    val canSave = CloudBrowserState.canAddSite(form.url)
     CloudScaffold("Add site", onBack = onBack, testTag = "cloudBrowser.addSiteForm",
         saveEnabled = canSave, saveTag = "cloudBrowser.addSite.save",
-        onSave = { if (state.addSite(url, permission, username, password) != null) onSaved() }) {
+        onSave = { if (state.addSite(form.url, form.permission, form.username, form.password) != null) onSaved() }) {
         CloudSection {
-            CloudUrlField("Enter domain or URL", "https://example.com", url, { url = it },
-                autofocus = true, testTag = "cloudBrowser.addSite.domainField")
+            CloudUrlField("Enter domain or URL", "https://example.com", form.url, { form.url = it },
+                autofocus = false, testTag = "cloudBrowser.addSite.domainField")
         }
         CloudSection(header = "Access") {
             CloudPermissionRow("Permission", "Choose how Rem should handle this site.",
-                selected = permission, onSelect = { permission = it })
+                selected = form.permission, onSelect = { form.permission = it })
         }
         CloudSection(header = "Login details",
             footer = "Save a login now, or add one later from the site's detail screen.") {
-            CloudInputField("Username or email (optional)", username, { username = it },
+            CloudInputField("Username or email (optional)", form.username, { form.username = it },
                 testTag = "cloudBrowser.addSite.username")
             CloudRowDivider()
-            CloudInputField("Password (optional)", password, { password = it }, secure = true,
+            CloudInputField("Password (optional)", form.password, { form.password = it }, secure = true,
                 testTag = "cloudBrowser.addSite.password")
         }
     }
@@ -204,38 +195,38 @@ private fun CloudSiteDetailScreen(state: CloudBrowserState, siteId: String, onBa
 }
 
 @Composable
-private fun CloudAddLoginScreen(state: CloudBrowserState, siteId: String, onBack: () -> Unit, onSaved: () -> Unit) {
+private fun CloudAddLoginScreen(state: CloudBrowserState, form: CloudLoginDraft, siteId: String,
+                                onBack: () -> Unit, onSaved: () -> Unit) {
     val domain = state.site(siteId)?.domain ?: "this site"
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    val canSave = CloudBrowserState.canAddLogin(username, password)
+    val canSave = CloudBrowserState.canAddLogin(form.username, form.password)
     CloudScaffold("Add login", onBack = onBack, testTag = "cloudBrowser.addLoginForm",
         saveEnabled = canSave, saveTag = "cloudBrowser.addLogin.save",
-        onSave = { if (state.addLogin(siteId, username, password) != null) onSaved() }) {
+        onSave = { if (state.addLogin(siteId, form.username, form.password) != null) onSaved() }) {
         CloudSection(header = "Website") {
             CloudValueRow(domain, "Login will be available only for this site.")
         }
         CloudSection(header = "Login details",
             footer = "Rem uses this login only when you authorize access to $domain.") {
-            CloudInputField("Username or email", username, { username = it }, autofocus = true,
+            CloudInputField("Username or email", form.username, { form.username = it }, labelled = true,
                 testTag = "cloudBrowser.addLogin.username")
             CloudRowDivider()
-            CloudInputField("Password", password, { password = it }, secure = true,
+            CloudInputField("Password", form.password, { form.password = it }, secure = true, labelled = true,
                 testTag = "cloudBrowser.addLogin.password")
         }
     }
 }
 
 @Composable
-private fun CloudSavedLoginScreen(state: CloudBrowserState, siteId: String, loginId: String,
+private fun CloudSavedLoginScreen(state: CloudBrowserState, editor: CloudLoginEditor, siteId: String, loginId: String,
                                   onBack: () -> Unit, onRemoved: () -> Unit) {
     val site = state.site(siteId)
     val login = site?.logins?.firstOrNull { it.id == loginId }
     if (site == null || login == null) { LaunchedEffect(Unit) { onBack() }; return }
 
-    // editing: 0 = none, 1 = username, 2 = password
-    var editing by remember { mutableStateOf(0) }
-    var draft by remember { mutableStateOf("") }
+    val editing = editor.field
+    val draft = editor.draft
+    // Registered after the destination handler: Back cancels an edit before popping the route.
+    BackHandler(enabled = editing != 0) { editor.cancel() }
     var confirmRemove by remember { mutableStateOf(false) }
     val canSave = draft.trim().isNotEmpty()
 
@@ -246,19 +237,19 @@ private fun CloudSavedLoginScreen(state: CloudBrowserState, siteId: String, logi
         CloudSection(header = "Login details",
             footer = "Illustrative values. Saved credentials require secure storage and explicit authorization.") {
             if (editing == 1) {
-                CloudEditField("Username or email", "Username or email", draft, { draft = it },
+                CloudEditField("Username or email", "Username or email", draft, { editor.draft = it },
                     testTag = "cloudBrowser.savedLogin.usernameField")
             } else {
                 CloudEditRow("Username or email", login.username, showPencil = editing == 0,
-                    onEdit = { draft = login.username; editing = 1 }, testTag = "cloudBrowser.savedLogin.editUsername")
+                    onEdit = { editor.startUsername(login.username) }, testTag = "cloudBrowser.savedLogin.editUsername")
             }
             CloudRowDivider()
             if (editing == 2) {
-                CloudEditField("Password", "Password", draft, { draft = it }, secure = true,
+                CloudEditField("Password", "Password", draft, { editor.draft = it }, secure = true,
                     testTag = "cloudBrowser.savedLogin.passwordField")
             } else {
                 CloudEditRow("Password", login.maskedPassword, showPencil = editing == 0,
-                    onEdit = { draft = ""; editing = 2 }, testTag = "cloudBrowser.savedLogin.editPassword")
+                    onEdit = { editor.startPassword() }, testTag = "cloudBrowser.savedLogin.editPassword")
             }
         }
         CloudSection {
@@ -271,13 +262,9 @@ private fun CloudSavedLoginScreen(state: CloudBrowserState, siteId: String, logi
         CloudScaffold("Saved login", onBack = onBack, testTag = "cloudBrowser.savedLogin", content = content)
     } else {
         CloudEditScaffold("Saved login",
-            onCancel = { editing = 0 }, cancelTag = "cloudBrowser.savedLogin.cancel",
+            onCancel = { editor.cancel() }, cancelTag = "cloudBrowser.savedLogin.cancel",
             saveEnabled = canSave, saveTag = "cloudBrowser.savedLogin.save",
-            onSave = {
-                if (editing == 1) state.updateUsername(siteId, loginId, draft)
-                else state.updatePassword(siteId, loginId, draft)
-                editing = 0
-            }, content = content)
+            onSave = { editor.save(state, siteId, loginId) }, content = content)
     }
 
     if (confirmRemove) {
@@ -321,6 +308,7 @@ private fun CloudCookiesScreen(state: CloudBrowserState, siteId: String, onBack:
 private fun CloudScaffold(
     title: String, onBack: () -> Unit, testTag: String,
     saveEnabled: Boolean? = null, saveTag: String = "", onSave: () -> Unit = {},
+    actionTitle: String? = null, actionTag: String = "", onAction: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = RemColors.current
@@ -333,6 +321,11 @@ private fun CloudScaffold(
                 }
             },
             actions = {
+                if (actionTitle != null) {
+                    TextButton(onClick = onAction, modifier = Modifier.testTag(actionTag)) {
+                        Text(actionTitle, style = RemTypography.body, color = colors.brandBlue)
+                    }
+                }
                 if (saveEnabled != null) {
                     TextButton(onClick = onSave, enabled = saveEnabled, modifier = Modifier.testTag(saveTag)) {
                         Text("Save", style = RemTypography.bodyBold,
@@ -512,16 +505,17 @@ private fun CloudEditRow(title: String, value: String, showPencil: Boolean, onEd
 @Composable
 private fun CloudUrlField(label: String, example: String, value: String, onValueChange: (String) -> Unit,
                           autofocus: Boolean, testTag: String) {
-    val showLabel = value.isNotEmpty()
-    CloudFieldShell(label = if (showLabel) label else null,
-        placeholder = if (showLabel) example else label, value = value, onValueChange = onValueChange,
+    CloudFieldShell(label = null, floatingLabel = label, focusedPlaceholder = example,
+        placeholder = label, value = value, onValueChange = onValueChange,
         keyboard = KeyboardType.Uri, autofocus = autofocus, testTag = testTag)
 }
 
 @Composable
 private fun CloudInputField(placeholder: String, value: String, onValueChange: (String) -> Unit,
-                            secure: Boolean = false, autofocus: Boolean = false, testTag: String) {
+                            secure: Boolean = false, autofocus: Boolean = false, labelled: Boolean = false,
+                            testTag: String) {
     CloudFieldShell(label = null, placeholder = placeholder, value = value, onValueChange = onValueChange,
+        floatingLabel = if (labelled) placeholder else null, demoteFilledValue = labelled,
         secure = secure, autofocus = autofocus, testTag = testTag)
 }
 
@@ -538,24 +532,36 @@ private fun CloudFieldShell(
     label: String?, placeholder: String, value: String, onValueChange: (String) -> Unit,
     secure: Boolean = false, keyboard: KeyboardType = KeyboardType.Text,
     autofocus: Boolean = false, testTag: String,
+    floatingLabel: String? = null, focusedPlaceholder: String = "", demoteFilledValue: Boolean = false,
 ) {
     val colors = RemColors.current
+    var focused by remember { mutableStateOf(false) }
+    val showFloatingLabel = floatingLabel != null && (focused || value.isNotEmpty())
+    val displayLabel = if (showFloatingLabel) floatingLabel else label
+    val filledResting = demoteFilledValue && !focused && value.isNotEmpty()
+    val displayPlaceholder = if (showFloatingLabel) focusedPlaceholder else placeholder
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
     if (autofocus) LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Column(Modifier.fillMaxWidth().heightIn(min = 60.dp)
         .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md),
         verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        if (label != null) Text(label, style = RemTypography.footnote, color = colors.labelSecondary)
+        if (displayLabel != null) Text(displayLabel,
+            style = if (filledResting) RemTypography.body else RemTypography.footnote,
+            color = if (filledResting) colors.labelPrimary else colors.labelSecondary)
         BasicTextField(
             value = value, onValueChange = onValueChange, singleLine = true,
-            textStyle = RemTypography.body.copy(color = colors.labelPrimary),
+            textStyle = if (filledResting) RemTypography.footnote.copy(color = colors.labelSecondary)
+                else RemTypography.body.copy(color = colors.labelPrimary),
             cursorBrush = SolidColor(colors.brandBlue),
             visualTransformation = if (secure) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = if (secure) KeyboardType.Password else keyboard,
                 imeAction = ImeAction.Done),
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester).testTag(testTag),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+                .onFocusChanged { focused = it.isFocused }.testTag(testTag),
             decorationBox = { inner ->
-                if (value.isEmpty()) Text(placeholder, style = RemTypography.body, color = colors.labelTertiary)
+                if (value.isEmpty()) Text(displayPlaceholder, style = RemTypography.body, color = colors.labelTertiary)
                 inner()
             },
         )
@@ -616,5 +622,6 @@ private fun CloudConfirm(title: String, message: String, confirmTitle: String, c
 @Preview(name = "SettingsCloudBrowserScreen", showBackground = true, widthDp = 402, heightDp = 860)
 @Composable
 private fun SettingsCloudBrowserScreenPreview() {
-    RemTheme { SettingsCloudBrowserScreen(onBack = {}) }
+    val session = remember { CloudBrowserViewModel() }
+    RemTheme { SettingsCloudBrowserScreen(onBack = {}, session = session) }
 }

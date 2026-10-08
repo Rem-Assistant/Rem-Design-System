@@ -71,7 +71,7 @@ private struct CloudBrowserRootList: View {
                                title: "Clear all site data", tint: .red)
                 }
                 .accessibilityIdentifier("cloudBrowser.clearAllData")
-            } footer: {
+            } header: { Text("Browser data") } footer: {
                 Text("Saved passwords remain until you remove them.")
             }
         }
@@ -109,15 +109,18 @@ private struct CloudSitesList: View {
                 ForEach(model.sites) { site in
                     CloudSiteRow(site: site) { openedSiteID = site.id }
                 }
-            } header: {
-                CloudSectionHeader("Sites", actionTitle: "Add site") { showAddSite = true }
-                    .accessibilityIdentifier("cloudBrowser.sites.addSite")
-            }
+            } header: { Text("Sites") }
         }
         .cloudListStyle()
         .navigationTitle("Sites")
         .inlineNavTitle()
         .accessibilityIdentifier("cloudBrowser.sitesList")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Add") { showAddSite = true }
+                    .accessibilityIdentifier("cloudBrowser.sites.addSite")
+            }
+        }
         .navigationDestination(item: $openedSiteID) { id in
             CloudSiteDetail(model: model, siteID: id)
         }
@@ -178,7 +181,7 @@ private struct CloudAddSiteForm: View {
                 .accessibilityIdentifier("cloudBrowser.addSite.save")
             }
         }
-        .onAppear { domainFocused = true }
+        .onDisappear { urlDraft = ""; username = ""; password = "" }
     }
 }
 
@@ -268,7 +271,6 @@ private struct CloudAddLoginForm: View {
 
     @State private var username = ""
     @State private var password = ""
-    @FocusState private var usernameFocused: Bool
 
     private var domain: String { model.site(siteID)?.domain ?? "this site" }
     private var canSave: Bool { CloudBrowserModel.canAddLogin(username: username, password: password) }
@@ -279,9 +281,9 @@ private struct CloudAddLoginForm: View {
                 CloudLabel("Login will be available only for this site.", title: domain)
             } header: { Text("Website") }
             Section {
-                CloudTextField(placeholder: "Username or email", text: $username, focused: $usernameFocused)
+                CloudLoginField(label: "Username or email", text: $username)
                     .accessibilityIdentifier("cloudBrowser.addLogin.username")
-                CloudSecureField(placeholder: "Password", text: $password)
+                CloudLoginField(label: "Password", text: $password, secure: true)
                     .accessibilityIdentifier("cloudBrowser.addLogin.password")
             } header: { Text("Login details") } footer: {
                 Text("Rem uses this login only when you authorize access to \(domain).")
@@ -302,7 +304,7 @@ private struct CloudAddLoginForm: View {
                 .accessibilityIdentifier("cloudBrowser.addLogin.save")
             }
         }
-        .onAppear { usernameFocused = true }
+        .onDisappear { username = ""; password = "" }
     }
 }
 
@@ -353,7 +355,7 @@ private struct CloudSavedLoginView: View {
                 .toolbar {
                     if editing != .none {
                         ToolbarItem(placement: .cancellationAction) {
-                            Button("Cancel") { editing = .none }
+                            Button("Cancel") { cancelEditing() }
                                 .accessibilityIdentifier("cloudBrowser.savedLogin.cancel")
                         }
                         ToolbarItem(placement: .confirmationAction) {
@@ -364,6 +366,7 @@ private struct CloudSavedLoginView: View {
                     }
                 }
                 .onChange(of: editing) { _, newValue in fieldFocused = newValue != .none }
+                .onDisappear { cancelEditing() }
                 .confirmationDialog("Remove saved login?", isPresented: $confirmRemove,
                                     titleVisibility: .visible) {
                     Button("Remove login", role: .destructive) {
@@ -416,7 +419,13 @@ private struct CloudSavedLoginView: View {
         case .password: model.updatePassword(siteID: siteID, loginID: loginID, to: draft)
         case .none: break
         }
+        cancelEditing()
+    }
+
+    private func cancelEditing() {
+        draft = ""
         editing = .none
+        fieldFocused = false
     }
 }
 
@@ -587,6 +596,40 @@ private struct CloudURLField: View {
                 .urlKeyboard()
                 .noAutocap()
                 .focused(focused)
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+/// Add-login rows retain their label when filled; focusing demotes it above the editable value.
+/// Empty forms remain unfocused until the user taps, preserving both authored empty/focus states.
+private struct CloudLoginField: View {
+    let label: String
+    @Binding var text: String
+    var secure = false
+    @FocusState private var focused: Bool
+
+    private var showsLabel: Bool { focused || !text.isEmpty }
+    private var filledResting: Bool { !focused && !text.isEmpty }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if showsLabel {
+                Text(label)
+                    .font(filledResting ? .body : .footnote)
+                    .foregroundStyle(filledResting ? DesignTokens.Color.labelPrimary : DesignTokens.Color.labelSecondary)
+            }
+            Group {
+                if secure {
+                    SecureField(showsLabel ? "" : label, text: $text)
+                } else {
+                    TextField(showsLabel ? "" : label, text: $text).noAutocap()
+                }
+            }
+            .font(filledResting ? .footnote : .body)
+            .foregroundStyle(filledResting ? DesignTokens.Color.labelSecondary : DesignTokens.Color.labelPrimary)
+            .focused($focused)
+            .onSubmit { focused = false }
         }
         .frame(minHeight: 44)
     }
