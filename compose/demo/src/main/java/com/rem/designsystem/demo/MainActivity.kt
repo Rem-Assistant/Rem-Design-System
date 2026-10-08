@@ -84,7 +84,7 @@ fun Playground() {
             when (route) {
                 Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text("Settings New · Android", style = RemTypography.title3Bold)
-                    Text("A local prototype with illustrative data. Paired Devices, Cloud browser, Memory and Models are connected; other destinations are awaiting implementation. Automations remains outside this trial.", style = RemTypography.footnote)
+                    Text("A local prototype with illustrative data. Paired Devices, Cloud browser, Memory, Models, Wallet and Voice are connected. Voice preview controls are simulated without audio. Connectors is awaiting integration; Automations remains outside this trial.", style = RemTypography.footnote)
                     Text("Load fixture", style = RemTypography.bodyBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) }
@@ -127,9 +127,12 @@ private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestina
             AgentSettingsDestination.Memory -> SettingsMemoryScreen(onBack = onDestinationBack)
             AgentSettingsDestination.Models -> SettingsModelsScreen(onBack = onDestinationBack)
             AgentSettingsDestination.CloudBrowser -> SettingsCloudBrowserScreen(onBack = onDestinationBack)
+            AgentSettingsDestination.Wallet -> SettingsWalletScreen(onBack = onDestinationBack)
+            AgentSettingsDestination.Voice -> SettingsVoiceScreen(onBack = onDestinationBack)
             else -> Column(Modifier.verticalScroll(rememberScrollState())) {
                 AgentSettingsContent(availableDestinations = setOf(AgentSettingsDestination.PairedDevices,
-                    AgentSettingsDestination.CloudBrowser, AgentSettingsDestination.Memory, AgentSettingsDestination.Models), openDestination = onOpenDestination)
+                    AgentSettingsDestination.CloudBrowser, AgentSettingsDestination.Memory, AgentSettingsDestination.Models,
+                    AgentSettingsDestination.Wallet, AgentSettingsDestination.Voice), openDestination = onOpenDestination)
             }
         }
     }
