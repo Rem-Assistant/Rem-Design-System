@@ -50,12 +50,13 @@ jobs:
           jq -e --arg base "$BASE_REF" '.[0].isDraft == true and .[0].baseRefName == $base' <<<"$prs"
   builder:
     needs: preflight
-    uses: samuelalake/agent-factory/.github/workflows/builder.yml@3a767861cebce2f08f21639297ab8693b77f9a4f
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@8522d84d9cd429c9b8cb9d028cf665a6136403c0
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: 3a767861cebce2f08f21639297ab8693b77f9a4f
+      factory_ref: 8522d84d9cd429c9b8cb9d028cf665a6136403c0
       runner: ubuntu-latest
       base_ref: ${{ inputs.base_ref }}
+      suppress_failure_escalation: true
       app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

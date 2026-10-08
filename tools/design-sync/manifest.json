@@ -43,6 +43,8 @@
     { "name": "SignIn-light",  "node": "788:3183", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift" },
     { "name": "Consent-default-light", "node": "777:248", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift" },
     { "name": "Consent-terms-light",   "node": "777:325", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
-    { "name": "Consent-privacy-light", "node": "777:392", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" }
+    { "name": "Consent-privacy-light", "node": "777:392", "page": "Onboarding", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/main/Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift" },
+    {"name": "SettingsEntry-light", "node": "1964:86819", "page": "Settings New", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/codex/settings-integration/Sources/RemDesignSystem/Screens/SettingsPlaygroundContent.swift"},
+    {"name": "AgentSettings-light", "node": "1827:50855", "page": "Settings New", "source": "https://github.com/Rem-Assistant/Rem-Design-System/blob/codex/settings-integration/Sources/RemDesignSystem/Screens/SettingsPlaygroundContent.swift"}
   ]
 }

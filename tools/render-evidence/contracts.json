@@ -33,5 +33,35 @@
     "waypoints": {
       "consent-flow-documentation": { "name": "Consent-flow-documentation", "node": "777:432" }
     }
+  },
+  "settings-foundation": {
+    "paths": [
+      "Sources/RemDesignSystem/Screens/SettingsPlaygroundContent.swift",
+      "Sources/RemDesignSystem/Rows/**",
+      "Sources/RemDesignSystem/Primitives/ContainedIcon*",
+      "compose/RemDesignSystem/screens/SettingsPlaygroundContent.kt",
+      "compose/RemDesignSystem/rows/**",
+      "compose/RemDesignSystem/primitives/ContainedIcon*",
+      "tools/playground-ios/**",
+      "compose/demo/**",
+      "tokens/**"
+    ],
+    "states": [
+      "settingsentry-light",
+      "agentsettings-light"
+    ],
+    "requirePrototype": false,
+    "references": {
+      "settingsentry-light": {
+        "name": "SettingsEntry-light",
+        "node": "1964:86819",
+        "requireDocumentation": false
+      },
+      "agentsettings-light": {
+        "name": "AgentSettings-light",
+        "node": "1827:50855",
+        "requireDocumentation": false
+      }
+    }
   }
 }
