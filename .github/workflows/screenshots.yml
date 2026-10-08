@@ -8,6 +8,12 @@ name: screenshots
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to verify (both by default)
+        type: choice
+        default: both
+        options: [both, ios, android]
   pull_request:
     paths:
       - "tools/playground-ios/**"
@@ -21,12 +27,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: screenshots-${{ github.ref }}
+  group: screenshots-${{ github.ref }}-${{ inputs.platform || 'both' }}
   cancel-in-progress: true
 
 jobs:
   swiftui:
     name: Render SwiftUI (iOS)
+    if: inputs.platform != 'android'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +73,7 @@ jobs:
 
   compose:
     name: Render Compose (Android)
+    if: inputs.platform != 'ios'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -98,7 +106,7 @@ jobs:
 
   settings-ios:
     name: Exercise Settings playground (iOS)
-    if: github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration') && inputs.platform != 'android'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -144,7 +152,7 @@ jobs:
 
   settings-android:
     name: Exercise Settings playground (Android)
-    if: github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration') && inputs.platform != 'ios'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
