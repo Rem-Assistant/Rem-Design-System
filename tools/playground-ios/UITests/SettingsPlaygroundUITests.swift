@@ -364,7 +364,8 @@ final class SettingsPlaygroundUITests: XCTestCase {
             let bounds = app.frame
             let bar = app.navigationBars.firstMatch
             let top = bar.exists ? bar.frame.maxY : bounds.minY + 60
-            let bottom = footer.map { $0.exists ? $0.frame.minY - 8 : bounds.maxY - 34 } ?? bounds.maxY - 34
+            // Wallet footer has 16pt opaque padding above Connect; keep another 8pt clear.
+            let bottom = footer.map { $0.exists ? $0.frame.minY - 24 : bounds.maxY - 34 } ?? bounds.maxY - 34
             let viewport = CGRect(x: bounds.minX, y: top, width: bounds.width, height: max(0, bottom - top))
             if element.exists {
                 let frame = element.frame
