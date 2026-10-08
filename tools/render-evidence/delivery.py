@@ -176,9 +176,13 @@ def _evidence(root: Path, platform: str) -> dict[str, Path]:
 
 
 def prepare(root: Path, head: str, conclusion: str, changed: list[str], contracts: dict,
-            primary_contract: str | None = None) -> tuple[str, str, list[Path]]:
+            primary_contract: str | None = None,
+            run_url: str | None = None) -> tuple[str, str, list[Path]]:
     if not re.fullmatch(r"[0-9a-f]{40}", head):
         raise ValueError("Full head SHA required")
+    if run_url is not None and not re.fullmatch(
+            r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/actions/runs/[1-9][0-9]*", run_url):
+        raise ValueError("A GitHub Actions run URL is required")
     pairs: dict[str, dict[str, Path]] = {}
     for platform in ("swiftui", "compose"):
         for key, path in _evidence(root, platform).items():
@@ -210,6 +214,14 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
             contract = contracts[name]
             if any(fnmatch.fnmatchcase(path, pattern) for path in changed for pattern in contract["paths"]):
                 required.update(contract["states"])
+    runtime_required = {
+        state for name in selected_contracts
+        for group in contracts[name].get("runtimeGroups", [])
+        if any(fnmatch.fnmatchcase(path, pattern) for path in changed for pattern in group["paths"])
+        for state in group["states"]
+    }
+    runtime_only = runtime_required - required
+    required.update(runtime_required)
     missing = [f"{key} / {platform}" for key in sorted(required)
                for platform in ("swiftui", "compose") if platform not in pairs.get(key, {})]
     # Figma is an explicit contract-level capability. Path inference still determines the required
@@ -289,8 +301,8 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     # A contract-scoped delivery is deliberately narrow: Reviewer sees exactly the required states
     # for the changed screen, while the full renderer may still exercise regression/component
     # snapshots in CI. Unscoped changes retain the complete gallery as a useful fallback.
-    delivery_keys = sorted(required) if required else sorted(pairs)
-    for key in delivery_keys:
+    delivery_keys = sorted(required - runtime_only) if required else sorted(pairs)
+    def append_row(key, with_references):
         cells = []
         for platform in ("swiftui", "compose"):
             path = pairs.get(key, {}).get(platform)
@@ -299,7 +311,7 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
                 attachments.append(path)
             else:
                 cells.append("**Not rendered**")
-        if include_reference_column:
+        if with_references:
             path = references.get(key)
             if path:
                 cells.append(f"![Figma Reference {key}]({path})")
@@ -307,6 +319,19 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
             else:
                 cells.append("**Not exported**")
         lines.append(f"| `{key}` | {' | '.join(cells)} |")
+    for key in delivery_keys:
+        append_row(key, include_reference_column)
+    if runtime_only:
+        lines += ["", "Paired native runtime evidence:", "",
+                  "These path-scoped captures cover the changed fixture destinations. They add no authenticated Figma structural coverage; "
+                  "the Figma proof above remains limited to its declared reference states. "
+                  "This bounded gallery does not establish every-state, dark-mode, or large-text fidelity.", "",
+                  "| Runtime state | iOS · SwiftUI | Android · Compose |", "|---|:---:|:---:|"]
+        for key in sorted(runtime_only):
+            append_row(key, False)
+    if run_url:
+        lines += ["", f"[Full producing CI run and downloadable artifacts]({run_url}) include the remaining native captures, "
+                  "journey logs, and test results for this head. Artifact availability does not imply every image has been reviewed."]
     if waypoint_keys:
         lines += ["", "Authenticated Figma structure waypoints:", "",
                   "| Waypoint | Figma Reference |", "|---|:---:|"]
@@ -331,12 +356,13 @@ def main():
     parser.add_argument("--conclusion", required=True)
     parser.add_argument("--changed-paths", type=Path, required=True)
     parser.add_argument("--primary-contract")
+    parser.add_argument("--run-url")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     contracts = json.loads(Path(__file__).with_name("contracts.json").read_text())
     status, body, attachments = prepare(args.evidence_root, args.head, args.conclusion,
                                         args.changed_paths.read_text().splitlines(), contracts,
-                                        args.primary_contract)
+                                        args.primary_contract, args.run_url)
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "body.md").write_text(body)
     (args.output / "status").write_text(status)

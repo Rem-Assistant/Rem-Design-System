@@ -12,6 +12,78 @@ CONSENT = "compose/RemDesignSystem/onboarding/ConsentStep.kt"
 
 
 class PairedDeliveryTests(unittest.TestCase):
+    def settings_fixtures(self, root):
+        contract = CONTRACTS["settings-foundation"]
+        runtime = {state for group in contract["runtimeGroups"] for state in group["states"]}
+        for platform in ("swiftui", "compose", "reference"):
+            (root / platform).mkdir()
+            states = contract["references"] if platform == "reference" else set(contract["states"]) | runtime
+            for state in states:
+                (root / platform / f"{state}.png").write_bytes(b"fixture")
+        (root / "structure").mkdir()
+        (root / "structure/report.json").write_text(json.dumps({
+            "status": "completed", "head": "a" * 40,
+            "structure": {"canonicalScreens": [
+                {"id": value["node"], "status": "conformant"}
+                for value in contract["references"].values()
+            ], "screens": []},
+        }))
+        return runtime
+
+    def test_full_settings_packet_requires_runtime_pairs_without_inventing_figma_proof(self):
+        changed = [f"Sources/RemDesignSystem/Screens/Settings{name}Screen.swift" for name in
+                   ("PairedDevices", "Connectors", "CloudBrowser", "Memory", "Models", "Wallet", "Voice")]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); runtime = self.settings_fixtures(root)
+            status, body, attachments = delivery.prepare(
+                root, "a" * 40, "success", changed, CONTRACTS, "settings-foundation",
+                "https://github.com/Rem-Assistant/Rem-Design-System/actions/runs/123",
+            )
+            self.assertEqual(status, "ready")
+            self.assertEqual(len(runtime), 18)
+            self.assertEqual(len(attachments), 42)
+            self.assertEqual(len([p for p in attachments if p.parent.name == "reference"]), 2)
+            self.assertIn("add no authenticated Figma structural coverage", body)
+            self.assertIn("Full producing CI run and downloadable artifacts", body)
+            for key in runtime:
+                row = next(line for line in body.splitlines() if line.startswith(f"| `{key}`"))
+                self.assertIn(f"swiftui Render {key}", row)
+                self.assertIn(f"compose Render {key}", row)
+                self.assertNotIn("Not exported", row)
+            for key in runtime:
+                for platform in ("swiftui", "compose"):
+                    path = root / platform / f"{key}.png"; path.unlink()
+                    missing_status, missing_body, _ = delivery.prepare(
+                        root, "a" * 40, "success", changed, CONTRACTS, "settings-foundation")
+                    self.assertEqual(missing_status, "failed")
+                    self.assertIn(f"{key} / {platform}", missing_body)
+                    path.write_bytes(b"fixture")
+
+    def test_settings_runtime_requirements_follow_changed_destination_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); self.settings_fixtures(root)
+            status, body, attachments = delivery.prepare(
+                root, "a" * 40, "success", ["compose/RemDesignSystem/screens/SettingsMemoryScreen.kt"],
+                CONTRACTS, "settings-foundation")
+            self.assertEqual(status, "ready")
+            self.assertEqual(len(attachments), 10)
+            self.assertIn("memory-composer-feedback-light", body)
+            self.assertNotIn("wallet-link-consent-light", body)
+
+    def test_shared_wallet_and_voice_components_require_their_runtime_pairs(self):
+        for path, state in (
+            ("compose/RemDesignSystem/screens/ProviderPreConsentContent.kt", "wallet-link-consent-light"),
+            ("Sources/RemDesignSystem/Primitives/RemSlider.swift", "voice-sliders-adjusted-light"),
+            ("compose/RemDesignSystem/primitives/RemSlider.kt", "voice-sliders-adjusted-light"),
+        ):
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory); self.settings_fixtures(root)
+                (root / "compose" / f"{state}.png").unlink()
+                status, body, _ = delivery.prepare(
+                    root, "a" * 40, "success", [path], CONTRACTS, "settings-foundation")
+                self.assertEqual(status, "failed")
+                self.assertIn(f"{state} / compose", body)
+
     def test_delivery_declares_cross_renderer_comparison_basis(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -226,6 +298,7 @@ class PairedDeliveryTests(unittest.TestCase):
                 "docs/contracts/onboarding-consent.md",
                 "docs/contracts/onboarding-sign-in.md",
                 "compose/RemDesignSystem/onboarding/SignInStep.kt",
+                "Sources/RemDesignSystem/Screens/SettingsVoiceScreen.swift",
             ]
             status, body, attachments = delivery.prepare(
                 root, "a" * 40, "success", changed, CONTRACTS,
