@@ -97,30 +97,30 @@ public struct SettingsPairedDevicesScreen: View {
     private var emptyState: some View {
         GeometryReader { geometry in
             ScrollView {
-        VStack(spacing: DesignTokens.Spacing.lg) {
-            Spacer()
-            ContainedIcon(PairedDevicesCopy.emptySymbol, fill: .subtle, size: .large, glyphWeight: .regular)
-                .accessibilityHidden(true)
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                Text(PairedDevicesCopy.emptyTitle)
-                    .font(DesignTokens.Typography.title1Bold)
-                    .foregroundStyle(DesignTokens.Color.labelPrimary)
-                    .multilineTextAlignment(.center)
-                Text(PairedDevicesCopy.emptyMessage)
-                    .font(DesignTokens.Typography.subheadline)
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Button(PairedDevicesCopy.refreshAction) { state.refresh() }
-                .remButton(.rectBlue)
-                .accessibilityIdentifier("pairedDevices.refresh")
-            Spacer()
-            Spacer()
-        }
-        .padding(.horizontal, DesignTokens.Spacing.xl)
-        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
-        .accessibilityIdentifier("pairedDevices.empty")
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    Spacer()
+                    ContainedIcon(PairedDevicesCopy.emptySymbol, fill: .subtle, size: .large, glyphWeight: .regular)
+                        .accessibilityHidden(true)
+                    VStack(spacing: DesignTokens.Spacing.sm) {
+                        Text(PairedDevicesCopy.emptyTitle)
+                            .font(DesignTokens.Typography.title1Bold)
+                            .foregroundStyle(DesignTokens.Color.labelPrimary)
+                            .multilineTextAlignment(.center)
+                        Text(PairedDevicesCopy.emptyMessage)
+                            .font(DesignTokens.Typography.subheadline)
+                            .foregroundStyle(DesignTokens.Color.labelSecondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Button(PairedDevicesCopy.refreshAction) { state.refresh() }
+                        .remButton(.rectBlue)
+                        .accessibilityIdentifier("pairedDevices.refresh")
+                    Spacer()
+                    Spacer()
+                }
+                .padding(.horizontal, DesignTokens.Spacing.xl)
+                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                .accessibilityIdentifier("pairedDevices.empty")
             }
         }
     }
@@ -130,18 +130,18 @@ public struct SettingsPairedDevicesScreen: View {
     private var addBoundarySheet: some View {
         NavigationStack {
             ScrollView {
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                ContainedIcon(PairedDevicesCopy.emptySymbol, fill: .subtle, size: .large, glyphWeight: .regular)
-                    .accessibilityHidden(true)
-                Text(PairedDevicesCopy.addMessage)
-                    .font(DesignTokens.Typography.body)
-                    .foregroundStyle(DesignTokens.Color.labelSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(DesignTokens.Spacing.xl)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, DesignTokens.Spacing.xl)
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    ContainedIcon(PairedDevicesCopy.emptySymbol, fill: .subtle, size: .large, glyphWeight: .regular)
+                        .accessibilityHidden(true)
+                    Text(PairedDevicesCopy.addMessage)
+                        .font(DesignTokens.Typography.body)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(DesignTokens.Spacing.xl)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, DesignTokens.Spacing.xl)
             }
             .background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle(PairedDevicesCopy.addTitle)
