@@ -89,6 +89,31 @@ def validate_tests(record, sha, platform):
 
 
 
+
+def hosted_execution(sha):
+    require(os.environ.get("GITHUB_ACTIONS") == "true", "Require hosted native execution")
+    event_name = os.environ.get("GITHUB_EVENT_NAME")
+    event_sha = os.environ.get("GITHUB_SHA", "")
+    require(re.fullmatch(r"[0-9a-f]{40}", event_sha), "Missing workflow event SHA")
+    if event_name == "pull_request":
+        event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+        pr = event["pull_request"]
+        require(pr["head"]["sha"] == sha, "Native source differs from immutable PR event head")
+        require(pr["head"]["repo"]["full_name"] == os.environ.get("GITHUB_REPOSITORY"),
+                "Require same-repository candidate")
+        require(os.environ.get("GITHUB_REF") == f"refs/pull/{event['number']}/merge",
+                "Unexpected PR workflow ref")
+    else:
+        require(event_name == "workflow_dispatch" and event_sha == sha,
+                "Record native results only in the exact-revision hosted workflow")
+    execution = {"provider": "github_actions", "workflow_sha": sha,
+                 "event_name": event_name, "event_sha": event_sha,
+                 "run_id": os.environ.get("GITHUB_RUN_ID", ""),
+                 "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "")}
+    require(execution["run_id"].isdigit() and execution["run_attempt"].isdigit(), "Missing native run identity")
+    return execution
+
+
 def inspect_artifact(platform, artifact, sha):
     artifact = Path(artifact)
     if platform == "ios":
@@ -162,11 +187,7 @@ def main():
     if args.command == "inspect":
         write_json(args.output, inspect_artifact(args.platform, args.artifact, args.sha))
     elif args.command == "record-tests":
-        require(os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("GITHUB_SHA") == args.sha,
-                "Record native results only in the exact-revision hosted workflow")
-        execution = {"provider": "github_actions", "workflow_sha": os.environ["GITHUB_SHA"],
-                     "run_id": os.environ.get("GITHUB_RUN_ID", ""), "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", "")}
-        require(execution["run_id"].isdigit() and execution["run_attempt"].isdigit(), "Missing native run identity")
+        execution = hosted_execution(args.sha)
         report = Path(args.report)
         files = [report] if args.platform == "ios" else sorted(report.rglob("TEST-*.xml"))
         methods = parse_ios(report.read_text()) if args.platform == "ios" else parse_android(files)

@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import os
 import plistlib
 import sys
 import zipfile
@@ -10,6 +12,42 @@ from unittest.mock import patch
 spec = importlib.util.spec_from_file_location("delivery", Path(__file__).with_name("delivery.py"))
 d = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(d)
+
+
+class HostedExecutionTests(unittest.TestCase):
+    def setUp(self):
+        self.sha = "a" * 40
+        self.env = {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "workflow_dispatch",
+                    "GITHUB_SHA": self.sha, "GITHUB_RUN_ID": "123", "GITHUB_RUN_ATTEMPT": "1"}
+
+    def test_dispatch_requires_exact_revision(self):
+        with patch.dict(os.environ, self.env, clear=True):
+            self.assertEqual(d.hosted_execution(self.sha)["workflow_sha"], self.sha)
+            with self.assertRaises(ValueError):
+                d.hosted_execution("b" * 40)
+
+    def test_pr_binds_event_head_without_overriding_merge_sha(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            event_path = Path(tmp) / "event.json"
+            event = {"number": 93, "pull_request": {"head": {
+                "sha": self.sha, "repo": {"full_name": "Rem-Assistant/Rem-Design-System"}}}}
+            event_path.write_text(json.dumps(event))
+            self.env.update(GITHUB_EVENT_NAME="pull_request", GITHUB_SHA="b" * 40,
+                            GITHUB_EVENT_PATH=str(event_path), GITHUB_REF="refs/pull/93/merge",
+                            GITHUB_REPOSITORY="Rem-Assistant/Rem-Design-System")
+            with patch.dict(os.environ, self.env, clear=True):
+                execution = d.hosted_execution(self.sha)
+                self.assertEqual(execution["workflow_sha"], self.sha)
+                self.assertEqual(execution["event_sha"], "b" * 40)
+                with self.assertRaisesRegex(ValueError, "immutable PR event head"):
+                    d.hosted_execution("c" * 40)
+                for change in ({"GITHUB_REPOSITORY": "other/repo"},
+                               {"GITHUB_REF": "refs/heads/main"},
+                               {"GITHUB_EVENT_NAME": "pull_request_target"},
+                               {"GITHUB_ACTIONS": "false"}, {"GITHUB_RUN_ID": ""}):
+                    with self.subTest(change=change), patch.dict(os.environ, change):
+                        with self.assertRaises(ValueError):
+                            d.hosted_execution(self.sha)
 
 
 class NativeEvidenceTests(unittest.TestCase):
