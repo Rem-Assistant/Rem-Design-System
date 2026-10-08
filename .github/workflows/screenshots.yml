@@ -108,12 +108,14 @@ jobs:
     name: Exercise Settings playground (iOS)
     if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration') && inputs.platform != 'android'
     runs-on: macos-14
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Run the actual playground journeys
+        timeout-minutes: 40
         run: |
           set -eo pipefail
           xcodebuild test \
@@ -122,8 +124,10 @@ jobs:
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 300 \
             -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log" | tail -100
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log"
       - name: Extract actual playground screenshots
         if: always()
         run: |
