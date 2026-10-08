@@ -325,7 +325,8 @@ class PairedDeliveryTests(unittest.TestCase):
 
     def test_unscoped_contract_paths_require_platforms_but_not_figma(self):
         all_states = sorted({
-            state for contract in CONTRACTS.values() for state in contract["states"]
+            state for contract in CONTRACTS.values() if "tokens/**" in contract["paths"]
+            for state in contract["states"]
         })
         cases = [
             ([CONSENT], CONTRACTS["onboarding-consent"]["states"]),

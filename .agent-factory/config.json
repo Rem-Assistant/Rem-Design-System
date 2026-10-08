@@ -16,7 +16,8 @@
       "docs/contracts/settings-playground.md",
       "docs/contracts/settings-foundation.md",
       ".claude/skills/rem-design-system/local-policy/product-design-supplement.md",
-      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md"
+      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md",
+      "docs/contracts/playground-expansion.md"
     ],
     "skill_dirs": [
       ".claude/skills"
@@ -54,8 +55,8 @@
     "model": "claude-opus-4-8",
     "cli_version": "0.55.1",
     "timeout_seconds": 1800,
-    "branch_prefix": "agent-factory/settings-issue-",
-    "base_branch": "codex/settings-integration",
+    "branch_prefix": "agent-factory/playground-issue-",
+    "base_branch": "codex/playground-expansion",
     "runner": "ubuntu-latest",
     "fallback_provider": null,
     "fallback_model": null,

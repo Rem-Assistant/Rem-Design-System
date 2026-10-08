@@ -59,7 +59,7 @@ jobs:
           [[ "$RUN_ID" =~ ^[0-9]+$ ]]
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             case "$GITHUB_REF_NAME" in
-              codex/settings-integration|codex/settings-review-contracts|codex/settings-review-native) ;;
+              codex/settings-integration|codex/settings-review-contracts|codex/settings-review-native|codex/playground-expansion) ;;
               *) echo '::error::unsupported manual publisher ref'; exit 1 ;;
             esac
           fi
@@ -117,6 +117,8 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             test "$GITHUB_REF_NAME" = "$base_ref"
             case "$base_ref:$head_ref" in
+              codex/playground-expansion:agent-factory/playground-issue-*)
+                [[ "$head_ref" =~ ^agent-factory/playground-issue-[0-9]+$ ]] ;;
               codex/settings-integration:agent-factory/settings-issue-*)
                 [[ "$head_ref" =~ ^agent-factory/settings-issue-[0-9]+$ ]] ;;
               codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
@@ -142,7 +144,18 @@ jobs:
           else
             echo "primary_contract=" >> "$GITHUB_OUTPUT"
           fi
+          # Expansion scope and route must match for BOTH automatic and manual publishing.
+          scope=${scopes[0]:-}
+          if [ "$base_ref" = codex/playground-expansion ] || [ "$scope" = agenda-suggestions ] || [ "$scope" = onboarding-voice ]; then
+            test "$base_ref" = codex/playground-expansion
+            [[ "$head_ref" =~ ^agent-factory/playground-issue-[0-9]+$ ]]
+            test "$(jq -r .draft <<<"$pr_meta")" = true
+            case "$scope" in agenda-suggestions|onboarding-voice) ;; *) exit 1 ;; esac
+          elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            test "$scope" = settings-foundation
+          fi
           case "$base_ref:$head_ref" in
+            codex/playground-expansion:agent-factory/playground-issue-*) ;;
             main:*|codex/settings-integration:*) ;;
             codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
             *) echo "::error::unsupported evidence base/head pair: $base_ref:$head_ref"; exit 1 ;;
@@ -222,6 +235,7 @@ jobs:
           BASE_REF: ${{ steps.validate.outputs.base_ref }}
           HEAD_REF: ${{ steps.validate.outputs.head_ref }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
+          PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
         run: |
           set -euo pipefail
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
@@ -247,7 +261,10 @@ jobs:
           case "$run_event" in
             pull_request_target) ;;
             workflow_dispatch)
-              MANUAL_ARGS=(--allow-settings-manual)
+              case "$PRIMARY_CONTRACT" in
+                agenda-suggestions|onboarding-voice) MANUAL_ARGS=(--allow-playground-manual) ;;
+                *) MANUAL_ARGS=(--allow-settings-manual) ;;
+              esac
               ;;
             *) echo '::error::unsupported Figma evidence event'; exit 1 ;;
           esac
@@ -263,7 +280,7 @@ jobs:
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/validate_figma_run.py" \
             --run-meta "$run_meta_path" --artifact "$artifact_meta_path" \
             --repository "$GITHUB_REPOSITORY" --pr "$PR" \
-            --head-sha "$SHA" --head-ref "$HEAD_REF" --base-sha "$BASE_SHA" --base-ref "$BASE_REF" "${MANUAL_ARGS[@]}"
+            --head-sha "$SHA" --head-ref "$HEAD_REF" --base-sha "$BASE_SHA" --base-ref "$BASE_REF" --primary-contract "$PRIMARY_CONTRACT" "${MANUAL_ARGS[@]}"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "run_attempt=$run_attempt" >> "$GITHUB_OUTPUT"
           echo "artifact_id=$(jq -r .id <<<"$artifact")" >> "$GITHUB_OUTPUT"
@@ -302,13 +319,19 @@ jobs:
           if [ "$FIGMA_RUN_EVENT" = workflow_dispatch ]; then
             MANUAL_ARGS=(--manual-base-sha "$BASE_SHA" --manual-base-ref "$BASE_REF" --manual-head-ref "$HEAD_REF")
           fi
+          SOURCE_ARGS=()
+          case "$PRIMARY_CONTRACT" in
+            agenda-suggestions|onboarding-voice)
+              source_sha=$(shasum -a 256 "$GITHUB_WORKSPACE/consumer-delivery/tools/design-sync/playground-source-contracts.json" | awk '{print $1}')
+              SOURCE_ARGS=(--trusted-source-sha256 "$source_sha") ;;
+          esac
           python3 "$GITHUB_WORKSPACE/consumer-delivery/tools/render-evidence/artifact.py" \
             --root "$FIGMA_ROOT" --pr "$PR" --sha "$SHA" \
             --run-id "$FIGMA_RUN_ID" --run-attempt "$FIGMA_RUN_ATTEMPT" \
             --workflow-sha256 "$TRUSTED_WORKFLOW_SHA" --media-dir reference \
             --figma-file-key "$figma_file_key" --contracts-sha256 "$contracts_sha" \
             --primary-contract "$PRIMARY_CONTRACT" \
-            --require-reference-export --require-structure-verification "${MANUAL_ARGS[@]}"
+            --require-reference-export --require-structure-verification "${MANUAL_ARGS[@]}" "${SOURCE_ARGS[@]}"
           mkdir -p "$EVIDENCE_ROOT/reference"
           cp "$FIGMA_ROOT"/reference/*.png "$EVIDENCE_ROOT/reference/"
           mkdir -p "$EVIDENCE_ROOT/structure"
@@ -358,16 +381,28 @@ jobs:
           VERIFY_CONCLUSION: ${{ needs.locate.outputs.conclusion }}
           VERIFY_RUN_ID: ${{ needs.locate.outputs.run_id }}
           BASE_REF: ${{ steps.validate.outputs.base_ref }}
+          HEAD_REF: ${{ steps.validate.outputs.head_ref }}
           BASE_SHA: ${{ steps.validate.outputs.base_sha }}
           EVIDENCE_ROOT: ${{ runner.temp }}/evidence
           PRIMARY_CONTRACT: ${{ steps.validate.outputs.primary_contract }}
         run: |
           set -euo pipefail
           PR=$(jq -r .pr "$EVIDENCE_ROOT/delivery/manifest.json")
-          # Refuse a stale delivery if the candidate or trusted base moved during export/upload preparation.
+          # Refuse a stale delivery if the candidate, scope or trusted base moved during export/upload preparation.
           pr_meta=$(gh api "repos/${REPO}/pulls/${PR}")
           test "$(jq -r .head.sha <<<"$pr_meta")" = "$SHA"
           test "$(jq -r .base.ref <<<"$pr_meta")" = "$BASE_REF"
+          test "$(jq -r .head.ref <<<"$pr_meta")" = "$HEAD_REF"
+          test "$(jq -r .head.repo.full_name <<<"$pr_meta")" = "$REPO"
+          test "$(jq -r .base.repo.full_name <<<"$pr_meta")" = "$REPO"
+          final_scopes=$(jq -c '[.labels[].name | select(startswith("delivery-scope:")) | sub("^delivery-scope:"; "")]' <<<"$pr_meta")
+          if [ -n "$PRIMARY_CONTRACT" ]; then
+            test "$(jq length <<<"$final_scopes")" = 1
+            test "$(jq -r '.[0]' <<<"$final_scopes")" = "$PRIMARY_CONTRACT"
+          else
+            test "$(jq length <<<"$final_scopes")" = 0
+          fi
+          if [ "$BASE_REF" = codex/playground-expansion ]; then test "$(jq -r .draft <<<"$pr_meta")" = true; fi
           test "$(jq -r .state <<<"$pr_meta")" = open
           encoded_ref=$(jq -rn --arg ref "$BASE_REF" '$ref | @uri')
           test "$(gh api "repos/${REPO}/git/ref/heads/${encoded_ref}" --jq .object.sha)" = "$BASE_SHA"

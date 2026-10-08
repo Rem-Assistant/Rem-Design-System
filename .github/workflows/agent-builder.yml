@@ -7,11 +7,11 @@ on:
         required: true
         type: string
       base_ref:
-        description: Isolated Settings integration branch
+        description: Isolated playground expansion branch
         required: true
         type: choice
-        options: [codex/settings-integration]
-        default: codex/settings-integration
+        options: [codex/playground-expansion]
+        default: codex/playground-expansion
 permissions:
   actions: read
   contents: read
@@ -32,20 +32,20 @@ jobs:
           BASE_REF: ${{ inputs.base_ref }}
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = codex/settings-integration
-          test "$BASE_REF" = codex/settings-integration
+          test "$GITHUB_REF_NAME" = codex/playground-expansion
+          test "$BASE_REF" = codex/playground-expansion
           test -n "$CLAUDE_CODE_OAUTH_TOKEN" || { echo '::error::CLAUDE_CODE_OAUTH_TOKEN is unavailable'; exit 1; }
           [[ "$ISSUE" =~ ^[0-9]+$ ]]
           jq -e --arg base "$BASE_REF" '
             .builder.base_branch == $base and
-            .builder.branch_prefix == "agent-factory/settings-issue-" and
+            .builder.branch_prefix == "agent-factory/playground-issue-" and
             .figma.enabled == false and
             .integration.automatic_promotion == false
           ' .agent-factory/config.json
           # Reusing a seeded draft avoids the upstream code-only create-PR path,
           # which currently creates a ready PR. No upstream Factory patch needed.
           prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
-            --head "agent-factory/settings-issue-$ISSUE" --json number,isDraft,baseRefName)
+            --head "agent-factory/playground-issue-$ISSUE" --json number,isDraft,baseRefName)
           test "$(jq length <<<"$prs")" = 1
           jq -e --arg base "$BASE_REF" '.[0].isDraft == true and .[0].baseRefName == $base' <<<"$prs"
   builder:
