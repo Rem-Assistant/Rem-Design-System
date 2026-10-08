@@ -78,6 +78,28 @@ test('rejects slot spacing drift, wrong preceding action and absent local coordi
     (n) => { delete n['6:4'].relativeTransform; },
   ]) { const f = fixture(); mutate(f.nodes); assert.ok(verify(f).errors.length); }
 });
+test('numeric failures expose bounded presence, type and geometry diagnostics without accepting defaults', () => {
+  const f = fixture();
+  f.nodes['6:1'].layoutMode = 'VERTICAL';
+  delete f.nodes['6:1'].paddingBottom;
+  f.nodes['6:2'].itemSpacing = null;
+  delete f.nodes['6:4'].relativeTransform;
+  const errors = verify(f).errors;
+  const details = (prefix) => JSON.parse(errors.find((error) => error.startsWith(prefix)).split('; observed=')[1]);
+  assert.deepEqual(details('6:1 paddingBottom'), {
+    nodeId: '6:1', field: 'paddingBottom', hasOwnProperty: false,
+    observedType: 'undefined', observedValue: 'undefined', nodeType: 'SLOT',
+    layoutMode: 'VERTICAL', nodeMissing: false,
+  });
+  assert.equal(details('6:2 itemSpacing').hasOwnProperty, true);
+  assert.equal(details('6:2 itemSpacing').observedType, 'null');
+  assert.equal(details('6:2 itemSpacing').observedValue, 'null');
+  assert.equal(details('6:4 y').relativeTransformHasOwnProperty, false);
+  assert.equal(details('6:4 y').relativeTransformRaw, 'undefined');
+  f.nodes['6:1'].paddingBottom = 'x'.repeat(2000);
+  const bounded = verify(f).errors.find((error) => error.startsWith('6:1 paddingBottom'));
+  assert.equal(JSON.parse(bounded.split('; observed=')[1]).observedValue.length, 512);
+});
 test('rejects additional or reordered children in explicit exact order assertions', () => {
   const f = fixture(); f.contract.lanes[0].states[0].childOrderAssertions = [{ parentId: '3:1', mode: 'exact', childIds: ['3:2', '3:3'] }];
   assert.deepEqual(verify(f).errors, []);
