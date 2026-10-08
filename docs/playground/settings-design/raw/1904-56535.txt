@@ -1,3 +1,0 @@
-An unexpected error occurred.
-
-Figma Debug UUID: 555ead83-447d-4717-b89e-8cb159549ae4

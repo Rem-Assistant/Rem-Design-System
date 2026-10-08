@@ -10,6 +10,8 @@ main merge, real service calls, or credentials.
 - `docs/playground/settings-design/settings-destinations.md` → **Cloud browser** section
 - Raw node contexts `docs/playground/settings-design/raw/<node>.txt` and screenshots
   `.../screenshots/<node>.png` for every state below (source evidence, not app screens).
+  [Verify and extract the source archive](../../playground/settings-design/source-evidence-README.md)
+  to read these original paths; the manifest preserves their byte sizes and SHA-256 hashes.
 
 ## Entry points (public, deterministic)
 
