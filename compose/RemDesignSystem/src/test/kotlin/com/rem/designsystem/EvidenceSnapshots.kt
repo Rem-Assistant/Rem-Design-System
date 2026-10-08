@@ -224,7 +224,7 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun connectors() = shot("Connectors-light") {
+    fun connectors() = shot("LegacyOnboardingConnectors-light") {
         RemTheme {
             OnboardingConnectorsScreen(
                 connectors = listOf(
@@ -238,7 +238,7 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun voice() = shot("Voice-light") {
+    fun voice() = shot("LegacyOnboardingVoice-light") {
         RemTheme {
             OnboardingVoiceScreen(
                 voiceName = "Aria",
