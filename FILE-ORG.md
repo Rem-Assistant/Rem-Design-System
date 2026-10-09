@@ -1,5 +1,31 @@
 # Figma file organization — current state + proposed structure
 
+## Connected-flow presentation
+
+Current direction, 2026-10-09: Samuel confirmed connected flows like Settings, referencing
+[FigJam QGFwluZMaWyJZUai2OxlXw, node 65:6964](https://www.figma.com/board/QGFwluZMaWyJZUai2OxlXw?node-id=65-6964).
+This supersedes blanket mobile-walkthrough requirements in older guidance and the historical
+topology ledger. The dated inventory below is not a fresh live-canvas audit.
+
+Represent the smallest meaningful unit of change: a natural-sized canonical component or
+payload-card variant for local behavior, an overlay for presentation changes, and a full screen
+for a distinct destination or when keyboard, safe-area, navigation or platform context matters.
+Use readable, labeled connectors for local updates, navigation, external handoffs and return/
+cancel paths. Mark unresolved destinations explicitly. Reuse destinations rather than copying
+whole screens for every incoming action. Component specimens do not prove screen completeness.
+
+Connected-flow organization is the default review canvas. Mobile Flow Documentation and
+device-framed walkthroughs remain options when useful or required by a specific delivery
+contract. Do not require every state to occupy a 402×874 frame or duplicate a connected graph
+as a mandatory walkthrough strip. Preserve existing attached templates when reused, canonical
+masters, natural component sizing and state coverage. This changes canvas organization, not
+iOS quality, native controls, accessibility, authentication or OAuth architecture.
+For Chat review, retain this connected component/state canvas **and** representative full-screen
+compositions using the shared Chat shell and slots. Check contextual spacing, short/long text,
+combined message/reaction/failure states, keyboard/safe areas and prototype destinations; isolated
+cards alone are insufficient. See [Chat jobs and principles](REGISTRY.md#chat-component-jobs-and-principles)
+for ownership and the [evidence checklist](.claude/skills/rem-design-system/references/chat-review.md).
+
 > Rem Figma file `af4yDqCzp57jds9lkFiIaO`. Founder flagged 2026-09-25: "figma file organization is
 > still the piece that's unclear." **✅ EXECUTED 2026-09-25 (founder greenlit "Yes — reorganize").**
 > The banded structure below is now live: `Cover · Guide · —FOUNDATIONS— · —COMPONENTS— (Components,
