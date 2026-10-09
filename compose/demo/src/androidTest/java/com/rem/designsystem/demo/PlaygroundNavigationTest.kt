@@ -117,7 +117,10 @@ class PlaygroundNavigationTest {
     @Test fun catalogControlsSliderAndPills() {
         openCatalogPage("openControls")
         compose.onNodeWithText("50%").performScrollTo().assertExists()
-        compose.onNodeWithTag("controls.slider").performScrollTo().performTouchInput { swipeRight() }
+        // Drive the slider through its accessibility action (deterministic, unlike a touch swipe).
+        compose.onNodeWithTag("controls.slider").performScrollTo()
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(1f) }
+        compose.onNodeWithText("100%").assertExists()
         compose.onNodeWithText("50%").assertDoesNotExist()
         compose.onNodeWithText("Personal").performScrollTo().assertExists()
         capture("Catalog-controls-light")

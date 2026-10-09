@@ -108,7 +108,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let last = app.staticTexts["controls.lastButton"]
         XCTAssertTrue(last.waitForExistence(timeout: 2))
         XCTAssertEqual(last.label, "Tapped Rect · Blue", "Only the tapped variant fires")
-        XCTAssertTrue(app.staticTexts["50%"].exists, "Slider value is shown")
+        let level = app.staticTexts["50%"]
+        reveal(level)
+        XCTAssertTrue(level.exists, "Slider value is shown")
         XCTAssertFalse(app.buttons["Disabled"].isEnabled, "Disabled variant is not interactive")
         capture("Catalog-controls-light")
     }

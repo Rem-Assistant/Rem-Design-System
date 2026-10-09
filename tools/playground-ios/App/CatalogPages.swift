@@ -288,12 +288,13 @@ struct CatalogBrand: View {
             CatalogGroup(title: "Provider marks") {
                 HStack(spacing: DesignTokens.Spacing.md) {
                     RemGoogleGlyph(size: 26)
-                        .accessibilityLabel("Google")
                     ForEach(ConnectorProvider.allCases) { provider in
                         ConnectorProviderMark(provider)
                     }
                 }
-                .accessibilityElement(children: .contain)
+                // Each mark hides itself from VoiceOver; expose the row as one labelled element.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Google, " + ConnectorProvider.allCases.map(\.title).joined(separator: ", "))
                 .accessibilityIdentifier("catalog.providerMarks")
             }
             CatalogGroup(title: "Empty state") {
