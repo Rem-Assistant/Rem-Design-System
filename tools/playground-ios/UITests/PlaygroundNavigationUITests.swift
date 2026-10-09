@@ -39,6 +39,11 @@ final class PlaygroundNavigationUITests: XCTestCase {
         element.tap()
     }
 
+    private func waitUntilGone(_ element: XCUIElement, _ message: String) {
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 3), .completed, message)
+    }
+
     private func openOnboardingStep(_ identifier: String) {
         tap("openOnboarding")
         tap(identifier)
@@ -69,7 +74,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(skeleton.label, "Loading content")
         capture("Loading-skeleton-light")
         XCTAssertTrue(app.staticTexts["Memory"].waitForExistence(timeout: 8), "Skeleton resolves to content")
-        XCTAssertFalse(skeleton.exists, "Skeleton is removed once content arrives")
+        waitUntilGone(skeleton, "Skeleton is removed once content arrives")
         capture("Loading-content-light")
         tap("loading.refresh")
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Refreshing")).firstMatch.waitForExistence(timeout: 2),
@@ -135,7 +140,8 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(done.waitForExistence(timeout: 3), "Terms opens its document")
         capture("Onboarding-consent-terms-light")
         done.tap()
-        XCTAssertTrue(app.buttons["Accept and Continue"].waitForExistence(timeout: 3), "Closing returns to Consent")
+        waitUntilGone(done, "Done closes the document")
+        XCTAssertTrue(app.buttons["Accept and Continue"].isHittable, "Closing returns to Consent")
     }
 
     func testConnectorRowTogglesLocalState() {

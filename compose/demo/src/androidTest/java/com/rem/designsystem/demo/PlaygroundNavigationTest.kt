@@ -156,6 +156,8 @@ class PlaygroundNavigationTest {
         compose.onAllNodesWithText("How Rem accounts, subscriptions, and approved actions work.", useUnmergedTree = true).assertCountEquals(2)
         capture("Onboarding-consent-terms-light")
         compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithText("Done").assertDoesNotExist()
+        compose.onAllNodesWithText("How Rem accounts, subscriptions, and approved actions work.", useUnmergedTree = true).assertCountEquals(1)
         compose.onNodeWithText("Accept and Continue").assertExists()
     }
 

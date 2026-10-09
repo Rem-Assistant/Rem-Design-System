@@ -35,7 +35,9 @@ def source(sha):
     require(actual == sha, "Source SHA mismatch")
     dirty = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], cwd=ROOT, text=True)
     # Name the offending paths so a rejected run is diagnosable; the rejection itself is unchanged.
-    require(not dirty, "Require a clean isolated checkout; unexpected changes:\n" + dirty.rstrip())
+    lines = dirty.splitlines()
+    listed = "\n".join(lines[:50]) + (f"\n… and {len(lines) - 50} more" if len(lines) > 50 else "")
+    require(not dirty, "Require a clean isolated checkout; unexpected changes:\n" + listed)
 
 
 def expected_tests(platform):

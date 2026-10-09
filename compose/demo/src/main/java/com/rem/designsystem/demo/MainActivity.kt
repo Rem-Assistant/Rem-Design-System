@@ -348,6 +348,8 @@ private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestina
             AgentSettingsDestination.Wallet -> SettingsWalletScreen(onBack = onDestinationBack)
             AgentSettingsDestination.Voice -> SettingsVoiceScreen(onBack = onDestinationBack)
             else -> Column(Modifier.verticalScroll(rememberScrollState())) {
+                // Announces the resolved load once, politely (the skeleton's own live region is gone).
+                Box(Modifier.size(1.dp).semantics { contentDescription = "Agent settings loaded"; liveRegion = LiveRegionMode.Polite })
                 AgentSettingsContent(availableDestinations = setOf(AgentSettingsDestination.PairedDevices, AgentSettingsDestination.Connectors,
                     AgentSettingsDestination.CloudBrowser, AgentSettingsDestination.Memory, AgentSettingsDestination.Models,
                     AgentSettingsDestination.Wallet, AgentSettingsDestination.Voice), openDestination = onOpenDestination)
