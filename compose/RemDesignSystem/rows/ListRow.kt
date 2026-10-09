@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
@@ -89,7 +90,10 @@ fun ListRow(
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
-                    text = title,
+                    // Compose 1.7.3's String fast path reconstructs semantics at the parent
+                    // maxWidth rather than the rendered paragraph width. The annotated overload
+                    // exposes the actual cached layout for accessibility and overflow inspection.
+                    text = AnnotatedString(title),
                     style = RemTypography.body.copy(fontWeight = FontWeight.SemiBold),
                     color = colors.labelPrimary,
                 )

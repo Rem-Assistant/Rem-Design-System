@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.rem.designsystem.R
 import com.rem.designsystem.primitives.ContainedIcon
@@ -327,7 +328,8 @@ private fun CheckinTimePickerValue(
         )
     }
     Text(
-        text = text,
+        // Keep semantics backed by the rendered layout, as for the canonical row title.
+        text = AnnotatedString(text),
         style = RemTypography.body,
         color = colors.labelPrimary,
         modifier = Modifier

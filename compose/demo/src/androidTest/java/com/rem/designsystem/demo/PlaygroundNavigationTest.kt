@@ -371,9 +371,15 @@ class PlaygroundNavigationTest {
             val layouts = mutableListOf<TextLayoutResult>()
             checkNotNull(node.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
             val textLayout = layouts.single()
-            check(!textLayout.hasVisualOverflow) { "Check-in title \"$title\" is clipped or truncated" }
+            check(!textLayout.hasVisualOverflow) {
+                "Check-in title \"$title\" is clipped or truncated; " +
+                    "bounds=${node.boundsInRoot}; ${describeTextLayout(textLayout)}"
+            }
             val lines = textLayout.lineCount
-            check(lines == 1) { "Check-in title \"$title\" laid out on $lines lines" }
+            check(lines == 1) {
+                "Check-in title \"$title\" laid out on $lines lines; " +
+                    "bounds=${node.boundsInRoot}; ${describeTextLayout(textLayout)}"
+            }
         }
         // Hidden fit probes must never expose extra controls to accessibility or tests.
         compose.onAllNodes(isToggleable()).assertCountEquals(3)
@@ -387,13 +393,26 @@ class PlaygroundNavigationTest {
             val layouts = mutableListOf<TextLayoutResult>()
             checkNotNull(time.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
             check(layouts.single().lineCount == 1 && !layouts.single().hasVisualOverflow) {
-                "Check-in time value is clipped or truncated"
+                "Check-in time value is clipped or truncated; bounds=${time.boundsInRoot}; " +
+                    describeTextLayout(layouts.single())
             }
             check(time.boundsInRoot.left >= window.left && time.boundsInRoot.right <= window.right) {
                 "Check-in time ${time.config.getOrNull(SemanticsProperties.Text)} is clipped horizontally: ${time.boundsInRoot}"
             }
         }
     }
+
+    /** Distinguishes glyph clipping from a mismatch between rendered and semantic paragraph sizes. */
+    private fun describeTextLayout(layout: TextLayoutResult): String =
+        "text=${layout.layoutInput.text.text}, size=${layout.size}, " +
+            "paragraph=${layout.multiParagraph.width}x${layout.multiParagraph.height}, " +
+            "constraints=${layout.layoutInput.constraints}, lines=${layout.lineCount}, " +
+            "overflowWidth=${layout.didOverflowWidth}, overflowHeight=${layout.didOverflowHeight}, " +
+            "lineBounds=" + (0 until layout.lineCount).joinToString { line ->
+                "${layout.getLineLeft(line)}..${layout.getLineRight(line)}; " +
+                    "top=${layout.getLineTop(line)}, bottom=${layout.getLineBottom(line)}, " +
+                    "ellipsized=${layout.isLineEllipsized(line)}"
+            }
 
     /** Sets a framework TimePicker directly — the dialog's own dial has no stable touch targets. */
     private fun setTime(hour: Int, minute: Int) = object : ViewAction {
