@@ -41,7 +41,12 @@ Samuel's final clarification is recorded as approved direction: the **red outlin
 circle-exclamation icon** is entirely outside/right of the bubble; **Not delivered text stays
 below**, with no timestamp. A reaction overlaps the bubble edge; the under-bubble receipt/subtext
 has a right inset or left shift to clear it. This supersedes the temporary placement hold.
-The sheet-opening Button owns the credential chevron; ListRow does not.
+The sheet-opening Button owns the credential chevron; ListRow does not. Permission requests
+have a separate, explicitly chosen inline-card presentation: disclosure/header above a slotted
+request body, in-place expansion, collapsed Denied receipt with inspectable history, and three
+horizontal canonical ButtonGroup actions subject to narrow-width/long-label fit validation.
+Existing ButtonGroup variants remain; native OS permission handoffs stay separate. This does
+not decide Always Allow scope/backend policy or authorize a redundant Rem review sheet.
 
 Read-only pixel inspection of [Grok reference 2535:22130](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2535-22130)
 was performed on 2026-10-09. The final capture was 2532×5364 pixels, equal to the node's reported
@@ -77,8 +82,8 @@ The new tests validate Markdown route integrity, not prose meaning or UI complia
 contract workflow discovers these tests when its path filters trigger (this PR adds a test under
 `tools/`). This does not add a new CI trigger for future guidance-only edits. Run the documented
 command for such edits; manual evidence review still owns visual and interaction acceptance.
-Reactions/read/runtime remain not implemented; the broader activity model, permission shell and
-exact Read backend remain proposed/unresolved.
+Reactions/read/runtime remain not implemented; the broader activity model, permission policy and
+exact Read backend remain proposed/unresolved; inline-card presentation is chosen but not verified.
 
 ## Changed paths and publication boundary
 

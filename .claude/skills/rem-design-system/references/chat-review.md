@@ -34,6 +34,7 @@ A documentation-only change can complete while the UI gates remain not verified.
 | Reference authority | Actual pixels inspected at natural size; observed versus approved versus proposed states identified; no invented long-press role actions. |
 | Canonical anatomy | Master ancestry plus descendant/slot map. List leading icon, Content title/permanent subtitle grouping, trailing slot, and separate transient status helper inspected. |
 | Credential and service composition | Before-saved Add login CTA; chevron on the sheet-opening Button; saved outcome with corresponding navigation affordance and no extra standalone ViewDetails; canonical leading asset slot and modest logo weight. |
+| Permission request | Inline disclosure/header above slotted request body; in-place expand/collapse; denied collapses to configurable Denied receipt with inspectable history; consequential information visible. Three horizontal canonical ButtonGroup actions pass narrow-width/long-label fit checks without changing existing variants. Native OS handoff is separate; no redundant Rem review sheet or assumed Always Allow policy. |
 | Control semantics | Each Button classified as action, disclosure, busy, disabled availability or noninteractive receipt; destination or action owner recorded. |
 | Status ownership | Agent/run, action card, voice session, message delivery and composer input/send each has an explicit owner; no completion inferred across owners. |
 | Message receipts and recovery | Latest Delivered/Read retains delivery time; next-message normal receipt removal; failure text below with no timestamp; retry restricted to definitively failed user messages; unknown outcome reconciled; no external email resend. |
@@ -42,7 +43,7 @@ A documentation-only change can complete while the UI gates remain not verified.
 | Composer continuity | Existing Send-arrow and circular progress retained through representative input/send states. |
 | Contextual composition | Representative full screens consume the shared Chat shell and slots, alongside the connected component/state canvas; keyboard, safe areas, wrapping and neighbors checked. |
 | Prototype destinations | For in-scope actions: actual destination, local update or external handoff and return/cancel route verified; unresolved destinations labeled, not invented or silently omitted. |
-| Delivery claims | Separate design/prototype/runtime status. Reactions/read/runtime are not implemented by this guidance update; broader activity model, permission shell and exact Read backend remain proposed. |
+| Delivery claims | Separate design/prototype/runtime status. Reactions/read/runtime are not implemented by this guidance update; broader activity model, permission policy and exact Read backend remain proposed. |
 
 ## Minimum contextual matrix
 
@@ -59,6 +60,7 @@ runtime. Mark unsupported combinations explicitly and explain why.
 | Unknown user-message delivery | Reconciliation boundary explicit; no unconditional retry. |
 | User and assistant long press | Separate role menus; bottom-sheet reaction grid and grouped actions; no unsupported retry or email resend. |
 | Credential before saved / saved | Contextual service title and asset; Button disclosure opens actual Add Login/detail destination; outcome remains clear. |
+| Permission request / denied | In-place expand/collapse and history inspection; narrow mobile width plus long labels for all three horizontal ButtonGroup actions; inspect existing variants for regressions. |
 | Independent statuses | Representative card outcome while agent runs, voice-session state, and composer sending; each displays only its own truth. |
 
 ## What is automated

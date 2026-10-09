@@ -86,7 +86,17 @@ Chat design acceptance. Check mutable masters again before subsequent authorized
   The saved state keeps a clear outcome and reuses the corresponding Button navigation affordance
   without a redundant standalone ViewDetails link. The outcome receipt and navigation control have
   separate jobs. Use the existing Add Login UI; this affordance decision does not settle broader
-  credential storage, inline entry, authentication or permission-shell architecture.
+  credential storage, inline entry or authentication architecture; permission requests follow
+  their separate inline-card contract below.
+- **Permission request:** use an **inline card**, with disclosure/header text above a slotted
+  request body; expand/collapse in place. Do not open a redundant Rem review sheet. Denied
+  collapses by default and uses the simple configurable receipt **Denied**, not Denied·Notrun;
+  preserve inspectable request history. Keep consequential information visible; typed tool
+  payload details and a technical fallback are allowed. Required native OS permission prompts
+  remain a separate handoff. Always Allow scope and backend policy are not settled by this layout.
+- **Permission actions:** extend canonical **ButtonGroup** to **three horizontal actions on
+  mobile**, preserving existing variants. This is the chosen layout subject to narrow-width and
+  long-label fit validation, not a claim of verified Figma or runtime delivery.
 - **Service context:** use the canonical leading slot for contextual service titles/logo assets;
   preserve the title in Content and give the logo modest visual weight. Use the real asset, not a
   decorative approximation or a second bespoke header.
@@ -115,14 +125,15 @@ Chat design acceptance. Check mutable masters again before subsequent authorized
 
 Reactions, read receipts and their runtime behavior remain **not implemented** in this guidance
 change. A prototype demonstrates only the transitions actually wired. The broader activity model,
-permission shell and exact Read backend remain proposals/unresolved decisions.
+broader permission policy and exact Read backend remain proposals/unresolved decisions. The
+inline permission-card presentation is chosen; its fit and behavior still need verification.
 
 ### Reference provenance and unresolved decisions
 
 - [Grok, node 2535:22130](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2535-22130): concrete payload cards whose controls become receipts; observed states above are the active worker's supplied inspection.
 - [Muse, node 2039:14610](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2039-14610): agent details, separate statuses and browser takeover, from the same supplied inspection.
 - [Rem agent detail](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2048-169906) uses [master 2002:76914](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2002-76914); [New Add login](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=1956-8162) and [Saved login](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=1956-8161) are existing reuse targets per worker readback.
-- Samuel approved separate statuses and the shared suggestion/choice/confirmation family. Exact family APIs, full Rem lifecycle coverage, detail-screen repair, broader permission shell and inline credentials remain to be reconciled with live design/source; do not infer implementation approval.
+- Samuel approved separate statuses and the shared suggestion/choice/confirmation family. Exact family APIs, full Rem lifecycle coverage, detail-screen repair, broader permission policy and inline credentials remain to be reconciled with live design/source; do not infer implementation approval.
 - Active Rem review targets in file `af4yDqCzp57jds9lkFiIaO`: [core `2571:17104`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2571-17104), [extended `2584:17467`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2584-17467), [message `2603:19439`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19439). These are handoff targets under revision by another worker, not a verified inventory of finished masters.
 - Canvas organization follows [connected-flow presentation](FILE-ORG.md#connected-flow-presentation): natural-sized component states where local, full screens where destination or platform context matters.
 
