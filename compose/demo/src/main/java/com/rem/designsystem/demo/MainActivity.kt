@@ -81,7 +81,18 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class LoadFixture { Success, Slow, Error }
-private enum class Route { Home, Components, Controls, Loading, Settings, Agent, AgendaSuggestions, Onboarding }
+private enum class Route { Home, Components, Controls, Rows, CatalogAgenda, Chat, AgentCatalog, Brand, Loading, Settings, Agent, AgendaSuggestions, Onboarding }
+
+/** Catalog pages, in browse order: title, route and the tag tests use to open each. */
+private val catalogPages = listOf(
+    Triple("Controls", Route.Controls, "openControls"),
+    Triple("Rows", Route.Rows, "openRows"),
+    Triple("Agenda", Route.CatalogAgenda, "openCatalogAgenda"),
+    Triple("Chat", Route.Chat, "openChat"),
+    Triple("Agent", Route.AgentCatalog, "openAgent"),
+    Triple("Brand & empty states", Route.Brand, "openBrand"),
+    Triple("Loading", Route.Loading, "openLoading"),
+)
 
 /** The established onboarding order: Sign in → Consent → Connectors → Check-in → Voice. */
 enum class PlaygroundOnboardingStep(val title: String, val tag: String) {
@@ -110,13 +121,15 @@ fun Playground() {
     val back = {
         route = when (route) {
             Route.Agent -> Route.Settings
-            Route.Controls, Route.Loading -> Route.Components
+            Route.Controls, Route.Rows, Route.CatalogAgenda, Route.Chat, Route.AgentCatalog, Route.Brand, Route.Loading -> Route.Components
             else -> Route.Home
         }
     }
     BackHandler(route != Route.Home && !fullScreen) { back() }
     val title = when (route) {
         Route.Home -> "Rem Playground"; Route.Components -> "Components"; Route.Controls -> "Controls"
+        Route.Rows -> "Rows"; Route.CatalogAgenda -> "Agenda"; Route.Chat -> "Chat"; Route.AgentCatalog -> "Agent"
+        Route.Brand -> "Brand & empty states"
         Route.Loading -> "Loading"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"
         Route.AgendaSuggestions -> "Agenda New"; Route.Onboarding -> "Onboarding"
     }
@@ -147,11 +160,15 @@ fun Playground() {
                     NavRow("Onboarding", "openOnboarding") { onboardingStack = emptyList(); onboardingComplete = null; route = Route.Onboarding }
                     Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("playground.build"))
                 }
-                Route.Components -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    NavRow("Controls", "openControls") { route = Route.Controls }
-                    NavRow("Loading", "openLoading") { route = Route.Loading }
+                Route.Components -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    catalogPages.forEach { (label, page, tag) -> NavRow(label, tag) { route = page } }
                 }
                 Route.Controls -> ControlsPreview()
+                Route.Rows -> CatalogRows()
+                Route.CatalogAgenda -> CatalogAgenda()
+                Route.Chat -> CatalogChat()
+                Route.AgentCatalog -> CatalogAgent()
+                Route.Brand -> CatalogBrand()
                 Route.Loading -> LoadingPreview()
                 Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) {
                     SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {
@@ -374,6 +391,7 @@ private fun ControlsPreview() {
     var name by rememberSaveable { mutableStateOf("Avery Diaz") }
     var draft by rememberSaveable { mutableStateOf("") }
     var editing by rememberSaveable { mutableStateOf(false) }
+    var level by rememberSaveable { mutableFloatStateOf(0.5f) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Notifications", Modifier.weight(1f)); Switch(enabled, onCheckedChange = { enabled = it }, modifier = Modifier.testTag("notifications").semantics { contentDescription = "Notifications" })
@@ -383,6 +401,15 @@ private fun ControlsPreview() {
             ContainedIconSize.entries.forEach { size -> ContainedIcon(RemMaterialSymbols.Info, fill = ContainedIconFill.Tint(RemColors.current.systemBlue), size = size) }
         }
         Button(onClick = {}, enabled = false) { Text("Disabled") }
+        Text("Slider", style = RemTypography.footnote, color = RemColors.current.labelSecondary)
+        RemSlider(value = level, onValueChange = { level = it }, modifier = Modifier.testTag("controls.slider"))
+        Text("${(level * 100).toInt()}%", style = RemTypography.footnote)
+        Text("Pills", style = RemTypography.footnote, color = RemColors.current.labelSecondary)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RemPill("3 tasks", kind = RemPillKind.List)
+            RemPill("Standup", kind = RemPillKind.Dot(RemColors.current.systemBlue))
+            RemPill("Personal")
+        }
     }
     if (editing) AlertDialog(onDismissRequest = { editing = false }, title = { Text("Edit name") }, text = {
         OutlinedTextField(draft, onValueChange = { draft = it }, label = { Text("Display name") }, modifier = Modifier.testTag("nameField"))

@@ -48,7 +48,8 @@ jobs:
   ios:
     needs: preflight
     runs-on: macos-14
-    timeout-minutes: 45
+    # The journey suite (Settings, Agenda, Onboarding, navigation and catalog) runs ~40 minutes.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,6 +69,26 @@ jobs:
           name: ios-native-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/ios-native.json
           if-no-files-found: error
+      # Visual review copies of the journeys' own XCTest attachments (same extraction as
+      # screenshots.yml). Written outside the checkout after the evidence record.
+      - name: Export journey screenshots
+        if: always()
+        run: |
+          set -euo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          out="$RUNNER_TEMP/ios-screenshots"
+          mkdir -p "$out" "$RUNNER_TEMP/ios-attachments"
+          xcparse attachments "$RUNNER_TEMP/SettingsPlayground.xcresult" "$RUNNER_TEMP/ios-attachments"
+          find "$RUNNER_TEMP/ios-attachments" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f")
+            cp "$f" "$out/${b%%_*}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/ios-screenshots/*.png
+          if-no-files-found: warn
 
   android:
     needs: preflight
@@ -100,7 +121,9 @@ jobs:
           arch: x86_64
           disable-animations: true
           working-directory: compose
-          script: ./gradlew :demo:connectedDebugAndroidTest --stacktrace --no-daemon
+          script: |
+            ./gradlew :demo:connectedDebugAndroidTest --stacktrace --no-daemon
+            mkdir -p "$RUNNER_TEMP/android-screenshots" && adb pull /sdcard/Pictures/RemSettingsPlayground/. "$RUNNER_TEMP/android-screenshots/" || true
       - name: Verify every expected method actually passed
         run: python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform android --report compose/demo/build/outputs/androidTest-results --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/android-native.json"
       - uses: actions/upload-artifact@v4
@@ -108,6 +131,14 @@ jobs:
           name: android-native-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/android-native.json
           if-no-files-found: error
+      # Visual review copies of the journeys' own captures. Outside the checkout and after the
+      # evidence record, so they cannot affect clean-checkout or method-set validation.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-screenshots-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/android-screenshots/*.png
+          if-no-files-found: warn
 
   native-evidence:
     if: always()

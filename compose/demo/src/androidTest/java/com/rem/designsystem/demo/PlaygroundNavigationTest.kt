@@ -102,6 +102,75 @@ class PlaygroundNavigationTest {
         compose.waitUntil(6000) { compose.onAllNodesWithText("Refresh").fetchSemanticsNodes().isNotEmpty() }
     }
 
+    private fun openCatalogPage(tag: String) {
+        compose.onNodeWithTag("openComponents").performClick()
+        compose.onNodeWithTag(tag).performScrollTo().performClick()
+    }
+
+    @Test fun catalogListsEveryPage() {
+        compose.onNodeWithTag("openComponents").performClick()
+        listOf("openControls", "openRows", "openCatalogAgenda", "openChat", "openAgent", "openBrand", "openLoading").forEach {
+            compose.onNodeWithTag(it).assertExists()
+        }
+    }
+
+    @Test fun catalogControlsSliderAndPills() {
+        openCatalogPage("openControls")
+        compose.onNodeWithText("50%").performScrollTo().assertExists()
+        compose.onNodeWithTag("controls.slider").performScrollTo().performTouchInput { swipeRight() }
+        compose.onNodeWithText("50%").assertDoesNotExist()
+        compose.onNodeWithText("Personal").performScrollTo().assertExists()
+        capture("Catalog-controls-light")
+    }
+
+    @Test fun catalogRowsListAndConnectorStates() {
+        openCatalogPage("openRows")
+        compose.onNodeWithTag("catalog.listRow").performClick()
+        compose.onNodeWithText("Opened").assertExists()
+        compose.onNodeWithText("Connect").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Connected").fetchSemanticsNodes().size >= 2 }
+        capture("Catalog-rows-light")
+    }
+
+    @Test fun catalogAgendaDateAndSuggestions() {
+        openCatalogPage("openCatalogAgenda")
+        compose.onNodeWithText("Oct 1 2026").assertExists()
+        compose.onNodeWithContentDescription("Next day").performClick()
+        compose.onNodeWithText("Oct 2 2026").assertExists()
+        compose.onNodeWithTag("catalog.suggestion.accept.add").performClick()
+        compose.onNodeWithText("Added").assertExists()
+        capture("Catalog-agenda-light")
+        compose.onNodeWithTag("catalog.suggestion.restore").performClick()
+        compose.onNodeWithTag("catalog.suggestion.accept.add").assertExists()
+    }
+
+    @Test fun catalogChatComposerSendsMessage() {
+        openCatalogPage("openChat")
+        compose.onNodeWithTag("catalog.composerField").performTextInput("Plan my afternoon")
+        compose.onNodeWithTag("catalog.composerSend").performClick()
+        compose.onNodeWithText("Plan my afternoon").assertExists()
+        capture("Catalog-chat-light")
+    }
+
+    @Test fun catalogAgentSurfaces() {
+        openCatalogPage("openAgent")
+        compose.onAllNodesWithText("Working")[0].assertExists()
+        compose.onNodeWithTag("catalog.browserState.Ended").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.browserState.Ended").assertIsSelected()
+        compose.onNodeWithText("Your morning brief").performScrollTo().assertExists()
+        capture("Catalog-agent-light")
+    }
+
+    @Test fun catalogBrandAndEmptyState() {
+        openCatalogPage("openBrand")
+        compose.onNodeWithTag("catalog.faceThinking").performClick()
+        compose.onNodeWithText("Add New").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.emptyReset").assertExists()
+        capture("Catalog-brand-light")
+        compose.onNodeWithTag("catalog.emptyReset").performClick()
+        compose.onNodeWithText("Add New").assertExists()
+    }
+
     /** Continue from Sign in walks every established step, in order, to the completion state. */
     @Test fun continueAdvancesThroughEveryStepToCompletion() {
         openOnboardingStep("openOnboardingSignIn")

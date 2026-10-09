@@ -46,7 +46,7 @@ enum OnboardingStep: Int, CaseIterable, Hashable {
 }
 
 private enum PlaygroundRoute: Hashable {
-    case components, controls, loading
+    case components, controls, rows, agenda, chat, agent, brand, loading
     case settings
     case agendaSuggestions(AgendaSuggestionsFixture)
     case onboarding
@@ -93,6 +93,11 @@ struct PlaygroundHome: View {
                 switch route {
                 case .components: ComponentCatalog()
                 case .controls: ControlsPreview()
+                case .rows: CatalogRows()
+                case .agenda: CatalogAgenda()
+                case .chat: CatalogChat()
+                case .agent: CatalogAgent()
+                case .brand: CatalogBrand()
                 case .loading: LoadingPreview()
                 case .settings: SettingsPreview(fixture: fixture)
                 case .agendaSuggestions(let agenda): AgendaSuggestionsPreview(fixture: agenda)
@@ -139,12 +144,22 @@ struct PlaygroundHome: View {
 // MARK: - Components
 
 struct ComponentCatalog: View {
+    private static let pages: [(title: String, route: PlaygroundRoute, identifier: String)] = [
+        ("Controls", .controls, "openControls"),
+        ("Rows", .rows, "openRows"),
+        ("Agenda", .agenda, "openCatalogAgenda"),
+        ("Chat", .chat, "openChat"),
+        ("Agent", .agent, "openAgent"),
+        ("Brand & empty states", .brand, "openBrand"),
+        ("Loading", .loading, "openLoading"),
+    ]
+
     var body: some View {
         List {
-            NavigationLink("Controls", value: PlaygroundRoute.controls)
-                .accessibilityIdentifier("openControls")
-            NavigationLink("Loading", value: PlaygroundRoute.loading)
-                .accessibilityIdentifier("openLoading")
+            ForEach(Self.pages, id: \.identifier) { page in
+                NavigationLink(page.title, value: page.route)
+                    .accessibilityIdentifier(page.identifier)
+            }
         }
         .navigationTitle("Components")
         .navigationBarTitleDisplayMode(.inline)
@@ -219,6 +234,13 @@ struct LoadingPreview: View {
 }
 
 struct ControlsPreview: View {
+    private static let buttons: [(title: String, variant: RemButtonVariant)] = [
+        ("Rect · Black", .rectBlack), ("Rect · Blue", .rectBlue), ("Rect · Secondary", .rectSecondary),
+        ("Rect · Destructive", .rectDestructive), ("Text · Accent", .textAccent),
+        ("Text · Destructive", .textDestructive), ("Pill · Secondary", .pillSecondary),
+    ]
+    @State private var lastButton: String?
+    @State private var level = 0.5
     @State private var enabled = true
     @State private var name = "Avery Diaz"
     @State private var draft = ""
@@ -235,7 +257,30 @@ struct ControlsPreview: View {
                     ContainedIcon("info.circle.fill", fill: .tint(.blue), size: .small)
                     ContainedIcon("info.circle.fill", fill: .tint(.blue), size: .large)
                 }
-                Button("Disabled") {}.remButton(.rectBlue).disabled(true)
+            }
+            Section("Buttons") {
+                VStack(spacing: DesignTokens.Spacing.sm) {
+                    ForEach(Self.buttons, id: \.title) { button in
+                        Button(button.title) { lastButton = button.title }.remButton(button.variant)
+                    }
+                    Button("Disabled") {}.remButton(.rectBlack).disabled(true)
+                }
+                .listRowBackground(Color.clear)
+                if let lastButton {
+                    Text("Tapped \(lastButton)").accessibilityIdentifier("controls.lastButton")
+                }
+            }
+            Section("Slider") {
+                RemSlider(value: $level)
+                    .accessibilityIdentifier("controls.slider")
+                Text("\(Int((level * 100).rounded()))%").foregroundStyle(.secondary)
+            }
+            Section("Pills") {
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    RemPill("3 tasks", kind: .list)
+                    RemPill("Standup", kind: .dot(DesignTokens.Color.systemBlue))
+                    RemPill("Personal")
+                }
             }
         }.navigationTitle("Controls")
             .navigationBarTitleDisplayMode(.inline)

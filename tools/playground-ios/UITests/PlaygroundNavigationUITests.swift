@@ -85,6 +85,82 @@ final class PlaygroundNavigationUITests: XCTestCase {
                       "Action progress clears")
     }
 
+    // MARK: Catalog pages
+
+    private func openCatalogPage(_ identifier: String, title: String) {
+        tap("openComponents")
+        tap(identifier)
+        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 3), "\(title) page opens")
+    }
+
+    func testCatalogListsEveryPage() {
+        tap("openComponents")
+        for id in ["openControls", "openRows", "openCatalogAgenda", "openChat", "openAgent", "openBrand", "openLoading"] {
+            XCTAssertTrue(app.buttons[id].waitForExistence(timeout: 3), "Catalog is missing \(id)")
+        }
+    }
+
+    func testCatalogControlsButtonsSliderAndPills() {
+        openCatalogPage("openControls", title: "Controls")
+        let blue = app.buttons["Rect · Blue"]
+        reveal(blue)
+        blue.tap()
+        XCTAssertEqual(app.staticTexts["controls.lastButton"].label, "Tapped Rect · Blue")
+        XCTAssertFalse(app.buttons["Disabled"].isEnabled, "Disabled variant is not interactive")
+        capture("Catalog-controls-light")
+    }
+
+    func testCatalogRowsListAndConnectorStates() {
+        openCatalogPage("openRows", title: "Rows")
+        tap("catalog.listRow")
+        XCTAssertTrue(app.staticTexts["Opened"].waitForExistence(timeout: 2), "List row action runs")
+        tapButton(containing: "Connect Gmail")
+        XCTAssertTrue(app.switches.firstMatch.waitForExistence(timeout: 5), "Connect moves through Connecting to Connected")
+        capture("Catalog-rows-light")
+    }
+
+    func testCatalogAgendaDateAndSuggestions() {
+        openCatalogPage("openCatalogAgenda", title: "Agenda")
+        XCTAssertTrue(app.staticTexts["Oct 1 2026"].exists)
+        app.buttons["Next day"].tap()
+        XCTAssertTrue(app.staticTexts["Oct 2 2026"].waitForExistence(timeout: 2), "Next day advances the date")
+        tap("catalog.suggestion.accept.add")
+        XCTAssertTrue(app.staticTexts["Added"].waitForExistence(timeout: 2), "Accepting resolves the suggestion")
+        capture("Catalog-agenda-light")
+        tap("catalog.suggestion.restore")
+        XCTAssertTrue(app.buttons["catalog.suggestion.accept.add"].waitForExistence(timeout: 2), "Restore brings it back")
+    }
+
+    func testCatalogChatComposerSendsMessage() {
+        openCatalogPage("openChat", title: "Chat")
+        let field = app.descendants(matching: .any)["catalog.composerField"].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        field.tap()
+        field.typeText("Plan my afternoon")
+        tap("catalog.composerSend")
+        XCTAssertTrue(app.staticTexts["Plan my afternoon"].waitForExistence(timeout: 3), "Send adds a message bubble")
+        capture("Catalog-chat-light")
+    }
+
+    func testCatalogAgentSurfaces() {
+        openCatalogPage("openAgent", title: "Agent")
+        XCTAssertTrue(app.staticTexts["Working"].firstMatch.exists)
+        let ended = app.segmentedControls["catalog.browserState"].buttons["Ended"]
+        reveal(ended)
+        ended.tap()
+        XCTAssertTrue(ended.isSelected, "Browser card state can be switched")
+        capture("Catalog-agent-light")
+    }
+
+    func testCatalogBrandAndEmptyState() {
+        openCatalogPage("openBrand", title: "Brand & empty states")
+        tapButton(containing: "Add New")
+        XCTAssertTrue(app.buttons["catalog.emptyReset"].waitForExistence(timeout: 2), "Empty-state action shows content")
+        capture("Catalog-brand-light")
+        tap("catalog.emptyReset")
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Add New")).firstMatch.waitForExistence(timeout: 2))
+    }
+
     // MARK: Onboarding
 
     /// Continue from Sign in walks every established step, in order, to the completion state.
