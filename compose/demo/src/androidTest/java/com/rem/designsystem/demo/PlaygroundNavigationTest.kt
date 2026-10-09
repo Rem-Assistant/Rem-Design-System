@@ -12,6 +12,16 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.espresso.Espresso
+import android.view.View
+import android.widget.TimePicker
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import org.hamcrest.Matcher
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
@@ -250,7 +260,7 @@ class PlaygroundNavigationTest {
         compose.onNodeWithText("Connectors").assertExists()
         capture("Onboarding-connectors-light")
         compose.onNodeWithText("Continue").performClick()
-        compose.onNodeWithText("Check-in").assertExists()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
         capture("Onboarding-checkin-light")
         compose.onNodeWithText("Continue").performClick()
         waitForTag("onboardingVoice")
@@ -262,12 +272,14 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("openOnboardingSignIn").assertExists()
     }
 
-    /** Skip is available from Connectors onward and moves the flow on exactly like Continue. */
+    /** Connectors and Voice offer Skip, which moves the flow on like Continue. Check-in has no Skip
+     *  (it asks for at least one time), so the flow passes it with Continue. */
     @Test fun skipAdvancesFromConnectorsToCompletion() {
         openOnboardingStep("openOnboardingConnectors")
         compose.onNodeWithText("Skip").performClick()
-        compose.onNodeWithText("Check-in").assertExists()
-        compose.onNodeWithText("Skip").performClick()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        compose.onNodeWithText("Skip").assertDoesNotExist()
+        compose.onNodeWithText("Continue").performClick()
         waitForTag("onboardingVoice")
         compose.onNodeWithTag("onboardingVoice.skip").performClick()
         compose.onNodeWithTag("onboarding.complete")
@@ -280,9 +292,53 @@ class PlaygroundNavigationTest {
         compose.onNodeWithText("Continue").performClick()
         waitForTag("onboardingVoice")
         systemBack()
-        compose.onNodeWithText("Check-in").assertExists()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
         systemBack()
         compose.onNodeWithTag("openOnboardingCheckIn").assertExists()
+    }
+
+    /** Check-in: a switch adds a time, the platform time picker changes one, and Continue saves first. */
+    @Test fun checkInSwitchTimePickerAndSave() {
+        openOnboardingStep("openOnboardingCheckIn")
+        compose.onNodeWithText("12:30 PM").assertDoesNotExist()
+        // Rows run Morning, Midday, Evening; each ends in its switch.
+        compose.onAllNodes(isToggleable())[1].performClick()
+        compose.onNodeWithText("12:30 PM").assertExists()
+        compose.onNodeWithText("8:00 AM").performClick()
+        onView(isAssignableFrom(TimePicker::class.java)).inRoot(isDialog()).perform(setTime(9, 0))
+        capture("Onboarding-checkin-picker-light")
+        onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
+        compose.onNodeWithText("9:00 AM").assertExists()
+        capture("Onboarding-checkin-edited-light")
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText("Continue").performClick()
+        compose.mainClock.advanceTimeBy(100)
+        compose.onNodeWithText("Saving\u2026").assertExists()
+        compose.mainClock.autoAdvance = true
+        waitForTag("onboardingVoice")
+    }
+
+    /** Check-in with the "Fails once" fixture: the first save fails with Try again, and retrying recovers. */
+    @Test fun checkInSaveFailureRecovers() {
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag("checkInSave.Fails once").performClick()
+        compose.onNodeWithTag("openOnboardingCheckIn").performClick()
+        compose.onNodeWithText("Continue").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Try again").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("We couldn't save your check-in times. Check your connection and try again.", substring = true).assertExists()
+        capture("Onboarding-checkin-failure-light")
+        compose.onNodeWithText("Try again").performClick()
+        waitForTag("onboardingVoice")
+    }
+
+    /** Sets a framework TimePicker directly — the dialog's own dial has no stable touch targets. */
+    private fun setTime(hour: Int, minute: Int) = object : ViewAction {
+        override fun getConstraints(): Matcher<View> = isAssignableFrom(TimePicker::class.java)
+        override fun getDescription() = "set time to $hour:$minute"
+        override fun perform(uiController: UiController, view: View) {
+            (view as TimePicker).apply { this.hour = hour; this.minute = minute }
+            uiController.loopMainThreadUntilIdle()
+        }
     }
 
     @Test fun consentLegalRowsOpenDocuments() {

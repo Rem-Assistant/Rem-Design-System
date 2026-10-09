@@ -289,10 +289,10 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Connectors"].waitForExistence(timeout: 3), "Consent → Connectors")
         capture("Onboarding-connectors-light")
         tap("Continue")
-        XCTAssertTrue(app.buttons["onboardingCheckIn.continue"].waitForExistence(timeout: 3), "Connectors → Check-in")
+        XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Connectors → Check-in")
         capture("Onboarding-checkin-light")
-        tap("onboardingCheckIn.continue")
-        XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 3), "Check-in → Voice")
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 5), "Check-in saves → Voice")
         tap("onboardingVoice.continue")
         let complete = app.staticTexts["onboarding.complete"]
         XCTAssertTrue(complete.waitForExistence(timeout: 3), "Voice → completion")
@@ -302,13 +302,15 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["openOnboardingSignIn"].waitForExistence(timeout: 3), "Done returns to the onboarding hub")
     }
 
-    /// Skip is available from Connectors onward and moves the flow on exactly like Continue.
+    /// Connectors and Voice offer Skip, which moves the flow on like Continue. Check-in has no Skip
+    /// (it asks for at least one time), so the flow passes it with Continue.
     func testSkipAdvancesFromConnectorsToCompletion() {
         openOnboardingStep("openOnboardingConnectors")
         tap("Skip")
-        XCTAssertTrue(app.buttons["onboardingCheckIn.skip"].waitForExistence(timeout: 3), "Connectors Skip → Check-in")
-        tap("onboardingCheckIn.skip")
-        XCTAssertTrue(app.buttons["onboardingVoice.skip"].waitForExistence(timeout: 3), "Check-in Skip → Voice")
+        XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Connectors Skip → Check-in")
+        XCTAssertFalse(app.buttons["Skip"].exists, "Check-in has no Skip")
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.buttons["onboardingVoice.skip"].waitForExistence(timeout: 5), "Check-in → Voice")
         tap("onboardingVoice.skip")
         let complete = app.staticTexts["onboarding.complete"]
         XCTAssertTrue(complete.waitForExistence(timeout: 3), "Voice Skip → completion")
@@ -318,10 +320,47 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// Native Back walks the pushed steps in reverse.
     func testBackReturnsToPreviousStep() {
         openOnboardingStep("openOnboardingCheckIn")
-        tap("onboardingCheckIn.continue")
-        XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 3))
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 5))
         app.navigationBars.element(boundBy: 0).buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["onboardingCheckIn.continue"].waitForExistence(timeout: 3), "Back from Voice → Check-in")
+        XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Back from Voice → Check-in")
+    }
+
+    /// Check-in: a switch adds a time, the native wheel changes one, and Continue saves before moving on.
+    func testCheckInSwitchTimePickerAndSave() {
+        openOnboardingStep("openOnboardingCheckIn")
+        XCTAssertFalse(app.buttons["Edit 12:30 PM"].exists, "Midday starts off, without a time")
+        app.switches["Midday"].tap()
+        XCTAssertTrue(app.buttons["Edit 12:30 PM"].waitForExistence(timeout: 2), "Turning Midday on shows its time")
+        tap("Edit 8:00 AM")
+        let picker = app.datePickers.firstMatch
+        XCTAssertTrue(picker.waitForExistence(timeout: 3), "The time opens the native picker")
+        app.pickerWheels.element(boundBy: 0).adjust(toPickerWheelValue: "9")
+        capture("Onboarding-checkin-picker-light")
+        // Drag the sheet down from its top margin, clear of the wheels.
+        let top = picker.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: -10))
+        top.press(forDuration: 0.1, thenDragTo: app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.98)))
+        waitUntilGone(picker, "The picker sheet closes")
+        XCTAssertTrue(app.buttons["Edit 9:00 AM"].waitForExistence(timeout: 2), "The chosen time shows in the row")
+        capture("Onboarding-checkin-edited-light")
+        // The one-second Saving state is not asserted here: its spinner keeps the app from idling, so
+        // XCUITest may not observe it before Saved. The failure test pins the persistence states.
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 5), "Saved → Voice")
+    }
+
+    /// Check-in with the "Fails once" fixture: the first save fails with Try again, and retrying recovers.
+    func testCheckInSaveFailureRecovers() {
+        tap("openOnboarding")
+        app.segmentedControls["checkInSaveFixture"].buttons["Fails once"].tap()
+        tap("openOnboardingCheckIn")
+        app.buttons["Continue"].tap()
+        let retry = app.buttons["Try again"]
+        XCTAssertTrue(retry.waitForExistence(timeout: 4), "A failed save offers Try again")
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "save your check-in times")).firstMatch.exists, "The failure toast explains it")
+        capture("Onboarding-checkin-failure-light")
+        retry.tap()
+        XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 5), "Retry saves → Voice")
     }
 
     func testConsentLegalRowsOpenDocuments() {

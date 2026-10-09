@@ -114,6 +114,7 @@ fun Playground() {
     var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
+    var checkInFailsOnce by rememberSaveable { mutableStateOf(false) }
     // Pushed onboarding steps (ordinals), mirroring the iOS navigation stack: Continue / Skip push the
     // next step, Back pops, and an empty stack is the onboarding hub.
     var onboardingStack by rememberSaveable { mutableStateOf(listOf<Int>()) }
@@ -203,7 +204,7 @@ fun Playground() {
                         current != null -> {
                             val pop = { onboardingStack = onboardingStack.dropLast(1) }
                             BackHandler { pop() }
-                            OnboardingStepPreview(current, onBack = pop) { action ->
+                            OnboardingStepPreview(current, checkInFailsOnce, onBack = pop) { action ->
                                 val next = current.ordinal + 1
                                 if (next < PlaygroundOnboardingStep.entries.size) onboardingStack = onboardingStack + next
                                 else onboardingComplete = action
@@ -214,6 +215,13 @@ fun Playground() {
                                 PlaygroundOnboardingStep.entries.forEachIndexed { index, step ->
                                     if (index > 0) RowDivider()
                                     NavRow(step.title, step.tag) { onboardingStack = listOf(step.ordinal) }
+                                    if (step == PlaygroundOnboardingStep.CheckIn) ChipRow {
+                                        // The Check-in step's save fixture, beside its row like the root's data pickers.
+                                        listOf(false to "Succeeds", true to "Fails once").forEach { (fails, label) ->
+                                            FilterChip(selected = checkInFailsOnce == fails, onClick = { checkInFailsOnce = fails },
+                                                label = { Text(label) }, modifier = Modifier.testTag("checkInSave.$label"))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -270,9 +278,50 @@ private fun LoadingPreview() {
     }
 }
 
+/**
+ * Check-in cadence (PR #53's shared screen) over local fixture state: switches and the platform time
+ * picker edit the cadence, and Continue runs the save lifecycle (Saving → Saved) before the flow
+ * moves on. With the hub's "Fails once" fixture the first save fails, so Try again exercises
+ * recovery. Nothing is scheduled or persisted.
+ */
+@Composable
+private fun CheckInStepPreview(failFirstSave: Boolean, progress: OnboardingProgress, onBack: () -> Unit, onContinue: () -> Unit) {
+    var checkins by remember { mutableStateOf(checkinDefaultCadence()) }
+    var status by remember { mutableStateOf<CheckinStatus>(CheckinStatus.Default) }
+    var failedOnce by remember { mutableStateOf(false) }
+    var saveAttempt by remember { mutableIntStateOf(0) }
+    LaunchedEffect(saveAttempt) {
+        if (saveAttempt == 0) return@LaunchedEffect
+        delay(1000)
+        if (failFirstSave && !failedOnce) {
+            failedOnce = true
+            status = CheckinStatus.Failure("We couldn't save your check-in times. Check your connection and try again.")
+            return@LaunchedEffect
+        }
+        status = CheckinStatus.Saved
+        delay(800)
+        onContinue()
+    }
+    val save = { status = CheckinStatus.Saving; saveAttempt += 1 }
+    fun update(slot: String, change: (Checkin) -> Checkin) {
+        checkins = checkins.map { if (it.slot == slot) change(it) else it }
+        status = CheckinStatus.Edited
+    }
+    OnboardingCheckinScreen(
+        status = status,
+        periods = checkinPeriods(checkins),
+        onToggle = { slot, on -> update(slot) { it.copy(enabled = on) } },
+        onTimeChange = { slot, hour, minute -> update(slot) { it.copy(deliveryHour = hour, deliveryMinute = minute) } },
+        onContinue = save,
+        onRetry = save,
+        progress = progress,
+        onBack = onBack,
+    )
+}
+
 /** One onboarding step, wired so Continue / Skip move the flow on with the action taken. */
 @Composable
-private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, onBack: () -> Unit, advance: (String) -> Unit) {
+private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, checkInFailsOnce: Boolean, onBack: () -> Unit, advance: (String) -> Unit) {
     val scope = object : OnboardingStepScope {
         override val index = step.ordinal
         override val count = PlaygroundOnboardingStep.entries.size
@@ -316,16 +365,11 @@ private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, onBack: () -> 
                 showSeeMore = false,
             )
         }
-        // Check-in keeps its place in the flow; its time choices are not settled (native Check-in: PR #53).
-        PlaygroundOnboardingStep.CheckIn -> OnboardingScaffold(
-            primary = OnboardingAction(label = "Continue", onClick = { advance("continue") }),
-            secondary = OnboardingAction(label = "Skip", onClick = { advance("skip") }, style = OnboardingActionStyle.TextAccent),
-            hero = OnboardingHero(icon = Icons.Filled.Notifications),
-            title = "Check-in",
-            subtitle = "Check-in times are pending.",
-            background = OnboardingBackground.Secondary,
+        PlaygroundOnboardingStep.CheckIn -> CheckInStepPreview(
+            failFirstSave = checkInFailsOnce,
             progress = scope.progress,
             onBack = onBack,
+            onContinue = { advance("continue") },
         )
         PlaygroundOnboardingStep.Voice -> OnboardingVoiceScreen(
             onBack = onBack,

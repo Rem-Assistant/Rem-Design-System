@@ -58,6 +58,7 @@ struct PlaygroundHome: View {
     @State private var path = NavigationPath()
     @State private var fixture = LoadFixture.success
     @State private var agendaFixture = AgendaSuggestionsFixture.loaded
+    @State private var checkInSave = CheckInSaveFixture.succeeds
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -101,9 +102,9 @@ struct PlaygroundHome: View {
                 case .loading: LoadingPreview()
                 case .settings: SettingsPreview(fixture: fixture)
                 case .agendaSuggestions(let agenda): AgendaSuggestionsPreview(fixture: agenda)
-                case .onboarding: OnboardingHub()
+                case .onboarding: OnboardingHub(checkInSave: $checkInSave)
                 case .onboardingStep(let step):
-                    OnboardingStepHost(step: step, advance: { advance(from: step, action: $0) })
+                    OnboardingStepHost(step: step, checkInSave: checkInSave, advance: { advance(from: step, action: $0) })
                 case .onboardingComplete(let lastAction):
                     OnboardingComplete(lastAction: lastAction, onDone: returnToOnboardingHub)
                 }
@@ -383,13 +384,29 @@ struct AgendaSuggestionsPreview: View {
 
 // MARK: - Onboarding
 
+/// How the Check-in step's fixture save behaves.
+enum CheckInSaveFixture: String, CaseIterable, Hashable {
+    case succeeds = "Succeeds"
+    case failsOnce = "Fails once"
+}
+
 /// Entry points into each established onboarding step; every step continues to the next.
 struct OnboardingHub: View {
+    @Binding var checkInSave: CheckInSaveFixture
+
     var body: some View {
         List {
             ForEach(OnboardingStep.allCases, id: \.self) { step in
                 NavigationLink(step.title, value: PlaygroundRoute.onboardingStep(step))
                     .accessibilityIdentifier(step.identifier)
+                if step == .checkIn {
+                    // The Check-in step's save fixture, beside its row like the root's data pickers.
+                    Picker("Check-in save", selection: $checkInSave) {
+                        ForEach(CheckInSaveFixture.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("checkInSaveFixture")
+                }
             }
         }
         .navigationTitle("Onboarding")
@@ -399,6 +416,7 @@ struct OnboardingHub: View {
 
 struct OnboardingStepHost: View {
     let step: OnboardingStep
+    var checkInSave: CheckInSaveFixture = .succeeds
     /// Advances with the action that moved the flow on ("continue" or "skip").
     let advance: (String) -> Void
 
@@ -416,7 +434,7 @@ struct OnboardingStepHost: View {
         case .connectors:
             OnboardingConnectorsStep(onContinue: { advance("continue") }, onSkip: { advance("skip") })
         case .checkIn:
-            OnboardingCheckInStep(onContinue: { advance("continue") }, onSkip: { advance("skip") })
+            OnboardingCheckInStep(failFirstSave: checkInSave == .failsOnce, onContinue: { advance("continue") })
         case .voice:
             OnboardingVoicePlaygroundScreen(
                 onContinue: { advance("continue") },
@@ -489,39 +507,57 @@ private struct OnboardingConnectorsStep: View {
     }
 }
 
-/// Check-in keeps its place in the flow. Its time choices are not settled, so this step only
-/// routes Continue / Skip; the native Check-in implementation lives in PR #53.
+/// Check-in cadence (PR #53's shared template) over local fixture state: switches and the native
+/// time picker edit the cadence, and Continue runs the save lifecycle (Saving → Saved) before the
+/// flow moves on. With the hub's "Fails once" fixture the first save fails, so Try again exercises
+/// recovery. Nothing is scheduled or persisted.
 private struct OnboardingCheckInStep: View {
+    let failFirstSave: Bool
     let onContinue: () -> Void
-    let onSkip: () -> Void
+    @State private var checkins = OnboardingCheckinTemplate.defaultCadence()
+    @State private var status: OnboardingCheckinTemplate.Status = .default
+    @State private var failedOnce = false
 
     var body: some View {
-        VStack(spacing: DesignTokens.Spacing.md) {
-            Spacer()
-            ContainedIcon("sun.horizon.fill", fill: .tint(DesignTokens.Color.brandBlue), size: .large)
-                .accessibilityHidden(true)
-            Text("Check-in")
-                .font(DesignTokens.Typography.largeTitle.weight(.semibold))
-                .foregroundStyle(DesignTokens.Color.labelPrimary)
-            Text("Check-in times are pending.")
-                .font(DesignTokens.Typography.body)
-                .foregroundStyle(DesignTokens.Color.labelSecondary)
-            Spacer()
-            VStack(spacing: DesignTokens.Spacing.xs) {
-                Button(action: onContinue) { Text("Continue").frame(maxWidth: .infinity) }
-                    .remPrimaryActionButton()
-                    .accessibilityIdentifier("onboardingCheckIn.continue")
-                Button("Skip", action: onSkip)
-                    .remButton(.textAccent)
-                    .accessibilityIdentifier("onboardingCheckIn.skip")
-            }
-        }
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, DesignTokens.Spacing.lg)
-        .padding(.bottom, DesignTokens.Spacing.sm)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DesignTokens.Color.backgroundPrimary)
+        OnboardingCheckinTemplate(
+            status: status,
+            periods: OnboardingCheckinTemplate.periods(
+                from: checkins,
+                onToggle: { slot, on in update(slot) { $0.enabled = on } },
+                onTimeChange: { slot, hour, minute in update(slot) { $0.hour = hour; $0.minute = minute } }
+            ),
+            onPrimary: save,
+            onRetry: save
+        )
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private struct Edit { var enabled: Bool; var hour: Int; var minute: Int }
+
+    private func update(_ slot: CheckinSlot, _ change: (inout Edit) -> Void) {
+        checkins = checkins.map { checkin in
+            guard checkin.slot == slot.rawValue else { return checkin }
+            var edit = Edit(enabled: checkin.enabled, hour: checkin.deliveryHour, minute: checkin.deliveryMinute)
+            change(&edit)
+            return Checkin(slot: checkin.slot, enabled: edit.enabled, deliveryHour: edit.hour,
+                           deliveryMinute: edit.minute, timezone: checkin.timezone)
+        }
+        status = .edited
+    }
+
+    private func save() {
+        status = .saving
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            if failFirstSave && !failedOnce {
+                failedOnce = true
+                status = .failure(message: "We couldn't save your check-in times. Check your connection and try again.")
+                return
+            }
+            status = .saved
+            try? await Task.sleep(for: .seconds(0.8))
+            onContinue()
+        }
     }
 }
 
