@@ -17,6 +17,8 @@ check(checks['permissions'] == {'contents' => 'read'}, 'Checks must remain read-
 [release, checks].each do |workflow|
   workflow['jobs'].each_value do |item|
     check(!item.key?('secrets'), 'No inherited secrets')
+    check(!item.fetch('env', {}).values.any? { |v| v.to_s.include?('runner.') },
+      'Runner context is unavailable in job-level env; initialize paths in a step')
     item['steps'].each do |step|
       action = step['uses']
       if action

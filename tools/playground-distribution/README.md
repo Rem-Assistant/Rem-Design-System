@@ -191,7 +191,7 @@ ruby -c tools/playground-distribution/fastlane/Fastfile
 ruby tools/playground-distribution/test_store.rb
 ruby tools/playground-distribution/test_workflows.rb
 # On the pinned Ruby runtime, with the committed frozen bundle installed:
-bundle exec ruby tools/playground-distribution/test_dependencies.rb
+(cd tools/playground-distribution && BUNDLE_FROZEN=true bundle exec ruby test_dependencies.rb)
 ```
 
 Tests exercise input injection, foreign/stale runs, missing/duplicate jobs, incomplete

@@ -99,11 +99,13 @@ jobs:
     timeout-minutes: 60
     env:
       PLAYGROUND_PLATFORM: ${{ matrix.platform }}
-      PLAYGROUND_OUTPUT: ${{ runner.temp }}/playground-package
-      PLAYGROUND_ADMISSION: ${{ runner.temp }}/admission.json
       BUNDLE_FROZEN: 'true'
-      BUNDLE_PATH: ${{ runner.temp }}/playground-gems
     steps:
+      - name: Initialize ephemeral runner paths
+        run: |
+          echo "PLAYGROUND_OUTPUT=$RUNNER_TEMP/playground-package" >> "$GITHUB_ENV"
+          echo "PLAYGROUND_ADMISSION=$RUNNER_TEMP/admission.json" >> "$GITHUB_ENV"
+          echo "BUNDLE_PATH=$RUNNER_TEMP/playground-gems" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.sha }}

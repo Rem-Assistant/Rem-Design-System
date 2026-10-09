@@ -6,6 +6,9 @@ on:
       - 'tools/playground-distribution/**'
 permissions:
   contents: read
+concurrency:
+  group: playground-distribution-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 jobs:
   guards-and-dependencies:
     strategy:
@@ -16,11 +19,12 @@ jobs:
     timeout-minutes: 20
     env:
       BUNDLE_FROZEN: 'true'
-      BUNDLE_PATH: ${{ runner.temp }}/playground-check-gems
       FASTLANE_SKIP_UPDATE_CHECK: '1'
       FASTLANE_HIDE_CHANGELOG: '1'
       FASTLANE_OPT_OUT_USAGE: '1'
     steps:
+      - name: Initialize ephemeral dependency path
+        run: echo "BUNDLE_PATH=$RUNNER_TEMP/playground-check-gems" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.event.pull_request.head.sha }}
