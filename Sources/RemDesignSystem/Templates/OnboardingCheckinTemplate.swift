@@ -150,12 +150,14 @@ public struct OnboardingCheckinTemplate: View {
                 ListRow(
                     period.title,
                     emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
                     leading: { ContainedIcon(period.symbol, fill: .subtle) },
                     trailing: { accessories(period, includesTime: true) }
                 )
                 ListRow(
                     period.title,
                     emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
                     leading: { ContainedIcon(period.symbol, fill: .subtle) },
                     supporting: { timeValue(period) },
                     trailing: { accessories(period, includesTime: false) }
@@ -163,6 +165,7 @@ public struct OnboardingCheckinTemplate: View {
                 ListRow(
                     period.title,
                     emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
                     leading: { ContainedIcon(period.symbol, fill: .subtle) },
                     supporting: { accessories(period, includesTime: true) },
                     trailing: { EmptyView() }
@@ -170,6 +173,7 @@ public struct OnboardingCheckinTemplate: View {
                 ListRow(
                     period.title,
                     emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
                     leading: { ContainedIcon(period.symbol, fill: .subtle) },
                     supporting: {
                         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {

@@ -442,6 +442,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
         openOnboardingStep("openOnboardingCheckIn")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Check-in opens")
         assertCheckInRowsFit()
+        scroll(to: app.buttons["Edit 8:00 AM"], named: "Morning time", up: false)
+        XCTAssertTrue(app.staticTexts["Morning"].isHittable, "The capture includes the Morning title")
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-large-text")
         let midday = app.switches["Midday"]
         reveal(midday)
@@ -467,7 +470,11 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let times = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Edit "))
         XCTAssertTrue(times.firstMatch.waitForExistence(timeout: 2), "A Check-in time is shown")
         let reference = times.firstMatch.frame.height
-        XCTAssertEqual(app.switches.count, 3, "Only the three displayed cadence switches have accessibility nodes")
+        // iOS exposes a named SwiftUI Toggle wrapper and an anonymous native UISwitch child.
+        // Count the named cadence controls; hidden fit candidates must not duplicate those labels.
+        let cadenceSwitches = app.switches.matching(NSPredicate(format: "label IN %@",
+            ["Morning", "Midday", "Evening"]))
+        XCTAssertEqual(cadenceSwitches.count, 3, "Exactly three named cadence switches are exposed")
         for title in ["Morning", "Midday", "Evening"] {
             let text = app.staticTexts[title]
             XCTAssertTrue(text.exists, "The \(title) title is shown")

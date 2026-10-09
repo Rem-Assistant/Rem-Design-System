@@ -38,6 +38,7 @@ public struct ListRow<Leading: View, Trailing: View>: View {
     let trailing: () -> Trailing
     private var settingsContent: AnyView?
     private var supporting: AnyView?
+    private var titleOnOneLine = false
     private var showsDivider = false
     private var layout: ListRowLayout = .standalone
 
@@ -46,6 +47,7 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         subtitle: String? = nil,
         action: (() -> Void)? = nil,
         emphasis: ListRowEmphasis = .standard,
+        titleOnOneLine: Bool = false,
         @ViewBuilder leading: @escaping () -> Leading,
         @ViewBuilder trailing: @escaping () -> Trailing
     ) {
@@ -53,6 +55,7 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         self.subtitle = subtitle
         self.action = action
         self.emphasis = emphasis
+        self.titleOnOneLine = titleOnOneLine
         self.leading = leading
         self.trailing = trailing
     }
@@ -65,11 +68,12 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         subtitle: String? = nil,
         action: (() -> Void)? = nil,
         emphasis: ListRowEmphasis = .standard,
+        titleOnOneLine: Bool = false,
         @ViewBuilder leading: @escaping () -> Leading,
         @ViewBuilder supporting: () -> Supporting,
         @ViewBuilder trailing: @escaping () -> Trailing
     ) {
-        self.init(title, subtitle: subtitle, action: action, emphasis: emphasis, leading: leading, trailing: trailing)
+        self.init(title, subtitle: subtitle, action: action, emphasis: emphasis, titleOnOneLine: titleOnOneLine, leading: leading, trailing: trailing)
         self.supporting = AnyView(supporting())
     }
 
@@ -132,6 +136,9 @@ public struct ListRow<Leading: View, Trailing: View>: View {
                     Text(title)
                         .font(DesignTokens.Typography.body.weight(.semibold))
                         .foregroundStyle(DesignTokens.Color.labelPrimary)
+                        // Adaptive parents must measure the full title, not a compressed wrapping label.
+                        .lineLimit(titleOnOneLine ? 1 : nil)
+                        .fixedSize(horizontal: titleOnOneLine, vertical: false)
                     if let subtitle {
                         Text(subtitle)
                             .font(DesignTokens.Typography.caption1)
