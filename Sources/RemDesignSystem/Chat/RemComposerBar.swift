@@ -28,6 +28,7 @@ public struct RemComposerBar: View {
     private var onSend: (() -> Void)?
     private var onAdd: (() -> Void)?
     private var accessibilityPrefix = "composer"
+    @FocusState private var fieldFocused: Bool
 
     public init(
         text: String = "",
@@ -81,6 +82,13 @@ public struct RemComposerBar: View {
                 TextField(placeholder, text: textBinding, axis: .vertical)
                     .font(DesignTokens.Typography.chatMessage)
                     .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    .focused($fieldFocused)
+                #if os(iOS)
+                    // Tap-to-type through SwiftUI's own gesture path. Inside a host ScrollView the
+                    // vertical field's text view did not take focus from a tap or a short press
+                    // (playground run 37944337913), while SwiftUI controls on the same page did.
+                    .simultaneousGesture(TapGesture().onEnded { fieldFocused = true })
+                #endif
                     .accessibilityIdentifier("\(accessibilityPrefix).composerField")
             } else {
                 Text(text.isEmpty ? placeholder : text)

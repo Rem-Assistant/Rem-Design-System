@@ -24,21 +24,20 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
     }
 
-    /// Taps a text input and waits until it actually has keyboard focus before anything is typed.
-    /// At cd00c00 typing began 0.3 s after the tap with no focus check, and focus had not arrived.
-    /// If the tap has not focused it within 2 s, one short press (below the long-press threshold) is
-    /// tried and logged as an activity; no focus after both fails the test.
+    /// Taps a text input and requires it to take keyboard focus before anything is typed, so a tap
+    /// that does not focus fails here rather than inside typeText.
     private func focus(_ field: XCUIElement) {
-        let focused = NSPredicate(format: "hasKeyboardFocus == true")
-        func gained() -> Bool {
-            XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: focused, object: field)], timeout: 2) == .completed
-        }
         field.tap()
-        if gained() { return }
-        XCTContext.runActivity(named: "Tap did not focus \(field.identifier); pressing instead") { _ in
-            field.press(forDuration: 0.3)
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        let result = XCTWaiter.wait(for: [focused], timeout: 2)
+        if result != .completed {
+            // Evidence for a failure: what the tap hit and what, if anything, holds focus.
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "\(field.identifier)-unfocused-hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
         }
-        XCTAssertTrue(gained(), "\(field.identifier) never took keyboard focus")
+        XCTAssertEqual(result, .completed, "\(field.identifier) did not take keyboard focus on tap")
     }
 
     private func tap(_ identifier: String) {
