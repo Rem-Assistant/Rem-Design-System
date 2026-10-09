@@ -14,7 +14,10 @@ documentation` (`741:309`) are the worked examples.
   A row is three slots: **Leading Accessory** · **Content** · **Trailing Accessory**. The
   Content default is its own sub-component (`ListRowLabel`) that carries the text props, so
   the row stays composable (swap Content for a custom block) and the label still hosts
-  Title/Subtitle.
+  Title/Subtitle. Keep title and permanent subtitle closely grouped inside Content; transient
+  error/retry help belongs to separate status feedback. Inspect the real master descendants
+  and slot owners, not just the instance name. For Chat cards and messages, apply the
+  [Chat review gates](chat-review.md) and [current contracts](../../../../REGISTRY.md#chat-interaction-and-anatomy-contracts).
 - Each slot's default is a **local component node id** (see figma-gotchas: INSTANCE_SWAP).
   Provide a small, real set of options (Chevron/Switch/Button/None for trailing;
   ContainedIcon/Avatar for leading) and, for FIXED-size options like a switch, HUG-wrap the

@@ -14,6 +14,136 @@ hand-build a duplicate. This mirrors the **Component Index** page in Figma.
    `SectionHeader`/`SectionFooter`, etc. The name is the code-connect.
 4. **New concept?** Add the row here *and* on the Figma Component Index in the same change.
 
+## Chat component jobs and principles
+
+Updated 2026-10-09 from Samuel's decisions and the active design worker's reference readback.
+This section owns the Chat responsibility contract; skills link here rather than duplicating it.
+The older registry rows retain their recorded implementation/mapping status. Decisions below
+do not claim new Figma variants, wired interactions, storage guarantees, or shipped behavior.
+Inspect current masters and source before editing. This documentation pass inspected Grok and
+current Rem review captures without changing Figma; structural verification is attributed to the
+completed design worker's readback. Evidence and remaining limits are identified in the
+[review record](docs/design-reconciliation/2026-10-09-chat-guidance-review.md).
+
+### Principles
+
+- **Separate status ownership.** Agent status describes the agent/run; action-card status
+  describes one payload/action; voice-bar status describes the audio session; message status
+  describes delivery of that message; composer status describes input/send progress. A completed
+  card does not imply an idle agent; listening does not imply an action is running; message
+  delivery does not establish completion of an external action.
+- **Show concrete payloads and outcomes.** A card presents the object being acted on,
+  available controls and the resulting receipt. A tap alone cannot establish completion;
+  keep an unconfirmed outcome explicit. Visual components receive authoritative status and
+  emit actions; they do not invent service results.
+- **Share a job through variants.** Suggested actions and choice/confirmation form one
+  family. Reuse structure and decision semantics without forcing every payload to share
+  one state enum or making every row below a new component master.
+- **Improve existing detail.** Tapping the agent opens its detail/activity surface. Reuse
+  that screen and master. A proposed repair is to separate the overlapping identity/status
+  header from tabs and show human-readable dated activities with technical trace secondary;
+  this recommendation is not a completed redesign.
+- **Reuse Add Login.** Existing custom Add Login screens are the starting point for the
+  sheet-opening CTA contract below. Inline credential entry remains an unsettled alternative.
+  Canvas presentation does not decide authentication, OAuth, or credential-storage architecture.
+- **Keep provenance explicit.** Distinguish observed references, approved Rem direction,
+  proposed variants and verified implementation. Preserve semantic tokens, native controls,
+  accessibility and platform quality in both component specimens and full-screen review.
+
+### Family contracts
+
+"Owned status" names the state being presented, not an authorization to implement a service.
+Reference-only variants remain reference-only until adopted. Existing mappings below are reuse
+candidates, not proof that they already implement the new responsibilities.
+
+| Family and job | Owned status / variants | Inputs and actions | Relationships and source |
+|---|---|---|---|
+| Agent identity/status: identify the agent and expose current work | Agent/run only; existing neutral/attention tones are presentation, not a complete lifecycle | Identity, run status, detail destination; tap opens detail/activity | Separate from card and voice status. Samuel decision; Muse; existing AgentStatusPill `427:21` |
+| Agent detail/activity: inspect this agent's work | Selected agent/run and activity history | Agent/run identity, dated activities; inspect detail and return | Improve existing screen `2048:169906`, master `2002:76914`. Muse and worker readback; reconcile existing ExecutionTrace `431:21` rather than replacing detail with technical trace |
+| Action/payload card: present a concrete object, controls and receipt | One action's outcome; payload-specific variants | Payload, action identity, allowed controls, authoritative result; invoke the explicit action | Shared composition boundary. Grok; inspect existing ToolResultCard / ProposalCard / result cards for reuse |
+| Suggested action / choice / confirmation: propose a next step or resolve a decision | One family with suggestion, choice and confirmation variants; Grok choice observed unanswered/selected | Prompt, options, selection, confirmation requirement; choose or confirm as appropriate | Samuel's shared-family decision. Selected does not mean a downstream operation succeeded. Grok; existing ProposalCard `54:55` and ConfirmationCard are candidates |
+| Connector authorization: request and report one connection | Grok observed Authorize / Adding / Added / Retry | Connector, authorization requirement, result; authorize or retry | Action-card variant; authorization boundary owns result. Grok. No change to provider handoff or OAuth architecture |
+| Email payload: review an email and report its result | Grok observed **Review / Sent / Unconfirmed only** | Email payload and authoritative outcome; review action and result receipt | Action-card status, not agent completion. Grok. Additional email states are neither observed here nor implicitly approved for Rem |
+| Credential / Add Login: obtain a login through existing product UI | Grok observed empty / filled / Saved; existing Rem New/Saved login sets | Site/account context, existing form fields and actions; open Add Login, save/cancel per verified contract | Reuse New Add login `1956:8162` and Saved login `1956:8161`. Their descriptions mark storage behavior **proposed**. Sheet-opening CTA follows the current contract below; inline entry unresolved; no security/implementation guarantees inferred |
+| Voice bar: expose and control the audio session | Voice session only; existing connecting/listening/speaking/muted/reading/closing | Audio state and supported audio controls; route actions to audio owner | Independent of agent and card state. Existing VoiceBar `160:884` / MiniPlayerBar lineage |
+| Composer: collect the next user input | Input-local Idle / Composing / Sending in existing scenario registry | Text, attachments, options; add, speak, send, stop where supported | Starts input/turn; does not own agent, card-result or voice truth. RemComposerBar `53:2`, scenarios `527:2` |
+| Message / rich result: retain conversation and returned content | User/assistant role and result-specific presentation | Message content, role, concrete result data; actions from the existing result contract | May host/neighbor action cards; prose is not a verified receipt. MessageBubble `50:7`, markdown `566:31`, result mappings below |
+| Browser preview / takeover: expose browser activity and control ownership | Preview Opening / Active / Ended; Rem-driving versus user-control state | Browser session, address/preview, control owner; open, take/return control, end where supported | Separate browser-control status; detail may link to it. Muse; BrowserLiveCard `524:31`, takeover `556:31` / `562:31` |
+
+### Chat interaction and anatomy contracts
+
+These are Samuel's current design decisions (2026-10-09), not claims of implementation.
+The final placement clarification supersedes the earlier placement hold and agent inference.
+Use the [review gates](.claude/skills/rem-design-system/references/chat-review.md) before claiming
+Chat design acceptance. Check mutable masters again before subsequent authorized edits.
+
+- **Canonical reuse:** verify the actual master ancestry, descendants, properties, slot owners
+  and instance overrides, not instance names alone. List anatomy is leading icon + **Content** + trailing slot. Content owns
+  the title and closely grouped permanent subtitle. Transient error/retry helper text is separate
+  status feedback, not a replacement for or extra permanent subtitle.
+- **Credential card:** retain the **Add login** CTA before saved. The chevron belongs **on the
+  Button opening the sheet**, not on ListRow; this explicitly corrects the earlier interpretation.
+  The saved state keeps a clear outcome and reuses the corresponding Button navigation affordance
+  without a redundant standalone ViewDetails link. The outcome receipt and navigation control have
+  separate jobs. Use the existing Add Login UI; this affordance decision does not settle broader
+  credential storage, inline entry or authentication architecture; permission requests follow
+  their separate inline-card contract below.
+- **Permission request:** use an **inline card**, with disclosure/header text above **one shared
+  request-body slot**; expand/collapse in place. Do not open a redundant Rem review sheet. Denied
+  collapses by default and uses the simple configurable receipt **Denied**, not Denied·Notrun;
+  preserve inspectable request history. Keep consequential information visible; typed tool
+  payload details and a technical fallback are allowed. Required native OS permission prompts
+  remain a separate handoff. Always Allow scope and backend policy are not settled by this layout.
+- **Permission actions:** reuse canonical **ButtonGroup** with **three horizontal actions on
+  mobile**. Its existing Actions slot already supports three children; no new primitive is needed.
+  Preserve existing variants. The completed Figma review shows compact **Allow once / Always allow /
+  Deny** labels fitting at **320, 330 and 370pt without shrinking type**. Longer labels fail at
+  320pt and are explicitly **non-shipping**; longer/localized labels need an agreed adaptive-height
+  or layout policy and fresh fit checks. Always allow scope and runtime behavior remain unresolved.
+- **Service context:** use the canonical leading slot for contextual service titles/logo assets;
+  preserve the title in Content and give the logo modest visual weight. Use the real asset, not a
+  decorative approximation or a second bespoke header.
+- **Button jobs:** distinguish a contextual identity row, a navigation Button and an outcome
+  receipt; visual resemblance does not give them the same interaction. State whether each control
+  performs an action, opens a sheet/navigation
+  destination, shows busy progress, is unavailable/disabled, or presents a noninteractive outcome
+  receipt. Busy is not merely disabled; a receipt does not execute again; a selection is not a
+  successful external result. Apply disclosure to the Button that opens the destination.
+- **Normal message receipt:** the latest outgoing message's Delivered/Read footnote retains its
+  actual delivery time (including when the label becomes Read). The older normal receipt disappears
+  on the next message. Do not fabricate a read timestamp or claim the exact Read backend is settled.
+- **Failed message:** show a red **outline** circle-exclamation icon, using the existing outline asset
+  where available. The icon sits entirely outside, to the **right of the bubble**, without
+  overlapping it. **Not delivered** text remains **below** the bubble, not beside it, with no timestamp.
+  Reaction badges overlap the bubble edge. Give under-bubble receipt/subtext a right inset or
+  left shift to clear the reaction. Review these together at natural size; do not use failure
+  placement as the reaction anchor or treat the inset as a guessed fixed pixel value.
+- **Retry boundary:** retry only a definitively failed **user message**. An unknown delivery outcome
+  requires reconciliation first. Message retry never authorizes resending an external email or
+  repeating another payload action. Preserve email Review / Sent / Unconfirmed distinctions.
+- **Composer:** preserve the existing Send-arrow and circular progress treatment. Composer input/
+  sending, message delivery, agent/run, card/action and voice-session status have separate owners.
+- **Long press:** use Samuel's Grok **bottom sheet**, with a **2×6 reaction grid** and grouped
+  contextual actions, replacing the earlier floating reaction strip direction. Actions are
+  role-specific: verify the supplied reference and the user/assistant message role before choosing
+  items; do not invent an identical menu for both roles. Retry remains restricted as above.
+
+Reactions, read receipts and their runtime behavior remain **not implemented** in this guidance
+change. A prototype demonstrates only the transitions actually wired. The broader activity model,
+broader permission policy and exact Read backend remain proposals/unresolved decisions. The
+inline permission-card presentation and compact-label fit are design-reviewed; broader label fit,
+Always allow policy and runtime behavior are not established by those results.
+
+### Reference provenance and unresolved decisions
+
+- [Grok, node 2535:22130](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2535-22130): concrete payload cards whose controls become receipts; observed states above are the active worker's supplied inspection.
+- [Muse, node 2039:14610](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2039-14610): agent details, separate statuses and browser takeover, from the same supplied inspection.
+- [Rem agent detail](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2048-169906) uses [master 2002:76914](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2002-76914); [New Add login](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=1956-8162) and [Saved login](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=1956-8161) are existing reuse targets per worker readback.
+- Samuel approved separate statuses and the shared suggestion/choice/confirmation family. Exact family APIs, full Rem lifecycle coverage, detail-screen repair, broader permission policy and inline credentials remain to be reconciled with live design/source; do not infer implementation approval.
+- Active Rem review targets in file `af4yDqCzp57jds9lkFiIaO`: [core `2571:17104`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2571-17104), [extended `2584:17467`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2584-17467), [message `2603:19439`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19439). The design worker completed the latest corrections; this is not a claim of shipped behavior.
+- Completed review evidence: [full Chat review `2626:20028`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2626-20028), [Grok-style long-press sheet `2603:19498`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19498), and [full Chat prototype entry `2630:20783`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2630-20783). The review record separates inspected pixels, worker structural evidence and runtime limits.
+- Canvas organization follows [connected-flow presentation](FILE-ORG.md#connected-flow-presentation): natural-sized component states where local, full screens where destination or platform context matters.
+
 ## File organization (auto-layout pass — 2026-09-24)
 
 Founder feedback: pages felt disorderly (no auto-layout) and some screens were on the wrong page.

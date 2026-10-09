@@ -1,10 +1,14 @@
-# Screen / pattern track — device-framed, native, all states
+# Screen / pattern track — connected flows and native context
 
-For a **screen or flow** (Agenda, Chat, Settings, Inbox, a pattern). A screen is a canonical,
-full-device component *composed of* the system's lower-level components; it is not a replacement for
-those primitives. Instance that one screen master in inventory, documentation, prototype, and
-handoff. Ground it in the real SwiftUI view so the structure and every state are faithful, not
-invented.
+For a **screen or flow** (Agenda, Chat, Settings, Inbox, a pattern), follow the current
+[connected-flow contract](../../../../FILE-ORG.md#connected-flow-presentation). Full-device
+screens compose lower-level components; component-local states need not become full screens.
+Reuse canonical masters in documentation and handoff. Ground reproductions in source and
+screenshots; distinguish approved design changes from as-built fidelity. For Chat, read the
+[family jobs and status ownership](../../../../REGISTRY.md#chat-component-jobs-and-principles)
+and [Chat review gates](chat-review.md). Keep the connected component/state canvas and
+representative full screens made with the shared Chat shell and slots. Review destinations,
+return/cancel paths, keyboard, safe areas and combined states in that context.
 
 ## Ground in BOTH the source and the screenshot — then diff
 
@@ -31,10 +35,19 @@ connecting/listening/speaking/muted/reading/closing).
 to `docs/screenshots/<screen>.png` side by side; fix every mismatch. This is the visual half
 of "verified against the app"; skipping it is how unfaithful screens ship.
 
+## States and destinations at their actual scope
+
+Enumerate in-scope states and destinations as components, overlays, external boundaries or
+full-screen destinations. Connect local updates, navigation and return/cancel paths. Mark
+unresolved destinations rather than inventing them. State coverage is required; one mobile
+frame per state is not. Natural-size specimens must still be checked in representative
+full-screen compositions. Verify prototype destinations when interactions are in scope.
+
 ## Build native, in auto-layout, on canonical components
 
-- **Screen = a 402×874 component**, `layoutMode="VERTICAL"`, FIXED — the device content size,
-  so it drops into the bezel size-safe.
+- **Full-screen context:** use the declared device viewport (402×874 for the existing mobile
+  chassis), native chrome and auto-layout. Natural-sized component specimens are not screens
+  and should not inherit that fixed height.
 - **Chrome from the kit:** use canonical navigation/header, `StatusBar`, and
   `NavigationIndicator` components; every standalone full-device screen includes its platform
   chrome unless the product state explicitly hides it. Platform switches may change fonts, metrics,
@@ -58,7 +71,11 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
   space are invalid because they obscure intent and break when content changes.
 
-## Use the file's documentation templates
+## Use the file's documentation templates when appropriate
+
+The connected-flow contract governs new work. The walkthrough recipe below applies when
+maintaining an existing walkthrough or when a task requires one; it does not require a device
+frame for every component-local state. Preserve attached templates when they are used.
 
 - **Page scale:** use one page per product domain, not one page per screen or per flow. Onboarding
   flows belong together on `Onboarding`; Settings flows belong together on `Settings`. Keep reusable
@@ -80,7 +97,7 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   empty Anatomy/Props/Layout placeholders; the Specs plugin can add those later. Documentation
   chrome uses Light semantic surfaces and text by default; switch it only when the documentation is
   explicitly demonstrating another theme.
-- **Flows:** instance `Mobile Flow Documentation` (`769:282`) from Device Kit. Populate its Overview
+- **Optional mobile walkthrough:** instance `Mobile Flow Documentation` (`769:282`) from Device Kit. Populate its Overview
   slot and the nested flow slots; never detach it. Do not add loose screen frames as siblings.
   Treat its canvas presentation—orientation, widths, padding, fills, and nested section surfaces—as
   master-owned. Do not duplicate those values in each flow or rebuild them from skill prose; attached
@@ -102,7 +119,7 @@ of "verified against the app"; skipping it is how unfaithful screens ship.
   Android-Dark without maintaining four detached screen copies.
 - `DeviceFrame/iPhone` (`128:46`) remains available when a standalone bezel preview is useful;
   it does not replace the Mobile Flow documentation hierarchy.
-- Keep the nested documentation hierarchy, then add a labeled `PROTOTYPE FLOWS` strip of direct
+- When a runnable mobile walkthrough is in scope, keep its nested documentation hierarchy and add a labeled `PROTOTYPE FLOWS` strip of direct
   402×874 canonical screen instances inside the separate numbered prototype section. Wire and name
   real Presentation starting points and set interactions on instance descendants. Keep the
   component mapping in the structure contract so the strip cannot become an untracked duplicate.

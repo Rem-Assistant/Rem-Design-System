@@ -21,6 +21,14 @@ the Rem adapter: it supplies Rem's Figma file, node ids, registries, templates, 
 sources, and fidelity evidence. Other projects should reuse the generic skill and provide their own
 adapter instead of forking Rem-specific identifiers.
 
+Before Chat design or reuse, read the durable
+[component jobs and principles](../../../REGISTRY.md#chat-component-jobs-and-principles) and
+[Chat review gates](references/chat-review.md). Apply the gates to actual anatomy, screen
+composition and destinations; an instance name or an isolated card is insufficient evidence.
+For canvas organization, follow [connected-flow presentation](../../../FILE-ORG.md#connected-flow-presentation).
+These current Rem contracts supersede older blanket mobile-frame/walkthrough requirements;
+they preserve native quality and do not decide authentication architecture.
+
 You are building/maintaining a **living** design system in one Figma file
 (`af4yDqCzp57jds9lkFiIaO`) that mirrors the iOS 26 look and is **verified against the
 real SwiftUI app**. The single hardest failure mode is **drift** — creating a second
@@ -34,7 +42,9 @@ Before creating **any** component, style, or screen element:
 
 1. **Check the registry.** `REGISTRY.md` (repo) and the **Component Index** page in Figma
    list every canonical component with its node id + SwiftUI source. If it exists,
-   **instance the canonical master** — never re-draw it, never make a "v2".
+   **instance the canonical master** — never re-draw it, never make a "v2". Inspect its
+   actual descendants, content hierarchy, exposed properties and slot ownership; a matching
+   instance name alone does not prove canonical reuse. Record the master and consumed slots.
 2. **One canonical per concept, on its own named page.** No second generation, no bespoke
    copy. The worst messes this session came from breaking this (two ListRows, a bespoke
    `DateNav` beside the real `DateNavigationHeader`, a `Card` that should have been
@@ -65,13 +75,11 @@ needs. Don't force one onto the other.
   vertical columns. Each column puts the canonical component/variant set first and an attached
   `Component Documentation` instance second. The template contains documentation metadata only;
   it has no Component slot. Full Specs-plugin output is optional follow-up work.
-- **Screen or pattern** (Agenda, Chat, Settings, a flow): follow
-  **`references/screen-track.md`** — a full-device (402×874) screen built **native, in
-  auto-layout, on the canonical components**, documented with the file's `Component Documentation`
-  and attached slot-based flow templates. `Mobile Flow Documentation` → `Mobile Flow` → Sections →
-  Rows → Steps → `Mobile Placeholder` → Screen remains an instance chain; replace content through
-  slots and never detach the template. Canonical screen components are instanced into documentation
-  and prototype so one edit updates both.
+- **Screen or connected flow** (Agenda, Chat, Settings): follow
+  **`references/screen-track.md`** and the current canvas contract above. Use natural-sized
+  component states for local changes and canonical full screens where destination or platform
+  context matters. Device-framed walkthroughs are optional unless the task contract requires
+  them. When using an existing attached template, populate its slots without detaching it.
 
 On the Onboarding page, `00 · Canonical screen components` (`760:21`) uses `#F5F5F5` as its
 canvas contrast surface around white device frames. Canonical Sign-in uses the repository's real
@@ -170,6 +178,6 @@ not a Button-specific definition of quality.
 
 - `references/figma-gotchas.md` — the `use_figma` plugin traps + how to work around each.
 - `references/component-track.md` — the Fluent component-page recipe (anatomy, slots, matrices).
-- `references/screen-track.md` — the device-bezel screen recipe (native auto-layout, sections, states).
+- `references/screen-track.md` — connected flows and native screen context (auto-layout, states, optional device walkthroughs).
 - `references/sf-symbols-map.md` — verified SF Symbol → PUA codepoint table (the app's icon set)
   + how it was sourced. Read it before adding any icon so you reuse a verified codepoint.
