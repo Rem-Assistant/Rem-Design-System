@@ -1,5 +1,7 @@
 name: agent-builder
 on:
+  issues:
+    types: [labeled]
   workflow_dispatch:
     inputs:
       issue:
@@ -7,56 +9,24 @@ on:
         required: true
         type: string
       base_ref:
-        description: Isolated playground expansion branch
-        required: true
-        type: choice
-        options: [codex/playground-expansion]
-        default: codex/playground-expansion
+        description: Allowed target branch; blank reuses the task route or repository default
+        required: false
+        type: string
 permissions:
+  issues: read
   actions: read
   contents: read
-  pull-requests: read
 jobs:
-  preflight:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.base_ref }}
-          persist-credentials: false
-      - name: Require isolated code-only configuration and an existing draft task PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          ISSUE: ${{ inputs.issue }}
-          BASE_REF: ${{ inputs.base_ref }}
-        run: |
-          set -euo pipefail
-          test "$GITHUB_REF_NAME" = codex/playground-expansion
-          test "$BASE_REF" = codex/playground-expansion
-          test -n "$CLAUDE_CODE_OAUTH_TOKEN" || { echo '::error::CLAUDE_CODE_OAUTH_TOKEN is unavailable'; exit 1; }
-          [[ "$ISSUE" =~ ^[0-9]+$ ]]
-          jq -e --arg base "$BASE_REF" '
-            .builder.base_branch == $base and
-            .builder.branch_prefix == "agent-factory/playground-issue-" and
-            .figma.enabled == false and
-            .integration.automatic_promotion == false
-          ' .agent-factory/config.json
-          # Reusing a seeded draft avoids the upstream code-only create-PR path,
-          # which currently creates a ready PR. No upstream Factory patch needed.
-          prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
-            --head "agent-factory/playground-issue-$ISSUE" --json number,isDraft,baseRefName)
-          test "$(jq length <<<"$prs")" = 1
-          jq -e --arg base "$BASE_REF" '.[0].isDraft == true and .[0].baseRefName == $base' <<<"$prs"
   builder:
-    needs: preflight
-    uses: samuelalake/agent-factory/.github/workflows/builder.yml@8522d84d9cd429c9b8cb9d028cf665a6136403c0
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && (github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder')
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: 8522d84d9cd429c9b8cb9d028cf665a6136403c0
-      runner: ubuntu-latest
+      validated_routing: true
       base_ref: ${{ inputs.base_ref }}
+      factory_ref: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
       suppress_failure_escalation: true
+      runner: ubuntu-latest
       app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
