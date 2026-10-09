@@ -1,4 +1,5 @@
 name: Playground native candidate (no distribution)
+run-name: ${{ (inputs.ios_tests != '' || inputs.android_tests != '') && 'Targeted native check (not evidence)' || github.workflow }}
 
 on:
   pull_request:
@@ -10,6 +11,17 @@ on:
         description: Full approved SHA; must equal the selected workflow revision
         type: string
         required: true
+      # Targeted iteration only. Either input runs just the named tests on that platform (the other
+      # platform is skipped), records no test receipt, uploads nothing, and skips native-evidence,
+      # so a targeted run can never stand in for the full native evidence.
+      ios_tests:
+        description: 'Targeted iOS run (not evidence): comma-separated testMethod or Class/testMethod'
+        type: string
+        default: ''
+      android_tests:
+        description: 'Targeted Android run (not evidence): comma-separated fully.qualified.Class#method'
+        type: string
+        default: ''
 
 # Unprivileged candidate validation only; no signing credentials, app uploads, or publisher.
 # The existing screenshots/publisher trust contract is intentionally unchanged.
@@ -17,11 +29,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: playground-native-${{ github.event.pull_request.number || github.ref }}
+  # Targeted runs use their own group, so iterating never cancels a full evidence run.
+  group: playground-native-${{ github.event.pull_request.number || github.ref }}${{ (inputs.ios_tests != '' || inputs.android_tests != '') && '-targeted' || '' }}
   cancel-in-progress: true
 
 env:
   SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  TARGETED: ${{ inputs.ios_tests != '' || inputs.android_tests != '' }}
 
 jobs:
   preflight:
@@ -47,6 +61,7 @@ jobs:
 
   ios:
     needs: preflight
+    if: inputs.android_tests == '' || inputs.ios_tests != ''
     runs-on: macos-14
     # The journey suite (Settings, Agenda, Onboarding, navigation and catalog) runs ~40 minutes.
     timeout-minutes: 60
@@ -57,14 +72,16 @@ jobs:
           persist-credentials: false
       - name: Run every iOS native journey
         env:
-          IOS_TEST: ''
+          IOS_TEST: ${{ inputs.ios_tests }}
         run: bash tools/playground-ios/run-hosted-journeys.sh
       # run-hosted-journeys.sh tees XCTest output to settings-ios-build.log.
       - name: Verify every expected method actually passed
+        if: env.TARGETED != 'true'
         run: |
           xcodebuild -version > "$RUNNER_TEMP/toolchain.txt"
           python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform ios --report "$RUNNER_TEMP/settings-ios-build.log" --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/ios-native.json"
       - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
         with:
           name: ios-native-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/ios-native.json
@@ -73,6 +90,7 @@ jobs:
       # screenshots.yml), exported to $RUNNER_TEMP only after a passing evidence record.
       - name: Export journey screenshots
         # Optional visual copy: a failure here means missing visual proof, never a failed record.
+        if: env.TARGETED != 'true'
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -85,6 +103,7 @@ jobs:
             cp "$f" "$out/${b%%_*}.png"
           done
       - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
         continue-on-error: true
         with:
           name: ios-screenshots-${{ env.SOURCE_SHA }}
@@ -93,6 +112,7 @@ jobs:
 
   android:
     needs: preflight
+    if: inputs.ios_tests == '' || inputs.android_tests != ''
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -111,23 +131,33 @@ jobs:
           ./gradlew --version > "$RUNNER_TEMP/toolchain.txt"
           grep -q '^Gradle 8.14.4$' "$RUNNER_TEMP/toolchain.txt"
           java -version >> "$RUNNER_TEMP/toolchain.txt" 2>&1
+      - name: Validate targeted Android tests
+        if: env.TARGETED == 'true'
+        env:
+          ANDROID_TESTS: ${{ inputs.android_tests }}
+        run: |
+          [[ "$ANDROID_TESTS" =~ ^[a-z][a-z0-9_.]*\.[A-Z][A-Za-z0-9_]*(#[a-z][A-Za-z0-9_]*)?(,[a-z][a-z0-9_.]*\.[A-Z][A-Za-z0-9_]*(#[a-z][A-Za-z0-9_]*)?)*$ ]] || { echo 'Invalid Android test list.' >&2; exit 2; }
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ANDROID_TESTS: ${{ inputs.android_tests }}
         with:
           api-level: 34
           arch: x86_64
           disable-animations: true
           working-directory: compose
           script: |
-            ./gradlew :demo:connectedDebugAndroidTest -PplaygroundSourceSha="$SOURCE_SHA" --stacktrace --no-daemon
+            ./gradlew :demo:connectedDebugAndroidTest -PplaygroundSourceSha="$SOURCE_SHA" ${ANDROID_TESTS:+-Pandroid.testInstrumentationRunnerArguments.class=$ANDROID_TESTS} --stacktrace --no-daemon
             mkdir -p "$RUNNER_TEMP/android-screenshots" && adb pull /sdcard/Pictures/RemSettingsPlayground/. "$RUNNER_TEMP/android-screenshots/" || true
       - name: Verify every expected method actually passed
+        if: env.TARGETED != 'true'
         run: python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform android --report compose/demo/build/outputs/androidTest-results --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/android-native.json"
       - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
         with:
           name: android-native-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/android-native.json
@@ -135,6 +165,7 @@ jobs:
       # Visual review copies of the journeys' own captures, pulled inside the emulator step before
       # teardown into $RUNNER_TEMP (never the checkout) and uploaded only after a passing record.
       - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
         continue-on-error: true
         with:
           name: android-screenshots-${{ env.SOURCE_SHA }}
@@ -142,7 +173,8 @@ jobs:
           if-no-files-found: warn
 
   native-evidence:
-    if: always()
+    # Never for a targeted run: it records nothing to verify and is not evidence.
+    if: always() && inputs.ios_tests == '' && inputs.android_tests == ''
     needs: [preflight, ios, android]
     runs-on: ubuntu-latest
     steps:

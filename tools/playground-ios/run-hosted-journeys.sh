@@ -4,10 +4,12 @@ set -euo pipefail
 [[ "${GITHUB_ACTIONS:-}" == true ]] || { echo 'Run this helper on GitHub Actions only.' >&2; exit 2; }
 test_args=(test)
 if [[ -n "${IOS_TEST:-}" ]]; then
-  [[ "$IOS_TEST" =~ ^test[A-Za-z0-9_]+(,test[A-Za-z0-9_]+)*$ ]] || { echo 'Invalid iOS test method list.' >&2; exit 2; }
+  # Each entry is testMethod (SettingsPlaygroundUITests, as screenshots.yml passes) or Class/testMethod.
+  [[ "$IOS_TEST" =~ ^([A-Za-z]+UITests/)?test[A-Za-z0-9_]+(,([A-Za-z]+UITests/)?test[A-Za-z0-9_]+)*$ ]] || { echo 'Invalid iOS test method list.' >&2; exit 2; }
   IFS=',' read -r -a selected_methods <<< "$IOS_TEST"
   for selected_method in "${selected_methods[@]}"; do
-    test_args+=("-only-testing:RemSettingsPlaygroundUITests/SettingsPlaygroundUITests/$selected_method")
+    [[ "$selected_method" == */* ]] || selected_method="SettingsPlaygroundUITests/$selected_method"
+    test_args+=("-only-testing:RemSettingsPlaygroundUITests/$selected_method")
   done
 fi
 
