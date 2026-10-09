@@ -520,6 +520,7 @@ private struct OnboardingCheckInStep: View {
     @State private var checkins = OnboardingCheckinTemplate.defaultCadence()
     @State private var status: OnboardingCheckinTemplate.Status = .default
     @State private var failedOnce = false
+    @State private var saveTask: Task<Void, Never>?
 
     var body: some View {
         OnboardingCheckinTemplate(
@@ -533,6 +534,8 @@ private struct OnboardingCheckInStep: View {
             onRetry: save
         )
         .navigationBarTitleDisplayMode(.inline)
+        // Leaving mid-save (Back) cancels it, so a late save cannot push the next step.
+        .onDisappear { saveTask?.cancel() }
     }
 
     private struct Edit { var enabled: Bool; var hour: Int; var minute: Int }
@@ -550,16 +553,23 @@ private struct OnboardingCheckInStep: View {
 
     private func save() {
         status = .saving
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1))
-            if checkInSave == .failsOnce && !failedOnce {
-                failedOnce = true
-                status = .failure(message: "We couldn't save your check-in times. Check your connection and try again.")
+        saveTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .seconds(1))
+                if checkInSave == .failsOnce && !failedOnce {
+                    failedOnce = true
+                    status = .failure(message: "We couldn't save your check-in times. Check your connection and try again.")
+                    return
+                }
+                status = .saved
+                try await Task.sleep(for: .seconds(0.8))
+            } catch {
+                status = .edited // Cancelled by leaving the step; nothing was saved.
                 return
             }
-            status = .saved
-            try? await Task.sleep(for: .seconds(0.8))
             onContinue()
+            // Coming Back to this step shows the saved cadence, ready to continue again.
+            status = .default
         }
     }
 }

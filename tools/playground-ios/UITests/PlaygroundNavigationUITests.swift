@@ -332,7 +332,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         openOnboardingStep("openOnboardingConnectors")
         tap("Skip")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Connectors Skip → Check-in")
-        XCTAssertFalse(app.buttons["Skip"].exists, "Check-in has no Skip")
+        waitUntilGone(app.buttons["Skip"], "Check-in has no Skip")
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.buttons["onboardingVoice.skip"].waitForExistence(timeout: 5), "Check-in → Voice")
         tap("onboardingVoice.skip")

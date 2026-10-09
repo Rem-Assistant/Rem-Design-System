@@ -21,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
 import com.rem.designsystem.R
 import com.rem.designsystem.primitives.ContainedIcon
@@ -214,6 +216,8 @@ private fun CheckinPeriodRow(
                 checked = period.enabled,
                 onCheckedChange = if (interactive) { checked -> onToggle(period.id, checked) } else null,
                 enabled = interactive,
+                // Name the switch for TalkBack, matching the iOS Toggle's period label.
+                modifier = Modifier.semantics { contentDescription = period.title },
             )
         },
     )

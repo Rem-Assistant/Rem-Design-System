@@ -182,11 +182,17 @@ jobs:
           if-no-files-found: warn
 
   native-evidence:
-    # Never for a targeted run: it records nothing to verify and is not evidence.
-    if: always() && inputs.ios_tests == '' && inputs.android_tests == ''
+    if: always()
     needs: [preflight, ios, android]
     runs-on: ubuntu-latest
     steps:
+      # A targeted run fails here rather than being skipped: a skipped check can satisfy a
+      # required status check, and a targeted run is never evidence.
+      - name: Refuse targeted runs as evidence
+        if: env.TARGETED == 'true'
+        run: |
+          echo '::error::Targeted run: not native evidence.'
+          exit 1
       - name: Reject missing, failed, cancelled, or skipped native jobs
         env:
           PREFLIGHT: ${{ needs.preflight.result }}

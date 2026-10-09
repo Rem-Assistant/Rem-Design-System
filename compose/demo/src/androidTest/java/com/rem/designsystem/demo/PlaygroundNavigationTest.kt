@@ -304,8 +304,7 @@ class PlaygroundNavigationTest {
     @Test fun checkInSwitchTimePickerAndSave() {
         openOnboardingStep("openOnboardingCheckIn")
         compose.onNodeWithText("12:30 PM").assertDoesNotExist()
-        // Rows run Morning, Midday, Evening; each ends in its switch.
-        compose.onAllNodes(isToggleable())[1].performClick()
+        compose.onNode(isToggleable() and hasContentDescription("Midday")).performClick()
         compose.onNodeWithText("12:30 PM").assertExists()
         compose.onNodeWithText("8:00 AM").performClick()
         onView(isAssignableFrom(TimePicker::class.java)).inRoot(isDialog()).perform(setTime(9, 0))

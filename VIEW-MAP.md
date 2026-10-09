@@ -36,7 +36,7 @@ the `Shared/Views/**` surfaces — treat Shared as canonical, Mac as an injectio
 **Templates** (flow = `OnboardingFlow`, caller `ContentView:46`; steps: signIn → dataSharingConsent → deploying → postSetupActivation):
 - `OnboardingFlow` `Rem/Sources/Onboarding/OnboardingFlow.swift` — states: **signIn / consent / deploying⚠️ / activation**
 - `AIDataSharingConsentView` `…/AIDataSharingConsentView.swift` — "Privacy by design" consent
-- `CheckinsService` / `Checkin` — "When should Rem check in?" cadence step (Morning/Midday/Evening time-of-day briefs). Reproduced: `OnboardingCheckinTemplate` (SwiftUI) · `onboarding/CheckinStep.kt` (Compose); states default/edited/saving/saved/failure — issue #52 (`docs/contracts/onboarding-checkin.md`). Extracts canonical `RemSwitch`.
+- `CheckinsService` / `Checkin` — "When should Rem check in?" cadence step (Morning/Midday/Evening time-of-day briefs). Reproduced: `OnboardingCheckinTemplate` (SwiftUI) · `onboarding/CheckinStep.kt` (Compose); states default/edited/saving/saved/failure — issue #52 (`docs/contracts/onboarding-checkin.md`). Uses the platform switch (founder decision 2026-10-09; `RemSwitch` removed).
 - `PostSetupActivationView` `…/PostSetupActivationView.swift`
 - `ConversationalCaptureView` `…/ConversationalCaptureView.swift` — first-capture primer
 - 🧪 `LaunchRecoveryCopyFixtureView`, `TaskCollaborationFixtureView`

@@ -58,12 +58,16 @@ public struct SuggestionSection: View {
                 }
                 // Founder-specified copy, deliberately without a count.
                 if overflow > 0, let onSeeMore {
-                    Button("See more", action: onSeeMore)
-                        .font(DesignTokens.Typography.footnote.weight(.semibold))
-                        .foregroundStyle(DesignTokens.Color.brandBlueOnFill)
-                        .buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-                        .contentShape(Rectangle())
+                    // The whole row is the tap target: frame and shape sit inside the label, because a
+                    // plain-style button only hit-tests its label.
+                    Button(action: onSeeMore) {
+                        Text("See more")
+                            .font(DesignTokens.Typography.footnote.weight(.semibold))
+                            .foregroundStyle(DesignTokens.Color.brandBlueOnFill)
+                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
