@@ -442,24 +442,42 @@ final class PlaygroundNavigationUITests: XCTestCase {
         openOnboardingStep("openOnboardingCheckIn")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Check-in opens")
         assertCheckInRowsFit()
-        scroll(to: app.buttons["Edit 8:00 AM"], named: "Morning time", up: false)
+        revealCheckInControl(app.buttons["Edit 8:00 AM"])
         XCTAssertTrue(app.staticTexts["Morning"].isHittable, "The capture includes the Morning title")
         assertCheckInRowsFit()
         capture("Onboarding-checkin-large-text")
         let midday = app.switches["Midday"]
-        reveal(midday)
+        revealCheckInControl(midday)
         midday.tap()
         let middayTime = app.buttons["Edit 12:30 PM"]
         XCTAssertTrue(middayTime.waitForExistence(timeout: 2), "Turning Midday on shows its time")
         assertCheckInRowsFit()
-        reveal(middayTime)
+        revealCheckInControl(middayTime)
         capture("Onboarding-checkin-large-text-edited")
         for title in ["Morning", "Midday", "Evening"] {
             let control = app.switches[title]
-            let aboveViewport = control.exists && control.frame.minY < app.navigationBars.firstMatch.frame.maxY
-            scroll(to: control, named: title, up: aboveViewport)
+            revealCheckInControl(control)
             XCTAssertTrue(control.isHittable, "The \(title) switch remains reachable")
         }
+    }
+
+    /// Check-in insets its scroll view by 24pt. Window-edge gestures fall outside that view, so drag
+    /// within its blank leading margin and require the entire target inside the scroll viewport.
+    private func revealCheckInControl(_ element: XCUIElement) {
+        let scrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(scrollView.exists, "Check-in exposes its scrollable content")
+        for _ in 0..<12 {
+            let viewport = scrollView.frame
+            if element.exists && !element.frame.isEmpty && viewport.contains(element.frame) && element.isHittable {
+                return
+            }
+            let up = element.exists && element.frame.minY < viewport.minY
+            let from = scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: up ? 0.35 : 0.75))
+            let to = scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: up ? 0.75 : 0.35))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(element.exists && !element.frame.isEmpty && scrollView.frame.contains(element.frame) && element.isHittable,
+                      "Expected the complete Check-in control inside the scroll viewport: \(element.identifier)")
     }
 
     /// The Check-in row regression: each period title lays out on one line and each time is fully on
