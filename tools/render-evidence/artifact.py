@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from settings_routing import EXPANSION_SCOPES, validate_manual_pair
 
 
 def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
@@ -13,7 +14,11 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
              figma_file_key: str | None = None, contracts_sha256: str | None = None,
              primary_contract: str | None = None,
              require_reference_export: bool = False,
-             require_structure_verification: bool = False) -> dict:
+             require_structure_verification: bool = False,
+             manual_base_sha: str | None = None,
+             manual_base_ref: str | None = None,
+             manual_head_ref: str | None = None,
+             trusted_source_sha256: str | None = None) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("full lowercase head SHA required")
     if not re.fullmatch(r"[0-9a-f]{64}", workflow_sha256):
@@ -39,6 +44,13 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
         raise ValueError("Figma evidence used an unexpected reference contract")
     if manifest.get("primary_contract") != primary_contract:
         raise ValueError("Figma evidence used an unexpected primary delivery scope")
+    if primary_contract in EXPANSION_SCOPES:
+        if (not isinstance(trusted_source_sha256, str) or
+                not re.fullmatch(r"[0-9a-f]{64}", trusted_source_sha256) or
+                manifest.get("structure_contract_sha256") != trusted_source_sha256):
+            raise ValueError("playground evidence does not match the trusted source contract")
+        if not require_structure_verification:
+            raise ValueError("playground evidence requires structure verification")
     if require_reference_export and manifest.get("reference_export_status") != "success":
         raise ValueError("Figma reference export did not succeed")
     if require_structure_verification:
@@ -64,9 +76,21 @@ def validate(root: Path, *, pr: int, sha: str, run_id: int, run_attempt: int,
             raise ValueError("Figma structure report is not a completed exact-head verification")
         if figma_file_key is not None and report.get("fileKey") != figma_file_key:
             raise ValueError("Figma structure report names an unexpected file")
+        if primary_contract in EXPANSION_SCOPES and report.get("primaryContract") != primary_contract:
+            raise ValueError("Figma structure report names an unexpected playground scope")
         candidate_manifest = json.loads(candidate_manifest_path.read_text(encoding="utf-8"))
         if figma_file_key is not None and candidate_manifest.get("figmaFileKey") != figma_file_key:
             raise ValueError("candidate manifest names an unexpected file")
+
+    if manual_base_sha is not None:
+        if not re.fullmatch(r"[0-9a-f]{40}", manual_base_sha):
+            raise ValueError("full trusted manual base SHA required")
+        validate_manual_pair(manual_base_ref, manual_head_ref, primary_contract)
+        if (manifest.get("event") != "workflow_dispatch" or
+                manifest.get("manual_base_sha") != manual_base_sha or
+                manifest.get("manual_base_ref") != manual_base_ref or
+                manifest.get("manual_head_ref") != manual_head_ref):
+            raise ValueError("manual Figma manifest is not bound to the isolated candidate")
 
     media = manifest.get("media_sha256")
     if not isinstance(media, dict) or not media:
@@ -108,6 +132,10 @@ def main() -> None:
     parser.add_argument("--primary-contract", required=True)
     parser.add_argument("--require-reference-export", action="store_true")
     parser.add_argument("--require-structure-verification", action="store_true")
+    parser.add_argument("--manual-base-sha")
+    parser.add_argument("--manual-base-ref")
+    parser.add_argument("--manual-head-ref")
+    parser.add_argument("--trusted-source-sha256")
     args = parser.parse_args()
     validate(
         args.root,
@@ -122,6 +150,10 @@ def main() -> None:
         primary_contract=args.primary_contract or None,
         require_reference_export=args.require_reference_export,
         require_structure_verification=args.require_structure_verification,
+        manual_base_sha=args.manual_base_sha,
+        manual_base_ref=args.manual_base_ref,
+        manual_head_ref=args.manual_head_ref,
+        trusted_source_sha256=args.trusted_source_sha256,
     )
 
 

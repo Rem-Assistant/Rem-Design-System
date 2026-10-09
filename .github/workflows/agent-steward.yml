@@ -8,15 +8,22 @@ on:
         description: Issue number
         required: true
         type: string
+      base_ref:
+        description: Allowed target branch; blank reuses the task route or repository default
+        required: false
+        type: string
 permissions:
+  issues: read
   contents: read
 jobs:
   steward:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'ready' || github.event.label.name == 'agent:steward' || github.event.label.name == 'agent:retry'
-    uses: samuelalake/agent-factory/.github/workflows/steward.yml@bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && (github.event_name == 'workflow_dispatch' || github.event.label.name == 'ready' || github.event.label.name == 'agent:steward' || github.event.label.name == 'agent:retry')
+    uses: samuelalake/agent-factory/.github/workflows/steward.yml@9a77601d21c33708a9bfb2eeea2070ac7b819ea8
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+      validated_routing: true
+      base_ref: ${{ inputs.base_ref }}
+      factory_ref: 9a77601d21c33708a9bfb2eeea2070ac7b819ea8
       app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
       AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}

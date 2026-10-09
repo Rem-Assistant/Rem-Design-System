@@ -50,8 +50,8 @@
     "model": "claude-opus-4-8",
     "cli_version": "0.55.1",
     "timeout_seconds": 1800,
-    "branch_prefix": "agent-factory/issue-",
-    "base_branch": "main",
+    "branch_prefix": "agent-factory/playground-issue-",
+    "base_branch": "codex/playground-expansion",
     "runner": "ubuntu-latest",
     "fallback_provider": null,
     "fallback_model": null,
@@ -62,11 +62,12 @@
     "fallback_visual_revision_context": false,
     "max_model_cost_usd": 3.0,
     "input_cost_per_million": 0.0,
-    "output_cost_per_million": 0.0
+    "output_cost_per_million": 0.0,
+    "figma_mcp": false
   },
   "figma": {
     "marker": "<!-- figma-writer:agent-factory -->",
-    "enabled": true,
+    "enabled": false,
     "lease_key": "figma-oauth/samuel-primary",
     "model": "claude-opus-4-8",
     "timeout_seconds": 1800
@@ -102,5 +103,12 @@
     "context": "agent-factory",
     "required_checks": [],
     "allow_followup_issues": true
+  },
+  "routing": {
+    "repository": "Rem-Assistant/Rem-Design-System",
+    "allowed_base_branches": [
+      "main",
+      "codex/playground-expansion"
+    ]
   }
 }
