@@ -52,8 +52,10 @@ mint keys, accept agreements, create apps/groups, or invite testers.
    checks these before referencing an environment, so absent protection fails closed
    instead of letting GitHub implicitly create an unprotected environment. The owner
    exception is restricted to Samuel's verified ID; it does not remove required review.
-2. Securely provision only the applicable platform's values below, at environment
-   scope. Use least-privilege existing store app access. Do not add repository-wide
+2. The user must supply sensitive values through secure handoff or an explicitly
+   supported secure credential tool that keeps values outside the agent's context.
+   Provision only the applicable platform's values below, at environment scope.
+   Use least-privilege existing store app access. Do not add repository-wide
    release secrets. GitHub's runner token needs read access to Actions, contents and
    environment/deployment metadata; inability to inspect protections blocks release.
 3. Commit the approved store metadata to the application candidate, including icons,
@@ -134,7 +136,10 @@ stable GitHub ID and login; no new user/team is implicitly accepted. The selecte
 model and reviewer are included in the allowlisted run summary. GitHub documents
 the [self-review restriction](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
 
-Approve secure entry of only the environment-specific secrets/variables in the table.
+Environment-setting approval covers only ordinary protection settings and separately
+approved non-secret variables. It does not authorize agent extraction or transmission
+of sensitive credentials. The user supplies the environment-specific secrets in the
+table through the secure handoff described below.
 Use existing identities with these capabilities; missing capabilities are a separate
 grant decision, not permission to create keys or expand access:
 
@@ -154,11 +159,16 @@ grant decision, not permission to create keys or expand access:
   requested. The existing dedicated upload key is separate from this API identity;
   neither it nor the Play app-signing key is rotated.
 
-Enter values directly through GitHub's protected-environment secret UI or an approved
-secure transfer from the already-connected Mac. No new desktop connection is needed;
-Samuel need not paste credentials from iOS or into this chat. Return only setup
-completion and non-sensitive identity fingerprints,
-never key/password/JSON values. This request does **not** authorize merging, dispatching
+The user enters credentials directly through GitHub's protected-environment secret UI,
+or through an explicitly supported secure credential tool that accepts them without
+exposing their values to the agent. The agent must not extract, copy, upload or relay
+`.p8` keys, signing private keys/P12 files, passwords, keystore secrets or service-account
+JSON from Keychain or files, even after broad setup approval. The connected Mac does
+not authorize secret transfer, and no new desktop connection is required. Do not ask
+Samuel to paste secrets from iOS or into chat. If secure user entry or a supported
+secure tool is unavailable, keep credential setup blocked and report that boundary.
+Return only setup completion and non-sensitive identity fingerprints, never
+key/password/JSON values. This request does **not** authorize merging, dispatching
 the workflow, uploading a candidate, changing store groups or running the pilot.
 Those require a fresh exact-SHA release decision after the candidate's visual gate.
 
