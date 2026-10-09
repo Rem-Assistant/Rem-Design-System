@@ -37,6 +37,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// that does not focus fails here rather than inside typeText.
     private func focus(_ field: XCUIElement) {
         field.tap()
+        dismissKeyboardIntroduction()
         let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
         let result = XCTWaiter.wait(for: [focused], timeout: 2)
         if result != .completed {
@@ -56,6 +57,16 @@ final class PlaygroundNavigationUITests: XCTestCase {
             add(hierarchy)
         }
         XCTAssertEqual(result, .completed, "\(field.identifier) did not take keyboard focus on tap")
+    }
+
+    /// On a simulator's first text entry iOS lays a one-time "slide to type" tip over the keyboard
+    /// (`UIContinuousPathIntroductionView`). It is OS onboarding, not app UI; the full run's screen
+    /// dump showed it over a focused composer. Dismiss it with its own Continue when it appears.
+    private func dismissKeyboardIntroduction() {
+        let intro = app.otherElements["UIContinuousPathIntroductionView"]
+        guard intro.waitForExistence(timeout: 2) else { return }
+        intro.buttons["Continue"].tap()
+        waitUntilGone(intro, "The keyboard tip closes")
     }
 
     private func tap(_ identifier: String) {
