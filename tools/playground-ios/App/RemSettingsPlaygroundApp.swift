@@ -245,7 +245,7 @@ struct LoadingPreview: View {
         }
     }
 
-    private func completeLoad() {
+    @MainActor private func completeLoad() {
         loaded = true
         announce("Content loaded")
     }
