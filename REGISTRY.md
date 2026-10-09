@@ -20,9 +20,9 @@ Updated 2026-10-09 from Samuel's decisions and the active design worker's refere
 This section owns the Chat responsibility contract; skills link here rather than duplicating it.
 The older registry rows retain their recorded implementation/mapping status. Decisions below
 do not claim new Figma variants, wired interactions, storage guarantees, or shipped behavior.
-Inspect current masters and source before editing; this documentation pass inspected the Grok
-reference pixels but did not audit or change live Rem masters. Reference-only observations below
-are attributed to the worker readback unless explicitly identified in the
+Inspect current masters and source before editing. This documentation pass inspected Grok and
+current Rem review captures without changing Figma; structural verification is attributed to the
+completed design worker's readback. Evidence and remaining limits are identified in the
 [review record](docs/design-reconciliation/2026-10-09-chat-guidance-review.md).
 
 ### Principles
@@ -77,8 +77,8 @@ The final placement clarification supersedes the earlier placement hold and agen
 Use the [review gates](.claude/skills/rem-design-system/references/chat-review.md) before claiming
 Chat design acceptance. Check mutable masters again before subsequent authorized edits.
 
-- **Canonical reuse:** verify the actual master, descendants, properties and slot owners, not
-  instance names alone. List anatomy is leading icon + **Content** + trailing slot. Content owns
+- **Canonical reuse:** verify the actual master ancestry, descendants, properties, slot owners
+  and instance overrides, not instance names alone. List anatomy is leading icon + **Content** + trailing slot. Content owns
   the title and closely grouped permanent subtitle. Transient error/retry helper text is separate
   status feedback, not a replacement for or extra permanent subtitle.
 - **Credential card:** retain the **Add login** CTA before saved. The chevron belongs **on the
@@ -88,19 +88,24 @@ Chat design acceptance. Check mutable masters again before subsequent authorized
   separate jobs. Use the existing Add Login UI; this affordance decision does not settle broader
   credential storage, inline entry or authentication architecture; permission requests follow
   their separate inline-card contract below.
-- **Permission request:** use an **inline card**, with disclosure/header text above a slotted
-  request body; expand/collapse in place. Do not open a redundant Rem review sheet. Denied
+- **Permission request:** use an **inline card**, with disclosure/header text above **one shared
+  request-body slot**; expand/collapse in place. Do not open a redundant Rem review sheet. Denied
   collapses by default and uses the simple configurable receipt **Denied**, not Denied·Notrun;
   preserve inspectable request history. Keep consequential information visible; typed tool
   payload details and a technical fallback are allowed. Required native OS permission prompts
   remain a separate handoff. Always Allow scope and backend policy are not settled by this layout.
-- **Permission actions:** extend canonical **ButtonGroup** to **three horizontal actions on
-  mobile**, preserving existing variants. This is the chosen layout subject to narrow-width and
-  long-label fit validation, not a claim of verified Figma or runtime delivery.
+- **Permission actions:** reuse canonical **ButtonGroup** with **three horizontal actions on
+  mobile**. Its existing Actions slot already supports three children; no new primitive is needed.
+  Preserve existing variants. The completed Figma review shows compact **Allow once / Always allow /
+  Deny** labels fitting at **320, 330 and 370pt without shrinking type**. Longer labels fail at
+  320pt and are explicitly **non-shipping**; longer/localized labels need an agreed adaptive-height
+  or layout policy and fresh fit checks. Always allow scope and runtime behavior remain unresolved.
 - **Service context:** use the canonical leading slot for contextual service titles/logo assets;
   preserve the title in Content and give the logo modest visual weight. Use the real asset, not a
   decorative approximation or a second bespoke header.
-- **Button jobs:** state whether each control performs an action, opens a sheet/navigation
+- **Button jobs:** distinguish a contextual identity row, a navigation Button and an outcome
+  receipt; visual resemblance does not give them the same interaction. State whether each control
+  performs an action, opens a sheet/navigation
   destination, shows busy progress, is unavailable/disabled, or presents a noninteractive outcome
   receipt. Busy is not merely disabled; a receipt does not execute again; a selection is not a
   successful external result. Apply disclosure to the Button that opens the destination.
@@ -126,7 +131,8 @@ Chat design acceptance. Check mutable masters again before subsequent authorized
 Reactions, read receipts and their runtime behavior remain **not implemented** in this guidance
 change. A prototype demonstrates only the transitions actually wired. The broader activity model,
 broader permission policy and exact Read backend remain proposals/unresolved decisions. The
-inline permission-card presentation is chosen; its fit and behavior still need verification.
+inline permission-card presentation and compact-label fit are design-reviewed; broader label fit,
+Always allow policy and runtime behavior are not established by those results.
 
 ### Reference provenance and unresolved decisions
 
@@ -134,7 +140,8 @@ inline permission-card presentation is chosen; its fit and behavior still need v
 - [Muse, node 2039:14610](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2039-14610): agent details, separate statuses and browser takeover, from the same supplied inspection.
 - [Rem agent detail](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2048-169906) uses [master 2002:76914](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2002-76914); [New Add login](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=1956-8162) and [Saved login](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=1956-8161) are existing reuse targets per worker readback.
 - Samuel approved separate statuses and the shared suggestion/choice/confirmation family. Exact family APIs, full Rem lifecycle coverage, detail-screen repair, broader permission policy and inline credentials remain to be reconciled with live design/source; do not infer implementation approval.
-- Active Rem review targets in file `af4yDqCzp57jds9lkFiIaO`: [core `2571:17104`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2571-17104), [extended `2584:17467`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2584-17467), [message `2603:19439`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19439). These are handoff targets under revision by another worker, not a verified inventory of finished masters.
+- Active Rem review targets in file `af4yDqCzp57jds9lkFiIaO`: [core `2571:17104`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2571-17104), [extended `2584:17467`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2584-17467), [message `2603:19439`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19439). The design worker completed the latest corrections; this is not a claim of shipped behavior.
+- Completed review evidence: [full Chat review `2626:20028`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2626-20028), [Grok-style long-press sheet `2603:19498`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19498), and [full Chat prototype entry `2630:20783`](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2630-20783). The review record separates inspected pixels, worker structural evidence and runtime limits.
 - Canvas organization follows [connected-flow presentation](FILE-ORG.md#connected-flow-presentation): natural-sized component states where local, full screens where destination or platform context matters.
 
 ## File organization (auto-layout pass — 2026-09-24)

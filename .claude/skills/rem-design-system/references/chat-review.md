@@ -16,9 +16,9 @@ Separate **observed reference**, **user-approved Rem direction**, **inferred/pro
 states of a component. Missing reference pixels remain an evidence gap; do not fill them from
 memory. A later explicit user correction supersedes an earlier agent interpretation.
 
-For each reviewed surface, record master/instance IDs, the actual descendant/slot mapping and
+For each reviewed surface, record master/instance IDs, the actual descendant/slot mapping, instance overrides and
 natural-size rendered evidence. Re-read mutable masters before an authorized change; the current
-Chat core/extended/message targets are linked in the registry and may be changing concurrently.
+Chat core/extended/message targets and completed review evidence are linked in the registry.
 Do not declare a name-only instance lookup an anatomy check.
 
 ## Required checklist
@@ -32,10 +32,10 @@ A documentation-only change can complete while the UI gates remain not verified.
 | Gate | Evidence required for acceptance |
 |---|---|
 | Reference authority | Actual pixels inspected at natural size; observed versus approved versus proposed states identified; no invented long-press role actions. |
-| Canonical anatomy | Master ancestry plus descendant/slot map. List leading icon, Content title/permanent subtitle grouping, trailing slot, and separate transient status helper inspected. |
+| Canonical anatomy | Actual master ancestry, descendant/slot map and instance overrides. List leading icon, Content title/permanent subtitle grouping, trailing slot, and separate transient status helper inspected. |
 | Credential and service composition | Before-saved Add login CTA; chevron on the sheet-opening Button; saved outcome with corresponding navigation affordance and no extra standalone ViewDetails; canonical leading asset slot and modest logo weight. |
-| Permission request | Inline disclosure/header above slotted request body; in-place expand/collapse; denied collapses to configurable Denied receipt with inspectable history; consequential information visible. Three horizontal canonical ButtonGroup actions pass narrow-width/long-label fit checks without changing existing variants. Native OS handoff is separate; no redundant Rem review sheet or assumed Always Allow policy. |
-| Control semantics | Each Button classified as action, disclosure, busy, disabled availability or noninteractive receipt; destination or action owner recorded. |
+| Permission request | Inline disclosure/header above one shared request-body slot; in-place expand/collapse; denied collapses to configurable Denied receipt with inspectable history; consequential information visible. Reuse the existing ButtonGroup Actions slot for three horizontal children; preserve existing variants. Test compact and long labels at 320/330/370pt without shrinking type; failed label sets cannot ship. Native OS handoff is separate; no redundant Rem review sheet or assumed Always Allow policy. |
+| Control semantics | Identity rows, navigation Buttons and outcome receipts distinguished; each Button classified as action, disclosure, busy, disabled availability or noninteractive receipt; destination or action owner recorded. |
 | Status ownership | Agent/run, action card, voice session, message delivery and composer input/send each has an explicit owner; no completion inferred across owners. |
 | Message receipts and recovery | Latest Delivered/Read retains delivery time; next-message normal receipt removal; failure text below with no timestamp; retry restricted to definitively failed user messages; unknown outcome reconciled; no external email resend. |
 | Message geometry | Reaction overlaps bubble edge; red outline circle-exclamation is entirely outside/right of bubble; Not delivered text stays below. Under-bubble subtext right inset/left shift clears reaction without clipping or collisions. Use existing outline icon asset where available. |
@@ -60,8 +60,23 @@ runtime. Mark unsupported combinations explicitly and explain why.
 | Unknown user-message delivery | Reconciliation boundary explicit; no unconditional retry. |
 | User and assistant long press | Separate role menus; bottom-sheet reaction grid and grouped actions; no unsupported retry or email resend. |
 | Credential before saved / saved | Contextual service title and asset; Button disclosure opens actual Add Login/detail destination; outcome remains clear. |
-| Permission request / denied | In-place expand/collapse and history inspection; narrow mobile width plus long labels for all three horizontal ButtonGroup actions; inspect existing variants for regressions. |
+| Permission request / denied | In-place expand/collapse and history inspection; compact and long labels at 320/330/370pt without shrinking type for all three horizontal ButtonGroup actions; inspect existing variants for regressions. |
 | Independent statuses | Representative card outcome while agent runs, voice-session state, and composer sending; each displays only its own truth. |
+
+## Completed review evidence and limits
+
+Use the [full Chat review](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2626-20028),
+[Grok-style long-press sheet](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2603-19498)
+and [full Chat prototype entry](https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO?node-id=2630-20783)
+for the current review. Compact permission labels fit at 320/330/370pt without shrinking type;
+longer labels fail 320pt and are explicitly non-shipping. Preserve that failing specimen as a
+limit, not a passing option. The existing ButtonGroup slot supports three children; reuse does
+not require a new primitive. Short/wrapped message + reaction + failure specimens are geometry
+stress tests, not proof that the combination is reachable in runtime. Keep role-specific menu
+and prototype destination checks tied to the actual nodes/transitions inspected. Always allow
+scope and runtime behavior remain unresolved. See the
+[review record](../../../../docs/design-reconciliation/2026-10-09-chat-guidance-review.md)
+for evidence provenance; this guidance test suite cannot certify any of those visual results.
 
 ## What is automated
 
