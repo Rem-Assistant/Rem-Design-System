@@ -28,6 +28,9 @@ import com.rem.designsystem.tokens.RemTypography
  *
  * The DS component renders the list it is given, bounded; contextual ordering
  * (`SuggestionBriefRelevance`) is app logic the host applies before passing [suggestions].
+ * Design composition: Section (`1307:667`, Plain `1307:660`) + AgendaSuggestionRow (`2336:19583`).
+ * This wrapper uses SuggestedTaskRow to forward TaskSuggestion into AgendaSuggestionRow. It has no
+ * standalone Figma master; see `code-connect/SuggestionSection.composition.json`.
  * Token-only values. Authority: `SharedSuggestionSection.swift`.
  */
 @Composable

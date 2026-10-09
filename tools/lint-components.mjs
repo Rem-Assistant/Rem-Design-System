@@ -2,7 +2,7 @@
 // Component architecture contract lint — see docs/contracts/component-architecture.md
 //
 // Checks the deterministic parts of the contract across the SwiftUI component source set:
-//   figma   — a matching parserless SwiftUI mapping OR an excluded, co-located archived native mapping
+//   figma   — exact parserless/native mapping, or a checked canonical constituent composition
 //   compose — a Compose twin <Name>.kt exists somewhere under compose/RemDesignSystem/
 //   tokenset— cross-product components (TIER2 below) have a <Name>TokenSet.swift
 //   hex     — no raw color literals in the view body (token-only)
@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parserlessMappingMatches } from './component-code-connect.mjs';
+import { suggestionSectionMappingErrors, suggestionSectionSource } from './suggestion-section-mapping.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SW_ROOT = join(ROOT, 'Sources', 'RemDesignSystem');
@@ -63,6 +64,7 @@ function parserlessTemplates(dir) {
   });
 }
 const swiftTemplates = parserlessTemplates(join(ROOT, 'code-connect', 'swiftui'));
+const suggestionMappingErrors = suggestionSectionMappingErrors(path => readFileSync(join(ROOT, path), 'utf8'));
 
 
 // Raw color literal — the token-only rule. Conservative, high-signal patterns only.
@@ -70,6 +72,9 @@ const HEX = /Color\(\s*red:|UIColor\(\s*red:|#[0-9A-Fa-f]{6}\b|Color\(0x[0-9A-Fa
 
 const violations = [];
 const add = (component, rule, detail) => violations.push({ key: `${component}:${rule}`, detail });
+// Check even if the wrapper source is deleted: absence must not evade the component scan.
+if (suggestionMappingErrors.length)
+  add('SuggestionSection', 'composition', suggestionMappingErrors.join('; '));
 
 for (const folder of COMPONENT_FOLDERS) {
   const dir = join(SW_ROOT, folder);
@@ -82,9 +87,13 @@ for (const folder of COMPONENT_FOLDERS) {
 
     // Prefer the current parserless path. Exact source + identity + node URL must agree.
     // Archived native mappings still count, but any native file must stay excluded from SPM.
-    const mapped = swiftTemplates.some((text) => parserlessMappingMatches(text, {
+    const directMapping = swiftTemplates.some((text) => parserlessMappingMatches(text, {
       source: `Sources/RemDesignSystem/${folder}/${entry}`, component: name,
     }));
+    // A composition is admitted only by its exact source and fully validated constituents.
+    // It cannot be satisfied by adding a fake standalone master/template.
+    const isSuggestionComposition = `Sources/RemDesignSystem/${folder}/${entry}` === suggestionSectionSource;
+    const mapped = isSuggestionComposition ? suggestionMappingErrors.length === 0 : directMapping;
     const figmaFile = join(dir, `${name}.figma.swift`);
     if (!mapped && !existsSync(figmaFile))
       add(name, 'figma', `missing matching parserless mapping or ${folder}/${name}.figma.swift`);

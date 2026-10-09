@@ -2,7 +2,6 @@
   "grandfathered": [
     "AgentStatusPill:figma",
     "BrowserLiveCard:figma",
-    "DailyBriefCard:figma",
     "DateNavigationHeader:figma",
     "ExecutionTrace:figma",
     "ExecutionTrace:tokenset",
@@ -15,7 +14,6 @@
     "RemPill:figma",
     "RemSlider:figma",
     "RunningTaskBanner:figma",
-    "SuggestionSection:figma",
     "TaskEventRow:figma",
     "TaskEventRow:tokenset",
     "VoiceBar:figma",

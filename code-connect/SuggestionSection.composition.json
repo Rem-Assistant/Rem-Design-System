@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "kind": "constituent-composition",
+  "component": "SuggestionSection",
+  "figmaFileKey": "af4yDqCzp57jds9lkFiIaO",
+  "standaloneMaster": null,
+  "sources": {
+    "swiftui": "Sources/RemDesignSystem/Agenda/SuggestionSection.swift",
+    "compose": "compose/RemDesignSystem/rows/SuggestionSection.kt"
+  },
+  "constituents": [
+    {
+      "component": "Section",
+      "nodeId": "1307:667",
+      "variant": {
+        "Style": "Plain"
+      },
+      "variantNodeId": "1307:660",
+      "templates": {
+        "swiftui": "code-connect/swiftui/Section.figma.ts",
+        "compose": "code-connect/compose/Section.figma.ts"
+      }
+    },
+    {
+      "component": "AgendaSuggestionRow",
+      "nodeId": "2336:19583",
+      "templates": {
+        "swiftui": "code-connect/swiftui/AgendaSuggestionRow.figma.ts",
+        "compose": "code-connect/compose/AgendaSuggestionRow.figma.ts"
+      }
+    }
+  ],
+  "references": [
+    {
+      "nodeId": "2049:10080",
+      "type": "INSTANCE"
+    },
+    {
+      "nodeId": "2336:19714",
+      "type": "FRAME"
+    }
+  ],
+  "behavior": {
+    "header": "Suggestions",
+    "defaultInlineLimit": 3,
+    "overflowAction": "See more",
+    "orderingOwner": "host",
+    "empty": "hidden"
+  },
+  "nativeComposition": "VStack/Column owns bounds and overflow; Section is the design composition reference, not a native RemSection call."
+}

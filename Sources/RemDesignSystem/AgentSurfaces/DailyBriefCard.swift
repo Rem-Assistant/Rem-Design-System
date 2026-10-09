@@ -25,8 +25,9 @@ public struct DailyBriefCounts: Equatable, Sendable {
 /// Design-system sibling of the Compose `DailyBriefCard` (`agentsurfaces/DailyBriefCard.kt`), with the
 /// same inputs. Authority: the shipping app's `Rem/Sources/Components/DailyBriefCard.swift`, which binds
 /// the app's `DailyBrief` model; this component takes plain values so it carries no app model.
-/// Deliberately uncontained — no boxed card background, exactly as the shipping card. No Figma master
-/// exists yet (`tasks/DailyBriefCard.md`).
+/// Deliberately uncontained — no boxed card background. Canonical Figma set `2190:12237` maps
+/// Headline/Summary and Playback Ready/Reading. Finished/Retry are unsupported by this boolean API;
+/// see `docs/contracts/playground-mappings.md` for the explicit state proposal.
 public struct DailyBriefCard: View {
     private let title: String
     private let summary: String?

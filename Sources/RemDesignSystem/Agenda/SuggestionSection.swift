@@ -12,7 +12,9 @@ import SwiftUI
 /// 3. **One header everywhere** — "Suggestions", sentence case, footnote semibold, `labelSecondary`.
 ///
 /// It renders the list it is given; contextual ordering (`SuggestionBriefRelevance`) is app logic the
-/// host applies first. Rows are the canonical `AgendaSuggestionRow`. No Figma master exists yet.
+/// host applies first. Rows are the canonical `AgendaSuggestionRow` (`2336:19583`). The design
+/// composes Section (`1307:667`, Plain `1307:660`); this behavioral wrapper has no standalone master.
+/// See `code-connect/SuggestionSection.composition.json` and `docs/contracts/playground-mappings.md`.
 public struct SuggestionSection: View {
     private let suggestions: [AgendaSuggestionItem]
     private let inlineLimit: Int

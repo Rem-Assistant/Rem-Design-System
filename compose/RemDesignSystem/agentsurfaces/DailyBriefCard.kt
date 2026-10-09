@@ -46,6 +46,8 @@ import com.rem.designsystem.tokens.RemTypography
  * top of the agenda, exactly as the shipping iOS card. (The Android build's grey-card + "DAILY BRIEF"
  * header treatment was engineer drift; this matches the design-system source of truth.)
  *
+ * Canonical Figma set `2190:12237`: Headline/Summary and Playback Ready/Reading map to this API.
+ * Finished/Retry need a separate state API; see `docs/contracts/playground-mappings.md`.
  * Authority: `DailyBriefCard.swift` + `DailyBriefAgendaPresentation`. Token-only values.
  */
 data class BriefCounts(
