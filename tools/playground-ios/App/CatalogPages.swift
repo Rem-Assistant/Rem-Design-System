@@ -119,6 +119,8 @@ struct CatalogRows: View {
 struct CatalogAgenda: View {
     @State private var dayOffset = 0
     @State private var resolved: [String: String] = [:]
+    @State private var remaining = CatalogAgenda.sectionSuggestions
+    @State private var expanded = false
 
     private static let suggestions: [(id: String, action: AgendaSuggestionRow.Action, title: String, metadata: String)] = [
         ("add", .add, "Confirm rehearsal time", "From Slack · Today"),
@@ -156,8 +158,30 @@ struct CatalogAgenda: View {
                         .accessibilityIdentifier("catalog.suggestion.restore")
                 }
             }
+            CatalogGroup(title: "Suggestion section") {
+                SuggestionSection(
+                    suggestions: remaining,
+                    inlineLimit: expanded ? remaining.count : SuggestionSection.defaultInlineLimit,
+                    onAccept: { accepted in remaining.removeAll { $0.id == accepted.id } },
+                    onDismiss: { dismissed in remaining.removeAll { $0.id == dismissed.id } },
+                    onSeeMore: { expanded = true }
+                )
+                if remaining.count < Self.sectionSuggestions.count || expanded {
+                    Button("Reset") { remaining = Self.sectionSuggestions; expanded = false }
+                        .remButton(.textAccent)
+                        .accessibilityIdentifier("catalog.section.reset")
+                }
+            }
         }
     }
+
+    // The same four suggestions as the Compose catalog: three inline, one behind See more.
+    private static let sectionSuggestions: [AgendaSuggestionItem] = [
+        AgendaSuggestionItem(id: "testflight", action: .add, title: "Set up the TestFlight pipeline", metadata: "From Granola · 8h ago"),
+        AgendaSuggestionItem(id: "compose", action: .add, title: "Confirm the Compose UI renders", metadata: "From Granola · 8h ago"),
+        AgendaSuggestionItem(id: "deposit", action: .move, title: "Reply to the venue about the deposit", metadata: "Overdue 3d"),
+        AgendaSuggestionItem(id: "offsite", action: .add, title: "Book the venue for the offsite", metadata: "From Slack · Today"),
+    ]
 
     private var dateText: String {
         var base = DateComponents()
@@ -222,6 +246,7 @@ struct CatalogChat: View {
 
 struct CatalogAgent: View {
     @State private var browser: BrowserLiveCardState = .active
+    @State private var reading = false
 
     var body: some View {
         CatalogPage(title: "Agent") {
@@ -262,6 +287,15 @@ struct CatalogAgent: View {
                               lane: .subagent("01"), status: .done),
                     ],
                     footer: "Working"
+                )
+            }
+            CatalogGroup(title: "Daily brief card") {
+                DailyBriefCard(
+                    title: "Your morning brief",
+                    summary: "Three things need you today: the investor update, a venue reply, and rehearsal timing.",
+                    onTap: {},
+                    onRead: { reading.toggle() },
+                    isReading: reading
                 )
             }
         }

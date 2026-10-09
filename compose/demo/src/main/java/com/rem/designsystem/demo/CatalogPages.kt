@@ -222,7 +222,6 @@ internal fun CatalogAgenda() {
                 TextButton(onClick = { resolved = emptyMap() }, modifier = Modifier.testTag("catalog.suggestion.restore")) { Text("Restore") }
             }
         }
-        // Compose-only: the SwiftUI sibling (SharedSuggestionSection) lives in the app, not the design system.
         CatalogGroup("Suggestion section") {
             var remaining by remember { mutableStateOf(catalogSectionSuggestions) }
             var expanded by rememberSaveable { mutableStateOf(false) }
@@ -317,7 +316,6 @@ internal fun CatalogAgent() {
                 footer = "Working",
             )
         }
-        // Compose-only component: there is no SwiftUI DailyBriefCard.
         CatalogGroup("Daily brief card") {
             var reading by remember { mutableStateOf(false) }
             DailyBriefCard(

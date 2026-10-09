@@ -166,6 +166,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
             ]),
             ("openCatalogAgenda", "Agenda", "agenda", [
                 Shot(name: "Suggestion rows", anchor: "Reply to the venue"),
+                Shot(name: "Suggestion section", anchor: "See more"),
             ]),
             ("openChat", "Chat", "chat", [
                 Shot(name: "Composer", anchor: "Auto"),
@@ -176,6 +177,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
                 Shot(name: "Browser card", anchor: "Rem's browser session"),
                 Shot(name: "Execution trace bottom", anchor: "Working", last: true),
                 Shot(name: "Execution trace top", anchor: "IN PROGRESS", up: true),
+                Shot(name: "Daily brief card", anchor: "Read latest brief"),
             ]),
             ("openBrand", "Brand & empty states", "brand", [
                 Shot(name: "Provider marks", anchor: "Google"),
@@ -242,6 +244,14 @@ final class PlaygroundNavigationUITests: XCTestCase {
         capture("Catalog-agenda-light")
         tap("catalog.suggestion.restore")
         XCTAssertTrue(app.buttons["catalog.suggestion.accept.add"].waitForExistence(timeout: 2), "Restore brings it back")
+        // Suggestion section: three inline, the fourth behind See more.
+        let fourth = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Book the venue for the offsite")).firstMatch
+        XCTAssertFalse(fourth.exists, "Only three suggestions render inline")
+        let seeMore = app.buttons["See more"]
+        reveal(seeMore)
+        seeMore.tap()
+        XCTAssertTrue(fourth.waitForExistence(timeout: 2), "See more reveals the rest")
+        tap("catalog.section.reset")
     }
 
     func testCatalogChatComposerSendsMessage() {
@@ -263,6 +273,11 @@ final class PlaygroundNavigationUITests: XCTestCase {
         reveal(ended)
         ended.tap()
         XCTAssertTrue(ended.isSelected, "Browser card state can be switched")
+        let read = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Read latest brief")).firstMatch
+        reveal(read)
+        read.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Stop reading")).firstMatch.waitForExistence(timeout: 2),
+                      "The brief's read action toggles")
         capture("Catalog-agent-light")
     }
 

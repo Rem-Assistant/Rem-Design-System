@@ -184,8 +184,11 @@ class PlaygroundNavigationTest {
         }
     }
 
-    @Test fun catalogControlsSliderAndPills() {
+    @Test fun catalogControlsButtonsSliderAndPills() {
         openCatalogPage("openControls")
+        compose.onNodeWithText("Rect \u00b7 Blue").performScrollTo().performClick()
+        compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped Rect \u00b7 Blue")
+        compose.onNodeWithText("Disabled").assertIsNotEnabled()
         compose.onNodeWithText("50%").performScrollTo().assertExists()
         // Drive the slider through its accessibility action (deterministic, unlike a touch swipe).
         compose.onNodeWithTag("controls.slider").performScrollTo()

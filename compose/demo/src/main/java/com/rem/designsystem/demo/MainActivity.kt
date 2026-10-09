@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.buttons.RemButton
+import com.rem.designsystem.buttons.RemButtonVariant
 import com.rem.designsystem.icons.RemMaterialSymbols
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
@@ -455,6 +457,7 @@ private fun ControlsPreview() {
     var draft by rememberSaveable { mutableStateOf("") }
     var editing by rememberSaveable { mutableStateOf(false) }
     var level by rememberSaveable { mutableFloatStateOf(0.5f) }
+    var lastButton by rememberSaveable { mutableStateOf<String?>(null) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Notifications", Modifier.weight(1f)); Switch(enabled, onCheckedChange = { enabled = it }, modifier = Modifier.testTag("notifications").semantics { contentDescription = "Notifications" })
@@ -463,7 +466,12 @@ private fun ControlsPreview() {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             ContainedIconSize.entries.forEach { size -> ContainedIcon(RemMaterialSymbols.Info, fill = ContainedIconFill.Tint(RemColors.current.systemBlue), size = size) }
         }
-        Button(onClick = {}, enabled = false) { Text("Disabled") }
+        Text("Buttons", style = RemTypography.footnote, color = RemColors.current.labelSecondary)
+        RemButtonVariant.entries.forEach { variant ->
+            RemButton(variant.figmaStyleName, onClick = { lastButton = variant.figmaStyleName }, variant = variant)
+        }
+        RemButton("Disabled", onClick = {}, enabled = false)
+        lastButton?.let { Text("Tapped $it", style = RemTypography.footnote, modifier = Modifier.testTag("controls.lastButton")) }
         Text("Slider", style = RemTypography.footnote, color = RemColors.current.labelSecondary)
         RemSlider(value = level, onValueChange = { level = it }, modifier = Modifier.testTag("controls.slider"))
         Text("${(level * 100).toInt()}%", style = RemTypography.footnote)
