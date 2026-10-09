@@ -24,6 +24,23 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
     }
 
+    /// Taps a text input and waits until it actually has keyboard focus before anything is typed.
+    /// At cd00c00 typing began 0.3 s after the tap with no focus check, and focus had not arrived.
+    /// If the tap has not focused it within 2 s, one short press (below the long-press threshold) is
+    /// tried and logged as an activity; no focus after both fails the test.
+    private func focus(_ field: XCUIElement) {
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        func gained() -> Bool {
+            XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: focused, object: field)], timeout: 2) == .completed
+        }
+        field.tap()
+        if gained() { return }
+        XCTContext.runActivity(named: "Tap did not focus \(field.identifier); pressing instead") { _ in
+            field.press(forDuration: 0.3)
+        }
+        XCTAssertTrue(gained(), "\(field.identifier) never took keyboard focus")
+    }
+
     private func tap(_ identifier: String) {
         let element = app.buttons[identifier]
         XCTAssertTrue(element.waitForExistence(timeout: 3), "Missing \(identifier)")
@@ -220,9 +237,10 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testCatalogChatComposerSendsMessage() {
         openCatalogPage("openChat", title: "Chat")
-        let field = app.descendants(matching: .any)["catalog.composerField"].firstMatch
+        // A vertical-axis TextField is exposed as a text view.
+        let field = app.textViews["catalog.composerField"]
         XCTAssertTrue(field.waitForExistence(timeout: 3))
-        field.tap()
+        focus(field)
         field.typeText("Plan my afternoon")
         tap("catalog.composerSend")
         XCTAssertTrue(app.staticTexts["Plan my afternoon"].waitForExistence(timeout: 3), "Send adds a message bubble")
