@@ -43,6 +43,26 @@ trap 'kill "$sampler_pid" 2>/dev/null || true' EXIT
 source_stamp=unversioned
 if [[ "${SOURCE_SHA:-}" =~ ^[0-9a-f]{40}$ ]]; then source_stamp="$SOURCE_SHA"; fi
 
+# iOS lays a one-time "slide to type" tip over the keyboard on a simulator's first text entry, and
+# it can interrupt whichever test types first (a different test in each shard). Mark it shown and
+# turn slide-to-type off on the test simulator before any test runs. Best effort: the catalog
+# composer test still dismisses the tip if it appears.
+sim_udid=$(xcrun simctl list devices available -j | python3 -c '
+import json, sys
+for runtime, devices in json.load(sys.stdin)["devices"].items():
+    if runtime.endswith("iOS-17-5"):
+        for device in devices:
+            if device["name"] == "iPhone 15":
+                print(device["udid"])
+                sys.exit()
+' || true)
+if [[ -n "$sim_udid" ]]; then
+  xcrun simctl boot "$sim_udid" 2>/dev/null || true
+  xcrun simctl bootstatus "$sim_udid" -b >/dev/null 2>&1 || true
+  xcrun simctl spawn "$sim_udid" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true || true
+  xcrun simctl spawn "$sim_udid" defaults write com.apple.keyboard.preferences KeyboardContinuousPathEnabled -bool false || true
+fi
+
 xcodebuild "${test_args[@]}" \
   -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
   -scheme RemSettingsPlayground \

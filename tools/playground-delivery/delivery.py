@@ -63,6 +63,25 @@ def parse_ios(text):
     return set(names)
 
 
+def shard_tests(platform, index, count):
+    """Deterministic shard of the expected method set: sorted, then round-robin, so every method
+    lands in exactly one shard and slow suites spread across shards."""
+    require(1 <= count <= 8 and 0 <= index < count, "Invalid shard index or count")
+    return set(sorted(expected_tests(platform))[index::count])
+
+
+def parse_ios_shards(texts):
+    """Every shard log must be a successful XCTest run with only passing, unrepeated methods, and no
+    method may appear in two shards; the caller still requires the union to equal the source set."""
+    require(texts, "No XCTest shard logs")
+    methods = set()
+    for text in texts:
+        shard = parse_ios(text)
+        require(not (shard & methods), "A method ran in more than one shard; retries are not readiness proof")
+        methods |= shard
+    return methods
+
+
 def parse_android(files):
     names = []
     require(files, "No Android instrumentation XML reports")
@@ -161,15 +180,21 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
     pre = sub.add_parser("preflight")
     pre.add_argument("--sha", required=True)
-    for name in ("record-tests", "check-tests", "manifest", "verify", "inspect"):
+    for name in ("record-tests", "check-tests", "manifest", "verify", "inspect", "shard", "check-shard"):
         p = sub.add_parser(name)
         p.add_argument("--sha", required=True)
         p.add_argument("--platform", choices=IDS, required=True)
         if name == "inspect":
             p.add_argument("--artifact", required=True)
             p.add_argument("--output", required=True)
+        elif name in ("shard", "check-shard"):
+            p.add_argument("--index", type=int, required=True)
+            p.add_argument("--count", type=int, required=True)
+            if name == "check-shard":
+                p.add_argument("--report", required=True)
         elif name == "record-tests":
-            p.add_argument("--report", required=True)
+            # iOS may pass one log per shard; Android passes its report directory.
+            p.add_argument("--report", required=True, nargs="+")
             p.add_argument("--toolchain", required=True)
             p.add_argument("--output", required=True)
         elif name == "check-tests":
@@ -189,11 +214,21 @@ def main():
         return
     if args.command == "inspect":
         write_json(args.output, inspect_artifact(args.platform, args.artifact, args.sha))
+    elif args.command == "shard":
+        print(",".join(sorted(shard_tests(args.platform, args.index, args.count))))
+    elif args.command == "check-shard":
+        require(args.platform == "ios", "Only iOS runs in shards")
+        require(parse_ios(Path(args.report).read_text()) == shard_tests(args.platform, args.index, args.count),
+                "Shard ran an incomplete or unexpected method set")
     elif args.command == "record-tests":
         execution = hosted_execution(args.sha)
-        report = Path(args.report)
-        files = [report] if args.platform == "ios" else sorted(report.rglob("TEST-*.xml"))
-        methods = parse_ios(report.read_text()) if args.platform == "ios" else parse_android(files)
+        if args.platform == "ios":
+            files = [Path(r) for r in args.report]
+            methods = parse_ios_shards([f.read_text() for f in files])
+        else:
+            require(len(args.report) == 1, "Android records one report directory")
+            files = sorted(Path(args.report[0]).rglob("TEST-*.xml"))
+            methods = parse_android(files)
         require(methods == expected_tests(args.platform), "Incomplete or unexpected native method set")
         record = {"source_sha": args.sha, "platform": args.platform, "features": FEATURES,
                   "status": "passed", "unfiltered": True, "execution": execution, "passed_count": len(methods),

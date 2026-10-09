@@ -119,6 +119,25 @@ class NativeEvidenceTests(unittest.TestCase):
             with self.subTest(log=bad), self.assertRaises(ValueError):
                 d.parse_ios(bad)
 
+    def test_ios_shards_partition_and_combine_strictly(self):
+        expected = {"Suite/testA", "Suite/testB", "Other/testC", "Other/testD", "Other/testE"}
+        with patch.object(d, "expected_tests", return_value=expected):
+            shards = [d.shard_tests("ios", i, 3) for i in range(3)]
+            self.assertEqual(set().union(*shards), expected)
+            self.assertEqual(sum(len(s) for s in shards), len(expected))
+            with self.assertRaises(ValueError):
+                d.shard_tests("ios", 3, 3)
+        def log(names):
+            return "".join(f"Test Case '-[RemSettingsPlaygroundUITests.{n.replace('/', ' ')}]' passed (0.1 seconds).\n"
+                           for n in names) + "** TEST SUCCEEDED **"
+        self.assertEqual(d.parse_ios_shards([log(["Suite/testA"]), log(["Other/testC"])]), {"Suite/testA", "Other/testC"})
+        for bad in ([log(["Suite/testA"]), log(["Suite/testA"])],
+                    [log(["Suite/testA"]), log(["Other/testC"]).replace("** TEST SUCCEEDED **", "")],
+                    [log(["Suite/testA"]).replace("passed", "failed")],
+                    []):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                d.parse_ios_shards(bad)
+
     def test_android_skipped_failed_and_empty_reports_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = Path(tmp) / "TEST-Suite.xml"
