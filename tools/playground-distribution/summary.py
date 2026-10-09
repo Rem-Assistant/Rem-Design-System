@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
-from gate import arguments, visual_review, require
+from gate import arguments, visual_review, require, REVIEWERS
 
 
 def public_record(data):
@@ -20,8 +20,17 @@ def public_record(data):
     require(data.get('distribution') in ('not_started', 'upload_started', 'processed',
             'assigned_existing_internal_group', 'published_existing_internal_track'), 'Unknown state')
     visual_review(data.get('visual_review_url'))
+    if 'approvals' in data:
+        require(isinstance(data['approvals'], dict) and data['approvals'], 'Missing approval model')
+        for platform, approval in data['approvals'].items():
+            require(platform in ('ios', 'android') and isinstance(approval, dict) and
+                    set(approval) == {'model', 'reviewer'}, 'Invalid approval metadata')
+            require(approval['model'] in ('owner-approval', 'independent') and
+                    approval['reviewer'] in REVIEWERS.values(), 'Unknown approval model or reviewer')
+            require(approval['model'] != 'owner-approval' or approval['reviewer'] == 'samuelalake',
+                    'Invalid owner approval identity')
     allowed = ('source_sha', 'native_run_id', 'native_run_attempt', 'build_number', 'platform',
-               'binary_sha256', 'distribution', 'physical_device', 'visual_review_url')
+               'binary_sha256', 'distribution', 'physical_device', 'visual_review_url', 'approvals')
     return {k: data[k] for k in allowed if k in data}
 
 

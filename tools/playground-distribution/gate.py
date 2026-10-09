@@ -14,6 +14,10 @@ import zipfile
 REPO = 'Rem-Assistant/Rem-Design-System'
 WORKFLOW = '.github/workflows/playground-native-candidate.yml'
 PLATFORMS = ('ios', 'android')
+# Existing repository administrators verified through GitHub's collaborator API.
+# Supporting an identity here does not assign it or grant repository access.
+REVIEWERS = {58840187: 'samuelalake', 62378296: 'oledibefrancis', 74985099: 'davidolaniran'}
+OWNER_ID = 58840187
 
 
 def same_repository(value):
@@ -95,14 +99,30 @@ def validate_receipt(record, run, sha, platform, methods, features):
         require(any(p['head']['sha'] == sha for p in run.get('pull_requests', [])), 'PR head mismatch')
 
 
-def validate_environment(environment, policies):
+def validate_environment(environment, policies, initiators):
     reviews = [r for r in environment.get('protection_rules', []) if r['type'] == 'required_reviewers']
-    require(len(reviews) == 1 and reviews[0].get('reviewers') and reviews[0].get('prevent_self_review') is True,
-            'Existing environment must require reviewers and prevent self-review')
+    require(len(reviews) == 1 and len(reviews[0].get('reviewers', [])) == 1,
+            'Existing environment must require exactly one selected reviewer')
+    entry = reviews[0]['reviewers'][0]
+    user = entry.get('reviewer', {})
+    reviewer = REVIEWERS.get(user.get('id'))
+    require(entry.get('type') == 'User' and reviewer and user.get('login', '').casefold() == reviewer,
+            'Reviewer must match a verified existing repository identity')
+    prevent_self = reviews[0].get('prevent_self_review')
+    require(isinstance(prevent_self, bool), 'Explicit self-review policy required')
+    if prevent_self:
+        require(initiators and all(isinstance(x, str) and x for x in initiators), 'Missing dispatch identity')
+        require(reviewer not in {x.casefold() for x in initiators},
+                'Selected reviewer initiated this run; choose a reachable reviewer or approved owner self-review')
+        model = 'independent'
+    else:
+        require(user['id'] == OWNER_ID, 'Self-review exception is limited to Samuel as sole reviewer')
+        model = 'owner-approval'
     require(environment.get('can_admins_bypass') is False, 'Environment must disable administrator bypass')
     require(environment.get('deployment_branch_policy') == {'protected_branches': False, 'custom_branch_policies': True},
             'Environment must use a selected-branch policy')
     require(policies == [{'name': 'main', 'type': 'branch'}], 'Environment must allow only main (no tags or wildcards)')
+    return {'model': model, 'reviewer': reviewer}
 
 
 def read_receipt_archive(data, artifact, sha, platform, run):
@@ -154,14 +174,16 @@ def verify(root, sha, run_id, build, platforms, check_environment=True):
         record = read_receipt_archive(gh(f'repos/{REPO}/actions/artifacts/{a["id"]}/zip', raw=True), a, sha, platform, run)
         validate_receipt(record, run, sha, platform, expected_methods(root, platform), features)
         receipts[platform] = {'artifact_id': a['id'], 'digest': a['digest'], 'passed_count': record['passed_count']}
+    approvals = {}
     if check_environment:
         for platform in platforms:
             base = f'repos/{REPO}/environments/playground-{platform}'
             env = gh(base)
             policies = [{'name': p['name'], 'type': p['type']} for p in paged(base + '/deployment-branch-policies', 'branch_policies')]
-            validate_environment(env, policies)
+            approvals[platform] = validate_environment(env, policies,
+                (os.environ.get('GITHUB_ACTOR'), os.environ.get('GITHUB_TRIGGERING_ACTOR')))
     return {'source_sha': sha, 'native_run_id': int(run_id), 'native_run_attempt': run['run_attempt'],
-            'build_number': str(build), 'features': features, 'receipts': receipts,
+            'build_number': str(build), 'features': features, 'receipts': receipts, 'approvals': approvals,
             'distribution': 'not_started', 'physical_device': 'unverified'}
 
 

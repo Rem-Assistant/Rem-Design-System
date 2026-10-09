@@ -114,17 +114,48 @@ class AdmissionTests(unittest.TestCase):
                 gate.read_receipt_archive(data, meta(data), SHA, 'ios', self.run)
 
     def test_environment_must_preexist_and_be_protected(self):
-        env = dict(protection_rules=[dict(type='required_reviewers', reviewers=[{'type': 'User'}], prevent_self_review=True)],
+        env = dict(protection_rules=[dict(type='required_reviewers', reviewers=[{'type': 'User',
+                   'reviewer': {'id': 62378296, 'login': 'oledibefrancis'}}], prevent_self_review=True)],
                    can_admins_bypass=False, deployment_branch_policy=dict(protected_branches=False, custom_branch_policies=True))
         policies = [dict(name='main', type='branch')]
-        gate.validate_environment(env, policies)
+        self.assertEqual(gate.validate_environment(env, policies, ['samuelalake']),
+                         {'model': 'independent', 'reviewer': 'oledibefrancis'})
         for changed in [dict(env, can_admins_bypass=True), dict(env, protection_rules=[]),
                         dict(env, deployment_branch_policy=None)]:
             with self.assertRaises(ValueError):
-                gate.validate_environment(changed, policies)
+                gate.validate_environment(changed, policies, ['samuelalake'])
         for changed in [[], [dict(name='*', type='branch')], [dict(name='main', type='tag')]]:
             with self.assertRaises(ValueError):
-                gate.validate_environment(env, changed)
+                gate.validate_environment(env, changed, ['samuelalake'])
+
+    def test_owner_can_approve_own_dispatch_only_with_explicit_narrow_exception(self):
+        env = dict(protection_rules=[dict(type='required_reviewers', reviewers=[{'type': 'User',
+                   'reviewer': {'id': gate.OWNER_ID, 'login': 'samuelalake'}}], prevent_self_review=False)],
+                   can_admins_bypass=False, deployment_branch_policy=dict(protected_branches=False, custom_branch_policies=True))
+        policies = [dict(name='main', type='branch')]
+        self.assertEqual(gate.validate_environment(env, policies, ['samuelalake']),
+                         {'model': 'owner-approval', 'reviewer': 'samuelalake'})
+        env['protection_rules'][0]['prevent_self_review'] = True
+        with self.assertRaisesRegex(ValueError, 'initiated this run'):
+            gate.validate_environment(env, policies, ['samuelalake'])
+        with self.assertRaisesRegex(ValueError, 'Missing dispatch identity'):
+            gate.validate_environment(env, policies, [None])
+        self.assertEqual(gate.validate_environment(env, policies, ['oledibefrancis'])['model'], 'independent')
+
+    def test_reviewer_identity_and_rerun_initiator_are_checked(self):
+        env = dict(protection_rules=[dict(type='required_reviewers', reviewers=[{'type': 'User',
+                   'reviewer': {'id': 74985099, 'login': 'davidolaniran'}}], prevent_self_review=True)],
+                   can_admins_bypass=False, deployment_branch_policy=dict(protected_branches=False, custom_branch_policies=True))
+        policies = [dict(name='main', type='branch')]
+        gate.validate_environment(env, policies, ['samuelalake'])
+        with self.assertRaises(ValueError):
+            gate.validate_environment(env, policies, ['samuelalake', 'davidolaniran'])
+        env['protection_rules'][0]['prevent_self_review'] = False
+        with self.assertRaisesRegex(ValueError, 'limited to Samuel'):
+            gate.validate_environment(env, policies, ['samuelalake'])
+        env['protection_rules'][0]['reviewers'][0]['reviewer']['id'] = gate.OWNER_ID
+        with self.assertRaisesRegex(ValueError, 'verified existing'):
+            gate.validate_environment(env, policies, ['samuelalake'])
 
     def test_source_contract_is_data_not_executed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -198,6 +229,10 @@ class PackagingTests(unittest.TestCase):
         self.assertNotIn('private', json.dumps(summary.public_record(data)))
         with self.assertRaises(ValueError):
             summary.public_record(dict(data, distribution='```\nprivate'))
+        approvals = {'ios': {'model': 'owner-approval', 'reviewer': 'samuelalake'}}
+        self.assertEqual(summary.public_record(dict(data, approvals=approvals))['approvals'], approvals)
+        with self.assertRaises(ValueError):
+            summary.public_record(dict(data, approvals={'ios': {'model': 'owner-approval', 'reviewer': 'davidolaniran'}}))
 
 
 if __name__ == '__main__':

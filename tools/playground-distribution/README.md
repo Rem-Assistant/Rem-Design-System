@@ -45,12 +45,13 @@ configure these. Do not paste credentials into issues, comments, shell transcrip
 workflow inputs, or chat. This change does not create environments, install secrets,
 mint keys, accept agreements, create apps/groups, or invite testers.
 
-1. Create `playground-ios` and `playground-android` with required reviewers,
-   **prevent self-review**, **disable administrator bypass**, and one selected
+1. Create `playground-ios` and `playground-android` with **Samuel (`samuelalake`,
+   GitHub ID `58840187`) as sole required reviewer**, **prevent self-review off**
+   under the explicitly approved owner model below, **administrator bypass off**, and one selected
    deployment **branch** policy named `main`. No tag or wildcard policy. Admission
    checks these before referencing an environment, so absent protection fails closed
-   instead of letting GitHub implicitly create an unprotected environment. Reviewers
-   and app permissions must permit a different authorized person to approve a run.
+   instead of letting GitHub implicitly create an unprotected environment. The owner
+   exception is restricted to Samuel's verified ID; it does not remove required review.
 2. Securely provision only the applicable platform's values below, at environment
    scope. Use least-privilege existing store app access. Do not add repository-wide
    release secrets. GitHub's runner token needs read access to Actions, contents and
@@ -98,11 +99,40 @@ authorized service account and does not silently reuse or broaden that token.
 ### Exact setup request for an authorized administrator
 
 Approve creation/configuration of **only** `playground-ios` and `playground-android`
-in this repository: at least one named authorized required reviewer, prevent
-self-review enabled, administrator bypass disabled, selected deployment branches
-enabled with exactly the branch `main` (no tags/patterns). Confirm who may approve
-when the dispatcher cannot approve their own run. No repository rules, Factory
-configuration, app identifiers or store destinations change.
+in this repository with Samuel (`samuelalake`, ID `58840187`) as the sole required
+reviewer, **Prevent self-review unchecked**, **Allow administrators to bypass
+configured protection rules unchecked**, and selected deployment branches enabled
+with exactly the branch `main` (no tags/patterns). This is an explicit owner-approval
+exception so Samuel can independently request and approve a release. No repository
+rules, Factory configuration, app identifiers or store destinations change.
+
+Read-only identity verification on 2026-10-09 established:
+
+- The connected GitHub CLI is `samuelalake` (ID `58840187`) with repository admin
+  access. Existing manual native run `37965150798` has both `actor` and
+  `triggering_actor` equal to `samuelalake`. The distribution lane itself has never
+  been dispatched. An iOS browser session's signed-in account was not inspected;
+  approval must use the designated reviewer account.
+- Existing repository administrators `oledibefrancis` (ID `62378296`) and
+  `davidolaniran` (ID `74985099`) can be selected as independent reviewers without
+  adding repository access. Their availability or agreement to own release reviews
+  has not been established; neither has been assigned or contacted for this change.
+
+Recommended model: Samuel dispatches, then deliberately approves each selected
+platform's environment. This preserves the pause, exact-SHA evidence checks, audit
+trail and required human review, but **does not provide two-person separation**.
+Someone controlling Samuel's account could both dispatch and approve. Factory code
+review and native/visual evidence remain required, and admin bypass stays disabled.
+The workflow never approves its own deployment.
+
+Alternative, only if Samuel selects it: keep Prevent self-review **on** and choose
+exactly one existing reviewer, `oledibefrancis` or `davidolaniran`. That person must
+approve Samuel's dispatch, so this option depends on another person's availability.
+Admission rejects a selected independent reviewer who initiated or re-triggered the
+run, instead of creating an impossible approval wait. The gate checks reviewer type,
+stable GitHub ID and login; no new user/team is implicitly accepted. The selected
+model and reviewer are included in the allowlisted run summary. GitHub documents
+the [self-review restriction](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
 
 Approve secure entry of only the environment-specific secrets/variables in the table.
 Use existing identities with these capabilities; missing capabilities are a separate
@@ -125,7 +155,9 @@ grant decision, not permission to create keys or expand access:
   neither it nor the Play app-signing key is rotated.
 
 Enter values directly through GitHub's protected-environment secret UI or an approved
-secure transfer. Return only setup completion and non-sensitive identity fingerprints,
+secure transfer from the already-connected Mac. No new desktop connection is needed;
+Samuel need not paste credentials from iOS or into this chat. Return only setup
+completion and non-sensitive identity fingerprints,
 never key/password/JSON values. This request does **not** authorize merging, dispatching
 the workflow, uploading a candidate, changing store groups or running the pilot.
 Those require a fresh exact-SHA release decision after the candidate's visual gate.
