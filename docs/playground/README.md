@@ -29,7 +29,10 @@ and zero-Factory-run count do not describe the expanded integration.
 
 - **iOS:** open `tools/playground-ios/RemSettingsPlayground.xcodeproj`, choose the RemSettingsPlayground scheme and a dedicated simulator, Run. [CLI/test instructions](../../tools/playground-ios/README.md).
 - **Android:** open `compose` in Android Studio, select `demo`, Run. Existing wrapper requires JDK17 and Android SDK34. [CLI/test instructions](../../compose/README.md).
-- Start at the gallery. Choose Success/Slow/Error, open Settings, tap Agent settings. Use Back/Cancel or Retry as appropriate. Shared controls supports a local toggle and name edit with Save/Cancel.
+- The root has two sections. **Components** opens the catalog: Controls (local toggle and name edit with Save/Cancel) and Loading (skeleton → content, inline progress for an action). **Screens** opens Settings, Agenda and Onboarding, with the Settings (Success/Slow/Error) and Agenda data pickers beside them and the build revision in the section footer.
+- Settings: open Agent settings. Slow shows the skeleton; use Back/Cancel or Retry as appropriate.
+- Onboarding: a hub of the established steps — Sign in → Privacy → Connectors → Check-in → Voice. Continue and Skip move to the next step; the last step reaches a completion state whose Done returns to the hub. Back walks the steps in reverse. Sign-in advances without authentication and Check-in only routes: their auth and time-picker rules are not settled (native Check-in is in PR53).
+- Skeletons stay static and transitions don't animate under Reduce Motion (iOS) or with animations removed (Android). Load completion is announced politely.
 - Destination removals and saves affect local fixtures only. There is no connection to real accounts or services. Automations remains outside scope.
 
 ## Sources and baseline
