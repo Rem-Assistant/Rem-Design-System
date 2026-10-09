@@ -31,8 +31,17 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
         let result = XCTWaiter.wait(for: [focused], timeout: 2)
         if result != .completed {
-            // Evidence for a failure: what the tap hit and what, if anything, holds focus.
-            let hierarchy = XCTAttachment(string: app.debugDescription)
+            // Evidence for a failure: what the tap hit and what, if anything, holds focus. Printed
+            // (bounded) so it reaches the job log, since attachments are exported only after a pass.
+            let tree = app.debugDescription
+            let limit = 12_000
+            print("""
+            [focus-diagnostic] \(field.identifier) unfocused after tap; keyboards: \(app.keyboards.count); \
+            frame: \(field.frame); hierarchy (\(min(tree.count, limit)) of \(tree.count) chars):
+            \(tree.prefix(limit))
+            [/focus-diagnostic]
+            """)
+            let hierarchy = XCTAttachment(string: tree)
             hierarchy.name = "\(field.identifier)-unfocused-hierarchy"
             hierarchy.lifetime = .keepAlways
             add(hierarchy)
