@@ -1,4 +1,4 @@
-package com.rem.designsystem.primitives
+package com.rem.designsystem.demo
 
 import android.provider.Settings
 import androidx.compose.animation.core.LinearEasing
@@ -48,7 +48,7 @@ import com.rem.designsystem.tokens.RemSpacing
  * an animator duration scale of 0). Skeletons then stay static instead of sweeping.
  */
 @Composable
-fun rememberReduceMotion(): Boolean {
+internal fun rememberReduceMotion(): Boolean {
     val resolver = LocalContext.current.contentResolver
     return remember(resolver) {
         Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
@@ -56,10 +56,10 @@ fun rememberReduceMotion(): Boolean {
 }
 
 /**
- * Sibling of the SwiftUI `RemShimmerModifier`: a moving highlight across skeleton placeholders,
+ * Sibling of the iOS playground `ShimmerModifier` (ported from the shipping app): a moving highlight across skeleton placeholders,
  * static when [rememberReduceMotion] is true.
  */
-fun Modifier.remShimmer(): Modifier = composed {
+internal fun Modifier.skeletonShimmer(): Modifier = composed {
     if (rememberReduceMotion()) return@composed this
     val transition = rememberInfiniteTransition(label = "remShimmer")
     val phase by transition.animateFloat(
@@ -85,7 +85,7 @@ fun Modifier.remShimmer(): Modifier = composed {
 
 /** One rounded placeholder bar in the shared skeleton fill. */
 @Composable
-fun RemSkeletonBlock(modifier: Modifier = Modifier, width: Dp? = null, height: Dp = 14.dp, cornerRadius: Dp = 4.dp) {
+internal fun SkeletonBlock(modifier: Modifier = Modifier, width: Dp? = null, height: Dp = 14.dp, cornerRadius: Dp = 4.dp) {
     val sized = if (width != null) modifier.width(width) else modifier.fillMaxWidth()
     Box(
         sized
@@ -96,18 +96,18 @@ fun RemSkeletonBlock(modifier: Modifier = Modifier, width: Dp? = null, height: D
 }
 
 /**
- * Sibling of the SwiftUI `RemSkeletonList`: grouped-list placeholder rows. Collapsed into one polite
+ * Sibling of the iOS playground `SkeletonList`: grouped-list placeholder rows. Collapsed into one polite
  * live region carrying [label], so TalkBack announces the loading state once.
  */
 @Composable
-fun RemSkeletonList(label: String, modifier: Modifier = Modifier, rows: Int = 4) {
+internal fun SkeletonList(label: String, modifier: Modifier = Modifier, rows: Int = 4) {
     val colors = RemColors.current
     Column(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(RemRadius.medium))
             .background(colors.backgroundSecondary)
-            .remShimmer()
+            .skeletonShimmer()
             .clearAndSetSemantics {
                 contentDescription = label
                 liveRegion = LiveRegionMode.Polite
@@ -119,8 +119,8 @@ fun RemSkeletonList(label: String, modifier: Modifier = Modifier, rows: Int = 4)
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(RemSpacing.md),
             ) {
-                RemSkeletonBlock(width = 30.dp, height = 30.dp, cornerRadius = 7.dp)
-                RemSkeletonBlock(width = if (index % 2 == 0) 160.dp else 120.dp)
+                SkeletonBlock(width = 30.dp, height = 30.dp, cornerRadius = 7.dp)
+                SkeletonBlock(width = if (index % 2 == 0) 160.dp else 120.dp)
                 Spacer(Modifier.size(0.dp))
             }
             if (index < rows - 1) {

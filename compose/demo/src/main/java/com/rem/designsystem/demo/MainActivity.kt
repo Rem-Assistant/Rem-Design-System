@@ -214,8 +214,8 @@ private fun LoadingPreview() {
     var refreshing by remember { mutableStateOf(false) }
     val reduceMotion = rememberReduceMotion()
     val rows = listOf("Paired devices", "Connectors", "Memory", "Voice")
-    LaunchedEffect(attempt) { loaded = false; delay(1500); loaded = true }
-    LaunchedEffect(refreshing) { if (refreshing) { delay(1200); refreshing = false } }
+    LaunchedEffect(attempt) { loaded = false; delay(3000); loaded = true }
+    LaunchedEffect(refreshing) { if (refreshing) { delay(2500); refreshing = false } }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         androidx.compose.animation.Crossfade(targetState = loaded, animationSpec = androidx.compose.animation.core.tween(if (reduceMotion) 0 else 250), label = "loading") { ready ->
             if (ready) {
@@ -223,7 +223,7 @@ private fun LoadingPreview() {
                     rows.forEach { Text(it, Modifier.padding(vertical = 14.dp)) }
                 }
             } else {
-                RemSkeletonList(label = "Loading content", rows = rows.size, modifier = Modifier.testTag("loading.skeleton"))
+                SkeletonList(label = "Loading content", rows = rows.size, modifier = Modifier.testTag("loading.skeleton"))
             }
         }
         OutlinedButton(onClick = { refreshing = true }, enabled = loaded && !refreshing, modifier = Modifier.fillMaxWidth().testTag("loading.refresh")) {
@@ -302,9 +302,13 @@ private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, onBack: () -> 
         // The sheet body reuses the row's own description; real legal copy belongs to the shipping app.
         val summary = if (open == "Terms of Service") "How Rem accounts, subscriptions, and approved actions work."
             else "What Rem, your gateway, and AI or voice providers process."
-        BackHandler { document = null }
-        Box(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary)) {
-            LegalDocumentScreen(title = open, sections = listOf(LegalSection(open, summary)), onClose = { document = null })
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { document = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary)) {
+                LegalDocumentScreen(title = open, sections = listOf(LegalSection(open, summary)), onClose = { document = null })
+            }
         }
     }
 }
@@ -351,7 +355,7 @@ private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestina
         }
     }
     else if (status == "loading") Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        RemSkeletonList(label = "Loading agent settings", rows = 7, modifier = Modifier.testTag("agentSettings.skeleton"))
+        SkeletonList(label = "Loading agent settings", rows = 7, modifier = Modifier.testTag("agentSettings.skeleton"))
         TextButton(onClick = onCancel, modifier = Modifier.testTag("cancelLoad")) { Text("Cancel") }
     }
     else Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)) {

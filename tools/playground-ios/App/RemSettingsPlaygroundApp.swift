@@ -172,7 +172,7 @@ struct LoadingPreview: View {
                     }
                     .transition(.opacity)
                 } else {
-                    RemSkeletonList(rows: rows.count, label: "Loading content")
+                    SkeletonList(rows: rows.count, label: "Loading content")
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                         .accessibilityIdentifier("loading.skeleton")
@@ -202,17 +202,17 @@ struct LoadingPreview: View {
         .task(id: attempt) {
             loaded = false
             do {
-                try await Task.sleep(for: .seconds(1.5))
+                try await Task.sleep(for: .seconds(3))
                 loaded = true
-                remAnnounce("Content loaded")
+                announce("Content loaded")
             } catch { /* Leaving the screen cancels the load. */ }
         }
         .task(id: refreshing) {
             guard refreshing else { return }
             do {
-                try await Task.sleep(for: .seconds(1.2))
+                try await Task.sleep(for: .seconds(2.5))
                 refreshing = false
-                remAnnounce("Refreshed")
+                announce("Refreshed")
             } catch { refreshing = false }
         }
     }
@@ -290,7 +290,7 @@ struct AgentPreview: View {
                     .transition(.opacity)
             } else if status == "loading" {
                 VStack(spacing: 20) {
-                    RemSkeletonList(rows: 7, label: "Loading agent settings")
+                    SkeletonList(rows: 7, label: "Loading agent settings")
                         .accessibilityIdentifier("agentSettings.skeleton")
                     Button("Cancel") { dismiss() }.accessibilityIdentifier("cancelLoad")
                     Spacer(minLength: 0)
@@ -319,7 +319,7 @@ struct AgentPreview: View {
                 try await Task.sleep(for: .seconds(fixture == .slow && attempt == 0 ? 10 : 0.2))
                 try Task.checkCancellation()
                 status = fixture == .error && attempt == 0 ? "error" : "ready"
-                remAnnounce(status == "ready" ? "Agent settings loaded" : "Couldn’t load agent settings")
+                announce(status == "ready" ? "Agent settings loaded" : "Couldn’t load agent settings")
             } catch { /* Navigation cancels this view-owned task. */ }
         }
     }
@@ -505,6 +505,107 @@ struct OnboardingComplete: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignTokens.Color.backgroundPrimary)
         .navigationBarBackButtonHidden()
-        .onAppear { remAnnounce("Onboarding complete") }
+        .onAppear { announce("Onboarding complete") }
     }
+}
+
+
+// MARK: - Skeleton loading
+
+/// Moving highlight for skeleton placeholders. Ported from the shipping app's `ShimmerModifier`
+/// (`RemClaw/Shared/Views/DesignTokens.swift`), with one addition: when Reduce Motion is on the
+/// placeholder stays static instead of sweeping.
+struct ShimmerModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase: CGFloat = -1
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if !reduceMotion {
+                    GeometryReader { proxy in
+                        LinearGradient(
+                            colors: [.clear, .white.opacity(0.3), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: proxy.size.width)
+                        .offset(x: phase * proxy.size.width)
+                    }
+                    .mask(content)
+                    .allowsHitTesting(false)
+                }
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) { phase = 1 }
+            }
+    }
+}
+
+extension View {
+    /// Applies the skeleton shimmer (static under Reduce Motion).
+    func shimmering() -> some View { modifier(ShimmerModifier()) }
+}
+
+/// One rounded placeholder bar, in the skeleton fill used by the shipping app's row skeletons.
+struct SkeletonBlock: View {
+    private let width: CGFloat?
+    private let height: CGFloat
+    private let cornerRadius: CGFloat
+
+    init(width: CGFloat? = nil, height: CGFloat = 14, cornerRadius: CGFloat = 4) {
+        self.width = width
+        self.height = height
+        self.cornerRadius = cornerRadius
+    }
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: cornerRadius)
+            .fill(DesignTokens.Color.labelSecondary.opacity(0.2))
+            .frame(width: width, height: height)
+            .frame(maxWidth: width == nil ? .infinity : nil, alignment: .leading)
+    }
+}
+
+/// Grouped-list skeleton: an icon tile plus a title bar per row, inside one rounded section.
+/// Exposed to assistive technologies as a single element carrying `label`, so VoiceOver reads the
+/// loading state once rather than every placeholder bar.
+struct SkeletonList: View {
+    private let rows: Int
+    private let label: String
+
+    init(rows: Int = 4, label: String) {
+        self.rows = rows
+        self.label = label
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<rows, id: \.self) { index in
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    SkeletonBlock(width: 30, height: 30, cornerRadius: 7)
+                    SkeletonBlock(width: index.isMultiple(of: 2) ? 160 : 120)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .frame(minHeight: 52)
+                if index < rows - 1 {
+                    Divider().padding(.leading, DesignTokens.Spacing.lg + 30 + DesignTokens.Spacing.md)
+                }
+            }
+        }
+        .background(DesignTokens.Color.backgroundSecondary, in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium))
+        .shimmering()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+}
+
+/// Posts a polite VoiceOver/assistive announcement (for example, "Agent settings loaded") when a
+/// loading state resolves without moving focus.
+@MainActor
+func announce(_ message: String) {
+    UIAccessibility.post(notification: .announcement, argument: message)
 }

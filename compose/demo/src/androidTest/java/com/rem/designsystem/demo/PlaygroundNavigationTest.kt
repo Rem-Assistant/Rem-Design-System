@@ -89,7 +89,7 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("loading.skeleton").assertExists().assertContentDescriptionEquals("Loading content")
         compose.mainClock.autoAdvance = true
         capture("Loading-skeleton-light")
-        compose.waitUntil(5000) { compose.onAllNodesWithText("Memory").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(8000) { compose.onAllNodesWithText("Memory").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("loading.skeleton").assertDoesNotExist()
         capture("Loading-content-light")
         compose.mainClock.autoAdvance = false
@@ -99,7 +99,7 @@ class PlaygroundNavigationTest {
         compose.onNodeWithText("Memory").assertExists()
         compose.mainClock.autoAdvance = true
         capture("Loading-action-progress-light")
-        compose.waitUntil(4000) { compose.onAllNodesWithText("Refresh").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(6000) { compose.onAllNodesWithText("Refresh").fetchSemanticsNodes().isNotEmpty() }
     }
 
     /** Continue from Sign in walks every established step, in order, to the completion state. */
@@ -151,7 +151,9 @@ class PlaygroundNavigationTest {
     @Test fun consentLegalRowsOpenDocuments() {
         openOnboardingStep("openOnboardingConsent")
         compose.onNodeWithText("Terms of Service").performClick()
-        compose.onNodeWithText("How Rem accounts, subscriptions, and approved actions work.", useUnmergedTree = true).assertExists()
+        // The document is a modal dialog; Done exists only there.
+        compose.onNodeWithText("Done").assertExists()
+        compose.onAllNodesWithText("How Rem accounts, subscriptions, and approved actions work.", useUnmergedTree = true).assertCountEquals(2)
         capture("Onboarding-consent-terms-light")
         compose.onNodeWithText("Done").performClick()
         compose.onNodeWithText("Accept and Continue").assertExists()
@@ -159,8 +161,11 @@ class PlaygroundNavigationTest {
 
     @Test fun connectorRowTogglesLocalState() {
         openOnboardingStep("openOnboardingConnectors")
+        // Gmail starts connected; Google Calendar and Slack offer Connect.
         compose.onAllNodesWithText("Connected").assertCountEquals(1)
-        compose.onNodeWithText("Slack").performClick()
+        compose.onAllNodesWithText("Connect").assertCountEquals(2)
+        compose.onAllNodesWithText("Connect")[1].performClick()
         compose.onAllNodesWithText("Connected").assertCountEquals(2)
+        compose.onAllNodesWithText("Connect").assertCountEquals(1)
     }
 }

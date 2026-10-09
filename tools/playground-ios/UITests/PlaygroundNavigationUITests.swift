@@ -31,6 +31,14 @@ final class PlaygroundNavigationUITests: XCTestCase {
         element.tap()
     }
 
+    /// Taps the first button whose combined label contains `text` (rows fold icons and subtitles in).
+    private func tapButton(containing text: String) {
+        let element = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+        XCTAssertTrue(element.waitForExistence(timeout: 3), "Missing button containing \(text)")
+        reveal(element)
+        element.tap()
+    }
+
     private func openOnboardingStep(_ identifier: String) {
         tap("openOnboarding")
         tap(identifier)
@@ -43,7 +51,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
             XCTAssertTrue(app.buttons[id].waitForExistence(timeout: 3), "Root is missing \(id)")
         }
         XCTAssertFalse(app.buttons["Shared controls"].exists, "Controls live in the component catalog")
-        XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "prototype")).firstMatch.exists,
+        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "prototype")).firstMatch.exists,
                        "Root carries functional labels only")
         XCTAssertTrue(app.staticTexts["playground.build"].exists, "Build revision stays visible")
         capture("Playground-root-light")
@@ -56,19 +64,20 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["openControls"].waitForExistence(timeout: 3))
         capture("Playground-components-light")
         tap("openLoading")
-        let skeleton = app.descendants(matching: .any)["loading.skeleton"]
-        XCTAssertTrue(skeleton.waitForExistence(timeout: 1), "Content load starts on the skeleton")
+        let skeleton = app.descendants(matching: .any)["loading.skeleton"].firstMatch
+        XCTAssertTrue(skeleton.waitForExistence(timeout: 2), "Content load starts on the skeleton")
         XCTAssertEqual(skeleton.label, "Loading content")
         capture("Loading-skeleton-light")
-        XCTAssertTrue(app.staticTexts["Memory"].waitForExistence(timeout: 5), "Skeleton resolves to content")
+        XCTAssertTrue(app.staticTexts["Memory"].waitForExistence(timeout: 8), "Skeleton resolves to content")
         XCTAssertFalse(skeleton.exists, "Skeleton is removed once content arrives")
         capture("Loading-content-light")
         tap("loading.refresh")
-        XCTAssertTrue(app.buttons["loading.refresh"].staticTexts["Refreshing"].waitForExistence(timeout: 1)
-            || app.staticTexts["Refreshing"].exists, "Actions show inline progress")
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Refreshing")).firstMatch.waitForExistence(timeout: 2),
+                      "Actions show inline progress")
         XCTAssertTrue(app.staticTexts["Memory"].exists, "Content stays visible during an action")
         capture("Loading-action-progress-light")
-        XCTAssertTrue(app.staticTexts["Refresh"].waitForExistence(timeout: 4), "Action progress clears")
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == %@", "Refresh")).firstMatch.waitForExistence(timeout: 6),
+                      "Action progress clears")
     }
 
     // MARK: Onboarding
@@ -77,7 +86,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     func testContinueAdvancesThroughEveryStepToCompletion() {
         openOnboardingStep("openOnboardingSignIn")
         capture("Onboarding-signIn-light")
-        tap("Continue with Apple")
+        tapButton(containing: "Continue with Apple")
         XCTAssertTrue(app.buttons["Accept and Continue"].waitForExistence(timeout: 3), "Sign in → Consent")
         capture("Onboarding-consent-light")
         tap("Accept and Continue")
@@ -121,20 +130,22 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testConsentLegalRowsOpenDocuments() {
         openOnboardingStep("openOnboardingConsent")
-        tap("Terms of Service")
-        XCTAssertTrue(app.navigationBars["Terms of Service"].waitForExistence(timeout: 3), "Terms opens its document")
+        tapButton(containing: "Terms of Service")
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 3), "Terms opens its document")
         capture("Onboarding-consent-terms-light")
-        app.navigationBars["Terms of Service"].buttons.firstMatch.tap()
+        done.tap()
         XCTAssertTrue(app.buttons["Accept and Continue"].waitForExistence(timeout: 3), "Closing returns to Consent")
     }
 
     func testConnectorRowTogglesLocalState() {
         openOnboardingStep("openOnboardingConnectors")
-        let slack = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Slack")).firstMatch
-        XCTAssertTrue(slack.waitForExistence(timeout: 3))
-        slack.tap()
-        XCTAssertTrue(app.buttons.containing(NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "Slack", "Connected")).firstMatch
-            .waitForExistence(timeout: 2) || app.staticTexts.matching(NSPredicate(format: "label == %@", "Connected")).count >= 2,
-            "Tapping a connector updates its status")
+        // Gmail starts connected; Google Calendar and Slack offer Connect.
+        let connect = app.buttons.matching(NSPredicate(format: "label == %@", "Connect"))
+        XCTAssertTrue(connect.firstMatch.waitForExistence(timeout: 3))
+        XCTAssertEqual(connect.count, 2)
+        connect.firstMatch.tap()
+        let oneLeft = expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: connect)
+        wait(for: [oneLeft], timeout: 3)
     }
 }
