@@ -1,0 +1,29 @@
+name: Playground distribution checks
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/playground-distribut*.yml'
+      - 'tools/playground-distribution/**'
+permissions:
+  contents: read
+jobs:
+  lock-bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8
+        with:
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Resolve lock metadata only (no app build or store access)
+        working-directory: tools/playground-distribution
+        run: bundle lock --add-platform ruby x86_64-linux arm64-darwin-24 x86_64-darwin-24 --add-checksums
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: playground-gemfile-lock
+          path: tools/playground-distribution/Gemfile.lock
+          retention-days: 1
