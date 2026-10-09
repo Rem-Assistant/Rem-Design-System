@@ -36,6 +36,11 @@ fi
 sampler_pid=$!
 trap 'kill "$sampler_pid" 2>/dev/null || true' EXIT
 
+# Stamp the build with the exact candidate revision when the caller provides one (the same
+# REM_PLAYGROUND_SOURCE_SHA input build-local.sh uses); other callers keep "unversioned".
+source_stamp=unversioned
+if [[ "${SOURCE_SHA:-}" =~ ^[0-9a-f]{40}$ ]]; then source_stamp="$SOURCE_SHA"; fi
+
 xcodebuild "${test_args[@]}" \
   -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
   -scheme RemSettingsPlayground \
@@ -45,4 +50,5 @@ xcodebuild "${test_args[@]}" \
   -test-timeouts-enabled YES \
   -maximum-test-execution-time-allowance 300 \
   -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
+  REM_PLAYGROUND_SOURCE_SHA="$source_stamp" \
   CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log"

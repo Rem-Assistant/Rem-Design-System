@@ -123,7 +123,7 @@ jobs:
           disable-animations: true
           working-directory: compose
           script: |
-            ./gradlew :demo:connectedDebugAndroidTest --stacktrace --no-daemon
+            ./gradlew :demo:connectedDebugAndroidTest -PplaygroundSourceSha="$SOURCE_SHA" --stacktrace --no-daemon
             mkdir -p "$RUNNER_TEMP/android-screenshots" && adb pull /sdcard/Pictures/RemSettingsPlayground/. "$RUNNER_TEMP/android-screenshots/" || true
       - name: Verify every expected method actually passed
         run: python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform android --report compose/demo/build/outputs/androidTest-results --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/android-native.json"

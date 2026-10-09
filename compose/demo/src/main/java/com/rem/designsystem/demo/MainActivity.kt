@@ -38,6 +38,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import com.rem.designsystem.onboarding.*
 import com.rem.designsystem.primitives.*
 import com.rem.designsystem.screens.*
+import com.rem.designsystem.rows.DisclosureChevron
+import com.rem.designsystem.rows.RemSection
+import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.tokens.*
 import kotlinx.coroutines.delay
 
@@ -144,24 +147,31 @@ fun Playground() {
     }) { padding ->
         Box(Modifier.then(if (!fullScreen) Modifier.padding(padding) else Modifier).fillMaxSize()) {
             when (route) {
-                Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SectionHeader("Components")
-                    NavRow("Component catalog", "openComponents") { route = Route.Components }
-                    Spacer(Modifier.height(8.dp))
-                    SectionHeader("Screens")
-                    NavRow("Settings", "openSettings") { route = Route.Settings }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) }
+                Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                    RemSection(header = "Components") {
+                        NavRow("Component catalog", "openComponents") { route = Route.Components }
                     }
-                    NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) }
+                    Column {
+                        RemSection(header = "Screens") {
+                            NavRow("Settings", "openSettings") { route = Route.Settings }
+                            ChipRow { LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) } }
+                            RowDivider()
+                            NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
+                            ChipRow { AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) } }
+                            RowDivider()
+                            NavRow("Onboarding", "openOnboarding") { onboardingStack = emptyList(); onboardingComplete = null; route = Route.Onboarding }
+                        }
+                        Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, color = RemColors.current.labelSecondary,
+                            modifier = Modifier.padding(start = 12.dp, top = 4.dp).testTag("playground.build"))
                     }
-                    NavRow("Onboarding", "openOnboarding") { onboardingStack = emptyList(); onboardingComplete = null; route = Route.Onboarding }
-                    Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("playground.build"))
                 }
-                Route.Components -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    catalogPages.forEach { (label, page, tag) -> NavRow(label, tag) { route = page } }
+                Route.Components -> Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+                    RemSection {
+                        catalogPages.forEachIndexed { index, (label, page, tag) ->
+                            if (index > 0) RowDivider()
+                            NavRow(label, tag) { route = page }
+                        }
+                    }
                 }
                 Route.Controls -> ControlsPreview()
                 Route.Rows -> CatalogRows()
@@ -199,9 +209,12 @@ fun Playground() {
                                 else onboardingComplete = action
                             }
                         }
-                        else -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            PlaygroundOnboardingStep.entries.forEach { step ->
-                                NavRow(step.title, step.tag) { onboardingStack = listOf(step.ordinal) }
+                        else -> Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+                            RemSection {
+                                PlaygroundOnboardingStep.entries.forEachIndexed { index, step ->
+                                    if (index > 0) RowDivider()
+                                    NavRow(step.title, step.tag) { onboardingStack = listOf(step.ordinal) }
+                                }
                             }
                         }
                     }
@@ -211,16 +224,22 @@ fun Playground() {
     }
 }
 
+/** Navigation row: the shared ListRow with a disclosure chevron, inside a RemSection. */
 @Composable
-private fun SectionHeader(text: String) {
-    Text(text, style = RemTypography.footnote, color = RemColors.current.labelSecondary)
+private fun NavRow(label: String, tag: String, onClick: () -> Unit) {
+    ListRow(title = label, onClick = onClick, trailing = { DisclosureChevron() }, modifier = Modifier.testTag(tag))
+}
+
+/** Data pickers for the screen row above, inside the same section. */
+@Composable
+private fun ChipRow(content: @Composable RowScope.() -> Unit) {
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp), content = content)
 }
 
 @Composable
-private fun NavRow(label: String, tag: String, onClick: () -> Unit) {
-    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag(tag)) {
-        Text(label, Modifier.weight(1f))
-    }
+private fun RowDivider() {
+    HorizontalDivider(Modifier.padding(start = 16.dp), color = RemColors.current.separator)
 }
 
 /** Skeleton → content for a content load, and an inline progress indicator for an action. */

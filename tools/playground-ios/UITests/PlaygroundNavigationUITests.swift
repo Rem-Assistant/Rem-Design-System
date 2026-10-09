@@ -93,6 +93,38 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 3), "\(title) page opens")
     }
 
+    private func slug(_ text: String) -> String {
+        text.lowercased().map { $0.isLetter || $0.isNumber ? String($0) : "-" }.joined()
+            .split(separator: "-").joined(separator: "-")
+    }
+
+    /// Unobscured overview captures: each page's top, then each component group scrolled into view
+    /// by real scrolling, before any interaction (so no keyboard or post-action scroll position).
+    func testCatalogSectionCaptures() {
+        tap("openComponents")
+        let pages: [(id: String, title: String, slug: String, anchors: [String])] = [
+            ("openControls", "Controls", "controls", ["Pill · Secondary", "50%"]),
+            ("openRows", "Rows", "rows", ["Section", "Connector row", "Task and event rows"]),
+            ("openCatalogAgenda", "Agenda", "agenda", ["Suggestion rows"]),
+            ("openChat", "Chat", "chat", ["Composer", "Voice bar"]),
+            ("openAgentCatalog", "Agent", "agent", ["Running task banner", "Browser card", "Execution trace"]),
+            ("openBrand", "Brand & empty states", "brand", ["App icon", "Provider marks", "Empty state"]),
+        ]
+        for page in pages {
+            tap(page.id)
+            XCTAssertTrue(app.navigationBars[page.title].waitForExistence(timeout: 3), "\(page.title) opens")
+            capture("Catalog-\(page.slug)-top-light")
+            for anchor in page.anchors {
+                let element = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", anchor)).firstMatch
+                // Lazy Form rows exist only once scrolled near; reveal scrolls until the anchor is hittable.
+                reveal(element)
+                capture("Catalog-\(page.slug)-\(slug(anchor))-light")
+            }
+            app.navigationBars[page.title].buttons.element(boundBy: 0).tap()
+            XCTAssertTrue(app.buttons[page.id].waitForExistence(timeout: 3), "Back returns to the catalog")
+        }
+    }
+
     func testCatalogListsEveryPage() {
         tap("openComponents")
         for id in ["openControls", "openRows", "openCatalogAgenda", "openChat", "openAgentCatalog", "openBrand", "openLoading"] {

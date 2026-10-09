@@ -107,6 +107,34 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag(tag).performScrollTo().performClick()
     }
 
+    private fun slug(text: String) = text.lowercase().map { if (it.isLetterOrDigit()) it else '-' }
+        .joinToString("").split('-').filter { it.isNotEmpty() }.joinToString("-")
+
+    /** Unobscured overview captures: each page's top, then each component group scrolled into view,
+     *  before any interaction (so no keyboard or post-action scroll position). */
+    @Test fun catalogSectionCaptures() {
+        compose.onNodeWithTag("openComponents").performClick()
+        val pages = listOf(
+            Triple("openControls", "controls", listOf("Slider", "Pills")),
+            Triple("openRows", "rows", listOf("Section", "Connector row", "Task and event rows")),
+            Triple("openCatalogAgenda", "agenda", listOf("Suggestion rows", "Suggestion section")),
+            Triple("openChat", "chat", listOf("Composer", "Voice bar")),
+            Triple("openAgentCatalog", "agent", listOf("Running task banner", "Browser card", "Execution trace", "Daily brief card")),
+            Triple("openBrand", "brand", listOf("App icon", "Provider marks", "Empty state")),
+        )
+        pages.forEach { (tag, page, anchors) ->
+            compose.onNodeWithTag(tag).performScrollTo().performClick()
+            compose.waitForIdle()
+            capture("Catalog-$page-top-light")
+            anchors.forEach { anchor ->
+                compose.onNodeWithText(anchor).performScrollTo().assertIsDisplayed()
+                capture("Catalog-$page-${slug(anchor)}-light")
+            }
+            compose.onNodeWithTag("back").performClick()
+            compose.onNodeWithTag(tag).assertExists()
+        }
+    }
+
     @Test fun catalogListsEveryPage() {
         compose.onNodeWithTag("openComponents").performClick()
         listOf("openControls", "openRows", "openCatalogAgenda", "openChat", "openAgentCatalog", "openBrand", "openLoading").forEach {
