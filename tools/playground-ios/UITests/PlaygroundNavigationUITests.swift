@@ -376,7 +376,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// Check-in with the "Fails once" fixture: the first save fails with Try again, and retrying recovers.
     func testCheckInSaveFailureRecovers() {
         tap("openOnboarding")
-        app.segmentedControls["checkInSaveFixture"].buttons["Fails once"].tap()
+        let failsOnce = app.segmentedControls["checkInSaveFixture"].buttons["Fails once"]
+        failsOnce.tap()
+        XCTAssertTrue(failsOnce.isSelected, "The save fixture switches to Fails once")
         tap("openOnboardingCheckIn")
         app.buttons["Continue"].tap()
         let retry = app.buttons["Try again"]

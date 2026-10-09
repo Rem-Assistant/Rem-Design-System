@@ -104,7 +104,7 @@ struct PlaygroundHome: View {
                 case .agendaSuggestions(let agenda): AgendaSuggestionsPreview(fixture: agenda)
                 case .onboarding: OnboardingHub(checkInSave: $checkInSave)
                 case .onboardingStep(let step):
-                    OnboardingStepHost(step: step, checkInSave: checkInSave, advance: { advance(from: step, action: $0) })
+                    OnboardingStepHost(step: step, checkInSave: $checkInSave, advance: { advance(from: step, action: $0) })
                 case .onboardingComplete(let lastAction):
                     OnboardingComplete(lastAction: lastAction, onDone: returnToOnboardingHub)
                 }
@@ -416,7 +416,9 @@ struct OnboardingHub: View {
 
 struct OnboardingStepHost: View {
     let step: OnboardingStep
-    var checkInSave: CheckInSaveFixture = .succeeds
+    /// A binding, not a value: the step is built from a navigation-destination closure, which would
+    /// otherwise keep the value from when it was registered and miss a change made on the hub.
+    @Binding var checkInSave: CheckInSaveFixture
     /// Advances with the action that moved the flow on ("continue" or "skip").
     let advance: (String) -> Void
 
@@ -434,7 +436,7 @@ struct OnboardingStepHost: View {
         case .connectors:
             OnboardingConnectorsStep(onContinue: { advance("continue") }, onSkip: { advance("skip") })
         case .checkIn:
-            OnboardingCheckInStep(failFirstSave: checkInSave == .failsOnce, onContinue: { advance("continue") })
+            OnboardingCheckInStep(checkInSave: $checkInSave, onContinue: { advance("continue") })
         case .voice:
             OnboardingVoicePlaygroundScreen(
                 onContinue: { advance("continue") },
@@ -512,7 +514,8 @@ private struct OnboardingConnectorsStep: View {
 /// flow moves on. With the hub's "Fails once" fixture the first save fails, so Try again exercises
 /// recovery. Nothing is scheduled or persisted.
 private struct OnboardingCheckInStep: View {
-    let failFirstSave: Bool
+    /// Read when a save runs, so the hub's current fixture always applies.
+    @Binding var checkInSave: CheckInSaveFixture
     let onContinue: () -> Void
     @State private var checkins = OnboardingCheckinTemplate.defaultCadence()
     @State private var status: OnboardingCheckinTemplate.Status = .default
@@ -549,7 +552,7 @@ private struct OnboardingCheckInStep: View {
         status = .saving
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))
-            if failFirstSave && !failedOnce {
+            if checkInSave == .failsOnce && !failedOnce {
                 failedOnce = true
                 status = .failure(message: "We couldn't save your check-in times. Check your connection and try again.")
                 return
