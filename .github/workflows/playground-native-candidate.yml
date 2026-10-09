@@ -72,6 +72,8 @@ jobs:
       # Visual review copies of the journeys' own XCTest attachments (same extraction as
       # screenshots.yml), exported to $RUNNER_TEMP only after a passing evidence record.
       - name: Export journey screenshots
+        # Optional visual copy: a failure here means missing visual proof, never a failed record.
+        continue-on-error: true
         run: |
           set -euo pipefail
           brew install xcparse || brew install chargepoint/xcparse/xcparse
@@ -83,6 +85,7 @@ jobs:
             cp "$f" "$out/${b%%_*}.png"
           done
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: ios-screenshots-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/ios-screenshots/*.png
@@ -132,6 +135,7 @@ jobs:
       # Visual review copies of the journeys' own captures, pulled inside the emulator step before
       # teardown into $RUNNER_TEMP (never the checkout) and uploaded only after a passing record.
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: android-screenshots-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/android-screenshots/*.png

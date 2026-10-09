@@ -109,7 +109,7 @@ class PlaygroundNavigationTest {
 
     @Test fun catalogListsEveryPage() {
         compose.onNodeWithTag("openComponents").performClick()
-        listOf("openControls", "openRows", "openCatalogAgenda", "openChat", "openAgent", "openBrand", "openLoading").forEach {
+        listOf("openControls", "openRows", "openCatalogAgenda", "openChat", "openAgentCatalog", "openBrand", "openLoading").forEach {
             compose.onNodeWithTag(it).assertExists()
         }
     }
@@ -157,7 +157,7 @@ class PlaygroundNavigationTest {
     }
 
     @Test fun catalogAgentSurfaces() {
-        openCatalogPage("openAgent")
+        openCatalogPage("openAgentCatalog")
         compose.onAllNodesWithText("Working")[0].assertExists()
         compose.onNodeWithTag("catalog.browserState.Ended").performScrollTo().performClick()
         compose.onNodeWithTag("catalog.browserState.Ended").assertIsSelected()

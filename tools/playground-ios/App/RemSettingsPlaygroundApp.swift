@@ -149,7 +149,7 @@ struct ComponentCatalog: View {
         ("Rows", .rows, "openRows"),
         ("Agenda", .agenda, "openCatalogAgenda"),
         ("Chat", .chat, "openChat"),
-        ("Agent", .agent, "openAgent"),
+        ("Agent", .agent, "openAgentCatalog"),
         ("Brand & empty states", .brand, "openBrand"),
         ("Loading", .loading, "openLoading"),
     ]
@@ -259,13 +259,13 @@ struct ControlsPreview: View {
                 }
             }
             Section("Buttons") {
-                VStack(spacing: DesignTokens.Spacing.sm) {
-                    ForEach(Self.buttons, id: \.title) { button in
-                        Button(button.title) { lastButton = button.title }.remButton(button.variant)
-                    }
-                    Button("Disabled") {}.remButton(.rectBlack).disabled(true)
+                // One row per button so each tap reaches only its own action.
+                ForEach(Self.buttons, id: \.title) { button in
+                    Button(button.title) { lastButton = button.title }.remButton(button.variant)
+                        .listRowBackground(Color.clear)
                 }
-                .listRowBackground(Color.clear)
+                Button("Disabled") {}.remButton(.rectBlack).disabled(true)
+                    .listRowBackground(Color.clear)
                 if let lastButton {
                     Text("Tapped \(lastButton)").accessibilityIdentifier("controls.lastButton")
                 }

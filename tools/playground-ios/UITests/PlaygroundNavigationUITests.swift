@@ -95,7 +95,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testCatalogListsEveryPage() {
         tap("openComponents")
-        for id in ["openControls", "openRows", "openCatalogAgenda", "openChat", "openAgent", "openBrand", "openLoading"] {
+        for id in ["openControls", "openRows", "openCatalogAgenda", "openChat", "openAgentCatalog", "openBrand", "openLoading"] {
             XCTAssertTrue(app.buttons[id].waitForExistence(timeout: 3), "Catalog is missing \(id)")
         }
     }
@@ -105,7 +105,10 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let blue = app.buttons["Rect · Blue"]
         reveal(blue)
         blue.tap()
-        XCTAssertEqual(app.staticTexts["controls.lastButton"].label, "Tapped Rect · Blue")
+        let last = app.staticTexts["controls.lastButton"]
+        XCTAssertTrue(last.waitForExistence(timeout: 2))
+        XCTAssertEqual(last.label, "Tapped Rect · Blue", "Only the tapped variant fires")
+        XCTAssertTrue(app.staticTexts["50%"].exists, "Slider value is shown")
         XCTAssertFalse(app.buttons["Disabled"].isEnabled, "Disabled variant is not interactive")
         capture("Catalog-controls-light")
     }
@@ -113,7 +116,10 @@ final class PlaygroundNavigationUITests: XCTestCase {
     func testCatalogRowsListAndConnectorStates() {
         openCatalogPage("openRows", title: "Rows")
         tap("catalog.listRow")
-        XCTAssertTrue(app.staticTexts["Opened"].waitForExistence(timeout: 2), "List row action runs")
+        // ListRow buttons fold their subtitle into the button label.
+        let opened = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Opened"),
+                                               object: app.buttons["catalog.listRow"])
+        XCTAssertEqual(XCTWaiter().wait(for: [opened], timeout: 3), .completed, "List row action runs")
         tapButton(containing: "Connect Gmail")
         XCTAssertTrue(app.switches.firstMatch.waitForExistence(timeout: 5), "Connect moves through Connecting to Connected")
         capture("Catalog-rows-light")
@@ -143,7 +149,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     }
 
     func testCatalogAgentSurfaces() {
-        openCatalogPage("openAgent", title: "Agent")
+        openCatalogPage("openAgentCatalog", title: "Agent")
         XCTAssertTrue(app.staticTexts["Working"].firstMatch.exists)
         let ended = app.segmentedControls["catalog.browserState"].buttons["Ended"]
         reveal(ended)

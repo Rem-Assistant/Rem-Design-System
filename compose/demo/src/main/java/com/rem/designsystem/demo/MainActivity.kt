@@ -89,7 +89,7 @@ private val catalogPages = listOf(
     Triple("Rows", Route.Rows, "openRows"),
     Triple("Agenda", Route.CatalogAgenda, "openCatalogAgenda"),
     Triple("Chat", Route.Chat, "openChat"),
-    Triple("Agent", Route.AgentCatalog, "openAgent"),
+    Triple("Agent", Route.AgentCatalog, "openAgentCatalog"),
     Triple("Brand & empty states", Route.Brand, "openBrand"),
     Triple("Loading", Route.Loading, "openLoading"),
 )
