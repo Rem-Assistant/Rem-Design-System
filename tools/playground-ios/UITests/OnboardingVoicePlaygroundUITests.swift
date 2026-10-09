@@ -36,7 +36,11 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
     }
 
     private func openOnboardingVoice() {
+        let hub = app.buttons["openOnboarding"]
+        reveal(hub)
+        hub.tap()
         let open = app.buttons["openOnboardingVoice"]
+        XCTAssertTrue(open.waitForExistence(timeout: 3))
         reveal(open)
         open.tap()
         XCTAssertTrue(app.staticTexts["Choose how Rem sounds"].waitForExistence(timeout: 3),
@@ -134,10 +138,11 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
         let cont = app.buttons["onboardingVoice.continue"]
         XCTAssertTrue(cont.waitForExistence(timeout: 3))
         cont.tap()
-        let outcome = app.staticTexts["onboardingVoice.outcome"]
-        XCTAssertTrue(outcome.waitForExistence(timeout: 3))
-        XCTAssertEqual(outcome.label, "Host callback: continue")
-        XCTAssertFalse(app.buttons["onboardingVoice.skip"].exists, "Continue invokes only the Continue callback")
+        // Voice is the last onboarding step, so Continue completes the flow.
+        let complete = app.staticTexts["onboarding.complete"]
+        XCTAssertTrue(complete.waitForExistence(timeout: 3))
+        XCTAssertEqual(complete.value as? String, "continue")
+        XCTAssertFalse(app.buttons["onboardingVoice.skip"].exists, "Continue leaves the Voice step")
         capture("OnboardingVoice-continue-light")
     }
 
@@ -146,10 +151,11 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
         let skip = app.buttons["onboardingVoice.skip"]
         XCTAssertTrue(skip.waitForExistence(timeout: 3))
         skip.tap()
-        let outcome = app.staticTexts["onboardingVoice.outcome"]
-        XCTAssertTrue(outcome.waitForExistence(timeout: 3))
-        XCTAssertEqual(outcome.label, "Host callback: skip")
-        XCTAssertFalse(app.buttons["onboardingVoice.continue"].exists, "Skip invokes only the Skip callback")
+        // Voice is the last onboarding step, so Skip completes the flow.
+        let complete = app.staticTexts["onboarding.complete"]
+        XCTAssertTrue(complete.waitForExistence(timeout: 3))
+        XCTAssertEqual(complete.value as? String, "skip")
+        XCTAssertFalse(app.buttons["onboardingVoice.continue"].exists, "Skip leaves the Voice step")
         capture("OnboardingVoice-skip-light")
     }
 
@@ -158,7 +164,7 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
         // The shell's own nav bar has no title; its back button is the first navigation-bar button.
         app.navigationBars.element(boundBy: 0).buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["openOnboardingVoice"].waitForExistence(timeout: 3),
-                      "Outer Back exits the Voice shell to the playground host")
+                      "Outer Back exits the Voice step to the onboarding hub")
         XCTAssertFalse(app.staticTexts["Choose how Rem sounds"].exists)
         capture("OnboardingVoice-back-light")
     }

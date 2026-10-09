@@ -78,7 +78,8 @@ class OnboardingVoicePlaygroundTest {
     }
 
     private fun openOnboardingVoice() {
-        compose.onNodeWithTag("openOnboardingVoice").performScrollTo().performClick()
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag("openOnboardingVoice").performClick()
         waitForTag("onboardingVoice")
     }
 
@@ -155,7 +156,9 @@ class OnboardingVoicePlaygroundTest {
     @Test fun continueCallback() {
         openOnboardingVoice()
         compose.onNodeWithTag("onboardingVoice.continue").performClick()
-        compose.onNodeWithTag("onboardingVoice.outcome").assertTextEquals("Host callback: continue")
+        // Voice is the last onboarding step, so Continue completes the flow.
+        compose.onNodeWithTag("onboarding.complete")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "continue"))
         compose.onNodeWithTag("onboardingVoice.skip").assertDoesNotExist()
         capture("OnboardingVoice-continue-light")
     }
@@ -163,7 +166,8 @@ class OnboardingVoicePlaygroundTest {
     @Test fun skipCallback() {
         openOnboardingVoice()
         compose.onNodeWithTag("onboardingVoice.skip").performClick()
-        compose.onNodeWithTag("onboardingVoice.outcome").assertTextEquals("Host callback: skip")
+        compose.onNodeWithTag("onboarding.complete")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "skip"))
         compose.onNodeWithTag("onboardingVoice.continue").assertDoesNotExist()
         capture("OnboardingVoice-skip-light")
     }

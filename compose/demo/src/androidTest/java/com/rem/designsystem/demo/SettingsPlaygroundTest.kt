@@ -118,8 +118,9 @@ class SettingsPlaygroundTest {
     @Test fun cancelLoadingDoesNotNavigateLater() {
         openSettings("Slow")
         compose.onNodeWithTag("openAgent").performClick()
-        waitForText("Loading agent settings…")
-        compose.onNodeWithText("Loading agent settings…").assertIsDisplayed()
+        // Slow loads show the shared skeleton, announced once as a polite live region.
+        compose.onNodeWithTag("agentSettings.skeleton").assertIsDisplayed()
+            .assertContentDescriptionEquals("Loading agent settings")
         capture("android-loading")
         compose.onNodeWithTag("cancelLoad").performClick()
         Thread.sleep(10300) // Pass the cancelled fixture deadline; it must not navigate later.
@@ -303,7 +304,8 @@ class SettingsPlaygroundTest {
     }
 
     @Test fun controlCancelRollbackAndSave() {
-        compose.onNodeWithText("Shared controls").performClick()
+        compose.onNodeWithTag("openComponents").performScrollTo().performClick()
+        compose.onNodeWithTag("openControls").performClick()
         compose.onNodeWithTag("editName").performClick()
         compose.onNodeWithTag("nameField").performTextReplacement("Discard me")
         compose.onNodeWithText("Cancel").performClick()

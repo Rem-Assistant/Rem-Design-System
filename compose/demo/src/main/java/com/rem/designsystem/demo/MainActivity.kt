@@ -28,7 +28,14 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.icons.RemMaterialSymbols
-import com.rem.designsystem.onboarding.OnboardingVoiceScreen
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
+import com.rem.designsystem.onboarding.*
 import com.rem.designsystem.primitives.*
 import com.rem.designsystem.screens.*
 import com.rem.designsystem.tokens.*
@@ -74,7 +81,16 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class LoadFixture { Success, Slow, Error }
-private enum class Route { Home, Settings, Agent, Controls, OnboardingVoice, AgendaSuggestions }
+private enum class Route { Home, Components, Controls, Loading, Settings, Agent, AgendaSuggestions, Onboarding }
+
+/** The established onboarding order: Sign in → Consent → Connectors → Check-in → Voice. */
+enum class PlaygroundOnboardingStep(val title: String, val tag: String) {
+    SignIn("Sign in", "openOnboardingSignIn"),
+    Consent("Privacy", "openOnboardingConsent"),
+    Connectors("Connectors", "openOnboardingConnectors"),
+    CheckIn("Check-in", "openOnboardingCheckIn"),
+    Voice("Voice", "openOnboardingVoice"),
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,13 +99,27 @@ fun Playground() {
     var route by rememberSaveable { mutableStateOf(Route.Home) }
     var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
-    var voiceOutcome by rememberSaveable { mutableStateOf<String?>(null) }
-    // OnboardingVoiceScreen owns its own chrome and Back handling, like the Agent destinations.
-    val fullScreen = destination != null || route == Route.OnboardingVoice
-    val back = { route = if (route == Route.Agent) Route.Settings else Route.Home }
-    BackHandler(route != Route.Home && !fullScreen) { back() }
-    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls"; Route.OnboardingVoice -> "Onboarding Voice"; Route.AgendaSuggestions -> "Agenda New" }
     var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
+    // Pushed onboarding steps (ordinals), mirroring the iOS navigation stack: Continue / Skip push the
+    // next step, Back pops, and an empty stack is the onboarding hub.
+    var onboardingStack by rememberSaveable { mutableStateOf(listOf<Int>()) }
+    var onboardingComplete by rememberSaveable { mutableStateOf<String?>(null) }
+    val inOnboardingFlow = route == Route.Onboarding && (onboardingStack.isNotEmpty() || onboardingComplete != null)
+    // Settings destinations and onboarding steps own their chrome and Back handling.
+    val fullScreen = destination != null || inOnboardingFlow
+    val back = {
+        route = when (route) {
+            Route.Agent -> Route.Settings
+            Route.Controls, Route.Loading -> Route.Components
+            else -> Route.Home
+        }
+    }
+    BackHandler(route != Route.Home && !fullScreen) { back() }
+    val title = when (route) {
+        Route.Home -> "Rem Playground"; Route.Components -> "Components"; Route.Controls -> "Controls"
+        Route.Loading -> "Loading"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"
+        Route.AgendaSuggestions -> "Agenda New"; Route.Onboarding -> "Onboarding"
+    }
     Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
         if (!fullScreen) {
         CenterAlignedTopAppBar(title = { Text(title, style = RemTypography.bodyBold) }, navigationIcon = {
@@ -101,49 +131,33 @@ fun Playground() {
     }) { padding ->
         Box(Modifier.then(if (!fullScreen) Modifier.padding(padding) else Modifier).fillMaxSize()) {
             when (route) {
-                Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("Settings New · Android", style = RemTypography.title3Bold)
-                    Text("A local prototype with illustrative data for all seven designed Agent settings destinations. Voice previews demonstrate controls without audio. Automations remains outside this trial.", style = RemTypography.footnote)
-                    Text("Load fixture", style = RemTypography.bodyBold)
+                Route.Home -> Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader("Components")
+                    NavRow("Component catalog", "openComponents") { route = Route.Components }
+                    Spacer(Modifier.height(8.dp))
+                    SectionHeader("Screens")
+                    NavRow("Settings", "openSettings") { route = Route.Settings }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) }
                     }
-                    Button(onClick = { route = Route.Settings }, modifier = Modifier.testTag("openSettings")) { Text("Open Settings") }
-                    OutlinedButton(onClick = { route = Route.Controls }) { Text("Shared controls") }
-
-                    Text("Agenda New · Suggestions", style = RemTypography.title3Bold)
-                    Text("A local Agenda Suggestions journey: Add / Move / Dismiss, overflow, and the empty day becoming populated — all from deterministic fixtures.", style = RemTypography.footnote)
-                    Text("Agenda fixture", style = RemTypography.bodyBold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) }
                     }
-                    Button(onClick = { route = Route.AgendaSuggestions }, modifier = Modifier.testTag("openAgendaSuggestions")) { Text("Open Agenda Suggestions") }
-                    Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview plays no audio; Continue and Skip are host callbacks with no downstream screen.", style = RemTypography.footnote)
-                    OutlinedButton(onClick = { voiceOutcome = null; route = Route.OnboardingVoice }, modifier = Modifier.testTag("openOnboardingVoice")) { Text("Open Onboarding Voice") }
-                    Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, modifier = Modifier.testTag("playground.build"))
+                    NavRow("Onboarding", "openOnboarding") { onboardingStack = emptyList(); onboardingComplete = null; route = Route.Onboarding }
+                    Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("playground.build"))
                 }
-                Route.OnboardingVoice -> {
-                    val outcome = voiceOutcome
-                    if (outcome != null) {
-                        BackHandler { voiceOutcome = null; route = Route.Home }
-                        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)) {
-                            Text("Host callback: $outcome", style = RemTypography.title3Bold, modifier = Modifier.testTag("onboardingVoice.outcome"))
-                            Text("The onboarding masters wire no next screen; this is the bounded playground boundary.", style = RemTypography.footnote, textAlign = TextAlign.Center)
-                            Button(onClick = { voiceOutcome = null }, modifier = Modifier.testTag("onboardingVoice.restart")) { Text("Restart") }
-                        }
-                    } else {
-                        OnboardingVoiceScreen(
-                            onBack = { route = Route.Home },
-                            onContinue = { voiceOutcome = "continue" },
-                            onSkip = { voiceOutcome = "skip" },
-                        )
-                    }
+                Route.Components -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    NavRow("Controls", "openControls") { route = Route.Controls }
+                    NavRow("Loading", "openLoading") { route = Route.Loading }
                 }
+                Route.Controls -> ControlsPreview()
+                Route.Loading -> LoadingPreview()
                 Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) {
                     SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {
                         val share = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "Rem — a personal AI assistant. Shared from the local Settings playground.")
+                            putExtra(Intent.EXTRA_TEXT, "Rem — a personal AI assistant.")
                         }
                         context.startActivity(Intent.createChooser(share, null))
                     })
@@ -151,10 +165,161 @@ fun Playground() {
                 Route.Agent -> AgentPreview(fixture, destination = destination,
                     onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
                     onCancel = { route = Route.Settings })
-                Route.Controls -> ControlsPreview()
                 Route.AgendaSuggestions -> AgendaSuggestionsPlayground(fixture = agendaFixture)
+                Route.Onboarding -> {
+                    val completed = onboardingComplete
+                    val current = onboardingStack.lastOrNull()?.let { PlaygroundOnboardingStep.entries[it] }
+                    when {
+                        completed != null -> OnboardingCompletePreview(completed) {
+                            onboardingComplete = null; onboardingStack = emptyList()
+                        }
+                        current != null -> {
+                            val pop = { onboardingStack = onboardingStack.dropLast(1) }
+                            BackHandler { pop() }
+                            OnboardingStepPreview(current, onBack = pop) { action ->
+                                val next = current.ordinal + 1
+                                if (next < PlaygroundOnboardingStep.entries.size) onboardingStack = onboardingStack + next
+                                else onboardingComplete = action
+                            }
+                        }
+                        else -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            PlaygroundOnboardingStep.entries.forEach { step ->
+                                NavRow(step.title, step.tag) { onboardingStack = listOf(step.ordinal) }
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(text, style = RemTypography.footnote, color = RemColors.current.labelSecondary)
+}
+
+@Composable
+private fun NavRow(label: String, tag: String, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag(tag)) {
+        Text(label, Modifier.weight(1f))
+    }
+}
+
+/** Skeleton → content for a content load, and an inline progress indicator for an action. */
+@Composable
+private fun LoadingPreview() {
+    var attempt by rememberSaveable { mutableIntStateOf(0) }
+    var loaded by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
+    val reduceMotion = rememberReduceMotion()
+    val rows = listOf("Paired devices", "Connectors", "Memory", "Voice")
+    LaunchedEffect(attempt) { loaded = false; delay(1500); loaded = true }
+    LaunchedEffect(refreshing) { if (refreshing) { delay(1200); refreshing = false } }
+    Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        androidx.compose.animation.Crossfade(targetState = loaded, animationSpec = androidx.compose.animation.core.tween(if (reduceMotion) 0 else 250), label = "loading") { ready ->
+            if (ready) {
+                Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite; contentDescription = "Content loaded" }) {
+                    rows.forEach { Text(it, Modifier.padding(vertical = 14.dp)) }
+                }
+            } else {
+                RemSkeletonList(label = "Loading content", rows = rows.size, modifier = Modifier.testTag("loading.skeleton"))
+            }
+        }
+        OutlinedButton(onClick = { refreshing = true }, enabled = loaded && !refreshing, modifier = Modifier.fillMaxWidth().testTag("loading.refresh")) {
+            Text(if (refreshing) "Refreshing" else "Refresh", Modifier.weight(1f))
+            if (refreshing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        }
+        TextButton(onClick = { attempt += 1 }, enabled = loaded, modifier = Modifier.testTag("loading.reload")) { Text("Reload") }
+    }
+}
+
+/** One onboarding step, wired so Continue / Skip move the flow on with the action taken. */
+@Composable
+private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, onBack: () -> Unit, advance: (String) -> Unit) {
+    val scope = object : OnboardingStepScope {
+        override val index = step.ordinal
+        override val count = PlaygroundOnboardingStep.entries.size
+        override val isFirst = step.ordinal == 0
+        override val isLast = step.ordinal == PlaygroundOnboardingStep.entries.lastIndex
+        override val progress = OnboardingProgress(current = step.ordinal, total = PlaygroundOnboardingStep.entries.size)
+        override val onBack: (() -> Unit)? = onBack
+        override fun advance() = advance("continue")
+        override fun skip() = advance("skip")
+    }
+    var document by rememberSaveable { mutableStateOf<String?>(null) }
+    var connected by rememberSaveable { mutableStateOf(listOf("Gmail")) }
+    when (step) {
+        // Auth is unresolved for the playground: both providers advance without signing in.
+        PlaygroundOnboardingStep.SignIn -> OnboardingSignInScreen(
+            state = SignInState.New,
+            onContinue = { advance("continue") },
+            onUseDifferentAccount = {},
+            onUseGoogle = { advance("continue") },
+        )
+        PlaygroundOnboardingStep.Consent -> consentStep(
+            onAccept = { advance("continue") },
+            onOpenTerms = { document = "Terms of Service" },
+            onOpenPrivacy = { document = "Privacy Policy" },
+        ).content(scope)
+        PlaygroundOnboardingStep.Connectors -> {
+            val catalog = listOf(
+                Triple(Icons.Filled.Email, Color(0xFFEA4335), "Gmail"),
+                Triple(Icons.Filled.DateRange, Color(0xFF1A73E8), "Google Calendar"),
+                Triple(Icons.Filled.Notifications, Color(0xFF6B4FBB), "Slack"),
+            )
+            OnboardingConnectorsScreen(
+                connectors = catalog.map { (icon, tint, name) ->
+                    val isConnected = name in connected
+                    Connector(icon, tint, name, if (isConnected) "Connected" else "Not connected", isConnected) {
+                        connected = if (isConnected) connected - name else connected + name
+                    }
+                },
+                onContinue = { advance("continue") },
+                onSkip = { advance("skip") },
+                showSeeMore = false,
+            )
+        }
+        // Check-in keeps its place in the flow; its time choices are not settled (native Check-in: PR #53).
+        PlaygroundOnboardingStep.CheckIn -> OnboardingScaffold(
+            primary = OnboardingAction(label = "Continue", onClick = { advance("continue") }),
+            secondary = OnboardingAction(label = "Skip", onClick = { advance("skip") }, style = OnboardingActionStyle.TextAccent),
+            hero = OnboardingHero(icon = Icons.Filled.Notifications),
+            title = "Check-in",
+            subtitle = "Check-in times are pending.",
+            background = OnboardingBackground.Secondary,
+            progress = scope.progress,
+            onBack = onBack,
+        )
+        PlaygroundOnboardingStep.Voice -> OnboardingVoiceScreen(
+            onBack = onBack,
+            onContinue = { advance("continue") },
+            onSkip = { advance("skip") },
+        )
+    }
+    val open = document
+    if (open != null) {
+        // The sheet body reuses the row's own description; real legal copy belongs to the shipping app.
+        val summary = if (open == "Terms of Service") "How Rem accounts, subscriptions, and approved actions work."
+            else "What Rem, your gateway, and AI or voice providers process."
+        BackHandler { document = null }
+        Box(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary)) {
+            LegalDocumentScreen(title = open, sections = listOf(LegalSection(open, summary)), onClose = { document = null })
+        }
+    }
+}
+
+/** The flow's completion state. Done returns to the onboarding hub. */
+@Composable
+private fun OnboardingCompletePreview(lastAction: String, onDone: () -> Unit) {
+    BackHandler { onDone() }
+    Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)) {
+        Text(
+            "Onboarding complete",
+            style = RemTypography.title3Bold,
+            modifier = Modifier.testTag("onboarding.complete").semantics { stateDescription = lastAction; liveRegion = LiveRegionMode.Polite },
+        )
+        Button(onClick = onDone, modifier = Modifier.fillMaxWidth().testTag("onboarding.done")) { Text("Done") }
     }
 }
 
@@ -185,16 +350,14 @@ private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestina
             }
         }
     }
+    else if (status == "loading") Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        RemSkeletonList(label = "Loading agent settings", rows = 7, modifier = Modifier.testTag("agentSettings.skeleton"))
+        TextButton(onClick = onCancel, modifier = Modifier.testTag("cancelLoad")) { Text("Cancel") }
+    }
     else Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)) {
-        if (status == "loading") {
-            CircularProgressIndicator()
-            Text("Loading agent settings…")
-        } else {
-            Text(RemMaterialSymbols.ErrorNotice.glyph, fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.ErrorNotice), fontSize = 34.sp, color = RemColors.current.systemOrange, modifier = Modifier.clearAndSetSemantics {})
-            Text("Couldn’t load agent settings", style = RemTypography.title3Bold)
-            Text("This is a simulated connection error. Retry to load the local fixture.", textAlign = TextAlign.Center)
-            Button(onClick = { attempt += 1 }, modifier = Modifier.testTag("retry")) { Text("Retry") }
-        }
+        Text(RemMaterialSymbols.ErrorNotice.glyph, fontFamily = RemMaterialSymbols.family(RemMaterialSymbols.ErrorNotice), fontSize = 34.sp, color = RemColors.current.systemOrange, modifier = Modifier.clearAndSetSemantics {})
+        Text("Couldn’t load agent settings", style = RemTypography.title3Bold, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        Button(onClick = { attempt += 1 }, modifier = Modifier.testTag("retry")) { Text("Retry") }
         TextButton(onClick = onCancel, modifier = Modifier.testTag("cancelLoad")) { Text("Cancel") }
     }
 }
@@ -213,8 +376,7 @@ private fun ControlsPreview() {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             ContainedIconSize.entries.forEach { size -> ContainedIcon(RemMaterialSymbols.Info, fill = ContainedIconFill.Tint(RemColors.current.systemBlue), size = size) }
         }
-        Button(onClick = {}, enabled = false) { Text("Disabled example") }
-        Text("Changes are local to this controls session.", style = RemTypography.footnote)
+        Button(onClick = {}, enabled = false) { Text("Disabled") }
     }
     if (editing) AlertDialog(onDismissRequest = { editing = false }, title = { Text("Edit name") }, text = {
         OutlinedTextField(draft, onValueChange = { draft = it }, label = { Text("Display name") }, modifier = Modifier.testTag("nameField"))
