@@ -50,4 +50,6 @@ jobs:
           node --test tools/test-component-code-connect.mjs
           node tools/lint-components.mjs
       - name: Paired evidence delivery contract
-        run: python3 -m unittest discover -s tools/render-evidence -p 'test_*.py'
+        run: |
+          python3 -m unittest discover -s tools/render-evidence -p 'test_*.py'
+          node --test tools/design-sync/test-playground-structure.mjs tools/design-sync/test-settings-structure.mjs tools/design-sync/test-reference-config.mjs

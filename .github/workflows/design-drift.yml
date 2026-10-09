@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       pr:
-        description: Open draft Settings child PR requiring read-only Figma evidence
+        description: Open draft admitted playground PR requiring read-only Figma evidence
         required: true
         type: string
   pull_request_target:
@@ -33,7 +33,7 @@ jobs:
   drift:
     runs-on: macos-14
     steps:
-      - name: Resolve and constrain manual Settings evidence target
+      - name: Resolve and constrain manual evidence target
         id: manual
         if: github.event_name == 'workflow_dispatch'
         env:
@@ -48,6 +48,8 @@ jobs:
           base_ref=$(jq -r .base.ref <<<"$meta")
           head_ref=$(jq -r .head.ref <<<"$meta")
           case "$base_ref:$head_ref" in
+            codex/playground-expansion:agent-factory/playground-issue-*)
+              [[ "$head_ref" =~ ^agent-factory/playground-issue-[0-9]+$ ]] ;;
             codex/settings-integration:agent-factory/settings-issue-*)
               [[ "$head_ref" =~ ^agent-factory/settings-issue-[0-9]+$ ]] ;;
             codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
@@ -63,7 +65,13 @@ jobs:
           test "$(jq -r .head.repo.full_name <<<"$meta")" = "$GITHUB_REPOSITORY"
           scopes=$(jq -c '[.labels[].name | select(startswith("delivery-scope:")) | sub("^delivery-scope:"; "")]' <<<"$meta")
           test "$(jq length <<<"$scopes")" = 1
-          test "$(jq -r '.[0]' <<<"$scopes")" = settings-foundation
+          scope=$(jq -r '.[0]' <<<"$scopes")
+          case "$base_ref:$scope" in
+            codex/playground-expansion:agenda-suggestions|codex/playground-expansion:onboarding-voice) ;;
+            codex/settings-integration:settings-foundation|codex/settings-review-contracts:settings-foundation|codex/settings-review-native:settings-foundation) ;;
+            *) echo '::error::unsupported scope/base pair'; exit 1 ;;
+          esac
+          echo "primary_contract=$scope" >> "$GITHUB_OUTPUT"
           echo "pr=$PR" >> "$GITHUB_OUTPUT"
           echo "head_sha=$(jq -r .head.sha <<<"$meta")" >> "$GITHUB_OUTPUT"
           echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
@@ -81,11 +89,15 @@ jobs:
       - name: Select explicit delivery scope
         id: scope
         if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch' }}
+        env:
+          MANUAL_SCOPE: ${{ steps.manual.outputs.primary_contract }}
         run: |
           python3 - <<'PY'
-          import json, os
+          import json, os, sys
+          sys.path.insert(0, 'tools/render-evidence')
+          from settings_routing import EXPANSION_SCOPES, validate_manual_pair
           event = json.loads(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8").read())
-          scopes = (["settings-foundation"] if os.environ["GITHUB_EVENT_NAME"] == "workflow_dispatch" else [
+          scopes = ([os.environ["MANUAL_SCOPE"]] if os.environ["GITHUB_EVENT_NAME"] == "workflow_dispatch" else [
               label["name"].removeprefix("delivery-scope:")
               for label in event["pull_request"].get("labels", [])
               if label.get("name", "").startswith("delivery-scope:")
@@ -93,12 +105,18 @@ jobs:
           if len(scopes) > 1:
               raise SystemExit("at most one delivery-scope label is allowed")
           primary = scopes[0] if scopes else ""
+          if os.environ["GITHUB_EVENT_NAME"] == "pull_request_target":
+              pr = event["pull_request"]
+              if primary in EXPANSION_SCOPES or pr["base"]["ref"] == "codex/playground-expansion":
+                  validate_manual_pair(pr["base"]["ref"], pr["head"]["ref"], primary)
+                  if pr.get("state") != "open" or pr.get("draft") is not True or pr["head"]["repo"]["full_name"] != os.environ["GITHUB_REPOSITORY"] or pr["base"]["repo"]["full_name"] != os.environ["GITHUB_REPOSITORY"]:
+                      raise SystemExit("Expansion evidence requires an open same-repository draft")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"primary_contract={primary}\n")
           PY
 
       - name: Fetch and validate exact-head declarative contract data
-        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && steps.scope.outputs.primary_contract != 'settings-foundation' }}
+        if: ${{ github.event_name == 'pull_request_target' && steps.scope.outputs.primary_contract != '' && steps.scope.outputs.primary_contract != 'settings-foundation' && steps.scope.outputs.primary_contract != 'agenda-suggestions' && steps.scope.outputs.primary_contract != 'onboarding-voice' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
@@ -143,6 +161,13 @@ jobs:
               --output=artifacts/figma-structure-report.json --head="$HEAD_SHA"
             exit 0
           fi
+          case "$PRIMARY_CONTRACT" in
+            agenda-suggestions|onboarding-voice)
+              node tools/design-sync/verify-playground-structure.mjs \
+                --output=artifacts/figma-structure-report.json --head="$HEAD_SHA" \
+                --primary-contract="$PRIMARY_CONTRACT"
+              exit 0 ;;
+          esac
           file_key=$(jq -r .figmaFileKey tools/design-sync/manifest.json)
           contract=tools/design-sync/structure-contract.json
           if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
@@ -199,6 +224,9 @@ jobs:
           cp artifacts/figma-structure-report.json figma-reference/structure/report.json
           if [ "$PRIMARY_CONTRACT" = settings-foundation ]; then
             cp tools/design-sync/settings-structure-contract.json figma-reference/structure/contract.json
+            cp tools/design-sync/manifest.json figma-reference/structure/manifest.json
+          elif [ "$PRIMARY_CONTRACT" = agenda-suggestions ] || [ "$PRIMARY_CONTRACT" = onboarding-voice ]; then
+            cp tools/design-sync/playground-source-contracts.json figma-reference/structure/contract.json
             cp tools/design-sync/manifest.json figma-reference/structure/manifest.json
           else
             cp "$RUNNER_TEMP/head-data/structure-contract.json" figma-reference/structure/contract.json

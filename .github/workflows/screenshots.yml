@@ -24,9 +24,12 @@ on:
       - "Sources/**"
       - "compose/**"
       - "tokens/generated/**"
+      - "docs/agent-factory/routing-smoke.md"
       - "tools/render-evidence/**"
       - "tools/render-swift/**"
       - "docs/playground/evidence/**"
+      - "docs/playground/expansion-design/**"
+      - "docs/contracts/playground-expansion.md"
       - "docs/playground/artifacts.json"
       - "docs/playground/verification.md"
       - ".github/workflows/screenshots.yml"
@@ -114,10 +117,16 @@ jobs:
 
   settings-ios:
     name: Exercise Settings playground (iOS)
-    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'android'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'android'
     runs-on: macos-14
     timeout-minutes: 45
     steps:
+      - name: Constrain expansion native evidence target
+        if: github.event.pull_request.base.ref == 'codex/playground-expansion'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          [[ "$HEAD_REF" =~ ^agent-factory/playground-issue-[0-9]+$ ]]
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -167,9 +176,15 @@ jobs:
 
   settings-android:
     name: Exercise Settings playground (Android)
-    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'ios'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence')) && inputs.platform != 'ios'
     runs-on: ubuntu-latest
     steps:
+      - name: Constrain expansion native evidence target
+        if: github.event.pull_request.base.ref == 'codex/playground-expansion'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          [[ "$HEAD_REF" =~ ^agent-factory/playground-issue-[0-9]+$ ]]
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -245,8 +260,11 @@ jobs:
           cp dl/settings-swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
           cp dl/settings-compose-screenshots/*.png out/compose/ 2>/dev/null || true
           python3 - <<'PY'
-          import hashlib, json, os
+          import hashlib, json, os, subprocess
           from pathlib import Path
+          actual_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if actual_head != os.environ['SHA']:
+              raise SystemExit('checked-out source does not match candidate head')
           out = Path("out")
           media = {}
           for d in ("swiftui", "compose"):
@@ -256,7 +274,7 @@ jobs:
           # re-derives it from the base branch and refuses if this PR modified the workflow.
           Path("out/delivery/manifest.json").write_text(json.dumps({
               "pr": int(os.environ["PR"]),
-              "sha": os.environ["SHA"],
+              "sha": actual_head,
               "run_id": int(os.environ["RUN_ID"]),
               "run_attempt": int(os.environ["RUN_ATTEMPT"]),
               "workflow_sha256": hashlib.sha256(Path(".github/workflows/screenshots.yml").read_bytes()).hexdigest(),

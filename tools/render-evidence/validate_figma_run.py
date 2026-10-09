@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import re
-from settings_routing import validate_settings_pair
+from settings_routing import EXPANSION_SCOPES, validate_manual_pair
 
 
 def _positive_int(value: object, label: str) -> int:
@@ -22,7 +22,8 @@ def _mapping(value: object, label: str) -> dict:
 
 def validate(run: dict, artifact: dict, *, repository: str, pr: int,
              head_sha: str, base_sha: str, base_ref: str, allow_settings_manual: bool = False,
-             head_ref: str | None = None) -> dict:
+             head_ref: str | None = None, allow_playground_manual: bool = False,
+             primary_contract: str = "settings-foundation") -> dict:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
         raise ValueError("full repository name required")
     _positive_int(pr, "PR number")
@@ -36,10 +37,12 @@ def validate(run: dict, artifact: dict, *, repository: str, pr: int,
     if run.get("path") != ".github/workflows/design-drift.yml":
         raise ValueError("unexpected Figma workflow path")
     manual = run.get("event") == "workflow_dispatch"
-    if run.get("event") != "pull_request_target" and not (manual and allow_settings_manual):
+    expansion = primary_contract in EXPANSION_SCOPES
+    manual_allowed = allow_playground_manual if expansion else allow_settings_manual
+    if run.get("event") != "pull_request_target" and not (manual and manual_allowed):
         raise ValueError("Figma evidence was not produced by an authorized event")
-    if manual:
-        validate_settings_pair(base_ref, head_ref)
+    if manual or expansion or base_ref == "codex/playground-expansion":
+        validate_manual_pair(base_ref, head_ref, primary_contract)
     if run.get("status") != "completed" or run.get("conclusion") != "success":
         raise ValueError("Figma evidence run did not complete successfully")
     expected_run_sha = base_sha if manual else head_sha
@@ -56,7 +59,7 @@ def validate(run: dict, artifact: dict, *, repository: str, pr: int,
 
     if manual:
         if head_branch != base_ref:
-            raise ValueError("manual Figma run does not originate from the Settings integration branch")
+            raise ValueError("manual Figma run does not originate from the admitted integration branch")
         # The trusted manual workflow resolves a constrained PR before secrets,
         # then binds its candidate in the authenticated delivery manifest. Its
         # GitHub run/artifact SHA is the trusted workflow base, not the PR head.
@@ -108,6 +111,8 @@ def main() -> None:
     parser.add_argument("--base-sha", required=True)
     parser.add_argument("--base-ref", required=True)
     parser.add_argument("--allow-settings-manual", action="store_true")
+    parser.add_argument("--allow-playground-manual", action="store_true")
+    parser.add_argument("--primary-contract", default="settings-foundation")
     args = parser.parse_args()
     validate(
         json.loads(args.run_meta.read_text(encoding="utf-8")),
@@ -119,6 +124,8 @@ def main() -> None:
         base_ref=args.base_ref,
         allow_settings_manual=args.allow_settings_manual,
         head_ref=args.head_ref,
+        allow_playground_manual=args.allow_playground_manual,
+        primary_contract=args.primary_contract,
     )
 
 

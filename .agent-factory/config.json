@@ -16,7 +16,8 @@
       "docs/contracts/settings-playground.md",
       "docs/contracts/settings-foundation.md",
       ".claude/skills/rem-design-system/local-policy/product-design-supplement.md",
-      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md"
+      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md",
+      "docs/contracts/playground-expansion.md"
     ],
     "skill_dirs": [
       ".claude/skills"
@@ -54,8 +55,8 @@
     "model": "claude-opus-4-8",
     "cli_version": "0.55.1",
     "timeout_seconds": 1800,
-    "branch_prefix": "agent-factory/settings-issue-",
-    "base_branch": "codex/settings-integration",
+    "branch_prefix": "agent-factory/playground-issue-",
+    "base_branch": "codex/playground-expansion",
     "runner": "ubuntu-latest",
     "fallback_provider": null,
     "fallback_model": null,
@@ -66,7 +67,8 @@
     "fallback_visual_revision_context": false,
     "max_model_cost_usd": 3.0,
     "input_cost_per_million": 0.0,
-    "output_cost_per_million": 0.0
+    "output_cost_per_million": 0.0,
+    "figma_mcp": false
   },
   "figma": {
     "marker": "<!-- figma-writer:agent-factory -->",
@@ -107,5 +109,17 @@
     "context": "agent-factory",
     "required_checks": [],
     "allow_followup_issues": true
+  },
+  "routing": {
+    "repository": "Rem-Assistant/Rem-Design-System",
+    "allowed_base_branches": [
+      "main",
+      "codex/playground-expansion"
+    ],
+    "legacy_publication_heads": {
+      "86": "38a259960f64156e3e30881ded06093c8c8fadca",
+      "87": "e710f71bc8371e19afd2359d1f29e606512c8a4b",
+      "92": "220962cd8751baa8afbfc71ea7f426e9d3dfb3dd"
+    }
   }
 }

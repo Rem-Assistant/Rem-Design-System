@@ -224,5 +224,119 @@
         ]
       }
     ]
+  },
+  "agenda-suggestions": {
+    "paths": [
+      "Sources/RemDesignSystem/Agenda/**",
+      "Sources/RemDesignSystem/Screens/Agenda*.swift",
+      "compose/RemDesignSystem/agenda/**",
+      "compose/RemDesignSystem/screens/Agenda*.kt"
+    ],
+    "states": [
+      "agendasuggestions-inline-light",
+      "agendasuggestions-overflow-light",
+      "agendasuggestions-none-light"
+    ],
+    "requirePrototype": false,
+    "references": {
+      "agendasuggestions-inline-light": {
+        "name": "AgendaSuggestions-inline-light",
+        "node": "2336:19585",
+        "requireDocumentation": false
+      },
+      "agendasuggestions-overflow-light": {
+        "name": "AgendaSuggestions-overflow-light",
+        "node": "2338:20884",
+        "requireDocumentation": false
+      },
+      "agendasuggestions-none-light": {
+        "name": "AgendaSuggestions-none-light",
+        "node": "2337:20436",
+        "requireDocumentation": false
+      }
+    },
+    "runtimeGroups": [
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Agenda/**",
+          "Sources/RemDesignSystem/Screens/Agenda*.swift",
+          "compose/RemDesignSystem/agenda/**",
+          "compose/RemDesignSystem/screens/Agenda*.kt",
+          "tools/playground-ios/App/**",
+          "tools/playground-ios/UITests/**",
+          "compose/demo/**",
+          "tokens/**"
+        ],
+        "states": [
+          "agendasuggestions-dark",
+          "agendasuggestions-large-text",
+          "agendasuggestions-added-light",
+          "agendasuggestions-moved-light",
+          "agendasuggestions-dismissed-light",
+          "agendasuggestions-last-removal-light",
+          "agendasuggestions-restored-light"
+        ]
+      }
+    ]
+  },
+  "onboarding-voice": {
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingVoice*.swift",
+      "Sources/RemDesignSystem/Screens/OnboardingVoice*.swift",
+      "Sources/RemDesignSystem/Screens/SettingsVoice*.swift",
+      "compose/RemDesignSystem/onboarding/Voice*.kt",
+      "compose/RemDesignSystem/screens/OnboardingVoice*.kt",
+      "compose/RemDesignSystem/screens/SettingsVoice*.kt",
+      "compose/RemDesignSystem/onboarding/OnboardingVoiceScreen.kt"
+    ],
+    "states": [
+      "onboardingvoice-light",
+      "onboardingvoice-chooser-light",
+      "onboardingvoice-selected-light"
+    ],
+    "requirePrototype": false,
+    "references": {
+      "onboardingvoice-light": {
+        "name": "OnboardingVoice-light",
+        "node": "2219:22520",
+        "requireDocumentation": false
+      },
+      "onboardingvoice-chooser-light": {
+        "name": "OnboardingVoice-chooser-light",
+        "node": "2221:83686",
+        "requireDocumentation": false
+      },
+      "onboardingvoice-selected-light": {
+        "name": "OnboardingVoice-selected-light",
+        "node": "2219:23081",
+        "requireDocumentation": false
+      }
+    },
+    "runtimeGroups": [
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Templates/OnboardingVoice*.swift",
+          "Sources/RemDesignSystem/Screens/OnboardingVoice*.swift",
+          "Sources/RemDesignSystem/Screens/SettingsVoice*.swift",
+          "compose/RemDesignSystem/onboarding/Voice*.kt",
+          "compose/RemDesignSystem/screens/OnboardingVoice*.kt",
+          "compose/RemDesignSystem/screens/SettingsVoice*.kt",
+          "tools/playground-ios/App/**",
+          "tools/playground-ios/UITests/**",
+          "compose/demo/**",
+          "tokens/**",
+          "compose/RemDesignSystem/onboarding/OnboardingVoiceScreen.kt"
+        ],
+        "states": [
+          "onboardingvoice-dark",
+          "onboardingvoice-large-text",
+          "onboardingvoice-chooser-preview-light",
+          "onboardingvoice-sliders-adjusted-light",
+          "onboardingvoice-continue-light",
+          "onboardingvoice-skip-light",
+          "onboardingvoice-back-light"
+        ]
+      }
+    ]
   }
 }

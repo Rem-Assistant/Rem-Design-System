@@ -1,0 +1,1429 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "provenance": {
+    "source": "authenticated Figma use_figma read-only structure + get_design_context",
+    "capturedDateUTC": "2026-10-08",
+    "sourceRevision": null,
+    "hashes": "SHA256SUMS",
+    "sourceRevisionNote": "No Figma revision ID returned. Hashes identify saved evidence bytes, not a live revision."
+  },
+  "assertionSemantics": {
+    "identity": "Exact id/name/type match; exact direct parent and each consecutive ancestor path edge.",
+    "visibleText": "Each required TEXT node must have exact characters, belong to textScopeNodeId, and have visible=true on every ancestor to that scope. Preserve listed order as a subsequence of depth-first document child order. This does not prove viewport exposure, clipping or occlusion.",
+    "instance": "Exact instance id/type/name, mainComponent id/name/type and mainComponent parent identity; verify every rootToInstancePathIds edge.",
+    "childOrder": "exact means complete child IDs equality; requiredRootChildrenInOrder is also exact for this bounded snapshot.",
+    "properties": "Exact values; numeric slot assertions have tolerance0.",
+    "screenshots": "References are unmodified Figma tool PNGs. Native adaptations require actual runtime screenshots and separate visual review; structural success is not pixel equivalence."
+  },
+  "lanes": [
+    {
+      "laneId": "agenda-suggestions",
+      "page": {
+        "id": "1910:40765",
+        "name": "Agenda, Task & Events New",
+        "type": "PAGE"
+      },
+      "section": {
+        "id": "2336:19584",
+        "name": "Agenda suggestions · Accept, move, dismiss and overflow",
+        "type": "SECTION"
+      },
+      "structuralEvidence": [
+        "structural/agenda-reference-structure.tool.json",
+        "structural/agenda-slot-and-sheet-structure.tool.json"
+      ],
+      "states": [
+        {
+          "renderKey": "AgendaSuggestions-inline-light",
+          "root": {
+            "id": "2336:19585",
+            "name": "Suggestions · Today · Three plus overflow",
+            "type": "FRAME"
+          },
+          "directParent": {
+            "id": "2336:19584",
+            "name": "Agenda suggestions · Accept, move, dismiss and overflow",
+            "type": "SECTION"
+          },
+          "pageToRootPathIds": [
+            "1910:40765",
+            "2336:19584",
+            "2336:19585"
+          ],
+          "requiredRootChildrenInOrder": [
+            "2336:19586",
+            "2338:21200",
+            "2338:21202",
+            "2338:21204",
+            "2338:21214"
+          ],
+          "textScopeNodeId": "2336:19585",
+          "requiredVisibleTextInOrder": [
+            {
+              "id": "I2336:19590;208:15",
+              "text": "Today"
+            },
+            {
+              "id": "I2336:19590;208:16",
+              "text": "Aug 13 2026"
+            },
+            {
+              "id": "I2336:19597;2190:12241",
+              "text": "Sort by: Time"
+            },
+            {
+              "id": "I2336:19598;46:11",
+              "text": "Reply to the venue"
+            },
+            {
+              "id": "I2336:19599;46:11",
+              "text": "Confirm rehearsal time"
+            },
+            {
+              "id": "I2336:19600;46:20",
+              "text": "Coffee chat with a mentor"
+            },
+            {
+              "id": "I2336:19601;2189:11922",
+              "text": "Add New"
+            },
+            {
+              "id": "I2336:19601;2189:11926",
+              "text": "Schedule"
+            },
+            {
+              "id": "I2336:19715;161:69",
+              "text": "Suggestions"
+            },
+            {
+              "id": "I2336:19718;2336:19567",
+              "text": "Prep for tonight’s rehearsal"
+            },
+            {
+              "id": "I2336:19729;2336:19578",
+              "text": "Move rehearsal check-in to 3:00 PM"
+            },
+            {
+              "id": "I2336:19740;2336:19567",
+              "text": "Review venue notes"
+            },
+            {
+              "id": "I2336:19751;377:3",
+              "text": "See more"
+            }
+          ],
+          "forbiddenVisibleText": [],
+          "requiredInstances": [
+            {
+              "node": {
+                "id": "2336:19598",
+                "name": "TaskEventRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "46:2",
+                "name": "Kind=task, Leading=Time",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "46:21",
+                "name": "TaskEventRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19598"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2336:19599",
+                "name": "TaskEventRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "46:2",
+                "name": "Kind=task, Leading=Time",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "46:21",
+                "name": "TaskEventRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19599"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2336:19600",
+                "name": "TaskEventRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "46:12",
+                "name": "Kind=event, Leading=Time",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "46:21",
+                "name": "TaskEventRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19600"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2336:19601",
+                "name": "AgendaAddSchedule",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2189:11919",
+                "name": "AgendaAddSchedule",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2189:11918",
+                "name": "Rem · Agenda reusable components · Proposed delivery",
+                "type": "SECTION"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19601"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2336:19718",
+                "name": "AgendaSuggestionRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19561",
+                "name": "action=add",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19714",
+                "2336:19718"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2336:19729",
+                "name": "AgendaSuggestionRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19572",
+                "name": "action=move",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19714",
+                "2336:19729"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2336:19740",
+                "name": "AgendaSuggestionRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19561",
+                "name": "action=add",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2336:19585",
+                "2336:19586",
+                "2336:19588",
+                "2336:19591",
+                "2336:19592",
+                "2336:19714",
+                "2336:19740"
+              ],
+              "requiredProperties": {}
+            }
+          ],
+          "childOrderAssertions": [
+            {
+              "parentId": "2336:19714",
+              "mode": "exact",
+              "childIds": [
+                "2336:19715",
+                "2336:19718",
+                "2336:19729",
+                "2336:19740",
+                "2336:19751"
+              ]
+            }
+          ],
+          "reference": {
+            "toolResponse": "raw/2336-19585.json",
+            "context": "raw/2336-19585.txt",
+            "screenshot": "raw/2336-19585.png"
+          }
+        },
+        {
+          "renderKey": "AgendaSuggestions-overflow-light",
+          "root": {
+            "id": "2338:20884",
+            "name": "Overflow · Four suggestions",
+            "type": "FRAME"
+          },
+          "directParent": {
+            "id": "2336:19584",
+            "name": "Agenda suggestions · Accept, move, dismiss and overflow",
+            "type": "SECTION"
+          },
+          "pageToRootPathIds": [
+            "1910:40765",
+            "2336:19584",
+            "2338:20884"
+          ],
+          "requiredRootChildrenInOrder": [
+            "2338:20885",
+            "2338:20922",
+            "2338:20923",
+            "2338:20973",
+            "2338:21370",
+            "2338:21372"
+          ],
+          "textScopeNodeId": "2338:20923",
+          "requiredVisibleTextInOrder": [
+            {
+              "id": "2338:20925",
+              "text": "Suggestions"
+            },
+            {
+              "id": "2338:20926",
+              "text": "Done"
+            },
+            {
+              "id": "I2338:20929;2336:19565",
+              "text": "Add"
+            },
+            {
+              "id": "I2338:20929;2336:19567",
+              "text": "Prep for tonight’s rehearsal"
+            },
+            {
+              "id": "I2338:20929;2336:19568",
+              "text": "Your calendar has rehearsal at 6:00 PM."
+            },
+            {
+              "id": "I2338:20940;2336:19576",
+              "text": "Move"
+            },
+            {
+              "id": "I2338:20940;2336:19578",
+              "text": "Move rehearsal check-in to 3:00 PM"
+            },
+            {
+              "id": "I2338:20940;2336:19579",
+              "text": "Your calendar has a conflict at 8:00 AM."
+            },
+            {
+              "id": "I2338:20951;2336:19565",
+              "text": "Add"
+            },
+            {
+              "id": "I2338:20951;2336:19567",
+              "text": "Review venue notes"
+            },
+            {
+              "id": "I2338:20951;2336:19568",
+              "text": "Have the details ready for tonight."
+            },
+            {
+              "id": "I2338:20962;2336:19565",
+              "text": "Add"
+            },
+            {
+              "id": "I2338:20962;2336:19567",
+              "text": "Bring the updated set list"
+            },
+            {
+              "id": "I2338:20962;2336:19568",
+              "text": "Keep the latest songs ready for rehearsal."
+            }
+          ],
+          "forbiddenVisibleText": [],
+          "requiredInstances": [
+            {
+              "node": {
+                "id": "2338:20929",
+                "name": "Suggestion/0",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19561",
+                "name": "action=add",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2338:20884",
+                "2338:20923",
+                "2338:20928",
+                "2338:20929"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2338:20940",
+                "name": "Suggestion/1",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19572",
+                "name": "action=move",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2338:20884",
+                "2338:20923",
+                "2338:20928",
+                "2338:20940"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2338:20951",
+                "name": "Suggestion/2",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19561",
+                "name": "action=add",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2338:20884",
+                "2338:20923",
+                "2338:20928",
+                "2338:20951"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2338:20962",
+                "name": "Suggestion/3",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2336:19561",
+                "name": "action=add",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2336:19583",
+                "name": "AgendaSuggestionRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2338:20884",
+                "2338:20923",
+                "2338:20928",
+                "2338:20962"
+              ],
+              "requiredProperties": {}
+            }
+          ],
+          "childOrderAssertions": [
+            {
+              "parentId": "2338:20928",
+              "mode": "exact",
+              "childIds": [
+                "2338:20929",
+                "2338:20940",
+                "2338:20951",
+                "2338:20962"
+              ]
+            }
+          ],
+          "reference": {
+            "toolResponse": "raw/2338-20884.json",
+            "context": "raw/2338-20884.txt",
+            "screenshot": "raw/2338-20884.png"
+          }
+        },
+        {
+          "renderKey": "AgendaSuggestions-none-light",
+          "root": {
+            "id": "2337:20436",
+            "name": "Last suggestion removed",
+            "type": "FRAME"
+          },
+          "directParent": {
+            "id": "2336:19584",
+            "name": "Agenda suggestions · Accept, move, dismiss and overflow",
+            "type": "SECTION"
+          },
+          "pageToRootPathIds": [
+            "1910:40765",
+            "2336:19584",
+            "2337:20436"
+          ],
+          "requiredRootChildrenInOrder": [
+            "2337:20437"
+          ],
+          "textScopeNodeId": "2337:20436",
+          "requiredVisibleTextInOrder": [
+            {
+              "id": "I2337:20441;208:15",
+              "text": "Today"
+            },
+            {
+              "id": "I2337:20441;208:16",
+              "text": "Aug 13 2026"
+            },
+            {
+              "id": "I2337:20448;2190:12241",
+              "text": "Sort by: Time"
+            },
+            {
+              "id": "I2337:20449;46:11",
+              "text": "Reply to the venue"
+            },
+            {
+              "id": "I2337:20450;46:11",
+              "text": "Confirm rehearsal time"
+            },
+            {
+              "id": "I2337:20451;46:20",
+              "text": "Coffee chat with a mentor"
+            },
+            {
+              "id": "I2337:20452;2189:11922",
+              "text": "Add New"
+            },
+            {
+              "id": "I2337:20452;2189:11926",
+              "text": "Schedule"
+            }
+          ],
+          "forbiddenVisibleText": [
+            "Suggestions",
+            "See more"
+          ],
+          "requiredInstances": [
+            {
+              "node": {
+                "id": "2337:20449",
+                "name": "TaskEventRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "46:2",
+                "name": "Kind=task, Leading=Time",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "46:21",
+                "name": "TaskEventRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2337:20436",
+                "2337:20437",
+                "2337:20439",
+                "2337:20442",
+                "2337:20443",
+                "2337:20449"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2337:20450",
+                "name": "TaskEventRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "46:2",
+                "name": "Kind=task, Leading=Time",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "46:21",
+                "name": "TaskEventRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2337:20436",
+                "2337:20437",
+                "2337:20439",
+                "2337:20442",
+                "2337:20443",
+                "2337:20450"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2337:20451",
+                "name": "TaskEventRow",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "46:12",
+                "name": "Kind=event, Leading=Time",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "46:21",
+                "name": "TaskEventRow",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2337:20436",
+                "2337:20437",
+                "2337:20439",
+                "2337:20442",
+                "2337:20443",
+                "2337:20451"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2337:20452",
+                "name": "AgendaAddSchedule",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2189:11919",
+                "name": "AgendaAddSchedule",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2189:11918",
+                "name": "Rem · Agenda reusable components · Proposed delivery",
+                "type": "SECTION"
+              },
+              "rootToInstancePathIds": [
+                "2337:20436",
+                "2337:20437",
+                "2337:20439",
+                "2337:20442",
+                "2337:20443",
+                "2337:20452"
+              ],
+              "requiredProperties": {}
+            }
+          ],
+          "childOrderAssertions": [
+            {
+              "parentId": "2337:20443",
+              "mode": "exact",
+              "childIds": [
+                "2337:20444",
+                "2337:20449",
+                "2337:20450",
+                "2337:20451",
+                "2337:20452"
+              ]
+            }
+          ],
+          "reference": {
+            "toolResponse": "raw/2337-20436.json",
+            "context": "raw/2337-20436.txt",
+            "screenshot": "raw/2337-20436.png"
+          }
+        }
+      ],
+      "canonicalSlotAssertions": [
+        {
+          "node": {
+            "id": "2049:10103",
+            "name": "Suggestions",
+            "type": "SLOT"
+          },
+          "directParent": {
+            "id": "2049:10094",
+            "name": "VStack/Agenda rows",
+            "type": "FRAME"
+          },
+          "pageToNodePathIds": [
+            "1910:40765",
+            "2189:11918",
+            "2192:12182",
+            "2049:10087",
+            "2049:10088",
+            "2049:10090",
+            "2049:10093",
+            "2049:10094",
+            "2049:10103"
+          ],
+          "numericProperties": {
+            "paddingTop": 24,
+            "paddingBottom": 0
+          },
+          "parentNumericProperties": {
+            "itemSpacing": 0
+          },
+          "immediatelyPrecededBy": {
+            "id": "2049:10102",
+            "name": "AgendaAddSchedule",
+            "type": "INSTANCE"
+          },
+          "firstChild": {
+            "node": {
+              "id": "2085:11482",
+              "name": "Section/Suggestions",
+              "type": "INSTANCE"
+            },
+            "numericProperties": {
+              "y": 24
+            }
+          }
+        },
+        {
+          "node": {
+            "id": "2049:10127",
+            "name": "Suggestions",
+            "type": "SLOT"
+          },
+          "directParent": {
+            "id": "2049:10116",
+            "name": "VStack/Agenda rows",
+            "type": "FRAME"
+          },
+          "pageToNodePathIds": [
+            "1910:40765",
+            "2189:11918",
+            "2192:12182",
+            "2049:10109",
+            "2049:10110",
+            "2049:10112",
+            "2049:10115",
+            "2049:10116",
+            "2049:10127"
+          ],
+          "numericProperties": {
+            "paddingTop": 24,
+            "paddingBottom": 0
+          },
+          "parentNumericProperties": {
+            "itemSpacing": 0
+          },
+          "immediatelyPrecededBy": {
+            "id": "2049:10126",
+            "name": "AgendaAddSchedule",
+            "type": "INSTANCE"
+          },
+          "firstChild": {
+            "node": {
+              "id": "2085:11538",
+              "name": "Section/Suggestions",
+              "type": "INSTANCE"
+            },
+            "numericProperties": {
+              "y": 24
+            }
+          }
+        },
+        {
+          "node": {
+            "id": "2052:11463",
+            "name": "Suggestions",
+            "type": "SLOT"
+          },
+          "directParent": {
+            "id": "2049:10323",
+            "name": "VStack/Agenda rows",
+            "type": "FRAME"
+          },
+          "pageToNodePathIds": [
+            "1910:40765",
+            "2189:11918",
+            "2192:12182",
+            "2049:10336",
+            "2049:10319",
+            "2049:10322",
+            "2049:10323",
+            "2052:11463"
+          ],
+          "numericProperties": {
+            "paddingTop": 24,
+            "paddingBottom": 0
+          },
+          "parentNumericProperties": {
+            "itemSpacing": 0
+          },
+          "immediatelyPrecededBy": {
+            "id": "2049:10331",
+            "name": "AgendaAddSchedule",
+            "type": "INSTANCE"
+          },
+          "firstChild": {
+            "node": {
+              "id": "2085:11572",
+              "name": "Section/Suggestions",
+              "type": "INSTANCE"
+            },
+            "numericProperties": {
+              "y": 24
+            }
+          }
+        },
+        {
+          "node": {
+            "id": "2191:12585",
+            "name": "Suggestions",
+            "type": "SLOT"
+          },
+          "directParent": {
+            "id": "2191:12575",
+            "name": "VStack/Agenda rows",
+            "type": "FRAME"
+          },
+          "pageToNodePathIds": [
+            "1910:40765",
+            "2189:11918",
+            "2192:12182",
+            "2191:12568",
+            "2191:12569",
+            "2191:12571",
+            "2191:12574",
+            "2191:12575",
+            "2191:12585"
+          ],
+          "numericProperties": {
+            "paddingTop": 24,
+            "paddingBottom": 0
+          },
+          "parentNumericProperties": {
+            "itemSpacing": 0
+          },
+          "immediatelyPrecededBy": {
+            "id": "2191:12584",
+            "name": "AgendaAddSchedule",
+            "type": "INSTANCE"
+          },
+          "firstChild": {
+            "node": {
+              "id": "2191:12586",
+              "name": "Section/Suggestions",
+              "type": "INSTANCE"
+            },
+            "numericProperties": {
+              "y": 24
+            }
+          }
+        }
+      ],
+      "limits": [
+        "The four strict24pt assertions target canonical Screen/Agenda slots, not a guessed numeric property on the detached outcome frames.",
+        "The no-suggestions frame has no Suggestions region after AgendaAddSchedule; exact child order proves structural removal, not runtime gap geometry.",
+        "5PM Add and3PM Move are authored example fixture payloads, not app defaults.",
+        "No Inspector, Check-in, real service calls, or generalized Plain/filled icon rule."
+      ]
+    },
+    {
+      "laneId": "onboarding-voice",
+      "page": {
+        "id": "2213:9168",
+        "name": "Onboarding New",
+        "type": "PAGE"
+      },
+      "section": {
+        "id": "2213:9346",
+        "name": "04 · Voice · Working states",
+        "type": "SECTION"
+      },
+      "structuralEvidence": [
+        "structural/voice-reference-structure.tool.json"
+      ],
+      "states": [
+        {
+          "renderKey": "OnboardingVoice-light",
+          "root": {
+            "id": "2219:22520",
+            "name": "Screen/Voice · Onboarding",
+            "type": "COMPONENT"
+          },
+          "directParent": {
+            "id": "2213:9346",
+            "name": "04 · Voice · Working states",
+            "type": "SECTION"
+          },
+          "pageToRootPathIds": [
+            "2213:9168",
+            "2213:9346",
+            "2219:22520"
+          ],
+          "requiredRootChildrenInOrder": [
+            "2219:22475",
+            "2219:22476",
+            "2219:22506"
+          ],
+          "textScopeNodeId": "2219:22520",
+          "requiredVisibleTextInOrder": [
+            {
+              "id": "I2219:22480;773:20",
+              "text": "Choose how Rem sounds"
+            },
+            {
+              "id": "I2219:22480;773:21",
+              "text": "Preview a voice, choose the one Rem uses, then fine-tune its delivery."
+            },
+            {
+              "id": "I2219:22589;2217:1553;2217:1558;1328:26726",
+              "text": "Hear this voice"
+            },
+            {
+              "id": "I2219:22589;2217:1553;2217:1558;1328:26727",
+              "text": "Aria"
+            },
+            {
+              "id": "I2219:22589;2217:1555;741:312;161:69",
+              "text": "Spoken responses"
+            },
+            {
+              "id": "I2219:22589;2217:1555;2217:1564;188:192;188:3",
+              "text": "Voice"
+            },
+            {
+              "id": "I2219:22589;2217:1555;2217:1564;188:192;188:4",
+              "text": "Aria (Warm)"
+            },
+            {
+              "id": "I2219:22589;2217:1555;741:337;161:71",
+              "text": "Choose how Rem sounds when reading a response or talking with you."
+            },
+            {
+              "id": "I2219:22589;2217:1556;741:312;161:69",
+              "text": "Character & speed"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1568;188:192;1375:5910",
+              "text": "Speed"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1568;188:192;1375:5913",
+              "text": "Slower"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1568;188:192;1375:5914",
+              "text": "Faster"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1569;188:192;1375:5910",
+              "text": "Consistency"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1569;188:192;1375:5913",
+              "text": "Creative"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1569;188:192;1375:5914",
+              "text": "Consistent"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1570;188:192;1375:5910",
+              "text": "Likeness"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1570;188:192;1375:5913",
+              "text": "Flexible"
+            },
+            {
+              "id": "I2219:22589;2217:1556;2217:1566;1375:5929;2217:1570;188:192;1375:5914",
+              "text": "Faithful"
+            },
+            {
+              "id": "I2219:22589;2217:1556;741:337;161:71",
+              "text": "Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."
+            },
+            {
+              "id": "I2219:22505;773:30;2219:22516;773:8;2219:22518;110:46",
+              "text": "Continue"
+            },
+            {
+              "id": "I2219:22505;773:30;2219:22516;773:8;2219:22519;377:3",
+              "text": "Skip"
+            }
+          ],
+          "forbiddenVisibleText": [],
+          "requiredInstances": [
+            {
+              "node": {
+                "id": "2219:22480",
+                "name": "Lockup/Voice",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "773:22",
+                "name": "Alignment=Center",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "1861:54960",
+                "name": "Lockup",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2219:22520",
+                "2219:22476",
+                "2219:22478",
+                "2219:22479",
+                "2219:22480"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2219:22589",
+                "name": "VoiceControlsContent",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2217:1571",
+                "name": "VoiceControlsContent",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2217:1551",
+                "name": "Shared content · Onboarding & Settings",
+                "type": "SECTION"
+              },
+              "rootToInstancePathIds": [
+                "2219:22520",
+                "2219:22476",
+                "2219:22478",
+                "2219:22479",
+                "2219:22589"
+              ],
+              "requiredProperties": {
+                "Show conversation entry#2217:0": {
+                  "type": "BOOLEAN",
+                  "value": false
+                }
+              }
+            },
+            {
+              "node": {
+                "id": "2219:22505",
+                "name": "ActionArea/Continue",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "773:28",
+                "name": "ActionArea",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "815:48",
+                "name": "VStack/ActionArea Documentation",
+                "type": "FRAME"
+              },
+              "rootToInstancePathIds": [
+                "2219:22520",
+                "2219:22476",
+                "2219:22504",
+                "2219:22505"
+              ],
+              "requiredProperties": {}
+            }
+          ],
+          "childOrderAssertions": [],
+          "reference": {
+            "toolResponse": "raw/2219-22520.json",
+            "context": "raw/2219-22520.txt",
+            "screenshot": "raw/2219-22520.png"
+          }
+        },
+        {
+          "renderKey": "OnboardingVoice-chooser-light",
+          "root": {
+            "id": "2221:83686",
+            "name": "Screen/Voice · Choose a voice",
+            "type": "COMPONENT"
+          },
+          "directParent": {
+            "id": "2213:9346",
+            "name": "04 · Voice · Working states",
+            "type": "SECTION"
+          },
+          "pageToRootPathIds": [
+            "2213:9168",
+            "2213:9346",
+            "2221:83686"
+          ],
+          "requiredRootChildrenInOrder": [
+            "2221:83636",
+            "2221:83637",
+            "2221:83685"
+          ],
+          "textScopeNodeId": "2221:83686",
+          "requiredVisibleTextInOrder": [
+            {
+              "id": "2221:83640",
+              "text": "Choose a voice"
+            },
+            {
+              "id": "I2221:83710;2217:1892",
+              "text": "Preview a voice, then choose the one Rem should use."
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1896;188:192;188:3",
+              "text": "Aria"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1896;188:192;188:4",
+              "text": "Warm"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1897;188:192;188:3",
+              "text": "Sol"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1897;188:192;188:4",
+              "text": "Bright"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1898;188:192;188:3",
+              "text": "Rowan"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1898;188:192;188:4",
+              "text": "Calm"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1899;188:192;188:3",
+              "text": "Juniper"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1899;188:192;188:4",
+              "text": "Expressive"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1900;188:192;188:3",
+              "text": "Vale"
+            },
+            {
+              "id": "I2221:83710;2217:1893;2217:1900;188:192;188:4",
+              "text": "Neutral"
+            },
+            {
+              "id": "I2221:83710;2217:1894",
+              "text": "Your choice follows this agent across your devices. Tap a play button to hear a preview."
+            }
+          ],
+          "forbiddenVisibleText": [],
+          "requiredInstances": [
+            {
+              "node": {
+                "id": "2221:83710",
+                "name": "VoiceChooserContent",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2217:1901",
+                "name": "VoiceChooserContent",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2217:1551",
+                "name": "Shared content · Onboarding & Settings",
+                "type": "SECTION"
+              },
+              "rootToInstancePathIds": [
+                "2221:83686",
+                "2221:83637",
+                "2221:83641",
+                "2221:83710"
+              ],
+              "requiredProperties": {}
+            }
+          ],
+          "childOrderAssertions": [],
+          "reference": {
+            "toolResponse": "raw/2221-83686.json",
+            "context": "raw/2221-83686.txt",
+            "screenshot": "raw/2221-83686.png"
+          }
+        },
+        {
+          "renderKey": "OnboardingVoice-selected-light",
+          "root": {
+            "id": "2219:23081",
+            "name": "Screen/Voice · Voice selected",
+            "type": "COMPONENT"
+          },
+          "directParent": {
+            "id": "2213:9346",
+            "name": "04 · Voice · Working states",
+            "type": "SECTION"
+          },
+          "pageToRootPathIds": [
+            "2213:9168",
+            "2213:9346",
+            "2219:23081"
+          ],
+          "requiredRootChildrenInOrder": [
+            "2219:23036",
+            "2219:23037",
+            "2219:23067"
+          ],
+          "textScopeNodeId": "2219:23081",
+          "requiredVisibleTextInOrder": [
+            {
+              "id": "I2219:23041;773:20",
+              "text": "Choose how Rem sounds"
+            },
+            {
+              "id": "I2219:23041;773:21",
+              "text": "Preview a voice, choose the one Rem uses, then fine-tune its delivery."
+            },
+            {
+              "id": "I2219:23150;2217:1553;741:314;2221:13354;1328:26726",
+              "text": "Hear this voice"
+            },
+            {
+              "id": "I2219:23150;2217:1553;741:314;2221:13354;1328:26727",
+              "text": "Sol"
+            },
+            {
+              "id": "I2219:23150;2217:1555;741:312;161:69",
+              "text": "Spoken responses"
+            },
+            {
+              "id": "I2219:23150;2217:1555;741:314;2221:13360;188:192;188:3",
+              "text": "Voice"
+            },
+            {
+              "id": "I2219:23150;2217:1555;741:314;2221:13360;188:192;188:4",
+              "text": "Sol (Bright)"
+            },
+            {
+              "id": "I2219:23150;2217:1555;741:337;161:71",
+              "text": "Choose how Rem sounds when reading a response or talking with you."
+            },
+            {
+              "id": "I2219:23150;2217:1556;741:312;161:69",
+              "text": "Character & speed"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1568;188:192;1375:5910",
+              "text": "Speed"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1568;188:192;1375:5913",
+              "text": "Slower"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1568;188:192;1375:5914",
+              "text": "Faster"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1569;188:192;1375:5910",
+              "text": "Consistency"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1569;188:192;1375:5913",
+              "text": "Creative"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1569;188:192;1375:5914",
+              "text": "Consistent"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1570;188:192;1375:5910",
+              "text": "Likeness"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1570;188:192;1375:5913",
+              "text": "Flexible"
+            },
+            {
+              "id": "I2219:23150;2217:1556;2217:1566;1375:5929;2217:1570;188:192;1375:5914",
+              "text": "Faithful"
+            },
+            {
+              "id": "I2219:23150;2217:1556;741:337;161:71",
+              "text": "Speed applies to the next thing Rem says. Consistency trades expressive range for a steadier delivery, and likeness controls how closely Rem holds to the chosen voice."
+            },
+            {
+              "id": "I2219:23066;773:30;2219:23077;773:8;2219:23079;110:46",
+              "text": "Continue"
+            },
+            {
+              "id": "I2219:23066;773:30;2219:23077;773:8;2219:23080;377:3",
+              "text": "Skip"
+            }
+          ],
+          "forbiddenVisibleText": [],
+          "requiredInstances": [
+            {
+              "node": {
+                "id": "2219:23041",
+                "name": "Lockup/Voice",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "773:22",
+                "name": "Alignment=Center",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "1861:54960",
+                "name": "Lockup",
+                "type": "COMPONENT_SET"
+              },
+              "rootToInstancePathIds": [
+                "2219:23081",
+                "2219:23037",
+                "2219:23039",
+                "2219:23040",
+                "2219:23041"
+              ],
+              "requiredProperties": {}
+            },
+            {
+              "node": {
+                "id": "2219:23150",
+                "name": "VoiceControlsContent",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "2217:1571",
+                "name": "VoiceControlsContent",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "2217:1551",
+                "name": "Shared content · Onboarding & Settings",
+                "type": "SECTION"
+              },
+              "rootToInstancePathIds": [
+                "2219:23081",
+                "2219:23037",
+                "2219:23039",
+                "2219:23040",
+                "2219:23150"
+              ],
+              "requiredProperties": {
+                "Show conversation entry#2217:0": {
+                  "type": "BOOLEAN",
+                  "value": false
+                }
+              }
+            },
+            {
+              "node": {
+                "id": "2219:23066",
+                "name": "ActionArea/Continue",
+                "type": "INSTANCE"
+              },
+              "mainComponent": {
+                "id": "773:28",
+                "name": "ActionArea",
+                "type": "COMPONENT"
+              },
+              "mainComponentParent": {
+                "id": "815:48",
+                "name": "VStack/ActionArea Documentation",
+                "type": "FRAME"
+              },
+              "rootToInstancePathIds": [
+                "2219:23081",
+                "2219:23037",
+                "2219:23065",
+                "2219:23066"
+              ],
+              "requiredProperties": {}
+            }
+          ],
+          "childOrderAssertions": [],
+          "reference": {
+            "toolResponse": "raw/2219-23081.json",
+            "context": "raw/2219-23081.txt",
+            "screenshot": "raw/2219-23081.png"
+          }
+        }
+      ],
+      "canonicalSlotAssertions": [],
+      "limits": [
+        "Back exits chooser retaining controlled state; outer Back/Continue/Skip are host callbacks for bounded playground only; no authored downstream destination claim.",
+        "Reuse VoiceControlsContent2217:1571 with Show conversation entry=false and VoiceChooserContent2217:1901.",
+        "No actual audio service or exploratory conversational context-gathering replacement."
+      ]
+    }
+  ]
+}
