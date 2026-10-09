@@ -142,6 +142,10 @@ class PlaygroundNavigationTest {
         capture("Catalog-agenda-light")
         compose.onNodeWithTag("catalog.suggestion.restore").performClick()
         compose.onNodeWithTag("catalog.suggestion.accept.add").assertExists()
+        // SuggestionSection bounds inline rows at three; See more reveals the fourth.
+        compose.onNodeWithText("Book the venue for the offsite").assertDoesNotExist()
+        compose.onNodeWithText("See more").performScrollTo().performClick()
+        compose.onNodeWithText("Book the venue for the offsite").performScrollTo().assertExists()
     }
 
     @Test fun catalogChatComposerSendsMessage() {
@@ -169,6 +173,7 @@ class PlaygroundNavigationTest {
         capture("Catalog-brand-light")
         compose.onNodeWithTag("catalog.emptyReset").performClick()
         compose.onNodeWithText("Add New").assertExists()
+        compose.onNodeWithContentDescription("Google").performScrollTo().assertExists()
     }
 
     /** Continue from Sign in walks every established step, in order, to the completion state. */

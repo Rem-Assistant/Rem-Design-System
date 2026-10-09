@@ -159,6 +159,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         capture("Catalog-brand-light")
         tap("catalog.emptyReset")
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Add New")).firstMatch.waitForExistence(timeout: 2))
+        XCTAssertTrue(app.descendants(matching: .any)["catalog.providerMarks"].firstMatch.exists, "Provider marks render")
     }
 
     // MARK: Onboarding

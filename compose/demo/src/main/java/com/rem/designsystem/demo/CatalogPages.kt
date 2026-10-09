@@ -71,6 +71,11 @@ import com.rem.designsystem.rows.DisclosureChevron
 import com.rem.designsystem.rows.ListRow
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.rows.SuggestionAccept
+import com.rem.designsystem.rows.SuggestionSection
+import com.rem.designsystem.rows.TaskSuggestion
+import com.rem.designsystem.onboarding.RemBrandGlyphs
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
 import com.rem.designsystem.rows.TaskEventKind
 import com.rem.designsystem.rows.TaskEventLeading
 import com.rem.designsystem.rows.TaskEventRow
@@ -176,6 +181,13 @@ private val catalogSuggestions = listOf(
     CatalogSuggestion("move", SuggestionAccept.Move, "Reply to the venue", "Due today · Move to 3:00 PM"),
 )
 
+private val catalogSectionSuggestions = listOf(
+    TaskSuggestion("Set up the TestFlight pipeline", "From Granola · 8h ago"),
+    TaskSuggestion("Confirm the Compose UI renders", "From Granola · 8h ago"),
+    TaskSuggestion("Reply to the venue about the deposit", "Overdue 3d", accept = SuggestionAccept.Move),
+    TaskSuggestion("Book the venue for the offsite", "From Slack · Today"),
+)
+
 @Composable
 internal fun CatalogAgenda() {
     var dayOffset by rememberSaveable { mutableIntStateOf(0) }
@@ -208,6 +220,22 @@ internal fun CatalogAgenda() {
             }
             if (resolved.isNotEmpty()) {
                 TextButton(onClick = { resolved = emptyMap() }, modifier = Modifier.testTag("catalog.suggestion.restore")) { Text("Restore") }
+            }
+        }
+        // Compose-only: the SwiftUI sibling (SharedSuggestionSection) lives in the app, not the design system.
+        CatalogGroup("Suggestion section") {
+            var remaining by remember { mutableStateOf(catalogSectionSuggestions) }
+            var expanded by rememberSaveable { mutableStateOf(false) }
+            SuggestionSection(
+                suggestions = remaining,
+                onAccept = { accepted -> remaining = remaining - accepted },
+                onDismiss = { dismissed -> remaining = remaining - dismissed },
+                inlineLimit = if (expanded) remaining.size else 3,
+                onSeeMore = { expanded = true },
+                modifier = Modifier.testTag("catalog.suggestionSection"),
+            )
+            if (remaining.size < catalogSectionSuggestions.size || expanded) {
+                TextButton(onClick = { remaining = catalogSectionSuggestions; expanded = false }, modifier = Modifier.testTag("catalog.section.reset")) { Text("Reset") }
             }
         }
     }
@@ -317,6 +345,12 @@ internal fun CatalogBrand() {
         }
         CatalogGroup("App icon") {
             RemAppIcon(size = 64.dp, cornerRadius = RemRadius.large)
+        }
+        CatalogGroup("Provider marks") {
+            Row(Modifier.testTag("catalog.providerMarks"), horizontalArrangement = Arrangement.spacedBy(RemSpacing.md), verticalAlignment = Alignment.CenterVertically) {
+                Image(imageVector = RemBrandGlyphs.GoogleG, contentDescription = "Google", modifier = Modifier.size(26.dp))
+                ConnectorProvider.entries.forEach { ConnectorProviderMark(it) }
+            }
         }
         CatalogGroup("Empty state") {
             if (added) {

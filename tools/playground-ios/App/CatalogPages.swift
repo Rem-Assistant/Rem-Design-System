@@ -285,6 +285,17 @@ struct CatalogBrand: View {
             CatalogGroup(title: "App icon") {
                 RemAppIcon(size: 64, cornerRadius: DesignTokens.CornerRadius.large)
             }
+            CatalogGroup(title: "Provider marks") {
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    RemGoogleGlyph(size: 26)
+                        .accessibilityLabel("Google")
+                    ForEach(ConnectorProvider.allCases) { provider in
+                        ConnectorProviderMark(provider)
+                    }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("catalog.providerMarks")
+            }
             CatalogGroup(title: "Empty state") {
                 if added {
                     TaskEventRow(kind: .task, title: "New task", leading: .schedule, showPills: false)
