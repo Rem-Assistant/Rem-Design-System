@@ -133,7 +133,8 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let window = app.windows.firstMatch
         let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.35 : 0.65))
         let to = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.65 : 0.35))
-        for _ in 0..<24 where !(element.exists && element.isHittable) {
+        for _ in 0..<24 {
+            if element.exists && element.isHittable { break }
             from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(element.exists && element.isHittable, "Expected reachable content: \(anchor)")
