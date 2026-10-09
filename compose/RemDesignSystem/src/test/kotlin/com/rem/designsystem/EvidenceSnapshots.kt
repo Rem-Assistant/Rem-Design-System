@@ -67,6 +67,8 @@ import com.rem.designsystem.screens.WalletScreen
 import com.rem.designsystem.screens.walletReferenceProviders
 import com.rem.designsystem.screens.SettingsReferenceContent
 import com.rem.designsystem.agentsurfaces.DailyBriefCard
+import com.rem.designsystem.buttons.RemButton
+import com.rem.designsystem.buttons.RemButtonVariant
 import com.rem.designsystem.agentsurfaces.BriefCounts
 import com.rem.designsystem.rows.SuggestionSection
 import com.rem.designsystem.rows.TaskSuggestion
@@ -109,6 +111,24 @@ class EvidenceSnapshots {
 
     private fun shot(name: String, content: @Composable () -> Unit) =
         paparazzi.snapshot(name = name, composable = content)
+
+    // Pairs with the SwiftUI `RemButton-light` / `RemButton-dark` gallery: every variant, then Disabled.
+    @Test
+    fun remButton() {
+        shot("RemButton-light") { RemTheme { buttonGallery() } }
+        shot("RemButton-dark") { RemTheme(darkTheme = true) { buttonGallery() } }
+    }
+
+    @Composable
+    private fun buttonGallery() {
+        Column(
+            Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            RemButtonVariant.entries.forEach { RemButton(it.figmaStyleName, onClick = {}, variant = it) }
+            RemButton("Disabled", onClick = {}, enabled = false)
+        }
+    }
 
     @Test
     fun containedIcon() {

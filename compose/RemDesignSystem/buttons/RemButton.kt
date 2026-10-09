@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -22,12 +24,14 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
+import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
 
 /**
@@ -148,5 +152,16 @@ internal fun remButtonTokens(variant: RemButtonVariant, size: RemButtonSize): Re
             foregroundDisabled = colors.labelSecondary,
             pressedOpacity = 0.7f,
         )
+    }
+}
+
+@Preview(name = "RemButton — all variants", showBackground = true, widthDp = 300)
+@Composable
+private fun RemButtonPreview() {
+    RemTheme {
+        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            RemButtonVariant.entries.forEach { RemButton(it.figmaStyleName, onClick = {}, variant = it) }
+            RemButton("Disabled", onClick = {}, enabled = false)
+        }
     }
 }

@@ -131,6 +131,28 @@ final class RenderSnapshots: XCTestCase {
         render("RunningTaskBanner-light", width: 440, height: nil, dark: false) { runningTaskBanners }
         render("BrowserLiveCard-light", width: 380, height: nil, dark: false) { browserLiveCards }
         render("ExecutionTrace-light", width: 430, height: nil, dark: false) { executionTrace }
+        // Pair with the Compose `DailyBriefCard-light` / `SuggestionSection-light` shots.
+        render("DailyBriefCard-light", width: 402, height: nil, dark: false) {
+            DailyBriefCard(
+                title: "Daily brief",
+                summary: "Sent to damilola.ogunnaike@gmail.com at 9:37 am — “Hi Damilola, I’ll send you the notes from yesterday’s call before 2pm. Best, Larissa.” 1 task overdue needs attention.",
+                onTap: {}, onRead: {}
+            )
+            .padding(16)
+            .background(DesignTokens.Color.backgroundPrimary)
+        }
+        render("SuggestionSection-light", width: 402, height: nil, dark: false) {
+            SuggestionSection(
+                suggestions: [
+                    AgendaSuggestionItem(id: "testflight", action: .add, title: "Set up the TestFlight pipeline using ASC CLI", metadata: "Samuel · Granola · 8h ago"),
+                    AgendaSuggestionItem(id: "compose", action: .add, title: "Pull the Claude/DSFlows branch and confirm the Compose UI renders", metadata: "Damilola · Granola · 8h ago"),
+                    AgendaSuggestionItem(id: "deposit", action: .move, title: "Reply to the venue about the deposit", metadata: "‘Confirm Saturday’ · overdue 3d"),
+                ],
+                onAccept: { _ in }, onDismiss: { _ in }, onSeeMore: {}
+            )
+            .padding(16)
+            .background(DesignTokens.Color.backgroundPrimary)
+        }
         render("WalletScreen-light", width: 402, height: 900, dark: false) { walletScreen() }
         // Check-in cadence states, keyed to pair with the Compose `Checkin-*` shots. Default has only
         // Morning on; the edited/saving/saved/failure set carries the added Midday selection so the
