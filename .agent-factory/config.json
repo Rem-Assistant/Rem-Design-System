@@ -109,6 +109,11 @@
     "allowed_base_branches": [
       "main",
       "codex/playground-expansion"
-    ]
+    ],
+    "legacy_publication_heads": {
+      "86": "38a259960f64156e3e30881ded06093c8c8fadca",
+      "87": "e710f71bc8371e19afd2359d1f29e606512c8a4b",
+      "92": "220962cd8751baa8afbfc71ea7f426e9d3dfb3dd"
+    }
   }
 }

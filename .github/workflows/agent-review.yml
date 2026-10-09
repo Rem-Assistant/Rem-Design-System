@@ -28,11 +28,11 @@ jobs:
       (github.actor == 'agent-factory-builder[bot]' && github.event.changes.body &&
       (contains(github.event.pull_request.body, 'builder-delivery-status:ready') ||
       contains(github.event.pull_request.body, 'builder-delivery-status:failed')))))
-    uses: samuelalake/agent-factory/.github/workflows/review.yml@9a77601d21c33708a9bfb2eeea2070ac7b819ea8
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
       validated_routing: true
-      factory_ref: 9a77601d21c33708a9bfb2eeea2070ac7b819ea8
+      factory_ref: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
       reviewer_app_id: ${{ vars.AGENT_FACTORY_REVIEWER_APP_ID }}
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
@@ -42,3 +42,10 @@ jobs:
       AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY }}
       AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
       AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
+  review-gate:
+    needs: review
+    uses: samuelalake/agent-factory/.github/workflows/gate.yml@bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
+    with:
+      pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
+      validated_routing: true
+      factory_ref: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8

@@ -183,6 +183,22 @@ def prepare(root: Path, head: str, conclusion: str, changed: list[str], contract
     if run_url is not None and not re.fullmatch(
             r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/actions/runs/[1-9][0-9]*", run_url):
         raise ValueError("A GitHub Actions run URL is required")
+    if primary_contract == 'factory-routing':
+        # A bounded engineering proof, never a waiver for UI or design-contract changes.
+        if not changed or set(changed) != {'docs/agent-factory/routing-smoke.md'}:
+            raise ValueError('factory-routing permits only its routing smoke document')
+        if not run_url:
+            raise ValueError('factory-routing requires its exact-head CI run URL')
+        status = 'ready' if conclusion == 'success' else 'failed'
+        body = '\n'.join([
+            '<!-- agent-factory:builder-delivery-evidence:not-applicable -->',
+            '### Engineering routing proof', '',
+            f'Candidate head: `{head}`', f'Verification: [{conclusion}]({run_url})', '',
+            'Figma and product-design acceptance are **not applicable**. This exact-head',
+            'run verifies the routing smoke document and existing native render checks.',
+            'It does not claim a new UI, design-system, or distribution delivery.',
+        ])
+        return status, body, []
     pairs: dict[str, dict[str, Path]] = {}
     for platform in ("swiftui", "compose"):
         for key, path in _evidence(root, platform).items():
