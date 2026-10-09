@@ -17,8 +17,11 @@ import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.onboarding.CheckinStatus
 import com.rem.designsystem.onboarding.LegalDocumentScreen
+import com.rem.designsystem.onboarding.OnboardingCheckinScreen
 import com.rem.designsystem.onboarding.OnboardingSequencer
+import com.rem.designsystem.onboarding.checkinDefaultPeriods
 import com.rem.designsystem.onboarding.OnboardingSignInScreen
 import com.rem.designsystem.onboarding.SignInState
 import com.rem.designsystem.onboarding.consentStep
@@ -207,6 +210,68 @@ class EvidenceSnapshots {
                 state = SignInState.Recovery("Your session expired. Sign in again to pick up where you left off."),
                 onContinue = {},
                 onUseDifferentAccount = {},
+            )
+        }
+    }
+
+    // Check-in cadence states — the Compose siblings of the SwiftUI `Checkin-*` shots, one state per
+    // snapshot so the paired table diffs each state directly.
+    @Test
+    fun checkinDefault() = shot("Checkin-default-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Default,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = false, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinEdited() = shot("Checkin-edited-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Edited,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinSaving() = shot("Checkin-saving-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Saving,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinSaved() = shot("Checkin-saved-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Saved,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinFailure() = shot("Checkin-failure-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Failure("We couldn't save your check-in times. Check your connection and try again."),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
             )
         }
     }

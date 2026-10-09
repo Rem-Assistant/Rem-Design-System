@@ -1,5 +1,19 @@
 import SwiftUI
 
+/// Semantic visual emphasis for a row. Callers describe intent while `ListRow` owns the shared
+/// foundation treatment, keeping state styling consistent across every row composition.
+public enum ListRowEmphasis: Sendable {
+    case standard
+    case deemphasized
+
+    fileprivate var opacity: Double {
+        switch self {
+        case .standard: 1
+        case .deemphasized: DesignTokens.Opacity.deemphasized
+        }
+    }
+}
+
 /// The canonical list row **content**: **[Leading accessory] · Title/Subtitle · [Trailing accessory]**.
 /// Figma canonical: **ListRow** (`101:18`) + **ListRowLabel** (`188:2`).
 ///
@@ -19,6 +33,7 @@ public struct ListRow<Leading: View, Trailing: View>: View {
     let title: String
     let subtitle: String?
     let action: (() -> Void)?
+    let emphasis: ListRowEmphasis
     let leading: () -> Leading
     let trailing: () -> Trailing
     private var settingsContent: AnyView?
@@ -29,12 +44,14 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         _ title: String,
         subtitle: String? = nil,
         action: (() -> Void)? = nil,
+        emphasis: ListRowEmphasis = .standard,
         @ViewBuilder leading: @escaping () -> Leading,
         @ViewBuilder trailing: @escaping () -> Trailing
     ) {
         self.title = title
         self.subtitle = subtitle
         self.action = action
+        self.emphasis = emphasis
         self.leading = leading
         self.trailing = trailing
     }
@@ -51,6 +68,7 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         self.title = ""
         self.subtitle = nil
         self.action = nil
+        self.emphasis = .standard
         self.leading = leading
         self.trailing = trailing
         self.settingsContent = AnyView(content())
@@ -60,10 +78,10 @@ public struct ListRow<Leading: View, Trailing: View>: View {
 
     public var body: some View {
         if let action {
-            Button(action: action) { rowContent }
+            Button(action: action) { rowContent.opacity(emphasis.opacity) }
                 .buttonStyle(.plain)
         } else {
-            rowContent
+            rowContent.opacity(emphasis.opacity)
         }
     }
 

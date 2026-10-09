@@ -1,8 +1,8 @@
 ---
 component: Toast
 group: general
-mirrors: RemToast (compact transient notice)
-status: draft
+mirrors: RemToast (SwiftUI and Compose compact transient feedback)
+status: canonical
 rules:
   - id: transient-nonactionable
     do: "Use Toast for a brief, non-blocking confirmation or notice ('Reconnected', 'Task added')."
@@ -35,6 +35,7 @@ capsule. For brief confirmations ("Reconnected", "Task added").
 |---|---|
 | `variant` | `info` · `success` · `warning` · `error` |
 | `message` | the text (required) |
+| `duration` | auto-dismiss delay; 4 seconds by default |
 
 ## Do's & don'ts
 | ✅ Do | 🚫 Don't |
@@ -54,4 +55,11 @@ capsule. For brief confirmations ("Reconnected", "Task added").
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `variant` | `info\|success\|warning\|error` | `info` | Semantic glyph + tint |
-| `message` | `ReactNode` | — | The notice (required) |
+| `message` | `String` | — | The notice (required) |
+| `duration` / `durationMillis` | `Duration` / `Long` | 4 seconds | Auto-dismiss delay |
+| `onDismiss` | closure | no-op | Called after automatic dismissal |
+
+## Platform documentation
+- SwiftUI: ``RemToast`` and ``RemToastVariant`` carry DocC comments and a four-variant preview.
+- Compose: `RemToast` and `RemToastVariant` carry KDoc and a polite live-region contract.
+- Figma: canonical set `72:24`; Code Connect maps `Variant` and `Message` to both implementations.

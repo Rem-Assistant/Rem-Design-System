@@ -16,9 +16,7 @@
   "onboarding-checkin": {
     "paths": [
       "Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift",
-      "Sources/RemDesignSystem/Controls/RemSwitch.swift",
       "compose/RemDesignSystem/onboarding/CheckinStep.kt",
-      "compose/RemDesignSystem/controls/RemSwitch.kt",
       "tokens/**"
     ],
     "states": [
@@ -60,18 +58,11 @@
       }
     },
     "waypoints": {
-      "checkin-component-set": {
-        "name": "Checkin-component-set",
-        "node": "876:1121"
-      },
-      "checkin-flow-documentation": {
-        "name": "Checkin-flow-documentation",
-        "node": "890:1502"
-      },
-      "checkin-prototype": {
-        "name": "Checkin-prototype",
-        "node": "885:1121"
-      }
+      "checkin-component-set": { "name": "Checkin-component-set", "node": "876:1121" },
+      "checkin-flow-documentation": { "name": "Checkin-flow-documentation", "node": "890:1502" },
+      "checkin-prototype": { "name": "Checkin-prototype", "node": "885:1121" },
+      "checkin-picker-presentations": { "name": "Checkin-picker-presentations", "node": "932:4350" },
+      "time-picker-composition": { "name": "Time-picker-composition", "node": "939:258" }
     }
   },
   "onboarding-consent": {

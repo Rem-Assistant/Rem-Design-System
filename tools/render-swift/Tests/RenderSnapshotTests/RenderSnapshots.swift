@@ -132,6 +132,29 @@ final class RenderSnapshots: XCTestCase {
         render("BrowserLiveCard-light", width: 380, height: nil, dark: false) { browserLiveCards }
         render("ExecutionTrace-light", width: 430, height: nil, dark: false) { executionTrace }
         render("WalletScreen-light", width: 402, height: 900, dark: false) { walletScreen() }
+        // Check-in cadence states, keyed to pair with the Compose `Checkin-*` shots. Default has only
+        // Morning on; the edited/saving/saved/failure set carries the added Midday selection so the
+        // states are visibly distinct in the paired table.
+        render("Checkin-default-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .default, morningOn: true, middayOn: false, nightOn: false)
+        }
+        render("Checkin-edited-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .edited, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-saving-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saving, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-saved-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saved, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-failure-light", width: 393, height: 852, dark: false) {
+            checkinScreen(
+                status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
+                morningOn: true,
+                middayOn: true,
+                nightOn: false
+            )
+        }
     }
 
     // MARK: - Wave 4 galleries (agent surfaces) + Wallet
@@ -353,6 +376,28 @@ final class RenderSnapshots: XCTestCase {
         }
         .padding(20)
         .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // The REAL onboarding Check-in template, one state per snapshot.
+    private func checkinScreen(
+        status: OnboardingCheckinTemplate.Status,
+        morningOn: Bool,
+        middayOn: Bool,
+        nightOn: Bool
+    ) -> some View {
+        OnboardingCheckinTemplate(
+            status: status,
+            // Through the real cadence adapter — the Evening row carries the canonical `night` slot id.
+            periods: OnboardingCheckinTemplate.periods(
+                from: OnboardingCheckinTemplate.defaultCadence(
+                    morningOn: morningOn,
+                    middayOn: middayOn,
+                    nightOn: nightOn
+                ),
+                onToggle: { _, _ in }
+            ),
+            onPrimary: {}
+        )
     }
 
     // MARK: - Galleries (mirror each component's #Preview)

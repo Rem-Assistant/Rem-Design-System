@@ -38,8 +38,11 @@ optional hairline `separator` beneath.
 | `subtitle` | node |
 | `trailing` | node (chevron/Pill/Button/value) |
 | `separator` | boolean |
+| `emphasis` | standard / deemphasized |
 
-States: default, and (via trailing content) navigable (chevron) / actionable (Button) / status (Pill).
+States: standard or semantically deemphasized, plus (via trailing content) navigable (chevron) /
+actionable (Button) / status (Pill). Use `deemphasized` when a parent workflow temporarily locks a
+row; the canonical row maps that intent to the shared foundation opacity token.
 
 ## Do's & don'ts
 | ✅ Do | 🚫 Don't |
@@ -54,7 +57,8 @@ States: default, and (via trailing content) navigable (chevron) / actionable (Bu
 - Trailing chevron is decorative — the title conveys the destination.
 
 ## Tokens used
-- `spacing.*` (row insets), `color.separator` (hairline), `color.label.*` (title/subtitle)
+- `spacing.*` (row insets), `color.separator` (hairline), `color.label.*` (title/subtitle),
+  `opacity.deemphasized` (locked-state emphasis)
 
 ## API
 | Prop | Type | Default | Description |
@@ -64,3 +68,4 @@ States: default, and (via trailing content) navigable (chevron) / actionable (Bu
 | `subtitle` | `ReactNode` | — | Secondary label |
 | `trailing` | `ReactNode` | — | Trailing accessory |
 | `separator` | `boolean` | — | Show hairline under the row |
+| `emphasis` | `standard \| deemphasized` | `standard` | Semantic visual emphasis owned by ListRow |
