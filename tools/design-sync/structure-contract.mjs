@@ -85,6 +85,23 @@ export function validateStructureContract(contract, { expectedFileKey } = {}) {
   node(screenComponents.id, 'screenComponents.id', true);
   string(screenComponents.type, 'screenComponents.type', { max: 100 });
   string(screenComponents.name, 'screenComponents.name');
+  array(screenComponents.rootOrder, 'screenComponents.rootOrder', { min: 1, max: 20 })
+    .forEach((entry, index) => string(entry, `screenComponents.rootOrder[${index}]`, { max: 100 }));
+  array(screenComponents.hierarchyScreenIds, 'screenComponents.hierarchyScreenIds', { min: 1, max: 50 })
+    .forEach((entry, index) => node(entry, `screenComponents.hierarchyScreenIds[${index}]`, true));
+  const screenBody = object(screenComponents.body, 'screenComponents.body');
+  if (!Number.isFinite(screenBody.padding) || screenBody.padding < 0 || screenBody.padding > 1_000) {
+    throw new Error('screenComponents.body.padding is invalid');
+  }
+  string(screenBody.layoutSizingHorizontal, 'screenComponents.body.layoutSizingHorizontal', { max: 100 });
+  string(screenBody.layoutSizingVertical, 'screenComponents.body.layoutSizingVertical', { max: 100 });
+  string(screenBody.primaryAxisAlignItems, 'screenComponents.body.primaryAxisAlignItems', { max: 100 });
+  array(screenBody.children, 'screenComponents.body.children', { min: 1, max: 20 })
+    .forEach((entry, index) => string(entry, `screenComponents.body.children[${index}]`, { max: 100 }));
+  if (screenBody.actionAreaOwnsOuterInset !== false) {
+    throw new Error('screenComponents.body.actionAreaOwnsOuterInset must be false');
+  }
+  string(screenBody.actionAreaName, 'screenComponents.body.actionAreaName', { max: 100 });
   array(screenComponents.screens, 'screenComponents.screens', { min: 1, max: 50 }).forEach((entry, index) => {
     object(entry, `screenComponents.screens[${index}]`);
     node(entry.id, `screenComponents.screens[${index}].id`, true);
@@ -110,6 +127,12 @@ export function validateStructureContract(contract, { expectedFileKey } = {}) {
         object(binding, `textStyleBindings[${bindingIndex}]`);
         node(binding.id, `textStyleBindings[${bindingIndex}].id`, true);
         string(binding.name, `textStyleBindings[${bindingIndex}].name`);
+      });
+    array(checks.variableBindings ?? [], `componentQuality.components[${index}].checks.variableBindings`, { max: 100 })
+      .forEach((binding, bindingIndex) => {
+        object(binding, `variableBindings[${bindingIndex}]`);
+        node(binding.id, `variableBindings[${bindingIndex}].id`, true);
+        string(binding.name, `variableBindings[${bindingIndex}].name`);
       });
   });
 

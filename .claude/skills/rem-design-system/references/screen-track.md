@@ -87,6 +87,13 @@ explains it.
   `ActionArea`, and `NavigationIndicator`. Within those regions, use SwiftUI-first names for generic
   layout (`VStack`, `HStack`, `ZStack`, `LazyVStack`, `LazyHStack`). The cross-platform docs map
   those to Compose `Column`, `Row`, `Box`, `LazyColumn`, and `LazyRow`.
+- **Full-device root order is semantic.** Use sibling regions in source order:
+  `StatusBar`, optional `TopBar`, `Body`, `NavigationIndicator`. `Body` fills the remaining width and
+  height, owns the screen's 24-point outer inset, and contains `VStack/Content` plus
+  `VStack/Actions`. Put the canonical `ActionArea` inside `VStack/Actions`; turn off its Footnote
+  property when the screen has no supporting copy. `ActionArea` owns no screen inset. Keep
+  `NavigationIndicator` outside Body as device chrome. Follow the product contract for top versus
+  center alignment; use auto-layout `SPACE_BETWEEN` rather than an empty spacer frame.
 - **Use auto spacing, not empty spacer frames.** Group the top and bottom regions semantically and
   use `SPACE_BETWEEN` on their parent. Empty frames whose only purpose is vertical or horizontal
   space are invalid because they obscure intent and break when content changes.
@@ -116,6 +123,10 @@ recipe.
   divider, flow rows, and spacing. After any child is added, removed, or reordered, refit the native
   Section bounds to `Content` with the established outer inset. Place pairs on a non-overlapping
   grid and verify bounds. The structure contract lists the exact allowed top-level nodes.
+  Native Figma Sections never reflow their children by themselves; the transparent Content frame is
+  the layout engine. The same rule applies to the canonical-screen inventory: place its masters in
+  one auto-layout HStack/VStack so deleting or inserting a screen heals spacing automatically, then
+  refit the native Section bounds.
 
 - **Component-family pages:** use `Component Documentation` (`663:2270`) for every new or changed
   canonical component. Arrange the family as a horizontal auto-layout row of vertical columns. Each

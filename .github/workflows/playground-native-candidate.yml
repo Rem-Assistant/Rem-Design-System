@@ -1,0 +1,265 @@
+name: Playground native candidate (no distribution)
+run-name: ${{ (inputs.ios_tests != '' || inputs.android_tests != '') && 'Targeted native check (not evidence)' || github.workflow }}
+
+on:
+  pull_request:
+    branches: [agent-factory/playground-issue-84]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full approved SHA; must equal the selected workflow revision
+        type: string
+        required: true
+      # Targeted iteration only. Either input runs just the named tests on that platform (the other
+      # platform is skipped), records no test receipt, uploads nothing, and skips native-evidence,
+      # so a targeted run can never stand in for the full native evidence.
+      ios_tests:
+        description: 'Targeted iOS run (not evidence): comma-separated testMethod or Class/testMethod'
+        type: string
+        default: ''
+      android_tests:
+        description: 'Targeted Android run (not evidence): comma-separated fully.qualified.Class#method'
+        type: string
+        default: ''
+
+# Unprivileged candidate validation only; no signing credentials, app uploads, or publisher.
+# The existing screenshots/publisher trust contract is intentionally unchanged.
+permissions:
+  contents: read
+
+concurrency:
+  # Targeted runs use their own group, so iterating never cancels a full evidence run.
+  group: playground-native-${{ github.event.pull_request.number || github.ref }}${{ (inputs.ios_tests != '' || inputs.android_tests != '') && '-targeted' || '' }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  TARGETED: ${{ inputs.ios_tests != '' || inputs.android_tests != '' }}
+
+jobs:
+  preflight:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'codex/playground-local-delivery-draft')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Pin requested candidate to this workflow revision
+        env:
+          REQUESTED_SHA: ${{ inputs.source_sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            test "$REQUESTED_SHA" = "$SOURCE_SHA"
+          fi
+          python3 tools/playground-delivery/delivery.py preflight --sha "$SOURCE_SHA"
+      - run: python3 -m unittest discover -s tools/playground-delivery -p 'test_*.py'
+
+  # The iOS suite runs as three parallel shards (each ~1/3 of the methods, assigned from source by
+  # delivery.py), so a full run takes ~15 minutes instead of ~40. ios-evidence then requires the
+  # shards' union to equal the exact source method set before any iOS evidence exists. A targeted
+  # run uses a single shard for its named tests.
+  ios:
+    needs: preflight
+    if: inputs.android_tests == '' || inputs.ios_tests != ''
+    runs-on: macos-14
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON((inputs.ios_tests != '' || inputs.android_tests != '') && '[0]' || '[0, 1, 2]') }}
+    env:
+      SHARD_COUNT: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Select this shard's methods
+        if: env.TARGETED != 'true'
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          tests=$(python3 tools/playground-delivery/delivery.py shard --sha "$SOURCE_SHA" --platform ios --index "$SHARD" --count "$SHARD_COUNT")
+          test -n "$tests"
+          echo "SHARD_TESTS=$tests" >> "$GITHUB_ENV"
+      - name: Run this shard's iOS native journeys
+        env:
+          TARGETED_TESTS: ${{ inputs.ios_tests }}
+        run: IOS_TEST="${TARGETED_TESTS:-${SHARD_TESTS:-}}" bash tools/playground-ios/run-hosted-journeys.sh
+      # Diagnostics only: repeat each failure and its printed screen state at the end of the log,
+      # where a long run's early failures are otherwise far from the summary.
+      - name: Repeat failure diagnostics
+        if: failure()
+        run: |
+          log="$RUNNER_TEMP/settings-ios-build.log"
+          [ -f "$log" ] || exit 0
+          grep -E 'error: |Test Case .* failed' "$log" | tail -n 40 || true
+          awk '/\[(focus|failure)-diagnostic\]/{p=1} p{print} /\[\/(focus|failure)-diagnostic\]/{p=0}' "$log" | head -c 60000 || true
+      # run-hosted-journeys.sh tees XCTest output to settings-ios-build.log.
+      - name: Verify every method assigned to this shard passed
+        if: env.TARGETED != 'true'
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python3 tools/playground-delivery/delivery.py check-shard --sha "$SOURCE_SHA" --platform ios --index "$SHARD" --count "$SHARD_COUNT" --report "$RUNNER_TEMP/settings-ios-build.log"
+          mkdir -p "$RUNNER_TEMP/shard"
+          cp "$RUNNER_TEMP/settings-ios-build.log" "$RUNNER_TEMP/shard/ios-shard-$SHARD.log"
+          xcodebuild -version > "$RUNNER_TEMP/shard/toolchain-$SHARD.txt"
+      # The shard's test log only: ios-evidence turns the complete set of shard logs into evidence.
+      - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
+        with:
+          # Named by attempt: a re-run of one failed shard cannot be combined with older shards.
+          name: ios-shard-${{ matrix.shard }}-${{ env.SOURCE_SHA }}-a${{ github.run_attempt }}
+          path: ${{ runner.temp }}/shard/
+          if-no-files-found: error
+      # Visual review copies of the journeys' own XCTest attachments (same extraction as
+      # screenshots.yml), exported only after this shard's methods are verified as all passed.
+      - name: Export journey screenshots
+        # Optional visual copy: a failure here means missing visual proof, never a failed record.
+        if: env.TARGETED != 'true'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          out="$RUNNER_TEMP/ios-screenshots"
+          mkdir -p "$out" "$RUNNER_TEMP/ios-attachments"
+          xcparse attachments "$RUNNER_TEMP/SettingsPlayground.xcresult" "$RUNNER_TEMP/ios-attachments"
+          find "$RUNNER_TEMP/ios-attachments" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f")
+            cp "$f" "$out/${b%%_*}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
+        continue-on-error: true
+        with:
+          name: ios-screenshots-${{ env.SOURCE_SHA }}-shard${{ matrix.shard }}
+          path: ${{ runner.temp }}/ios-screenshots/*.png
+          if-no-files-found: warn
+
+  # Combines the shard logs: every shard must have succeeded, no method may repeat, and together
+  # they must equal the exact source method set. Only then is ios-native-<sha> recorded.
+  ios-evidence:
+    needs: ios
+    if: inputs.ios_tests == '' && inputs.android_tests == ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'ios-shard-*-${{ env.SOURCE_SHA }}-a${{ github.run_attempt }}'
+          path: ${{ runner.temp }}/shards
+          merge-multiple: true
+      - name: Verify every expected method actually passed
+        run: |
+          # One toolchain for the whole record: every shard must report the same Xcode.
+          for f in "$RUNNER_TEMP"/shards/toolchain-*.txt; do cmp "$RUNNER_TEMP/shards/toolchain-0.txt" "$f"; done
+          python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform ios --report "$RUNNER_TEMP"/shards/ios-shard-*.log --toolchain "$RUNNER_TEMP/shards/toolchain-0.txt" --output "$RUNNER_TEMP/ios-native.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-native-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/ios-native.json
+          if-no-files-found: error
+
+  android:
+    needs: preflight
+    if: inputs.ios_tests == '' || inputs.android_tests != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify the actual checked-in wrapper
+        working-directory: compose
+        run: |
+          ./gradlew --version > "$RUNNER_TEMP/toolchain.txt"
+          grep -q '^Gradle 8.14.4$' "$RUNNER_TEMP/toolchain.txt"
+          java -version >> "$RUNNER_TEMP/toolchain.txt" 2>&1
+      - name: Validate targeted Android tests
+        if: env.TARGETED == 'true'
+        env:
+          ANDROID_TESTS: ${{ inputs.android_tests }}
+        run: |
+          [[ "$ANDROID_TESTS" =~ ^[a-z][a-z0-9_.]*\.[A-Z][A-Za-z0-9_]*(#[a-z][A-Za-z0-9_]*)?(,[a-z][a-z0-9_.]*\.[A-Z][A-Za-z0-9_]*(#[a-z][A-Za-z0-9_]*)?)*$ ]] || { echo 'Invalid Android test list.' >&2; exit 2; }
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ANDROID_TESTS: ${{ inputs.android_tests }}
+        with:
+          api-level: 34
+          arch: x86_64
+          disable-animations: true
+          working-directory: compose
+          script: |
+            ./gradlew :demo:connectedDebugAndroidTest -PplaygroundSourceSha="$SOURCE_SHA" ${ANDROID_TESTS:+-Pandroid.testInstrumentationRunnerArguments.class=$ANDROID_TESTS} --stacktrace --no-daemon
+            mkdir -p "$RUNNER_TEMP/android-screenshots" && adb pull /sdcard/Pictures/RemSettingsPlayground/. "$RUNNER_TEMP/android-screenshots/" || true
+      - name: Verify every expected method actually passed
+        if: env.TARGETED != 'true'
+        run: python3 tools/playground-delivery/delivery.py record-tests --sha "$SOURCE_SHA" --platform android --report compose/demo/build/outputs/androidTest-results --toolchain "$RUNNER_TEMP/toolchain.txt" --output "$RUNNER_TEMP/android-native.json"
+      - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
+        with:
+          name: android-native-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/android-native.json
+          if-no-files-found: error
+      # Visual review copies of the journeys' own captures, pulled inside the emulator step before
+      # teardown into $RUNNER_TEMP (never the checkout) and uploaded only after a passing record.
+      - uses: actions/upload-artifact@v4
+        if: env.TARGETED != 'true'
+        continue-on-error: true
+        with:
+          name: android-screenshots-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/android-screenshots/*.png
+          if-no-files-found: warn
+
+  native-evidence:
+    if: always()
+    needs: [preflight, ios, ios-evidence, android]
+    runs-on: ubuntu-latest
+    steps:
+      # A targeted run fails here rather than being skipped: a skipped check can satisfy a
+      # required status check, and a targeted run is never evidence.
+      - name: Refuse targeted runs as evidence
+        if: env.TARGETED == 'true'
+        run: |
+          echo '::error::Targeted run: not native evidence.'
+          exit 1
+      - name: Reject missing, failed, cancelled, or skipped native jobs
+        env:
+          PREFLIGHT: ${{ needs.preflight.result }}
+          IOS: ${{ needs.ios.result }}
+          IOS_EVIDENCE: ${{ needs['ios-evidence'].result }}
+          ANDROID: ${{ needs.android.result }}
+        run: test "$PREFLIGHT" = success && test "$IOS" = success && test "$IOS_EVIDENCE" = success && test "$ANDROID" = success
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-native-${{ env.SOURCE_SHA }}'
+          path: ${{ runner.temp }}/native
+          merge-multiple: true
+      - name: Verify source, scope, and native method sets on both platforms
+        run: |
+          python3 tools/playground-delivery/delivery.py check-tests --sha "$SOURCE_SHA" --platform ios --tests "$RUNNER_TEMP/native/ios-native.json"
+          python3 tools/playground-delivery/delivery.py check-tests --sha "$SOURCE_SHA" --platform android --tests "$RUNNER_TEMP/native/android-native.json"

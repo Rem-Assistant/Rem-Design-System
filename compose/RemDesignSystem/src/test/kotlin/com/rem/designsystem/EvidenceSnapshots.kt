@@ -17,8 +17,11 @@ import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.icons.RemMaterialSymbols
+import com.rem.designsystem.onboarding.CheckinStatus
 import com.rem.designsystem.onboarding.LegalDocumentScreen
+import com.rem.designsystem.onboarding.OnboardingCheckinScreen
 import com.rem.designsystem.onboarding.OnboardingSequencer
+import com.rem.designsystem.onboarding.checkinDefaultPeriods
 import com.rem.designsystem.onboarding.OnboardingSignInScreen
 import com.rem.designsystem.onboarding.SignInState
 import com.rem.designsystem.onboarding.consentStep
@@ -37,6 +40,10 @@ import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.screens.AgendaScreen
+import com.rem.designsystem.screens.AgendaReferenceSuggestions
+import com.rem.designsystem.screens.AgendaSuggestionsFixture
+import com.rem.designsystem.screens.AgendaSuggestionsOverflowContent
+import com.rem.designsystem.screens.AgendaSuggestionsPlayground
 import com.rem.designsystem.screens.AddTaskField
 import com.rem.designsystem.screens.InboxScreen
 import com.rem.designsystem.screens.ChatScreen
@@ -60,6 +67,8 @@ import com.rem.designsystem.screens.WalletScreen
 import com.rem.designsystem.screens.walletReferenceProviders
 import com.rem.designsystem.screens.SettingsReferenceContent
 import com.rem.designsystem.agentsurfaces.DailyBriefCard
+import com.rem.designsystem.buttons.RemButton
+import com.rem.designsystem.buttons.RemButtonVariant
 import com.rem.designsystem.agentsurfaces.BriefCounts
 import com.rem.designsystem.rows.SuggestionSection
 import com.rem.designsystem.rows.TaskSuggestion
@@ -75,7 +84,6 @@ import com.rem.designsystem.rows.TaskEventKind
 import com.rem.designsystem.rows.TaskEventLeading
 import com.rem.designsystem.onboarding.Connector
 import com.rem.designsystem.onboarding.OnboardingConnectorsScreen
-import com.rem.designsystem.onboarding.OnboardingVoiceScreen
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
@@ -103,6 +111,24 @@ class EvidenceSnapshots {
 
     private fun shot(name: String, content: @Composable () -> Unit) =
         paparazzi.snapshot(name = name, composable = content)
+
+    // Pairs with the SwiftUI `RemButton-light` / `RemButton-dark` gallery: every variant, then Disabled.
+    @Test
+    fun remButton() {
+        shot("RemButton-light") { RemTheme { buttonGallery() } }
+        shot("RemButton-dark") { RemTheme(darkTheme = true) { buttonGallery() } }
+    }
+
+    @Composable
+    private fun buttonGallery() {
+        Column(
+            Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            RemButtonVariant.entries.forEach { RemButton(it.figmaStyleName, onClick = {}, variant = it) }
+            RemButton("Disabled", onClick = {}, enabled = false)
+        }
+    }
 
     @Test
     fun containedIcon() {
@@ -208,6 +234,68 @@ class EvidenceSnapshots {
         }
     }
 
+    // Check-in cadence states — the Compose siblings of the SwiftUI `Checkin-*` shots, one state per
+    // snapshot so the paired table diffs each state directly.
+    @Test
+    fun checkinDefault() = shot("Checkin-default-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Default,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = false, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinEdited() = shot("Checkin-edited-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Edited,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinSaving() = shot("Checkin-saving-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Saving,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinSaved() = shot("Checkin-saved-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Saved,
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
+    @Test
+    fun checkinFailure() = shot("Checkin-failure-light") {
+        RemTheme {
+            OnboardingCheckinScreen(
+                status = CheckinStatus.Failure("We couldn't save your check-in times. Check your connection and try again."),
+                periods = checkinDefaultPeriods(morningOn = true, middayOn = true, nightOn = false),
+                onToggle = { _, _ -> },
+                onContinue = {},
+            )
+        }
+    }
+
     @Test
     fun consent() = shot("Consent-default-light") { RemTheme { consentScreen() } }
 
@@ -224,7 +312,7 @@ class EvidenceSnapshots {
     }
 
     @Test
-    fun connectors() = shot("Connectors-light") {
+    fun connectors() = shot("LegacyOnboardingConnectors-light") {
         RemTheme {
             OnboardingConnectorsScreen(
                 connectors = listOf(
@@ -237,19 +325,9 @@ class EvidenceSnapshots {
         }
     }
 
-    @Test
-    fun voice() = shot("Voice-light") {
-        RemTheme {
-            OnboardingVoiceScreen(
-                voiceName = "Aria",
-                selectedVoice = "Aria (Warm)",
-                onHearVoice = {}, onSelectVoice = {},
-                speed = 0.45f, onSpeedChange = {},
-                consistency = 0.7f, onConsistencyChange = {},
-                likeness = 0.6f, onLikenessChange = {},
-            )
-        }
-    }
+    // Onboarding Voice now has its own interactive native journey (OnboardingVoice-* captures) that
+    // reuses the shared VoiceControlsContent/VoiceChooserContent cores. The legacy static Paparazzi
+    // render was retired so it cannot drift from, or collide with, those journey shots.
 
     @Test
     fun pill() {
@@ -380,6 +458,25 @@ class EvidenceSnapshots {
                 TaskEventRow(kind = TaskEventKind.Task, title = "Draft the investor update", leading = TaskEventLeading.Time("14:00"), pills = listOf("Fundraise"))
             }
         }
+    }
+
+    @Test
+    fun agendaSuggestionsInline() = shot("AgendaSuggestions-inline-light") {
+        RemTheme { AgendaSuggestionsPlayground(fixture = AgendaSuggestionsFixture.Loaded) }
+    }
+
+    @Test
+    fun agendaSuggestionsOverflow() = shot("AgendaSuggestions-overflow-light") {
+        RemTheme {
+            Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary)) {
+                AgendaSuggestionsOverflowContent(suggestions = AgendaReferenceSuggestions)
+            }
+        }
+    }
+
+    @Test
+    fun agendaSuggestionsNone() = shot("AgendaSuggestions-none-light") {
+        RemTheme { AgendaSuggestionsPlayground(fixture = AgendaSuggestionsFixture.None) }
     }
 
     @Test

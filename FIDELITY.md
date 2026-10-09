@@ -8,6 +8,101 @@ The earlier hosted run37779992053 at `8c5ed28` passed iOS25/25 and Android26/26,
 
 Approved entry amendments rename Rem to Agent settings, give Help & Support a question-mark icon, remove extra row minimums, and omit the redundant Agent settings subtitle. Native iOS List/Section structure and Subtle utility icons remain intact. Large-text screenshot findings drove adaptive Connector/Voice rows, true Wallet sheet scaling, and a scaled consent-icon slot. See the ledger for the evidence and remaining limits.
 
+## Onboarding New → Voice playground — October 8, 2026 (issue #84)
+
+Code-only fixture slice on `agent-factory/playground-issue-84` (base `codex/playground-expansion`,
+delivery scope `onboarding-voice`). The onboarding shell (SwiftUI `OnboardingVoiceTemplate` +
+`OnboardingVoicePlaygroundScreen`, Compose `OnboardingVoiceScreen`) reuses the **shared Settings
+cores** `VoiceControlsContent` (`2217:1571`, `Show conversation entry = false`) and
+`VoiceChooserContent` (`2217:1901`); the duplicate control tree was removed. Onboarding owns only the
+centered lockup (`773:22`) and the safe-area Continue/Skip action area (`773:28`). Settings behavior,
+tests, and capture names are unchanged.
+
+**Source-state coverage (nine authored states, section `2213:9346`).** All nine are implemented as
+behaviors of the two composed screens and were **visually compared against the Figma source PNGs** in
+`docs/playground/expansion-design/source-evidence.tar.gz` (archive SHA-256 verified; 99 enclosed file
+hashes verified):
+
+| # | Source state | Node | Implemented as | Source PNG compared |
+|---|---|---|---|---|
+| 1 | Default (Aria, 50/75/50) | `2219:22520` | shell default | yes |
+| 2 | Previewing (Aria · Playing) | `2219:22800` | `voice.previewSelected` play/pause | yes |
+| 3 | Selected (Sol) | `2219:23081` | chooser→Back reflects Sol | yes |
+| 4 | Speed 75% | `2219:23361` | native slider + a11y value | yes |
+| 5 | Consistency 50% | `2219:23641` | native slider + a11y value | yes (same slider row family) |
+| 6 | Likeness 75% | `2219:23921` | native slider + a11y value | yes (same slider row family) |
+| 7 | Chooser default (Aria checked) | `2221:83686` | chooser default | yes |
+| 8 | Chooser preview (Aria pause, check kept) | `2221:83798` | independent preview/selection | yes |
+| 9 | Chooser selected (Sol checked) | `2221:84017` | chooser selection | yes |
+
+Values are represented through the authored native slider state and its accessibility value (percent),
+not new numeric labels. Preview is the shared fixture's local no-audio play/pause boundary — no audio,
+TTS, microphone, account, service, or persistence. Back/Continue/Skip resolve to host callbacks with
+no invented downstream product screen (no route into Check-in).
+
+**Verification status.** Paired native runtime captures are produced by the hosted
+`screenshots.yml` journeys — iOS `OnboardingVoicePlaygroundUITests` (registered in the Xcode project)
+and Compose `OnboardingVoicePlaygroundTest` — emitting the ten `OnboardingVoice-*` keys in
+`tools/render-evidence/contracts.json` on both platforms. **These journeys have not been run in this
+task**, and no simulator/emulator was available on the build runner (SwiftUI/Android SDK absent).
+Current-head fidelity therefore remains **outstanding** until that authenticated paired delivery
+exists and is visually reviewed; source-PNG comparison and build-green alone do not establish runtime
+fidelity.
+
+---
+
+## Agenda New — Suggestions playground — October 8, 2026 (issue #83)
+
+Code-only fixture prototype on the isolated `codex/playground-expansion` base; **not** production Rem
+integration and **not** a claim that the whole Agenda surface is complete. Only the authored
+*Suggestions* slice is implemented. Source authority: Figma `af4yDqCzp57jds9lkFiIaO`, page `1910:40765`,
+Suggestions section `2336:19584` (archive verified by SHA-256
+`494a323503cf281b37df737c9e987c9b97b48fcb3a79511aba33c8de1b7da2ae` plus all 99 enclosed file hashes).
+
+**New / changed code**
+- `AgendaSuggestionRow` (SwiftUI `Agenda/AgendaSuggestionRow.swift`) implements the current
+  `2336:19583` contract — dashed tile, leading Add/Move CTA, title + field-owned reason, dismiss ✕;
+  no spinner / success badge / error card / Retry.
+- **Component-architecture contract (2026-10-08 revision):** the canonical Compose twin now lives in
+  `compose/RemDesignSystem/rows/AgendaSuggestionRow.kt` with an API mirroring the SwiftUI row
+  (`action` add/move, `title`, `metadata`, accept/dismiss, test tags); `rows/SuggestedTaskRow.kt`
+  remains as a `TaskSuggestion`-based wrapper that delegates to it, so existing call sites
+  (`SuggestionSection`, `AgendaSuggestionsPlayground`, `AgendaScreen`, evidence snapshots) and the
+  rendered behaviour are unchanged. Parserless Code Connect source mappings were authored for both
+  platforms (`code-connect/swiftui/AgendaSuggestionRow.figma.ts`,
+  `code-connect/compose/AgendaSuggestionRow.figma.ts`) binding the canonical Figma component
+  `2336:19583` (variant property `action` add `2336:19561` / move `2336:19572`, Title/Metadata text
+  props) to the SwiftUI and Compose rows. `node tools/lint-components.mjs` and
+  `npm run check-code-connect` (types + SwiftUI + Compose parse) pass. Live Code Connect publication
+  stays plan-blocked (Dev/Org seat); the templates and `REGISTRY.md` record the source binding.
+- `AgendaSuggestionsPlaygroundView` (SwiftUI) and `AgendaSuggestionsPlayground` (Compose) compose the
+  reused `DateNavigationHeader`, `TaskEventRow` (a `pending` dashed-ring option was added), the empty
+  `RemContentUnavailableView`, a sort trigger, and the Add New / Schedule bar. The Suggestions slot
+  follows AddNew/Schedule with exactly 24pt spacing and owns that gap, so removing the slot removes it.
+- Overflow uses the native sheet (`.sheet` / `ModalBottomSheet`) with the authored **Suggestions / Done**
+  header, divider and scrollable content; no fixed detents or invented drag indicator.
+- Discoverable routes added to both existing hosts (`tools/playground-ios/App`, `compose/demo`); a new
+  iOS UI-test class `AgendaSuggestionsUITests` is registered in the Xcode project.
+
+**Supplied source states implemented and visually compared** (against the packet PNGs):
+initial/inline `2336:19585`, Add `2337:19714`, Move `2337:19928`, Dismiss `2337:20122`,
+none `2337:20436`, overflow `2338:20884`, accepted-open `2338:20977`, empty-one `2337:20667`,
+empty-accepted `2337:20986`, empty-overflow `2338:21059`, empty→populated `2338:21133`. Authored rules
+`2338:21758` / `2338:21759` (≤3 inline, all live rows in overflow, optimistic add/move/dismiss, last
+removal hides the slot and closes overflow, overflow persists while rows remain, deterministic
+restoration, no network/spinner) are modelled locally.
+
+**Paired captures** (unique per run): canonical `AgendaSuggestions-inline-light`,
+`AgendaSuggestions-overflow-light`, `AgendaSuggestions-none-light` (iOS `RenderSnapshots` + Compose
+`EvidenceSnapshots`); behavioral `AgendaSuggestions-{added,moved,dismissed,last-removal,restored,
+empty-populated}-light`, plus `-dark` and `-large-text`, from the iOS/Android journey tests. Render
+screenshots alone are not treated as proof — each interaction is asserted in the tests.
+
+**Not claimed / excluded:** the wider Agenda shell (creation / scheduling / detail / Brief / recovery),
+Inspector date / minimum-duration / all-day semantics, Check-in, Automations, Chat, real scheduling,
+backend. Live Figma REST verification and the hosted paired-render review remain the separate delivery
+gates; no build or live verification has run inside this task.
+
 ---
 
 This is the record for the **Mac-verify fidelity** step: every Figma component in the
@@ -32,6 +127,58 @@ screenshots is live and reproducible.
 Fidelity target: **iOS 26** (the version Rem ships screenshots from today).
 
 ---
+
+## Check-in cadence step — paired iOS + Android per contract — 2026-09-29 (issue #52)
+
+- **Screen:** onboarding **Check-in cadence** — "When should Rem check in?" — reproduced to
+  `docs/contracts/onboarding-checkin.md`. Authority: the shipping `CheckinsService` / `Checkin` cadence
+  model + the founder reference frame `tasks/refs/onboarding/04-checkin.png` (the "Saving…" state).
+- **Paired code:** SwiftUI `Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift` and
+  Compose `compose/RemDesignSystem/onboarding/CheckinStep.kt` (`OnboardingCheckinScreen` /
+  `checkinStep(status:…)`, hosted by `OnboardingSequencer`). Both render the same scaffolded step (hero
+  → title → body → grouped cadence list) with an ActionArea inside the fill-height Body whose label +
+  affordance track the five save-lifecycle states, and a transient error Toast above the ActionArea.
+- **New canonical component:** `RemSwitch` (`Controls/RemSwitch.swift` · `controls/RemSwitch.kt`) — a
+  thin native-switch wrapper pinned to the `systemGreen` on-tint, Figma `RemSwitch` set `868:210`
+  (legacy iOS-on variant `110:50`), Code Connect
+  `code-connect/{swiftui,compose}/RemSwitch.figma.ts`. First consumer is this screen; extracted because
+  a grouped-settings toggle recurs across Settings/automations/voice.
+- **Reuse:** `RemSection` + `ListRow`, `ContainedIcon` (hero + row leadings), canonical `ActionArea`,
+  explicit Button states, and canonical `Toast` (`72:24`, SwiftUI/Compose auto-dismiss after 4s), plus
+  generated tokens. The value pill is local (`TimePill` / `CheckinTimePill`), flagged for
+  extraction.
+- **Icons:** four new registry rows — hero `clock.badge.checkmark.fill` / `alarm_on` (FILL 1) and the
+  Morning/Midday/Evening leadings `sunrise`·`sun.max`·`moon.stars` / `wb_twilight`·`wb_sunny`·`bedtime`
+  (FILL 0). Android renders these from the Material Icons vector set (Outlined/Filled), a documented
+  FILL-honouring divergence from the baked Material Symbols subset (which cannot be regenerated on this
+  runner — no `fonttools`/network). See `docs/contracts/icon-registry.md` ‡.
+- **Mapping boundary:** the `CheckinSlot` / `Checkin` adapter (`CheckinCadenceAdapter.{swift,kt}`)
+  accepts the raw shipping `Checkin` fields (`slot`, `enabled`, `deliveryHour`, `deliveryMinute`,
+  `timezone`), validates the slot against `morning | midday | night`, formats the hour/minute into the
+  brief-time label internally (no host display string), produces the canonical rows, and forwards toggles
+  as a canonical `CheckinSlot` — so the `Checkin` identity (display "Evening" / send `night`) holds
+  without the host remapping.
+- **Evidence:** the five states — `checkin-default-light`, `checkin-edited-light`, `checkin-saving-light`,
+  `checkin-saved-light`, `checkin-failure-light` — via `RenderSnapshotTests` (iOS) and `EvidenceSnapshots`
+  (Compose/Paparazzi), declared in `tools/render-evidence/contracts.json` as `onboarding-checkin`. The
+  Android `checkin-saving-light` / `checkin-saved-light` CTA now uses the same explicit semantic
+  disabled container and label roles as Figma and SwiftUI, with no whole-control opacity. The adapter +
+  save-lifecycle model is unit-tested on both platforms (`CheckinCadenceTest`,
+  `CheckinInteractionTests` — 8:00 AM, a non-zero minute, the rejected invalid `evening`, and the `night`
+  toggle/update payload).
+- **Editable Figma delivery:** a founder-authorized direct Codex Figma session authored and read back
+  `Screen/Check-in` (`876:1121`) with
+  Default / Edited / Saving / Saved / Failure variants, documentation section `02A` (`890:1502`), and
+  prototype section `02B` (`885:1121`). Direct 402×874 instances are registered as exact references
+  in `tools/render-evidence/contracts.json`; the prototype begins at Default and covers
+  Default → Edited → Saving → Saved plus Failure → Saving retry. The canonical screen now uses
+  `StatusBar → TopBar → Body → NavigationIndicator`, an official iOS top toolbar, and a fill-height
+  Body with one 24pt inset and `VStack/Content` + `VStack/Actions`. It uses HUG Section rows with
+  transparent ListRows, official iOS/Material Switch instances behind `RemSwitch`, HUG `ActionArea`
+  with Footnote off, canonical Toast in Failure, and explicit disabled Button variants. Inventory
+  Section `00` now contains one auto-layout HStack, so its spacing heals after
+  insertion or deletion. The exact-head CI rerun binds this live structure to the final commit; it
+  does not misattribute the direct interactive edit to the hosted Factory writer.
 
 ## Consent flow + component-documentation proving pass — 2026-09-28 (issue #30)
 
@@ -152,15 +299,12 @@ deploy code itself is retired later with the runtime migration (out of scope her
   recovery); the host maps its real auth to these and advances only on success. checking = disabled
   spinner CTA; error/recovery are an **Extend** treatment (no reference frame) reusing a token-bound
   inline message — flagged for founder confirmation.
-- **Token-bound + canonical reuse — honest `composed_of`:** every visual binds to `RemTokens`, and the
-  hero + consent-row leading icons reuse the canonical `ContainedIcon` (anti-drift Rule 0). That is the
-  **only** canonical reuse this surface performs. The CTA button (`OnboardingActionButton` in
-  `OnboardingScaffold.kt`) and the consent legal rows (`ConsentLegalRow` in `ConsentStep.kt`) are
-  **hand-rolled, not instances of the canonical `Button` / `ListRow`** — no Compose primitive exists for
-  either yet, so both are **forked-pending-native and flagged for extraction** (the same flag
-  `OnboardingSupport.kt` already carries for the button now covers the row too). The manifest reflects
-  this: `composedOf: [ContainedIcon]`, `pendingNative: [Button, ListRow]`; `OnboardingSequencer.md`
-  no longer claims Button/ListRow reuse. Flagged metric debts (centralized, not
+- **Token-bound + canonical reuse — honest `composed_of`:** every visual binds to `RemTokens`; hero
+  and row leadings reuse `ContainedIcon`, and both Consent and Check-in use the canonical Compose
+  `ListRow` in `rows/ListRow.kt`. The CTA button (`OnboardingActionButton` in
+  `OnboardingScaffold.kt`) remains hand-rolled until the Compose `Button` primitive lands. The
+  manifest reflects this: `composedOf: [ContainedIcon, ListRow]`, `pendingNative: [Button]`. Flagged
+  metric debts (centralized, not
   call-site literals): onboarding hero may want a dedicated size token (reuses `ContainedIcon` Large
   today); disabled-CTA alpha and the progress-dot sizes have no token yet; iOS glyphs (`doc.text`,
   `shield`, `lock.shield.fill`, Apple/Google marks) diverge to Material vectors / overridable params
@@ -288,14 +432,14 @@ Legend — **✅ faithful**: matches the real render on structure, layout, type,
 | ListRow | `101-18` | ✅ | **Unified row** — leading icon · title · subtitle · **Accessory slot** (Chevron/Switch/Button/None), 12pt padding, bottom-pinned divider. Verified vs `05-connectors`, reused across Settings/Connectors/About. (old `68-6` retired) |
 | ContainedIcon | `110-54` | ✅ | Colored rounded-square icon container; per-row fill override for section colors. (old `12-19` deleted) |
 | Button | `110-47` | ✅ | Accessory pill (`Label` TEXT prop); brand-blue **Connect**/action. Also used in ProposalCard. (old `66-10` deleted) |
-| Switch | `110-50` | ✅ | 51×31 green Toggle, HUG-wrapped track so instance-swap resizes it in the ListRow slot. |
+| Switch | `868-210` | ✅ | Platform=iOS/Android × State=On/Off wrapper around official iOS 26 and Material 3 instances; shared `systemGreen` on-tint. |
 | DeviceFrame | `128-46` | ✅ | Real Apple iPhone 16 Pro bezel + 402×874 Screen instance-swap slot. |
 | MessageBubble | `50-7` | ✅ | Corner **18** (chat constant, not a token); **no tail** in normal style (tail is onboarding-only); user text **14pt**; brand-blue fill + 0.5px white-12% border. Assistant turns render as **bubble-less prose**. Matches `06-chat` + `ChatMessageViews.swift`. |
 | ComposerBar | `53-2` | ✅ | "Ask anything" · `+` attach · brand-blue **Speak** pill (`waveform` + "Speak", corner `medium`/12, white semibold) · `↑` send. Matches `SharedRemChatView.speakButton`. |
 | ContextualMessage | `73-39` | ✅ | Five states (info/success/warning/error/neutral) with correct colored status glyphs. |
 | ThinkingBlock | `63-20` | ✅ | Collapsed "Thought for a moment ⌄" and expanded reasoning body. |
 | TypingDots | `17-3` | ✅ | Three-dot typing indicator. |
-| Toast | `72-24` | ✅ | Four states (info/success/warning/error), colored status glyphs on gray pill. |
+| Toast | `72-24` | ✅ | Four semantic variants, responsive Message binding, colored status glyphs on gray pill; SwiftUI/Compose auto-dismiss after 4s and announce politely. |
 | ToolResultCard | `62-2` | ✅ | Generic tool-result card (calendar-events example). |
 | TaskEventRow | `46-21` | ✅ | Dashed-circle status indicator (overdue), two-part time label (`08` `00`/`AM`), gray leading bar for events, bold 2-line title. Chevron is a row sibling, not part of the component — matches `TaskEventView`. |
 | SuggestedTaskRow | `48-25` | ✅ | Dashed-border card, blue stacked action (`+ Add` / `↪ Move`), meta line, `×` dismiss. Matches `01-agenda`. |

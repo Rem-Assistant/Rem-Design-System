@@ -23,7 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.primitives.RemPill
@@ -74,6 +77,7 @@ fun TaskEventRow(
     leading: TaskEventLeading = TaskEventLeading.None,
     pills: List<String> = emptyList(),
     showPills: Boolean = true,
+    pending: Boolean = false,
 ) {
     val colors = RemColors.current
     val pillKind = when (kind) {
@@ -120,11 +124,32 @@ fun TaskEventRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(StatusRingSize)
-                            .border(1.5.dp, colors.labelSecondary, CircleShape),
-                    )
+                    // A pending row (a just-accepted suggestion) draws a dashed ring; a committed
+                    // task draws a solid one.
+                    if (pending) {
+                        Box(
+                            modifier = Modifier
+                                .size(StatusRingSize)
+                                .drawBehind {
+                                    drawCircle(
+                                        color = colors.labelSecondary,
+                                        radius = size.minDimension / 2 - 0.75.dp.toPx(),
+                                        style = Stroke(
+                                            width = 1.5.dp.toPx(),
+                                            pathEffect = PathEffect.dashPathEffect(
+                                                floatArrayOf(3.dp.toPx(), 2.dp.toPx()),
+                                            ),
+                                        ),
+                                    )
+                                },
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(StatusRingSize)
+                                .border(1.5.dp, colors.labelSecondary, CircleShape),
+                        )
+                    }
                     TitleText(title)
                 }
                 PillsRow(pills, showPills, pillKind)

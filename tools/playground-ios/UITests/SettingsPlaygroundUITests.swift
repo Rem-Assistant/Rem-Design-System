@@ -84,6 +84,9 @@ final class SettingsPlaygroundUITests: XCTestCase {
         openSettings("Slow")
         app.buttons["openAgent"].tap()
         XCTAssertTrue(app.buttons["cancelLoad"].waitForExistence(timeout: 2))
+        let skeleton = app.descendants(matching: .any)["agentSettings.skeleton"]
+        XCTAssertTrue(skeleton.exists, "Slow loads show the skeleton, not a bare spinner")
+        XCTAssertEqual(skeleton.label, "Loading agent settings")
         capture("ios-loading")
         app.buttons["cancelLoad"].tap()
         // After the original load deadline, the destination must still be dismissed.
@@ -308,7 +311,9 @@ final class SettingsPlaygroundUITests: XCTestCase {
     }
 
     func testControlsCancelRollbackAndSave() {
-        app.buttons["Shared controls"].tap()
+        app.buttons["openComponents"].tap()
+        XCTAssertTrue(app.buttons["openControls"].waitForExistence(timeout: 3))
+        app.buttons["openControls"].tap()
         app.buttons["editName"].tap()
         let field = app.textFields["nameField"]
         XCTAssertTrue(field.waitForExistence(timeout: 3))

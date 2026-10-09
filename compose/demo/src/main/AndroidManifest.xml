@@ -5,6 +5,7 @@
         android:label="Rem Design System"
         android:supportsRtl="true"
         android:theme="@style/Theme.RemDesignSystemDemo">
+        <meta-data android:name="RemPlaygroundSourceSHA" android:value="${playgroundSourceSha}" />
         <activity
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize"

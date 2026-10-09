@@ -29,6 +29,13 @@ runs JS against the Figma Plugin API; `figma` is the global.
 - **Renaming a property** via `editComponentProperty(oldName, {name})` keeps the `#id`
   suffix, so existing instances keep working. Renamed `Accessory#151:0` → `Trailing
   Accessory` with zero breakage.
+- **Cloned component variants can lose text-property references.** After duplicating a variant,
+  verify each editable text node's `componentPropertyReferences.characters` and restore the
+  canonical TEXT property reference before relying on `setProperties`.
+- **Slots may carry a default specimen.** Remove the default slot child before appending intended
+  content; otherwise the old specimen and the new content both render, often as duplicate actions.
+- **Variant-axis renames can make a set temporarily unreadable.** Cache the current variant metadata,
+  rename every member consistently, and only then read the component-set property definitions.
 
 ## Auto-layout / sizing
 
@@ -44,6 +51,9 @@ runs JS against the Figma Plugin API; `figma` is the global.
   child node; nudging the frame `x` forces a relayout.
 - A toggle/switch hugging only its knob renders as a ring — give the **track** a FIXED size
   and let the component HUG the track.
+- **Native Figma Sections do not auto-layout.** Keep one transparent auto-layout Content/HStack/
+  VStack inside each Section and refit the Section bounds after mutations. Empty spacer frames and
+  manual x/y gaps will not heal after deletion.
 
 ## SF Symbols (the icon "wall" is not real)
 

@@ -88,9 +88,11 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
-        // Wave 1 onboarding flows — paired with the Compose `Connectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
-        render("Connectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
-        render("Voice-light", width: 393, height: 852, dark: false) { voiceScreen() }
+        // Wave 1 onboarding flows — paired with the Compose `LegacyOnboardingConnectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
+        render("LegacyOnboardingConnectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
+        // Onboarding Voice now has its own interactive native journey (OnboardingVoice-* captures)
+        // that reuses the shared VoiceControlsContent/VoiceChooserContent cores; the legacy static
+        // gallery render was retired so it cannot drift from, or collide with, those journey shots.
         render("AgendaEmpty-light", width: 393, height: 852, dark: false) {
             RemContentUnavailableView(
                 symbol: "calendar.badge.plus",
@@ -106,6 +108,16 @@ final class RenderSnapshots: XCTestCase {
         render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
         render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+        // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
+        render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .loaded)
+        }
+        render("AgendaSuggestions-overflow-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsOverflowSheet(suggestions: AgendaSuggestionItem.referenceSuggestions)
+        }
+        render("AgendaSuggestions-none-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .none)
+        }
         // Wave 2 screens — components composed into surfaces.
         render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
         render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
@@ -119,7 +131,52 @@ final class RenderSnapshots: XCTestCase {
         render("RunningTaskBanner-light", width: 440, height: nil, dark: false) { runningTaskBanners }
         render("BrowserLiveCard-light", width: 380, height: nil, dark: false) { browserLiveCards }
         render("ExecutionTrace-light", width: 430, height: nil, dark: false) { executionTrace }
+        // Pair with the Compose `DailyBriefCard-light` / `SuggestionSection-light` shots.
+        render("DailyBriefCard-light", width: 402, height: nil, dark: false) {
+            DailyBriefCard(
+                title: "Daily brief",
+                summary: "Sent to damilola.ogunnaike@gmail.com at 9:37 am — “Hi Damilola, I’ll send you the notes from yesterday’s call before 2pm. Best, Larissa.” 1 task overdue needs attention.",
+                onTap: {}, onRead: {}
+            )
+            .padding(16)
+            .background(DesignTokens.Color.backgroundPrimary)
+        }
+        render("SuggestionSection-light", width: 402, height: nil, dark: false) {
+            SuggestionSection(
+                suggestions: [
+                    AgendaSuggestionItem(id: "testflight", action: .add, title: "Set up the TestFlight pipeline using ASC CLI", metadata: "Samuel · Granola · 8h ago"),
+                    AgendaSuggestionItem(id: "compose", action: .add, title: "Pull the Claude/DSFlows branch and confirm the Compose UI renders", metadata: "Damilola · Granola · 8h ago"),
+                    AgendaSuggestionItem(id: "deposit", action: .move, title: "Reply to the venue about the deposit", metadata: "‘Confirm Saturday’ · overdue 3d"),
+                ],
+                onAccept: { _ in }, onDismiss: { _ in }, onSeeMore: {}
+            )
+            .padding(16)
+            .background(DesignTokens.Color.backgroundPrimary)
+        }
         render("WalletScreen-light", width: 402, height: 900, dark: false) { walletScreen() }
+        // Check-in cadence states, keyed to pair with the Compose `Checkin-*` shots. Default has only
+        // Morning on; the edited/saving/saved/failure set carries the added Midday selection so the
+        // states are visibly distinct in the paired table.
+        render("Checkin-default-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .default, morningOn: true, middayOn: false, nightOn: false)
+        }
+        render("Checkin-edited-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .edited, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-saving-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saving, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-saved-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saved, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-failure-light", width: 393, height: 852, dark: false) {
+            checkinScreen(
+                status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
+                morningOn: true,
+                middayOn: true,
+                nightOn: false
+            )
+        }
     }
 
     // MARK: - Wave 4 galleries (agent surfaces) + Wallet
@@ -343,6 +400,28 @@ final class RenderSnapshots: XCTestCase {
         .background(DesignTokens.Color.backgroundPrimary)
     }
 
+    // The REAL onboarding Check-in template, one state per snapshot.
+    private func checkinScreen(
+        status: OnboardingCheckinTemplate.Status,
+        morningOn: Bool,
+        middayOn: Bool,
+        nightOn: Bool
+    ) -> some View {
+        OnboardingCheckinTemplate(
+            status: status,
+            // Through the real cadence adapter — the Evening row carries the canonical `night` slot id.
+            periods: OnboardingCheckinTemplate.periods(
+                from: OnboardingCheckinTemplate.defaultCadence(
+                    morningOn: morningOn,
+                    middayOn: middayOn,
+                    nightOn: nightOn
+                ),
+                onToggle: { _, _ in }
+            ),
+            onPrimary: {}
+        )
+    }
+
     // MARK: - Galleries (mirror each component's #Preview)
 
     @ViewBuilder private var buttonGallery: some View {
@@ -449,19 +528,6 @@ final class RenderSnapshots: XCTestCase {
                 .init(symbol: "number", tint: DesignTokens.Color.systemPurple, name: "Slack", status: "Not connected", isConnected: false, action: {}),
             ],
             onContinue: {}, onSkip: {}
-        )
-    }
-
-    // Voice setup — hero + hear/picker rows + Character & speed sliders + Continue (constant bindings).
-    private func voiceScreen() -> some View {
-        OnboardingVoiceTemplate(
-            selectedVoice: "Aria (Warm)",
-            onHearVoice: {},
-            onSelectVoice: {},
-            speed: .constant(0.45),
-            consistency: .constant(0.7),
-            likeness: .constant(0.6),
-            onContinue: {}
         )
     }
 

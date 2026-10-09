@@ -28,6 +28,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rem.playground.settings
+        INFOPLIST_FILE: App/Info.plist
+        REM_PLAYGROUND_SOURCE_SHA: unversioned
         INFOPLIST_KEY_CFBundleDisplayName: Rem Playground
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
   RemSettingsPlaygroundUITests:

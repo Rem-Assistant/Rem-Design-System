@@ -106,6 +106,12 @@ unless they explicitly own one, and equal-priority horizontal actions divide the
 Theme and Platform remain independent axes. Full prototype reactions are verified in authenticated
 Figma/Present inspection because the public REST node schema does not return those interactions.
 
+### Structure contract schema history
+
+- **v16:** records observable sizing, layout, fill, ordering, component identity, and variable/style
+  bindings. It intentionally omits primary/counter-axis sizing fields that Figma REST does not expose
+  reliably; HUG/FILL behavior is verified from the observable geometry and child relationships.
+
 ## 3. Generator (code → Figma)
 
 You already own the primitive layer: `tokens/tokens.json` → Figma variables (Style Dictionary /

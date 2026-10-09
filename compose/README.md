@@ -12,7 +12,7 @@ adb install -r demo/build/outputs/apk/debug/demo-debug.apk
 adb shell am start -n com.rem.designsystem.demo/.MainActivity
 ```
 
-The Settings New playground exposes **Success**, **Slow** (10 seconds), and **Error** local fixtures. Open Settings → Rem to inspect Agent settings; Back/Cancel returns to Settings and Retry recovers. **Shared controls** contains local notification/name editing. Other Settings rows, including Automations, are visual references only.
+The playground root has Components (a catalog: Controls, Rows, Agenda, Chat, Agent, Brand & empty states, Loading) and Screens (Settings, Agenda, Onboarding — whose Check-in step is the shared cadence screen with the platform time picker and a Succeeds/Fails once save fixture). Settings exposes **Success**, **Slow** (10 seconds), and **Error** local fixtures. Open Settings → Rem to inspect Agent settings; Back/Cancel returns to Settings and Retry recovers. **Shared controls** contains local notification/name editing. Other Settings rows, including Automations, are visual references only.
 
 Run the instrumentation suite on a dedicated device:
 
