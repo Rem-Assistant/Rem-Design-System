@@ -98,27 +98,74 @@ final class PlaygroundNavigationUITests: XCTestCase {
             .split(separator: "-").joined(separator: "-")
     }
 
-    /// Unobscured overview captures: each page's top, then each component group scrolled into view
-    /// by real scrolling, before any interaction (so no keyboard or post-action scroll position).
+    /// One overview capture: `name` names the file, `anchor` is text inside the component (never its
+    /// group heading). `last` picks the final match when the page repeats the text (the trace's
+    /// "Working" footer follows the "Working" status pill); `up` scrolls back toward the page top.
+    private struct Shot {
+        let name: String
+        let anchor: String
+        var last = false
+        var up = false
+    }
+
+    /// Scrolls in short drags held at the end (no fling) until `element` is hittable, so it stops just
+    /// inside the edge it entered from: the bottom when scrolling down, with its component above it,
+    /// or the top when scrolling up, with its component below it. Drags start at the trailing margin,
+    /// clear of the page's controls.
+    private func scroll(to element: XCUIElement, named anchor: String, up: Bool) {
+        let window = app.windows.firstMatch
+        let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.35 : 0.65))
+        let to = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.65 : 0.35))
+        for _ in 0..<24 where !(element.exists && element.isHittable) {
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(element.exists && element.isHittable, "Expected reachable content: \(anchor)")
+    }
+
+    /// Unobscured overview captures: each page's top, then each component scrolled into view by its
+    /// own content, before any interaction (so no keyboard or post-action scroll position). The
+    /// execution trace is captured at its bottom, then its top, in case it outgrows the viewport.
     func testCatalogSectionCaptures() {
         tap("openComponents")
-        let pages: [(id: String, title: String, slug: String, anchors: [String])] = [
-            ("openControls", "Controls", "controls", ["Pill · Secondary", "50%"]),
-            ("openRows", "Rows", "rows", ["Section", "Connector row", "Task and event rows"]),
-            ("openCatalogAgenda", "Agenda", "agenda", ["Suggestion rows"]),
-            ("openChat", "Chat", "chat", ["Composer", "Voice bar"]),
-            ("openAgentCatalog", "Agent", "agent", ["Running task banner", "Browser card", "Execution trace"]),
-            ("openBrand", "Brand & empty states", "brand", ["App icon", "Provider marks", "Empty state"]),
+        let pages: [(id: String, title: String, slug: String, shots: [Shot])] = [
+            ("openControls", "Controls", "controls", [
+                Shot(name: "Buttons", anchor: "Pill \u{00B7} Secondary"),
+                Shot(name: "Slider", anchor: "50%"),
+                Shot(name: "Pills", anchor: "Personal"),
+            ]),
+            ("openRows", "Rows", "rows", [
+                Shot(name: "Section", anchor: "Applies to this device."),
+                Shot(name: "Connector row", anchor: "Gmail"),
+                Shot(name: "Task and event rows", anchor: "Unfiled inbox task"),
+            ]),
+            ("openCatalogAgenda", "Agenda", "agenda", [
+                Shot(name: "Suggestion rows", anchor: "Reply to the venue"),
+            ]),
+            ("openChat", "Chat", "chat", [
+                Shot(name: "Composer", anchor: "Auto"),
+                Shot(name: "Voice bar", anchor: "Listening\u{2026}"),
+            ]),
+            ("openAgentCatalog", "Agent", "agent", [
+                Shot(name: "Running task banner", anchor: "Needs you \u{00B7} Password rejected"),
+                Shot(name: "Browser card", anchor: "Rem's browser session"),
+                Shot(name: "Execution trace bottom", anchor: "Working", last: true),
+                Shot(name: "Execution trace top", anchor: "IN PROGRESS", up: true),
+            ]),
+            ("openBrand", "Brand & empty states", "brand", [
+                Shot(name: "Provider marks", anchor: "Google"),
+                Shot(name: "Empty state", anchor: "Add New"),
+            ]),
         ]
         for page in pages {
             tap(page.id)
             XCTAssertTrue(app.navigationBars[page.title].waitForExistence(timeout: 3), "\(page.title) opens")
             capture("Catalog-\(page.slug)-top-light")
-            for anchor in page.anchors {
-                let element = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", anchor)).firstMatch
-                // Lazy Form rows exist only once scrolled near; reveal scrolls until the anchor is hittable.
-                reveal(element)
-                capture("Catalog-\(page.slug)-\(slug(anchor))-light")
+            for shot in page.shots {
+                // Combined accessibility labels fold row text together, so match by containment.
+                let matches = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", shot.anchor))
+                let element = shot.last ? matches.element(boundBy: max(matches.count - 1, 0)) : matches.firstMatch
+                scroll(to: element, named: shot.anchor, up: shot.up)
+                capture("Catalog-\(page.slug)-\(slug(shot.name))-light")
             }
             app.navigationBars[page.title].buttons.element(boundBy: 0).tap()
             XCTAssertTrue(app.buttons[page.id].waitForExistence(timeout: 3), "Back returns to the catalog")

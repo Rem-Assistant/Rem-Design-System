@@ -110,25 +110,57 @@ class PlaygroundNavigationTest {
     private fun slug(text: String) = text.lowercase().map { if (it.isLetterOrDigit()) it else '-' }
         .joinToString("").split('-').filter { it.isNotEmpty() }.joinToString("-")
 
-    /** Unobscured overview captures: each page's top, then each component group scrolled into view,
-     *  before any interaction (so no keyboard or post-action scroll position). */
+    /** One overview capture: [name] names the file, [anchor] is content inside the component (never its
+     *  group heading). Scrolling moves only as far as needed, so an anchor reached by scrolling down
+     *  lands at the bottom edge with its component above it, and one reached by scrolling back up
+     *  lands at the top edge with its component below it. [last] picks the final match when the
+     *  page repeats the text (the trace's "Working" footer follows the "Working" status pill). */
+    private data class Shot(val name: String, val anchor: SemanticsMatcher, val last: Boolean = false)
+
+    /** Unobscured overview captures: each page's top, then each component scrolled into view by its
+     *  own content, before any interaction (so no keyboard or post-action scroll position). The
+     *  execution trace is taller than the viewport, so it is captured at its bottom, then its top. */
     @Test fun catalogSectionCaptures() {
         compose.onNodeWithTag("openComponents").performClick()
         val pages = listOf(
-            Triple("openControls", "controls", listOf("Slider", "Pills")),
-            Triple("openRows", "rows", listOf("Section", "Connector row", "Task and event rows")),
-            Triple("openCatalogAgenda", "agenda", listOf("Suggestion rows", "Suggestion section")),
-            Triple("openChat", "chat", listOf("Composer", "Voice bar")),
-            Triple("openAgentCatalog", "agent", listOf("Running task banner", "Browser card", "Execution trace", "Daily brief card")),
-            Triple("openBrand", "brand", listOf("App icon", "Provider marks", "Empty state")),
+            Triple("openControls", "controls", listOf(
+                Shot("Buttons", hasText("Disabled")),
+                Shot("Slider", hasText("50%")),
+                Shot("Pills", hasText("Personal")),
+            )),
+            Triple("openRows", "rows", listOf(
+                Shot("Section", hasText("Applies to this device.")),
+                Shot("Connector row", hasText("Gmail")),
+                Shot("Task and event rows", hasText("Unfiled inbox task")),
+            )),
+            Triple("openCatalogAgenda", "agenda", listOf(
+                Shot("Suggestion rows", hasText("Reply to the venue")),
+                Shot("Suggestion section", hasText("See more")),
+            )),
+            Triple("openChat", "chat", listOf(
+                Shot("Composer", hasText("Auto")),
+                Shot("Voice bar", hasText("Listening\u2026")),
+            )),
+            Triple("openAgentCatalog", "agent", listOf(
+                Shot("Running task banner", hasText("Needs you \u00b7 Password rejected")),
+                Shot("Browser card", hasText("Rem's browser session")),
+                Shot("Execution trace bottom", hasText("Working"), last = true),
+                Shot("Execution trace top", hasText("IN PROGRESS")),
+                Shot("Daily brief card", hasText("Read latest brief")),
+            )),
+            Triple("openBrand", "brand", listOf(
+                Shot("Provider marks", hasTestTag("catalog.providerMarks")),
+                Shot("Empty state", hasText("Add New")),
+            )),
         )
-        pages.forEach { (tag, page, anchors) ->
+        pages.forEach { (tag, page, shots) ->
             compose.onNodeWithTag(tag).performScrollTo().performClick()
             compose.waitForIdle()
             capture("Catalog-$page-top-light")
-            anchors.forEach { anchor ->
-                compose.onNodeWithText(anchor).performScrollTo().assertIsDisplayed()
-                capture("Catalog-$page-${slug(anchor)}-light")
+            shots.forEach { shot ->
+                val anchor = if (shot.last) compose.onAllNodes(shot.anchor).onLast() else compose.onNode(shot.anchor)
+                anchor.performScrollTo().assertIsDisplayed()
+                capture("Catalog-$page-${slug(shot.name)}-light")
             }
             compose.onNodeWithTag("back").performClick()
             compose.onNodeWithTag(tag).assertExists()
