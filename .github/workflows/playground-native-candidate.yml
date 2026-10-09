@@ -74,6 +74,15 @@ jobs:
         env:
           IOS_TEST: ${{ inputs.ios_tests }}
         run: bash tools/playground-ios/run-hosted-journeys.sh
+      # Diagnostics only: repeat each failure and its printed screen state at the end of the log,
+      # where a long run's early failures are otherwise far from the summary.
+      - name: Repeat failure diagnostics
+        if: failure()
+        run: |
+          log="$RUNNER_TEMP/settings-ios-build.log"
+          [ -f "$log" ] || exit 0
+          grep -E 'error: |Test Case .* failed' "$log" | tail -n 40 || true
+          awk '/\[(focus|failure)-diagnostic\]/{p=1} p{print} /\[\/(focus|failure)-diagnostic\]/{p=0}' "$log" | head -c 60000 || true
       # run-hosted-journeys.sh tees XCTest output to settings-ios-build.log.
       - name: Verify every expected method actually passed
         if: env.TARGETED != 'true'

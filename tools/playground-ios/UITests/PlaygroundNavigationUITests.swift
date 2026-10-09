@@ -11,6 +11,15 @@ final class PlaygroundNavigationUITests: XCTestCase {
         app.launch()
     }
 
+    /// On failure, print what was on screen (bounded) so it reaches the job log; the workflow repeats
+    /// it at the end of a failed job, since attachments are exported only after a passing run.
+    override func tearDownWithError() throws {
+        if let run = testRun, run.failureCount > 0 {
+            let tree = app.debugDescription
+            print("[failure-diagnostic] \(name)\n\(tree.prefix(12_000))\n[/failure-diagnostic]")
+        }
+    }
+
     private func capture(_ name: String) {
         RunLoop.current.run(until: Date().addingTimeInterval(0.5)) // Let native navigation chrome settle.
         let attachment = XCTAttachment(screenshot: app.screenshot())
