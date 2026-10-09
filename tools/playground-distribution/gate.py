@@ -34,8 +34,8 @@ def arguments(sha, run_id, build):
 
 def visual_review(url):
     # A locator for human visual acceptance, never a claim that tests imply visual approval.
-    require(re.fullmatch(r'https://github\.com/Rem-Assistant/Rem-Design-System/pull/[1-9][0-9]*'
-                         r'#(?:pullrequestreview|issuecomment)-[1-9][0-9]*', url or ''),
+    require(re.fullmatch(r'https://(?i:github\.com/Rem-Assistant/Rem-Design-System)/pull/[1-9][0-9]*'
+                         r'#(?:pullrequestreview|issuecomment)-[1-9][0-9]*', url or '', flags=re.ASCII),
             'Provide a specific review/comment URL in this repository')
     return url
 

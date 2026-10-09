@@ -64,8 +64,10 @@ class AdmissionTests(unittest.TestCase):
             with self.subTest(sha=sha, run=run, build=build), self.assertRaises(ValueError):
                 gate.arguments(sha, run, build)
         self.assertEqual(gate.visual_review(URL), URL)
+        self.assertEqual(gate.visual_review(URL.lower()), URL.lower())
         for url in [URL + '\nsecret', URL.replace('github.com', 'github.com.evil.test'),
-                    URL.replace('/Rem-Design-System/', '/other/'), URL.split('#')[0]]:
+                    URL.replace('/Rem-Design-System/', '/other/'), URL.split('#')[0],
+                    URL.replace('github.com', 'gıthub.com'), URL.replace('System', 'ſystem')]:
             with self.assertRaises(ValueError):
                 gate.visual_review(url)
 
