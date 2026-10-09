@@ -23,7 +23,8 @@ def apple_request(method, path, payload = nil)
 end
 
 def apple_key
-  app_store_connect_api_key(key_id: ENV.fetch('PLAYGROUND_ASC_KEY_ID'), issuer_id: ENV.fetch('PLAYGROUND_ASC_ISSUER_ID'),
+  issuer = ENV.fetch('PLAYGROUND_ASC_ISSUER_ID', '').strip
+  app_store_connect_api_key(key_id: ENV.fetch('PLAYGROUND_ASC_KEY_ID'), issuer_id: issuer.empty? ? nil : issuer,
     key_content: ENV.fetch('PLAYGROUND_ASC_KEY_BASE64'), is_key_content_base64: true, duration: 1200)
 end
 

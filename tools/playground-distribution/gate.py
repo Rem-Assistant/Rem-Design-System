@@ -16,6 +16,11 @@ WORKFLOW = '.github/workflows/playground-native-candidate.yml'
 PLATFORMS = ('ios', 'android')
 
 
+def same_repository(value):
+    # GitHub repository slugs are case-insensitive; branch refs are not.
+    return isinstance(value, str) and value.casefold() == REPO.casefold()
+
+
 def require(ok, message):
     if not ok:
         raise ValueError(message)
@@ -37,7 +42,7 @@ def visual_review(url):
 
 def validate_run(run, jobs, sha, run_id):
     require(str(run['id']) == str(run_id), 'Run identity mismatch')
-    require(run['repository']['full_name'] == REPO and run['head_repository']['full_name'] == REPO,
+    require(same_repository(run['repository']['full_name']) and same_repository(run['head_repository']['full_name']),
             'Foreign repository or fork')
     require(run['head_sha'] == sha, 'Native run source mismatch')
     require(run['path'] == WORKFLOW, 'Wrong native workflow')
@@ -169,7 +174,7 @@ def main():
     p.add_argument('--platform', choices=['both', *PLATFORMS], required=True)
     p.add_argument('--out', type=Path, required=True)
     a = p.parse_args()
-    require(os.environ.get('GITHUB_REPOSITORY') == REPO and os.environ.get('GITHUB_REF') == 'refs/heads/main'
+    require(same_repository(os.environ.get('GITHUB_REPOSITORY')) and os.environ.get('GITHUB_REF') == 'refs/heads/main'
             and os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch', 'Release control must run by manual dispatch from main')
     platforms = list(PLATFORMS) if a.platform == 'both' else [a.platform]
     result = verify(a.source.resolve(), a.sha, a.run, a.build, platforms)

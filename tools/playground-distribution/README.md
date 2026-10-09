@@ -66,9 +66,10 @@ mint keys, accept agreements, create apps/groups, or invite testers.
    for hostile code:** a build could leave processes or modify later scripts on the
    same runner. Do not approve unreviewed or adversarial PRs. Stronger separation
    requires a separately designed private artifact handoff and signing service.
-5. Review hosted toolchain availability and resolve/freeze Fastlane transitive gems
-   before commissioning. The draft pins Fastlane 2.240.1 and action commits, but its
-   transitive Ruby dependencies are not yet locked. Validate real hosted packaging,
+5. Review hosted native toolchain availability before commissioning. Ruby 3.3.12,
+   Bundler 2.6.9, Fastlane 2.240.1 and every transitive gem/checksum are committed in
+   `Gemfile.lock`. CI and release use frozen Bundler installs and `bundle exec`.
+   Validate real hosted packaging,
    signing, processing and private assignment in an explicitly authorized pilot.
 
 ### Existing destinations and secure values
@@ -79,7 +80,7 @@ mint keys, accept agreements, create apps/groups, or invite testers.
 | iOS | secret | `PLAYGROUND_IOS_CERTIFICATE_PASSWORD`: P12 password |
 | iOS | secret | `PLAYGROUND_IOS_PROFILE_BASE64`: existing matching App Store provisioning profile |
 | iOS | variable | `PLAYGROUND_IOS_CERTIFICATE_SHA1`: authorized existing distribution certificate fingerprint |
-| iOS | secret | `PLAYGROUND_ASC_KEY_ID`, `PLAYGROUND_ASC_ISSUER_ID`, `PLAYGROUND_ASC_KEY_BASE64`: existing authorized App Store Connect API key |
+| iOS | secret | `PLAYGROUND_ASC_KEY_ID`, `PLAYGROUND_ASC_KEY_BASE64`: existing authorized App Store Connect API key; `PLAYGROUND_ASC_ISSUER_ID` is required for team keys, omitted for individual keys |
 | iOS | variable | `PLAYGROUND_TESTFLIGHT_GROUP_ID`: existing private **internal**, manual-access group for this app |
 | Android | secret | `PLAYGROUND_ANDROID_KEYSTORE_BASE64`: existing upload P12, alias `playground-upload` |
 | Android | secret | `PLAYGROUND_ANDROID_KEYSTORE_PASSWORD`: existing P12/key password |
@@ -93,6 +94,41 @@ An exportable iOS CI distribution identity has **not** yet been verified. Existi
 local automatic/cloud signing does not prove that these CI assets are available.
 The current CLI Google token lacks AndroidPublisher scope; this draft requires an
 authorized service account and does not silently reuse or broaden that token.
+
+### Exact setup request for an authorized administrator
+
+Approve creation/configuration of **only** `playground-ios` and `playground-android`
+in this repository: at least one named authorized required reviewer, prevent
+self-review enabled, administrator bypass disabled, selected deployment branches
+enabled with exactly the branch `main` (no tags/patterns). Confirm who may approve
+when the dispatcher cannot approve their own run. No repository rules, Factory
+configuration, app identifiers or store destinations change.
+
+Approve secure entry of only the environment-specific secrets/variables in the table.
+Use existing identities with these capabilities; missing capabilities are a separate
+grant decision, not permission to create keys or expand access:
+
+- Apple: existing signing P12/private key and matching App Store profile for
+  `R6A892D599.com.rem.playground.settings`; existing API identity able to read this
+  app's builds/groups, upload a build and assign it to its existing internal group.
+  Developer is sufficient for build uploads/internal testing; no Admin/Account Holder
+  or production submission permission is requested. Prefer an existing individual
+  key whose user's app access is limited to this app. A team API key can cover every
+  app in the team: disclose that broader existing scope before installing it, do not
+  represent it as app-scoped. No certificate/profile creation or group/tester edits.
+- Google: existing service account with AndroidPublisher scope and Play permissions
+  limited to `com.rem.designsystem.demo`: **View app information (read-only)** and
+  **Release apps to testing tracks**. It must read tracks/bundles and create, upload,
+  commit/delete edits for testing releases. No production release, financial data,
+  account administration, store-listing management, or tester-list management is
+  requested. The existing dedicated upload key is separate from this API identity;
+  neither it nor the Play app-signing key is rotated.
+
+Enter values directly through GitHub's protected-environment secret UI or an approved
+secure transfer. Return only setup completion and non-sensitive identity fingerprints,
+never key/password/JSON values. This request does **not** authorize merging, dispatching
+the workflow, uploading a candidate, changing store groups or running the pilot.
+Those require a fresh exact-SHA release decision after the candidate's visual gate.
 
 Only an existing private internal TestFlight group is supported in this first lane.
 Existing external-test access is not sufficient: no external Beta App Review,
@@ -153,6 +189,9 @@ free of personal tester data. The source code and these nonsensitive IDs are pub
 python3 -m unittest discover -s tools/playground-distribution -p 'test_*.py' -v
 ruby -c tools/playground-distribution/fastlane/Fastfile
 ruby tools/playground-distribution/test_store.rb
+ruby tools/playground-distribution/test_workflows.rb
+# On the pinned Ruby runtime, with the committed frozen bundle installed:
+bundle exec ruby tools/playground-distribution/test_dependencies.rb
 ```
 
 Tests exercise input injection, foreign/stale runs, missing/duplicate jobs, incomplete
@@ -162,7 +201,19 @@ the real run confirmed both downloaded ZIP digests and exact source method sets.
 These checks do not constitute a hosted build, signing proof, store upload, visual
 approval, physical-device drive or permission to distribute.
 
+`playground-distribution-check.yml` runs these guards plus frozen installation and
+actual locked provider-interface loading on both `ubuntu-24.04` and `macos-15`.
+It has a read-only token, no release environment, no store secrets and no package
+build/upload step. Intentional dependency updates regenerate the checksummed lock
+with Bundler 2.6.9 on Ruby 3.3.12, then rerun both platforms; release jobs never resolve
+new versions or rewrite the lock. The temporary lock-bootstrap artifact contains
+dependency metadata only and is retained for one day; the final check workflow
+publishes no artifacts.
+
 Provider references: [TestFlight upload](https://docs.fastlane.tools/actions/upload_to_testflight/),
 [Play upload](https://docs.fastlane.tools/actions/upload_to_play_store/),
 [Apple group assignment](https://developer.apple.com/documentation/appstoreconnectapi/post-v1-builds-_id_-relationships-betagroups),
 [Play internal track API](https://developers.google.com/android-publisher/api-ref/rest/v3/edits.tracks/update).
+[Apple internal testing roles](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers/),
+[Apple API key scope](https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-api/),
+[Play permissions](https://support.google.com/googleplay/android-developer/answer/9844686).

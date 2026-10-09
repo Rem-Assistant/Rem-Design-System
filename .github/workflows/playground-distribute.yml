@@ -101,6 +101,8 @@ jobs:
       PLAYGROUND_PLATFORM: ${{ matrix.platform }}
       PLAYGROUND_OUTPUT: ${{ runner.temp }}/playground-package
       PLAYGROUND_ADMISSION: ${{ runner.temp }}/admission.json
+      BUNDLE_FROZEN: 'true'
+      BUNDLE_PATH: ${{ runner.temp }}/playground-gems
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -127,9 +129,14 @@ jobs:
           java-version: '17'
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
         with:
-          ruby-version: '3.3'
-      - name: Install pinned distribution tool (no credentials present)
-        run: gem install fastlane --version 2.240.1 --no-document
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Install frozen checksummed dependencies (no credentials present)
+        working-directory: control/tools/playground-distribution
+        run: |
+          bundle install --jobs 4 --retry 2
+          bundle check
+          git diff --exit-code -- Gemfile.lock
       - name: Build and inspect committed store-ready source (no signing or store credentials)
         run: |
           python3 control/tools/playground-distribution/package.py build --source candidate \
@@ -164,7 +171,7 @@ jobs:
         run: |
           umask 077
           # Provider output can contain account details; never print it or publish it as an artifact.
-          if ! fastlane distribute > "$RUNNER_TEMP/playground-store-private.log" 2>&1; then
+          if ! bundle exec fastlane distribute > "$RUNNER_TEMP/playground-store-private.log" 2>&1; then
             echo 'Store step failed or is unresolved. Inspect provider state before rerunning; do not blindly re-upload.'
             exit 1
           fi

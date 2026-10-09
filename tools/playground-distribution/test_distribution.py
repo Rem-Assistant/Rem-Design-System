@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 from unittest.mock import patch
 import zipfile
@@ -32,6 +34,29 @@ class AdmissionTests(unittest.TestCase):
     def test_exact_run_and_receipt(self):
         gate.validate_run(self.run, self.jobs, SHA, '123')
         gate.validate_receipt(self.record, self.run, SHA, 'ios', {'Tests/testOne'}, ['settings'])
+
+    def test_main_accepts_canonical_or_lowercase_repository_and_rejects_foreign(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for repository in (gate.REPO, gate.REPO.lower(), 'foreign/Rem-Design-System'):
+                out = Path(tmp) / 'admission.json'
+                argv = ['gate', '--source', tmp, '--sha', SHA, '--run', '123', '--build', '5',
+                        '--platform', 'ios', '--out', str(out)]
+                env = dict(GITHUB_REPOSITORY=repository, GITHUB_REF='refs/heads/main',
+                           GITHUB_EVENT_NAME='workflow_dispatch', PLAYGROUND_VISUAL_REVIEW_URL=URL)
+                with patch.object(sys, 'argv', argv), patch.dict(os.environ, env, clear=True), \
+                     patch.object(gate, 'verify', return_value={}) as verify:
+                    if repository.startswith('foreign/'):
+                        with self.assertRaises(ValueError):
+                            gate.main()
+                        verify.assert_not_called()
+                    else:
+                        gate.main()
+                        verify.assert_called_once()
+                        self.assertEqual(json.loads(out.read_text())['visual_review_url'], URL)
+
+    def test_run_repository_case_matches_github_identity(self):
+        run = dict(self.run, repository={'full_name': gate.REPO.lower()}, head_repository={'full_name': gate.REPO.upper()})
+        gate.validate_run(run, self.jobs, SHA, '123')
 
     def test_inputs_reject_refs_and_injection(self):
         for sha, run, build in [('main', '123', '5'), (SHA, '1;echo', '5'), (SHA, '1', '0'),

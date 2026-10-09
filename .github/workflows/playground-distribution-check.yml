@@ -7,9 +7,19 @@ on:
 permissions:
   contents: read
 jobs:
-  lock-bootstrap:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+  guards-and-dependencies:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      BUNDLE_FROZEN: 'true'
+      BUNDLE_PATH: ${{ runner.temp }}/playground-check-gems
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+      FASTLANE_OPT_OUT_USAGE: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -19,11 +29,17 @@ jobs:
         with:
           ruby-version: '3.3.12'
           bundler: '2.6.9'
-      - name: Resolve lock metadata only (no app build or store access)
+      - name: Install only committed locked dependencies (no app build or store access)
         working-directory: tools/playground-distribution
-        run: bundle lock --add-platform ruby x86_64-linux arm64-darwin-24 x86_64-darwin-24 --add-checksums
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: playground-gemfile-lock
-          path: tools/playground-distribution/Gemfile.lock
-          retention-days: 1
+        run: |
+          bundle install --jobs 4 --retry 2
+          bundle check
+          git diff --exit-code -- Gemfile.lock
+      - name: Run guard tests and installed provider API contract checks
+        working-directory: tools/playground-distribution
+        run: |
+          python3 -m unittest discover -p 'test_*.py' -v
+          bundle exec ruby test_store.rb
+          bundle exec ruby test_dependencies.rb
+          bundle exec ruby test_workflows.rb
+          bundle exec fastlane lanes
