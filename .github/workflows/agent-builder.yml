@@ -8,22 +8,28 @@ on:
         description: Issue number
         required: true
         type: string
+      base_ref:
+        description: Allowed target branch; blank reuses the task route or repository default
+        required: false
+        type: string
 permissions:
+  issues: read
   actions: read
   contents: read
 jobs:
   builder:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder'
-    uses: samuelalake/agent-factory/.github/workflows/builder.yml@bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && (github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:builder')
+    uses: samuelalake/agent-factory/.github/workflows/builder.yml@bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
     with:
       issue: ${{ format('{0}', github.event.issue.number || inputs.issue) }}
-      factory_ref: bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+      validated_routing: true
+      base_ref: ${{ inputs.base_ref }}
+      factory_ref: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
+      suppress_failure_escalation: true
       runner: ubuntu-latest
-      base_ref: main
       app_id: ${{ vars.AGENT_FACTORY_BUILDER_APP_ID }}
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      FIGMA_MCP_OAUTH_BUNDLE: ${{ secrets.FIGMA_MCP_OAUTH_BUNDLE }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       AGENT_FACTORY_BUILDER_APP_ID: ${{ secrets.AGENT_FACTORY_BUILDER_APP_ID }}
       AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_BUILDER_APP_PRIVATE_KEY }}

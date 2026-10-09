@@ -1,37 +1,333 @@
 {
   "onboarding-sign-in": {
-    "paths": ["Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift", "compose/RemDesignSystem/onboarding/SignInStep.kt", "tokens/**"],
-    "states": ["signin-returning-light", "signin-new-light", "signin-checking-light", "signin-error-dark", "signin-recovery-light"]
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingSignInTemplate.swift",
+      "compose/RemDesignSystem/onboarding/SignInStep.kt",
+      "tokens/**"
+    ],
+    "states": [
+      "signin-returning-light",
+      "signin-new-light",
+      "signin-checking-light",
+      "signin-error-dark",
+      "signin-recovery-light"
+    ]
   },
   "onboarding-checkin": {
-    "paths": ["Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift", "Sources/RemDesignSystem/Controls/RemSwitch.swift", "compose/RemDesignSystem/onboarding/CheckinStep.kt", "compose/RemDesignSystem/controls/RemSwitch.kt", "tokens/**"],
-    "states": ["checkin-default-light", "checkin-edited-light", "checkin-saving-light", "checkin-saved-light", "checkin-failure-light"],
-    "exclusive_output_prefixes": ["checkin-"],
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingCheckinTemplate.swift",
+      "compose/RemDesignSystem/onboarding/CheckinStep.kt",
+      "tokens/**"
+    ],
+    "states": [
+      "checkin-default-light",
+      "checkin-edited-light",
+      "checkin-saving-light",
+      "checkin-saved-light",
+      "checkin-failure-light"
+    ],
+    "exclusive_output_prefixes": [
+      "checkin-"
+    ],
     "requirePrototype": false,
     "references": {
-      "checkin-default-light": { "name": "Checkin-default-light", "node": "870:788", "requireDocumentation": false },
-      "checkin-edited-light": { "name": "Checkin-edited-light", "node": "875:857", "requireDocumentation": false },
-      "checkin-saving-light": { "name": "Checkin-saving-light", "node": "875:940", "requireDocumentation": false },
-      "checkin-saved-light": { "name": "Checkin-saved-light", "node": "875:1026", "requireDocumentation": false },
-      "checkin-failure-light": { "name": "Checkin-failure-light", "node": "875:1112", "requireDocumentation": false }
+      "checkin-default-light": {
+        "name": "Checkin-default-light",
+        "node": "870:788",
+        "requireDocumentation": false
+      },
+      "checkin-edited-light": {
+        "name": "Checkin-edited-light",
+        "node": "875:857",
+        "requireDocumentation": false
+      },
+      "checkin-saving-light": {
+        "name": "Checkin-saving-light",
+        "node": "875:940",
+        "requireDocumentation": false
+      },
+      "checkin-saved-light": {
+        "name": "Checkin-saved-light",
+        "node": "875:1026",
+        "requireDocumentation": false
+      },
+      "checkin-failure-light": {
+        "name": "Checkin-failure-light",
+        "node": "875:1112",
+        "requireDocumentation": false
+      }
     },
     "waypoints": {
       "checkin-component-set": { "name": "Checkin-component-set", "node": "876:1121" },
       "checkin-flow-documentation": { "name": "Checkin-flow-documentation", "node": "890:1502" },
-      "checkin-prototype": { "name": "Checkin-prototype", "node": "885:1121" }
+      "checkin-prototype": { "name": "Checkin-prototype", "node": "885:1121" },
+      "checkin-picker-presentations": { "name": "Checkin-picker-presentations", "node": "932:4350" },
+      "time-picker-composition": { "name": "Time-picker-composition", "node": "939:258" }
     }
   },
   "onboarding-consent": {
-    "paths": ["Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift", "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift", "compose/RemDesignSystem/onboarding/ConsentStep.kt", "compose/RemDesignSystem/onboarding/LegalDocument.kt", "tokens/**"],
-    "states": ["consent-default-light", "consent-terms-light", "consent-privacy-light"],
-    "exclusive_output_prefixes": ["consent-"],
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingConsentTemplate.swift",
+      "Sources/RemDesignSystem/Templates/LegalDocumentTemplate.swift",
+      "compose/RemDesignSystem/onboarding/ConsentStep.kt",
+      "compose/RemDesignSystem/onboarding/LegalDocument.kt",
+      "tokens/**"
+    ],
+    "states": [
+      "consent-default-light",
+      "consent-terms-light",
+      "consent-privacy-light"
+    ],
+    "exclusive_output_prefixes": [
+      "consent-"
+    ],
     "references": {
-      "consent-default-light": { "name": "Consent-default-light", "node": "777:248" },
-      "consent-terms-light": { "name": "Consent-terms-light", "node": "777:325" },
-      "consent-privacy-light": { "name": "Consent-privacy-light", "node": "777:392" }
+      "consent-default-light": {
+        "name": "Consent-default-light",
+        "node": "777:248"
+      },
+      "consent-terms-light": {
+        "name": "Consent-terms-light",
+        "node": "777:325"
+      },
+      "consent-privacy-light": {
+        "name": "Consent-privacy-light",
+        "node": "777:392"
+      }
     },
     "waypoints": {
-      "consent-flow-documentation": { "name": "Consent-flow-documentation", "node": "777:432" }
+      "consent-flow-documentation": {
+        "name": "Consent-flow-documentation",
+        "node": "777:432"
+      }
     }
+  },
+  "settings-foundation": {
+    "paths": [
+      "Sources/RemDesignSystem/Screens/SettingsPlaygroundContent.swift",
+      "Sources/RemDesignSystem/Rows/**",
+      "Sources/RemDesignSystem/Primitives/ContainedIcon*",
+      "compose/RemDesignSystem/screens/SettingsPlaygroundContent.kt",
+      "compose/RemDesignSystem/rows/**",
+      "compose/RemDesignSystem/primitives/ContainedIcon*",
+      "tools/playground-ios/**",
+      "compose/demo/**",
+      "tokens/**"
+    ],
+    "states": [
+      "settingsentry-light",
+      "agentsettings-light"
+    ],
+    "requirePrototype": false,
+    "references": {
+      "settingsentry-light": {
+        "name": "SettingsEntry-light",
+        "node": "1964:86819",
+        "requireDocumentation": false
+      },
+      "agentsettings-light": {
+        "name": "AgentSettings-light",
+        "node": "1827:50855",
+        "requireDocumentation": false
+      }
+    },
+    "runtimeGroups": [
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsPairedDevices*.swift",
+          "compose/RemDesignSystem/screens/SettingsPairedDevices*.kt"
+        ],
+        "states": [
+          "paireddevices-light",
+          "paireddevices-empty-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsConnectors*.swift",
+          "compose/RemDesignSystem/screens/SettingsConnectors*.kt",
+          "Sources/RemDesignSystem/Rows/ConnectorRow.swift",
+          "compose/RemDesignSystem/rows/ConnectorRow.kt"
+        ],
+        "states": [
+          "connectors-light",
+          "gmail-connector-permissions-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsCloudBrowser*.swift",
+          "compose/RemDesignSystem/screens/SettingsCloudBrowser*.kt"
+        ],
+        "states": [
+          "cloudbrowser-light",
+          "cloudbrowser-add-login-filled-light",
+          "cloudbrowser-cookies-cleared-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsMemory*.swift",
+          "compose/RemDesignSystem/screens/SettingsMemory*.kt",
+          "Sources/RemDesignSystem/Chat/RemComposerBar.swift",
+          "compose/RemDesignSystem/chat/RemComposerBar.kt"
+        ],
+        "states": [
+          "memory-light",
+          "memory-composer-feedback-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsModels*.swift",
+          "compose/RemDesignSystem/screens/SettingsModels*.kt"
+        ],
+        "states": [
+          "models-light",
+          "models-provider-picker-light",
+          "models-key-masked-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsWallet*.swift",
+          "compose/RemDesignSystem/screens/SettingsWallet*.kt",
+          "Sources/RemDesignSystem/Templates/ProviderPreConsentContent.swift",
+          "compose/RemDesignSystem/screens/ProviderPreConsentContent.kt"
+        ],
+        "states": [
+          "wallet-light",
+          "wallet-link-consent-light",
+          "wallet-shoppay-consent-light"
+        ]
+      },
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Screens/SettingsVoice*.swift",
+          "compose/RemDesignSystem/screens/SettingsVoice*.kt",
+          "Sources/RemDesignSystem/Primitives/RemSlider.swift",
+          "compose/RemDesignSystem/primitives/RemSlider.kt"
+        ],
+        "states": [
+          "voice-light",
+          "voice-chooser-preview-light",
+          "voice-sliders-adjusted-light"
+        ]
+      }
+    ]
+  },
+  "agenda-suggestions": {
+    "paths": [
+      "Sources/RemDesignSystem/Agenda/**",
+      "Sources/RemDesignSystem/Screens/Agenda*.swift",
+      "compose/RemDesignSystem/agenda/**",
+      "compose/RemDesignSystem/screens/Agenda*.kt"
+    ],
+    "states": [
+      "agendasuggestions-inline-light",
+      "agendasuggestions-overflow-light",
+      "agendasuggestions-none-light"
+    ],
+    "requirePrototype": false,
+    "references": {
+      "agendasuggestions-inline-light": {
+        "name": "AgendaSuggestions-inline-light",
+        "node": "2336:19585",
+        "requireDocumentation": false
+      },
+      "agendasuggestions-overflow-light": {
+        "name": "AgendaSuggestions-overflow-light",
+        "node": "2338:20884",
+        "requireDocumentation": false
+      },
+      "agendasuggestions-none-light": {
+        "name": "AgendaSuggestions-none-light",
+        "node": "2337:20436",
+        "requireDocumentation": false
+      }
+    },
+    "runtimeGroups": [
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Agenda/**",
+          "Sources/RemDesignSystem/Screens/Agenda*.swift",
+          "compose/RemDesignSystem/agenda/**",
+          "compose/RemDesignSystem/screens/Agenda*.kt",
+          "tools/playground-ios/App/**",
+          "tools/playground-ios/UITests/**",
+          "compose/demo/**",
+          "tokens/**"
+        ],
+        "states": [
+          "agendasuggestions-dark",
+          "agendasuggestions-large-text",
+          "agendasuggestions-added-light",
+          "agendasuggestions-moved-light",
+          "agendasuggestions-dismissed-light",
+          "agendasuggestions-last-removal-light",
+          "agendasuggestions-restored-light"
+        ]
+      }
+    ]
+  },
+  "onboarding-voice": {
+    "paths": [
+      "Sources/RemDesignSystem/Templates/OnboardingVoice*.swift",
+      "Sources/RemDesignSystem/Screens/OnboardingVoice*.swift",
+      "Sources/RemDesignSystem/Screens/SettingsVoice*.swift",
+      "compose/RemDesignSystem/onboarding/Voice*.kt",
+      "compose/RemDesignSystem/screens/OnboardingVoice*.kt",
+      "compose/RemDesignSystem/screens/SettingsVoice*.kt",
+      "compose/RemDesignSystem/onboarding/OnboardingVoiceScreen.kt"
+    ],
+    "states": [
+      "onboardingvoice-light",
+      "onboardingvoice-chooser-light",
+      "onboardingvoice-selected-light"
+    ],
+    "requirePrototype": false,
+    "references": {
+      "onboardingvoice-light": {
+        "name": "OnboardingVoice-light",
+        "node": "2219:22520",
+        "requireDocumentation": false
+      },
+      "onboardingvoice-chooser-light": {
+        "name": "OnboardingVoice-chooser-light",
+        "node": "2221:83686",
+        "requireDocumentation": false
+      },
+      "onboardingvoice-selected-light": {
+        "name": "OnboardingVoice-selected-light",
+        "node": "2219:23081",
+        "requireDocumentation": false
+      }
+    },
+    "runtimeGroups": [
+      {
+        "paths": [
+          "Sources/RemDesignSystem/Templates/OnboardingVoice*.swift",
+          "Sources/RemDesignSystem/Screens/OnboardingVoice*.swift",
+          "Sources/RemDesignSystem/Screens/SettingsVoice*.swift",
+          "compose/RemDesignSystem/onboarding/Voice*.kt",
+          "compose/RemDesignSystem/screens/OnboardingVoice*.kt",
+          "compose/RemDesignSystem/screens/SettingsVoice*.kt",
+          "tools/playground-ios/App/**",
+          "tools/playground-ios/UITests/**",
+          "compose/demo/**",
+          "tokens/**",
+          "compose/RemDesignSystem/onboarding/OnboardingVoiceScreen.kt"
+        ],
+        "states": [
+          "onboardingvoice-dark",
+          "onboardingvoice-large-text",
+          "onboardingvoice-chooser-preview-light",
+          "onboardingvoice-sliders-adjusted-light",
+          "onboardingvoice-continue-light",
+          "onboardingvoice-skip-light",
+          "onboardingvoice-back-light"
+        ]
+      }
+    ]
   }
 }

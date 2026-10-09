@@ -15,6 +15,7 @@ on:
       - "tokens/generated/**"
       - "tools/render-evidence/**"
       - "tools/render-swift/**"
+      - "docs/agent-factory/routing-smoke.md"
 
 permissions:
   contents: read
@@ -29,6 +30,9 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - name: List schemes (debug)
         run: xcodebuild -list || true
       - name: Render on iOS Simulator (light + dark)
@@ -65,6 +69,9 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -96,6 +103,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           path: dl
@@ -114,8 +124,11 @@ jobs:
           cp dl/swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
           cp dl/compose-screenshots/*.png out/compose/ 2>/dev/null || true
           python3 - <<'PY'
-          import hashlib, json, os
+          import hashlib, json, os, subprocess
           from pathlib import Path
+          actual_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if actual_head != os.environ['SHA']:
+              raise SystemExit('checked-out source does not match candidate head')
           out = Path("out")
           media = {}
           for d in ("swiftui", "compose"):
@@ -125,7 +138,7 @@ jobs:
           # re-derives it from the base branch and refuses if this PR modified the workflow.
           Path("out/delivery/manifest.json").write_text(json.dumps({
               "pr": int(os.environ["PR"]),
-              "sha": os.environ["SHA"],
+              "sha": actual_head,
               "run_id": int(os.environ["RUN_ID"]),
               "run_attempt": int(os.environ["RUN_ATTEMPT"]),
               "workflow_sha256": hashlib.sha256(Path(".github/workflows/screenshots.yml").read_bytes()).hexdigest(),

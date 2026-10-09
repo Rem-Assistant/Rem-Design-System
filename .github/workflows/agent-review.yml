@@ -1,6 +1,6 @@
 name: agent-review
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_dispatch:
     inputs:
@@ -21,16 +21,18 @@ permissions:
 jobs:
   review:
     if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.head.repo.fork == false &&
+      (github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
+      ((github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'codex/playground-expansion') &&
+      github.event.pull_request.head.repo.fork == false &&
       (github.event.action != 'edited' ||
       (github.actor == 'agent-factory-builder[bot]' && github.event.changes.body &&
       (contains(github.event.pull_request.body, 'builder-delivery-status:ready') ||
       contains(github.event.pull_request.body, 'builder-delivery-status:failed')))))
-    uses: samuelalake/agent-factory/.github/workflows/review.yml@bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+    uses: samuelalake/agent-factory/.github/workflows/review.yml@bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+      validated_routing: true
+      factory_ref: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
       reviewer_app_id: ${{ vars.AGENT_FACTORY_REVIEWER_APP_ID }}
       steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
     secrets:
@@ -40,14 +42,10 @@ jobs:
       AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_REVIEWER_APP_PRIVATE_KEY }}
       AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
       AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
-  integration:
+  review-gate:
     needs: review
-    uses: samuelalake/agent-factory/.github/workflows/integration.yml@bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
+    uses: samuelalake/agent-factory/.github/workflows/gate.yml@bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
     with:
       pr: ${{ format('{0}', github.event.pull_request.number || inputs.pr) }}
-      factory_ref: bd7816b3b40938c3103ba93fc75e2fb8ae774ec0
-      timeout_seconds: 1800
-      steward_app_id: ${{ vars.AGENT_FACTORY_STEWARD_APP_ID }}
-    secrets:
-      AGENT_FACTORY_STEWARD_APP_ID: ${{ secrets.AGENT_FACTORY_STEWARD_APP_ID }}
-      AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY: ${{ secrets.AGENT_FACTORY_STEWARD_APP_PRIVATE_KEY }}
+      validated_routing: true
+      factory_ref: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
