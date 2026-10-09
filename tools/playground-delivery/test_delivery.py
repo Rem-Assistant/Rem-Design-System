@@ -14,6 +14,25 @@ d = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(d)
 
 
+class SourceCleanlinessTests(unittest.TestCase):
+    def test_dirty_checkout_is_rejected_and_names_paths(self):
+        sha = "c" * 40
+        outputs = {("git", "rev-parse", "HEAD"): sha + "\n",
+                   ("git", "status", "--porcelain", "--untracked-files=all"): "?? compose/.kotlin/errors/errors-1.log\n"}
+        with patch.object(d.subprocess, "check_output", side_effect=lambda cmd, **_: outputs[tuple(cmd)]):
+            with self.assertRaises(ValueError) as raised:
+                d.source(sha)
+        self.assertIn("Require a clean isolated checkout", str(raised.exception))
+        self.assertIn("compose/.kotlin/errors/errors-1.log", str(raised.exception))
+
+    def test_clean_checkout_at_exact_sha_passes(self):
+        sha = "c" * 40
+        outputs = {("git", "rev-parse", "HEAD"): sha + "\n",
+                   ("git", "status", "--porcelain", "--untracked-files=all"): ""}
+        with patch.object(d.subprocess, "check_output", side_effect=lambda cmd, **_: outputs[tuple(cmd)]):
+            d.source(sha)
+
+
 class HostedExecutionTests(unittest.TestCase):
     def setUp(self):
         self.sha = "a" * 40

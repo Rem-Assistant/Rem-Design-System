@@ -33,8 +33,9 @@ def source(sha):
     require(re.fullmatch(r"[0-9a-f]{40}", sha), "Require full immutable source SHA")
     actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     require(actual == sha, "Source SHA mismatch")
-    dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
-    require(not dirty, "Require a clean isolated checkout")
+    dirty = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], cwd=ROOT, text=True)
+    # Name the offending paths so a rejected run is diagnosable; the rejection itself is unchanged.
+    require(not dirty, "Require a clean isolated checkout; unexpected changes:\n" + dirty.rstrip())
 
 
 def expected_tests(platform):
