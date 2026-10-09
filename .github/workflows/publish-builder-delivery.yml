@@ -31,7 +31,7 @@ permissions:
 env:
   # The exact Agent Factory the consumer pins (must match the reviewer's factory_ref) so the delivery
   # CLI is the version the Reviewer reads back.
-  FACTORY_REF: 8522d84d9cd429c9b8cb9d028cf665a6136403c0
+  FACTORY_REF: bdc3fda75d2d4d4cc619b1d70012127d9e18fbb8
   GH_ATTACHMENT_CLI_VERSION: 2.100.0
   GH_ATTACHMENT_CLI_SHA256: e4d4bb4498e8d007abe545b6568926793ace1b6447da598294a610018cb164be
 
@@ -53,15 +53,16 @@ jobs:
         id: artifact
         env:
           GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           RUN_ID: ${{ github.event.workflow_run.id || inputs.evidence_run_id }}
         run: |
           set -euo pipefail
-          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]] || exit 1
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            case "$GITHUB_REF_NAME" in
-              codex/settings-integration|codex/settings-review-contracts|codex/settings-review-native|codex/playground-expansion) ;;
-              *) echo '::error::unsupported manual publisher ref'; exit 1 ;;
-            esac
+            test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
+            test "$GITHUB_TRIGGERING_ACTOR" = samuelalake
+            permission=$(gh api "repos/${GITHUB_REPOSITORY}/collaborators/${GITHUB_TRIGGERING_ACTOR}/permission" --jq .permission)
+            case "$permission" in admin|maintain|write) ;; *) exit 1 ;; esac
           fi
           meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
           test "$(jq -r .event <<<"$meta")" = pull_request
@@ -95,6 +96,27 @@ jobs:
           run-id: ${{ needs.locate.outputs.run_id }}
           github-token: ${{ github.token }}
 
+      - name: Checkout trusted consumer delivery formatter
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: consumer-delivery
+          persist-credentials: false
+
+      - name: Checkout exact Agent Factory publisher
+        uses: actions/checkout@v4
+        with:
+          repository: samuelalake/agent-factory
+          ref: ${{ env.FACTORY_REF }}
+          path: factory-delivery
+          persist-credentials: false
+
+      - name: Validate trusted publisher
+        run: |
+          set -euo pipefail
+          test "$(git -C factory-delivery rev-parse HEAD)" = "$FACTORY_REF"
+          test -z "$(git -C factory-delivery status --porcelain)"
+
       - name: Validate run, head, manifest, and media
         id: validate
         env:
@@ -114,32 +136,28 @@ jobs:
           head_ref=$(jq -r .head.ref <<<"$pr_meta")
           test "$(jq -r .state <<<"$pr_meta")" = open
           test "$(jq -r .head.repo.full_name <<<"$pr_meta")" = "$GITHUB_REPOSITORY"
-          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            test "$GITHUB_REF_NAME" = "$base_ref"
-            case "$base_ref:$head_ref" in
-              codex/playground-expansion:agent-factory/playground-issue-*)
-                [[ "$head_ref" =~ ^agent-factory/playground-issue-[0-9]+$ ]] ;;
-              codex/settings-integration:agent-factory/settings-issue-*)
-                [[ "$head_ref" =~ ^agent-factory/settings-issue-[0-9]+$ ]] ;;
-              codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
-              *) echo '::error::unsupported Settings base/head pair'; exit 1 ;;
-            esac
-            # Bind manual evidence to the current admitted integration ref,
-            # never the potentially stale pull.base.sha creation snapshot.
-            encoded_ref=$(jq -rn --arg ref "$base_ref" '$ref | @uri')
-            base_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded_ref}" --jq .object.sha)
-            test "$base_sha" = "$GITHUB_SHA"
-            test "$(jq -r .state <<<"$pr_meta")" = open
-            test "$(jq -r .draft <<<"$pr_meta")" = true
-            test "$(jq -r .head.repo.full_name <<<"$pr_meta")" = "$GITHUB_REPOSITORY"
-          fi
+          # Resolve the admitted branch snapshot; workflow/controller remains on main.
+          case "$base_ref" in main|codex/playground-expansion) ;; *) exit 1 ;; esac
+          encoded_ref=$(jq -rn --arg ref "$base_ref" '$ref | @uri')
+          base_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded_ref}" --jq .object.sha)
+          # Route-aware tasks retain the original source snapshot even if the base advances.
+          route_source=$(PYTHONPATH="$GITHUB_WORKSPACE/factory-delivery/src" python3 - "$GITHUB_REPOSITORY" "$PR" "$SHA" <<'PYCODE'
+          import sys
+          from pathlib import Path
+          from agent_factory.task_route import check_pr_route
+          route = check_pr_route(sys.argv[1], sys.argv[2], Path('consumer-delivery/.agent-factory/config.json'), expected_head=sys.argv[3])
+          print(route['source_sha'] if route else '')
+          PYCODE
+          )
+          if [ -n "$route_source" ]; then base_sha="$route_source"; fi
+          echo "routed=$([ -n "$route_source" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
           echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
           mapfile -t scopes < <(jq -r '.labels[].name | select(startswith("delivery-scope:")) | sub("^delivery-scope:"; "")' <<<"$pr_meta")
           test "${#scopes[@]}" -le 1
           if [ "${#scopes[@]}" = "1" ]; then
-            [[ "${scopes[0]}" =~ ^[a-z0-9-]+$ ]]
+            [[ "${scopes[0]}" =~ ^[a-z0-9-]+$ ]] || exit 1
             echo "primary_contract=${scopes[0]}" >> "$GITHUB_OUTPUT"
           else
             echo "primary_contract=" >> "$GITHUB_OUTPUT"
@@ -148,20 +166,21 @@ jobs:
           scope=${scopes[0]:-}
           if [ "$base_ref" = codex/playground-expansion ] || [ "$scope" = agenda-suggestions ] || [ "$scope" = onboarding-voice ]; then
             test "$base_ref" = codex/playground-expansion
-            [[ "$head_ref" =~ ^agent-factory/playground-issue-[0-9]+$ ]]
+            [[ "$head_ref" =~ ^agent-factory/playground-issue-[0-9]+$ ]] || exit 1
             test "$(jq -r .draft <<<"$pr_meta")" = true
-            case "$scope" in agenda-suggestions|onboarding-voice) ;; *) exit 1 ;; esac
-          elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            test "$scope" = settings-foundation
+            case "$scope" in agenda-suggestions|onboarding-voice|factory-routing) ;; *) exit 1 ;; esac
           fi
-          case "$base_ref:$head_ref" in
-            codex/playground-expansion:agent-factory/playground-issue-*) ;;
-            main:*|codex/settings-integration:*) ;;
-            codex/settings-review-contracts:codex/settings-review-native|codex/settings-review-native:codex/settings-review-evidence) ;;
-            *) echo "::error::unsupported evidence base/head pair: $base_ref:$head_ref"; exit 1 ;;
-          esac
+          if [ "$scope" = factory-routing ]; then
+            test "$base_ref" = codex/playground-expansion
+            test "$route_source" != ''
+            test "$(jq -r .figma.enabled consumer-delivery/.agent-factory/config.json)" = false
+            echo "engineering=true" >> "$GITHUB_OUTPUT"
+          fi
           run_meta=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
           test "$(jq -r .path <<<"$run_meta")" = ".github/workflows/screenshots.yml"
+          test "$(jq -r .head_sha <<<"$run_meta")" = "$SHA"
+          test "$(jq -r .run_attempt <<<"$run_meta")" = "$RUN_ATTEMPT"
+          test "$(jq -r .head_repository.full_name <<<"$run_meta")" = "$GITHUB_REPOSITORY"
           gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/pulls" --jq '.[].number' | grep -Fxq "$PR"
           artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?name=builder-evidence")
           test "$(jq -r .total_count <<<"$artifact")" = "1"
@@ -218,16 +237,9 @@ jobs:
                   raise SystemExit(f"evidence digest mismatch for {relative}")
           PY
 
-      - name: Checkout trusted consumer delivery formatter
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.validate.outputs.base_sha }}
-          path: consumer-delivery
-          persist-credentials: false
-
       - name: Locate exact-head Figma reference evidence
         id: figma-run
-        if: ${{ steps.validate.outputs.primary_contract != '' }}
+        if: ${{ steps.validate.outputs.primary_contract != '' && steps.validate.outputs.engineering != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ needs.locate.outputs.head_sha }}
@@ -286,7 +298,7 @@ jobs:
           echo "artifact_id=$(jq -r .id <<<"$artifact")" >> "$GITHUB_OUTPUT"
 
       - name: Download exact-head Figma reference evidence
-        if: ${{ steps.validate.outputs.primary_contract != '' }}
+        if: ${{ steps.validate.outputs.primary_contract != '' && steps.validate.outputs.engineering != 'true' }}
         uses: actions/download-artifact@v4
         with:
           artifact-ids: ${{ steps.figma-run.outputs.artifact_id }}
@@ -297,7 +309,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Validate and stage authenticated Figma references
-        if: ${{ steps.validate.outputs.primary_contract != '' }}
+        if: ${{ steps.validate.outputs.primary_contract != '' && steps.validate.outputs.engineering != 'true' }}
         env:
           SHA: ${{ needs.locate.outputs.head_sha }}
           FIGMA_ROOT: ${{ runner.temp }}/figma-evidence
@@ -337,20 +349,6 @@ jobs:
           mkdir -p "$EVIDENCE_ROOT/structure"
           cp "$FIGMA_ROOT/structure/report.json" "$EVIDENCE_ROOT/structure/report.json"
 
-      - name: Checkout exact Agent Factory publisher
-        uses: actions/checkout@v4
-        with:
-          repository: samuelalake/agent-factory
-          ref: ${{ env.FACTORY_REF }}
-          path: factory-delivery
-          persist-credentials: false
-
-      - name: Validate trusted publisher
-        run: |
-          set -euo pipefail
-          test "$(git -C factory-delivery rev-parse HEAD)" = "$FACTORY_REF"
-          test -z "$(git -C factory-delivery status --porcelain)"
-
       - name: Install pinned GitHub attachment client
         run: |
           set -euo pipefail
@@ -379,6 +377,7 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ needs.locate.outputs.head_sha }}
           VERIFY_CONCLUSION: ${{ needs.locate.outputs.conclusion }}
+          ROUTED: ${{ steps.validate.outputs.routed }}
           VERIFY_RUN_ID: ${{ needs.locate.outputs.run_id }}
           BASE_REF: ${{ steps.validate.outputs.base_ref }}
           HEAD_REF: ${{ steps.validate.outputs.head_ref }}
@@ -405,7 +404,9 @@ jobs:
           if [ "$BASE_REF" = codex/playground-expansion ]; then test "$(jq -r .draft <<<"$pr_meta")" = true; fi
           test "$(jq -r .state <<<"$pr_meta")" = open
           encoded_ref=$(jq -rn --arg ref "$BASE_REF" '$ref | @uri')
-          test "$(gh api "repos/${REPO}/git/ref/heads/${encoded_ref}" --jq .object.sha)" = "$BASE_SHA"
+          if [ "$ROUTED" != true ]; then
+            test "$(gh api "repos/${REPO}/git/ref/heads/${encoded_ref}" --jq .object.sha)" = "$BASE_SHA"
+          fi
           SCOPE_ARGS=()
           if [ -n "$PRIMARY_CONTRACT" ]; then
             SCOPE_ARGS=(--primary-contract "$PRIMARY_CONTRACT")
@@ -419,10 +420,14 @@ jobs:
           overall=$(cat "$RUNNER_TEMP/paired-delivery/status")
           ATTACHMENTS=()
           while IFS= read -r f; do ATTACHMENTS+=(--attach "$f"); done < <(jq -r '.[]' "$RUNNER_TEMP/paired-delivery/attachments.json")
+          ROUTE_ARGS=()
+          if [ "$ROUTED" = true ]; then
+            ROUTE_ARGS=(--route-config "$GITHUB_WORKSPACE/consumer-delivery/.agent-factory/config.json")
+          fi
           cd "$GITHUB_WORKSPACE/factory-delivery"
           PYTHONPATH=src python3 -m agent_factory.github_delivery \
             --repo "$REPO" --pr "$PR" --head "$SHA" --status "$overall" \
-            --body-file "$RUNNER_TEMP/paired-delivery/body.md" "${ATTACHMENTS[@]}"
+            --body-file "$RUNNER_TEMP/paired-delivery/body.md" "${ATTACHMENTS[@]}" "${ROUTE_ARGS[@]}"
 
       - name: Retire the legacy screenshot comment
         env:

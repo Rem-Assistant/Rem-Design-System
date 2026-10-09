@@ -24,6 +24,7 @@ on:
       - "Sources/**"
       - "compose/**"
       - "tokens/generated/**"
+      - "docs/agent-factory/routing-smoke.md"
       - "tools/render-evidence/**"
       - "tools/render-swift/**"
       - "docs/playground/evidence/**"
@@ -259,8 +260,11 @@ jobs:
           cp dl/settings-swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
           cp dl/settings-compose-screenshots/*.png out/compose/ 2>/dev/null || true
           python3 - <<'PY'
-          import hashlib, json, os
+          import hashlib, json, os, subprocess
           from pathlib import Path
+          actual_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if actual_head != os.environ['SHA']:
+              raise SystemExit('checked-out source does not match candidate head')
           out = Path("out")
           media = {}
           for d in ("swiftui", "compose"):
@@ -270,7 +274,7 @@ jobs:
           # re-derives it from the base branch and refuses if this PR modified the workflow.
           Path("out/delivery/manifest.json").write_text(json.dumps({
               "pr": int(os.environ["PR"]),
-              "sha": os.environ["SHA"],
+              "sha": actual_head,
               "run_id": int(os.environ["RUN_ID"]),
               "run_attempt": int(os.environ["RUN_ATTEMPT"]),
               "workflow_sha256": hashlib.sha256(Path(".github/workflows/screenshots.yml").read_bytes()).hexdigest(),
