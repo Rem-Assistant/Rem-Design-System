@@ -70,9 +70,8 @@ jobs:
           path: ${{ runner.temp }}/ios-native.json
           if-no-files-found: error
       # Visual review copies of the journeys' own XCTest attachments (same extraction as
-      # screenshots.yml). Written outside the checkout after the evidence record.
+      # screenshots.yml), exported to $RUNNER_TEMP only after a passing evidence record.
       - name: Export journey screenshots
-        if: always()
         run: |
           set -euo pipefail
           brew install xcparse || brew install chargepoint/xcparse/xcparse
@@ -84,7 +83,6 @@ jobs:
             cp "$f" "$out/${b%%_*}.png"
           done
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: ios-screenshots-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/ios-screenshots/*.png
@@ -131,10 +129,9 @@ jobs:
           name: android-native-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/android-native.json
           if-no-files-found: error
-      # Visual review copies of the journeys' own captures. Outside the checkout and after the
-      # evidence record, so they cannot affect clean-checkout or method-set validation.
+      # Visual review copies of the journeys' own captures, pulled inside the emulator step before
+      # teardown into $RUNNER_TEMP (never the checkout) and uploaded only after a passing record.
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: android-screenshots-${{ env.SOURCE_SHA }}
           path: ${{ runner.temp }}/android-screenshots/*.png
