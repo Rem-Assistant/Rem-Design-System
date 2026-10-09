@@ -12,7 +12,7 @@ contracts = {
     skip_waiting_for_build_processing wait_processing_timeout_duration distribute_external
     notify_external_testers expire_previous_builds app_version build_number],
   Fastlane::Actions::UploadToPlayStoreAction => %i[package_name json_key_data aab track release_status
-    release_name skip_upload_apk skip_upload_metadata skip_upload_changelogs skip_upload_images
+    version_name skip_upload_apk skip_upload_metadata skip_upload_changelogs skip_upload_images
     skip_upload_screenshots rescue_changes_not_sent_for_review],
   Fastlane::Actions::AppStoreConnectApiKeyAction => %i[key_id issuer_id key_content is_key_content_base64 duration]
 }

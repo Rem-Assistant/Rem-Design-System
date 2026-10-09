@@ -138,7 +138,7 @@ lane :distribute do
     receipt['distribution'] = 'upload_started'
     File.write(state_path, JSON.pretty_generate(receipt))
     upload_to_play_store(package_name: 'com.rem.designsystem.demo', json_key_data: ENV.fetch('PLAYGROUND_GOOGLE_PLAY_JSON'),
-      aab: binary, track: 'internal', release_status: 'completed', release_name: "Playground #{number} #{sha[0,12]}",
+      aab: binary, track: 'internal', release_status: 'completed', version_name: "Playground #{number} #{sha[0,12]}",
       skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true,
       skip_upload_images: true, skip_upload_screenshots: true, rescue_changes_not_sent_for_review: false)
     play_tracks(client) do |tracks, _|

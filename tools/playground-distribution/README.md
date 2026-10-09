@@ -203,6 +203,8 @@ approval, physical-device drive or permission to distribute.
 
 `playground-distribution-check.yml` runs these guards plus frozen installation and
 actual locked provider-interface loading on both `ubuntu-24.04` and `macos-15`.
+Checksum-pinned Actionlint 1.7.12 validates both workflow schemas and expression
+contexts; parsing YAML alone is insufficient for GitHub context availability.
 It has a read-only token, no release environment, no store secrets and no package
 build/upload step. Intentional dependency updates regenerate the checksummed lock
 with Bundler 2.6.9 on Ruby 3.3.12, then rerun both platforms; release jobs never resolve
