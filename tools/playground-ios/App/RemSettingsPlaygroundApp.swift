@@ -16,11 +16,12 @@ struct RemSettingsPlaygroundApp: App {
 
 enum LoadFixture: String, CaseIterable { case success = "Success", slow = "Slow", error = "Error" }
 
-private enum PlaygroundRoute: Hashable { case settings, controls, onboardingVoice }
+private enum PlaygroundRoute: Hashable { case settings, controls, onboardingVoice, agendaSuggestions(AgendaSuggestionsFixture) }
 
 struct PlaygroundHome: View {
     @State private var path = NavigationPath()
     @State private var fixture = LoadFixture.success
+    @State private var agendaFixture = AgendaSuggestionsFixture.loaded
     var body: some View {
         NavigationStack(path: $path) {
             Form {
@@ -32,6 +33,14 @@ struct PlaygroundHome: View {
                     }.pickerStyle(.segmented).accessibilityIdentifier("fixturePicker")
                     NavigationLink("Open Settings", value: PlaygroundRoute.settings).accessibilityIdentifier("openSettings")
                     NavigationLink("Shared controls", value: PlaygroundRoute.controls)
+                }
+                Section("Agenda New · Suggestions") {
+                    Text("A local Agenda Suggestions journey: Add / Move / Dismiss, overflow, and the empty day becoming populated — all from deterministic fixtures.").font(.footnote)
+                    Picker("Agenda fixture", selection: $agendaFixture) {
+                        ForEach(AgendaSuggestionsFixture.allCases, id: \.self) { Text($0.title).tag($0) }
+                    }.pickerStyle(.segmented).accessibilityIdentifier("agendaFixturePicker")
+                    NavigationLink("Open Agenda Suggestions", value: PlaygroundRoute.agendaSuggestions(agendaFixture))
+                        .accessibilityIdentifier("openAgendaSuggestions")
                 }
                 Section("Onboarding playground") {
                     Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview is local and plays no audio; Continue and Skip are host callbacks with no downstream screen.").font(.footnote)
@@ -49,6 +58,7 @@ struct PlaygroundHome: View {
                     case .settings: SettingsPreview(fixture: fixture)
                     case .controls: ControlsPreview()
                     case .onboardingVoice: OnboardingVoiceHost()
+                    case .agendaSuggestions(let agenda): AgendaSuggestionsPreview(fixture: agenda)
                     }
                 }
                 .navigationDestination(for: SettingsEntryDestination.self) { _ in
@@ -86,6 +96,15 @@ private struct PlaygroundShareSheet: UIViewControllerRepresentable {
         UIActivityViewController(activityItems: ["Rem — a personal AI assistant. Shared from the local Settings playground."], applicationActivities: nil)
     }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+struct AgendaSuggestionsPreview: View {
+    let fixture: AgendaSuggestionsFixture
+    var body: some View {
+        AgendaSuggestionsPlaygroundView(fixture: fixture)
+            .navigationTitle("Agenda New")
+            .navigationBarTitleDisplayMode(.inline)
+    }
 }
 
 struct AgentPreview: View {

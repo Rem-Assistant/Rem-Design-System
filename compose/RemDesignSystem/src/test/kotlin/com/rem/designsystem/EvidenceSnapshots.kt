@@ -37,6 +37,10 @@ import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.screens.AgendaScreen
+import com.rem.designsystem.screens.AgendaReferenceSuggestions
+import com.rem.designsystem.screens.AgendaSuggestionsFixture
+import com.rem.designsystem.screens.AgendaSuggestionsOverflowContent
+import com.rem.designsystem.screens.AgendaSuggestionsPlayground
 import com.rem.designsystem.screens.AddTaskField
 import com.rem.designsystem.screens.InboxScreen
 import com.rem.designsystem.screens.ChatScreen
@@ -369,6 +373,25 @@ class EvidenceSnapshots {
                 TaskEventRow(kind = TaskEventKind.Task, title = "Draft the investor update", leading = TaskEventLeading.Time("14:00"), pills = listOf("Fundraise"))
             }
         }
+    }
+
+    @Test
+    fun agendaSuggestionsInline() = shot("AgendaSuggestions-inline-light") {
+        RemTheme { AgendaSuggestionsPlayground(fixture = AgendaSuggestionsFixture.Loaded) }
+    }
+
+    @Test
+    fun agendaSuggestionsOverflow() = shot("AgendaSuggestions-overflow-light") {
+        RemTheme {
+            Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary)) {
+                AgendaSuggestionsOverflowContent(suggestions = AgendaReferenceSuggestions)
+            }
+        }
+    }
+
+    @Test
+    fun agendaSuggestionsNone() = shot("AgendaSuggestions-none-light") {
+        RemTheme { AgendaSuggestionsPlayground(fixture = AgendaSuggestionsFixture.None) }
     }
 
     @Test

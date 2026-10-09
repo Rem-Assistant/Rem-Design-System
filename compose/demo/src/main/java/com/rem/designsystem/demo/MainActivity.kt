@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class LoadFixture { Success, Slow, Error }
-private enum class Route { Home, Settings, Agent, Controls, OnboardingVoice }
+private enum class Route { Home, Settings, Agent, Controls, OnboardingVoice, AgendaSuggestions }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +88,8 @@ fun Playground() {
     val fullScreen = destination != null || route == Route.OnboardingVoice
     val back = { route = if (route == Route.Agent) Route.Settings else Route.Home }
     BackHandler(route != Route.Home && !fullScreen) { back() }
-    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls"; Route.OnboardingVoice -> "Onboarding Voice" }
+    val title = when (route) { Route.Home -> "Rem Playground"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"; Route.Controls -> "Shared controls"; Route.OnboardingVoice -> "Onboarding Voice"; Route.AgendaSuggestions -> "Agenda New" }
+    var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
     Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
         if (!fullScreen) {
         CenterAlignedTopAppBar(title = { Text(title, style = RemTypography.bodyBold) }, navigationIcon = {
@@ -109,6 +110,14 @@ fun Playground() {
                     }
                     Button(onClick = { route = Route.Settings }, modifier = Modifier.testTag("openSettings")) { Text("Open Settings") }
                     OutlinedButton(onClick = { route = Route.Controls }) { Text("Shared controls") }
+
+                    Text("Agenda New · Suggestions", style = RemTypography.title3Bold)
+                    Text("A local Agenda Suggestions journey: Add / Move / Dismiss, overflow, and the empty day becoming populated — all from deterministic fixtures.", style = RemTypography.footnote)
+                    Text("Agenda fixture", style = RemTypography.bodyBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) }
+                    }
+                    Button(onClick = { route = Route.AgendaSuggestions }, modifier = Modifier.testTag("openAgendaSuggestions")) { Text("Open Agenda Suggestions") }
                     Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview plays no audio; Continue and Skip are host callbacks with no downstream screen.", style = RemTypography.footnote)
                     OutlinedButton(onClick = { voiceOutcome = null; route = Route.OnboardingVoice }, modifier = Modifier.testTag("openOnboardingVoice")) { Text("Open Onboarding Voice") }
                     Text("Version ${BuildConfig.VERSION_NAME} · ${BuildConfig.PLAYGROUND_SOURCE_SHA.take(12)}", style = RemTypography.footnote, modifier = Modifier.testTag("playground.build"))
@@ -143,6 +152,7 @@ fun Playground() {
                     onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
                     onCancel = { route = Route.Settings })
                 Route.Controls -> ControlsPreview()
+                Route.AgendaSuggestions -> AgendaSuggestionsPlayground(fixture = agendaFixture)
             }
         }
     }
