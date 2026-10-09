@@ -37,6 +37,7 @@ public struct ListRow<Leading: View, Trailing: View>: View {
     let leading: () -> Leading
     let trailing: () -> Trailing
     private var settingsContent: AnyView?
+    private var supporting: AnyView?
     private var showsDivider = false
     private var layout: ListRowLayout = .standalone
 
@@ -54,6 +55,22 @@ public struct ListRow<Leading: View, Trailing: View>: View {
         self.emphasis = emphasis
         self.leading = leading
         self.trailing = trailing
+    }
+
+    /// A row with an interactive accessory **under the title** (Material's `ListItem` calls this
+    /// `supportingContent`). Used when a trailing value cannot share one line with the title — e.g. a
+    /// time value at narrow widths or accessibility text sizes — so the title never wraps.
+    public init<Supporting: View>(
+        _ title: String,
+        subtitle: String? = nil,
+        action: (() -> Void)? = nil,
+        emphasis: ListRowEmphasis = .standard,
+        @ViewBuilder leading: @escaping () -> Leading,
+        @ViewBuilder supporting: () -> Supporting,
+        @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.init(title, subtitle: subtitle, action: action, emphasis: emphasis, leading: leading, trailing: trailing)
+        self.supporting = AnyView(supporting())
     }
 
     /// Canonical settings density with an editable Content slot. The caller owns the divider,
@@ -120,6 +137,9 @@ public struct ListRow<Leading: View, Trailing: View>: View {
                             .font(DesignTokens.Typography.caption1)
                             .foregroundStyle(DesignTokens.Color.labelSecondary)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let supporting {
+                        supporting.padding(.top, DesignTokens.Spacing.xs)
                     }
                 }
                 Spacer(minLength: DesignTokens.Spacing.sm)

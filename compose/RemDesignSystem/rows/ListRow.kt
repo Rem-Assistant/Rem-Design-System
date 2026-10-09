@@ -42,6 +42,11 @@ enum class ListRowEmphasis { Standard, Deemphasized }
  * `Switch`, a value label, a badge); for a navigation row use [DisclosureChevron]. When [onClick] is
  * set the whole row is the tap target; [emphasis] de-emphasizes a locked row with the foundation
  * opacity token, and [showSeparator] draws an inset separator for rows outside a [RemSection].
+ * [supporting] is an optional accessory under the title (Material `ListItem.supportingContent`), used
+ * when a trailing value cannot share one line with the title, so the title never wraps.
+ *
+ * [titleLayout] normally fills the available label space; `Hug` permits natural-width measurement
+ * for adaptive row composition without querying intrinsic sizes of interactive accessories.
  *
  * Figma canonical: ListRow (`101:18`) + ListRowLabel (`188:2`). Compose has no native `List`/`Section`
  * disclosure chrome, so — unlike iOS, which leans on `NavigationLink` — the chevron is explicit here.
@@ -56,6 +61,8 @@ fun ListRow(
     emphasis: ListRowEmphasis = ListRowEmphasis.Standard,
     showSeparator: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
+    supporting: (@Composable () -> Unit)? = null,
+    titleLayout: ListRowTitleLayout = ListRowTitleLayout.Fill,
     trailing: (@Composable RowScope.() -> Unit)? = null,
 ) {
     val colors = RemColors.current
@@ -78,7 +85,7 @@ fun ListRow(
         ) {
             leading?.invoke()
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = if (titleLayout == ListRowTitleLayout.Fill) Modifier.weight(1f) else Modifier,
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
@@ -92,6 +99,9 @@ fun ListRow(
                         style = RemTypography.caption1,
                         color = colors.labelSecondary,
                     )
+                }
+                if (supporting != null) {
+                    Box(Modifier.padding(top = RemSpacing.xs)) { supporting() }
                 }
             }
             trailing?.invoke(this)

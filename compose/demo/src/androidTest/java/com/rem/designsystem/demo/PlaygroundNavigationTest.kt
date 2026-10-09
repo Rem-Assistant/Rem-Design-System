@@ -8,6 +8,8 @@ import android.provider.MediaStore
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -264,6 +266,7 @@ class PlaygroundNavigationTest {
         capture("Onboarding-connectors-light")
         compose.onNodeWithText("Continue").performClick()
         compose.onNodeWithText("When should Rem check in?").assertExists()
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-light")
         compose.onNodeWithText("Continue").performClick()
         waitForTag("onboardingVoice")
@@ -311,6 +314,7 @@ class PlaygroundNavigationTest {
         capture("Onboarding-checkin-picker-light")
         onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
         compose.onNodeWithText("9:00 AM").assertExists()
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-edited-light")
         compose.mainClock.autoAdvance = false
         compose.onNodeWithText("Continue").performClick()
@@ -328,9 +332,67 @@ class PlaygroundNavigationTest {
         compose.onNodeWithText("Continue").performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("Try again").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("We couldn't save your check-in times. Check your connection and try again.", substring = true).assertExists()
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-failure-light")
         compose.onNodeWithText("Try again").performClick()
         waitForTag("onboardingVoice")
+    }
+
+    /** Check-in at large text: every title stays on one line and every time stays fully on screen. */
+    @Test fun checkInRowsFitAtLargeText() {
+        compose.activityRule.scenario.onActivity { it.intent.putExtra("settingsLargeText", true) }
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag("openOnboardingCheckIn").performScrollTo().performClick()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-large-text")
+        compose.onNode(isToggleable() and hasContentDescription("Midday")).performScrollTo().performClick()
+        compose.onNodeWithText("12:30 PM").assertExists()
+        assertCheckInRowsFit()
+        compose.onNodeWithText("12:30 PM").performScrollTo()
+        capture("Onboarding-checkin-large-text-edited")
+        listOf("Morning", "Midday", "Evening").forEach { title ->
+            compose.onNode(isToggleable() and hasContentDescription(title)).performScrollTo().assertIsDisplayed()
+        }
+        listOf("8:00 AM", "12:30 PM").forEach { time ->
+            compose.onNodeWithText(time).performScrollTo().assertIsDisplayed().assertHasClickAction()
+        }
+    }
+
+    /**
+     * The Check-in row regression: each period title lays out on exactly one line (a single word like
+     * "Morning" must never break across lines), and each visible time value is fully inside the window.
+     */
+    private fun assertCheckInRowsFit() {
+        compose.waitForIdle()
+        listOf("Morning", "Midday", "Evening").forEach { title ->
+            val node = compose.onNode(hasText(title) and !isToggleable()).fetchSemanticsNode()
+            val layouts = mutableListOf<TextLayoutResult>()
+            checkNotNull(node.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
+            val textLayout = layouts.single()
+            check(!textLayout.hasVisualOverflow) { "Check-in title \"$title\" is clipped or truncated" }
+            val lines = textLayout.lineCount
+            check(lines == 1) { "Check-in title \"$title\" laid out on $lines lines" }
+        }
+        // Hidden fit probes must never expose extra controls to accessibility or tests.
+        compose.onAllNodes(isToggleable()).assertCountEquals(3)
+        val window = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        val timeValue = SemanticsMatcher("Check-in time value") {
+            it.config.getOrNull(SemanticsActions.OnClick)?.label?.startsWith("Edit ") == true
+        }
+        val times = compose.onAllNodes(timeValue).fetchSemanticsNodes()
+        check(times.isNotEmpty()) { "No Check-in time value is shown" }
+        times.forEach { time ->
+            val layouts = mutableListOf<TextLayoutResult>()
+            checkNotNull(time.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
+            check(layouts.single().lineCount == 1 && !layouts.single().hasVisualOverflow) {
+                "Check-in time value is clipped or truncated"
+            }
+            check(time.boundsInRoot.left >= window.left && time.boundsInRoot.right <= window.right) {
+                "Check-in time ${time.config.getOrNull(SemanticsProperties.Text)} is clipped horizontally: ${time.boundsInRoot}"
+            }
+        }
     }
 
     /** Sets a framework TimePicker directly — the dialog's own dial has no stable touch targets. */

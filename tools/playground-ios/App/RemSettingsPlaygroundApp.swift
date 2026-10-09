@@ -174,6 +174,14 @@ struct LoadingPreview: View {
     @State private var attempt = 0
     @State private var refreshing = false
 
+    // Deterministic UI-test fixture. Normal Playground use still completes after three seconds.
+    // The explicit completion action drives the same loaded state as the timed task.
+    #if DEBUG
+    private let holdsLoading = ProcessInfo.processInfo.arguments.contains("--loading-hold")
+    #else
+    private let holdsLoading = false
+    #endif
+
     private let rows = ["Paired devices", "Connectors", "Memory", "Voice"]
 
     var body: some View {
@@ -207,9 +215,13 @@ struct LoadingPreview: View {
                 }
                 .disabled(!loaded || refreshing)
                 .accessibilityIdentifier("loading.refresh")
-                Button("Reload") { attempt += 1 }
+                Button("Reload") { loaded = false; attempt += 1 }
                     .disabled(!loaded)
                     .accessibilityIdentifier("loading.reload")
+                if holdsLoading && !loaded {
+                    Button("Complete fixture load") { completeLoad() }
+                        .accessibilityIdentifier("loading.completeFixture")
+                }
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: loaded)
@@ -217,10 +229,10 @@ struct LoadingPreview: View {
         .navigationBarTitleDisplayMode(.inline)
         .task(id: attempt) {
             loaded = false
+            guard !holdsLoading else { return }
             do {
                 try await Task.sleep(for: .seconds(3))
-                loaded = true
-                announce("Content loaded")
+                completeLoad()
             } catch { /* Leaving the screen cancels the load. */ }
         }
         .task(id: refreshing) {
@@ -231,6 +243,11 @@ struct LoadingPreview: View {
                 announce("Refreshed")
             } catch { refreshing = false }
         }
+    }
+
+    private func completeLoad() {
+        loaded = true
+        announce("Content loaded")
     }
 }
 

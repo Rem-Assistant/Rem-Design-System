@@ -12,7 +12,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-FEATURES = ["settings", "onboarding-voice"]
+# Actual fixture routes in this candidate; retained verbatim in native receipts and package manifests.
+FEATURES = ["settings", "onboarding-sign-in", "onboarding-consent", "onboarding-connectors",
+            "onboarding-checkin", "onboarding-voice", "agenda-suggestions", "component-catalog"]
 IDS = {"ios": "com.rem.playground.settings", "android": "com.rem.designsystem.demo"}
 
 
