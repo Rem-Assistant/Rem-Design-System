@@ -82,6 +82,78 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertEqual(fixture.message(id)?.delivery, MessageBubble.Delivery.none, "Retry is not offered twice")
     }
 
+    /// Release-review regression: fail A, send + accept + complete B, then retry A. Host evidence must
+    /// apply to A (the active turn), not to B (the latest outgoing), and the turn must complete.
+    func testRetryOfOlderFailedMessageCompletesItsOwnTurn() {
+        var fixture = ChatPlaygroundFixture(.empty)
+        fixture.handle(.composer(.draftChanged("A")))
+        fixture.handle(.composer(.send))
+        let a = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)!
+        fixture.simulateDeliveryFailure()
+        XCTAssertEqual(fixture.message(a)?.delivery, .failed)
+
+        fixture.handle(.composer(.draftChanged("B")))
+        fixture.handle(.composer(.send))
+        let b = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)!
+        XCTAssertNotEqual(a, b)
+        fixture.handle(.transcript(.retry(messageID: a)))
+        XCTAssertEqual(fixture.activeOutgoingID, b, "Retry never switches the active turn mid-flight")
+        XCTAssertEqual(fixture.message(a)?.delivery, .failed)
+        fixture.simulateHostAcceptance()
+        fixture.simulateReplyComplete()
+        XCTAssertEqual(fixture.message(b)?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime))
+        XCTAssertNil(fixture.activeOutgoingID)
+
+        fixture.handle(.transcript(.retry(messageID: a)))
+        XCTAssertEqual(fixture.activeOutgoingID, a)
+        XCTAssertEqual(fixture.composer.state.phase, .sending)
+        fixture.simulateHostAcceptance()
+        XCTAssertEqual(fixture.message(a)?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime), "Acceptance applies to A")
+        XCTAssertEqual(fixture.message(b)?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime), "B is untouched")
+        XCTAssertEqual(fixture.composer.state.phase, .streaming)
+        let before = fixture.entries.count
+        fixture.simulateReplyComplete()
+        XCTAssertEqual(fixture.entries.count, before + 1)
+        XCTAssertEqual(fixture.composer.state.phase, .idle)
+        XCTAssertNil(fixture.activeOutgoingID)
+
+        // Latest-only receipt display is unchanged: B is still the latest outgoing message.
+        let latest = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)
+        XCTAssertEqual(latest, b)
+        XCTAssertEqual(ChatTranscriptRules.displayedDelivery(for: fixture.message(a)!, latestOutgoingID: latest),
+                       MessageBubble.Delivery.none)
+    }
+
+    func testRetryFailureAppliesToTheRetriedMessage() {
+        var fixture = ChatPlaygroundFixture(.empty)
+        fixture.handle(.composer(.draftChanged("A")))
+        fixture.handle(.composer(.send))
+        let a = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)!
+        fixture.simulateDeliveryFailure()
+        fixture.handle(.composer(.draftChanged("B")))
+        fixture.handle(.composer(.send))
+        let b = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)!
+        fixture.simulateHostAcceptance()
+        fixture.simulateReplyComplete()
+        fixture.handle(.transcript(.retry(messageID: a)))
+        fixture.simulateDeliveryFailure()
+        XCTAssertEqual(fixture.message(a)?.delivery, .failed)
+        XCTAssertEqual(fixture.message(a)?.canRetry, true)
+        XCTAssertEqual(fixture.message(b)?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime))
+        XCTAssertEqual(fixture.composer.state.phase, .idle)
+    }
+
+    func testCancelEndsTheActiveTurnWithoutAReceipt() {
+        var fixture = ChatPlaygroundFixture(.empty)
+        fixture.handle(.composer(.draftChanged("A")))
+        fixture.handle(.composer(.send))
+        let a = fixture.activeOutgoingID
+        fixture.handle(.composer(.cancel))
+        XCTAssertNil(fixture.activeOutgoingID)
+        fixture.simulateHostAcceptance()
+        XCTAssertEqual(fixture.message(a!)?.delivery, MessageBubble.Delivery.none, "No acceptance after cancel")
+    }
+
     func testHeaderAndAddEffects() {
         var fixture = ChatPlaygroundFixture()
         XCTAssertEqual(fixture.handle(.back), .exit)

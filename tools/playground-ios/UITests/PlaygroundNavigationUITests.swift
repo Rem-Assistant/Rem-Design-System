@@ -709,6 +709,14 @@ final class PlaygroundNavigationUITests: XCTestCase {
         retry.tap()
         XCTAssertTrue(element("chat.fixtureNote").waitForExistence(timeout: 3))
         XCTAssertFalse(element("message.sent.1.failure").exists)
+        // The retried message's own turn completes: acceptance lands on it and the reply ends the turn.
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Stop", "Retry starts a turn")
+        hostControl("chat.host.accept")
+        let receipt = element("message.sent.1.receipt")
+        XCTAssertTrue(receipt.waitForExistence(timeout: 3))
+        XCTAssertTrue(receipt.label.contains("Delivered · 10:24"))
+        hostControl("chat.host.reply")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "Reply complete ends the retried turn")
     }
 
     func testChatScreenAttachmentOnlySend() {

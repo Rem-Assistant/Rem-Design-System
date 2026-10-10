@@ -21,6 +21,12 @@ data class ChatPlaygroundFixture(
     val taskId: String? = null,
     val taskState: InboxItemState = InboxItemState.None,
     val note: String? = null,
+    /**
+     * The outgoing message the current turn belongs to (just sent or retried). Simulated host evidence
+     * applies to this message — never to "whichever is latest" — so a retried older message is the one
+     * accepted or failed. Null when no turn is in flight.
+     */
+    val activeOutgoingId: String? = null,
     private val nextId: Int = 0,
 ) {
     enum class Conversation(val label: String) { Populated("Populated"), Empty("Empty") }
@@ -49,6 +55,10 @@ data class ChatPlaygroundFixture(
         is ChatScreenAction.Composer -> when (action.action) {
             ChatComposerAction.Add -> this to ChatPlaygroundEffect.PresentAddToChat
             ChatComposerAction.Send -> send() to null
+            ChatComposerAction.Cancel -> {
+                val next = composer.apply(ChatComposerAction.Cancel)
+                copy(composer = next, activeOutgoingId = if (next.state.phase.isInFlight) activeOutgoingId else null) to null
+            }
             else -> copy(composer = composer.apply(action.action)) to null
         }
         is ChatScreenAction.Transcript -> handle(action.action) to null
@@ -57,9 +67,13 @@ data class ChatPlaygroundFixture(
     private fun handle(action: ChatTranscriptAction): ChatPlaygroundFixture = when (action) {
         is ChatTranscriptAction.Retry -> {
             val m = message(action.messageId)
-            if (m == null || m.delivery != MessageDelivery.Failed || !m.canRetry) this
-            else replace(m.copy(delivery = MessageDelivery.None, canRetry = false))
-                .copy(composer = composer.select(ChatComposerFixture.Scenario.Sending), note = RetryNote)
+            // One turn at a time: a retry never switches the active turn mid-flight.
+            if (composer.state.phase.isInFlight || m == null || m.delivery != MessageDelivery.Failed || !m.canRetry) this
+            else replace(m.copy(delivery = MessageDelivery.None, canRetry = false)).copy(
+                composer = composer.select(ChatComposerFixture.Scenario.Sending),
+                note = RetryNote,
+                activeOutgoingId = m.id,
+            )
         }
         is ChatTranscriptAction.RequestReaction -> copy(note = ReactionNote)
         is ChatTranscriptAction.React -> message(action.messageId)?.let { replace(it.copy(reaction = action.reaction)) } ?: this
@@ -75,18 +89,23 @@ data class ChatPlaygroundFixture(
             entries = entries + ChatTranscriptEntry.Message(ChatMessageDisplay("sent.$id", MessageRole.User, text)),
             composer = next.select(ChatComposerFixture.Scenario.Sending),
             note = null,
+            activeOutgoingId = "sent.$id",
             nextId = id,
         )
     }
 
     // Fixture host (stand-ins for evidence an app would receive).
 
-    /** The host accepted the latest outgoing message: Delivered with the fixture time; reply streams. */
+    /**
+     * The host accepted the active turn's message: Delivered with the fixture time; reply streams. Where
+     * the receipt shows is still decided by [ChatTranscriptRules] (latest outgoing only).
+     */
     fun simulateHostAcceptance(): ChatPlaygroundFixture {
-        val m = latestOutgoing() ?: return this
+        if (composer.state.phase != ComposerPhase.Sending) return this
+        val m = activeOutgoing() ?: return this
         if (m.delivery != MessageDelivery.None) return this
-        val accepted = replace(m.copy(delivery = MessageDelivery.Delivered(FixtureTime)))
-        return if (composer.state.phase == ComposerPhase.Sending) accepted.copy(composer = composer.select(ChatComposerFixture.Scenario.Streaming)) else accepted
+        return replace(m.copy(delivery = MessageDelivery.Delivered(FixtureTime)))
+            .copy(composer = composer.select(ChatComposerFixture.Scenario.Streaming))
     }
 
     /** The recipient explicitly acknowledged the latest outgoing message: Read keeps the delivered time. */
@@ -96,12 +115,13 @@ data class ChatPlaygroundFixture(
         return replace(m.copy(delivery = MessageDelivery.Read(delivered.at)))
     }
 
-    /** The host reported the latest outgoing message as not delivered (retryable); the turn ends. */
+    /** The host reported the active turn's message as not delivered (retryable); the turn ends. */
     fun simulateDeliveryFailure(): ChatPlaygroundFixture {
-        val m = latestOutgoing() ?: return this
+        if (composer.state.phase != ComposerPhase.Sending) return this
+        val m = activeOutgoing() ?: return this
         if (m.delivery != MessageDelivery.None) return this
         return replace(m.copy(delivery = MessageDelivery.Failed, canRetry = true))
-            .copy(composer = composer.select(ChatComposerFixture.Scenario.Ready))
+            .copy(composer = composer.select(ChatComposerFixture.Scenario.Ready), activeOutgoingId = null)
     }
 
     /** The reply finished: append a fixture assistant message and return to Ready. */
@@ -113,6 +133,7 @@ data class ChatPlaygroundFixture(
                 ChatMessageDisplay("reply.$id", MessageRole.Assistant, "Here is a fixture reply.", meta = "Automatic · Reply complete"),
             ),
             composer = composer.select(ChatComposerFixture.Scenario.Ready),
+            activeOutgoingId = null,
             nextId = id,
         )
     }
@@ -121,6 +142,8 @@ data class ChatPlaygroundFixture(
         (entries.firstOrNull { it.id == id } as? ChatTranscriptEntry.Message)?.message
 
     private fun latestOutgoing(): ChatMessageDisplay? = ChatTranscriptRules.latestOutgoingId(entries)?.let(::message)
+
+    private fun activeOutgoing(): ChatMessageDisplay? = activeOutgoingId?.let(::message)
 
     private fun replace(message: ChatMessageDisplay) = copy(
         entries = entries.map { if (it.id == message.id) ChatTranscriptEntry.Message(message) else it },

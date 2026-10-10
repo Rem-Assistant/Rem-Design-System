@@ -100,6 +100,77 @@ class ChatPlaygroundFixtureTest {
         assertEquals("Retry is not offered twice", MessageDelivery.None, fixture.message(id)!!.delivery)
     }
 
+    /**
+     * Release-review regression: fail A, send + accept + complete B, then retry A. Host evidence must
+     * apply to A (the active turn), not to B (the latest outgoing), and the turn must complete.
+     */
+    @Test fun retryOfOlderFailedMessageCompletesItsOwnTurn() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.latest()
+        fixture = fixture.simulateDeliveryFailure()
+        assertEquals(MessageDelivery.Failed, fixture.message(a)!!.delivery)
+
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("B")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val b = fixture.latest()
+        assertTrue(a != b)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+        assertEquals("Retry never switches the active turn mid-flight", b, fixture.activeOutgoingId)
+        assertEquals(MessageDelivery.Failed, fixture.message(a)!!.delivery)
+        fixture = fixture.simulateHostAcceptance().simulateReplyComplete()
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(b)!!.delivery)
+        assertNull(fixture.activeOutgoingId)
+
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+        assertEquals(a, fixture.activeOutgoingId)
+        assertEquals(ComposerPhase.Sending, fixture.composer.state.phase)
+        fixture = fixture.simulateHostAcceptance()
+        assertEquals("Acceptance applies to A", MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(a)!!.delivery)
+        assertEquals("B is untouched", MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(b)!!.delivery)
+        assertEquals(ComposerPhase.Streaming, fixture.composer.state.phase)
+        val before = fixture.entries.size
+        fixture = fixture.simulateReplyComplete()
+        assertEquals(before + 1, fixture.entries.size)
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+        assertNull(fixture.activeOutgoingId)
+
+        // Latest-only receipt display is unchanged: B is still the latest outgoing message.
+        val latest = ChatTranscriptRules.latestOutgoingId(fixture.entries)
+        assertEquals(b, latest)
+        assertEquals(MessageDelivery.None, ChatTranscriptRules.displayedDelivery(fixture.message(a)!!, latest))
+    }
+
+    @Test fun retryFailureAppliesToTheRetriedMessage() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.latest()
+        fixture = fixture.simulateDeliveryFailure()
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("B")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val b = fixture.latest()
+        fixture = fixture.simulateHostAcceptance().simulateReplyComplete()
+            .act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+            .simulateDeliveryFailure()
+        assertEquals(MessageDelivery.Failed, fixture.message(a)!!.delivery)
+        assertTrue(fixture.message(a)!!.canRetry)
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(b)!!.delivery)
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+    }
+
+    @Test fun cancelEndsTheActiveTurnWithoutAReceipt() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.activeOutgoingId!!
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertNull(fixture.activeOutgoingId)
+        fixture = fixture.simulateHostAcceptance()
+        assertEquals("No acceptance after cancel", MessageDelivery.None, fixture.message(a)!!.delivery)
+    }
+
     @Test fun headerAndAddEffects() {
         val fixture = ChatPlaygroundFixture()
         assertEquals(ChatPlaygroundEffect.Exit, fixture.handle(ChatScreenAction.Back).second)

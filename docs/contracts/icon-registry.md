@@ -38,6 +38,36 @@ The current screen evidence proves the semantic role and fill treatment in conte
 the final font-path glyph pairing. `clock.badge.checkmark` ↔ `alarm_on` remains the closest available
 clock+check candidate and should be revisited if a truer twin appears.
 
+### Chat slice — open rows (recorded as implemented, not yet graduated)
+
+Recorded from the Chat / Inbox composition sources so the cross-platform pairing and FILL are pinned and
+cannot drift silently. **All rows are open:** Android currently draws these from the Material Icons vector
+set (`material-icons-extended`), like the provisional check-in rows above, not from the `RemMaterialSymbols`
+font subset (Rule 2). They graduate only after a subset regeneration and standalone paired evidence.
+
+| Meaning | iOS (SF Symbol) | Android (as implemented) | FILL | Notes |
+|---|---|---|---|---|
+| header back | `chevron.left` | `Icons.AutoMirrored.Filled.KeyboardArrowLeft` | **0** | `ChatHeader`; stroke glyph, no fill variant |
+| header overflow | `ellipsis` | `Icons.Filled.MoreHoriz` | **0** | `ChatHeader`; dots, no fill variant |
+| activity disclosure | `chevron.right` | `Icons.AutoMirrored.Filled.KeyboardArrowRight` | **0** | `ChatHeader` capsule; matches the registry disclosure row |
+| add to chat | `plus` | `Icons.Filled.Add` | **0** | `RemComposerBar`; stroke glyph |
+| model trigger | `chevron.up.chevron.down` | `Icons.Filled.UnfoldMore` | **0** | `ChatModelMenu` / composer Auto pill |
+| model selected | `checkmark` | `Icons.Filled.Check` | **0** | `ChatModelMenu` rows |
+| speak | `waveform` | `Icons.Filled.GraphicEq` | **0** | composer Speak pill; matches the Voice row's semantic pair |
+| send | `arrow.up` | `Icons.Filled.ArrowUpward` | **0** | composer send circle |
+| stop (cancel turn) | `stop.fill` | `Icons.Filled.Stop` | **1** | composer stop circle |
+| remove / dismiss | `xmark` | `Icons.Filled.Close` | **0** | attachment chip, reply-context dismiss |
+| not delivered | `exclamationmark.circle` | `Icons.Outlined.ErrorOutline` | **0** | `MessageBubble` failure control (outline on both) |
+| camera | `camera` | `Icons.Outlined.PhotoCamera` | **0** | `AddToChatSheet` (iOS only; no Android camera tile) |
+| photos | `photo.on.rectangle` | `Icons.Outlined.PhotoLibrary` | **0** | `AddToChatSheet` |
+| files | `folder` | `Icons.Outlined.Folder` | **0** | `AddToChatSheet` |
+| cloud browser | `globe` | `Icons.Outlined.Public` | **0** | `AddToChatSheet` row; matches the Browser row's meaning |
+| thinking | `brain` | `Icons.Outlined.Psychology` | **0** | `AddToChatSheet` Thinking row; Memory uses `brain.head.profile` / `psychology` |
+
+Open questions for the human decision: `brain` vs `brain.head.profile` (Thinking vs Memory may want distinct
+glyphs), and whether stroke-only glyphs drawn from `Icons.Filled.*` vectors are acceptable until the font
+subset carries them.
+
 **Brand marks are assets, not registry glyphs** (they have no font twin):
 `RemAppIcon` (raster, both platforms) · Apple mark (SF `apple.logo` / bundled monochrome vector) ·
 Google "G" (multicolor asset, both).

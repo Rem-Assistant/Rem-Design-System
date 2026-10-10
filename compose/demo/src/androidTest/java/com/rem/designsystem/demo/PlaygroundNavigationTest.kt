@@ -705,13 +705,45 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
     }
 
+    private fun shell(command: String): String =
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command).let { fd ->
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(fd).bufferedReader().use { it.readText().trim() }
+        }
+
+    /** The soft IME's top edge in window coordinates while it is visible, else null (API 30+ insets). */
+    private fun imeTopInWindow(): Int? {
+        var top: Int? = null
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val decor = compose.activity.window.decorView
+            val insets = decor.rootWindowInsets ?: return@runOnMainSync
+            val ime = android.view.WindowInsets.Type.ime()
+            if (insets.isVisible(ime)) top = decor.height - insets.getInsets(ime).bottom
+        }
+        return top
+    }
+
     @Test fun chatScreenKeyboardOpenKeepsHeaderAndComposer() {
-        openChatScreen()
-        compose.onNodeWithTag("chat.composerField").performClick()
-        compose.onNodeWithTag("chat.composerField").assertIsFocused()
-        compose.onNodeWithTag("chat.header.back").assertIsDisplayed()
-        compose.onNodeWithTag("chat.composerSend").assertIsDisplayed()
-        capture("ChatScreen-keyboard-light")
+        check(Build.VERSION.SDK_INT >= 30) { "The soft-IME visibility check needs API 30+ window insets" }
+        // A hardware-keyboard emulator would otherwise hide the soft IME and let this journey pass without
+        // a keyboard on screen. Require the soft IME for this test only, then restore the device setting.
+        val previous = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        try {
+            openChatScreen()
+            compose.onNodeWithTag("chat.composerField").performClick()
+            compose.onNodeWithTag("chat.composerField").assertIsFocused()
+            compose.waitUntil(5000) { imeTopInWindow() != null }
+            compose.waitForIdle()
+            val imeTop = checkNotNull(imeTopInWindow()) { "The soft IME is not visible" }
+            val send = compose.onNodeWithTag("chat.composerSend").fetchSemanticsNode().boundsInWindow
+            check(send.bottom <= imeTop + 1) { "Composer send (bottom ${send.bottom}) must dock above the IME (top $imeTop)" }
+            compose.onNodeWithTag("chat.header.back").assertIsDisplayed()
+            compose.onNodeWithTag("chat.composerSend").assertIsDisplayed()
+            capture("ChatScreen-keyboard-light") // taken with the soft IME on screen
+        } finally {
+            if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
+            else shell("settings put secure show_ime_with_hard_keyboard $previous")
+        }
     }
 
     @Test fun chatScreenSendStopAcceptAndRead() {
@@ -744,6 +776,12 @@ class PlaygroundNavigationTest {
         compose.onNodeWithText("Try again").performClick()
         waitForTag("chat.fixtureNote")
         compose.onNodeWithTag("message.sent.1.failure").assertDoesNotExist()
+        // The retried message's own turn completes: acceptance lands on it and the reply ends the turn.
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        hostControl("chat.host.accept")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertTextContains("Delivered · 10:24", substring = true)
+        hostControl("chat.host.reply")
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
     }
 
     @Test fun chatScreenAttachmentOnlySend() {

@@ -48,6 +48,10 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     public private(set) var taskID: String?
     public private(set) var taskState: InboxItemState
     public private(set) var note: String?
+    /// The outgoing message the current turn belongs to (the one just sent or retried). Simulated host
+    /// evidence applies to this message — never to "whichever is latest" — so a retried older message
+    /// is the one accepted or failed. `nil` when no turn is in flight.
+    public private(set) var activeOutgoingID: String?
     private var nextID = 0
 
     // MARK: Construction
@@ -121,6 +125,9 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
             switch composerAction {
             case .add: return .presentAddToChat
             case .send: send()
+            case .cancel:
+                composer.apply(.cancel)
+                if !composer.state.phase.isInFlight { activeOutgoingID = nil }
             default: composer.apply(composerAction)
             }
         case .transcript(let transcriptAction):
@@ -132,11 +139,14 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     private mutating func handle(_ action: ChatTranscriptAction) {
         switch action {
         case .retry(let id):
-            guard let index = messageIndex(id), case .message(var message) = entries[index],
+            // One turn at a time: a retry never switches the active turn mid-flight.
+            guard !composer.state.phase.isInFlight,
+                  let index = messageIndex(id), case .message(var message) = entries[index],
                   message.delivery == .failed, message.canRetry else { return }
             message.delivery = .none
             message.canRetry = false
             entries[index] = .message(message)
+            activeOutgoingID = id
             composer.select(.sending)
             note = Self.retryNote
         case .requestReaction:
@@ -154,20 +164,23 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         composer.apply(.send)
         guard let text = composer.sent.last else { return }
         nextID += 1
-        entries.append(.message(ChatMessageDisplay(id: "sent.\(nextID)", role: .user, text: text)))
+        let id = "sent.\(nextID)"
+        entries.append(.message(ChatMessageDisplay(id: id, role: .user, text: text)))
+        activeOutgoingID = id
         composer.select(.sending)
         note = nil
     }
 
     // MARK: Fixture host (stand-ins for evidence an app would receive)
 
-    /// The host accepted the latest outgoing message: Delivered with the fixture time; reply streams.
+    /// The host accepted the active turn's message: Delivered with the fixture time; reply streams.
+    /// Where the receipt shows is still decided by `ChatTranscriptRules` (latest outgoing only).
     public mutating func simulateHostAcceptance() {
-        guard let index = latestOutgoingIndex, case .message(var message) = entries[index],
-              message.delivery == .none else { return }
+        guard composer.state.phase == .sending, let index = activeOutgoingIndex,
+              case .message(var message) = entries[index], message.delivery == .none else { return }
         message.delivery = .delivered(at: Self.fixtureTime)
         entries[index] = .message(message)
-        if composer.state.phase == .sending { composer.select(.streaming) }
+        composer.select(.streaming)
     }
 
     /// The recipient explicitly acknowledged the latest outgoing message: Read keeps the delivered time.
@@ -178,13 +191,14 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         entries[index] = .message(message)
     }
 
-    /// The host reported the latest outgoing message as not delivered (retryable); the turn ends.
+    /// The host reported the active turn's message as not delivered (retryable); the turn ends.
     public mutating func simulateDeliveryFailure() {
-        guard let index = latestOutgoingIndex, case .message(var message) = entries[index],
-              message.delivery == .none else { return }
+        guard composer.state.phase == .sending, let index = activeOutgoingIndex,
+              case .message(var message) = entries[index], message.delivery == .none else { return }
         message.delivery = .failed
         message.canRetry = true
         entries[index] = .message(message)
+        activeOutgoingID = nil
         composer.select(.ready)
     }
 
@@ -194,10 +208,15 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         nextID += 1
         entries.append(.message(ChatMessageDisplay(id: "reply.\(nextID)", role: .assistant,
                                                    text: "Here is a fixture reply.", meta: "Automatic · Reply complete")))
+        activeOutgoingID = nil
         composer.select(.ready)
     }
 
     // MARK: Helpers
+
+    private var activeOutgoingIndex: Int? {
+        activeOutgoingID.flatMap { messageIndex($0) }
+    }
 
     private var latestOutgoingIndex: Int? {
         guard let id = ChatTranscriptRules.latestOutgoingID(in: entries) else { return nil }

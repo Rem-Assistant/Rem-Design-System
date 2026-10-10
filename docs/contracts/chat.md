@@ -107,6 +107,9 @@ context accessory (`2682:22298`), the empty state (`2054:22089`) and the present
 - The default fixture's "Today 3:25 PM" vs "Delivered · 10:24" mismatch is sample data and is not reproduced.
 - The Inbox status pill (`AgentStatusPill`) and row separators are not in the supplied exports and are pending
   review.
+- Chat slice glyph pairs and their pinned FILL are recorded as **open rows** in
+  [`icon-registry.md`](icon-registry.md#chat-slice--open-rows-recorded-as-implemented-not-yet-graduated)
+  (Android uses the Material Icons vector fallback until the Symbols subset carries them).
 
 - The Figma long-press sheet draws a 2 × 6 grid with a "+" More cell. The approved six-choice row is
   implemented; the second row and More are not.
