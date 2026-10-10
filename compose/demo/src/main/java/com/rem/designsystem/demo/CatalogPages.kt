@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ModalBottomSheet
@@ -157,7 +158,12 @@ internal fun CatalogRows() {
         }
         CatalogGroup("Section") {
             RemSection(header = "Notifications", footer = "Applies to this device.") {
-                ListRow(title = "Daily brief", subtitle = "8:00 AM")
+                ListRow(
+                    title = "Daily brief",
+                    subtitle = "8:00 AM",
+                    // Pairs with iOS `sun.max.fill` (icon registry: sun.max ↔ wb_sunny, provisional vector).
+                    leading = { ContainedIcon(Icons.Filled.WbSunny, fill = ContainedIconFill.Tint(RemColors.current.systemOrange)) },
+                )
             }
         }
         CatalogGroup("Connector row") {
