@@ -45,7 +45,9 @@ public enum ComposerPhase: Equatable, Sendable {
 public struct ChatComposerState: Equatable, Sendable {
     public var draft: String
     public var placeholder: String
-    /// Model trigger label, typically from `ChatModelSelection.triggerLabel(in:)`.
+    /// Model trigger label, typically from `ChatModelMenu.triggerLabel(for:providers:)`. With a
+    /// `ChatModelMenu`, the menu's trigger shows this label when the selected model id is not among
+    /// the menu's providers (instead of the raw id), unless it is blank or the Automatic label.
     public var modelLabel: String
     public var attachments: [ComposerAttachment]
     public var availability: ComposerAvailability
@@ -55,6 +57,11 @@ public struct ChatComposerState: Equatable, Sendable {
     public var voiceAvailable: Bool
     /// Host-owned focus. The composer reports changes through `.focusChanged` and follows this value.
     public var isFocused: Bool
+    /// Host override for model-menu availability, independent of input availability. `nil` (default)
+    /// keeps the derived rule — disabled while input is disabled or a turn is in flight. A host that
+    /// blocks input (e.g. pending provider evidence, quota out) but must let the user escape back to
+    /// Automatic passes `true`; it passes `false` while it prepares or sends a turn.
+    public var modelMenuEnabled: Bool?
 
     public init(
         draft: String = "",
@@ -65,7 +72,8 @@ public struct ChatComposerState: Equatable, Sendable {
         phase: ComposerPhase = .idle,
         showsModel: Bool = true,
         voiceAvailable: Bool = true,
-        isFocused: Bool = false
+        isFocused: Bool = false,
+        modelMenuEnabled: Bool? = nil
     ) {
         self.draft = draft
         self.placeholder = placeholder
@@ -76,6 +84,7 @@ public struct ChatComposerState: Equatable, Sendable {
         self.showsModel = showsModel
         self.voiceAvailable = voiceAvailable
         self.isFocused = isFocused
+        self.modelMenuEnabled = modelMenuEnabled
     }
 
     /// True when the draft has visible text.
@@ -96,8 +105,9 @@ public struct ChatComposerState: Equatable, Sendable {
     /// Speak is shown only when voice is available, input is enabled and no turn is in flight.
     public var showsSpeak: Bool { voiceAvailable && availability.isEnabled && !phase.isInFlight }
 
-    /// The model trigger is shown disabled (45%) while a turn is in flight or input is disabled.
-    public var modelEnabled: Bool { availability.isEnabled && !phase.isInFlight }
+    /// Whether the model trigger / menu is enabled. `modelMenuEnabled` when the host sets it; otherwise
+    /// disabled (45%) while a turn is in flight or input is disabled.
+    public var modelEnabled: Bool { modelMenuEnabled ?? (availability.isEnabled && !phase.isInFlight) }
 
     /// What the trailing control does right now: `.send`, `.cancel`, or nothing (disabled).
     public var primaryAction: ChatComposerAction? {

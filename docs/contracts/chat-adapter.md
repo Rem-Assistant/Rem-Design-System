@@ -22,7 +22,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 | Type | Purpose |
 |---|---|
 | `ChatHeaderDisplay` | name, agent activity copy, status (connected / needs you), working face, which header controls are shown |
-| `ChatComposerState` | draft, placeholder, model label, attachments, `ComposerAvailability` (`enabled` / `disabled(reason)`), `ComposerPhase` (`idle` / `sending` / `streaming`), `voiceAvailable`, `isFocused` |
+| `ChatComposerState` | draft, placeholder, model label, attachments, `ComposerAvailability` (`enabled` / `disabled(reason)`), `ComposerPhase` (`idle` / `sending` / `streaming`), `voiceAvailable`, `isFocused`, `modelMenuEnabled` (optional override; `nil`/`null` = disabled while input is disabled or a turn is in flight) |
 | `ChatMessageDisplay` | id, role, text, meta, **host-supplied** `delivery`, reaction, `canRetry`, optional **host-formatted** `time` (swipe-to-reveal timestamp) |
 | `ChatTranscriptEntry` | `.message` / `.timestamp` / `.hostContent(id)` (Kotlin: `Message` / `Timestamp` / `HostContent`). `hostContent` places a host-rendered card in transcript order (a proposal with approve buttons, a tool result, the daily brief); `ChatTranscriptList(hostContent:)` renders it by id. It has no receipt and is never a message. |
 | `ChatReplyContext` | `targetID` (Kotlin `targetId`), title, summary — the task and conversation ids stay in the app |

@@ -55,6 +55,24 @@ final class ChatGeometryTests: XCTestCase {
         XCTAssertEqual(ChatModelMenu.triggerLabel(for: .automatic, providers: []), "Auto")
     }
 
+    func testModelTriggerPrefersTheHostLabelForAnUnlistedSelection() {
+        let providers = [
+            ChatModelProvider(id: "p", name: "Provider", models: [ChatModelOption(id: "m1", name: "Model One")]),
+        ]
+        let byok = ChatModelSelection.model(id: "anthropic/claude-sonnet-4-5")
+        XCTAssertEqual(ChatModelMenu.triggerLabel(for: byok, providers: providers, fallbackLabel: "Claude Sonnet 4.5"),
+                       "Claude Sonnet 4.5")
+        // A listed model keeps its catalog name; Automatic keeps the Automatic label.
+        XCTAssertEqual(ChatModelMenu.triggerLabel(for: .model(id: "m1"), providers: providers, fallbackLabel: "Other"), "Model One")
+        XCTAssertEqual(ChatModelMenu.triggerLabel(for: .automatic, providers: providers, fallbackLabel: "Other"), "Auto")
+        // Blank or Automatic-label fallbacks never disguise the selection: the raw id is shown.
+        for fallback in [nil, "", "  ", "Auto"] as [String?] {
+            XCTAssertEqual(ChatModelMenu.triggerLabel(for: byok, providers: providers, fallbackLabel: fallback),
+                           "anthropic/claude-sonnet-4-5", "\(String(describing: fallback))")
+        }
+        XCTAssertEqual(ChatModelMenu.triggerLabel(for: byok, providers: [], automaticLabel: "Automatic", fallbackLabel: "Auto"), "Auto")
+    }
+
     func testStandardReactionsAreTheApprovedSixInOrder() {
         XCTAssertEqual(MessageReaction.standardChoices.map(\.emoji), ["👍", "👎", "❤️", "😂", "🎉", "😮"])
         XCTAssertEqual(Set(MessageReaction.standardChoices.map(\.id)).count, 6)

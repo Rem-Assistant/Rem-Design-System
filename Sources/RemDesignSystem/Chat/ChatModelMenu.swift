@@ -34,7 +34,8 @@ public enum ChatModelSelection: Hashable, Sendable {
 /// **ChatModelMenu** — the composer's model trigger and its native menu.
 ///
 /// The trigger is the secondary pill (`fillTertiary` capsule, `chevron.up.chevron.down` + label). It
-/// reads **"Auto"** while Automatic is selected, otherwise the selected model's name. The menu is
+/// reads **"Auto"** while Automatic is selected, otherwise the selected model's name (or the host's
+/// fallback label while the selection is not among `providers`). The menu is
 /// source-aligned with the shipped picker (`SharedRemChatView` model menu): **Automatic** (checkmark
 /// when selected), one submenu per configured provider listing its models (checkmark on the
 /// selected one), then **Manage Models** when the host supplies a destination.
@@ -51,14 +52,21 @@ public struct ChatModelMenu: View {
     private let accessibilityPrefix: String
     private let onSelect: (ChatModelSelection) -> Void
     private let onManageModels: (() -> Void)?
+    private let fallbackLabel: String?
+    /// Set by `RemComposerBar` from `ChatComposerState.modelLabel`; used when `fallbackLabel` is nil.
+    @Environment(\.composerModelLabel) private var composerModelLabel
 
+    /// `fallbackLabel` is the host's label for an explicit selection the providers do not (yet) list —
+    /// e.g. a bring-your-own-key model whose provider evidence is still pending. When nil, a menu placed
+    /// in `RemComposerBar` uses the composer state's `modelLabel`. See `triggerLabel(for:providers:automaticLabel:fallbackLabel:)`.
     public init(
         providers: [ChatModelProvider],
         selection: ChatModelSelection,
         automaticLabel: String = "Auto",
         accessibilityPrefix: String = "composer",
         onSelect: @escaping (ChatModelSelection) -> Void,
-        onManageModels: (() -> Void)? = nil
+        onManageModels: (() -> Void)? = nil,
+        fallbackLabel: String? = nil
     ) {
         self.providers = providers
         self.selection = selection
@@ -66,21 +74,35 @@ public struct ChatModelMenu: View {
         self.accessibilityPrefix = accessibilityPrefix
         self.onSelect = onSelect
         self.onManageModels = onManageModels
+        self.fallbackLabel = fallbackLabel
     }
 
-    /// The trigger label for a selection: `automaticLabel` for Automatic, else the model's name. An id
-    /// the catalog does not (yet) contain is shown as-is rather than disguised as Automatic.
+    /// The trigger label for a selection: `automaticLabel` for Automatic, else the model's name. For an
+    /// id the providers do not (yet) contain, the host's `fallbackLabel` (typically
+    /// `ChatComposerState.modelLabel`) when it is non-blank and not the Automatic label, else the raw
+    /// id — never disguised as Automatic.
     public static func triggerLabel(
         for selection: ChatModelSelection,
         providers: [ChatModelProvider],
-        automaticLabel: String = "Auto"
+        automaticLabel: String = "Auto",
+        fallbackLabel: String? = nil
     ) -> String {
         switch selection {
         case .automatic:
             return automaticLabel
         case .model(let id):
-            return providers.lazy.flatMap(\.models).first { $0.id == id }?.name ?? id
+            if let name = providers.lazy.flatMap(\.models).first(where: { $0.id == id })?.name { return name }
+            if let fallback = fallbackLabel?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !fallback.isEmpty, fallback != automaticLabel {
+                return fallback
+            }
+            return id
         }
+    }
+
+    private var resolvedLabel: String {
+        Self.triggerLabel(for: selection, providers: providers, automaticLabel: automaticLabel,
+                          fallbackLabel: fallbackLabel ?? composerModelLabel)
     }
 
     public var body: some View {
@@ -110,9 +132,7 @@ public struct ChatModelMenu: View {
                 .accessibilityIdentifier("\(accessibilityPrefix).manageModels")
             }
         } label: {
-            ChatModelTriggerPill(
-                label: Self.triggerLabel(for: selection, providers: providers, automaticLabel: automaticLabel)
-            )
+            ChatModelTriggerPill(label: resolvedLabel)
         }
         .menuStyle(.button)
         .menuIndicator(.hidden)
@@ -120,7 +140,7 @@ public struct ChatModelMenu: View {
         // Vertical only: a host-supplied model name truncates (the pill's lineLimit(1)) instead of
         // pushing the composer's control row past a narrow screen.
         .fixedSize(horizontal: false, vertical: true)
-        .accessibilityLabel("Model, \(Self.triggerLabel(for: selection, providers: providers, automaticLabel: automaticLabel))")
+        .accessibilityLabel("Model, \(resolvedLabel)")
         .accessibilityIdentifier("\(accessibilityPrefix).modelMenu")
     }
 
@@ -131,6 +151,19 @@ public struct ChatModelMenu: View {
         } else {
             Text(title)
         }
+    }
+}
+
+private struct ComposerModelLabelKey: EnvironmentKey {
+    static let defaultValue: String? = nil
+}
+
+extension EnvironmentValues {
+    /// The enclosing composer's `ChatComposerState.modelLabel`, the default unresolved-selection label
+    /// for a `ChatModelMenu` placed in `RemComposerBar`.
+    var composerModelLabel: String? {
+        get { self[ComposerModelLabelKey.self] }
+        set { self[ComposerModelLabelKey.self] = newValue }
     }
 }
 

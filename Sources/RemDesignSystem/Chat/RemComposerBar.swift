@@ -12,7 +12,10 @@ import SwiftUI
 ///
 /// Chat slice (Figma **Composer** `2071:11555`): the model control is the secondary-pill **Auto**
 /// trigger. Pass a `ChatModelMenu` to make it open the runtime-supplied model menu; without one it is
-/// a display-only pill. While sending, the trigger is disabled (45%) and Speak is hidden. Attachments
+/// a display-only pill. While sending, the trigger is disabled (45%) and Speak is hidden. Hosts that
+/// disable input but must keep the menu open (to escape back to Automatic) set
+/// `ChatComposerState.modelMenuEnabled`; a menu's selection missing from its providers is labelled
+/// with `ChatComposerState.modelLabel`. Attachments
 /// are removable chips supplied by the host (`ComposerAttachment`) — a Cloud browser chip is a
 /// capability added to the next message, not a browser launch.
 ///
@@ -288,7 +291,8 @@ public struct RemComposerBar: View {
     @ViewBuilder
     private var modelSelector: some View {
         if let modelMenu {
-            modelMenu
+            // The host's label names a selection the menu's providers do not list (yet).
+            modelMenu.environment(\.composerModelLabel, resolved.modelLabel)
         } else {
             ChatModelTriggerPill(label: resolved.modelLabel)
         }

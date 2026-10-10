@@ -43,6 +43,11 @@ enum class ComposerSendDisplay { Unavailable, Send, Stop }
 data class ChatComposerState(
     val draft: String = "",
     val placeholder: String = "Ask anything",
+    /**
+     * Model trigger label, typically from [com.rem.designsystem.chat.chatModelTriggerLabel]. With a
+     * `ChatModelMenu`, the menu's trigger shows this label when the selected model id is not among the
+     * menu's providers (instead of the raw id), unless it is blank or the Automatic label.
+     */
     val modelLabel: String = "Auto",
     val attachments: List<ComposerAttachment> = emptyList(),
     val availability: ComposerAvailability = ComposerAvailability.Enabled,
@@ -52,6 +57,13 @@ data class ChatComposerState(
     val voiceAvailable: Boolean = true,
     /** Host-owned focus; the composer reports changes through [ChatComposerAction.FocusChanged]. */
     val isFocused: Boolean = false,
+    /**
+     * Host override for model-menu availability, independent of input availability. `null` (default)
+     * keeps the derived rule — disabled while input is disabled or a turn is in flight. A host that
+     * blocks input (e.g. pending provider evidence, quota out) but must let the user escape back to
+     * Automatic passes `true`; it passes `false` while it prepares or sends a turn.
+     */
+    val modelMenuEnabled: Boolean? = null,
 ) {
     val hasText: Boolean get() = draft.isNotBlank()
 
@@ -66,8 +78,11 @@ data class ChatComposerState(
 
     val showsSpeak: Boolean get() = voiceAvailable && availability.isEnabled && !phase.isInFlight
 
-    /** The model trigger is disabled (45%) while a turn is in flight or input is disabled. */
-    val modelEnabled: Boolean get() = availability.isEnabled && !phase.isInFlight
+    /**
+     * Whether the model trigger / menu is enabled: [modelMenuEnabled] when the host sets it; otherwise
+     * disabled (45%) while a turn is in flight or input is disabled.
+     */
+    val modelEnabled: Boolean get() = modelMenuEnabled ?: (availability.isEnabled && !phase.isInFlight)
 
     /** What the trailing control does right now: Send, Cancel, or nothing. */
     val primaryAction: ChatComposerAction?

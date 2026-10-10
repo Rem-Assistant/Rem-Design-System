@@ -24,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +67,10 @@ import com.rem.designsystem.tokens.RemTypography
  *
  * Chat slice (Figma **Composer** `2071:11555`): the model control is the secondary-pill **Auto**
  * trigger. Pass [modelMenu] (typically a [ChatModelMenu]) to make it open the runtime-supplied model
- * menu; its `enabled` argument is false while sending (45%), when Speak is also hidden. [attachments]
+ * menu; its `enabled` argument is false while sending (45%), when Speak is also hidden. Hosts that
+ * disable input but must keep the menu open (to escape back to Automatic) set
+ * `ChatComposerState.modelMenuEnabled`; a menu's selection missing from its providers is labelled with
+ * `ChatComposerState.modelLabel`. [attachments]
  * are removable chips owned by the host — a Cloud browser chip is a capability for the next message.
  */
 enum class ComposerSendState { Idle, Active, Sending }
@@ -282,7 +286,10 @@ private fun ComposerPill(
                 Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
             }
             if (showsModel) {
-                if (modelMenu != null) modelMenu(modelEnabled) else ChatModelTriggerPill(label = modelLabel, enabled = modelEnabled)
+                if (modelMenu != null) {
+                    // The host's label names a selection the menu's providers do not list (yet).
+                    CompositionLocalProvider(LocalComposerModelLabel provides modelLabel) { modelMenu(modelEnabled) }
+                } else ChatModelTriggerPill(label = modelLabel, enabled = modelEnabled)
             }
             Box(modifier = Modifier.weight(1f))
             if (showsSpeak) {
