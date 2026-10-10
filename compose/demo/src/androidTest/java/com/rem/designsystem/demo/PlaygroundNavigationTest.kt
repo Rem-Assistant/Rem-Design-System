@@ -596,7 +596,8 @@ class PlaygroundNavigationTest {
         // Gmail starts connected; Google Calendar and Slack offer Connect.
         compose.onAllNodesWithText("Connected").assertCountEquals(1)
         compose.onAllNodesWithText("Connect").assertCountEquals(2)
-        compose.onAllNodesWithText("Connect")[1].performClick()
+        // The Back bar can put Slack below the fold on shorter devices. Drive the visible control.
+        compose.onAllNodesWithText("Connect")[1].performScrollTo().assertIsDisplayed().performClick()
         compose.onAllNodesWithText("Connected").assertCountEquals(2)
         compose.onAllNodesWithText("Connect").assertCountEquals(1)
     }
