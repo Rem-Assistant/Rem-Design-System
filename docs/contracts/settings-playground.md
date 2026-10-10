@@ -4,7 +4,7 @@ Source of truth: [Settings New](https://www.figma.com/design/af4yDqCzp57jds9lkFi
 
 ## Scope and states
 
-A native gallery opens Settings. Only the Rem row navigates to Agent Settings. Both settled screen compositions are reusable library views; route state and simulated loading live in the demo hosts. All other Settings rows are visual references with no connected feature. Automations is shown for layout fidelity only; its behavior/design is outside this trial. No real accounts, persistence, network, sign-out, deletion, purchase or connector actions occur.
+A native gallery opens Settings. The Rem row navigates to Agent Settings; Billing & Usage, Permissions, About and Help & Support open their own pages, and Agent Settings → Automations opens the Automations page. Both settled screen compositions are reusable library views; route state and simulated loading live in the demo hosts. Share Rem, Sign Out and Delete Account keep their existing behavior. Page controls that need a backend explain the prototype boundary; automation behavior, purchases and permission requests are not implemented. No real accounts, persistence, network, sign-out, deletion, purchase or connector actions occur.
 
 Gallery offers Success, Slow and Error. Rem enters a loading destination; success presents Agent Settings. Error presents the same error copy, Retry and Cancel on both platforms. Retry succeeds with the local fixture. Cancel and native Back return to Settings and cancel destination-owned asynchronous work. Reopening starts a fresh load. Gallery controls allow a notification toggle and display-name edit. Cancel discards edits, Save trims nonempty input, and changes last for the controls session. Closing/reopening the controls route resets it on both platforms.
 

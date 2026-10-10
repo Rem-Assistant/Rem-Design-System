@@ -14,7 +14,7 @@
   "amendments": [
     "Native SwiftUI List/Section replaces the source custom scroll composition; Android retains canonical Compose sections.",
     "Settings contained icons use Subtle by explicit approval, while the current read-only Figma source remains tinted.",
-    "Automations is visibly unavailable pending an approved design; its source label is retained.",
+    "Automations opens its own page (1833:5080), as do Billing & Usage, Permissions, About and Help & Support; its source label is retained.",
     "The approved entry title Agent settings, omitted Connected subtitle, and Help & Support question-mark glyph are now present in the live Figma source. Code removes the inherited extra Agent row minimum; the source row still has a fixed 82-point height, which is not an approved spacing target."
   ],
   "screens": [

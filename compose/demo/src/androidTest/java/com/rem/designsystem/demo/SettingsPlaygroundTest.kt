@@ -98,11 +98,72 @@ class SettingsPlaygroundTest {
         compose.onNodeWithText("Voice").performScrollTo().assertIsDisplayed()
         capture("AgentSettings-large-text-bottom")
     }
-    @Test fun automationsHasNoNavigationAction() {
+    /** Settings → page by its entry row; the page owns its top bar title and Back. */
+    private fun openSettingsPage(destination: String, rootTag: String, title: String) {
         openSettings()
-        compose.onNodeWithTag("openAgent").performClick()
-        waitForText("Capabilities")
-        compose.onNodeWithTag("automationsUnavailable").assertHasNoClickAction()
+        compose.onNodeWithTag("settingsDestination.$destination").performScrollTo().assertHasClickAction().performClick()
+        waitForTag(rootTag)
+        compose.onNodeWithTag("openAgent").assertDoesNotExist()
+        compose.onAllNodesWithText(title).assertCountEquals(1)
+    }
+    private fun leaveSettingsPage(rootTag: String) {
+        compose.onNodeWithTag("back").performClick()
+        compose.onNodeWithTag("openAgent").assertExists()
+        compose.onNodeWithTag(rootTag).assertDoesNotExist()
+    }
+    /** Tapping a row that needs a missing service states the limitation, then dismisses cleanly. */
+    private fun assertBoundary(tag: String, contains: String) {
+        compose.onNodeWithTag(tag).performScrollTo().performClick()
+        compose.onNodeWithTag("settings.boundary").assertExists()
+        compose.onNodeWithText(contains, substring = true).assertExists()
+        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithTag("settings.boundary").assertDoesNotExist()
+    }
+    @Test fun automationsOpensItsPageFromAgentSettings() {
+        openDestination("Automations", "settingsAutomations")
+        compose.onAllNodesWithText("Automations").assertCountEquals(1)
+        compose.onNodeWithText("Daily Brief is a built-in automation. Open it to choose its schedule, instructions, inputs, and outputs.").assertExists()
+        capture("Automations-light")
+        assertBoundary("automations.dailyBrief", "No automation runs")
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("agentSettings")
+    }
+    @Test fun billingOpensFromSettingsAndUpgradeExplainsBoundary() {
+        openSettingsPage("Billing", "settingsBilling", "Billing & Usage")
+        compose.onNodeWithText("Free").assertExists()
+        compose.onNodeWithTag("billing.usage.today").assertExists()
+        capture("Billing-light")
+        assertBoundary("billing.upgrade", "No payment is made")
+        leaveSettingsPage("settingsBilling")
+    }
+    @Test fun permissionsOpensFromSettingsWithoutRequestingAccess() {
+        openSettingsPage("Permissions", "settingsPermissions", "Permissions")
+        compose.onNodeWithTag("permissions.camera").performScrollTo()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Denied"))
+        capture("Permissions-light")
+        assertBoundary("permissions.camera", "does not request access")
+        compose.onNodeWithTag("settingsPermissions").assertExists()
+        leaveSettingsPage("settingsPermissions")
+    }
+    @Test fun aboutOpensFromSettingsAndLegalSheetCloses() {
+        openSettingsPage("About", "settingsAbout", "About")
+        compose.onNodeWithText("Turn your thoughts into actions", substring = true).assertExists()
+        compose.onNodeWithTag("about.version").assertExists()
+        capture("About-light")
+        compose.onNodeWithTag("about.legal.terms").performScrollTo().performClick()
+        compose.onNodeWithText("How Rem accounts, subscriptions, and approved actions work.").assertExists()
+        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithText("How Rem accounts, subscriptions, and approved actions work.").assertDoesNotExist()
+        leaveSettingsPage("settingsAbout")
+    }
+    @Test fun helpOpensFromSettingsWithBoundariesAndLocalShakeSwitch() {
+        openSettingsPage("HelpSupport", "settingsHelp", "Help & Support")
+        capture("Help-light")
+        assertBoundary("help.sendFeedback", "Nothing is sent")
+        assertBoundary("help.reportBug", "No report is sent")
+        compose.onNodeWithTag("help.shakeToReport").assertIsOn().performClick().assertIsOff()
+        compose.onNodeWithText("Shake detection is not included", substring = true).assertExists()
+        leaveSettingsPage("settingsHelp")
     }
     @Test fun errorRetryAndCancel() {
         openSettings("Error")

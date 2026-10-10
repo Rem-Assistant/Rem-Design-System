@@ -136,8 +136,14 @@ struct PlaygroundHome: View {
                     OnboardingComplete(lastAction: lastAction, onDone: returnToOnboardingHub)
                 }
             }
-            .navigationDestination(for: SettingsEntryDestination.self) { _ in
-                AgentPreview(fixture: fixture)
+            .navigationDestination(for: SettingsEntryDestination.self) { route in
+                switch route {
+                case .agentSettings: AgentPreview(fixture: fixture)
+                case .billing: SettingsBillingScreen()
+                case .permissions: SettingsPermissionsScreen()
+                case .about: SettingsAboutScreen(version: PlaygroundBuild.aboutVersion)
+                case .helpSupport: SettingsHelpScreen()
+                }
             }
             .navigationDestination(for: AgentSettingsDestination.self) { route in
                 switch route {
@@ -148,6 +154,7 @@ struct PlaygroundHome: View {
                 case .wallet: SettingsWalletScreen()
                 case .voice: SettingsVoiceScreen()
                 case .connectors: SettingsConnectorsScreen()
+                case .automations: SettingsAutomationsScreen()
                 }
             }
         }
@@ -351,10 +358,20 @@ struct SettingsPreview: View {
     let fixture: LoadFixture
     @State private var sharing = false
     var body: some View {
-        SettingsEntryContent(onShare: { sharing = true }, agentRoute: .agentSettings)
+        SettingsEntryContent(onShare: { sharing = true }, agentRoute: .agentSettings,
+                             availableRoutes: [.billing, .permissions, .about, .helpSupport])
             .background(DesignTokens.Color.backgroundPrimary)
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $sharing) { PlaygroundShareSheet() }
+    }
+}
+
+/// The installed playground's real version for About, in the source "1.4.0 (128)" shape.
+enum PlaygroundBuild {
+    static var aboutVersion: String {
+        SettingsAboutFixture.versionLabel(
+            short: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+            build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String)
     }
 }
 
@@ -376,7 +393,7 @@ struct AgentPreview: View {
         // A stable container owns the load task while its loading/ready child changes.
         ZStack {
             if status == "ready" {
-                AgentSettingsContent(availableDestinations: [.pairedDevices, .connectors, .cloudBrowser, .memory, .models, .wallet, .voice])
+                AgentSettingsContent(availableDestinations: [.pairedDevices, .connectors, .automations, .cloudBrowser, .memory, .models, .wallet, .voice])
                     .transition(.opacity)
             } else if status == "loading" {
                 VStack(spacing: 20) {

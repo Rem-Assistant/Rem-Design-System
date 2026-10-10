@@ -58,15 +58,80 @@ final class SettingsPlaygroundUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Voice"].isHittable)
         capture("AgentSettings-large-text-bottom")
     }
-    func testAutomationsHasNoNavigationAction() {
+    /// Settings → page, assert its title and back. Rows are value routes on the entry List.
+    private func openSettingsPage(_ route: String, title: String) {
         openSettings()
-        app.buttons["openAgent"].tap()
-        waitForAgent()
-        XCTAssertFalse(app.buttons["automationsUnavailable"].exists)
-        let row = app.descendants(matching: .any)["automationsUnavailable"].firstMatch
-        XCTAssertTrue(row.exists)
+        let row = app.buttons["settingsDestination.\(route)"]
+        reveal(row)
         row.tap()
-        XCTAssertTrue(app.navigationBars["Agent settings"].exists)
+        let arrived = app.navigationBars[title].waitForExistence(timeout: 5)
+        if !arrived {
+            capture("SettingsPage-\(route)-unexpected")
+            print(app.debugDescription)
+        }
+        XCTAssertTrue(arrived, "Expected Settings page: \(title)")
+    }
+    /// Tapping a row that needs a missing service states the limitation, then dismisses cleanly.
+    private func assertBoundary(_ control: XCUIElement, contains text: String) {
+        reveal(control)
+        control.tap()
+        let alert = app.alerts["Prototype boundary"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 3))
+        XCTAssertTrue(alert.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch.exists)
+        alert.buttons["Done"].tap()
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: alert)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 3), .completed)
+    }
+    func testAutomationsOpensItsPageFromAgentSettings() {
+        openDestination("automations", title: "Automations")
+        XCTAssertTrue(app.staticTexts["Daily Brief"].exists)
+        XCTAssertTrue(app.staticTexts[
+            "Daily Brief is a built-in automation. Open it to choose its schedule, instructions, inputs, and outputs."].exists)
+        capture("Automations-light")
+        assertBoundary(app.buttons["automations.dailyBrief"], contains: "No automation runs")
+        navigateBack(from: "Automations", to: "Agent settings")
+    }
+    func testBillingOpensFromSettingsAndUpgradeExplainsBoundary() {
+        openSettingsPage("billing", title: "Billing & Usage")
+        XCTAssertTrue(app.staticTexts["Free"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["billing.usage.today"].exists)
+        capture("Billing-light")
+        assertBoundary(app.buttons["billing.upgrade"], contains: "No payment is made")
+        navigateBack(from: "Billing & Usage", to: "Settings")
+    }
+    func testPermissionsOpensFromSettingsWithoutRequestingAccess() {
+        openSettingsPage("permissions", title: "Permissions")
+        let camera = app.buttons["permissions.camera"]
+        reveal(camera)
+        XCTAssertEqual(camera.value as? String, "Denied")
+        capture("Permissions-light")
+        assertBoundary(camera, contains: "does not request access")
+        XCTAssertTrue(app.navigationBars["Permissions"].exists, "Rows never leave the app")
+        navigateBack(from: "Permissions", to: "Settings")
+    }
+    func testAboutOpensFromSettingsAndLegalSheetCloses() {
+        openSettingsPage("about", title: "About")
+        XCTAssertTrue(app.staticTexts["Turn your thoughts into actions"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["about.version"].exists)
+        capture("About-light")
+        let terms = app.buttons["about.legal.terms"]
+        reveal(terms)
+        terms.tap()
+        XCTAssertTrue(app.staticTexts["How Rem accounts, subscriptions, and approved actions work."].waitForExistence(timeout: 3))
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
+        navigateBack(from: "About", to: "Settings")
+    }
+    func testHelpOpensFromSettingsWithBoundariesAndLocalShakeSwitch() {
+        openSettingsPage("helpSupport", title: "Help & Support")
+        capture("Help-light")
+        assertBoundary(app.buttons["help.sendFeedback"], contains: "Nothing is sent")
+        assertBoundary(app.buttons["help.reportBug"], contains: "No report is sent")
+        assertToggle("help.shakeToReport", isOn: true)
+        setMemoryToggle("help.shakeToReport", isOn: false)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@",
+                                                             "Shake detection is not included")).firstMatch.exists)
+        navigateBack(from: "Help & Support", to: "Settings")
     }
     func testErrorRetryAndCancel() {
         openSettings("Error")

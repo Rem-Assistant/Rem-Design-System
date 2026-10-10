@@ -22,15 +22,26 @@ import com.rem.designsystem.primitives.*
 import com.rem.designsystem.rows.*
 import com.rem.designsystem.tokens.*
 
-/** The same seven stable identities as SwiftUI. Automations is deliberately absent. */
-enum class AgentSettingsDestination { PairedDevices, Connectors, CloudBrowser, Memory, Models, Wallet, Voice }
+/** The same eight stable identities as SwiftUI. Automations opens its own page (1833:5080). */
+enum class AgentSettingsDestination { PairedDevices, Connectors, Automations, CloudBrowser, Memory, Models, Wallet, Voice }
+
+/** Settings entry pages, matching SwiftUI SettingsEntryDestination (Agent settings uses openAgent). */
+enum class SettingsEntryDestination { Billing, Permissions, About, HelpSupport }
 
 /** Settled Settings New entry 1964:86819. Host owns scrolling and navigation. */
 @Composable
 fun SettingsEntryContent(openAgent: () -> Unit) = SettingsEntryContent(openAgent, onShare = null)
 
+/** Only supplied page routes are interactive; the rest remain static references. */
 @Composable
-fun SettingsEntryContent(openAgent: () -> Unit, onShare: (() -> Unit)?) {
+fun SettingsEntryContent(
+    openAgent: () -> Unit,
+    onShare: (() -> Unit)?,
+    availableDestinations: Set<SettingsEntryDestination> = emptySet(),
+    openDestination: (SettingsEntryDestination) -> Unit = {},
+) {
+    fun action(route: SettingsEntryDestination): (() -> Unit)? =
+        if (route in availableDestinations) { { openDestination(route) } } else null
     val colors = RemColors.current
     Column(Modifier.padding(horizontal = 16.dp).padding(top = 10.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         RemSection {
@@ -41,21 +52,29 @@ fun SettingsEntryContent(openAgent: () -> Unit, onShare: (() -> Unit)?) {
         }
         RemSection { SettingsRowLabel("Agent settings", symbol = Symbols.Info, onClick = openAgent, modifier = Modifier.testTag("openAgent")) }
         RemSection {
-            SettingsRowLabel("Billing & Usage", symbol = Symbols.Billing, showsDivider = true)
-            SettingsRowLabel("Permissions", symbol = Symbols.Permissions)
+            SettingsRowLabel("Billing & Usage", symbol = Symbols.Billing, showsDivider = true,
+                onClick = action(SettingsEntryDestination.Billing), modifier = Modifier.testTag("settingsDestination.Billing"))
+            SettingsRowLabel("Permissions", symbol = Symbols.Permissions,
+                onClick = action(SettingsEntryDestination.Permissions), modifier = Modifier.testTag("settingsDestination.Permissions"))
         }
-        RemSection { SettingsRowLabel("About", symbol = Symbols.Info) }
+        RemSection {
+            SettingsRowLabel("About", symbol = Symbols.Info,
+                onClick = action(SettingsEntryDestination.About), modifier = Modifier.testTag("settingsDestination.About"))
+        }
         RemSection {
             SettingsRowLabel("Share Rem", symbol = Symbols.Share, showsDivider = true, disclosure = false, onClick = onShare, modifier = Modifier.testTag("shareRem"))
+            val openHelp = action(SettingsEntryDestination.HelpSupport)
+            val helpTag = Modifier.testTag("settingsDestination.HelpSupport")
             ListRow(
-                modifier = Modifier.semantics(mergeDescendants = true) {
+                modifier = if (openHelp != null) helpTag else helpTag.semantics(mergeDescendants = true) {
                     contentDescription = "Help & Support. Visual reference; unavailable in this playground"
                 },
+                onClick = openHelp,
                 leading = {
                     ContainedIcon(Icons.Filled.Help, modifier = Modifier.clearAndSetSemantics {},
                         fill = ContainedIconFill.Subtle, size = ContainedIconSize.Settings)
                 },
-                content = { ListRowLabel("Help & Support") }, trailing = {},
+                content = { ListRowLabel("Help & Support") }, trailing = { if (openHelp != null) DisclosureChevron() },
             )
         }
         for (title in listOf("Sign Out", "Delete Account")) {
@@ -68,7 +87,7 @@ fun SettingsEntryContent(openAgent: () -> Unit, onShare: (() -> Unit)?) {
     }
 }
 
-/** Only supplied routes are interactive. Automations remains a visibly unavailable reference. */
+/** Only supplied routes are interactive; the rest remain visibly unavailable references. */
 @Composable
 fun AgentSettingsContent(
     availableDestinations: Set<AgentSettingsDestination> = emptySet(),
@@ -86,8 +105,7 @@ fun AgentSettingsContent(
             destination(AgentSettingsDestination.PairedDevices, "Paired Devices", "2", Symbols.Devices, true)
             destination(AgentSettingsDestination.Connectors, "Connectors", symbol = Symbols.Connectors, divider = true)
             destination(AgentSettingsDestination.CloudBrowser, "Cloud browser", symbol = Symbols.Browser, divider = true)
-            SettingsRowLabel("Automations", "Scheduled and triggered work", Symbols.Automations,
-                unavailableReason = "Unavailable. Automations design is awaiting a decision.", modifier = Modifier.testTag("automationsUnavailable"))
+            destination(AgentSettingsDestination.Automations, "Automations", "Scheduled and triggered work", Symbols.Automations)
         }
         RemSection(header = "Intelligence", settingsHeader = true) {
             destination(AgentSettingsDestination.Memory, "Memory", symbol = Symbols.Memory, divider = true)

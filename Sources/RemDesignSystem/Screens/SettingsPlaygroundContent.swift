@@ -1,12 +1,15 @@
 import SwiftUI
 
-/// The approved route contract. Automations has no settled destination yet.
+/// The approved Agent settings route contract. Automations opens its own page (`1833:5080`).
 public enum AgentSettingsDestination: String, CaseIterable, Hashable, Sendable {
-    case pairedDevices, connectors, cloudBrowser, memory, models, wallet, voice
+    case pairedDevices, connectors, automations, cloudBrowser, memory, models, wallet, voice
 }
 
-/// Value route for hosts that own one path for the complete Settings hierarchy.
-public enum SettingsEntryDestination: Hashable, Sendable { case agentSettings }
+/// Value routes for hosts that own one path for the complete Settings hierarchy: Agent settings
+/// plus the Billing & Usage, Permissions, About and Help & Support pages.
+public enum SettingsEntryDestination: String, CaseIterable, Hashable, Sendable {
+    case agentSettings, billing, permissions, about, helpSupport
+}
 
 /// Reusable Settings row content. Native containers own padding, separators and disclosure.
 /// Standalone callers can opt into the legacy padded layout and an explicit divider.
@@ -34,20 +37,26 @@ public struct SettingsEntryContent: View {
     private let openAgent: (() -> Void)?
     private let agentDestination: AnyView?
     private let agentRoute: SettingsEntryDestination?
+    private let availableRoutes: Set<SettingsEntryDestination>
     private let onShare: (() -> Void)?
     /// Compatibility for action-driven hosts. The native destination initializer is preferred.
     public init(onShare: (() -> Void)? = nil, openAgent: @escaping () -> Void) {
         self.onShare = onShare
         self.openAgent = openAgent; self.agentDestination = nil; self.agentRoute = nil
+        self.availableRoutes = []
     }
     public init<Destination: View>(onShare: (() -> Void)? = nil, @ViewBuilder agentDestination: () -> Destination) {
         self.onShare = onShare
         self.openAgent = nil; self.agentDestination = AnyView(agentDestination()); self.agentRoute = nil
+        self.availableRoutes = []
     }
     /// Keeps native navigation in the host's value-driven path across Settings and its children.
-    public init(onShare: (() -> Void)? = nil, agentRoute: SettingsEntryDestination) {
+    /// Rows whose route is in `availableRoutes` push that value; the rest stay static references.
+    public init(onShare: (() -> Void)? = nil, agentRoute: SettingsEntryDestination,
+                availableRoutes: Set<SettingsEntryDestination> = []) {
         self.onShare = onShare
         self.openAgent = nil; self.agentDestination = nil; self.agentRoute = agentRoute
+        self.availableRoutes = availableRoutes
     }
     public var body: some View {
         List {
@@ -74,17 +83,17 @@ public struct SettingsEntryContent: View {
                 }
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
-                referenceRow("Billing & Usage", symbol: "creditcard.fill")
-                referenceRow("Permissions", symbol: "hand.raised.fill")
+                pageRow(.billing, "Billing & Usage", symbol: "creditcard.fill")
+                pageRow(.permissions, "Permissions", symbol: "hand.raised.fill")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
-            Section { referenceRow("About", symbol: "info.circle.fill") }
+            Section { pageRow(.about, "About", symbol: "info.circle.fill") }
                 .listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section {
                 if let onShare {
                     Button(action: onShare) { SettingsRowLabel("Share Rem", symbol: "square.and.arrow.up") }
                         .buttonStyle(.plain).accessibilityIdentifier("shareRem")
                 } else { referenceRow("Share Rem", symbol: "square.and.arrow.up") }
-                referenceRow("Help & Support", symbol: "questionmark.circle.fill")
+                pageRow(.helpSupport, "Help & Support", symbol: "questionmark.circle.fill")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)
             Section { referenceAction("Sign Out") }
                 .listRowBackground(DesignTokens.Color.backgroundSecondary)
@@ -96,6 +105,14 @@ public struct SettingsEntryContent: View {
     }
     private var agentLabel: some View {
         SettingsRowLabel("Agent settings", symbol: "info.circle.fill")
+    }
+    @ViewBuilder private func pageRow(_ route: SettingsEntryDestination, _ title: String, symbol: String) -> some View {
+        if availableRoutes.contains(route) {
+            NavigationLink(value: route) { SettingsRowLabel(title, symbol: symbol) }
+                .accessibilityIdentifier("settingsDestination.\(route.rawValue)")
+        } else {
+            referenceRow(title, symbol: symbol)
+        }
     }
     private func referenceRow(_ title: String, symbol: String) -> some View {
         SettingsRowLabel(title, symbol: symbol)
@@ -128,9 +145,7 @@ public struct AgentSettingsContent: View {
                 destination(.pairedDevices, "Paired Devices", subtitle: "2", symbol: "macbook.and.iphone")
                 destination(.connectors, "Connectors", symbol: "link.circle.fill")
                 destination(.cloudBrowser, "Cloud browser", symbol: "globe")
-                SettingsRowLabel("Automations", subtitle: "Scheduled and triggered work", symbol: "bell.badge.fill")
-                    .accessibilityIdentifier("automationsUnavailable")
-                    .accessibilityHint("Unavailable. Automations design is awaiting a decision.")
+                destination(.automations, "Automations", subtitle: "Scheduled and triggered work", symbol: "bell.badge.fill")
             } header: { HStack { Text("Capabilities").textCase(nil) } } footer: {
                 Text("Manage connected surfaces and how your agent can perform.")
             }.listRowBackground(DesignTokens.Color.backgroundSecondary)

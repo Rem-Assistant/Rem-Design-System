@@ -118,6 +118,7 @@ fun Playground() {
     val context = LocalContext.current
     var route by rememberSaveable { mutableStateOf(Route.Home) }
     var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
+    var settingsPage by rememberSaveable { mutableStateOf<SettingsEntryDestination?>(null) }
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
     var checkInFailsOnce by rememberSaveable { mutableStateOf(false) }
@@ -131,7 +132,7 @@ fun Playground() {
     val inOnboardingFlow = route == Route.Onboarding && (onboardingStack.isNotEmpty() || onboardingComplete != null)
     // Settings destinations and onboarding steps own their chrome and Back handling.
     // Full-screen Chat and task reply own their header (back + overflow): no app bar above them.
-    val fullScreen = destination != null || inOnboardingFlow || route == Route.ChatScreen || route == Route.TaskReply
+    val fullScreen = destination != null || (route == Route.Settings && settingsPage != null) || inOnboardingFlow || route == Route.ChatScreen || route == Route.TaskReply
     val back = {
         route = when (route) {
             Route.Agent -> Route.Settings
@@ -201,14 +202,22 @@ fun Playground() {
                 Route.AgentCatalog -> CatalogAgent()
                 Route.Brand -> CatalogBrand()
                 Route.Loading -> LoadingPreview()
-                Route.Settings -> Column(Modifier.verticalScroll(rememberScrollState())) {
-                    SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {
-                        val share = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "Rem — a personal AI assistant.")
-                        }
-                        context.startActivity(Intent.createChooser(share, null))
-                    })
+                Route.Settings -> when (settingsPage) {
+                    SettingsEntryDestination.Billing -> SettingsBillingScreen(onBack = { settingsPage = null })
+                    SettingsEntryDestination.Permissions -> SettingsPermissionsScreen(onBack = { settingsPage = null })
+                    SettingsEntryDestination.About -> SettingsAboutScreen(onBack = { settingsPage = null },
+                        version = SettingsAboutFixture.versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString()))
+                    SettingsEntryDestination.HelpSupport -> SettingsHelpScreen(onBack = { settingsPage = null })
+                    null -> Column(Modifier.verticalScroll(rememberScrollState())) {
+                        SettingsEntryContent(openAgent = { route = Route.Agent }, onShare = {
+                            val share = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "Rem — a personal AI assistant.")
+                            }
+                            context.startActivity(Intent.createChooser(share, null))
+                        }, availableDestinations = SettingsEntryDestination.entries.toSet(),
+                            openDestination = { settingsPage = it })
+                    }
                 }
                 Route.Agent -> AgentPreview(fixture, destination = destination,
                     onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
@@ -449,11 +458,12 @@ private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestina
             AgentSettingsDestination.CloudBrowser -> SettingsCloudBrowserScreen(onBack = onDestinationBack)
             AgentSettingsDestination.Wallet -> SettingsWalletScreen(onBack = onDestinationBack)
             AgentSettingsDestination.Voice -> SettingsVoiceScreen(onBack = onDestinationBack)
+            AgentSettingsDestination.Automations -> SettingsAutomationsScreen(onBack = onDestinationBack)
             else -> Column(Modifier.verticalScroll(rememberScrollState())) {
                 // Announces the resolved load once, politely (the skeleton's own live region is gone).
                 Box(Modifier.size(1.dp).semantics { contentDescription = "Agent settings loaded"; liveRegion = LiveRegionMode.Polite })
                 AgentSettingsContent(availableDestinations = setOf(AgentSettingsDestination.PairedDevices, AgentSettingsDestination.Connectors,
-                    AgentSettingsDestination.CloudBrowser, AgentSettingsDestination.Memory, AgentSettingsDestination.Models,
+                    AgentSettingsDestination.Automations, AgentSettingsDestination.CloudBrowser, AgentSettingsDestination.Memory, AgentSettingsDestination.Models,
                     AgentSettingsDestination.Wallet, AgentSettingsDestination.Voice), openDestination = onOpenDestination)
             }
         }
