@@ -36,7 +36,15 @@ import com.rem.designsystem.primitives.RemPill
 import com.rem.designsystem.primitives.RemPillKind
 import com.rem.designsystem.primitives.RemSlider
 import com.rem.designsystem.agenda.DateNavigationHeader
+import com.rem.designsystem.chat.ActionReceipt
+import com.rem.designsystem.chat.ActionReceiptOutcome
 import com.rem.designsystem.chat.AddToChatSheet
+import com.rem.designsystem.chat.MessageDraft
+import com.rem.designsystem.chat.MessageDraftCard
+import com.rem.designsystem.chat.MessageDraftCardState
+import com.rem.designsystem.chat.PollCard
+import com.rem.designsystem.chat.PollOption
+import com.rem.designsystem.chat.PollPurpose
 import com.rem.designsystem.chat.ChatHeader
 import com.rem.designsystem.chat.ChatHeaderStatus
 import com.rem.designsystem.chat.ChatModelMenu
@@ -558,6 +566,60 @@ class EvidenceSnapshots {
 
     @Test
     fun messageActionSheetOwn() = shot("MessageActionSheet-own-light") { MessageActionSheetShot(MessageRole.User) }
+
+    // Chat cards (MessageDraftCard 2555:1550, PollCard 2559:1524, ActionReceipt 2566:2645), every state.
+    // Paired with the SwiftUI `ChatCard*` renders in RenderSnapshots.swift.
+    private val cardDraft = MessageDraft(
+        from = "me@example.com", to = "alex@example.com", subject = "Re: Product Designer - Next Steps",
+        body = "Hi Alex,\n\nThanks for reaching out — I’ve put time on the calendar. Looking forward to chatting.\n\nBest",
+    )
+    private val choiceOptions = listOf(PollOption("add", "Add Notion"), PollOption("later", "Not now"))
+    private val suggestionOptions = listOf(
+        PollOption("review", "Review the draft"),
+        PollOption("calendar", "Check my calendar"),
+        PollOption("remind", "Remind me later"),
+    )
+
+    @Test
+    fun chatCardMessageDraft() = shot("ChatCardMessageDraft-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                MessageDraftCardState.entries.forEach { MessageDraftCard(cardDraft, state = it) }
+            }
+        }
+    }
+
+    @Test
+    fun chatCardPoll() = shot("ChatCardPoll-light") {
+        val question = "Add the Notion connector so I can use your shared workspace?"
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                PollCard(question, choiceOptions)
+                PollCard(question, choiceOptions, selection = "add")
+                // Three options: the A/B pattern extended to C (no verified C master in Figma).
+                PollCard("What would you like to do next?", suggestionOptions, purpose = PollPurpose.Suggestion)
+                PollCard("What would you like to do next?", suggestionOptions, purpose = PollPurpose.Suggestion, selection = "remind")
+            }
+        }
+    }
+
+    @Test
+    fun chatCardActionReceipt() = shot("ChatCardActionReceipt-light") {
+        RemTheme {
+            Box(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary), contentAlignment = Alignment.Center) {
+                Column(Modifier.width(306.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActionReceipt(ActionReceiptOutcome.Confirmed, "Sent")
+                    ActionReceipt(ActionReceiptOutcome.Unconfirmed, "Unconfirmed")
+                }
+            }
+        }
+    }
 
     @Test
     fun agendaScreen() = shot("AgendaScreen-light") {

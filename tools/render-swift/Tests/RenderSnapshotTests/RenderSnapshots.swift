@@ -118,6 +118,11 @@ final class RenderSnapshots: XCTestCase {
         // Long-press sheet `2603:19498`: the assistant reference, then the own-message variant (no Report).
         render("MessageActionSheet-assistant-light", width: 402, height: nil, dark: false) { messageActionSheet(.assistant) }
         render("MessageActionSheet-own-light", width: 402, height: nil, dark: false) { messageActionSheet(.user) }
+        // Chat cards (MessageDraftCard 2555:1550, PollCard 2559:1524, ActionReceipt 2566:2645), every state.
+        // Paired with the Compose `ChatCard*` shots in EvidenceSnapshots.kt.
+        render("ChatCardMessageDraft-light", width: 402, height: nil, dark: false) { chatCardDrafts }
+        render("ChatCardPoll-light", width: 402, height: nil, dark: false) { chatCardPolls }
+        render("ChatCardActionReceipt-light", width: 402, height: nil, dark: false) { chatCardReceipts }
         // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
         render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
             AgendaSuggestionsPlaygroundView(fixture: .loaded)
@@ -471,6 +476,55 @@ final class RenderSnapshots: XCTestCase {
         MessageActionSheet(
             ChatMessageActionsDisplay(message: ChatMessageDisplay(id: "m1", role: role, text: "Here’s a clearer introduction you can review."))
         ) { _ in }
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // MARK: - Chat cards
+
+    private static let cardDraft = MessageDraft(
+        from: "me@example.com", to: "alex@example.com", subject: "Re: Product Designer - Next Steps",
+        body: "Hi Alex,\n\nThanks for reaching out \u{2014} I\u{2019}ve put time on the calendar. Looking forward to chatting.\n\nBest"
+    )
+    private static let choiceOptions = [PollOption(id: "add", label: "Add Notion"), PollOption(id: "later", label: "Not now")]
+    private static let suggestionOptions = [
+        PollOption(id: "review", label: "Review the draft"),
+        PollOption(id: "calendar", label: "Check my calendar"),
+        PollOption(id: "remind", label: "Remind me later"),
+    ]
+
+    @ViewBuilder private var chatCardDrafts: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            ForEach(MessageDraftCardState.allCases, id: \.self) { state in
+                MessageDraftCard(Self.cardDraft, state: state)
+            }
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatCardPolls: some View {
+        let question = "Add the Notion connector so I can use your shared workspace?"
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            PollCard(question: question, options: Self.choiceOptions)
+            PollCard(question: question, options: Self.choiceOptions, selection: "add")
+            // Three options: the A/B pattern extended to C (no verified C master in Figma).
+            PollCard(question: "What would you like to do next?", options: Self.suggestionOptions, purpose: .suggestion)
+            PollCard(question: "What would you like to do next?", options: Self.suggestionOptions, purpose: .suggestion, selection: "remind")
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatCardReceipts: some View {
+        VStack(spacing: DesignTokens.Spacing.sm) {
+            ActionReceipt(.confirmed, label: "Sent")
+            ActionReceipt(.unconfirmed, label: "Unconfirmed")
+        }
+        .frame(width: 306)
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
         .background(DesignTokens.Color.backgroundPrimary)
     }
 

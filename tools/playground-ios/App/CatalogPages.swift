@@ -231,6 +231,24 @@ enum ChatFixture {
     static let cameraNote = "Camera opens the system camera in the app."
 }
 
+/// Neutral display data for the chat card specimens (the Figma sample copy is private).
+private enum ChatCardFixture {
+    static let draft = MessageDraft(
+        from: "me@example.com", to: "alex@example.com", subject: "Re: Product Designer - Next Steps",
+        body: "Hi Alex,\n\nThanks for reaching out \u{2014} I\u{2019}ve put time on the calendar. Looking forward to chatting.\n\nBest"
+    )
+    static let sendNote = "Send Email requested. The app sends; the card shows Sent only on provider confirmation."
+    static let discardNote = "Discard requested. The app removes the draft."
+    static let choiceQuestion = "Add the Notion connector so I can use your shared workspace?"
+    static let choiceOptions = [PollOption(id: "add", label: "Add Notion"), PollOption(id: "later", label: "Not now")]
+    static let suggestionQuestion = "What would you like to do next?"
+    static let suggestionOptions = [
+        PollOption(id: "review", label: "Review the draft"),
+        PollOption(id: "calendar", label: "Check my calendar"),
+        PollOption(id: "remind", label: "Remind me later"),
+    ]
+}
+
 private struct ReactionTarget: Identifiable { let id: String }
 
 struct CatalogChat: View {
@@ -251,6 +269,9 @@ struct CatalogChat: View {
     @State private var showFiles = false
     @State private var feedback: String?
     @State private var headerCall = false
+    @State private var cardFeedback: String?
+    @State private var choiceSelection: String?
+    @State private var suggestionSelection: String?
 
     var body: some View {
         CatalogPage(title: "Chat") {
@@ -328,6 +349,48 @@ struct CatalogChat: View {
                 .pickerStyle(.menu)
                 .accessibilityIdentifier("catalog.voiceState")
                 VoiceBar(voice)
+            }
+            CatalogGroup(title: "Card \u{00B7} message draft") {
+                // Presentation only: Send/Discard report intent; nothing is sent from the catalog.
+                ForEach(MessageDraftCardState.allCases, id: \.self) { state in
+                    MessageDraftCard(
+                        ChatCardFixture.draft, state: state,
+                        accessibilityPrefix: "catalog.card.draft.\(state.rawValue)",
+                        onSend: { cardFeedback = ChatCardFixture.sendNote },
+                        onDiscard: { cardFeedback = ChatCardFixture.discardNote }
+                    )
+                }
+                if let cardFeedback {
+                    Text(cardFeedback)
+                        .font(DesignTokens.Typography.footnote)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                        .accessibilityIdentifier("catalog.card.draft.feedback")
+                }
+            }
+            CatalogGroup(title: "Card \u{00B7} poll") {
+                PollCard(
+                    question: ChatCardFixture.choiceQuestion, options: ChatCardFixture.choiceOptions,
+                    selection: choiceSelection, accessibilityPrefix: "catalog.card.poll.choice",
+                    onSelect: { choiceSelection = $0 }
+                )
+                // Three options extend the A/B master pattern to C; there is no verified C master.
+                PollCard(
+                    question: ChatCardFixture.suggestionQuestion, options: ChatCardFixture.suggestionOptions,
+                    purpose: .suggestion, selection: suggestionSelection,
+                    accessibilityPrefix: "catalog.card.poll.suggestion",
+                    onSelect: { suggestionSelection = $0 }
+                )
+                Button("Reset polls") { choiceSelection = nil; suggestionSelection = nil }
+                    .remButton(.textAccent, size: .compact)
+                    .accessibilityIdentifier("catalog.card.poll.reset")
+            }
+            CatalogGroup(title: "Card \u{00B7} action receipt") {
+                ForEach(ActionReceiptOutcome.allCases, id: \.self) { outcome in
+                    ActionReceipt(
+                        outcome, label: outcome == .confirmed ? "Sent" : "Unconfirmed",
+                        accessibilityPrefix: "catalog.card.receipt"
+                    )
+                }
             }
         }
         .sheet(item: $reactingTo) { target in

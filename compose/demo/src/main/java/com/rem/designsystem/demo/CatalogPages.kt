@@ -57,6 +57,11 @@ import com.rem.designsystem.agentsurfaces.RunningTaskTone
 import com.rem.designsystem.brand.RemAppIcon
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
+import com.rem.designsystem.buttons.RemButton
+import com.rem.designsystem.buttons.RemButtonSize
+import com.rem.designsystem.buttons.RemButtonVariant
+import com.rem.designsystem.chat.ActionReceipt
+import com.rem.designsystem.chat.ActionReceiptOutcome
 import com.rem.designsystem.chat.AddToChatMaxPhotoSelection
 import com.rem.designsystem.chat.AddToChatSheet
 import com.rem.designsystem.chat.ChatHeader
@@ -69,9 +74,15 @@ import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.chat.MessageBubble
 import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.chat.MessageDraft
+import com.rem.designsystem.chat.MessageDraftCard
+import com.rem.designsystem.chat.MessageDraftCardState
 import com.rem.designsystem.chat.MessageReaction
 import com.rem.designsystem.chat.MessageReactionPicker
 import com.rem.designsystem.chat.MessageRole
+import com.rem.designsystem.chat.PollCard
+import com.rem.designsystem.chat.PollOption
+import com.rem.designsystem.chat.PollPurpose
 import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ThinkingLevel
 import com.rem.designsystem.chat.VoiceBar
@@ -287,6 +298,24 @@ internal object ChatFixture {
     const val ManageModelsNote = "Manage Models opens model settings in the app."
 }
 
+/** Neutral display data for the chat card specimens (the Figma sample copy is private). */
+internal object ChatCardFixture {
+    val Draft = MessageDraft(
+        from = "me@example.com", to = "alex@example.com", subject = "Re: Product Designer - Next Steps",
+        body = "Hi Alex,\n\nThanks for reaching out \u2014 I\u2019ve put time on the calendar. Looking forward to chatting.\n\nBest",
+    )
+    const val SendNote = "Send Email requested. The app sends; the card shows Sent only on provider confirmation."
+    const val DiscardNote = "Discard requested. The app removes the draft."
+    const val ChoiceQuestion = "Add the Notion connector so I can use your shared workspace?"
+    val ChoiceOptions = listOf(PollOption("add", "Add Notion"), PollOption("later", "Not now"))
+    const val SuggestionQuestion = "What would you like to do next?"
+    val SuggestionOptions = listOf(
+        PollOption("review", "Review the draft"),
+        PollOption("calendar", "Check my calendar"),
+        PollOption("remind", "Remind me later"),
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CatalogChat() {
@@ -304,6 +333,9 @@ internal fun CatalogChat() {
     var browserAvailable by rememberSaveable { mutableStateOf(true) }
     var thinking by rememberSaveable { mutableStateOf(ThinkingLevel.Medium) }
     var feedback by rememberSaveable { mutableStateOf<String?>(null) }
+    var cardFeedback by rememberSaveable { mutableStateOf<String?>(null) }
+    var choiceSelection by rememberSaveable { mutableStateOf<String?>(null) }
+    var suggestionSelection by rememberSaveable { mutableStateOf<String?>(null) }
     // Same rule as the composer: text, or a content attachment alone (fixture chips, nothing is read).
     val send = {
         val text = draft.trim()
@@ -402,6 +434,47 @@ internal fun CatalogChat() {
                 }
             }
             VoiceBar(state = voice)
+        }
+        CatalogGroup("Card \u00b7 message draft") {
+            // Presentation only: Send/Discard report intent; nothing is sent from the catalog.
+            MessageDraftCardState.entries.forEach { state ->
+                MessageDraftCard(
+                    ChatCardFixture.Draft, state = state,
+                    accessibilityPrefix = "catalog.card.draft.${state.name.lowercase()}",
+                    onSend = { cardFeedback = ChatCardFixture.SendNote },
+                    onDiscard = { cardFeedback = ChatCardFixture.DiscardNote },
+                )
+            }
+            cardFeedback?.let {
+                Text(it, style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("catalog.card.draft.feedback"))
+            }
+        }
+        CatalogGroup("Card \u00b7 poll") {
+            PollCard(
+                ChatCardFixture.ChoiceQuestion, ChatCardFixture.ChoiceOptions,
+                selection = choiceSelection, accessibilityPrefix = "catalog.card.poll.choice",
+                onSelect = { choiceSelection = it },
+            )
+            // Three options extend the A/B master pattern to C; there is no verified C master.
+            PollCard(
+                ChatCardFixture.SuggestionQuestion, ChatCardFixture.SuggestionOptions,
+                purpose = PollPurpose.Suggestion, selection = suggestionSelection,
+                accessibilityPrefix = "catalog.card.poll.suggestion",
+                onSelect = { suggestionSelection = it },
+            )
+            RemButton(
+                "Reset polls", onClick = { choiceSelection = null; suggestionSelection = null },
+                variant = RemButtonVariant.TextAccent, size = RemButtonSize.Compact,
+                modifier = Modifier.testTag("catalog.card.poll.reset"),
+            )
+        }
+        CatalogGroup("Card \u00b7 action receipt") {
+            ActionReceiptOutcome.entries.forEach { outcome ->
+                ActionReceipt(
+                    outcome, if (outcome == ActionReceiptOutcome.Confirmed) "Sent" else "Unconfirmed",
+                    accessibilityPrefix = "catalog.card.receipt",
+                )
+            }
         }
     }
     reactingTo?.let { target ->
