@@ -803,14 +803,22 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
     }
 
-    @Test fun chatScreenAttachmentOnlySend() {
+    /**
+     * Photos and Files launch the real system pickers, which instrumented tests cannot drive; this
+     * asserts the canonical options exist and no sample chip is injected. Picked-content mapping and
+     * attachment-only send are covered by `ChatComposerFixtureTest`.
+     */
+    @Test fun chatScreenAddToChatOffersSystemPickers() {
         openChatScreen()
         compose.onNodeWithTag("chat.composerAdd").performClick()
         waitForTag("chat.addToChat.photos")
-        compose.onNodeWithTag("chat.addToChat.photos").performClick()
-        waitForTag("chat.attachment.photo.0")
-        compose.onNodeWithTag("chat.composerSend").assertIsEnabled().performClick()
-        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.addToChat.files").assertExists()
+        compose.onNodeWithTag("chat.addToChat.camera").assertDoesNotExist()
+        compose.onNodeWithTag("chat.attachment.photo.0").assertDoesNotExist()
+        compose.onNodeWithTag("chat.addToChat.cloudBrowser").performClick()
+        waitForTag("chat.attachment.cloud-browser")
+        compose.onNodeWithTag("chat.removeAttachment.cloud-browser").performClick()
+        compose.onNodeWithTag("chat.attachment.cloud-browser").assertDoesNotExist()
     }
 
     @Test fun chatScreenBackExits() {

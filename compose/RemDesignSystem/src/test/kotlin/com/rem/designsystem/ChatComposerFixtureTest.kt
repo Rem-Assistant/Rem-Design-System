@@ -40,6 +40,26 @@ class ChatComposerFixtureTest {
         assertTrue(twice.apply(ChatComposerAction.RemoveAttachment(ComposerAttachment.CloudBrowser.id)).state.attachments.isEmpty())
     }
 
+    @Test fun pickedPhotosBecomeImageChipsAndANewPickReplacesThem() {
+        val two = ChatComposerFixture().attach(ComposerAttachment.CloudBrowser).attachPickedPhotos(2)
+        assertEquals(listOf("cloud-browser", "photo.0", "photo.1"), two.state.attachments.map { it.id })
+        assertEquals("Photo 2", two.state.attachments.last().title)
+        val one = two.attachPickedPhotos(1)
+        assertEquals(listOf(ComposerAttachment.CloudBrowser, ChatComposerFixture.photoAttachment(0)), one.state.attachments)
+        assertEquals("An empty pick (cancel) changes nothing", one, one.attachPickedPhotos(0))
+    }
+
+    @Test fun pickedFilesBecomeNamedFileChipsOnceAndAreRemovable() {
+        val fixture = ChatComposerFixture().attachPickedPhotos(1)
+            .attachPickedFiles(listOf("receipt.png", "map.heic"))
+            .attachPickedFiles(listOf("receipt.png"))
+        assertEquals(listOf("photo.0", "file.receipt.png", "file.map.heic"), fixture.state.attachments.map { it.id })
+        assertEquals(listOf("receipt.png", "map.heic"), fixture.state.attachments.filter { it.kind == ComposerAttachment.Kind.File }.map { it.title })
+        val removed = fixture.apply(ChatComposerAction.RemoveAttachment("file.receipt.png"))
+        assertEquals(listOf("photo.0", "file.map.heic"), removed.state.attachments.map { it.id })
+        assertTrue("Picked content alone can be sent", removed.state.canSend)
+    }
+
     @Test fun scenariosDriveHostStates() {
         val base = ChatComposerFixture(state = ChatComposerState(draft = "Hello"))
         val unavailable = base.select(Scenario.Unavailable)

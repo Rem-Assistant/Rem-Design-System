@@ -85,6 +85,29 @@ public struct ChatComposerFixture: Equatable, Sendable {
         state.attachments += attachments
     }
 
+    /// Photos picked in the system photo picker: one image chip per pick ("Photo 1"…), replacing the
+    /// previous photo pick. Only the count is used; picked content stays on the device and is never read.
+    public mutating func attachPickedPhotos(count: Int) {
+        guard count > 0 else { return }
+        replaceAttachments(of: .image, with: (0..<count).map(Self.photoAttachment))
+    }
+
+    /// Documents picked in the system document picker, one file chip per name, each added once.
+    /// Only the display name is used; the file is never opened, read or uploaded.
+    public mutating func attachPickedFiles(named names: [String]) {
+        for name in names { attach(Self.fileAttachment(named: name)) }
+    }
+
+    /// The chip for the photo at `index` of a pick (`photo.0` → "Photo 1").
+    public static func photoAttachment(_ index: Int) -> ComposerAttachment {
+        ComposerAttachment(id: "photo.\(index)", title: "Photo \(index + 1)", kind: .image)
+    }
+
+    /// The chip for a picked document, keyed by its display name.
+    public static func fileAttachment(named name: String) -> ComposerAttachment {
+        ComposerAttachment(id: "file.\(name)", title: name, kind: .file)
+    }
+
     /// Shows a page-level note (e.g. Manage Models, Camera).
     public mutating func show(note: String?) {
         self.note = note

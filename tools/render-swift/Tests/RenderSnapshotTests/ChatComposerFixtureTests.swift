@@ -40,6 +40,30 @@ final class ChatComposerFixtureTests: XCTestCase {
         XCTAssertTrue(fixture.state.attachments.isEmpty)
     }
 
+    func testPickedPhotosBecomeImageChipsAndANewPickReplacesThem() {
+        var fixture = ChatComposerFixture()
+        fixture.attach(.cloudBrowser)
+        fixture.attachPickedPhotos(count: 2)
+        XCTAssertEqual(fixture.state.attachments.map(\.id), ["cloud-browser", "photo.0", "photo.1"])
+        XCTAssertEqual(fixture.state.attachments.last?.title, "Photo 2")
+        fixture.attachPickedPhotos(count: 1)
+        XCTAssertEqual(fixture.state.attachments, [.cloudBrowser, ChatComposerFixture.photoAttachment(0)])
+        fixture.attachPickedPhotos(count: 0)
+        XCTAssertEqual(fixture.state.attachments.count, 2, "An empty pick (cancel) changes nothing")
+    }
+
+    func testPickedFilesBecomeNamedFileChipsOnceAndAreRemovable() {
+        var fixture = ChatComposerFixture()
+        fixture.attachPickedPhotos(count: 1)
+        fixture.attachPickedFiles(named: ["receipt.png", "map.heic"])
+        fixture.attachPickedFiles(named: ["receipt.png"])
+        XCTAssertEqual(fixture.state.attachments.map(\.id), ["photo.0", "file.receipt.png", "file.map.heic"])
+        XCTAssertEqual(fixture.state.attachments.filter { $0.kind == .file }.map(\.title), ["receipt.png", "map.heic"])
+        fixture.apply(.removeAttachment(id: "file.receipt.png"))
+        XCTAssertEqual(fixture.state.attachments.map(\.id), ["photo.0", "file.map.heic"])
+        XCTAssertTrue(fixture.state.canSend, "Picked content alone can be sent")
+    }
+
     func testScenariosDriveHostStates() {
         var fixture = ChatComposerFixture(state: ChatComposerState(draft: "Hello"))
         fixture.select(.unavailable)

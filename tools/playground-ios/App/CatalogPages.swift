@@ -525,6 +525,9 @@ struct PlaygroundChatScreen: View {
     @State private var thinking: ThinkingLevel = .medium
     @State private var showHostControls = false
     @State private var showAddToChat = false
+    @State private var showPhotos = false
+    @State private var photoItems: [PhotosPickerItem] = []
+    @State private var showFiles = false
 
     init(fixture: ChatPlaygroundFixture) {
         _fixture = State(initialValue: fixture)
@@ -566,18 +569,38 @@ struct PlaygroundChatScreen: View {
             Text("Stand-ins for evidence the app receives from its runtime. Fixture only.")
         }
         .sheet(isPresented: $showAddToChat) {
+            // Real system pickers, as in the Chat catalog: PhotosPicker runs out of process and needs no
+            // library permission; the document picker grants access only to what the person picks.
             AddToChatSheet(
-                showsCamera: false,
+                showsCamera: UIImagePickerController.isSourceTypeAvailable(.camera),
                 browserAvailable: true,
                 thinking: $thinking,
                 accessibilityPrefix: "chat.addToChat",
-                // Fixture chips only: no picker is opened and no content is read.
-                onPhotos: { attach(ComposerAttachment(id: "photo.0", title: "Photo 1", kind: .image)) },
-                onFiles: { attach(ComposerAttachment(id: "file.notes", title: "notes.png", kind: .file)) },
+                onCamera: { fixture.composer.show(note: ChatFixture.cameraNote); showAddToChat = false },
+                onPhotos: { showPhotos = true },
+                onFiles: { showFiles = true },
                 onCloudBrowser: { attach(.cloudBrowser) },
                 onDone: { showAddToChat = false }
             )
+            .photosPicker(
+                isPresented: $showPhotos, selection: $photoItems,
+                maxSelectionCount: AddToChatSheet.maxPhotoSelection, matching: .images
+            )
+            .fileImporter(isPresented: $showFiles, allowedContentTypes: [.image], allowsMultipleSelection: true) { result in
+                // Only the file name is used: the file is never opened, read or uploaded.
+                if case .success(let urls) = result, !urls.isEmpty {
+                    fixture.composer.attachPickedFiles(named: urls.map(\.lastPathComponent))
+                    showAddToChat = false
+                }
+            }
             .presentationDetents([.medium])
+        }
+        .onChange(of: photoItems) { _, items in
+            guard !items.isEmpty else { return }
+            // Only the count is used: picked photos stay on the device and are never read here.
+            fixture.composer.attachPickedPhotos(count: items.count)
+            photoItems = []
+            showAddToChat = false
         }
     }
 

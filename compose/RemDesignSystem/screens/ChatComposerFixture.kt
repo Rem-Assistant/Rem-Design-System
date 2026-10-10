@@ -68,6 +68,20 @@ data class ChatComposerFixture(
     fun replaceAttachments(kind: ComposerAttachment.Kind, attachments: List<ComposerAttachment>): ChatComposerFixture =
         copy(state = state.copy(attachments = state.attachments.filter { it.kind != kind } + attachments))
 
+    /**
+     * Photos picked in the system photo picker: one image chip per pick ("Photo 1"…), replacing the
+     * previous photo pick. Only the count is used; picked content stays on the device and is never read.
+     */
+    fun attachPickedPhotos(count: Int): ChatComposerFixture =
+        if (count <= 0) this else replaceAttachments(ComposerAttachment.Kind.Image, (0 until count).map(::photoAttachment))
+
+    /**
+     * Documents picked in the system document picker, one file chip per name, each added once.
+     * Only the display name is used; the file is never opened, read or uploaded.
+     */
+    fun attachPickedFiles(names: List<String>): ChatComposerFixture =
+        names.fold(this) { fixture, name -> fixture.attach(fileAttachment(name)) }
+
     /** Shows a page-level note (e.g. Manage Models, Camera). */
     fun show(note: String?): ChatComposerFixture = copy(note = note)
 
@@ -75,5 +89,11 @@ data class ChatComposerFixture(
         const val UnavailableReason = "Chat is unavailable in this fixture."
         const val CancelNote = "Stop asks the app to cancel the turn."
         const val SpeakNote = "Speak starts voice input in the app."
+
+        /** The chip for the photo at [index] of a pick (`photo.0` → "Photo 1"). */
+        fun photoAttachment(index: Int) = ComposerAttachment("photo.$index", "Photo ${index + 1}", ComposerAttachment.Kind.Image)
+
+        /** The chip for a picked document, keyed by its display name. */
+        fun fileAttachment(name: String) = ComposerAttachment("file.$name", name, ComposerAttachment.Kind.File)
     }
 }

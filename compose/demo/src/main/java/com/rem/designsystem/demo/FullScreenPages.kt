@@ -1,5 +1,11 @@
 package com.rem.designsystem.demo
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +20,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import com.rem.designsystem.chat.AddToChatMaxPhotoSelection
 import com.rem.designsystem.chat.AddToChatSheet
 import com.rem.designsystem.chat.ChatModelMenu
 import com.rem.designsystem.chat.ChatModelSelection
@@ -60,6 +68,22 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
     val attach: (ComposerAttachment) -> Unit = {
         fixture = fixture.copy(composer = fixture.composer.attach(it))
         showAddToChat = false
+    }
+    // Real system pickers, as in the Chat catalog. The Photo Picker and the document picker need no
+    // runtime permission: each grants access only to what the person picks. Only the pick count and a
+    // document's display name are used; no content is opened, read or uploaded.
+    val context = LocalContext.current
+    val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(AddToChatMaxPhotoSelection)) { uris ->
+        if (uris.isNotEmpty()) {
+            fixture = fixture.copy(composer = fixture.composer.attachPickedPhotos(uris.size))
+            showAddToChat = false
+        }
+    }
+    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) {
+            fixture = fixture.copy(composer = fixture.composer.attachPickedFiles(uris.map { displayName(context, it) }))
+            showAddToChat = false
+        }
     }
 
     ChatScreen(
@@ -107,9 +131,8 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
                 browserAvailable = true,
                 thinking = thinking,
                 onThinkingChange = { thinking = it },
-                // Fixture chips only: no picker is opened and no content is read.
-                onPhotos = { attach(ComposerAttachment("photo.0", "Photo 1", ComposerAttachment.Kind.Image)) },
-                onFiles = { attach(ComposerAttachment("file.notes", "notes.png", ComposerAttachment.Kind.File)) },
+                onPhotos = { photos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                onFiles = { files.launch(arrayOf("image/*")) },
                 onCloudBrowser = { attach(ComposerAttachment.CloudBrowser) },
                 onDone = { showAddToChat = false },
                 accessibilityPrefix = "chat.addToChat",
@@ -117,6 +140,14 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
         }
     }
 }
+
+/** A picked document's display name (metadata only; the file itself is never opened). */
+private fun displayName(context: Context, uri: Uri): String =
+    runCatching {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+    }.getOrNull() ?: uri.lastPathSegment ?: "File"
 
 /** The unified Inbox fixture: host-reported item states; tapping an item opens its task reply chat. */
 @Composable

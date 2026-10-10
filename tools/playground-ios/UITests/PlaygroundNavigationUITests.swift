@@ -810,16 +810,20 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "Reply complete ends the retried turn")
     }
 
-    func testChatScreenAttachmentOnlySend() {
+    /// Photos and Files open the real system pickers, which UI tests cannot drive; this asserts the
+    /// canonical options exist and no sample chip is injected. Picked-content mapping and attachment-only
+    /// send are covered by `ChatComposerFixtureTests`.
+    func testChatScreenAddToChatOffersSystemPickers() {
         openChatScreen()
         app.buttons["chat.composerAdd"].tap()
-        let photos = app.buttons["chat.addToChat.photos"]
-        XCTAssertTrue(photos.waitForExistence(timeout: 3))
-        photos.tap()
-        XCTAssertTrue(element("chat.attachment.photo.0").waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["chat.composerSend"].isEnabled, "A content attachment alone can be sent")
-        app.buttons["chat.composerSend"].tap()
-        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["chat.addToChat.photos"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["chat.addToChat.files"].exists)
+        XCTAssertFalse(element("chat.attachment.photo.0").exists, "No sample photo chip is injected")
+        tap("chat.addToChat.cloudBrowser")
+        let removeBrowser = app.buttons["chat.removeAttachment.cloud-browser"]
+        XCTAssertTrue(removeBrowser.waitForExistence(timeout: 3), "Cloud browser adds a removable chip and dismisses")
+        removeBrowser.tap()
+        waitUntilGone(removeBrowser, "Removing the chip clears it")
     }
 
     func testChatScreenBackExits() {
