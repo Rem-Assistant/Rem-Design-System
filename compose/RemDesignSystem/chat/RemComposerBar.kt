@@ -24,15 +24,31 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.screens.ChatComposerAction
+import com.rem.designsystem.screens.ChatComposerState
+import com.rem.designsystem.screens.ComposerAvailability
+import com.rem.designsystem.screens.ComposerPhase
+import com.rem.designsystem.screens.ComposerSendDisplay
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -86,11 +102,130 @@ fun RemComposerBar(
     attachments: List<ComposerAttachment> = emptyList(),
     onRemoveAttachment: ((ComposerAttachment) -> Unit)? = null,
     modelMenu: (@Composable (enabled: Boolean) -> Unit)? = null,
+    /** Called by the red Stop while sending — never [onSend]. Stop is disabled when null. */
+    onCancel: (() -> Unit)? = null,
+    /** Makes Speak a button. */
+    onSpeak: (() -> Unit)? = null,
+) {
+    // `showAttachments` is the legacy display flag: it shows the canonical Cloud browser chip.
+    val chips = if (attachments.isEmpty() && showAttachments) listOf(ComposerAttachment.CloudBrowser) else attachments
+    val rules = ChatComposerState(
+        draft = text, placeholder = placeholder, modelLabel = model, attachments = chips,
+        phase = if (state == ComposerSendState.Sending) ComposerPhase.Sending else ComposerPhase.Idle,
+        showsModel = showModel, voiceAvailable = showSpeak,
+    )
+    // Display-only renders keep their explicit state (fixtures pass Active with text); interactive
+    // renders follow the single send rule in [ChatComposerState] (text or a content attachment).
+    val display = if (onTextChange == null) when (state) {
+        ComposerSendState.Idle -> ComposerSendDisplay.Unavailable
+        ComposerSendState.Active -> ComposerSendDisplay.Send
+        ComposerSendState.Sending -> ComposerSendDisplay.Stop
+    } else rules.sendDisplay
+    ComposerPill(
+        modifier = modifier,
+        chips = chips,
+        text = text,
+        placeholder = placeholder,
+        onTextChange = onTextChange,
+        inputEnabled = true,
+        disabledReason = null,
+        modelLabel = model,
+        showsModel = showModel,
+        modelEnabled = display != ComposerSendDisplay.Stop,
+        modelMenu = modelMenu,
+        showsSpeak = showSpeak && display != ComposerSendDisplay.Stop,
+        onSpeak = onSpeak,
+        display = display,
+        primaryEnabled = when (display) {
+            ComposerSendDisplay.Unavailable -> false
+            ComposerSendDisplay.Send -> onSend != null
+            ComposerSendDisplay.Stop -> onCancel != null
+        },
+        onPrimary = if (onSend == null) null else ({ if (display == ComposerSendDisplay.Stop) onCancel?.invoke() else onSend() }),
+        onAdd = onAdd,
+        onRemoveAttachment = onRemoveAttachment,
+        accessibilityPrefix = accessibilityPrefix,
+        focused = null,
+        onFocusChanged = null,
+    )
+}
+
+/**
+ * The host-driven composer: renders [state] exactly and reports every interaction as a typed
+ * [ChatComposerAction]. Availability (externally disabled), phase (sending / streaming), voice and focus
+ * are host decisions; the rules that turn them into the control row live in [ChatComposerState]. Stop
+ * emits [ChatComposerAction.Cancel], never Send. The Figma Sending (progress) vs Streaming (Stop) visual
+ * split is not drawn yet: both show the red Stop, pending review.
+ */
+@Composable
+fun RemComposerBar(
+    state: ChatComposerState,
+    onAction: (ChatComposerAction) -> Unit,
+    modifier: Modifier = Modifier,
+    accessibilityPrefix: String = "composer",
+    modelMenu: (@Composable (enabled: Boolean) -> Unit)? = null,
+) {
+    ComposerPill(
+        modifier = modifier,
+        chips = state.attachments,
+        text = state.draft,
+        placeholder = state.placeholder,
+        onTextChange = { onAction(ChatComposerAction.DraftChanged(it)) },
+        inputEnabled = state.availability.isEnabled,
+        disabledReason = (state.availability as? ComposerAvailability.Disabled)?.reason,
+        modelLabel = state.modelLabel,
+        showsModel = state.showsModel,
+        modelEnabled = state.modelEnabled,
+        modelMenu = modelMenu,
+        showsSpeak = state.showsSpeak,
+        onSpeak = { onAction(ChatComposerAction.Speak) },
+        display = state.sendDisplay,
+        primaryEnabled = state.primaryAction != null,
+        onPrimary = { state.primaryAction?.let(onAction) },
+        onAdd = { onAction(ChatComposerAction.Add) },
+        onRemoveAttachment = { onAction(ChatComposerAction.RemoveAttachment(it.id)) },
+        accessibilityPrefix = accessibilityPrefix,
+        focused = state.isFocused,
+        onFocusChanged = { if (it != state.isFocused) onAction(ChatComposerAction.FocusChanged(it)) },
+    )
+}
+
+/** The one canonical pill both overloads render. */
+@Composable
+private fun ComposerPill(
+    modifier: Modifier,
+    chips: List<ComposerAttachment>,
+    text: String,
+    placeholder: String,
+    onTextChange: ((String) -> Unit)?,
+    inputEnabled: Boolean,
+    disabledReason: String?,
+    modelLabel: String,
+    showsModel: Boolean,
+    modelEnabled: Boolean,
+    modelMenu: (@Composable (enabled: Boolean) -> Unit)?,
+    showsSpeak: Boolean,
+    onSpeak: (() -> Unit)?,
+    display: ComposerSendDisplay,
+    primaryEnabled: Boolean,
+    onPrimary: (() -> Unit)?,
+    onAdd: (() -> Unit)?,
+    onRemoveAttachment: ((ComposerAttachment) -> Unit)?,
+    accessibilityPrefix: String,
+    focused: Boolean?,
+    onFocusChanged: ((Boolean) -> Unit)?,
 ) {
     val colors = RemColors.current
-    val effectiveState = if (onTextChange != null && state != ComposerSendState.Sending) {
-        if (text.isBlank()) ComposerSendState.Idle else ComposerSendState.Active
-    } else state
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    var fieldHasFocus by remember { mutableStateOf(false) }
+    if (focused != null) {
+        // Host-owned focus: follow the requested value; report changes through onFocusChanged.
+        LaunchedEffect(focused) {
+            if (focused && !fieldHasFocus) focusRequester.requestFocus()
+            if (!focused && fieldHasFocus) focusManager.clearFocus()
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -98,8 +233,6 @@ fun RemComposerBar(
             .padding(RemSpacing.md),
         verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
     ) {
-        // `showAttachments` is the legacy display flag: it shows the canonical Cloud browser chip.
-        val chips = if (attachments.isEmpty() && showAttachments) listOf(ComposerAttachment.CloudBrowser) else attachments
         if (chips.isNotEmpty()) {
             AttachmentsStrip(chips, accessibilityPrefix, onRemoveAttachment)
         }
@@ -109,9 +242,15 @@ fun RemComposerBar(
                 if (text.isEmpty()) Text(placeholder, style = RemTypography.chatMessage, color = colors.labelTertiary)
                 BasicTextField(
                     value = text, onValueChange = onTextChange,
+                    enabled = inputEnabled,
                     textStyle = RemTypography.chatMessage.copy(color = colors.labelPrimary),
                     cursorBrush = SolidColor(colors.brandBlue),
-                    modifier = Modifier.fillMaxWidth().testTag("$accessibilityPrefix.composerField"),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { fieldHasFocus = it.isFocused; onFocusChanged?.invoke(it.isFocused) }
+                        .then(if (disabledReason != null) Modifier.semantics { stateDescription = disabledReason } else Modifier)
+                        .testTag("$accessibilityPrefix.composerField"),
                 )
             }
         } else {
@@ -129,24 +268,31 @@ fun RemComposerBar(
             horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
         ) {
             if (onAdd != null) {
-                IconButton(onClick = onAdd, modifier = Modifier.testTag("$accessibilityPrefix.composerAdd")) {
+                IconButton(onClick = onAdd, enabled = inputEnabled, modifier = Modifier.testTag("$accessibilityPrefix.composerAdd")) {
                     Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
                 }
             } else {
                 Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
             }
-            val modelEnabled = effectiveState != ComposerSendState.Sending
-            if (showModel) {
-                if (modelMenu != null) modelMenu(modelEnabled) else ChatModelTriggerPill(label = model, enabled = modelEnabled)
+            if (showsModel) {
+                if (modelMenu != null) modelMenu(modelEnabled) else ChatModelTriggerPill(label = modelLabel, enabled = modelEnabled)
             }
             Box(modifier = Modifier.weight(1f))
-            if (showSpeak && effectiveState != ComposerSendState.Sending) SpeakPill()
-            if (onSend != null) {
-                IconButton(onClick = onSend, enabled = effectiveState != ComposerSendState.Idle,
+            if (showsSpeak) {
+                if (onSpeak != null) {
+                    Box(
+                        modifier = Modifier
+                            .clickable(role = Role.Button, onClick = onSpeak)
+                            .testTag("$accessibilityPrefix.composerSpeak"),
+                    ) { SpeakPill() }
+                } else SpeakPill()
+            }
+            if (onPrimary != null) {
+                IconButton(onClick = onPrimary, enabled = primaryEnabled,
                     modifier = Modifier.testTag("$accessibilityPrefix.composerSend")) {
-                    SendButton(effectiveState)
+                    SendButton(display)
                 }
-            } else { SendButton(effectiveState) }
+            } else { SendButton(display) }
         }
     }
 }
@@ -167,23 +313,24 @@ private fun SpeakPill() {
 }
 
 @Composable
-private fun SendButton(state: ComposerSendState) {
+private fun SendButton(display: ComposerSendDisplay) {
     val colors = RemColors.current
-    val fill = when (state) {
-        ComposerSendState.Idle -> colors.fillTertiary
-        ComposerSendState.Active -> colors.brandBlue
-        ComposerSendState.Sending -> colors.systemRed
+    val fill = when (display) {
+        ComposerSendDisplay.Unavailable -> colors.fillTertiary
+        ComposerSendDisplay.Send -> colors.brandBlue
+        ComposerSendDisplay.Stop -> colors.systemRed
     }
-    val fg = if (state == ComposerSendState.Idle) colors.labelSecondary else colors.labelOnColor
+    val fg = if (display == ComposerSendDisplay.Unavailable) colors.labelSecondary else colors.labelOnColor
+    val stop = display == ComposerSendDisplay.Stop
     Box(
         modifier = Modifier.size(32.dp).background(fill, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = if (state == ComposerSendState.Sending) Icons.Filled.Stop else Icons.Filled.ArrowUpward,
-            contentDescription = if (state == ComposerSendState.Sending) "Stop" else "Send",
+            imageVector = if (stop) Icons.Filled.Stop else Icons.Filled.ArrowUpward,
+            contentDescription = if (stop) "Stop" else "Send",
             tint = fg,
-            modifier = Modifier.size(if (state == ComposerSendState.Sending) 15.dp else 18.dp),
+            modifier = Modifier.size(if (stop) 15.dp else 18.dp),
         )
     }
 }

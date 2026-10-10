@@ -612,4 +612,154 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let oneLeft = expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: connect)
         wait(for: [oneLeft], timeout: 3)
     }
+
+    // MARK: Full-screen Chat, task reply and Inbox (Playground 7 candidate)
+    //
+    // Canonical compositions driven by the DS `ChatPlaygroundFixture` / `InboxPlaygroundFixture`.
+    // Receipts appear only through the explicit fixture-host controls behind the header overflow.
+
+    private func openChatScreen(_ conversation: String = "Populated") {
+        app.segmentedControls["chatFixturePicker"].buttons[conversation].tap()
+        tap("openChatScreen")
+        XCTAssertTrue(app.buttons["chat.header.back"].waitForExistence(timeout: 3), "The header owns Back")
+    }
+
+    private func sendFromChat(_ text: String) {
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        focus(field)
+        field.typeText(text)
+        app.buttons["chat.composerSend"].tap()
+    }
+
+    private func hostControl(_ identifier: String) {
+        app.buttons["chat.header.overflow"].tap()
+        let control = app.buttons[identifier]
+        XCTAssertTrue(control.waitForExistence(timeout: 3), "Missing fixture host control \(identifier)")
+        control.tap()
+    }
+
+    func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
+        openChatScreen()
+        XCTAssertTrue(app.buttons["chat.header.overflow"].exists, "The header owns overflow")
+        XCTAssertEqual(app.navigationBars.count, 0, "No second navigation-title row above the header")
+        XCTAssertEqual(element("chat.header.identity").exists, true)
+        XCTAssertTrue(element("message.u2.receipt").waitForExistence(timeout: 3))
+        XCTAssertTrue(element("message.u2.receipt").label.contains("Delivered"))
+        XCTAssertFalse(element("message.u1.receipt").exists, "Older outgoing messages carry no receipt")
+        XCTAssertFalse(app.buttons["chat.composerSend"].isEnabled, "Empty draft disables send")
+        capture("ChatScreen-default-light")
+    }
+
+    func testChatScreenEmptyShowsStartersWithoutASecondFace() {
+        openChatScreen("Empty")
+        XCTAssertTrue(app.buttons["chat.starter.plan-day"].waitForExistence(timeout: 3))
+        capture("ChatScreen-empty-light")
+        app.buttons["chat.starter.plan-day"].tap()
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3), "A starter sends")
+        XCTAssertFalse(element("message.sent.1.receipt").exists, "No receipt without host acceptance")
+    }
+
+    func testChatScreenKeyboardOpenDocksComposerAboveKeyboard() {
+        openChatScreen()
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        focus(field)
+        XCTAssertGreaterThan(app.keyboards.count, 0)
+        let send = app.buttons["chat.composerSend"]
+        XCTAssertLessThanOrEqual(send.frame.maxY, app.keyboards.firstMatch.frame.minY + 1, "Composer docks above the keyboard")
+        XCTAssertTrue(app.buttons["chat.header.back"].isHittable, "Header stays visible with the keyboard open")
+        capture("ChatScreen-keyboard-light")
+    }
+
+    func testChatScreenSendStopAcceptAndRead() {
+        openChatScreen()
+        sendFromChat("Plan my afternoon")
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3))
+        XCTAssertFalse(element("message.sent.1.receipt").exists, "No receipt without host acceptance")
+        let control = app.buttons["chat.composerSend"]
+        XCTAssertEqual(control.label, "Stop", "In flight, the control is Stop")
+        control.tap()
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "Stop cancels back to Send")
+        XCTAssertFalse(element("message.sent.1.receipt").exists, "Stop never fabricates a receipt")
+
+        sendFromChat("Again")
+        hostControl("chat.host.accept")
+        let receipt = element("message.sent.2.receipt")
+        XCTAssertTrue(receipt.waitForExistence(timeout: 3))
+        XCTAssertTrue(receipt.label.contains("Delivered · 10:24"))
+        hostControl("chat.host.read")
+        XCTAssertTrue(element("message.sent.2.receipt").label.contains("Read · 10:24"))
+        hostControl("chat.host.reply")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send")
+        capture("ChatScreen-receipts-light")
+    }
+
+    func testChatScreenFailureRetry() {
+        openChatScreen()
+        sendFromChat("Share the agenda")
+        hostControl("chat.host.fail")
+        let failure = element("message.sent.1.failure")
+        XCTAssertTrue(failure.waitForExistence(timeout: 3))
+        XCTAssertTrue(element("message.sent.1.receipt").label.contains("Not delivered"))
+        capture("ChatScreen-failed-light")
+        failure.tap()
+        let retry = app.buttons["Try again"]
+        XCTAssertTrue(retry.waitForExistence(timeout: 3))
+        retry.tap()
+        XCTAssertTrue(element("chat.fixtureNote").waitForExistence(timeout: 3))
+        XCTAssertFalse(element("message.sent.1.failure").exists)
+    }
+
+    func testChatScreenAttachmentOnlySend() {
+        openChatScreen()
+        app.buttons["chat.composerAdd"].tap()
+        let photos = app.buttons["chat.addToChat.photos"]
+        XCTAssertTrue(photos.waitForExistence(timeout: 3))
+        photos.tap()
+        XCTAssertTrue(element("chat.attachment.photo.0").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["chat.composerSend"].isEnabled, "A content attachment alone can be sent")
+        app.buttons["chat.composerSend"].tap()
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3))
+    }
+
+    func testChatScreenBackExits() {
+        openChatScreen()
+        app.buttons["chat.header.back"].tap()
+        XCTAssertTrue(app.buttons["openChatScreen"].waitForExistence(timeout: 3), "Back returns to the root")
+    }
+
+    func testInboxStatesRouteIntoTaskReplyAndDismissAccessory() {
+        app.segmentedControls["inboxFixturePicker"].buttons["Items"].tap()
+        tap("openInbox")
+        // The row is one button; its label folds in the title and the host-reported status.
+        let venue = app.buttons["inbox.item.venue-booking"]
+        XCTAssertTrue(venue.waitForExistence(timeout: 3))
+        XCTAssertTrue(venue.label.contains("Needs approval"))
+        XCTAssertTrue(app.buttons["inbox.item.calendar-holds"].label.contains("Status unknown"))
+        let plain = app.buttons["inbox.item.plan-next-step"].label
+        for label in ["Working", "Needs", "Status unknown", "Done", "Loading"] {
+            XCTAssertFalse(plain.contains(label), "No state, no status")
+        }
+        capture("Inbox-states-light")
+
+        app.buttons["inbox.item.venue-booking"].tap()
+        let context = element("chat.replyContext.label")
+        XCTAssertTrue(context.waitForExistence(timeout: 3))
+        XCTAssertTrue(context.label.contains("Approve the venue booking"))
+        XCTAssertTrue(element("chat.header.identity").label.contains("Needs approval"), "Task chat shows the same state")
+        XCTAssertEqual(app.textViews["chat.composerField"].exists, true, "The same composer")
+        capture("ChatScreen-taskReply-light")
+        app.buttons["chat.replyContext.dismiss"].tap()
+        waitUntilGone(element("chat.replyContext.label"), "Dismiss clears the reply target")
+        XCTAssertTrue(app.textViews["chat.composerField"].exists, "The composer stays")
+        app.buttons["chat.header.back"].tap()
+        XCTAssertTrue(app.buttons["inbox.item.venue-booking"].waitForExistence(timeout: 3), "Back returns to the Inbox")
+    }
+
+    func testInboxEmpty() {
+        app.segmentedControls["inboxFixturePicker"].buttons["Empty"].tap()
+        tap("openInbox")
+        XCTAssertTrue(element("inbox.empty").waitForExistence(timeout: 3))
+    }
 }

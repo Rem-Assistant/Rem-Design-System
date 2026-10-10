@@ -494,3 +494,107 @@ struct CatalogBrand: View {
         }
     }
 }
+
+// MARK: - Full-screen Chat, task reply and Inbox (Playground 7 candidate)
+
+/// Full-screen canonical Chat driven by the DS `ChatPlaygroundFixture`, exactly as an app adapter would
+/// drive it. The header owns Back (exit) and overflow, which opens the **fixture host** controls — the
+/// stand-ins for host evidence (acceptance, read acknowledgement, failure, reply). Nothing leaves the
+/// page: no message is sent and no receipt exists without one of those explicit fixture controls.
+struct PlaygroundChatScreen: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var fixture: ChatPlaygroundFixture
+    @State private var model: ChatModelSelection = .automatic
+    @State private var thinking: ThinkingLevel = .medium
+    @State private var showHostControls = false
+    @State private var showAddToChat = false
+
+    init(fixture: ChatPlaygroundFixture) {
+        _fixture = State(initialValue: fixture)
+    }
+
+    var body: some View {
+        ChatScreen(
+            header: fixture.header,
+            composer: fixture.composer.state,
+            replyContext: fixture.replyContext,
+            emptyState: fixture.emptyState,
+            modelMenu: ChatModelMenu(
+                providers: ChatFixture.providers, selection: model, accessibilityPrefix: "chat",
+                onSelect: { model = $0 },
+                onManageModels: { fixture.composer.show(note: ChatFixture.manageModelsNote) }
+            ),
+            onAction: handle
+        ) {
+            ChatTranscriptList(fixture.entries) { handle(.transcript($0)) }
+            if let note = fixture.note ?? fixture.composer.note {
+                Text(note)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("chat.fixtureNote")
+            }
+        }
+        .confirmationDialog("Fixture host", isPresented: $showHostControls, titleVisibility: .visible) {
+            Button("Host accepted latest message") { fixture.simulateHostAcceptance() }
+                .accessibilityIdentifier("chat.host.accept")
+            Button("Recipient acknowledged (Read)") { fixture.simulateReadAcknowledgement() }
+                .accessibilityIdentifier("chat.host.read")
+            Button("Host reported not delivered") { fixture.simulateDeliveryFailure() }
+                .accessibilityIdentifier("chat.host.fail")
+            Button("Reply complete") { fixture.simulateReplyComplete() }
+                .accessibilityIdentifier("chat.host.reply")
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Stand-ins for evidence the app receives from its runtime. Fixture only.")
+        }
+        .sheet(isPresented: $showAddToChat) {
+            AddToChatSheet(
+                showsCamera: false,
+                browserAvailable: true,
+                thinking: $thinking,
+                accessibilityPrefix: "chat.addToChat",
+                // Fixture chips only: no picker is opened and no content is read.
+                onPhotos: { attach(ComposerAttachment(id: "photo.0", title: "Photo 1", kind: .image)) },
+                onFiles: { attach(ComposerAttachment(id: "file.notes", title: "notes.png", kind: .file)) },
+                onCloudBrowser: { attach(.cloudBrowser) },
+                onDone: { showAddToChat = false }
+            )
+            .presentationDetents([.medium])
+        }
+    }
+
+    private func handle(_ action: ChatScreenAction) {
+        switch fixture.handle(action) {
+        case .exit?: dismiss()
+        case .presentHostControls?: showHostControls = true
+        case .presentAddToChat?: showAddToChat = true
+        case nil: break
+        }
+    }
+
+    private func attach(_ attachment: ComposerAttachment) {
+        fixture.composer.attach(attachment)
+        showAddToChat = false
+    }
+}
+
+/// The unified Inbox fixture: host-reported item states; tapping an item opens its task reply chat.
+struct PlaygroundInboxScreen: View {
+    let inbox: InboxPlaygroundFixture
+    let open: (String) -> Void
+
+    var body: some View {
+        InboxScreen(items: inbox.items, onAction: { action in
+            if case .open(let id) = action { open(id) }
+        }) {
+            Text(InboxPlaygroundFixture.emptyMessage)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Color.labelSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.top, DesignTokens.Spacing.xl)
+                .accessibilityIdentifier("inbox.empty")
+        }
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}

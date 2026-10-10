@@ -662,4 +662,134 @@ class PlaygroundNavigationTest {
         compose.onAllNodesWithText("Connected").assertCountEquals(2)
         compose.onAllNodesWithText("Connect").assertCountEquals(1)
     }
+
+    // Full-screen Chat, task reply and Inbox (Playground 7 candidate). Canonical compositions driven by
+    // the DS `ChatPlaygroundFixture` / `InboxPlaygroundFixture`; receipts appear only through the
+    // explicit fixture-host controls behind the header overflow. Twin of the iOS journeys.
+
+    private fun openChatScreen(conversation: String = "Populated") {
+        compose.onNodeWithTag("chatFixture.$conversation").performScrollTo().performClick()
+        compose.onNodeWithTag("openChatScreen").performScrollTo().performClick()
+        waitForTag("chat.header.back")
+    }
+
+    private fun sendFromChat(text: String) {
+        compose.onNodeWithTag("chat.composerField").performTextInput(text)
+        compose.onNodeWithTag("chat.composerSend").performClick()
+    }
+
+    private fun hostControl(tag: String) {
+        compose.onNodeWithTag("chat.header.overflow").performClick()
+        waitForTag(tag)
+        compose.onNodeWithTag(tag).performClick()
+        compose.waitForIdle()
+    }
+
+    @Test fun chatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.header.overflow").assertIsDisplayed()
+        compose.onNodeWithTag("back").assertDoesNotExist() // no Playground app bar above the header
+        compose.onAllNodesWithTag("chat.header.identity").assertCountEquals(1)
+        compose.onNodeWithTag("message.u2.receipt", useUnmergedTree = true).assertTextContains("Delivered", substring = true)
+        compose.onNodeWithTag("message.u1.receipt", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerSend").assertIsNotEnabled()
+        capture("ChatScreen-default-light")
+    }
+
+    @Test fun chatScreenEmptyShowsStartersWithoutASecondFace() {
+        openChatScreen("Empty")
+        compose.onNodeWithTag("chat.starter.plan-day").assertIsDisplayed()
+        capture("ChatScreen-empty-light")
+        compose.onNodeWithTag("chat.starter.plan-day").performClick()
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test fun chatScreenKeyboardOpenKeepsHeaderAndComposer() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.composerField").performClick()
+        compose.onNodeWithTag("chat.composerField").assertIsFocused()
+        compose.onNodeWithTag("chat.header.back").assertIsDisplayed()
+        compose.onNodeWithTag("chat.composerSend").assertIsDisplayed()
+        capture("ChatScreen-keyboard-light")
+    }
+
+    @Test fun chatScreenSendStopAcceptAndRead() {
+        openChatScreen()
+        sendFromChat("Plan my afternoon")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        compose.onNodeWithTag("chat.composerSend").performClick()
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
+
+        sendFromChat("Again")
+        hostControl("chat.host.accept")
+        compose.onNodeWithTag("message.sent.2.receipt", useUnmergedTree = true).assertTextContains("Delivered · 10:24", substring = true)
+        hostControl("chat.host.read")
+        compose.onNodeWithTag("message.sent.2.receipt", useUnmergedTree = true).assertTextContains("Read · 10:24", substring = true)
+        hostControl("chat.host.reply")
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+        capture("ChatScreen-receipts-light")
+    }
+
+    @Test fun chatScreenFailureRetry() {
+        openChatScreen()
+        sendFromChat("Share the agenda")
+        hostControl("chat.host.fail")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertTextContains("Not delivered", substring = true)
+        capture("ChatScreen-failed-light")
+        compose.onNodeWithTag("message.sent.1.failure").performClick()
+        compose.onNodeWithText("Try again").performClick()
+        waitForTag("chat.fixtureNote")
+        compose.onNodeWithTag("message.sent.1.failure").assertDoesNotExist()
+    }
+
+    @Test fun chatScreenAttachmentOnlySend() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.composerAdd").performClick()
+        waitForTag("chat.addToChat.photos")
+        compose.onNodeWithTag("chat.addToChat.photos").performClick()
+        waitForTag("chat.attachment.photo.0")
+        compose.onNodeWithTag("chat.composerSend").assertIsEnabled().performClick()
+        waitForTag("message.sent.1.bubble")
+    }
+
+    @Test fun chatScreenBackExits() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.header.back").performClick()
+        waitForTag("openChatScreen")
+        openChatScreen()
+        systemBack()
+        waitForTag("openChatScreen")
+    }
+
+    @Test fun inboxStatesRouteIntoTaskReplyAndDismissAccessory() {
+        compose.onNodeWithTag("inboxFixture.Items").performScrollTo().performClick()
+        compose.onNodeWithTag("openInbox").performScrollTo().performClick()
+        waitForTag("inbox.item.venue-booking")
+        compose.onNodeWithTag("inbox.item.venue-booking.status", useUnmergedTree = true).assertTextContains("Needs approval", substring = true)
+        compose.onNodeWithTag("inbox.item.calendar-holds.status", useUnmergedTree = true).assertTextContains("Status unknown", substring = true)
+        compose.onNodeWithTag("inbox.item.plan-next-step.status", useUnmergedTree = true).assertDoesNotExist()
+        capture("Inbox-states-light")
+
+        compose.onNodeWithTag("inbox.item.venue-booking").performClick()
+        waitForTag("chat.replyContext.label")
+        compose.onNodeWithTag("chat.replyContext.label", useUnmergedTree = true).assertTextContains("Approve the venue booking", substring = true)
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Needs approval", substring = true))
+        compose.onNodeWithTag("chat.composerField").assertExists()
+        capture("ChatScreen-taskReply-light")
+        compose.onNodeWithTag("chat.replyContext.dismiss").performClick()
+        compose.onNodeWithTag("chat.replyContext.label", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerField").assertExists()
+        compose.onNodeWithTag("chat.header.back").performClick()
+        waitForTag("inbox.item.venue-booking")
+    }
+
+    @Test fun inboxEmpty() {
+        compose.onNodeWithTag("inboxFixture.Empty").performScrollTo().performClick()
+        compose.onNodeWithTag("openInbox").performScrollTo().performClick()
+        waitForTag("inbox.empty")
+    }
 }

@@ -13,6 +13,11 @@ import SwiftUI
 /// Figma canonical: Task detail screen (`299:2`, page "Task & Events"). Source: the shipping detail's
 /// `TaskCommentsThread` + `TaskCommentComposer` (`Shared/Views/Tasks/TaskCommentsSection.swift`).
 /// Compose sibling: `screens/TaskDetailScreen.kt`.
+///
+/// Task reply: `init(title:…composer:onComposerAction:content:)` uses the **same canonical composer**
+/// as Chat (`RemComposerBar(state:onAction:)`), so an empty reply can never act as a navigation doorway:
+/// Send follows `ChatComposerState.canSend`, and any "open in Chat" route is a separate host action. The
+/// task-context reply accessory (Figma `2682:22298`) is pending the canonical full-screen review.
 public struct TaskDetailScreen<Content: View>: View {
     private let title: String
     private let dateText: String?
@@ -21,6 +26,8 @@ public struct TaskDetailScreen<Content: View>: View {
     private let composerPlaceholder: String
     private let composerState: RemComposerBar.SendState
     private let content: () -> Content
+    private var hostComposer: ChatComposerState?
+    private var onComposerAction: ((ChatComposerAction) -> Void)?
 
     public init(
         title: String,
@@ -40,6 +47,32 @@ public struct TaskDetailScreen<Content: View>: View {
         self.content = content
     }
 
+    /// The host-driven detail: the reply composer is the canonical interactive composer, rendering
+    /// `composer` and reporting every interaction through `onComposerAction`. Whether a task reply shows
+    /// the model control is the host's `ChatComposerState.showsModel`.
+    public init(
+        title: String,
+        dateText: String? = nil,
+        metaPills: [String] = [],
+        composer: ChatComposerState,
+        onComposerAction: @escaping (ChatComposerAction) -> Void,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.init(title: title, dateText: dateText, metaPills: metaPills,
+                  composerText: composer.draft, composerPlaceholder: composer.placeholder, content: content)
+        self.hostComposer = composer
+        self.onComposerAction = onComposerAction
+    }
+
+    @ViewBuilder
+    private var composer: some View {
+        if let hostComposer, let onComposerAction {
+            RemComposerBar(state: hostComposer, accessibilityPrefix: "task", onAction: onComposerAction)
+        } else {
+            RemComposerBar(text: composerText, placeholder: composerPlaceholder, state: composerState)
+        }
+    }
+
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -50,7 +83,7 @@ public struct TaskDetailScreen<Content: View>: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(DesignTokens.Spacing.lg)
             }
-            RemComposerBar(text: composerText, placeholder: composerPlaceholder, state: composerState)
+            composer
                 .padding(.horizontal, DesignTokens.Spacing.lg)
                 .padding(.bottom, DesignTokens.Spacing.md)
         }

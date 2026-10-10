@@ -28,7 +28,7 @@ import SwiftUI
 /// Compose sibling: `MessageBubble` in `chat/MessageBubble.kt`.
 public struct MessageBubble: View {
     /// Who sent the message. Drives alignment, fill, and text treatment.
-    public enum Role: Equatable {
+    public enum Role: Equatable, Sendable {
         case user
         case assistant
     }
@@ -206,6 +206,33 @@ public struct MessageBubble: View {
             .foregroundStyle(DesignTokens.Color.labelSecondary)
             .frame(maxWidth: .infinity, alignment: alignment)
             .padding(.trailing, role == .user && failed ? MessageBubbleGeometry.failureReserve : 0)
+    }
+}
+
+extension MessageBubble {
+    /// Renders a host-supplied `ChatMessageDisplay` and reports interactions as `ChatTranscriptAction`s.
+    /// Delivery is rendered exactly as supplied — the host's adapter derives it from its own acceptance
+    /// and acknowledgement evidence. Try again is offered only when the message failed *and* the host
+    /// says it can retry (`canRetry`).
+    public init(
+        _ message: ChatMessageDisplay,
+        accessibilityPrefix: String? = nil,
+        onAction: @escaping (ChatTranscriptAction) -> Void
+    ) {
+        let id = message.id
+        let retry: (() -> Void)? = message.canRetry && message.delivery == .failed
+            ? { onAction(.retry(messageID: id)) }
+            : nil
+        self.init(
+            message.text,
+            role: message.role,
+            meta: message.meta,
+            delivery: message.delivery,
+            reaction: message.reaction,
+            accessibilityPrefix: accessibilityPrefix ?? "message.\(id)",
+            onRetry: retry,
+            onLongPress: { onAction(.requestReaction(messageID: id)) }
+        )
     }
 }
 

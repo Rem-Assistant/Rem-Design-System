@@ -37,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.screens.ChatMessageDisplay
+import com.rem.designsystem.screens.ChatTranscriptAction
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
@@ -94,6 +96,34 @@ fun MessageBubble(
         MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, onLongPress)
         MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reaction, accessibilityPrefix, onLongPress)
     }
+}
+
+/**
+ * Renders a host-supplied [ChatMessageDisplay] — twin of SwiftUI `MessageBubble(_:accessibilityPrefix:onAction:)`.
+ * Delivery is rendered exactly as supplied (the host's adapter derives it from its own evidence). Try
+ * again is offered only when the message failed and the host says it can retry.
+ */
+@Composable
+fun MessageBubble(
+    message: ChatMessageDisplay,
+    onAction: (ChatTranscriptAction) -> Unit,
+    modifier: Modifier = Modifier,
+    accessibilityPrefix: String = "message.${message.id}",
+) {
+    val retry: (() -> Unit)? = if (message.canRetry && message.delivery == MessageDelivery.Failed) {
+        { onAction(ChatTranscriptAction.Retry(message.id)) }
+    } else null
+    MessageBubble(
+        text = message.text,
+        role = message.role,
+        modifier = modifier,
+        meta = message.meta,
+        delivery = message.delivery,
+        reaction = message.reaction,
+        accessibilityPrefix = accessibilityPrefix,
+        onRetry = retry,
+        onLongPress = { onAction(ChatTranscriptAction.RequestReaction(message.id)) },
+    )
 }
 
 @Composable

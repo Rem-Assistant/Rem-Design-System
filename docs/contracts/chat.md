@@ -74,10 +74,13 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 8. **Add to Chat:** title + Done; Camera (conditional) / Photos / Files tiles (`fillTertiary`, radius
    12, min height 78); Cloud browser row when `browserAvailable` (adds the chip and dismisses);
    Thinking row → Off / Low / Medium / High menu.
-9. **Header:** 64 avatar (`backgroundSecondary`) with the 48 Rem face in brand blue. Beneath it, the
+9. **Header** (corrected 2026-10-10, handoff notes): the header **owns back and overflow** (44pt circular
+   controls level with the avatar, stretched to the screen width so overflow stays visible at 320pt) and is
+   used unchanged in ordinary and task chat. No navigation-title row above it; no face in empty content.
+   64 avatar (`backgroundSecondary`) with the 48 Rem face in brand blue. Beneath it, the
    identity pill shows the name (title3 semibold) and a status row: a 6pt dot (green when Connected,
    orange when Needs you), the **agent's current activity** in footnote `labelSecondary`, and a chevron.
-   Back and overflow buttons are host chrome.
+   The status label is the agent's lifecycle copy supplied by the host, not transport evidence.
 
 ## Paired native fixtures
 
@@ -88,7 +91,22 @@ tests: `testCatalogChatReactionsDeliveryModelMenuAndAttachments` (XCUITest) /
 `ChatMessageStates-narrow-light`, `ChatComposerAuto-light`, `AddToChatSheet-light`, `ChatHeader-light`,
 `MessageReactionPicker-light`.
 
+## Full-screen composition and app boundary
+
+See [`chat-adapter.md`](chat-adapter.md): typed inputs and actions, the latest-outgoing receipt rule, the reply
+context accessory (`2682:22298`), the empty state (`2054:22089`) and the presentation-only Playground fixtures.
+
 ## Known differences from Figma (reported, not hidden)
+
+- The composer's Sending (progress, `2071:11453`) and Streaming (Stop, `2071:11485`) variants were not in the
+  supplied exports; both render the red Stop and emit `.cancel`. Read-only (`2071:11520`) is not implemented.
+- In the 2026-10-10 exports the Speak pill reads grey, while code keeps the brand-blue Speak pill. Not changed
+  without the variant spec; flagged for review.
+- Reply-context source-master sizing polish was cancelled in Figma; code is content-sized with a 44pt dismiss
+  target and fills the dock (370 × 58 at 402pt in the task specimen).
+- The default fixture's "Today 3:25 PM" vs "Delivered · 10:24" mismatch is sample data and is not reproduced.
+- The Inbox status pill (`AgentStatusPill`) and row separators are not in the supplied exports and are pending
+  review.
 
 - The Figma long-press sheet draws a 2 × 6 grid with a "+" More cell. The approved six-choice row is
   implemented; the second row and More are not.

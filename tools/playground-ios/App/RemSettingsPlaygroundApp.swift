@@ -49,6 +49,9 @@ private enum PlaygroundRoute: Hashable {
     case components, controls, rows, agenda, chat, agent, brand, loading
     case settings
     case agendaSuggestions(AgendaSuggestionsFixture)
+    case chatScreen(ChatPlaygroundFixture.Conversation)
+    case inbox(InboxPlaygroundFixture.Content)
+    case taskReply(inbox: InboxPlaygroundFixture.Content, itemID: String)
     case onboarding
     case onboardingStep(OnboardingStep)
     case onboardingComplete(lastAction: String)
@@ -59,6 +62,8 @@ struct PlaygroundHome: View {
     @State private var fixture = LoadFixture.success
     @State private var agendaFixture = AgendaSuggestionsFixture.loaded
     @State private var checkInSave = CheckInSaveFixture.succeeds
+    @State private var chatConversation = ChatPlaygroundFixture.Conversation.populated
+    @State private var inboxContent = InboxPlaygroundFixture.Content.items
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -78,6 +83,16 @@ struct PlaygroundHome: View {
                     Picker("Agenda data", selection: $agendaFixture) {
                         ForEach(AgendaSuggestionsFixture.allCases, id: \.self) { Text($0.title).tag($0) }
                     }.pickerStyle(.segmented).accessibilityIdentifier("agendaFixturePicker")
+                    NavigationLink("Chat", value: PlaygroundRoute.chatScreen(chatConversation))
+                        .accessibilityIdentifier("openChatScreen")
+                    Picker("Chat data", selection: $chatConversation) {
+                        ForEach(ChatPlaygroundFixture.Conversation.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }.pickerStyle(.segmented).accessibilityIdentifier("chatFixturePicker")
+                    NavigationLink("Inbox", value: PlaygroundRoute.inbox(inboxContent))
+                        .accessibilityIdentifier("openInbox")
+                    Picker("Inbox data", selection: $inboxContent) {
+                        ForEach(InboxPlaygroundFixture.Content.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }.pickerStyle(.segmented).accessibilityIdentifier("inboxFixturePicker")
                     NavigationLink("Onboarding", value: PlaygroundRoute.onboarding)
                         .accessibilityIdentifier("openOnboarding")
                 } header: {
@@ -102,6 +117,16 @@ struct PlaygroundHome: View {
                 case .loading: LoadingPreview()
                 case .settings: SettingsPreview(fixture: fixture)
                 case .agendaSuggestions(let agenda): AgendaSuggestionsPreview(fixture: agenda)
+                case .chatScreen(let conversation):
+                    PlaygroundChatScreen(fixture: ChatPlaygroundFixture(conversation))
+                case .inbox(let content):
+                    PlaygroundInboxScreen(inbox: InboxPlaygroundFixture(content)) { id in
+                        path.append(PlaygroundRoute.taskReply(inbox: content, itemID: id))
+                    }
+                case .taskReply(let content, let id):
+                    if let chat = InboxPlaygroundFixture(content).route(.open(itemID: id)) {
+                        PlaygroundChatScreen(fixture: chat)
+                    }
                 case .onboarding: OnboardingHub(checkInSave: $checkInSave)
                 case .onboardingStep(let step):
                     OnboardingStepHost(step: step, checkInSave: $checkInSave, advance: { advance(from: step, action: $0) })

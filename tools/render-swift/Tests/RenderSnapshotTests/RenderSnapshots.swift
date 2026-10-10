@@ -129,6 +129,26 @@ final class RenderSnapshots: XCTestCase {
         render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
         render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
         render("ChatScreen-light", width: 402, height: 820, dark: false) { chatScreen() }
+        // Full-screen composition (board `2681:21977`): default, 320pt width stress, empty, task reply,
+        // and the Inbox states that route into task chat. Fixture data from the DS Playground fixtures.
+        render("ChatComposition-default-light", width: 402, height: 874, dark: false) {
+            chatComposition(ChatPlaygroundFixture(.populated))
+        }
+        render("ChatComposition-narrow-light", width: 320, height: 874, dark: false) {
+            chatComposition(ChatPlaygroundFixture(.populated))
+        }
+        render("ChatComposition-empty-light", width: 402, height: 874, dark: false) {
+            chatComposition(ChatPlaygroundFixture(.empty))
+        }
+        render("ChatComposition-taskReply-light", width: 402, height: 874, dark: false) {
+            chatComposition(InboxPlaygroundFixture().route(.open(itemID: "plan-next-step"))!)
+        }
+        render("ChatComposition-taskReply-narrow-light", width: 320, height: 874, dark: false) {
+            chatComposition(InboxPlaygroundFixture().route(.open(itemID: "plan-next-step"))!)
+        }
+        render("InboxStates-light", width: 402, height: 780, dark: false) {
+            InboxScreen(items: InboxPlaygroundFixture().items, onAction: { _ in }) { EmptyView() }
+        }
         // Wave 3 screens
         render("TaskDetailScreen-light", width: 402, height: 820, dark: false) { taskDetailScreen() }
         render("SettingsScreen-light", width: 402, height: 820, dark: false) { settingsScreen() }
@@ -336,6 +356,18 @@ final class RenderSnapshots: XCTestCase {
             TaskEventRow(kind: .task, title: "Review the Q4 roadmap draft", leading: .none, showPills: false)
             Divider().padding(.leading, 60)
             TaskEventRow(kind: .task, title: "Book the venue for the offsite", leading: .none, showPills: false)
+        }
+    }
+
+    private func chatComposition(_ fixture: ChatPlaygroundFixture) -> some View {
+        ChatScreen(
+            header: fixture.header,
+            composer: fixture.composer.state,
+            replyContext: fixture.replyContext,
+            emptyState: fixture.emptyState,
+            onAction: { _ in }
+        ) {
+            ChatTranscriptList(fixture.entries) { _ in }
         }
     }
 
