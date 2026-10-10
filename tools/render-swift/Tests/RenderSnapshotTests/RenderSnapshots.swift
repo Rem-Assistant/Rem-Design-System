@@ -241,6 +241,12 @@ final class RenderSnapshots: XCTestCase {
                 .padding(DesignTokens.Spacing.lg)
                 .background(DesignTokens.Color.backgroundPrimary)
         }
+        // Elevated risk + raw parameters (Full parameters starts collapsed); no Always allow scope.
+        render("ChatPermissionCard-elevated-light", width: 402, height: nil, dark: false) {
+            PermissionCard(Self.elevatedPermissionRequest, isExpanded: .constant(true), onAllow: {}, onDeny: {})
+                .padding(DesignTokens.Spacing.lg)
+                .background(DesignTokens.Color.backgroundPrimary)
+        }
     }
 
     // MARK: - Chat cards
@@ -277,6 +283,17 @@ final class RenderSnapshots: XCTestCase {
             alwaysAllowScope: "create reminders in Personal only.", state: state
         )
     }
+
+    static let elevatedPermissionRequest = PermissionCardModel(
+        title: "Email permission", question: "Allow Rem to send this email?",
+        summary: "Sends from your Gmail account. This can’t be undone.",
+        details: PermissionRequestDetails(title: "Q3 investor update", schedule: "Sends immediately", source: "Gmail · samuel@example.com"),
+        state: .awaiting, risk: .elevated,
+        parameters: [
+            PermissionParameter(label: "to", value: "investors@example.com"),
+            PermissionParameter(label: "subject", value: "Q3 investor update"),
+        ]
+    )
 
     /// One state, Expanded then Collapsed (the three renders together cover the six Figma variants).
     private func chatPermissionCards(_ state: PermissionCardState) -> some View {

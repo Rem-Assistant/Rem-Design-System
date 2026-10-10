@@ -564,11 +564,14 @@ struct CatalogLoginCardGroup: View {
 }
 
 /// PermissionCard specimen: the inline card expands and collapses in place. Allow once / Deny resolve
-/// and collapse it; Always allow is only a proposal (no grant); Review again returns to Awaiting.
+/// and collapse it; Always allow is only a proposal (no grant); Review again returns to Awaiting. A second,
+/// elevated-risk email request (no Always allow) shows the risk label and the Full parameters disclosure.
 struct CatalogPermissionCardGroup: View {
     @State private var state: PermissionCardState = .awaiting
     @State private var expanded = PermissionCardState.awaiting.defaultExpanded
     @State private var note: String?
+    @State private var emailState: PermissionCardState = .awaiting
+    @State private var emailExpanded = PermissionCardState.awaiting.defaultExpanded
 
     var body: some View {
         CatalogGroup(title: "Permission card") {
@@ -600,8 +603,31 @@ struct CatalogPermissionCardGroup: View {
                     .foregroundStyle(DesignTokens.Color.labelSecondary)
                     .accessibilityIdentifier("catalog.card.permission.note")
             }
+            PermissionCard(
+                PermissionCardModel(
+                    title: "Email permission", question: "Allow Rem to send this email?",
+                    summary: "Sends from your Gmail account. This can’t be undone.",
+                    details: PermissionRequestDetails(title: "Q3 investor update", schedule: "Sends immediately",
+                                                      source: "Gmail · samuel@example.com"),
+                    state: emailState, risk: .elevated,
+                    parameters: [
+                        PermissionParameter(label: "to", value: "investors@example.com"),
+                        PermissionParameter(label: "subject", value: "Q3 investor update"),
+                    ]
+                ),
+                isExpanded: $emailExpanded,
+                accessibilityPrefix: "catalog.card.permissionRisk",
+                onAllow: { resolveEmail(.allowed) },
+                onDeny: { resolveEmail(.denied) },
+                onReviewAgain: { resolveEmail(.awaiting) }
+            )
         }
         .onChange(of: state) { _, newState in expanded = newState.defaultExpanded }
+    }
+
+    private func resolveEmail(_ newState: PermissionCardState) {
+        emailState = newState
+        emailExpanded = newState.defaultExpanded
     }
 
     private func resolve(_ newState: PermissionCardState) {

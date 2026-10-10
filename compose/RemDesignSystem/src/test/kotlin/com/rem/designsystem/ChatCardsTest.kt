@@ -7,6 +7,8 @@ import com.rem.designsystem.chat.LoginCardModel
 import com.rem.designsystem.chat.LoginCardState
 import com.rem.designsystem.chat.PermissionCardModel
 import com.rem.designsystem.chat.PermissionCardState
+import com.rem.designsystem.chat.PermissionParameter
+import com.rem.designsystem.chat.PermissionRisk
 import com.rem.designsystem.chat.PermissionRequestDetails
 import com.rem.designsystem.chat.loginFormCanSave
 import com.rem.designsystem.rows.ConnectorProvider
@@ -115,5 +117,28 @@ class ChatCardsTest {
 
     @Test fun requestPayloadIsPreservedAcrossStates() {
         assertEquals(1, PermissionCardState.entries.map { permission(it).details }.toSet().size)
+    }
+
+    @Test fun riskLabelOnlyWhenElevated() {
+        assertEquals(PermissionRisk.Standard, permission(PermissionCardState.Awaiting).risk)
+        assertNull(permission(PermissionCardState.Awaiting).riskLabel)
+        assertEquals("Elevated risk", permission(PermissionCardState.Awaiting).copy(risk = PermissionRisk.Elevated).riskLabel)
+    }
+
+    @Test fun fullParametersHiddenWhenEmpty() {
+        assertFalse(permission(PermissionCardState.Awaiting).showsParameters)
+        assertTrue(permission(PermissionCardState.Awaiting)
+            .copy(parameters = listOf(PermissionParameter("to", "investors@example.com"))).showsParameters)
+    }
+
+    @Test fun detailRowsAreLabelValuePairsOfTheRequest() {
+        assertEquals(
+            listOf(
+                PermissionParameter("Action", "Send investor update"),
+                PermissionParameter("When", "Oct 10, 2026 · 9:00 AM UTC"),
+                PermissionParameter("Source", "Reminders · Personal"),
+            ),
+            permission(PermissionCardState.Awaiting).detailRows,
+        )
     }
 }

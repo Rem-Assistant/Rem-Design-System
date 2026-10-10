@@ -134,6 +134,8 @@ import com.rem.designsystem.chat.LoginForm
 import com.rem.designsystem.chat.PermissionCard
 import com.rem.designsystem.chat.PermissionCardModel
 import com.rem.designsystem.chat.PermissionCardState
+import com.rem.designsystem.chat.PermissionParameter
+import com.rem.designsystem.chat.PermissionRisk
 import com.rem.designsystem.chat.PermissionRequestDetails
 import com.rem.designsystem.rows.ConnectorProvider
 import org.junit.Rule
@@ -956,6 +958,25 @@ class EvidenceSnapshots {
             Box(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp)) {
                 PermissionCard(permissionRequest(PermissionCardState.Awaiting), true, {}, onAllow = {}, onDeny = {},
                     onAlwaysAllow = {}, modifier = Modifier.width(288.dp))
+            }
+        }
+    }
+
+    /** Elevated risk + raw parameters (Full parameters starts collapsed); no Always allow scope. */
+    @Test
+    fun chatPermissionCardElevated() = shot("ChatPermissionCard-elevated-light") {
+        RemTheme {
+            chatCardColumn {
+                PermissionCard(
+                    PermissionCardModel(
+                        title = "Email permission", question = "Allow Rem to send this email?",
+                        summary = "Sends from your Gmail account. This can’t be undone.",
+                        details = PermissionRequestDetails("Q3 investor update", "Sends immediately", "Gmail · samuel@example.com"),
+                        state = PermissionCardState.Awaiting, risk = PermissionRisk.Elevated,
+                        parameters = listOf(PermissionParameter("to", "investors@example.com"), PermissionParameter("subject", "Q3 investor update")),
+                    ),
+                    true, {}, onAllow = {}, onDeny = {},
+                )
             }
         }
     }

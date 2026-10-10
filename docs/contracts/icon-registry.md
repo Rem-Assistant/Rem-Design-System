@@ -59,6 +59,7 @@ font subset (Rule 2). They graduate only after a subset regeneration and standal
 | stop (cancel turn) | `stop.fill` | `Icons.Filled.Stop` | **1** | composer stop circle |
 | remove / dismiss | `xmark` | `Icons.Filled.Close` | **0** | attachment chip, reply-context dismiss |
 | not delivered | `exclamationmark.circle` | `Icons.Outlined.ErrorOutline` | **0** | `MessageBubble` failure control (outline on both) |
+| elevated risk | `exclamationmark.shield` | `Icons.Outlined.GppMaybe` | **0** | `PermissionCard` risk label (shield + exclamation, outline on both) |
 | camera | `camera` | `Icons.Outlined.PhotoCamera` | **0** | `AddToChatSheet` (iOS only; no Android camera tile) |
 | photos | `photo.on.rectangle` | `Icons.Outlined.PhotoLibrary` | **0** | `AddToChatSheet` |
 | files | `folder` | `Icons.Outlined.Folder` | **0** | `AddToChatSheet` |
