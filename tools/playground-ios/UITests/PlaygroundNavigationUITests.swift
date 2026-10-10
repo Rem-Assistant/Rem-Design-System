@@ -41,10 +41,11 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// above the keyboard and its input-assistant bar (a full-window swipe would start over the
     /// keyboard and scroll nothing).
     private func visibleScrollRegion(_ scrollView: XCUIElement) -> CGRect {
-        var top = app.keyboards.firstMatch.frame.minY
+        let frame = scrollView.frame
+        let keyboard = app.keyboards.firstMatch
+        var top = keyboard.exists ? keyboard.frame.minY : frame.maxY
         let assistant = app.otherElements["SystemInputAssistantView"]
         if assistant.exists { top = min(top, assistant.frame.minY) }
-        let frame = scrollView.frame
         var minY = frame.minY
         let bar = app.navigationBars.firstMatch
         if bar.exists { minY = max(minY, bar.frame.maxY) } // the scroll view extends under the bar
@@ -74,6 +75,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
             from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         let visible = visibleScrollRegion(scrollView)
+        XCTAssertGreaterThan(app.keyboards.count, 0, "The keyboard stays up while revealing \(element.identifier)")
         XCTAssertTrue(element.exists && visible.contains(element.frame) && element.isHittable,
                       "Expected \(element.identifier) fully visible above the keyboard (\(element.frame) in \(visible))")
     }
@@ -87,7 +89,8 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // element (by type + identifier) for a bounded 10s, then evaluate once more before failing.
         // Keyboard focus itself stays the requirement.
         let hasFocus = NSPredicate(format: "hasKeyboardFocus == true")
-        let fresh = { self.app.descendants(matching: field.elementType).matching(identifier: field.identifier).firstMatch }
+        let type = field.elementType, identifier = field.identifier
+        let fresh = { self.app.descendants(matching: type).matching(identifier: identifier).firstMatch }
         let deadline = Date().addingTimeInterval(10)
         var isFocused = false
         while !isFocused && Date() < deadline {
@@ -247,10 +250,12 @@ final class PlaygroundNavigationUITests: XCTestCase {
     private func scroll(to element: XCUIElement, named anchor: String, up: Bool) {
         // Drag inside the page's scroll view, in its blank leading margin: the trailing edge is the
         // interactive scroll indicator on long pages, which absorbs a short drag without scrolling.
-        let scrollView = app.scrollViews.firstMatch
-        let dx = 8 / max(scrollView.frame.width, 1)
-        let from = scrollView.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.35 : 0.65))
-        let to = scrollView.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.65 : 0.35))
+        // Form-based pages (Controls) expose a collection view rather than a scroll view.
+        let scroller = app.scrollViews.firstMatch.exists ? app.scrollViews.firstMatch : app.collectionViews.firstMatch
+        XCTAssertTrue(scroller.exists, "The page exposes its scroller")
+        let dx = 8 / max(scroller.frame.width, 1)
+        let from = scroller.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.35 : 0.65))
+        let to = scroller.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.65 : 0.35))
         for _ in 0..<24 {
             if element.exists && element.isHittable { break }
             from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)

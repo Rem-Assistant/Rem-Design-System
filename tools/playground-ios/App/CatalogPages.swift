@@ -16,6 +16,9 @@ struct CatalogPage<Content: View>: View {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xl) { content() }
                 .padding(DesignTokens.Spacing.lg)
         }
+        // Like ChatScreen: scrolling above the keyboard keeps it up (only a drag into it dismisses),
+        // so a person can scroll a mid-page composer's controls into view while typing.
+        .scrollDismissesKeyboard(.interactively)
         .background(DesignTokens.Color.backgroundPrimary)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
