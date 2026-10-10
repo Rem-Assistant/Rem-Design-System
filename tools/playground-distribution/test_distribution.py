@@ -251,10 +251,6 @@ class PackagingTests(unittest.TestCase):
             summary.public_record(dict(data, approvals={'ios': {'model': 'owner-approval', 'reviewer': 'davidolaniran'}}))
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class StorageTests(unittest.TestCase):
     def usage(self, free):
         return lambda path: type('Usage', (), {'free': free})()
@@ -335,3 +331,7 @@ class StorageTests(unittest.TestCase):
                     package.build(candidate, out, 'ios', SHA, '5')
                 command.assert_not_called()
                 self.assertFalse(out.exists())
+
+
+if __name__ == '__main__':
+    unittest.main()
