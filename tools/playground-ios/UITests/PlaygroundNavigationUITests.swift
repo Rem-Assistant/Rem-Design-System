@@ -56,8 +56,13 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// visible region, until `element` sits fully inside that region and is hittable. Bounded: stops
     /// when a drag makes no progress.
     private func revealAboveKeyboard(_ element: XCUIElement) {
-        let scrollView = app.scrollViews.firstMatch
-        XCTAssertTrue(scrollView.exists, "The page exposes its scroll view")
+        // The page's scroll view is the one holding `element`: with the keyboard up, the input-assistant
+        // bar's typing-predictions scroll view is also in the tree and can be the first match.
+        let holds = element.identifier.isEmpty
+            ? NSPredicate(format: "label == %@", element.label)
+            : NSPredicate(format: "identifier == %@", element.identifier)
+        let scrollView = app.scrollViews.containing(holds).firstMatch
+        XCTAssertTrue(scrollView.exists, "The page exposes the scroll view holding \(element.identifier)")
         let origin = app.coordinate(withNormalizedOffset: .zero)
         var lastMinY: CGFloat?
         for _ in 0..<8 {
