@@ -74,3 +74,15 @@ xcodebuild "${test_args[@]}" \
   -resultBundlePath "$RUNNER_TEMP/SettingsPlayground.xcresult" \
   REM_PLAYGROUND_SOURCE_SHA="$source_stamp" \
   CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/settings-ios-build.log"
+
+# A filter that matches nothing makes xcodebuild report TEST SUCCEEDED with 0 tests (run 38096566809:
+# a bare method name was prefixed with the wrong class). Every selected method must actually start.
+if [[ -n "${IOS_TEST:-}" ]]; then
+  for selected_method in "${selected_methods[@]}"; do
+    method="${selected_method##*/}"
+    grep -Eq "Test Case '-\[[A-Za-z]+\.[A-Za-z]+UITests ${method}\]' started" "$RUNNER_TEMP/settings-ios-build.log" || {
+      echo "Selected iOS test did not run: $selected_method (check its class name)." >&2
+      exit 1
+    }
+  done
+fi
