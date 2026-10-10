@@ -172,7 +172,7 @@ fun Playground() {
                             ChipRow { LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) } }
                             RowDivider()
                             NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
-                            ChipRow { AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) } }
+                            ChipRow { AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }, modifier = Modifier.testTag("agendaFixture.${value.name}")) } }
                             RowDivider()
                             NavRow("Chat", "openChatScreen") { route = Route.ChatScreen }
                             ChipRow { ChatPlaygroundFixture.Conversation.entries.forEach { value -> FilterChip(selected = chatConversation == value, onClick = { chatConversation = value }, label = { Text(value.label) }, modifier = Modifier.testTag("chatFixture.${value.label}")) } }
