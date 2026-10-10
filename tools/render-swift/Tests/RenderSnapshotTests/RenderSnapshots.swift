@@ -108,6 +108,13 @@ final class RenderSnapshots: XCTestCase {
         render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
         render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+        // Chat slice: 320pt screen = 288pt row (accepted narrow fixture 2659:21942), then the wide composer,
+        // Add to Chat, header and reaction row. Paired with the Compose `chat*` shots in EvidenceSnapshots.kt.
+        render("ChatMessageStates-narrow-light", width: 320, height: nil, dark: false) { chatMessageStates }
+        render("ChatComposerAuto-light", width: 402, height: nil, dark: false) { chatComposerAuto }
+        render("AddToChatSheet-light", width: 402, height: nil, dark: false) { addToChatSheet }
+        render("ChatHeader-light", width: 402, height: nil, dark: false) { chatHeaders }
+        render("MessageReactionPicker-light", width: 402, height: nil, dark: false) { reactionPicker }
         // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
         render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
             AgendaSuggestionsPlaygroundView(fixture: .loaded)
@@ -351,6 +358,69 @@ final class RenderSnapshots: XCTestCase {
         }
         .padding(24)
         .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // MARK: - Chat slice
+
+    @ViewBuilder private var chatMessageStates: some View {
+        VStack(spacing: DesignTokens.Spacing.lg) {
+            MessageBubble("Can you move the planning sync to Thursday?", role: .user, reaction: .heart)
+            MessageBubble(
+                "Done \u{2014} the planning sync is now Thursday at 10:00, and both attendees have the update.",
+                role: .assistant, reaction: .thumbsUp
+            )
+            MessageBubble("Thanks, that works.", role: .user, delivery: .read(at: "10:24"))
+            MessageBubble("Please share the agenda with the group as well.", role: .user, delivery: .failed, onRetry: {})
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    private static let chatProviders = [
+        ChatModelProvider(id: "provider-a", name: "Provider A", models: [ChatModelOption(id: "model-a1", name: "Model A1")]),
+    ]
+
+    @ViewBuilder private var chatComposerAuto: some View {
+        VStack(spacing: 20) {
+            RemComposerBar(
+                text: .constant(""),
+                attachments: [.cloudBrowser, ComposerAttachment(id: "photo.0", title: "Photo 1", kind: .image)],
+                modelMenu: ChatModelMenu(providers: Self.chatProviders, selection: .automatic, onSelect: { _ in }),
+                onAdd: {}, onRemoveAttachment: { _ in }, onSend: {}
+            )
+            RemComposerBar(
+                text: .constant("Plan the rest of my day"), state: .sending,
+                modelMenu: ChatModelMenu(providers: Self.chatProviders, selection: .model(id: "model-a1"), onSelect: { _ in }),
+                onSend: {}
+            )
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var addToChatSheet: some View {
+        AddToChatSheet(
+            showsCamera: true, browserAvailable: true, thinking: .constant(.medium),
+            onPhotos: {}, onFiles: {}, onDone: {}
+        )
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatHeaders: some View {
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            ChatHeader(activity: "Connected")
+            ChatHeader(activity: "Reading the shared notes", faceMode: .thinking)
+            ChatHeader(activity: "Needs you", status: .needsYou)
+        }
+        .padding(.vertical, DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var reactionPicker: some View {
+        MessageReactionPicker(selection: .heart) { _ in }
+            .padding(DesignTokens.Spacing.lg)
+            .background(DesignTokens.Color.backgroundPrimary)
     }
 
     // MARK: - Wave 2 galleries

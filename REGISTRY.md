@@ -68,8 +68,12 @@ Fixed:
 | Accessory/None | Controls | `157:43` | — (no accessory) | ✓ canonical |
 | Accessory/Value (right-aligned detail text; **Value** text prop) | Rows & Controls | `389:5` | title+value settings rows (e.g. Billing "Plan · Free") | ✓ canonical |
 | Avatar (leading; 29 default, 44 in profile row) | ContainedIcon | `185:2` | `SharedSettingsView.swift` `profileRow` fallbackAvatar | ✓ canonical |
-| MessageBubble (user/assistant) | MessageBubble | `50:7` | `ChatMessageViews.swift` | ✓ canonical |
-| RemComposerBar | RemComposerBar | `53:2` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) | ✓ canonical |
+| MessageBubble (user/assistant) — responsive hug-to-320/fill geometry, reaction toward centre, Delivered / Read / failed (outside-right control + "Not delivered") | MessageBubble · Chat | `50:7` · outgoing `2000:3605` · acceptance `2659:21942` | `Chat/MessageBubble.swift` · `chat/MessageBubble.kt` (`MessageBubbleGeometry`); lineage `ChatMessageViews.swift` | ✓ canonical · Chat slice, local only, see `docs/contracts/chat.md`; static parserless Code Connect twins |
+| MessageReactionBadge + MessageReactionPicker (approved six-choice row) | Chat | `2654:20860` · sheet `2603:19498` (row 1) | `Chat/MessageReactionBadge.swift` · `chat/MessageReactionBadge.kt` | Chat slice — reactions are host data, no persistence; static parserless Code Connect twins |
+| RemComposerBar — Auto secondary-pill model trigger, removable attachment chips, disabled Auto + hidden Speak while sending | RemComposerBar · Chat | `53:2` · Composer `2071:11555` | `RemComposerBar.swift` (used by SharedRemChatView + TaskCommentsSection) · `chat/RemComposerBar.kt` | ✓ canonical · Chat slice; static parserless Code Connect twins |
+| ChatModelMenu — Automatic / provider submenus / Manage Models, runtime-supplied | Chat | `2656:128164` · provider `2656:128245` | `Chat/ChatModelMenu.swift` · `chat/ChatModelMenu.kt` | Chat slice — no catalog in the design system; static parserless Code Connect twins |
+| AddToChatSheet — Camera (capability) / Photos ≤4 / Files (images) / Cloud browser (conditional) / Thinking Off–High | Chat | `2656:21214` · Thinking `2660:128572` | `Chat/AddToChatSheet.swift` · `chat/AddToChatSheet.kt` | Chat slice — host owns pickers; no Android camera; static parserless Code Connect twins |
+| ChatHeader — Rem face avatar + identity pill with current activity | Chat | `2054:19725` | `Chat/ChatHeader.swift` · `chat/ChatHeader.kt` | Chat slice; static parserless Code Connect twins |
 | ConversationView | ConversationView | `71:35` | folds into Chat screen | consolidating |
 | VoiceBar (MiniPlayerBar, 6 states) | Screens ⑤ | `160:884` | `MiniPlayerBar.swift` | ✓ canonical |
 | Pill (quiet status/metadata chip — kinds neutral / dot(color) / list) | Tasks & Agenda | `490624be…` (component set) | `Primitives/RemPill.swift` · `primitives/RemPill.kt` | ✓ canonical (Wave 2 · CI-verified iOS+Android) |

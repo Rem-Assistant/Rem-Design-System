@@ -1,0 +1,171 @@
+import SwiftUI
+
+/// One model a host can offer in the composer's model menu. Supplied at runtime — the design system
+/// never ships a model catalog.
+public struct ChatModelOption: Hashable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+
+    public init(id: String, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+/// A configured provider and the models it offers. Providers with no models are not listed.
+public struct ChatModelProvider: Hashable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let models: [ChatModelOption]
+
+    public init(id: String, name: String, models: [ChatModelOption]) {
+        self.id = id
+        self.name = name
+        self.models = models
+    }
+}
+
+/// What the composer will use: Automatic (the gateway's default routing) or one explicit model.
+public enum ChatModelSelection: Hashable, Sendable {
+    case automatic
+    case model(id: String)
+}
+
+/// **ChatModelMenu** — the composer's model trigger and its native menu.
+///
+/// The trigger is the secondary pill (`fillTertiary` capsule, `chevron.up.chevron.down` + label). It
+/// reads **"Auto"** while Automatic is selected, otherwise the selected model's name. The menu is
+/// source-aligned with the shipped picker (`SharedRemChatView` model menu): **Automatic** (checkmark
+/// when selected), one submenu per configured provider listing its models (checkmark on the
+/// selected one), then **Manage Models** when the host supplies a destination.
+///
+/// Everything listed comes from `providers` — fixtures pass fictional placeholders, production passes
+/// the runtime catalog. Disabled (45% opacity) when the environment disables it, e.g. while sending.
+///
+/// Figma canonical: **Rem/Chat/Model menu** (`2656:128164`) and provider submenu (`2656:128245`);
+/// trigger as drawn in **Composer** (`2071:11555`). Compose sibling: `chat/ChatModelMenu.kt`.
+public struct ChatModelMenu: View {
+    private let providers: [ChatModelProvider]
+    private let selection: ChatModelSelection
+    private let automaticLabel: String
+    private let accessibilityPrefix: String
+    private let onSelect: (ChatModelSelection) -> Void
+    private let onManageModels: (() -> Void)?
+
+    public init(
+        providers: [ChatModelProvider],
+        selection: ChatModelSelection,
+        automaticLabel: String = "Auto",
+        accessibilityPrefix: String = "composer",
+        onSelect: @escaping (ChatModelSelection) -> Void,
+        onManageModels: (() -> Void)? = nil
+    ) {
+        self.providers = providers
+        self.selection = selection
+        self.automaticLabel = automaticLabel
+        self.accessibilityPrefix = accessibilityPrefix
+        self.onSelect = onSelect
+        self.onManageModels = onManageModels
+    }
+
+    /// The trigger label for a selection: `automaticLabel` for Automatic, else the model's name. An id
+    /// the catalog does not (yet) contain is shown as-is rather than disguised as Automatic.
+    public static func triggerLabel(
+        for selection: ChatModelSelection,
+        providers: [ChatModelProvider],
+        automaticLabel: String = "Auto"
+    ) -> String {
+        switch selection {
+        case .automatic:
+            return automaticLabel
+        case .model(let id):
+            return providers.lazy.flatMap(\.models).first { $0.id == id }?.name ?? id
+        }
+    }
+
+    public var body: some View {
+        Menu {
+            Button { onSelect(.automatic) } label: {
+                checkmarkLabel("Automatic", selected: selection == .automatic)
+            }
+            .accessibilityIdentifier("\(accessibilityPrefix).modelAutomatic")
+
+            ForEach(providers.filter { !$0.models.isEmpty }) { provider in
+                Menu(provider.name) {
+                    ForEach(provider.models) { model in
+                        Button { onSelect(.model(id: model.id)) } label: {
+                            checkmarkLabel(model.name, selected: selection == .model(id: model.id))
+                        }
+                        .accessibilityIdentifier("\(accessibilityPrefix).model.\(model.id)")
+                    }
+                }
+                .accessibilityIdentifier("\(accessibilityPrefix).modelProvider.\(provider.id)")
+            }
+
+            if let onManageModels {
+                Divider()
+                Button(action: onManageModels) {
+                    Label("Manage Models", systemImage: "slider.horizontal.3")
+                }
+                .accessibilityIdentifier("\(accessibilityPrefix).manageModels")
+            }
+        } label: {
+            ChatModelTriggerPill(
+                label: Self.triggerLabel(for: selection, providers: providers, automaticLabel: automaticLabel)
+            )
+        }
+        .menuStyle(.button)
+        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
+        .fixedSize()
+        .accessibilityLabel("Model, \(Self.triggerLabel(for: selection, providers: providers, automaticLabel: automaticLabel))")
+        .accessibilityIdentifier("\(accessibilityPrefix).modelMenu")
+    }
+
+    @ViewBuilder
+    private func checkmarkLabel(_ title: String, selected: Bool) -> some View {
+        if selected {
+            Label(title, systemImage: "checkmark")
+        } else {
+            Text(title)
+        }
+    }
+}
+
+/// The secondary-pill trigger, shared by `ChatModelMenu` and the display-only `RemComposerBar`.
+/// Dims to 45% when the environment disables it (the composer disables it while sending).
+struct ChatModelTriggerPill: View {
+    let label: String
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.xs) {
+            Image(systemName: "chevron.up.chevron.down")
+                .font(.system(size: 10, weight: .semibold))
+            Text(label)
+                .font(DesignTokens.Typography.caption1)
+                .lineLimit(1)
+        }
+        .foregroundStyle(DesignTokens.Color.labelPrimary)
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+        .padding(.vertical, DesignTokens.Spacing.xs)
+        .background(DesignTokens.Color.fillTertiary, in: Capsule())
+        .opacity(isEnabled ? 1 : 0.45)
+    }
+}
+
+#Preview {
+    let providers = [
+        ChatModelProvider(id: "provider-a", name: "Provider A", models: [
+            ChatModelOption(id: "a-fast", name: "Fast model"),
+            ChatModelOption(id: "a-deep", name: "Deep model"),
+        ]),
+    ]
+    VStack(spacing: DesignTokens.Spacing.lg) {
+        ChatModelMenu(providers: providers, selection: .automatic, onSelect: { _ in }, onManageModels: {})
+        ChatModelMenu(providers: providers, selection: .model(id: "a-deep"), onSelect: { _ in })
+        ChatModelMenu(providers: providers, selection: .automatic, onSelect: { _ in }).disabled(true)
+    }
+    .padding(DesignTokens.Spacing.lg)
+    .background(DesignTokens.Color.backgroundSecondary)
+}

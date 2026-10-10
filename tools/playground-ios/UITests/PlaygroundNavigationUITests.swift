@@ -310,11 +310,93 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // A vertical-axis TextField is exposed as a text view.
         let field = app.textViews["catalog.composerField"]
         XCTAssertTrue(field.waitForExistence(timeout: 3))
+        reveal(field)
         focus(field)
         field.typeText("Plan my afternoon")
         tap("catalog.composerSend")
-        XCTAssertTrue(app.staticTexts["Plan my afternoon"].waitForExistence(timeout: 3), "Send adds a message bubble")
+        let sentBubble = element("chat.sent.0.bubble")
+        XCTAssertTrue(sentBubble.waitForExistence(timeout: 3), "Send adds a message bubble")
+        XCTAssertTrue(sentBubble.label.contains("Plan my afternoon"))
         capture("Catalog-chat-light")
+    }
+
+    /// First element anywhere in the tree with this accessibility identifier.
+    private func element(_ identifier: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// Chat slice journey, all local fixture state: header activity, long-press reaction (outgoing
+    /// upper-left), failed delivery and Try again, the Auto model menu, the Cloud browser chip and the
+    /// Thinking level. No message, reaction, model choice or attachment leaves the page.
+    func testCatalogChatReactionsDeliveryModelMenuAndAttachments() {
+        openCatalogPage("openChat", title: "Chat")
+
+        let identity = element("chat.header.identity")
+        XCTAssertTrue(identity.waitForExistence(timeout: 3))
+        XCTAssertTrue(identity.label.contains("Connected"), "Header shows the agent's current activity")
+
+        let outgoing = element("chat.outgoing.bubble")
+        reveal(outgoing)
+        XCTAssertFalse(element("chat.outgoing.reaction").exists)
+        outgoing.press(forDuration: 1.0)
+        let heart = app.buttons["chat.reactions.2"]
+        XCTAssertTrue(heart.waitForExistence(timeout: 3), "Long press opens the six-choice reaction row")
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "chat.reactions.")).count, 6)
+        heart.tap()
+        let reaction = element("chat.outgoing.reaction")
+        XCTAssertTrue(reaction.waitForExistence(timeout: 3), "Chosen reaction shows on the message")
+        // Outgoing reaction sits at the upper-left, overlapping toward the conversation centre.
+        XCTAssertLessThan(reaction.frame.minX, outgoing.frame.minX)
+        XCTAssertLessThan(reaction.frame.minY, outgoing.frame.minY)
+
+        let failedBubble = element("chat.failed.bubble")
+        let failure = element("chat.failed.failure")
+        reveal(failure)
+        let receipt = element("chat.failed.receipt")
+        XCTAssertEqual(receipt.label, "Not delivered")
+        // The failure control sits entirely outside the bubble on the right; the label is right-aligned to it.
+        XCTAssertGreaterThanOrEqual(failure.frame.minX, failedBubble.frame.maxX)
+        XCTAssertEqual(receipt.frame.maxX, failedBubble.frame.maxX, accuracy: 1)
+        failure.tap()
+        let tryAgain = app.buttons["Try again"]
+        XCTAssertTrue(tryAgain.waitForExistence(timeout: 3), "Failure control opens the Try again menu")
+        tryAgain.tap()
+        XCTAssertTrue(element("chat.failed.receipt").label.contains("Delivered"), "Try again resolves the fixture failure")
+
+        let menu = app.buttons["catalog.modelMenu"]
+        reveal(menu)
+        XCTAssertTrue(menu.label.contains("Auto"))
+        menu.tap()
+        XCTAssertTrue(app.buttons["Automatic"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Manage Models"].exists)
+        app.buttons["Provider A"].tap()
+        let modelA2 = app.buttons["Model A2"]
+        XCTAssertTrue(modelA2.waitForExistence(timeout: 3), "Provider submenu lists its models")
+        modelA2.tap()
+        XCTAssertTrue(menu.label.contains("Model A2"), "Trigger shows the selected model")
+        menu.tap()
+        app.buttons["Automatic"].tap()
+        XCTAssertTrue(menu.label.contains("Auto"), "Automatic returns the trigger to Auto")
+
+        tap("catalog.composerAdd")
+        XCTAssertTrue(app.buttons["catalog.addToChat.photos"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["catalog.addToChat.files"].exists)
+        tap("catalog.addToChat.cloudBrowser")
+        let removeBrowser = app.buttons["catalog.removeAttachment.cloud-browser"]
+        XCTAssertTrue(removeBrowser.waitForExistence(timeout: 3), "Cloud browser adds a removable chip and dismisses")
+        removeBrowser.tap()
+        waitUntilGone(removeBrowser, "Removing the chip clears it")
+
+        tap("catalog.composerAdd")
+        let thinking = app.buttons["catalog.addToChat.thinking"]
+        XCTAssertTrue(thinking.waitForExistence(timeout: 3))
+        XCTAssertTrue(thinking.label.contains("Medium"))
+        thinking.tap()
+        app.buttons["High"].tap()
+        XCTAssertTrue(thinking.label.contains("High"), "Thinking level is chosen from four options")
+        tap("catalog.addToChat.done")
+        waitUntilGone(thinking, "Done dismisses Add to Chat")
+        capture("Catalog-chat-journey-light")
     }
 
     func testCatalogAgentSurfaces() {

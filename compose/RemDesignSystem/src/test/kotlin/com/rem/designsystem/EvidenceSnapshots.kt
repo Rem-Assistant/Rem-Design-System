@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -35,7 +36,19 @@ import com.rem.designsystem.primitives.RemPill
 import com.rem.designsystem.primitives.RemPillKind
 import com.rem.designsystem.primitives.RemSlider
 import com.rem.designsystem.agenda.DateNavigationHeader
+import com.rem.designsystem.chat.AddToChatSheet
+import com.rem.designsystem.chat.ChatHeader
+import com.rem.designsystem.chat.ChatHeaderStatus
+import com.rem.designsystem.chat.ChatModelMenu
+import com.rem.designsystem.chat.ChatModelOption
+import com.rem.designsystem.chat.ChatModelProvider
+import com.rem.designsystem.chat.ChatModelSelection
+import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.MessageBubble
+import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.chat.MessageReaction
+import com.rem.designsystem.chat.MessageReactionPicker
+import com.rem.designsystem.chat.ThinkingLevel
 import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ComposerSendState
@@ -445,6 +458,83 @@ class EvidenceSnapshots {
                 RemComposerBar()
                 RemComposerBar(text = "Remind me to send the investor update tomorrow", state = ComposerSendState.Active, showAttachments = true)
                 RemComposerBar(text = "Plan the rest of my day", state = ComposerSendState.Sending)
+            }
+        }
+    }
+
+    // Chat slice: 320dp screen = 288dp row (accepted narrow fixture 2659:21942), then the wide composer,
+    // Add to Chat, header and reaction row. Paired with the SwiftUI chat renders in RenderSnapshots.swift.
+    @Test
+    fun chatMessageStatesNarrow() = shot("ChatMessageStates-narrow-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.width(320.dp).background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                MessageBubble("Can you move the planning sync to Thursday?", role = MessageRole.User, reaction = MessageReaction.Heart)
+                MessageBubble(
+                    "Done \u2014 the planning sync is now Thursday at 10:00, and both attendees have the update.",
+                    role = MessageRole.Assistant, reaction = MessageReaction.ThumbsUp,
+                )
+                MessageBubble("Thanks, that works.", role = MessageRole.User, delivery = MessageDelivery.Read("10:24"))
+                MessageBubble("Please share the agenda with the group as well.", role = MessageRole.User, delivery = MessageDelivery.Failed, onRetry = {})
+            }
+        }
+    }
+
+    private val chatProviders = listOf(ChatModelProvider("provider-a", "Provider A", listOf(ChatModelOption("model-a1", "Model A1"))))
+
+    @Test
+    fun chatComposerAuto() = shot("ChatComposerAuto-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                RemComposerBar(
+                    onTextChange = {}, onSend = {}, onAdd = {},
+                    attachments = listOf(ComposerAttachment.CloudBrowser, ComposerAttachment("photo.0", "Photo 1", ComposerAttachment.Kind.Image)),
+                    onRemoveAttachment = {},
+                    modelMenu = { enabled -> ChatModelMenu(chatProviders, ChatModelSelection.Automatic, onSelect = {}, enabled = enabled) },
+                )
+                RemComposerBar(
+                    text = "Plan the rest of my day", state = ComposerSendState.Sending, onTextChange = {}, onSend = {},
+                    modelMenu = { enabled -> ChatModelMenu(chatProviders, ChatModelSelection.Model("model-a1"), onSelect = {}, enabled = enabled) },
+                )
+            }
+        }
+    }
+
+    @Test
+    fun addToChatSheet() = shot("AddToChatSheet-light") {
+        RemTheme {
+            AddToChatSheet(
+                showsCamera = false, browserAvailable = true, thinking = ThinkingLevel.Medium, onThinkingChange = {},
+                onPhotos = {}, onFiles = {}, onDone = {},
+                modifier = Modifier.background(RemColors.current.backgroundPrimary),
+            )
+        }
+    }
+
+    @Test
+    fun chatHeader() = shot("ChatHeader-light") {
+        RemTheme {
+            Column(
+                modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                ChatHeader(activity = "Connected")
+                ChatHeader(activity = "Reading the shared notes", faceMode = RemFaceMarkMode.Thinking)
+                ChatHeader(activity = "Needs you", status = ChatHeaderStatus.NeedsYou)
+            }
+        }
+    }
+
+    @Test
+    fun messageReactionPicker() = shot("MessageReactionPicker-light") {
+        RemTheme {
+            Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp)) {
+                MessageReactionPicker(selection = MessageReaction.Heart, onSelect = {})
             }
         }
     }

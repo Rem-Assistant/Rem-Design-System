@@ -155,7 +155,7 @@ class PlaygroundNavigationTest {
                 Shot("Suggestion section", hasText("See more")),
             )),
             Triple("openChat", "chat", listOf(
-                Shot("Composer", hasText("Auto")),
+                Shot("Composer", hasTestTag("catalog.modelMenu")),
                 Shot("Voice bar", hasText("Listening\u2026")),
             )),
             Triple("openAgentCatalog", "agent", listOf(
@@ -297,11 +297,72 @@ class PlaygroundNavigationTest {
 
     @Test fun catalogChatComposerSendsMessage() {
         openCatalogPage("openChat")
-        compose.onNodeWithTag("catalog.composerField").performTextInput("Plan my afternoon")
+        compose.onNodeWithTag("catalog.composerField").performScrollTo().performTextInput("Plan my afternoon")
         compose.onNodeWithTag("catalog.composerSend").performClick()
         compose.onNodeWithText("Plan my afternoon").assertExists()
         capture("Catalog-chat-light")
     }
+
+    /**
+     * Chat slice journey, all local fixture state: header activity, long-press reaction (outgoing
+     * upper-left), failed delivery and Try again, the Auto model menu, the Cloud browser chip and the
+     * Thinking level. No Android camera tile exists. Nothing leaves the page.
+     */
+    @Test fun catalogChatReactionsDeliveryModelMenuAndAttachments() {
+        openCatalogPage("openChat")
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Rem, Connected"))
+        compose.onNodeWithTag("chat.headerActivity.1").performScrollTo().performClick()
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Rem, Reading the shared notes"))
+
+        compose.onNodeWithTag("chat.outgoing.reaction").assertDoesNotExist()
+        compose.onNodeWithTag("chat.outgoing.bubble").performScrollTo().performTouchInput { longClick() }
+        compose.onAllNodes(hasTestTagStartingWith("chat.reactions.")).assertCountEquals(6)
+        compose.onNodeWithTag("chat.reactions.2").performClick()
+        val bubble = compose.onNodeWithTag("chat.outgoing.bubble").getBoundsInRoot()
+        val badge = compose.onNodeWithTag("chat.outgoing.reaction").assertExists().getBoundsInRoot()
+        // Outgoing reaction sits at the upper-left, overlapping toward the conversation centre.
+        check(badge.left < bubble.left && badge.top < bubble.top) { "Outgoing reaction must anchor upper-left" }
+
+        compose.onNodeWithTag("chat.failed.receipt").performScrollTo().assertTextEquals("Not delivered")
+        val failedBubble = compose.onNodeWithTag("chat.failed.bubble").getBoundsInRoot()
+        val failure = compose.onNodeWithTag("chat.failed.failure").getBoundsInRoot()
+        check(failure.left >= failedBubble.right) { "Failure control must sit entirely outside the bubble" }
+        compose.onNodeWithTag("chat.failed.failure").performClick()
+        compose.onNodeWithTag("chat.failed.retry").performClick()
+        compose.onNodeWithTag("chat.failed.receipt").assertTextEquals("Delivered \u00b7 10:24")
+
+        compose.onNodeWithTag("catalog.modelMenu").performScrollTo().assert(hasText("Auto")).performClick()
+        compose.onNodeWithTag("catalog.manageModels").assertExists()
+        compose.onNodeWithTag("catalog.modelProvider.provider-a").performClick()
+        compose.onNodeWithTag("catalog.model.model-a2").performClick()
+        compose.onNodeWithTag("catalog.modelMenu").assert(hasText("Model A2"))
+        compose.onNodeWithTag("catalog.modelMenu").performClick()
+        compose.onNodeWithTag("catalog.modelAutomatic").performClick()
+        compose.onNodeWithTag("catalog.modelMenu").assert(hasText("Auto"))
+
+        compose.onNodeWithTag("catalog.composerAdd").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.addToChat.photos").assertExists()
+        compose.onNodeWithTag("catalog.addToChat.files").assertExists()
+        compose.onNodeWithTag("catalog.addToChat.camera").assertDoesNotExist()
+        compose.onNodeWithTag("catalog.addToChat.cloudBrowser").performClick()
+        compose.onNodeWithTag("catalog.attachment.cloud-browser").assertExists()
+        compose.onNodeWithTag("catalog.removeAttachment.cloud-browser").performClick()
+        compose.onNodeWithTag("catalog.attachment.cloud-browser").assertDoesNotExist()
+
+        compose.onNodeWithTag("catalog.composerAdd").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.addToChat.thinking").assert(hasText("Medium")).performClick()
+        compose.onNodeWithTag("catalog.addToChat.thinking.high").performClick()
+        compose.onNodeWithTag("catalog.addToChat.thinking").assert(hasText("High"))
+        compose.onNodeWithTag("catalog.addToChat.done").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("catalog.addToChat.thinking").assertDoesNotExist()
+        capture("Catalog-chat-journey-light")
+    }
+
+    private fun hasTestTagStartingWith(prefix: String) =
+        SemanticsMatcher("TestTag starts with $prefix") { node ->
+            node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
+        }
 
     @Test fun catalogAgentSurfaces() {
         openCatalogPage("openAgentCatalog")

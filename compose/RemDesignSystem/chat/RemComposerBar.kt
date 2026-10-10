@@ -1,6 +1,9 @@
 package com.rem.designsystem.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,12 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,8 +47,27 @@ import com.rem.designsystem.tokens.RemTypography
  *
  * (The shipping SwiftUI pill uses `.ultraThinMaterial`; Compose has no material blur, so both DS
  * renders use `backgroundSecondary` — the flat grey the Figma pill shows.)
+ *
+ * Chat slice (Figma **Composer** `2071:11555`): the model control is the secondary-pill **Auto**
+ * trigger. Pass [modelMenu] (typically a [ChatModelMenu]) to make it open the runtime-supplied model
+ * menu; its `enabled` argument is false while sending (45%), when Speak is also hidden. [attachments]
+ * are removable chips owned by the host — a Cloud browser chip is a capability for the next message.
  */
 enum class ComposerSendState { Idle, Active, Sending }
+
+/** One item attached to the next message, rendered as a removable chip in [RemComposerBar]. */
+data class ComposerAttachment(val id: String, val title: String, val kind: Kind) {
+    enum class Kind {
+        /** A capability for the next turn (e.g. Cloud browser) — not content, not an immediate launch. */
+        Capability,
+        Image,
+        File,
+    }
+
+    companion object {
+        val CloudBrowser = ComposerAttachment("cloud-browser", "Cloud browser", Kind.Capability)
+    }
+}
 
 @Composable
 fun RemComposerBar(
@@ -63,6 +83,9 @@ fun RemComposerBar(
     onSend: (() -> Unit)? = null,
     onAdd: (() -> Unit)? = null,
     accessibilityPrefix: String = "composer",
+    attachments: List<ComposerAttachment> = emptyList(),
+    onRemoveAttachment: ((ComposerAttachment) -> Unit)? = null,
+    modelMenu: (@Composable (enabled: Boolean) -> Unit)? = null,
 ) {
     val colors = RemColors.current
     val effectiveState = if (onTextChange != null && state != ComposerSendState.Sending) {
@@ -75,8 +98,10 @@ fun RemComposerBar(
             .padding(RemSpacing.md),
         verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
     ) {
-        if (showAttachments) {
-            AttachmentsStrip()
+        // `showAttachments` is the legacy display flag: it shows the canonical Cloud browser chip.
+        val chips = if (attachments.isEmpty() && showAttachments) listOf(ComposerAttachment.CloudBrowser) else attachments
+        if (chips.isNotEmpty()) {
+            AttachmentsStrip(chips, accessibilityPrefix, onRemoveAttachment)
         }
 
         if (onTextChange != null) {
@@ -110,14 +135,12 @@ fun RemComposerBar(
             } else {
                 Icon(Icons.Filled.Add, contentDescription = "Add", tint = colors.labelSecondary, modifier = Modifier.size(20.dp))
             }
+            val modelEnabled = effectiveState != ComposerSendState.Sending
             if (showModel) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = model, style = RemTypography.subheadline, color = colors.labelSecondary)
-                    Icon(Icons.Filled.UnfoldMore, contentDescription = null, tint = colors.labelTertiary, modifier = Modifier.size(14.dp))
-                }
+                if (modelMenu != null) modelMenu(modelEnabled) else ChatModelTriggerPill(label = model, enabled = modelEnabled)
             }
             Box(modifier = Modifier.weight(1f))
-            if (showSpeak) SpeakPill()
+            if (showSpeak && effectiveState != ComposerSendState.Sending) SpeakPill()
             if (onSend != null) {
                 IconButton(onClick = onSend, enabled = effectiveState != ComposerSendState.Idle,
                     modifier = Modifier.testTag("$accessibilityPrefix.composerSend")) {
@@ -166,38 +189,46 @@ private fun SendButton(state: ComposerSendState) {
 }
 
 @Composable
-private fun AttachmentsStrip() {
+private fun AttachmentsStrip(
+    attachments: List<ComposerAttachment>,
+    prefix: String,
+    onRemove: ((ComposerAttachment) -> Unit)?,
+) {
     val colors = RemColors.current
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
     ) {
-        // Cloud browser chip
-        Row(
-            modifier = Modifier
-                .background(colors.backgroundPrimary, CircleShape)
-                .padding(horizontal = RemSpacing.sm, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(RemSpacing.xs),
-        ) {
-            Icon(Icons.Filled.Public, contentDescription = null, tint = colors.brandBlue, modifier = Modifier.size(12.dp))
-            Text(text = "Cloud browser", style = RemTypography.caption1, color = colors.labelPrimary)
-            Icon(Icons.Filled.Close, contentDescription = "Remove", tint = colors.labelTertiary, modifier = Modifier.size(10.dp))
-        }
-        // Image thumbnail with remove affordance
-        Box(contentAlignment = Alignment.TopEnd) {
-            Box(
+        attachments.forEach { attachment ->
+            Row(
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(colors.systemBlue.copy(alpha = 0.35f), RoundedCornerShape(RemRadius.medium)),
-            )
-            Icon(
-                Icons.Filled.Cancel,
-                contentDescription = "Remove image",
-                tint = colors.labelPrimary,
-                modifier = Modifier.size(15.dp),
-            )
+                    .background(colors.backgroundPrimary, RoundedCornerShape(RemRadius.small))
+                    .padding(horizontal = RemSpacing.sm, vertical = RemSpacing.xs)
+                    .testTag("$prefix.attachment.${attachment.id}"),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(RemSpacing.xs),
+            ) {
+                Text(text = attachment.title, style = RemTypography.footnote, color = colors.labelPrimary, maxLines = 1)
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .then(
+                            if (onRemove != null) Modifier
+                                .clickable(role = Role.Button) { onRemove(attachment) }
+                                .testTag("$prefix.removeAttachment.${attachment.id}")
+                            else Modifier,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = if (onRemove != null) "Remove ${attachment.title}" else null,
+                        tint = colors.brandBlue,
+                        modifier = Modifier.size(12.dp),
+                    )
+                }
+            }
         }
     }
 }
