@@ -386,11 +386,7 @@ internal fun CatalogChat() {
     CatalogPage {
         CatalogGroup("Header") {
             val (activityText, status) = ChatFixture.Activities[activity]
-            // The trailing slot holds one action: the in-app call entry replaces More (WS1e).
-            ChatHeader(activity = activityText, status = status, accessibilityPrefix = "chat.header",
-                onOverflow = {}, onCall = if (headerCall) ({}) else null)
-            SegmentedPicker(listOf(false, true), headerCall, { headerCall = it }, { if (it) "Call" else "More" },
-                tag = { "chat.headerTrailing.${if (it) "Call" else "More"}" })
+            ChatHeader(activity = activityText, status = status, accessibilityPrefix = "chat.header")
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ChatFixture.Activities.forEachIndexed { index, (text, _) ->
                     FilterChip(selected = activity == index, onClick = { activity = index }, label = { Text(text) },
@@ -491,6 +487,14 @@ internal fun CatalogChat() {
         CatalogConnectorCardGroup()
         CatalogLoginCardGroup()
         CatalogPermissionCardGroup()
+        // Last on the page so the established groups above keep their geometry. The trailing slot holds
+        // one action: the in-app call entry replaces More (WS1e).
+        CatalogGroup("Header trailing action") {
+            ChatHeader(activity = "Connected", accessibilityPrefix = "catalog.headerTrailing",
+                onOverflow = {}, onCall = if (headerCall) ({}) else null)
+            SegmentedPicker(listOf(false, true), headerCall, { headerCall = it }, { if (it) "Call" else "More" },
+                tag = { "chat.headerTrailing.${if (it) "Call" else "More"}" })
+        }
     }
     reactingTo?.let { target ->
         ModalBottomSheet(onDismissRequest = { reactingTo = null }) {

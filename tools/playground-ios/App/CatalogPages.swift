@@ -276,20 +276,11 @@ struct CatalogChat: View {
     var body: some View {
         CatalogPage(title: "Chat") {
             CatalogGroup(title: "Header") {
-                // The trailing slot holds one action: the in-app call entry replaces More (WS1e).
                 ChatHeader(
                     activity: ChatFixture.activities[activity].text,
                     status: ChatFixture.activities[activity].status,
-                    accessibilityPrefix: "chat.header",
-                    onOverflow: {},
-                    onCall: headerCall ? {} : nil
+                    accessibilityPrefix: "chat.header"
                 )
-                Picker("Trailing action", selection: $headerCall) {
-                    Text("More").tag(false)
-                    Text("Call").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .accessibilityIdentifier("chat.headerTrailing")
                 Picker("Agent activity", selection: $activity) {
                     ForEach(ChatFixture.activities.indices, id: \.self) { index in
                         Text(ChatFixture.activities[index].text).tag(index)
@@ -395,6 +386,22 @@ struct CatalogChat: View {
             CatalogConnectorCardGroup()
             CatalogLoginCardGroup()
             CatalogPermissionCardGroup()
+            // Last on the page so the established groups above keep their geometry. The trailing slot
+            // holds one action: the in-app call entry replaces More (WS1e).
+            CatalogGroup(title: "Header trailing action") {
+                ChatHeader(
+                    activity: "Connected",
+                    accessibilityPrefix: "catalog.headerTrailing",
+                    onOverflow: {},
+                    onCall: headerCall ? {} : nil
+                )
+                Picker("Trailing action", selection: $headerCall) {
+                    Text("More").tag(false)
+                    Text("Call").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("chat.headerTrailing")
+            }
         }
         .sheet(item: $reactingTo) { target in
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
