@@ -63,7 +63,8 @@ final class PlaygroundNavigationUITests: XCTestCase {
         for _ in 0..<8 {
             let visible = visibleScrollRegion(scrollView)
             let target = element.frame
-            if element.exists && visible.contains(target) && element.isHittable { return }
+            // Success falls through to the shared final assertions (keyboard still up, fully visible).
+            if element.exists && visible.contains(target) && element.isHittable { break }
             if let lastMinY, abs(lastMinY - target.minY) < 1 { break }
             lastMinY = target.minY
             let up = target.minY < visible.minY
