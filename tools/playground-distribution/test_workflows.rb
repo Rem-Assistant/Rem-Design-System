@@ -31,6 +31,19 @@ check(checks['permissions'] == {'contents' => 'read'}, 'Checks must remain read-
     end
   end
 end
+names = job['steps'].map { |s| s['name'].to_s }
+# Numeric storage checks run immediately before each heavy or irreversible stage.
+{ 'dependencies' => 'Install frozen checksummed dependencies', 'build' => 'Build and inspect',
+  'sign' => 'Sign iOS', 'upload' => 'Upload directly' }.each do |stage, prefix|
+  index = names.index { |n| n.start_with?(prefix) }
+  check(index && index > 0 && names[index - 1] == "Check runner storage before #{stage}", "Missing storage check before #{stage}")
+  check(job['steps'][index - 1]['run'].include?("storage.py check --path \"$RUNNER_TEMP\"") &&
+        job['steps'][index - 1]['run'].include?("--stage #{stage}"), "Storage check for #{stage} is malformed")
+end
+init = job['steps'].first.fetch('run', '')
+check(init.include?('PLAYGROUND_EPHEMERAL=$RUNNER_TEMP/playground-ephemeral') &&
+      init.include?('GRADLE_USER_HOME=$RUNNER_TEMP/playground-ephemeral/gradle-home'),
+      'Build state must use ephemeral runner paths')
 steps = job['steps'].map { |s| s.fetch('run', '') }.join("\n")
 check(steps.include?('bundle exec fastlane distribute'), 'Store action must use the locked bundle')
 check(!steps.include?('gem install fastlane'), 'Unfrozen dependency install')

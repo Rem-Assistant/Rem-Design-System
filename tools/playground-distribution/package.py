@@ -16,6 +16,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 from gate import require, arguments
+import storage
 
 IOS_ID = 'com.rem.playground.settings'
 ANDROID_ID = 'com.rem.designsystem.demo'
@@ -70,9 +71,19 @@ def validate_profile(profile, certificate_sha1):
     require(re.fullmatch(r'[A-Fa-f0-9-]{36}', profile.get('UUID', '')), 'Invalid profile UUID')
 
 
+def ephemeral_root(root):
+    # Dependency, DerivedData and Gradle state live under the runner's temporary directory, outside the
+    # candidate checkout and the package output, and are removed by the workflow's cleanup step.
+    path = Path(os.environ.get('PLAYGROUND_EPHEMERAL', '')).resolve()
+    require(os.environ.get('PLAYGROUND_EPHEMERAL') and path.is_dir(), 'Missing ephemeral build directory')
+    require(root != path and root not in path.parents, 'Ephemeral build directory must be outside the candidate')
+    return path
+
+
 def build(root, out, platform, sha, number):
     require(not out.exists(), 'Refuse to overwrite build output')
-    require(shutil.disk_usage(out.parent).free >= 5 * 1024**3, 'Need at least 5 GiB free')
+    storage.require_free(out.parent, platform, 'build')
+    scratch = ephemeral_root(root)
     out.mkdir(mode=0o700)
     if platform == 'ios':
         project = root / 'tools/playground-ios/RemSettingsPlayground.xcodeproj'
@@ -80,33 +91,39 @@ def build(root, out, platform, sha, number):
         # Only build number and source stamp vary; no target SDK/resources/dependency patches.
         command(['xcodebuild', '-project', str(project), '-scheme', 'RemSettingsPlayground',
                  '-configuration', 'Release', '-destination', 'generic/platform=iOS',
-                 '-archivePath', str(out / 'Playground.xcarchive'), '-derivedDataPath', str(out / 'DerivedData'),
+                 '-archivePath', str(out / 'Playground.xcarchive'), '-derivedDataPath', str(scratch / 'DerivedData'),
+                 '-clonedSourcePackagesDirPath', str(scratch / 'SourcePackages'),
                  'CODE_SIGNING_ALLOWED=NO', 'CURRENT_PROJECT_VERSION=' + number,
                  'REM_PLAYGROUND_SOURCE_SHA=' + sha, 'archive'])
         apps = list((out / 'Playground.xcarchive/Products/Applications').glob('*.app'))
         require(len(apps) == 1, 'Expected one archived application')
         ios_metadata(plistlib.loads((apps[0] / 'Info.plist').read_bytes()), sha, number)
         toolchain = command(['xcodebuild', '-version']).decode().strip()
+        storage.remove_within(scratch, scratch / 'DerivedData')  # redundant once the archive is verified
     else:
         wrapper = root / 'compose/gradle/wrapper/gradle-wrapper.properties'
         require('gradle-8.14.4-bin.zip' in wrapper.read_text(), 'Unexpected Gradle wrapper')
         init = Path(__file__).with_name('version.init.gradle').resolve()
+        gradle = dict(os.environ, GRADLE_USER_HOME=str(scratch / 'gradle-home'))
         command(['./gradlew', '--no-daemon', '--no-configuration-cache', '-I', str(init),
-                 ':demo:bundleRelease', '-PplaygroundSourceSha=' + sha], cwd=root / 'compose')
+                 ':demo:bundleRelease', '-PplaygroundSourceSha=' + sha], cwd=root / 'compose', env=gradle)
         binary = root / 'compose/demo/build/outputs/bundle/release/demo-release.aab'
         require(binary.is_file(), 'Release AAB missing')
         shutil.copyfile(binary, out / 'Playground.aab')
-        os.environ['REM_VERIFY_AAB'] = str(out / 'Playground.aab')
-        command(['./gradlew', '--no-daemon', '-I', str(init), 'verifyPlaygroundBundle'], cwd=root / 'compose')
-        dumped = command(['./gradlew', '--no-daemon', '-q', '-I', str(init), 'inspectPlaygroundBundle'], cwd=root / 'compose').decode()
+        gradle['REM_VERIFY_AAB'] = str(out / 'Playground.aab')
+        command(['./gradlew', '--no-daemon', '-I', str(init), 'verifyPlaygroundBundle'], cwd=root / 'compose', env=gradle)
+        dumped = command(['./gradlew', '--no-daemon', '-q', '-I', str(init), 'inspectPlaygroundBundle'],
+                         cwd=root / 'compose', env=gradle).decode()
         match = re.search(r'<manifest\b[\s\S]*?</manifest>', dumped)
         require(match, 'No embedded bundle manifest')
         android_metadata(match[0], sha, number)
-        toolchain = command(['./gradlew', '--version'], cwd=root / 'compose').decode().strip()
+        toolchain = command(['./gradlew', '--version'], cwd=root / 'compose', env=gradle).decode().strip()
+        storage.remove_ignored_build_output(root, 'compose/demo/build')  # the AAB was copied and verified
     require(not command(['git', '-C', str(root), 'diff', '--name-only']), 'Build changed tracked source')
     (out / 'packaging.json').write_text(json.dumps({'source_sha': sha, 'platform': platform,
         'build_number': number, 'toolchain': toolchain, 'overrides': ['build_number', 'source_stamp'],
         'signing': 'pending', 'physical_device': 'unverified'}, indent=2))
+    storage.require_budget(out, platform, 'build')
 
 
 def material(name, path):
@@ -117,6 +134,7 @@ def material(name, path):
 
 
 def sign(out, platform, sha, number):
+    storage.require_free(out, platform, 'sign')
     if platform == 'android':
         with tempfile.TemporaryDirectory(dir=out) as tmp:
             key = Path(tmp) / 'upload.p12'
@@ -195,6 +213,10 @@ def sign(out, platform, sha, number):
     receipt = json.loads((out / 'packaging.json').read_text())
     receipt.update(signing='verified', binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest())
     (out / 'packaging.json').write_text(json.dumps(receipt, indent=2))
+    # Upload reads only packaging.json and the signed binary; drop the archive and export copy.
+    for name in ('Playground.xcarchive', 'export'):
+        storage.remove_within(out, out / name)
+    storage.require_budget(out, platform, 'sign')
 
 
 def main():

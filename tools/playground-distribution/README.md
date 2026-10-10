@@ -191,11 +191,43 @@ group, that tester is outside this lane's current scope; do not silently move th
   The trusted init script sets the release code through AGP `finalizeDsl` and uses
   the existing AGP bundletool classpath to inspect the embedded manifest.
 
-The last examined source `90b43871fc4454c4cd72b704345356521610d338` has compatible
+The native-candidate workflow now runs iOS as `ios (N)` shards merged by `ios-evidence`
+into the single `ios-native-<SHA>` receipt. Admission accepts exactly one form: a single
+`ios` job, or contiguous successful shards plus a successful `ios-evidence` job. Run
+`38075668310` at `c23521b43fd6b0dd62e5c8207a45611ac86e4d4f` (69 iOS / 74 Android methods)
+has this shape; the job check, method inventory and receipt fields were checked against it
+offline. Receipt downloads were not re-run from the cloud session, and passing admission is
+schema compatibility only, not release approval.
+
+The earlier examined source `90b43871fc4454c4cd72b704345356521610d338` has compatible
 receipts (run `37965150798`, 57 iOS / 58 Android methods), but **is not an approved
 release candidate**. Paired visual review found unresolved issues, and store-ready
 metadata must be committed/retested. Passing this draft's receipt parser proves
 schema compatibility only.
+
+### Runner storage
+
+Standard hosted runners only; this lane never activates a larger paid runner and never
+raises the repository cache limit. `storage.py` checks free space on `RUNNER_TEMP`
+immediately before each stage and stops safely, deleting nothing, when it is short:
+
+| Stage | iOS minimum free | Android minimum free |
+| --- | --- | --- |
+| dependencies | 2 GiB | 2 GiB |
+| build | 6 GiB | 5 GiB |
+| sign | 2 GiB | 1 GiB |
+| upload | 1 GiB | 1 GiB |
+
+DerivedData, SwiftPM checkouts (`-clonedSourcePackagesDirPath`) and `GRADLE_USER_HOME`
+live under `RUNNER_TEMP/playground-ephemeral`, outside the candidate checkout and the
+package, and nothing is cached between runs. Bounded cleanup removes only named
+intermediates inside their base: DerivedData once the archive is verified, the git-ignored
+`compose/demo/build` once the AAB is copied and verified, and the archive and export copy
+once the signed binary is verified. The package must then fit its output budget (iOS 2 GiB
+after build and 1 GiB after signing, Android 512 MiB). Upload reads only `packaging.json`
+and the signed binary. The final cleanup step removes the package, the ephemeral directory
+and private logs. Thresholds are conservative estimates for this small app; the first
+hosted pilot should record actual free space and sizes before they are tightened.
 
 ## Failure and recovery
 

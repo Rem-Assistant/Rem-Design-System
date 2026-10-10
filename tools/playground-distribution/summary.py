@@ -38,7 +38,7 @@ def main():
     mode, path = sys.argv[1], Path(sys.argv[2])
     if mode == 'cleanup':
         require(path.resolve() == Path(os.environ['RUNNER_TEMP']).resolve(), 'Only clean runner temporary output')
-        for name in ('playground-package', 'playground-store-private.log', 'admission.json'):
+        for name in ('playground-package', 'playground-ephemeral', 'playground-store-private.log', 'admission.json'):
             target = path / name
             if target.is_symlink():
                 target.unlink()

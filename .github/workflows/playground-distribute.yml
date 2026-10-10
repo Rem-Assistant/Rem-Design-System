@@ -106,6 +106,10 @@ jobs:
           echo "PLAYGROUND_OUTPUT=$RUNNER_TEMP/playground-package" >> "$GITHUB_ENV"
           echo "PLAYGROUND_ADMISSION=$RUNNER_TEMP/admission.json" >> "$GITHUB_ENV"
           echo "BUNDLE_PATH=$RUNNER_TEMP/playground-gems" >> "$GITHUB_ENV"
+          # DerivedData, SwiftPM checkouts and Gradle state stay in one ephemeral directory that cleanup removes.
+          echo "PLAYGROUND_EPHEMERAL=$RUNNER_TEMP/playground-ephemeral" >> "$GITHUB_ENV"
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/playground-ephemeral/gradle-home" >> "$GITHUB_ENV"
+          mkdir -m 700 "$RUNNER_TEMP/playground-ephemeral"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.sha }}
@@ -133,17 +137,23 @@ jobs:
         with:
           ruby-version: '3.3.12'
           bundler: '2.6.9'
+      - name: Check runner storage before dependencies
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage dependencies
       - name: Install frozen checksummed dependencies (no credentials present)
         working-directory: control/tools/playground-distribution
         run: |
           bundle install --jobs 4 --retry 2
           bundle check
           git diff --exit-code -- Gemfile.lock
+      - name: Check runner storage before build
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage build
       - name: Build and inspect committed store-ready source (no signing or store credentials)
         run: |
           python3 control/tools/playground-distribution/package.py build --source candidate \
             --out "$PLAYGROUND_OUTPUT" --platform "$PLAYGROUND_PLATFORM" \
             --sha "$PLAYGROUND_SOURCE_SHA" --build "$PLAYGROUND_BUILD_NUMBER"
+      - name: Check runner storage before sign
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage sign
       - name: Sign iOS using existing authorized assets
         if: matrix.platform == 'ios'
         env:
@@ -162,6 +172,8 @@ jobs:
         run: |
           python3 control/tools/playground-distribution/package.py sign --source candidate \
             --out "$PLAYGROUND_OUTPUT" --platform android --sha "$PLAYGROUND_SOURCE_SHA" --build "$PLAYGROUND_BUILD_NUMBER"
+      - name: Check runner storage before upload
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage upload
       - name: Upload directly to existing private store destination
         env:
           PLAYGROUND_ASC_KEY_ID: ${{ secrets.PLAYGROUND_ASC_KEY_ID }}

@@ -13,6 +13,7 @@ import zipfile
 
 import gate
 import package
+import storage
 import summary
 
 SHA = 'a' * 40
@@ -252,3 +253,81 @@ class PackagingTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class StorageTests(unittest.TestCase):
+    def usage(self, free):
+        return lambda path: type('Usage', (), {'free': free})()
+
+    def test_free_space_checked_per_stage_and_fails_closed(self):
+        for platform, stages in storage.MIN_FREE.items():
+            for stage, needed in stages.items():
+                storage.require_free('/', platform, stage, usage=self.usage(needed))
+                with self.subTest(platform=platform, stage=stage), self.assertRaisesRegex(ValueError, 'Stopped safely'):
+                    storage.require_free('/', platform, stage, usage=self.usage(needed - 1))
+        with self.assertRaises(ValueError):
+            storage.require_free('/', 'ios', 'deploy', usage=self.usage(10 ** 15))
+
+    def test_output_budget_counts_files_without_following_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out, outside = Path(tmp) / 'out', Path(tmp) / 'outside.bin'
+            out.mkdir()
+            outside.write_bytes(b'x' * 4096)
+            (out / 'Playground.aab').write_bytes(b'x' * 1000)
+            (out / 'link').symlink_to(outside)
+            self.assertLess(storage.tree_size(out), 1000 + 4096)
+            storage.require_budget(out, 'android', 'sign')
+            with patch.dict(storage.OUTPUT_BUDGET, {'android': {'sign': 999}}), self.assertRaisesRegex(ValueError, 'budget'):
+                storage.require_budget(out, 'android', 'sign')
+
+    def test_cleanup_is_bounded_to_its_base(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base, outside = Path(tmp) / 'base', Path(tmp) / 'keep'
+            (base / 'DerivedData/sub').mkdir(parents=True)
+            outside.mkdir()
+            (outside / 'file').write_text('keep')
+            (base / 'escape').symlink_to(outside)
+            storage.remove_within(base, base / 'DerivedData')
+            self.assertFalse((base / 'DerivedData').exists())
+            storage.remove_within(base, base / 'escape')  # unlinks the link, never its target
+            self.assertTrue((outside / 'file').exists())
+            storage.remove_within(base, base / 'missing')  # absent intermediates are fine
+            for target in (base, Path(tmp) / 'keep', base / '..', base / 'nested/../../keep'):
+                with self.subTest(target=str(target)), self.assertRaises(ValueError):
+                    storage.remove_within(base, target)
+            self.assertTrue((outside / 'file').exists())
+
+    def test_build_output_removal_requires_git_ignored_untracked_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run = lambda *a: __import__('subprocess').run(['git', '-C', tmp, *a], check=True, capture_output=True)
+            run('init', '-q')
+            (root / '.gitignore').write_text('compose/demo/build/\n')
+            (root / 'compose/demo/build/intermediates').mkdir(parents=True)
+            (root / 'compose/demo/src').mkdir(parents=True)
+            (root / 'compose/demo/src/Main.kt').write_text('tracked')
+            run('add', '.gitignore', 'compose/demo/src/Main.kt')
+            with self.assertRaisesRegex(ValueError, 'does not ignore'):
+                storage.remove_ignored_build_output(root, 'compose/demo/src')
+            storage.remove_ignored_build_output(root, 'compose/demo/build')
+            self.assertFalse((root / 'compose/demo/build').exists())
+            self.assertTrue((root / 'compose/demo/src/Main.kt').exists())
+            storage.remove_ignored_build_output(root, 'compose/demo/build')  # already gone
+
+    def test_build_refuses_low_storage_or_missing_ephemeral_paths_before_any_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, out = Path(tmp) / 'candidate', Path(tmp) / 'package'
+            root.mkdir()
+            with patch.object(storage.shutil, 'disk_usage', self.usage(storage.MIN_FREE['ios']['build'] - 1)), \
+                    patch.object(package, 'command') as command, self.assertRaisesRegex(ValueError, 'Insufficient'):
+                package.build(root, out, 'ios', SHA, '5')
+            command.assert_not_called()
+            self.assertFalse(out.exists())
+            for value in ('', str(root / 'inside')):
+                (root / 'inside').mkdir(exist_ok=True)
+                with patch.dict(os.environ, {'PLAYGROUND_EPHEMERAL': value}), \
+                        patch.object(storage.shutil, 'disk_usage', self.usage(10 ** 15)), \
+                        patch.object(package, 'command') as command, self.assertRaisesRegex(ValueError, 'Ephemeral|ephemeral'):
+                    package.build(root, out, 'ios', SHA, '5')
+                command.assert_not_called()
+                self.assertFalse(out.exists())
