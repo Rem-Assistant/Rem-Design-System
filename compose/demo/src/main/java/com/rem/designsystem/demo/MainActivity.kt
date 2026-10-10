@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import com.rem.designsystem.onboarding.*
 import com.rem.designsystem.primitives.*
 import com.rem.designsystem.screens.*
+import com.rem.designsystem.rows.ConnectorProvider
 import com.rem.designsystem.rows.DisclosureChevron
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.rows.ListRow
@@ -287,7 +288,7 @@ private fun LoadingPreview() {
  * recovery. Nothing is scheduled or persisted.
  */
 @Composable
-private fun CheckInStepPreview(failFirstSave: Boolean, progress: OnboardingProgress, onBack: () -> Unit, onContinue: () -> Unit) {
+private fun CheckInStepPreview(failFirstSave: Boolean, progress: OnboardingProgress, onBack: () -> Unit, onContinue: () -> Unit, onSkip: () -> Unit) {
     var checkins by remember { mutableStateOf(checkinDefaultCadence()) }
     var status by remember { mutableStateOf<CheckinStatus>(CheckinStatus.Default) }
     var failedOnce by remember { mutableStateOf(false) }
@@ -318,6 +319,7 @@ private fun CheckInStepPreview(failFirstSave: Boolean, progress: OnboardingProgr
         onRetry = save,
         progress = progress,
         onBack = onBack,
+        onSkip = onSkip,
     )
 }
 
@@ -358,13 +360,15 @@ private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, checkInFailsOn
             OnboardingConnectorsScreen(
                 connectors = catalog.map { (icon, tint, name) ->
                     val isConnected = name in connected
-                    Connector(icon, tint, name, if (isConnected) "Connected" else "Not connected", isConnected) {
+                    Connector(icon, tint, name, if (isConnected) "Connected" else "Not connected", isConnected,
+                        provider = ConnectorProvider.entries.first { it.title == name }) {
                         connected = if (isConnected) connected - name else connected + name
                     }
                 },
                 onContinue = { advance("continue") },
                 onSkip = { advance("skip") },
                 showSeeMore = false,
+                onBack = onBack,
             )
         }
         PlaygroundOnboardingStep.CheckIn -> CheckInStepPreview(
@@ -372,6 +376,7 @@ private fun OnboardingStepPreview(step: PlaygroundOnboardingStep, checkInFailsOn
             progress = scope.progress,
             onBack = onBack,
             onContinue = { advance("continue") },
+            onSkip = { advance("skip") },
         )
         PlaygroundOnboardingStep.Voice -> OnboardingVoiceScreen(
             onBack = onBack,

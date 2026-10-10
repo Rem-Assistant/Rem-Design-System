@@ -138,6 +138,7 @@ fun OnboardingCheckinScreen(
     subtitle: String = CHECKIN_SUBTITLE,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
+    onSkip: (() -> Unit)? = null,
 ) {
     val anyEnabled = periods.any { it.enabled }
     val rowsInteractive = status.rowsInteractive()
@@ -156,6 +157,7 @@ fun OnboardingCheckinScreen(
     OnboardingScaffold(
         modifier = modifier,
         primary = primary,
+        secondary = onSkip?.let { OnboardingAction("Skip", it, style = OnboardingActionStyle.TextAccent, enabled = rowsInteractive) },
         bottomToast = toast,
         // Registry hero: `alarm_on` (pairs with the iOS `clock.badge.checkmark.fill`, FILL 1) — a
         // scheduled, confirmed check-in time — on the brand-blue squircle.
@@ -364,6 +366,7 @@ fun checkinStep(
         onRetry = onRetry,
         progress = scope.progress,
         onBack = scope.onBack,
+        onSkip = scope::skip,
     )
 }
 

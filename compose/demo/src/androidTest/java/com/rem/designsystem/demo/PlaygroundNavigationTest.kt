@@ -1,6 +1,11 @@
 package com.rem.designsystem.demo
 
 import android.graphics.Bitmap
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.toPixelMap
 import android.os.Build
 import android.view.inspector.WindowInspector
 import android.content.ContentValues
@@ -201,6 +206,70 @@ class PlaygroundNavigationTest {
         capture("Catalog-controls-light")
     }
 
+    /** Real touch-down/up verifies visible press feedback and the most recent action receipt. */
+    @Test fun controlsPressFeedbackAndLatestStatus() {
+        openCatalogPage("openControls")
+        val variants = listOf("Rect · Black", "Rect · Blue", "Rect · Secondary", "Rect · Destructive",
+            "Text · Accent", "Text · Destructive", "Pill · Secondary")
+        variants.forEachIndexed { index, title ->
+            val button = compose.onNodeWithText(title).performScrollTo()
+            val resting = button.captureToImage().toPixelMap()
+            button.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(200)
+            val pressed = button.captureToImage().toPixelMap()
+            org.junit.Assert.assertTrue("$title must visibly react while held",
+                (0 until resting.width).any { x -> (0 until resting.height).any { y -> resting[x, y] != pressed[x, y] } })
+            if (index == 1) capture("Build6-controls-blue-held")
+            button.performTouchInput { up() }
+            compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped $title")
+        }
+        compose.onNodeWithText("Disabled").performScrollTo().performTouchInput { click() }
+        compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped Pill · Secondary")
+        capture("Build6-controls-latest-status")
+    }
+
+    @Test fun settingsAndTermsRowsShowNativePressFeedback() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val resolver = instrumentation.targetContext.contentResolver
+        val key = android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+        val original = android.provider.Settings.Global.getString(resolver, key)
+        fun setting(value: String?) {
+            val command = if (value == null) "settings delete global animator_duration_scale"
+                else "settings put global animator_duration_scale $value"
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+            org.junit.Assert.assertEquals(value?.toFloat(), android.provider.Settings.Global.getString(resolver, key)?.toFloat())
+        }
+        fun holdAndCompare(node: SemanticsNodeInteraction, name: String) {
+            val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+            val bounds = node.fetchSemanticsNode().boundsInWindow
+            capture("$name-resting")
+            val resting = automation.takeScreenshot()
+            node.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(200)
+            // Native ripple uses RenderThread time and must be measured in the device framebuffer.
+            android.os.SystemClock.sleep(250)
+            capture(name)
+            val pressed = automation.takeScreenshot()
+            org.junit.Assert.assertTrue("$name must visibly react while held",
+                (bounds.left.toInt() until bounds.right.toInt()).any { x ->
+                    (bounds.top.toInt() until bounds.bottom.toInt()).any { y -> resting.getPixel(x, y) != pressed.getPixel(x, y) } })
+            node.performTouchInput { up() }
+        }
+        try {
+        // CI disables system animations. Native ripple needs normal animator scale for this check.
+        setting("1")
+        compose.onNodeWithTag("openSettings").performClick()
+        holdAndCompare(compose.onNodeWithTag("openAgent"), "Build6-agent-row-held")
+        compose.onNodeWithText("Agent settings").assertExists()
+        compose.onNodeWithTag("back").performClick()
+        compose.onNodeWithTag("back").performClick()
+        openOnboardingStep("openOnboardingConsent")
+        holdAndCompare(compose.onNodeWithText("Terms of Service"), "Build6-terms-row-held")
+        compose.onNodeWithText("Done").assertExists()
+        } finally { setting(original) }
+    }
+
     @Test fun catalogRowsListAndConnectorStates() {
         openCatalogPage("openRows")
         compose.onNodeWithTag("catalog.listRow").performClick()
@@ -278,18 +347,100 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("openOnboardingSignIn").assertExists()
     }
 
-    /** Connectors and Voice offer Skip, which moves the flow on like Continue. Check-in has no Skip
-     *  (it asks for at least one time), so the flow passes it with Continue. */
+    /** Every optional onboarding step can be skipped without submitting its fixture. */
     @Test fun skipAdvancesFromConnectorsToCompletion() {
         openOnboardingStep("openOnboardingConnectors")
         compose.onNodeWithText("Skip").performClick()
         compose.onNodeWithText("When should Rem check in?").assertExists()
-        compose.onNodeWithText("Skip").assertDoesNotExist()
-        compose.onNodeWithText("Continue").performClick()
+        compose.onNodeWithText("Skip").assertIsEnabled().performClick()
         waitForTag("onboardingVoice")
         compose.onNodeWithTag("onboardingVoice.skip").performClick()
         compose.onNodeWithTag("onboarding.complete")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "skip"))
+    }
+
+    @Test fun connectorsVisibleBackReturnsWithoutRelaunch() {
+        openOnboardingStep("openOnboardingConnectors")
+        capture("Build6-connectors-back-and-provider-marks")
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("openOnboardingConnectors").assertIsDisplayed()
+    }
+
+    @Test fun checkInSkipWorksWithAllCadencesOff() {
+        openOnboardingStep("openOnboardingCheckIn")
+        compose.onNode(isToggleable() and hasContentDescription("Morning")).performClick()
+        compose.onNodeWithText("Continue").assertIsNotEnabled()
+        capture("Build6-checkin-all-off-skip")
+        compose.onNodeWithText("Skip").assertIsEnabled().performClick()
+        waitForTag("onboardingVoice")
+        capture("Build6-checkin-skip-landed-voice")
+    }
+
+    /** CI disables animations globally. This one test enables them temporarily, checks pixels,
+     * then checks Remove animations and restores the original setting even on failure. */
+    @Test fun thinkingOutlineChangesOverTime() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val resolver = instrumentation.targetContext.contentResolver
+        val dark = if (compose.activity.intent.hasExtra("settingsDark"))
+            compose.activity.intent.getBooleanExtra("settingsDark", false)
+        else (compose.activity.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val key = android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+        val original = android.provider.Settings.Global.getString(resolver, key)
+        fun setting(value: String?) {
+            val command = if (value == null) "settings delete global animator_duration_scale"
+                else "settings put global animator_duration_scale $value"
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+            val actual = android.provider.Settings.Global.getString(resolver, key)
+            org.junit.Assert.assertEquals("Animator setting must take effect", value?.toFloat(), actual?.toFloat())
+        }
+        fun changed(before: androidx.compose.ui.graphics.PixelMap, after: androidx.compose.ui.graphics.PixelMap) =
+            (0 until before.width).any { x -> (0 until before.height).any { y -> before[x, y] != after[x, y] } }
+        try {
+            setting("1")
+            openCatalogPage("openBrand")
+            compose.onNodeWithTag("catalog.faceThinking").assertIsDisplayed()
+            compose.mainClock.autoAdvance = false
+            compose.onNodeWithTag("catalog.faceThinking").performClick()
+            compose.mainClock.advanceTimeBy(160)
+            val before = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            compose.mainClock.advanceTimeBy(500)
+            val after = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            org.junit.Assert.assertTrue("Thinking must change visible pixels over time", changed(before, after))
+            setting("0")
+            instrumentation.waitForIdleSync()
+            compose.mainClock.advanceTimeBy(32)
+            val reducedBefore = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            compose.mainClock.advanceTimeBy(500)
+            val reducedAfter = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            org.junit.Assert.assertFalse("Remove animations must keep the outline still", changed(reducedBefore, reducedAfter))
+            // The inspection path draws the complete canonical outline. Compare real pixels against
+            // it as well: stillness alone would wrongly accept a blank or partly frozen outline.
+            compose.runOnIdle {
+                compose.activity.setContent {
+                    com.rem.designsystem.tokens.RemTheme(darkTheme = dark) {
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            androidx.compose.ui.platform.LocalInspectionMode provides true) {
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.background(com.rem.designsystem.tokens.RemColors.current.backgroundPrimary)) {
+                                com.rem.designsystem.brand.RemFaceMark(
+                                    mode = com.rem.designsystem.brand.RemFaceMarkMode.Thinking,
+                                    tint = com.rem.designsystem.tokens.RemColors.current.brandBlue,
+                                    modifier = Modifier.testTag("thinking.reference"))
+                            }
+                        }
+                    }
+                }
+            }
+            compose.mainClock.advanceTimeBy(32)
+            val complete = compose.onNodeWithTag("thinking.reference").captureToImage().toPixelMap()
+            org.junit.Assert.assertEquals(complete.width, reducedAfter.width)
+            org.junit.Assert.assertEquals(complete.height, reducedAfter.height)
+            org.junit.Assert.assertFalse("Remove animations must show the complete resting outline", changed(complete, reducedAfter))
+        } finally {
+            setting(original)
+            compose.mainClock.autoAdvance = true
+        }
     }
 
     /** System Back walks the pushed steps in reverse. */
