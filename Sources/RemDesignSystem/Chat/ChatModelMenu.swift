@@ -154,17 +154,23 @@ struct ChatModelTriggerPill: View {
     }
 }
 
-#Preview {
-    let providers = [
+/// Preview fixture. Kept out of the `#Preview` body: a multi-statement body cannot take part in the
+/// macro's overload resolution (View / UIView / UIViewController), which Xcode 15 reports as
+/// "Ambiguous use of 'init(_:traits:body:)'".
+private enum ChatModelMenuPreviewData {
+    static let providers = [
         ChatModelProvider(id: "provider-a", name: "Provider A", models: [
             ChatModelOption(id: "a-fast", name: "Fast model"),
             ChatModelOption(id: "a-deep", name: "Deep model"),
         ]),
     ]
+}
+
+#Preview {
     VStack(spacing: DesignTokens.Spacing.lg) {
-        ChatModelMenu(providers: providers, selection: .automatic, onSelect: { _ in }, onManageModels: {})
-        ChatModelMenu(providers: providers, selection: .model(id: "a-deep"), onSelect: { _ in })
-        ChatModelMenu(providers: providers, selection: .automatic, onSelect: { _ in }).disabled(true)
+        ChatModelMenu(providers: ChatModelMenuPreviewData.providers, selection: .automatic, onSelect: { _ in }, onManageModels: {})
+        ChatModelMenu(providers: ChatModelMenuPreviewData.providers, selection: .model(id: "a-deep"), onSelect: { _ in })
+        ChatModelMenu(providers: ChatModelMenuPreviewData.providers, selection: .automatic, onSelect: { _ in }).disabled(true)
     }
     .padding(DesignTokens.Spacing.lg)
     .background(DesignTokens.Color.backgroundSecondary)
