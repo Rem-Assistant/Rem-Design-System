@@ -71,7 +71,7 @@ sealed interface MessageDelivery {
  * the shipped `ChatMessageViews.swift`:
  *
  * - [MessageRole.User] (outgoing) — a brandBlue rounded bubble, trailing-aligned, labelOnColor text.
- * - [MessageRole.Assistant] (incoming) — unboxed prose, leading-aligned.
+ * - [MessageRole.Assistant] (incoming) — a leading bubble on the secondary background, same geometry as outgoing.
  *
  * Geometry is responsive ([MessageBubbleGeometry]): an outgoing bubble hugs its text up to 320dp and
  * fills when the row is narrower; a failed row reserves 52dp on the right for the outside failure
@@ -302,17 +302,22 @@ private fun IncomingMessage(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(RemSpacing.xs),
     ) {
-        Box(modifier = Modifier.widthIn(max = MessageBubbleGeometry.MaxWidth.dp).fillMaxWidth()) {
+        Box(modifier = Modifier.widthIn(max = MessageBubbleGeometry.MaxWidth.dp)) {
+            // Rem's message is contained in its own bubble (Samuel, 2026-10-10), in the outgoing
+            // bubble's geometry on the secondary background.
             Text(
                 text = text,
                 style = RemTypography.chatMessage,
                 color = colors.labelPrimary,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .background(colors.backgroundSecondary, RoundedCornerShape(MessageBubbleGeometry.CornerRadius.dp))
                     .longPress(longPress)
                     .bubbleCenterLine()
                     .testTag("$prefix.bubble")
-                    .padding(vertical = RemSpacing.xs),
+                    .padding(
+                        horizontal = MessageBubbleGeometry.ContentInsetHorizontal.dp,
+                        vertical = MessageBubbleGeometry.ContentInsetVertical.dp,
+                    ),
             )
             if (reaction != null) {
                 MessageReactionBadge(

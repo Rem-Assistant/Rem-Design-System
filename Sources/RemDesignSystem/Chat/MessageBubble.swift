@@ -7,7 +7,7 @@ import SwiftUI
 /// shipped `Shared/Views/Chat/ChatMessageViews.swift`:
 ///
 /// - `.user` (outgoing) — a `brandBlue` rounded bubble, trailing-aligned, with `labelOnColor` text.
-/// - `.assistant` (incoming) — unboxed text on the surface, leading-aligned, reading as prose.
+/// - `.assistant` (incoming) — a leading bubble on the secondary background, same geometry as outgoing.
 ///
 /// **Geometry is responsive, never a fixed width** (`MessageBubbleGeometry`): an outgoing bubble hugs
 /// its text up to 320pt; when the row is narrower than that, the bubble fills what is left. A failed
@@ -59,8 +59,8 @@ public struct MessageBubble: View {
     fileprivate(set) var longPressLabel = "React"
 
     /// - Parameters:
-    ///   - text: The message body. Plain text; the assistant role reads as prose.
-    ///   - role: `.user` (trailing bubble) or `.assistant` (leading plain text).
+    ///   - text: The message body. Plain text.
+    ///   - role: `.user` (trailing brand-blue bubble) or `.assistant` (leading bubble on the secondary background).
     ///   - meta: Optional metadata (e.g. a timestamp) shown beneath the message in `chatMeta`.
     ///   - delivery: Outgoing delivery state. `.none` by default.
     ///   - reaction: Optional reaction badge, anchored toward the conversation centre.
@@ -187,8 +187,14 @@ public struct MessageBubble: View {
                 .font(DesignTokens.Typography.chatMessage)
                 .foregroundStyle(DesignTokens.Color.labelPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.vertical, DesignTokens.Spacing.xs)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Rem's message is contained in its own bubble (Samuel, 2026-10-10), in the outgoing
+                // bubble's geometry on the secondary background.
+                .padding(.horizontal, MessageBubbleGeometry.contentInsetHorizontal)
+                .padding(.vertical, MessageBubbleGeometry.contentInsetVertical)
+                .background(
+                    DesignTokens.Color.backgroundSecondary,
+                    in: RoundedRectangle(cornerRadius: MessageBubbleGeometry.cornerRadius, style: .continuous)
+                )
                 .alignmentGuide(.messageBubbleCenter) { $0[VerticalAlignment.center] }
                 .modifier(LongPressAction(label: longPressLabel, action: onLongPress))
                 .accessibilityElement(children: .combine)
