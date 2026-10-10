@@ -117,7 +117,9 @@ public struct ChatModelMenu: View {
         .menuStyle(.button)
         .menuIndicator(.hidden)
         .buttonStyle(.plain)
-        .fixedSize()
+        // Vertical only: a host-supplied model name truncates (the pill's lineLimit(1)) instead of
+        // pushing the composer's control row past a narrow screen.
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityLabel("Model, \(Self.triggerLabel(for: selection, providers: providers, automaticLabel: automaticLabel))")
         .accessibilityIdentifier("\(accessibilityPrefix).modelMenu")
     }

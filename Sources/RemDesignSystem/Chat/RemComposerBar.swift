@@ -226,9 +226,10 @@ public struct RemComposerBar: View {
             // to their neighbours (17pt glyph / 32pt circle inside 44), so no extra row spacing is
             // added beside them. Speak keeps its one-line intrinsic width; the Spacer and then the
             // model label give way, so Speak never wraps at a 320pt screen (288pt composer, 264pt row).
+            // contentShape makes the whole 44pt frame tappable under the plain button style.
             HStack(spacing: 0) {
                 if let addAction {
-                    Button(action: addAction) { addGlyph.frame(minWidth: 44, minHeight: 44) }
+                    Button(action: addAction) { addGlyph.frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }
                         .buttonStyle(.plain).accessibilityLabel("Add")
                         .disabled(!inputEnabled)
                         .accessibilityIdentifier("\(accessibilityPrefix).composerAdd")
@@ -238,7 +239,7 @@ public struct RemComposerBar: View {
                 Spacer(minLength: DesignTokens.Spacing.sm)
                 if showsSpeak {
                     if let speakAction {
-                        Button(action: speakAction) { speakPill.frame(minHeight: 44) }
+                        Button(action: speakAction) { speakPill.frame(minHeight: 44).contentShape(Rectangle()) }
                             .buttonStyle(.plain)
                             .accessibilityLabel("Speak")
                             .accessibilityIdentifier("\(accessibilityPrefix).composerSpeak")
@@ -246,7 +247,7 @@ public struct RemComposerBar: View {
                     } else { speakPill }
                 }
                 if isInteractive {
-                    Button(action: performPrimary) { sendButton.frame(minWidth: 44, minHeight: 44) }
+                    Button(action: performPrimary) { sendButton.frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }
                         .buttonStyle(.plain)
                         .disabled(!primaryEnabled)
                         .accessibilityLabel(sendDisplay == .stop ? "Stop" : "Send")

@@ -10,24 +10,29 @@ import RemDesignSystem
 /// `ChatComposition-taskReply-narrow-light` showed Speak wrapping as "Spea" / "k" before the fix.
 ///
 /// Wrapping is detected by height: one-line Speak fits inside the 44pt row, a wrapped pill does not,
-/// so the composer's fitted height at 288pt must equal its height at the canonical 370pt.
+/// so the composer's fitted height at 288pt must equal its height at the canonical 370pt, and its fitted
+/// width must stay within 288pt (a rigid control would otherwise spill out of the composer).
 @MainActor
 final class ComposerNarrowLayoutTests: XCTestCase {
     private static let narrowComposer: CGFloat = 320 - 2 * 16
     private static let canonicalComposer: CGFloat = 402 - 2 * 16
 
-    private func fittedHeight<V: View>(_ view: V, width: CGFloat) -> CGFloat {
-        let host = UIHostingController(rootView: view.environment(\.colorScheme, .light))
-        return host.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height
+    /// Fitted size at the default text size (pinned, so the simulator's setting cannot mask a regression).
+    private func fitted<V: View>(_ view: V, width: CGFloat) -> CGSize {
+        let host = UIHostingController(rootView: view.environment(\.colorScheme, .light).environment(\.dynamicTypeSize, .large))
+        return host.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude))
     }
 
     private func assertOneLineRow<V: View>(_ view: V, _ name: String, file: StaticString = #filePath, line: UInt = #line) {
-        let narrow = fittedHeight(view, width: Self.narrowComposer)
-        let canonical = fittedHeight(view, width: Self.canonicalComposer)
-        XCTAssertGreaterThan(canonical, 0, name, file: file, line: line)
-        XCTAssertEqual(narrow, canonical, accuracy: 0.5,
+        let narrow = fitted(view, width: Self.narrowComposer)
+        let canonical = fitted(view, width: Self.canonicalComposer)
+        XCTAssertGreaterThan(canonical.height, 0, name, file: file, line: line)
+        XCTAssertEqual(narrow.height, canonical.height, accuracy: 0.5,
                        "\(name): the control row grew at 288pt (a control wrapped or was pushed to a new line)",
                        file: file, line: line)
+        // Rigid controls must not spill sideways out of the composer either.
+        XCTAssertLessThanOrEqual(narrow.width, Self.narrowComposer + 0.5,
+                                 "\(name): the control row overflowed the 288pt composer", file: file, line: line)
     }
 
     func testHostDrivenComposerKeepsOneLineControlsAtNarrowWidth() {
