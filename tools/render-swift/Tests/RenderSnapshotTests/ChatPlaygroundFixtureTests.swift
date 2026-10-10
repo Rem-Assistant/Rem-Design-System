@@ -37,11 +37,11 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         fixture.handle(.composer(.draftChanged("Plan my afternoon")))
         fixture.handle(.composer(.send))
         let id = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)!
-        XCTAssertEqual(fixture.message(id)?.delivery, .none)
+        XCTAssertEqual(fixture.message(id)?.delivery, MessageBubble.Delivery.none)
         XCTAssertEqual(fixture.composer.state.primaryAction, .cancel)
         fixture.handle(.composer(.cancel))
         XCTAssertEqual(fixture.composer.state.phase, .idle)
-        XCTAssertEqual(fixture.message(id)?.delivery, .none, "Stop never fabricates a receipt")
+        XCTAssertEqual(fixture.message(id)?.delivery, MessageBubble.Delivery.none, "Stop never fabricates a receipt")
 
         fixture.handle(.composer(.draftChanged("Again")))
         fixture.handle(.composer(.send))
@@ -63,7 +63,7 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         fixture.handle(.composer(.send))
         fixture.simulateReadAcknowledgement()
         let id = ChatTranscriptRules.latestOutgoingID(in: fixture.entries)!
-        XCTAssertEqual(fixture.message(id)?.delivery, .none)
+        XCTAssertEqual(fixture.message(id)?.delivery, MessageBubble.Delivery.none)
     }
 
     func testFailureAndRetryJourney() {
@@ -76,10 +76,10 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertEqual(fixture.message(id)?.canRetry, true)
         XCTAssertEqual(fixture.composer.state.phase, .idle)
         fixture.handle(.transcript(.retry(messageID: id)))
-        XCTAssertEqual(fixture.message(id)?.delivery, .none, "Retry waits for host acceptance")
+        XCTAssertEqual(fixture.message(id)?.delivery, MessageBubble.Delivery.none, "Retry waits for host acceptance")
         XCTAssertEqual(fixture.note, ChatPlaygroundFixture.retryNote)
         fixture.handle(.transcript(.retry(messageID: id)))
-        XCTAssertEqual(fixture.message(id)?.delivery, .none, "Retry is not offered twice")
+        XCTAssertEqual(fixture.message(id)?.delivery, MessageBubble.Delivery.none, "Retry is not offered twice")
     }
 
     func testHeaderAndAddEffects() {

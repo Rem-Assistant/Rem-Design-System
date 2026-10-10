@@ -70,10 +70,10 @@ private enum MockChatAdapter {
     }
 
     static func message(_ message: MockAppMessage) -> ChatMessageDisplay {
-        let delivery = delivery(for: message)
+        let shown = Self.delivery(for: message)
         return ChatMessageDisplay(
             id: message.id, role: message.fromPerson ? .user : .assistant, text: message.body,
-            delivery: delivery, canRetry: delivery == .failed && message.retryable
+            delivery: shown, canRetry: shown == .failed && message.retryable
         )
     }
 
