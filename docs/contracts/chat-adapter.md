@@ -24,7 +24,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 | `ChatHeaderDisplay` | name, agent activity copy, status (connected / needs you), working face, which header controls are shown |
 | `ChatComposerState` | draft, placeholder, model label, attachments, `ComposerAvailability` (`enabled` / `disabled(reason)`), `ComposerPhase` (`idle` / `sending` / `streaming`), `voiceAvailable`, `isFocused` |
 | `ChatMessageDisplay` | id, role, text, meta, **host-supplied** `delivery`, reaction, `canRetry`, optional **host-formatted** `time` (swipe-to-reveal timestamp) |
-| `ChatTranscriptEntry` | `.message` / `.timestamp` (Kotlin: `Message` / `Timestamp`) |
+| `ChatTranscriptEntry` | `.message` / `.timestamp` / `.hostContent(id)` (Kotlin: `Message` / `Timestamp` / `HostContent`). `hostContent` places a host-rendered card in transcript order (a proposal with approve buttons, a tool result, the daily brief); `ChatTranscriptList(hostContent:)` renders it by id. It has no receipt and is never a message. |
 | `ChatReplyContext` | `targetID` (Kotlin `targetId`), title, summary — the task and conversation ids stay in the app |
 | `ChatEmptyState`, `ChatStarter` | empty conversation copy and starters (host lists only what it can do) |
 | `ChatMessageActionsDisplay` | the long-press sheet for one message: the reaction grid (`MessageReaction.sheetChoices`), the current reaction, whether the `+` cell is shown, and the action groups for its role, narrowed to the host's `available` actions |

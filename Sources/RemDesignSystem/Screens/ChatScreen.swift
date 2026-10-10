@@ -221,6 +221,7 @@ public struct ChatEmptyStateView: View {
 public struct ChatTranscriptList: View {
     private let entries: [ChatTranscriptEntry]
     private let onAction: (ChatTranscriptAction) -> Void
+    private let hostContent: (String) -> AnyView
     /// Swipe-to-reveal timestamps (WS1d): one shared offset moves every row together.
     @State private var reveal: CGFloat = ChatTimestampReveal.settled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -228,9 +229,15 @@ public struct ChatTranscriptList: View {
     /// validated against long localized times and large text sizes; not a specified value.
     static let timeColumnWidth: CGFloat = 64
 
-    public init(_ entries: [ChatTranscriptEntry], onAction: @escaping (ChatTranscriptAction) -> Void) {
+    /// `hostContent` renders each `.hostContent(id:)` entry in place; hosts without such entries omit it.
+    public init(
+        _ entries: [ChatTranscriptEntry],
+        onAction: @escaping (ChatTranscriptAction) -> Void,
+        hostContent: @escaping (String) -> AnyView = { _ in AnyView(EmptyView()) }
+    ) {
         self.entries = entries
         self.onAction = onAction
+        self.hostContent = hostContent
     }
 
     public var body: some View {
@@ -244,6 +251,9 @@ public struct ChatTranscriptList: View {
                         .foregroundStyle(DesignTokens.Color.labelSecondary)
                         .frame(maxWidth: .infinity)
                         .accessibilityIdentifier("chat.timestamp.\(id)")
+                case .hostContent(let id):
+                    hostContent(id)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 case .message(let message):
                     MessageBubble(displayed(message, latest: latest), onAction: onAction)
                         .overlay(alignment: Alignment(horizontal: .trailing, vertical: .messageBubbleCenter)) {

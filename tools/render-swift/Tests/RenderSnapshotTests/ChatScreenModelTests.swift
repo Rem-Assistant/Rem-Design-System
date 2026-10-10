@@ -8,6 +8,16 @@ final class ChatScreenModelTests: XCTestCase {
     private let photo = ComposerAttachment(id: "photo.0", title: "Photo 1", kind: .image)
     private let file = ComposerAttachment(id: "file.a", title: "notes.png", kind: .file)
 
+    func testHostContentEntryIsNeverAMessage() {
+        let entries: [ChatTranscriptEntry] = [
+            .message(ChatMessageDisplay(id: "u1", role: .user, text: "Plan my day")),
+            .hostContent(id: "proposal.1"),
+        ]
+        XCTAssertEqual(entries[1].id, "proposal.1")
+        XCTAssertEqual(ChatTranscriptRules.latestOutgoingID(in: entries), "u1",
+                       "A host card after the latest outgoing message never takes its receipt")
+    }
+
     func testEmptyDraftCannotSend() {
         let state = ChatComposerState()
         XCTAssertFalse(state.canSend)

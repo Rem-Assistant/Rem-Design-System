@@ -213,7 +213,13 @@ fun ChatEmptyStateView(state: ChatEmptyState, onStarter: (String) -> Unit, modif
 private val TimeColumnWidth = 64.dp
 
 @Composable
-fun ChatTranscriptList(entries: List<ChatTranscriptEntry>, onAction: (ChatTranscriptAction) -> Unit, modifier: Modifier = Modifier) {
+fun ChatTranscriptList(
+    entries: List<ChatTranscriptEntry>,
+    onAction: (ChatTranscriptAction) -> Unit,
+    modifier: Modifier = Modifier,
+    /** Renders each [ChatTranscriptEntry.HostContent] in place; hosts without such entries omit it. */
+    hostContent: @Composable (id: String) -> Unit = {},
+) {
     val colors = RemColors.current
     val latest = ChatTranscriptRules.latestOutgoingId(entries)
     // Swipe left to reveal timestamps (WS1d): one shared offset moves every row together; the header,
@@ -254,6 +260,7 @@ fun ChatTranscriptList(entries: List<ChatTranscriptEntry>, onAction: (ChatTransc
     ) {
         entries.forEach { entry ->
             when (entry) {
+                is ChatTranscriptEntry.HostContent -> Box(Modifier.fillMaxWidth()) { hostContent(entry.id) }
                 is ChatTranscriptEntry.Timestamp -> Text(
                     entry.text, style = RemTypography.footnote, color = colors.labelSecondary,
                     textAlign = TextAlign.Center,

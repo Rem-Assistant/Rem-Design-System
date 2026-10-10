@@ -33,6 +33,16 @@ class ChatScreenModelTest {
     private val photo = ComposerAttachment("photo.0", "Photo 1", ComposerAttachment.Kind.Image)
     private val file = ComposerAttachment("file.a", "notes.png", ComposerAttachment.Kind.File)
 
+    @Test fun hostContentEntryIsNeverAMessage() {
+        val entries = listOf(
+            ChatTranscriptEntry.Message(ChatMessageDisplay("u1", MessageRole.User, "Plan my day")),
+            ChatTranscriptEntry.HostContent("proposal.1"),
+        )
+        assertEquals("proposal.1", entries[1].id)
+        assertEquals("A host card after the latest outgoing message never takes its receipt",
+            "u1", ChatTranscriptRules.latestOutgoingId(entries))
+    }
+
     @Test fun emptyDraftCannotSend() {
         val state = ChatComposerState()
         assertFalse(state.canSend)

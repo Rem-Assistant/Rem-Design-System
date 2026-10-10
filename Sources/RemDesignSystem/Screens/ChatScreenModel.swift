@@ -398,11 +398,16 @@ public enum ChatTranscriptEntry: Identifiable, Equatable, Sendable {
     case message(ChatMessageDisplay)
     /// A centred, host-formatted time separator (e.g. "Today 3:25 PM").
     case timestamp(id: String, text: String)
+    /// A host-rendered card at this position in the transcript (a proposal with approve buttons, a tool
+    /// result, the daily brief). The DS draws nothing for it; `ChatTranscriptList(hostContent:)` asks the
+    /// host for the view by `id`. It carries no receipt and never counts as a message.
+    case hostContent(id: String)
 
     public var id: String {
         switch self {
         case .message(let message): return message.id
         case .timestamp(let id, _): return id
+        case .hostContent(let id): return id
         }
     }
 }

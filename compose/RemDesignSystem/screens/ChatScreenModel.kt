@@ -309,6 +309,13 @@ sealed interface ChatTranscriptEntry {
 
     /** A centred, host-formatted time separator (e.g. "Today 3:25 PM"). */
     data class Timestamp(override val id: String, val text: String) : ChatTranscriptEntry
+
+    /**
+     * A host-rendered card at this position in the transcript (a proposal with approve buttons, a tool
+     * result, the daily brief). The DS draws nothing for it; [ChatTranscriptList]'s `hostContent` renders
+     * it by [id]. It carries no receipt and never counts as a message.
+     */
+    data class HostContent(override val id: String) : ChatTranscriptEntry
 }
 
 /**
