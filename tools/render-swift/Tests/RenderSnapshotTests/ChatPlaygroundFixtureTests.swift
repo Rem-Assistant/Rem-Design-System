@@ -175,8 +175,23 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertEqual(fixture.handle(.back), .exit)
         XCTAssertEqual(fixture.handle(.overflow), .presentHostControls)
         XCTAssertEqual(fixture.handle(.composer(.add)), .presentAddToChat)
-        XCTAssertNil(fixture.handle(.activityDetails))
-        XCTAssertEqual(fixture.note, ChatPlaygroundFixture.activityNote)
+        let before = fixture
+        XCTAssertEqual(fixture.handle(.activityDetails), .presentActivity, "The header identity opens Agent activity")
+        XCTAssertEqual(fixture, before, "Opening activity changes nothing in the conversation")
+        XCTAssertNil(fixture.note)
+    }
+
+    func testActivityScreenCarriesTheHeadersCurrentState() {
+        var fixture = ChatPlaygroundFixture()
+        XCTAssertEqual(fixture.activity.display.current, AgentActivityCurrent(fixture.header))
+        fixture.handle(.composer(.draftChanged("Plan my afternoon")))
+        fixture.handle(.composer(.send))
+        let current = fixture.activity.display.current
+        XCTAssertEqual(current.activity, "Working on your request", "Opened mid-turn, it shows the live state")
+        XCTAssertTrue(current.isWorking)
+        let task = InboxPlaygroundFixture().route(.open(itemID: "venue-booking"))!
+        XCTAssertEqual(task.activity.display.current.activity, task.header.activity)
+        XCTAssertEqual(task.activity.display.current.status, .needsYou)
     }
 
     func testCallButtonIsAnInAppVoiceEntryThatDialsNothing() {

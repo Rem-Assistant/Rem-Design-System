@@ -24,6 +24,8 @@ public enum ChatPlaygroundEffect: Equatable, Sendable {
     case presentHostControls
     /// Present Add to Chat.
     case presentAddToChat
+    /// Push the Agent activity screen (header identity), built from `ChatPlaygroundFixture.activity`.
+    case presentActivity
 }
 
 public struct ChatPlaygroundFixture: Equatable, Sendable {
@@ -35,7 +37,6 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     /// Illustrative fixture time for simulated host evidence. Not a clock reading.
     public static let fixtureTime = "10:24"
     public static let replyTitle = "Replying to Rem"
-    public static let activityNote = "Agent activity details open in the app."
     public static let callNote = "The app starts an in-app voice session with Rem."
     public static let reactionNote = "The app presents the reaction picker."
     public static let retryNote = "Retry resubmitted; no receipt until the host accepts it."
@@ -108,6 +109,12 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
             : (taskID == nil ? ChatHeaderDisplay(activity: "Connected") : taskState.header())
     }
 
+    /// The Agent activity screen for this conversation: the header's current state (never a timeline
+    /// event) plus the fixture history.
+    public var activity: AgentActivityFixture {
+        AgentActivityFixture(header: header)
+    }
+
     public var emptyState: ChatEmptyState? {
         entries.isEmpty ? ChatEmptyState(message: Self.emptyMessage, starters: Self.starters) : nil
     }
@@ -120,7 +127,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         switch action {
         case .back: return .exit
         case .overflow: return .presentHostControls
-        case .activityDetails: note = Self.activityNote
+        case .activityDetails: return .presentActivity
         case .call: note = Self.callNote
         case .starter(let id):
             guard let starter = Self.starters.first(where: { $0.id == id }) else { return nil }

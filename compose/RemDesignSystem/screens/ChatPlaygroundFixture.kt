@@ -10,8 +10,11 @@ import com.rem.designsystem.chat.MessageRole
 // through the explicitly named simulateHost… controls, at the illustrative [FixtureTime]. Immutable:
 // every operation returns the next fixture.
 
-/** What the page must do in response to a handled action (presentation, not effects). */
-enum class ChatPlaygroundEffect { Exit, PresentHostControls, PresentAddToChat }
+/**
+ * What the page must do in response to a handled action (presentation, not effects). [PresentActivity]
+ * opens the Agent activity screen (header identity), built from [ChatPlaygroundFixture.activity].
+ */
+enum class ChatPlaygroundEffect { Exit, PresentHostControls, PresentAddToChat, PresentActivity }
 
 data class ChatPlaygroundFixture(
     val entries: List<ChatTranscriptEntry> = PopulatedEntries,
@@ -40,6 +43,13 @@ data class ChatPlaygroundFixture(
             else -> taskState.header()
         } // No call entry: it would replace overflow, the Playground's route to its host controls.
 
+    /**
+     * The Agent activity screen for this conversation: the header's current state (never a timeline
+     * event) plus the fixture history.
+     */
+    val activity: AgentActivityFixture
+        get() = AgentActivityFixture.of(header)
+
     val emptyState: ChatEmptyState?
         get() = if (entries.isEmpty()) ChatEmptyState(message = EmptyMessage, starters = Starters) else null
 
@@ -47,7 +57,7 @@ data class ChatPlaygroundFixture(
     fun handle(action: ChatScreenAction): Pair<ChatPlaygroundFixture, ChatPlaygroundEffect?> = when (action) {
         ChatScreenAction.Back -> this to ChatPlaygroundEffect.Exit
         ChatScreenAction.Overflow -> this to ChatPlaygroundEffect.PresentHostControls
-        ChatScreenAction.ActivityDetails -> copy(note = ActivityNote) to null
+        ChatScreenAction.ActivityDetails -> this to ChatPlaygroundEffect.PresentActivity
         ChatScreenAction.Call -> copy(note = CallNote) to null
         is ChatScreenAction.Starter -> {
             val starter = Starters.firstOrNull { it.id == action.id }
@@ -167,7 +177,6 @@ data class ChatPlaygroundFixture(
         /** Illustrative fixture time for simulated host evidence. Not a clock reading. */
         const val FixtureTime = "10:24"
         const val ReplyTitle = "Replying to Rem"
-        const val ActivityNote = "Agent activity details open in the app."
         const val CallNote = "The app starts an in-app voice session with Rem."
         const val ReactionNote = "The app presents the reaction picker."
         const val RetryNote = "Retry resubmitted; no receipt until the host accepts it."

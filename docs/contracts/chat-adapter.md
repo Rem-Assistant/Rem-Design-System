@@ -28,6 +28,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 | `ChatReplyContext` | `targetID` (Kotlin `targetId`), title, summary — the task and conversation ids stay in the app |
 | `ChatEmptyState`, `ChatStarter` | empty conversation copy and starters (host lists only what it can do) |
 | `InboxItemDisplay`, `InboxItemState` | Inbox rows and their host-reported run state: none / loading / executing / needsApproval / blocked / unknown / completed |
+| `AgentActivityDisplay` | the Agent activity screen: `current` (`AgentActivityCurrent` — name, activity, status, working; built from the same `ChatHeaderDisplay`) and `days` (`AgentActivityDay` → `AgentActivityEvent`: action title, outcome, host-formatted time) |
 
 ## Actions
 
@@ -36,6 +37,12 @@ UTC). Component contract: [`chat.md`](chat.md).
 `ChatComposerAction`: `draftChanged`, `send`, `cancel`, `speak`, `add`, `removeAttachment(id)`, `focusChanged`.
 `ChatTranscriptAction`: `retry(messageID)`, `requestReaction(messageID)`, `react(messageID, reaction?)`.
 `InboxAction`: `open(itemID)`.
+
+`activityDetails` (tapping the identity / activity capsule under the Rem face) **routes to the Agent activity
+screen** (`AgentActivityScreen`, Figma master `2002:76914`); Back returns to Chat with the conversation unchanged.
+The host builds `AgentActivityDisplay` and owns the route: iOS pushes the screen on its `NavigationStack` (native
+bar, "‹ Chat" back), Compose shows it with its own top app bar and routes system Back to Chat. The Figma master has
+no prototype reaction; this routing is explicit.
 
 ## Rules the DS applies (presentation only)
 
@@ -52,6 +59,12 @@ UTC). Component contract: [`chat.md`](chat.md).
    **replaces** overflow (never a second icon beside it; in-app voice only, no PSTN). A host that shows the call entry keeps every action it had in overflow reachable through an existing surface it already owns (for example its agent settings or the activity screen). The DS adds no new menu for them. The platform
    navigation bar is hidden by the composition. The empty state has no second face.
 6. **Reply context** is an accessory above the same composer. Dismiss reports the target id only.
+7. **Agent activity** shows the identity with the **current** activity (`AgentActivityDisplay.current`, the same
+   state as the Chat header), an Activity / Approvals segmented control (iOS segmented `Picker`; Compose Material 3
+   `SingleChoiceSegmentedButtonRow`) and the Today / Yesterday timeline. Historical events never overwrite the
+   current state. Rows are not interactive (no verified destination). Approvals has no verified design (`2002:76915`
+   only repeats timeline rows), so it shows a labeled data gap, never invented approvals or an implied "none". The
+   screen is separate from agent settings, card outcomes and voice state.
 
 ## Rules the adapter applies (truth)
 
@@ -68,8 +81,10 @@ The reference adapter `MockChatAdapter` in `ChatAdapterContractTests.swift` / `C
 
 ## Fixtures (presentation-only)
 
-`ChatComposerFixture`, `ChatPlaygroundFixture` and `InboxPlaygroundFixture` drive the Playground exactly as an
-adapter would. A message sent in a fixture carries **no receipt**. Delivered / Read / Not delivered appear only
+`ChatComposerFixture`, `ChatPlaygroundFixture`, `InboxPlaygroundFixture` and `AgentActivityFixture` drive the
+Playground exactly as an adapter would. `ChatPlaygroundFixture` answers `activityDetails` with the
+`presentActivity` effect (Kotlin `PresentActivity`) and exposes `activity`, built from its current header plus
+neutral sample history (the Figma master's sample rows are not reproduced). A message sent in a fixture carries **no receipt**. Delivered / Read / Not delivered appear only
 through the explicitly named `simulateHost…` controls (Playground: header overflow → *Fixture host*), at the
 illustrative `fixtureTime` "10:24". They prove composition and interaction, never runtime behaviour.
 

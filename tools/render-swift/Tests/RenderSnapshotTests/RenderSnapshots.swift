@@ -149,6 +149,15 @@ final class RenderSnapshots: XCTestCase {
         render("InboxStates-light", width: 402, height: 780, dark: false) {
             InboxScreen(items: InboxPlaygroundFixture().items, onAction: { _ in }) { EmptyView() }
         }
+        // Agent activity (`2002:76914`), opened from the Chat header identity; pair with the Compose
+        // `AgentActivity-*` shots. Activity timeline and the labeled Approvals data gap.
+        for tab in AgentActivityTab.allCases {
+            render("AgentActivity-\(tab.rawValue.lowercased())-light", width: 402, height: 874, dark: false) {
+                NavigationStack {
+                    AgentActivityScreen(ChatPlaygroundFixture().activity.display, selection: .constant(tab))
+                }
+            }
+        }
         // Wave 3 screens
         render("TaskDetailScreen-light", width: 402, height: 820, dark: false) { taskDetailScreen() }
         render("SettingsScreen-light", width: 402, height: 820, dark: false) { settingsScreen() }

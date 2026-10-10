@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,8 @@ import com.rem.designsystem.chat.ChatModelMenu
 import com.rem.designsystem.chat.ChatModelSelection
 import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.ThinkingLevel
+import com.rem.designsystem.screens.AgentActivityScreen
+import com.rem.designsystem.screens.AgentActivityTab
 import com.rem.designsystem.screens.ChatPlaygroundEffect
 import com.rem.designsystem.screens.ChatPlaygroundFixture
 import com.rem.designsystem.screens.ChatScreen
@@ -44,7 +47,9 @@ import com.rem.designsystem.tokens.RemTypography
 // Full-screen Chat, task reply and Inbox (Playground 7 candidate) — twin of the iOS
 // `PlaygroundChatScreen` / `PlaygroundInboxScreen`. Canonical compositions driven by the DS
 // `ChatPlaygroundFixture` / `InboxPlaygroundFixture`. The header owns Back and overflow; overflow opens
-// the fixture-host controls, the only source of receipts here. Nothing leaves the page.
+// the fixture-host controls, the only source of receipts here. Nothing leaves the page. The header
+// identity opens Agent activity (`2002:76914`) over the same remembered fixture, so its Back (or system
+// Back) returns to the unchanged conversation.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +59,8 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
     var thinking by remember { mutableStateOf(ThinkingLevel.Medium) }
     var showHostControls by remember { mutableStateOf(false) }
     var showAddToChat by remember { mutableStateOf(false) }
+    var showActivity by remember { mutableStateOf(false) }
+    var activityTab by remember { mutableStateOf(AgentActivityTab.Activity) }
 
     val handle: (ChatScreenAction) -> Unit = { action ->
         val (next, effect) = fixture.handle(action)
@@ -62,6 +69,7 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
             ChatPlaygroundEffect.Exit -> onExit()
             ChatPlaygroundEffect.PresentHostControls -> showHostControls = true
             ChatPlaygroundEffect.PresentAddToChat -> showAddToChat = true
+            ChatPlaygroundEffect.PresentActivity -> { activityTab = AgentActivityTab.Activity; showActivity = true }
             null -> Unit
         }
     }
@@ -84,6 +92,19 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
             fixture = fixture.copy(composer = fixture.composer.attachPickedFiles(uris.map { displayName(context, it) }))
             showAddToChat = false
         }
+    }
+
+    if (showActivity) {
+        // Current state is read from the live Chat header; history never replaces it. This handler is
+        // registered after the Playground's Chat one, so system Back returns to Chat, not the root.
+        BackHandler { showActivity = false }
+        AgentActivityScreen(
+            display = fixture.activity.display,
+            selectedTab = activityTab,
+            onSelectTab = { activityTab = it },
+            onBack = { showActivity = false },
+        )
+        return
     }
 
     ChatScreen(

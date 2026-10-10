@@ -2,6 +2,7 @@ package com.rem.designsystem
 
 import com.rem.designsystem.chat.ChatHeaderStatus
 import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.screens.AgentActivityCurrent
 import com.rem.designsystem.screens.ChatComposerAction
 import com.rem.designsystem.screens.ChatPlaygroundEffect
 import com.rem.designsystem.screens.ChatPlaygroundFixture
@@ -191,9 +192,23 @@ class ChatPlaygroundFixtureTest {
         assertEquals(ChatPlaygroundEffect.Exit, fixture.handle(ChatScreenAction.Back).second)
         assertEquals(ChatPlaygroundEffect.PresentHostControls, fixture.handle(ChatScreenAction.Overflow).second)
         assertEquals(ChatPlaygroundEffect.PresentAddToChat, fixture.handle(ChatScreenAction.Composer(ChatComposerAction.Add)).second)
-        val (noted, effect) = fixture.handle(ChatScreenAction.ActivityDetails)
-        assertNull(effect)
-        assertEquals(ChatPlaygroundFixture.ActivityNote, noted.note)
+        val (opened, effect) = fixture.handle(ChatScreenAction.ActivityDetails)
+        assertEquals("The header identity opens Agent activity", ChatPlaygroundEffect.PresentActivity, effect)
+        assertEquals("Opening activity changes nothing in the conversation", fixture, opened)
+        assertNull(opened.note)
+    }
+
+    @Test fun activityScreenCarriesTheHeadersCurrentState() {
+        var fixture = ChatPlaygroundFixture()
+        assertEquals(AgentActivityCurrent.of(fixture.header), fixture.activity.display.current)
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val current = fixture.activity.display.current
+        assertEquals("Opened mid-turn, it shows the live state", "Working on your request", current.activity)
+        assertTrue(current.isWorking)
+        val task = InboxPlaygroundFixture().route(InboxAction.Open("venue-booking"))!!
+        assertEquals(task.header.activity, task.activity.display.current.activity)
+        assertEquals(ChatHeaderStatus.NeedsYou, task.activity.display.current.status)
     }
 
     @Test fun callButtonIsAnInAppVoiceEntryThatDialsNothing() {

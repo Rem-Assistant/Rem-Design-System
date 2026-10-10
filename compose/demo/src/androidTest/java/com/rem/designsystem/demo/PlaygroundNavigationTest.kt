@@ -830,6 +830,45 @@ class PlaygroundNavigationTest {
         waitForTag("openChatScreen")
     }
 
+    /**
+     * Header identity → Agent activity (`2002:76914`): title, the Activity / Approvals segmented buttons,
+     * the same current state as the Chat header, the timeline, the labeled Approvals data gap, and Back
+     * (app bar and system) to the unchanged conversation.
+     */
+    @Test fun chatHeaderOpensAgentActivityAndBackReturnsToChat() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Connected", substring = true)).performClick()
+
+        waitForTag("agentActivity.title")
+        compose.onNodeWithTag("agentActivity.title").assertTextEquals("Agent activity")
+        compose.onNodeWithTag("agentActivity.tabs").assertIsDisplayed()
+        compose.onNodeWithTag("agentActivity.tab.Activity").assertIsSelected()
+        compose.onNodeWithTag("agentActivity.tab.Approvals").assertIsNotSelected()
+        compose.onNodeWithTag("agentActivity.identity").assert(hasContentDescription("Connected", substring = true))
+        compose.onNodeWithTag("agentActivity.event.reminder").assertExists().assert(hasClickAction().not())
+        compose.onNodeWithTag("chat.header.identity").assertDoesNotExist()
+        capture("AgentActivity-light")
+
+        compose.onNodeWithTag("agentActivity.tab.Approvals").performClick()
+        waitForTag("agentActivity.approvals.gap")
+        compose.onNodeWithTag("agentActivity.tab.Approvals").assertIsSelected()
+        compose.onNodeWithTag("agentActivity.event.reminder").assertDoesNotExist()
+        compose.onNodeWithTag("agentActivity.identity").assert(hasContentDescription("Connected", substring = true))
+        capture("AgentActivity-approvals-light")
+
+        compose.onNodeWithTag("agentActivity.back").performClick()
+        waitForTag("chat.header.identity")
+        compose.onNodeWithTag("message.u2.receipt", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("chat.fixtureNote").assertDoesNotExist()
+
+        compose.onNodeWithTag("chat.header.identity").performClick()
+        waitForTag("agentActivity.title")
+        compose.onNodeWithTag("agentActivity.tab.Activity").assertIsSelected()
+        systemBack()
+        waitForTag("chat.header.identity")
+        compose.onNodeWithTag("openChatScreen").assertDoesNotExist()
+    }
+
     @Test fun inboxStatesRouteIntoTaskReplyAndDismissAccessory() {
         compose.onNodeWithTag("inboxFixture.Items").performScrollTo().performClick()
         compose.onNodeWithTag("openInbox").performScrollTo().performClick()

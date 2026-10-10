@@ -518,6 +518,8 @@ struct CatalogBrand: View {
 /// drive it. The header owns Back (exit) and overflow, which opens the **fixture host** controls — the
 /// stand-ins for host evidence (acceptance, read acknowledgement, failure, reply). Nothing leaves the
 /// page: no message is sent and no receipt exists without one of those explicit fixture controls.
+/// The header identity pushes the Agent activity screen (`2002:76914`); native Back returns here with
+/// the conversation unchanged.
 struct PlaygroundChatScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var fixture: ChatPlaygroundFixture
@@ -528,6 +530,8 @@ struct PlaygroundChatScreen: View {
     @State private var showPhotos = false
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var showFiles = false
+    @State private var showActivity = false
+    @State private var activityTab = AgentActivityTab.activity
 
     init(fixture: ChatPlaygroundFixture) {
         _fixture = State(initialValue: fixture)
@@ -554,6 +558,12 @@ struct PlaygroundChatScreen: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityIdentifier("chat.fixtureNote")
             }
+        }
+        // The hidden bar's title only names Back on the pushed Agent activity screen ("‹ Chat").
+        .navigationTitle(AgentActivityDisplay.backTitle)
+        .navigationDestination(isPresented: $showActivity) {
+            // Current state is read from the live Chat header; history never replaces it.
+            AgentActivityScreen(fixture.activity.display, selection: $activityTab)
         }
         .confirmationDialog("Fixture host", isPresented: $showHostControls, titleVisibility: .visible) {
             Button("Host accepted the message") { fixture.simulateHostAcceptance() }
@@ -609,6 +619,9 @@ struct PlaygroundChatScreen: View {
         case .exit?: dismiss()
         case .presentHostControls?: showHostControls = true
         case .presentAddToChat?: showAddToChat = true
+        case .presentActivity?:
+            activityTab = .activity
+            showActivity = true
         case nil: break
         }
     }

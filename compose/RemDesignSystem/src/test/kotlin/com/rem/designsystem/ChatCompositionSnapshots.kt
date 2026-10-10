@@ -3,6 +3,8 @@ package com.rem.designsystem
 import androidx.compose.runtime.Composable
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
+import com.rem.designsystem.screens.AgentActivityScreen
+import com.rem.designsystem.screens.AgentActivityTab
 import com.rem.designsystem.screens.ChatPlaygroundFixture
 import com.rem.designsystem.screens.ChatScreen
 import com.rem.designsystem.screens.ChatTranscriptList
@@ -53,6 +55,16 @@ class ChatCompositionSnapshots {
     @Test fun inboxStates() = shot("InboxStates-light") {
         RemTheme { InboxScreen(items = InboxPlaygroundFixture().items, onAction = {}) {} }
     }
+
+    /** Agent activity (`2002:76914`), opened from the Chat header; twin of the SwiftUI `AgentActivity-*`. */
+    @Composable
+    private fun Activity(tab: AgentActivityTab) = RemTheme {
+        AgentActivityScreen(display = ChatPlaygroundFixture().activity.display, selectedTab = tab, onSelectTab = {}, onBack = {})
+    }
+
+    @Test fun agentActivity() = shot("AgentActivity-activity-light") { Activity(AgentActivityTab.Activity) }
+
+    @Test fun agentActivityApprovals() = shot("AgentActivity-approvals-light") { Activity(AgentActivityTab.Approvals) }
 }
 
 /** The 320dp-wide stress fixture (not a device safe-area model). */

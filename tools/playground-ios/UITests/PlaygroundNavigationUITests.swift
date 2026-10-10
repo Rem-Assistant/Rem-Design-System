@@ -832,6 +832,38 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["openChatScreen"].waitForExistence(timeout: 3), "Back returns to the root")
     }
 
+    /// Header identity → Agent activity (`2002:76914`): title, the Activity / Approvals segmented control,
+    /// the same current state as the Chat header, the timeline, the labeled Approvals data gap, and Back
+    /// to the unchanged conversation.
+    func testChatHeaderOpensAgentActivityAndBackReturnsToChat() {
+        openChatScreen()
+        let header = element("chat.header.identity")
+        XCTAssertTrue(header.label.contains("Connected"))
+        header.tap()
+
+        let bar = app.navigationBars["Agent activity"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 3), "The header identity opens Agent activity")
+        let tabs = app.segmentedControls["agentActivity.tabs"]
+        XCTAssertTrue(tabs.waitForExistence(timeout: 3))
+        XCTAssertTrue(tabs.buttons["Activity"].isSelected, "Activity is selected first")
+        XCTAssertTrue(tabs.buttons["Approvals"].exists)
+        XCTAssertTrue(element("agentActivity.identity").label.contains("Connected"), "Same current state as the Chat header")
+        XCTAssertTrue(element("agentActivity.event.reminder").exists)
+        XCTAssertFalse(app.buttons["agentActivity.event.reminder"].exists, "Rows have no verified destination")
+        capture("AgentActivity-light")
+
+        tabs.buttons["Approvals"].tap()
+        XCTAssertTrue(element("agentActivity.approvals.gap").waitForExistence(timeout: 3), "Approvals is a labeled data gap")
+        XCTAssertFalse(element("agentActivity.event.reminder").exists, "No timeline rows posing as approvals")
+        XCTAssertTrue(element("agentActivity.identity").label.contains("Connected"), "Switching sections keeps the current state")
+        capture("AgentActivity-approvals-light")
+
+        bar.buttons["Chat"].tap()
+        XCTAssertTrue(app.buttons["chat.header.back"].waitForExistence(timeout: 3), "Back returns to Chat")
+        XCTAssertTrue(element("message.u2.receipt").exists, "The conversation is unchanged")
+        XCTAssertFalse(element("chat.fixtureNote").exists, "Activity opens a screen, not a note")
+    }
+
     func testInboxStatesRouteIntoTaskReplyAndDismissAccessory() {
         chooseRootFixture("inboxFixturePicker", "Items")
         tap("openInbox")
