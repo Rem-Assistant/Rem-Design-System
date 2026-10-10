@@ -120,6 +120,20 @@ import androidx.compose.ui.graphics.Color
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.rem.designsystem.chat.ConnectorCard
+import com.rem.designsystem.chat.ConnectorCardModel
+import com.rem.designsystem.chat.ConnectorCardState
+import com.rem.designsystem.chat.LoginCard
+import com.rem.designsystem.chat.LoginCardModel
+import com.rem.designsystem.chat.LoginCardState
+import com.rem.designsystem.chat.LoginForm
+import com.rem.designsystem.chat.PermissionCard
+import com.rem.designsystem.chat.PermissionCardModel
+import com.rem.designsystem.chat.PermissionCardState
+import com.rem.designsystem.chat.PermissionRequestDetails
+import com.rem.designsystem.rows.ConnectorProvider
 import org.junit.Rule
 import org.junit.Test
 
@@ -862,6 +876,86 @@ class EvidenceSnapshots {
     fun walletScreen() {
         shot("WalletScreen-light") { RemTheme { WalletScreen(providers = walletReferenceProviders(), onBack = {}) } }
         shot("WalletScreen-dark") { RemTheme(darkTheme = true) { WalletScreen(providers = walletReferenceProviders(), onBack = {}) } }
+    }
+
+    // Chat cards — paired with the SwiftUI `ChatConnectorCard-*` / `ChatLoginCard-*` / `ChatLoginForm-*` /
+    // `ChatPermissionCard-*` shots of the same names.
+    @Composable
+    private fun chatCardColumn(content: @Composable () -> Unit) {
+        Column(
+            Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) { content() }
+    }
+
+    @Test
+    fun chatConnectorCard() = shot("ChatConnectorCard-light") {
+        RemTheme {
+            chatCardColumn {
+                listOf(ConnectorCardState.Authorize, ConnectorCardState.Connecting, ConnectorCardState.Added, ConnectorCardState.Error())
+                    .forEach { state ->
+                        ConnectorCard(
+                            ConnectorCardModel(ConnectorProvider.Gmail, "Search, read, draft, and manage email.", state),
+                            onAuthorize = {}, onRetry = {},
+                        )
+                    }
+            }
+        }
+    }
+
+    @Test
+    fun chatLoginCard() = shot("ChatLoginCard-light") {
+        RemTheme {
+            chatCardColumn {
+                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Entry), onAddLogin = {}, onOpenSaved = {})
+                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Saved), onAddLogin = {}, onOpenSaved = {})
+                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Entry), onAddLogin = {}, onOpenSaved = {},
+                    showsChevron = false)
+            }
+        }
+    }
+
+    @Test
+    fun chatLoginForm() = shot("ChatLoginForm-light") {
+        RemTheme {
+            chatCardColumn {
+                LoginForm("github.com", "samuel@example.com", {}, "illustrative", {})
+            }
+        }
+    }
+
+    private fun permissionRequest(state: PermissionCardState) = PermissionCardModel(
+        title = "Reminder permission", question = "Allow Rem to create this reminder?",
+        summary = "One reminder in your Personal list.",
+        details = PermissionRequestDetails("Send investor update", "Oct 10, 2026 · 9:00 AM UTC", "Reminders · Personal"),
+        state = state, alwaysAllowScope = "create reminders in Personal only.",
+    )
+
+    /** One shot per State, each Expanded then Collapsed (together the six Figma variants). */
+    @Test
+    fun chatPermissionCard() {
+        PermissionCardState.entries.forEach { state ->
+            shot("ChatPermissionCard-${state.name.lowercase()}-light") {
+                RemTheme {
+                    chatCardColumn {
+                        listOf(true, false).forEach { expanded ->
+                            PermissionCard(permissionRequest(state), expanded, {}, onAllow = {}, onDeny = {},
+                                onAlwaysAllow = {}, onReviewAgain = {})
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun chatPermissionCardNarrow() = shot("ChatPermissionCard-narrow-light") {
+        RemTheme {
+            Box(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp)) {
+                PermissionCard(permissionRequest(PermissionCardState.Awaiting), true, {}, onAllow = {}, onDeny = {},
+                    onAlwaysAllow = {}, modifier = Modifier.width(288.dp))
+            }
+        }
     }
 
     @Composable

@@ -87,6 +87,18 @@ import com.rem.designsystem.chat.RemComposerBar
 import com.rem.designsystem.chat.ThinkingLevel
 import com.rem.designsystem.chat.VoiceBar
 import com.rem.designsystem.chat.VoiceBarState
+import com.rem.designsystem.chat.ConnectorCard
+import com.rem.designsystem.chat.ConnectorCardModel
+import com.rem.designsystem.chat.ConnectorCardState
+import com.rem.designsystem.chat.LoginCard
+import com.rem.designsystem.chat.LoginCardModel
+import com.rem.designsystem.chat.LoginCardState
+import com.rem.designsystem.chat.LoginForm
+import com.rem.designsystem.chat.PermissionCard
+import com.rem.designsystem.chat.PermissionCardModel
+import com.rem.designsystem.chat.PermissionCardState
+import com.rem.designsystem.chat.PermissionRequestDetails
+import com.rem.designsystem.chat.loginFormCanSave
 import com.rem.designsystem.icons.RemMaterialSymbols
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
@@ -476,6 +488,9 @@ internal fun CatalogChat() {
                 )
             }
         }
+        CatalogConnectorCardGroup()
+        CatalogLoginCardGroup()
+        CatalogPermissionCardGroup()
     }
     reactingTo?.let { target ->
         ModalBottomSheet(onDismissRequest = { reactingTo = null }) {
@@ -509,6 +524,109 @@ internal fun CatalogChat() {
                 onDone = { showAddToChat = false },
                 accessibilityPrefix = "catalog.addToChat",
             )
+        }
+    }
+}
+
+/**
+ * ConnectorCard specimen (twin of the iOS `CatalogConnectorCardGroup`): every state from the picker.
+ * Authorize and Retry move to Connecting only — no successful authorization is simulated.
+ */
+@Composable
+private fun CatalogConnectorCardGroup() {
+    val states = listOf(ConnectorCardState.Authorize, ConnectorCardState.Connecting, ConnectorCardState.Added, ConnectorCardState.Error())
+    val labels = listOf("Authorize", "Connecting", "Added", "Error")
+    var index by rememberSaveable { mutableIntStateOf(0) }
+    CatalogGroup("Connector card") {
+        SegmentedPicker(states.indices.toList(), index, { index = it },
+            { labels[it] }, tag = { "catalog.card.connector.state.${labels[it]}" })
+        ConnectorCard(
+            ConnectorCardModel(ConnectorProvider.Gmail, "Search, read, draft, and manage email.", states[index]),
+            onAuthorize = { index = 1 }, onRetry = { index = 1 },
+            accessibilityPrefix = "catalog.card.connector",
+        )
+    }
+}
+
+/**
+ * LoginCard specimen: Entry opens the native Add login form in a sheet. Fields live only in this page's
+ * state and are cleared on Save or dismiss — nothing is stored or sent; Save only flips the card to Saved.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CatalogLoginCardGroup() {
+    var state by rememberSaveable { mutableStateOf(LoginCardState.Entry) }
+    var showsChevron by rememberSaveable { mutableStateOf(true) }
+    var showForm by rememberSaveable { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var note by rememberSaveable { mutableStateOf<String?>(null) }
+    val closeForm = { showForm = false; username = ""; password = "" }
+    CatalogGroup("Login card") {
+        SegmentedPicker(LoginCardState.entries, state, { state = it }, { it.name }, tag = { "catalog.card.login.state.${it.name}" })
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Chevron on button", style = RemTypography.footnote, color = RemColors.current.labelPrimary, modifier = Modifier.weight(1f))
+            Switch(checked = showsChevron, onCheckedChange = { showsChevron = it }, modifier = Modifier.testTag("catalog.card.login.chevron"))
+        }
+        LoginCard(
+            LoginCardModel("GitHub login details", "github.com", state),
+            onAddLogin = { note = null; showForm = true },
+            onOpenSaved = { note = "Saved login details open in Settings → Cloud browser in the app." },
+            showsChevron = showsChevron,
+            accessibilityPrefix = "catalog.card.login",
+        )
+        note?.let {
+            Text(it, style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("catalog.card.login.note"))
+        }
+    }
+    if (showForm) {
+        ModalBottomSheet(onDismissRequest = closeForm, modifier = Modifier.testTag("catalog.card.login.form")) {
+            Column(Modifier.padding(horizontal = RemSpacing.lg).padding(bottom = RemSpacing.xl), verticalArrangement = Arrangement.spacedBy(RemSpacing.md)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = closeForm, modifier = Modifier.testTag("catalog.card.login.form.cancel")) { Text("Cancel") }
+                    Text("Add login", style = RemTypography.bodyBold, color = RemColors.current.labelPrimary, modifier = Modifier.weight(1f))
+                    TextButton(
+                        onClick = { state = LoginCardState.Saved; closeForm() },
+                        enabled = loginFormCanSave(username, password),
+                        modifier = Modifier.testTag("catalog.card.login.form.save"),
+                    ) { Text("Save") }
+                }
+                LoginForm("github.com", username, { username = it }, password, { password = it },
+                    testTagPrefix = "catalog.card.login.form")
+            }
+        }
+    }
+}
+
+/**
+ * PermissionCard specimen: the inline card expands and collapses in place. Allow once / Deny resolve and
+ * collapse it; Always allow is only a proposal (no grant); Review again returns to Awaiting.
+ */
+@Composable
+private fun CatalogPermissionCardGroup() {
+    var state by rememberSaveable { mutableStateOf(PermissionCardState.Awaiting) }
+    var expanded by rememberSaveable { mutableStateOf(PermissionCardState.Awaiting.defaultExpanded) }
+    var note by rememberSaveable { mutableStateOf<String?>(null) }
+    val resolve = { newState: PermissionCardState -> note = null; state = newState; expanded = newState.defaultExpanded }
+    CatalogGroup("Permission card") {
+        SegmentedPicker(PermissionCardState.entries, state, { resolve(it) }, { it.name }, tag = { "catalog.card.permission.state.${it.name}" })
+        PermissionCard(
+            PermissionCardModel(
+                title = "Reminder permission", question = "Allow Rem to create this reminder?",
+                summary = "One reminder in your Personal list.",
+                details = PermissionRequestDetails("Send investor update", "Oct 10, 2026 · 9:00 AM UTC", "Reminders · Personal"),
+                state = state, alwaysAllowScope = "create reminders in Personal only.",
+            ),
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            onAllow = { resolve(PermissionCardState.Allowed) },
+            onDeny = { resolve(PermissionCardState.Denied) },
+            onAlwaysAllow = { note = "Always allow is a proposal only. No persistent grant exists." },
+            onReviewAgain = { resolve(PermissionCardState.Awaiting) },
+            accessibilityPrefix = "catalog.card.permission",
+        )
+        note?.let {
+            Text(it, style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("catalog.card.permission.note"))
         }
     }
 }

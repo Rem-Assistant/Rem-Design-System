@@ -264,20 +264,8 @@ private struct CloudAddLoginForm: View {
     private var canSave: Bool { CloudBrowserModel.canAddLogin(username: username, password: password) }
 
     var body: some View {
-        List {
-            Section {
-                CloudLabel("Login will be available only for this site.", title: domain)
-            } header: { HStack { Text("Website").textCase(nil) } }.listRowBackground(DesignTokens.Color.backgroundSecondary)
-            Section {
-                CloudLoginField(label: "Username or email", text: $username)
-                    .accessibilityIdentifier("cloudBrowser.addLogin.username")
-                CloudLoginField(label: "Password", text: $password, secure: true)
-                    .accessibilityIdentifier("cloudBrowser.addLogin.password")
-            } header: { HStack { Text("Login details").textCase(nil) } } footer: {
-                Text("Rem uses this login only when you authorize access to \(domain).")
-            }.listRowBackground(DesignTokens.Color.backgroundSecondary)
-        }
-        .cloudListStyle()
+        // The shared native form (also opened from the chat LoginCard); fields bind to this view's state.
+        LoginForm(site: domain, username: $username, password: $password, accessibilityPrefix: "cloudBrowser.addLogin")
         .navigationTitle("Add login")
         .inlineNavTitle()
         .accessibilityIdentifier("cloudBrowser.addLoginForm")
@@ -465,7 +453,7 @@ private struct CloudCookiesView: View {
 
 /// A plain title/subtitle label, reusing the canonical `ListRowLabel`. `title` is the primary 17pt
 /// line; the leading argument is the 13pt secondary line (so call sites read top-to-bottom).
-private struct CloudLabel: View {
+struct CloudLabel: View {
     let subtitle: String
     let title: String
     var tint: Color?
@@ -574,11 +562,19 @@ private struct CloudURLField: View {
 
 /// Add-login rows retain their label when filled; focusing demotes it above the editable value.
 /// Empty forms remain unfocused until the user taps, preserving both authored empty/focus states.
-private struct CloudLoginField: View {
+struct CloudLoginField: View {
     let label: String
     @Binding var text: String
     var secure = false
     @FocusState private var focused: Bool
+
+    // Explicit so the shared chat `LoginForm` can build it: the private focus state would otherwise make
+    // the synthesized memberwise initializer file-private.
+    init(label: String, text: Binding<String>, secure: Bool = false) {
+        self.label = label
+        self._text = text
+        self.secure = secure
+    }
 
     private var showsLabel: Bool { focused || !text.isEmpty }
     private var filledResting: Bool { !focused && !text.isEmpty }
@@ -648,7 +644,7 @@ private struct CloudPermissionRow: View {
 
 // MARK: - Platform helpers (iOS-only modifiers no-op elsewhere)
 
-private extension View {
+extension View {
     @ViewBuilder func cloudListStyle() -> some View {
         #if os(iOS)
         self.listStyle(.insetGrouped).scrollContentBackground(.hidden)

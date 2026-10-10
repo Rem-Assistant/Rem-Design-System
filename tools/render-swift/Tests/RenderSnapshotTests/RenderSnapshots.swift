@@ -221,6 +221,73 @@ final class RenderSnapshots: XCTestCase {
                 nightOn: false
             )
         }
+        // Chat cards (transcript width 370 = 402pt screen − 2×16 gutters). Every state of each card,
+        // paired with the Compose `ChatConnectorCard-*` / `ChatLoginCard-*` / `ChatPermissionCard-*` shots.
+        render("ChatConnectorCard-light", width: 402, height: nil, dark: false) { chatConnectorCards }
+        render("ChatLoginCard-light", width: 402, height: nil, dark: false) { chatLoginCards }
+        render("ChatLoginForm-light", width: 402, height: 874, dark: false) {
+            NavigationStack {
+                LoginForm(site: "github.com", username: .constant("samuel@example.com"), password: .constant("illustrative"))
+                    .navigationTitle("Add login")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        for state in [PermissionCardState.awaiting, .allowed, .denied] {
+            render("ChatPermissionCard-\(state)-light", width: 402, height: nil, dark: false) { chatPermissionCards(state) }
+        }
+        render("ChatPermissionCard-narrow-light", width: 320, height: nil, dark: false) {
+            PermissionCard(Self.permissionRequest(.awaiting), isExpanded: .constant(true),
+                           onAllow: {}, onAlwaysAllow: {}, onDeny: {})
+                .padding(DesignTokens.Spacing.lg)
+                .background(DesignTokens.Color.backgroundPrimary)
+        }
+    }
+
+    // MARK: - Chat cards
+
+    @ViewBuilder private var chatConnectorCards: some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            ForEach([ConnectorCardState.authorize, .connecting, .added, .error()], id: \.self) { state in
+                ConnectorCard(
+                    ConnectorCardModel(provider: .gmail, subtitle: "Search, read, draft, and manage email.", state: state),
+                    onAuthorize: {}, onRetry: {}
+                )
+            }
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatLoginCards: some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), onAddLogin: {}, onOpenSaved: {})
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .saved), onAddLogin: {}, onOpenSaved: {})
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), showsChevron: false,
+                      onAddLogin: {}, onOpenSaved: {})
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    static func permissionRequest(_ state: PermissionCardState) -> PermissionCardModel {
+        PermissionCardModel(
+            title: "Reminder permission", question: "Allow Rem to create this reminder?",
+            summary: "One reminder in your Personal list.",
+            details: PermissionRequestDetails(title: "Send investor update", schedule: "Oct 10, 2026 · 9:00 AM UTC", source: "Reminders · Personal"),
+            alwaysAllowScope: "create reminders in Personal only.", state: state
+        )
+    }
+
+    /// One state, Expanded then Collapsed (the three renders together cover the six Figma variants).
+    private func chatPermissionCards(_ state: PermissionCardState) -> some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            ForEach([true, false], id: \.self) { expanded in
+                PermissionCard(Self.permissionRequest(state), isExpanded: .constant(expanded),
+                               onAllow: {}, onAlwaysAllow: {}, onDeny: {}, onReviewAgain: {})
+            }
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 
     // MARK: - Wave 4 galleries (agent surfaces) + Wallet

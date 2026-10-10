@@ -392,6 +392,9 @@ struct CatalogChat: View {
                     )
                 }
             }
+            CatalogConnectorCardGroup()
+            CatalogLoginCardGroup()
+            CatalogPermissionCardGroup()
         }
         .sheet(item: $reactingTo) { target in
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
@@ -461,6 +464,142 @@ struct CatalogChat: View {
         sent.append(text.isEmpty ? content.map(\.title).joined(separator: ", ") : text)
         draft = ""
         attachments.removeAll { $0.kind != .capability }
+    }
+}
+
+// MARK: - Chat cards
+
+/// ConnectorCard specimen: every state from the picker. Authorize and Retry move to Connecting only —
+/// the catalog never simulates a successful authorization; pick Added to see the verified receipt.
+struct CatalogConnectorCardGroup: View {
+    @State private var state: ConnectorCardState = .authorize
+
+    var body: some View {
+        CatalogGroup(title: "Connector card") {
+            Picker("Connector card state", selection: $state) {
+                Text("Authorize").tag(ConnectorCardState.authorize)
+                Text("Connecting").tag(ConnectorCardState.connecting)
+                Text("Added").tag(ConnectorCardState.added)
+                Text("Error").tag(ConnectorCardState.error())
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("catalog.card.connector.state")
+            ConnectorCard(
+                ConnectorCardModel(provider: .gmail, subtitle: "Search, read, draft, and manage email.", state: state),
+                accessibilityPrefix: "catalog.card.connector",
+                onAuthorize: { state = .connecting },
+                onRetry: { state = .connecting }
+            )
+        }
+    }
+}
+
+/// LoginCard specimen: Entry opens the native Add login form in a sheet. The fields live only in this
+/// page's state and are cleared on Save or Cancel — nothing is stored or sent; Save only flips the card
+/// to its Saved display state.
+struct CatalogLoginCardGroup: View {
+    @State private var state: LoginCardState = .entry
+    @State private var showsChevron = true
+    @State private var showForm = false
+    @State private var username = ""
+    @State private var password = ""
+    @State private var note: String?
+
+    var body: some View {
+        CatalogGroup(title: "Login card") {
+            Picker("Login card state", selection: $state) {
+                Text("Entry").tag(LoginCardState.entry)
+                Text("Saved").tag(LoginCardState.saved)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("catalog.card.login.state")
+            Toggle("Chevron on button", isOn: $showsChevron)
+                .font(DesignTokens.Typography.footnote)
+                .accessibilityIdentifier("catalog.card.login.chevron")
+            LoginCard(
+                LoginCardModel(title: "GitHub login details", site: "github.com", state: state),
+                showsChevron: showsChevron,
+                accessibilityPrefix: "catalog.card.login",
+                onAddLogin: { note = nil; showForm = true },
+                onOpenSaved: { note = "Saved login details open in Settings → Cloud browser in the app." }
+            )
+            if let note {
+                Text(note)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .accessibilityIdentifier("catalog.card.login.note")
+            }
+        }
+        .sheet(isPresented: $showForm, onDismiss: clear) {
+            NavigationStack {
+                LoginForm(site: "github.com", username: $username, password: $password,
+                          accessibilityPrefix: "catalog.card.login.form")
+                    .navigationTitle("Add login")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showForm = false }
+                                .accessibilityIdentifier("catalog.card.login.form.cancel")
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") { state = .saved; showForm = false }
+                                .disabled(!LoginForm.canSave(username: username, password: password))
+                                .accessibilityIdentifier("catalog.card.login.form.save")
+                        }
+                    }
+            }
+            .accessibilityIdentifier("catalog.card.login.form")
+        }
+    }
+
+    private func clear() { username = ""; password = "" }
+}
+
+/// PermissionCard specimen: the inline card expands and collapses in place. Allow once / Deny resolve
+/// and collapse it; Always allow is only a proposal (no grant); Review again returns to Awaiting.
+struct CatalogPermissionCardGroup: View {
+    @State private var state: PermissionCardState = .awaiting
+    @State private var expanded = PermissionCardState.awaiting.defaultExpanded
+    @State private var note: String?
+
+    var body: some View {
+        CatalogGroup(title: "Permission card") {
+            Picker("Permission card state", selection: $state) {
+                Text("Awaiting").tag(PermissionCardState.awaiting)
+                Text("Allowed").tag(PermissionCardState.allowed)
+                Text("Denied").tag(PermissionCardState.denied)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("catalog.card.permission.state")
+            PermissionCard(
+                PermissionCardModel(
+                    title: "Reminder permission", question: "Allow Rem to create this reminder?",
+                    summary: "One reminder in your Personal list.",
+                    details: PermissionRequestDetails(title: "Send investor update", schedule: "Oct 10, 2026 · 9:00 AM UTC",
+                                                      source: "Reminders · Personal"),
+                    alwaysAllowScope: "create reminders in Personal only.", state: state
+                ),
+                isExpanded: $expanded,
+                accessibilityPrefix: "catalog.card.permission",
+                onAllow: { resolve(.allowed) },
+                onAlwaysAllow: { note = "Always allow is a proposal only. No persistent grant exists." },
+                onDeny: { resolve(.denied) },
+                onReviewAgain: { resolve(.awaiting) }
+            )
+            if let note {
+                Text(note)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .accessibilityIdentifier("catalog.card.permission.note")
+            }
+        }
+        .onChange(of: state) { _, newState in expanded = newState.defaultExpanded }
+    }
+
+    private func resolve(_ newState: PermissionCardState) {
+        note = nil
+        state = newState
+        expanded = newState.defaultExpanded
     }
 }
 

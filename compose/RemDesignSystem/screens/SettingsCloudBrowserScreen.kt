@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.chat.LoginForm
 import com.rem.designsystem.rows.DisclosureChevron
 import com.rem.designsystem.rows.ListRowLabel
 import com.rem.designsystem.rows.RemSection
@@ -202,17 +203,9 @@ private fun CloudAddLoginScreen(state: CloudBrowserState, form: CloudLoginDraft,
     CloudScaffold("Add login", onBack = onBack, testTag = "cloudBrowser.addLoginForm",
         saveEnabled = canSave, saveTag = "cloudBrowser.addLogin.save",
         onSave = { if (state.addLogin(siteId, form.username, form.password) != null) onSaved() }) {
-        CloudSection(header = "Website") {
-            CloudValueRow(domain, "Login will be available only for this site.")
-        }
-        CloudSection(header = "Login details",
-            footer = "Rem uses this login only when you authorize access to $domain.") {
-            CloudInputField("Username or email", form.username, { form.username = it }, labelled = true,
-                testTag = "cloudBrowser.addLogin.username")
-            CloudRowDivider()
-            CloudInputField("Password", form.password, { form.password = it }, secure = true, labelled = true,
-                testTag = "cloudBrowser.addLogin.password")
-        }
+        // The shared native form (also opened from the chat LoginCard); fields bind to the draft only.
+        LoginForm(domain, form.username, { form.username = it }, form.password, { form.password = it },
+            testTagPrefix = "cloudBrowser.addLogin")
     }
 }
 
@@ -383,7 +376,7 @@ private fun CloudEditScaffold(
 // MARK: - Sections and rows
 
 @Composable
-private fun CloudSection(
+internal fun CloudSection(
     header: String? = null,
     headerAction: String? = null,
     onHeaderAction: () -> Unit = {},
@@ -416,7 +409,7 @@ private fun CloudSection(
 }
 
 @Composable
-private fun CloudRowDivider() {
+internal fun CloudRowDivider() {
     HorizontalDivider(Modifier.padding(start = RemSpacing.lg), thickness = 0.5.dp,
         color = RemColors.current.separator)
 }
@@ -443,7 +436,7 @@ private fun CloudNavRow(title: String, subtitle: String, onClick: () -> Unit, te
 
 /** A read-only title/value row (e.g. "Session" / "Signed in", "Website" / domain). */
 @Composable
-private fun CloudValueRow(title: String, value: String) {
+internal fun CloudValueRow(title: String, value: String) {
     Box(Modifier.fillMaxWidth().heightIn(min = 60.dp)
         .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)) {
         ListRowLabel(title, value)
@@ -511,7 +504,7 @@ private fun CloudUrlField(label: String, example: String, value: String, onValue
 }
 
 @Composable
-private fun CloudInputField(placeholder: String, value: String, onValueChange: (String) -> Unit,
+internal fun CloudInputField(placeholder: String, value: String, onValueChange: (String) -> Unit,
                             secure: Boolean = false, autofocus: Boolean = false, labelled: Boolean = false,
                             testTag: String) {
     CloudFieldShell(label = null, placeholder = placeholder, value = value, onValueChange = onValueChange,
