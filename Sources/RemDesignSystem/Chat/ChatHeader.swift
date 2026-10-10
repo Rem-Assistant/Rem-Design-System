@@ -93,6 +93,10 @@ public struct ChatHeader: View {
     private var identityStack: some View {
         VStack(spacing: 6) {
             RemFaceMark(mode: faceMode, tint: DesignTokens.Color.brandBlue, size: 48)
+                // A fresh mark per mode: leaving `.thinking` otherwise keeps its repeat-forever outline
+                // draw running (the idle trim target equals the loop's end value, so nothing replaces
+                // it) and the idle face can be caught with no outline.
+                .id(faceMode)
                 .frame(width: 64, height: 64)
                 .background(DesignTokens.Color.backgroundSecondary, in: Circle())
                 .accessibilityHidden(true)
