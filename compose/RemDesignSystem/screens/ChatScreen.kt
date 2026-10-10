@@ -32,6 +32,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import com.rem.designsystem.chat.MessageBubbleCenterLine
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -205,7 +209,7 @@ fun ChatEmptyStateView(state: ChatEmptyState, onStarter: (String) -> Unit, modif
  * timestamps, [MessageBubble]s, and [ChatTranscriptRules] receipt placement (latest outgoing only;
  * failures stay visible). Delivery values are rendered as supplied.
  */
-/** Width of the right-side swipe-to-reveal timestamp column (fits "10:24 AM" at footnote size). For review. */
+/** Right-side swipe-to-reveal time column (fits "10:24 AM" at footnote size). Provisional: to be validated against long localized times and large text; not a specified value. */
 private val TimeColumnWidth = 64.dp
 
 @Composable
@@ -258,23 +262,34 @@ fun ChatTranscriptList(entries: List<ChatTranscriptEntry>, onAction: (ChatTransc
                 is ChatTranscriptEntry.Message -> {
                     val m = entry.message
                     val shown = m.copy(delivery = ChatTranscriptRules.displayedDelivery(m, latest))
-                    Box(Modifier.fillMaxWidth()) {
-                        MessageBubble(message = shown, onAction = onAction)
-                        val time = m.time
-                        if (time != null) {
-                            // Just past the row's trailing edge: off-screen at rest, slides in outside the bubble.
-                            Text(
-                                time, style = RemTypography.footnote, color = colors.labelSecondary,
-                                textAlign = TextAlign.End, maxLines = 1,
-                                modifier = Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .offset(x = TimeColumnWidth)
-                                    .width(TimeColumnWidth)
-                                    .graphicsLayer { alpha = (reveal.value / columnPx).coerceIn(0f, 1f) }
-                                    // Spoken without the gesture: "Sent at 10:24" / "Received at 10:24".
-                                    .semantics { contentDescription = ChatTimestampReveal.accessibilityTime(m) ?: time }
-                                    .testTag("message.${m.id}.time"),
-                            )
+                    val time = m.time
+                    // The time sits just past the row's trailing edge (off-screen at rest, slides in outside the
+                    // bubble), centred on the bubble itself rather than on the bubble plus its receipt.
+                    Layout(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = {
+                            MessageBubble(message = shown, onAction = onAction)
+                            if (time != null) {
+                                Text(
+                                    time, style = RemTypography.footnote, color = colors.labelSecondary,
+                                    textAlign = TextAlign.End, maxLines = 1,
+                                    modifier = Modifier
+                                        .graphicsLayer { alpha = (reveal.value / columnPx).coerceIn(0f, 1f) }
+                                        // Spoken without the gesture: "Sent at 10:24" / "Received at 10:24".
+                                        .semantics { contentDescription = ChatTimestampReveal.accessibilityTime(m) ?: time }
+                                        .testTag("message.${m.id}.time"),
+                                )
+                            }
+                        },
+                    ) { measurables, constraints ->
+                        val row = measurables[0].measure(constraints)
+                        val timeText = measurables.getOrNull(1)?.measure(Constraints.fixedWidth(columnPx.roundToInt()))
+                        layout(row.width, row.height) {
+                            row.place(0, 0)
+                            if (timeText != null) {
+                                val centre = row[MessageBubbleCenterLine].takeIf { it != AlignmentLine.Unspecified } ?: (row.height / 2)
+                                timeText.place(row.width, centre - timeText.height / 2)
+                            }
                         }
                     }
                 }

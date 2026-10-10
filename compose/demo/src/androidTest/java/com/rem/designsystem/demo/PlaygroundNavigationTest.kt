@@ -29,6 +29,8 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import org.hamcrest.Matcher
+import androidx.compose.ui.geometry.Offset
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
@@ -683,6 +685,19 @@ class PlaygroundNavigationTest {
         waitForTag(tag)
         compose.onNodeWithTag(tag).performClick()
         compose.waitForIdle()
+    }
+
+    /** WS1d: a left swipe is a temporary peek; after release every row returns to its resting position. */
+    @Test fun chatSwipeLeftPeeksTimesAndSnapsBack() {
+        openChatScreen()
+        compose.onNodeWithTag("message.a1.time", useUnmergedTree = true).assertContentDescriptionEquals("Received at 10:21")
+        val bubble = compose.onNodeWithTag("message.a1.bubble", useUnmergedTree = true)
+        val rest = bubble.getUnclippedBoundsInRoot().left
+        bubble.performTouchInput { down(center); moveBy(Offset(-40f, 0f)); moveBy(Offset(-120f, 0f)) }
+        compose.waitForIdle()
+        assertTrue("Rows move left while held", bubble.getUnclippedBoundsInRoot().left < rest)
+        bubble.performTouchInput { up() }
+        compose.waitUntil(3_000) { bubble.getUnclippedBoundsInRoot().left == rest }
     }
 
     @Test fun chatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {

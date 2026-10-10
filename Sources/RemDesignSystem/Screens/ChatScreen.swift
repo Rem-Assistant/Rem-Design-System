@@ -224,7 +224,8 @@ public struct ChatTranscriptList: View {
     /// Swipe-to-reveal timestamps (WS1d): one shared offset moves every row together.
     @State private var reveal: CGFloat = ChatTimestampReveal.settled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Width of the right-side timestamp column (fits "10:24 AM" at footnote size). For review.
+    /// Width of the right-side timestamp column (fits "10:24 AM" at footnote size). Provisional: to be
+    /// validated against long localized times and large text sizes; not a specified value.
     static let timeColumnWidth: CGFloat = 64
 
     public init(_ entries: [ChatTranscriptEntry], onAction: @escaping (ChatTranscriptAction) -> Void) {
@@ -245,7 +246,9 @@ public struct ChatTranscriptList: View {
                         .accessibilityIdentifier("chat.timestamp.\(id)")
                 case .message(let message):
                     MessageBubble(displayed(message, latest: latest), onAction: onAction)
-                        .overlay(alignment: .trailing) { timeColumn(message) }
+                        .overlay(alignment: Alignment(horizontal: .trailing, vertical: .messageBubbleCenter)) {
+                            timeColumn(message)
+                        }
                 }
             }
         }

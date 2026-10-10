@@ -222,8 +222,10 @@ internal fun CatalogAgenda() {
         CatalogGroup("Date navigation") {
             DateNavigationHeader(dateText = dateText, onPrevious = { dayOffset -= 1 }, onNext = { dayOffset += 1 })
         }
+        // The row specimen stands alone (dashed outline, 4dp apart), as in region frame 2336:19714:
+        // no catalog card around it.
         CatalogGroup("Suggestion rows") {
-            Card {
+            Column(verticalArrangement = Arrangement.spacedBy(RemSpacing.xs)) {
                 catalogSuggestions.forEach { item ->
                     val outcome = resolved[item.id]
                     if (outcome != null) {

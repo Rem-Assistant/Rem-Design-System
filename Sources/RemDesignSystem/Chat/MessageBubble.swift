@@ -185,6 +185,7 @@ public struct MessageBubble: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, DesignTokens.Spacing.xs)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .alignmentGuide(.messageBubbleCenter) { $0[VerticalAlignment.center] }
                 .modifier(LongPressAction(action: onLongPress))
                 .accessibilityElement(children: .combine)
                 .modifier(AccessibilityTimeValue(time: accessibilityTime))
@@ -290,6 +291,16 @@ public enum MessageBubbleGeometry {
 
 /// Places the outgoing bubble (and, when failed, the outside failure control) using
 /// `MessageBubbleGeometry`. The row fills the proposed width; the bubble hugs or fills inside it.
+public extension VerticalAlignment {
+    private enum MessageBubbleCenter: AlignmentID {
+        static func defaultValue(in dimensions: ViewDimensions) -> CGFloat { dimensions[VerticalAlignment.center] }
+    }
+
+    /// Vertical centre of the bubble itself, excluding its receipt and meta line. Content placed beside a
+    /// message (the swipe-to-reveal time) aligns to this, so a Delivered / Read receipt never shifts it.
+    static let messageBubbleCenter = VerticalAlignment(MessageBubbleCenter.self)
+}
+
 struct MessageBubbleRowLayout: Layout {
     let failed: Bool
 
@@ -308,6 +319,13 @@ struct MessageBubbleRowLayout: Layout {
         let size = bubbleSize(bubble, available: available)
         let height = failed ? max(size.height, MessageBubbleGeometry.failureControl) : size.height
         return CGSize(width: available, height: height)
+    }
+
+    /// The bubble's own centre (it sits at the bottom; a failure control can make the row taller).
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout ()) -> CGFloat? {
+        guard guide == .messageBubbleCenter, let bubble = subviews.first else { return nil }
+        return bounds.maxY - bubbleSize(bubble, available: bounds.width).height / 2
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {

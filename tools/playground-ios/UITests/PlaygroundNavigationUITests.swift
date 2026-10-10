@@ -717,6 +717,19 @@ final class PlaygroundNavigationUITests: XCTestCase {
         control.tap()
     }
 
+    /// WS1d: a left swipe is a temporary peek. After release every row returns to its resting position.
+    /// The time itself is hidden from accessibility and spoken through the bubble instead.
+    func testChatSwipeLeftPeeksTimesAndSnapsBack() {
+        openChatScreen()
+        let bubble = element("message.a1.bubble")
+        XCTAssertTrue(bubble.waitForExistence(timeout: 3))
+        XCTAssertEqual(bubble.value as? String, "Received at 10:21", "The time is spoken without the gesture")
+        let rest = bubble.frame.minX
+        bubble.swipeLeft()
+        let settled = expectation(for: NSPredicate { _, _ in abs(bubble.frame.minX - rest) < 1 }, evaluatedWith: nil)
+        wait(for: [settled], timeout: 3)
+    }
+
     func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
         XCTAssertTrue(app.buttons["chat.header.overflow"].exists, "The header owns overflow")

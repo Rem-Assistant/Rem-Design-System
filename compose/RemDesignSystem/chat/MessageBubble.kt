@@ -26,7 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -164,6 +166,7 @@ private fun OutgoingMessage(
                             .fillMaxWidth()
                             .background(colors.brandBlue, RoundedCornerShape(MessageBubbleGeometry.CornerRadius.dp))
                             .longPress(onLongPress)
+                            .bubbleCenterLine()
                             .testTag("$prefix.bubble")
                             .padding(
                                 horizontal = MessageBubbleGeometry.ContentInsetHorizontal.dp,
@@ -287,6 +290,7 @@ private fun IncomingMessage(
                 modifier = Modifier
                     .fillMaxWidth()
                     .longPress(onLongPress)
+                    .bubbleCenterLine()
                     .testTag("$prefix.bubble")
                     .padding(vertical = RemSpacing.xs),
             )
@@ -365,5 +369,18 @@ private fun MessageBubblePreview() {
             MessageBubble("Thanks, that works.", role = MessageRole.User, delivery = MessageDelivery.Read("10:24"))
             MessageBubble("Also share the agenda with the group.", role = MessageRole.User, delivery = MessageDelivery.Failed, onRetry = {})
         }
+    }
+}
+
+/**
+ * Vertical centre of the bubble itself, excluding its receipt and meta line. Content placed beside a
+ * message (the swipe-to-reveal time) aligns to this, so a Delivered / Read receipt never shifts it.
+ */
+val MessageBubbleCenterLine = HorizontalAlignmentLine(::min)
+
+private fun Modifier.bubbleCenterLine() = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(placeable.width, placeable.height, mapOf(MessageBubbleCenterLine to placeable.height / 2)) {
+        placeable.place(0, 0)
     }
 }
