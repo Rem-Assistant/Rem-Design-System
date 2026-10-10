@@ -152,4 +152,36 @@ final class ChatScreenModelTests: XCTestCase {
                        "Received at 10:25")
         XCTAssertNil(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id: "x", role: .user, text: "Hi")))
     }
+
+    // MARK: Long-press message actions (`2603:19498`)
+
+    func testAssistantMessageSheetMatchesTheReferenceGroups() {
+        let sheet = ChatMessageActionsDisplay(message: ChatMessageDisplay(id: "a1", role: .assistant, text: "Hi", reaction: .heart))
+        XCTAssertEqual(sheet.messageID, "a1")
+        XCTAssertEqual(sheet.groups, [[.reply, .markUnread], [.copy, .selectText], [.report]])
+        XCTAssertEqual(sheet.selection, .heart, "The current reaction is the picker's selection")
+        XCTAssertEqual(sheet.reactions.count, 11, "2 × 6 grid: eleven reactions and the + cell")
+        XCTAssertEqual(Array(sheet.reactions.prefix(6)), MessageReaction.standardChoices)
+        XCTAssertTrue(sheet.showsMoreReactions)
+    }
+
+    func testOwnMessagesNeverOfferReportOrMarkAsUnread() {
+        let sheet = ChatMessageActionsDisplay(message: ChatMessageDisplay(id: "u1", role: .user, text: "Hi"))
+        XCTAssertEqual(sheet.groups, [[.reply], [.copy, .selectText]])
+        XCTAssertFalse(sheet.groups.joined().contains(.report))
+    }
+
+    func testUnavailableActionsAreHiddenAndEmptyGroupsDisappear() {
+        let groups = ChatMessageActionsDisplay.groups(for: .assistant, available: [.copy, .report])
+        XCTAssertEqual(groups, [[.copy], [.report]])
+        XCTAssertEqual(ChatMessageActionsDisplay.groups(for: .user, available: [.report]), [], "Report never reaches own messages")
+    }
+
+    func testMessageActionTitlesAndSymbolsFollowTheReference() {
+        XCTAssertEqual(ChatMessageAction.allCases.map(\.title), ["Reply", "Mark as unread", "Copy", "Select Text", "Report"])
+        XCTAssertEqual(ChatMessageAction.allCases.map(\.rawValue), ["reply", "markUnread", "copy", "selectText", "report"],
+                       "Identifier segments match the Compose keys")
+        XCTAssertEqual(ChatMessageAction.allCases.map(\.systemImage),
+                       ["arrowshape.turn.up.left", "message", "doc.on.doc", "selection.pin.in.out", "flag.fill"])
+    }
 }

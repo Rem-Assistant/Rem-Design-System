@@ -2,8 +2,11 @@ package com.rem.designsystem
 
 import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.chat.MessageReaction
 import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.screens.ChatComposerAction
+import com.rem.designsystem.screens.ChatMessageAction
+import com.rem.designsystem.screens.ChatMessageActionsDisplay
 import com.rem.designsystem.screens.ChatComposerState
 import com.rem.designsystem.screens.ChatEmptyState
 import com.rem.designsystem.screens.ChatHeaderDisplay
@@ -172,5 +175,49 @@ class ChatScreenModelTest {
         assertEquals("Received at 10:25", ChatTimestampReveal.accessibilityTime(
             ChatMessageDisplay(id = "a", role = MessageRole.Assistant, text = "Hi", time = "10:25")))
         assertNull(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id = "x", role = MessageRole.User, text = "Hi")))
+    }
+
+    // Long-press message actions (`2603:19498`).
+
+    @Test fun assistantMessageSheetMatchesTheReferenceGroups() {
+        val sheet = ChatMessageActionsDisplay(
+            ChatMessageDisplay(id = "a1", role = MessageRole.Assistant, text = "Hi", reaction = MessageReaction.Heart),
+        )
+        assertEquals("a1", sheet.messageId)
+        assertEquals(
+            listOf(
+                listOf(ChatMessageAction.Reply, ChatMessageAction.MarkUnread),
+                listOf(ChatMessageAction.Copy, ChatMessageAction.SelectText),
+                listOf(ChatMessageAction.Report),
+            ),
+            sheet.groups,
+        )
+        assertEquals("The current reaction is the picker's selection", MessageReaction.Heart, sheet.selection)
+        assertEquals("2 × 6 grid: eleven reactions and the + cell", 11, sheet.reactions.size)
+        assertEquals(MessageReaction.StandardChoices, sheet.reactions.take(6))
+        assertTrue(sheet.showsMoreReactions)
+    }
+
+    @Test fun ownMessagesNeverOfferReportOrMarkAsUnread() {
+        val sheet = ChatMessageActionsDisplay(ChatMessageDisplay(id = "u1", role = MessageRole.User, text = "Hi"))
+        assertEquals(listOf(listOf(ChatMessageAction.Reply), listOf(ChatMessageAction.Copy, ChatMessageAction.SelectText)), sheet.groups)
+        assertFalse(sheet.groups.flatten().contains(ChatMessageAction.Report))
+    }
+
+    @Test fun unavailableActionsAreHiddenAndEmptyGroupsDisappear() {
+        assertEquals(
+            listOf(listOf(ChatMessageAction.Copy), listOf(ChatMessageAction.Report)),
+            ChatMessageActionsDisplay.groups(MessageRole.Assistant, setOf(ChatMessageAction.Copy, ChatMessageAction.Report)),
+        )
+        assertEquals(
+            "Report never reaches own messages",
+            emptyList<List<ChatMessageAction>>(),
+            ChatMessageActionsDisplay.groups(MessageRole.User, setOf(ChatMessageAction.Report)),
+        )
+    }
+
+    @Test fun messageActionTitlesAndKeysFollowTheReference() {
+        assertEquals(listOf("Reply", "Mark as unread", "Copy", "Select Text", "Report"), ChatMessageAction.entries.map { it.title })
+        assertEquals(listOf("reply", "markUnread", "copy", "selectText", "report"), ChatMessageAction.entries.map { it.key })
     }
 }

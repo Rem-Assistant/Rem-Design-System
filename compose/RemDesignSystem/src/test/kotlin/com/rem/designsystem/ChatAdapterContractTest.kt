@@ -6,6 +6,7 @@ import com.rem.designsystem.chat.MessageReaction
 import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.screens.ChatComposerAction
 import com.rem.designsystem.screens.ChatComposerState
+import com.rem.designsystem.screens.ChatMessageAction
 import com.rem.designsystem.screens.ChatMessageDisplay
 import com.rem.designsystem.screens.ChatTranscriptAction
 import com.rem.designsystem.screens.ComposerAvailability
@@ -56,8 +57,14 @@ private sealed interface MockAppOperation {
     data class RemoveAttachment(val id: String) : MockAppOperation
     data class SetComposerFocus(val focused: Boolean) : MockAppOperation
     data class Retry(val id: String) : MockAppOperation
-    data class PresentReactionPicker(val id: String) : MockAppOperation
+    data class PresentMessageActions(val id: String) : MockAppOperation
     data class SetReaction(val id: String, val emoji: String?) : MockAppOperation
+    data class PresentEmojiPicker(val id: String) : MockAppOperation
+    data class SetReplyTarget(val id: String) : MockAppOperation
+    data class MarkUnread(val id: String) : MockAppOperation
+    data class CopyText(val id: String) : MockAppOperation
+    data class PresentTextSelection(val id: String) : MockAppOperation
+    data class PresentReport(val id: String) : MockAppOperation
 }
 
 private object MockChatAdapter {
@@ -113,8 +120,16 @@ private object MockChatAdapter {
 
     fun operation(action: ChatTranscriptAction): MockAppOperation = when (action) {
         is ChatTranscriptAction.Retry -> MockAppOperation.Retry(action.messageId)
-        is ChatTranscriptAction.RequestReaction -> MockAppOperation.PresentReactionPicker(action.messageId)
+        is ChatTranscriptAction.RequestActions -> MockAppOperation.PresentMessageActions(action.messageId)
         is ChatTranscriptAction.React -> MockAppOperation.SetReaction(action.messageId, action.reaction?.emoji)
+        is ChatTranscriptAction.RequestMoreReactions -> MockAppOperation.PresentEmojiPicker(action.messageId)
+        is ChatTranscriptAction.MessageAction -> when (action.action) {
+            ChatMessageAction.Reply -> MockAppOperation.SetReplyTarget(action.messageId)
+            ChatMessageAction.MarkUnread -> MockAppOperation.MarkUnread(action.messageId)
+            ChatMessageAction.Copy -> MockAppOperation.CopyText(action.messageId)
+            ChatMessageAction.SelectText -> MockAppOperation.PresentTextSelection(action.messageId)
+            ChatMessageAction.Report -> MockAppOperation.PresentReport(action.messageId)
+        }
     }
 }
 
@@ -197,8 +212,22 @@ class ChatAdapterContractTest {
 
     @Test fun transcriptActionsRouteToAppOperations() {
         assertEquals(MockAppOperation.Retry("m1"), MockChatAdapter.operation(ChatTranscriptAction.Retry("m1")))
-        assertEquals(MockAppOperation.PresentReactionPicker("m1"), MockChatAdapter.operation(ChatTranscriptAction.RequestReaction("m1")))
+        assertEquals(MockAppOperation.PresentMessageActions("m1"), MockChatAdapter.operation(ChatTranscriptAction.RequestActions("m1")))
         assertEquals(MockAppOperation.SetReaction("m1", "❤️"), MockChatAdapter.operation(ChatTranscriptAction.React("m1", MessageReaction.Heart)))
         assertEquals(MockAppOperation.SetReaction("m1", null), MockChatAdapter.operation(ChatTranscriptAction.React("m1", null)))
+        assertEquals(MockAppOperation.PresentEmojiPicker("m1"), MockChatAdapter.operation(ChatTranscriptAction.RequestMoreReactions("m1")))
+    }
+
+    @Test fun messageSheetActionsRouteToAppOperations() {
+        val expected = mapOf(
+            ChatMessageAction.Reply to MockAppOperation.SetReplyTarget("a1"),
+            ChatMessageAction.MarkUnread to MockAppOperation.MarkUnread("a1"),
+            ChatMessageAction.Copy to MockAppOperation.CopyText("a1"),
+            ChatMessageAction.SelectText to MockAppOperation.PresentTextSelection("a1"),
+            ChatMessageAction.Report to MockAppOperation.PresentReport("a1"),
+        )
+        for (action in ChatMessageAction.entries) {
+            assertEquals(expected[action], MockChatAdapter.operation(ChatTranscriptAction.MessageAction("a1", action)))
+        }
     }
 }

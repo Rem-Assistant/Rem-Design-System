@@ -14,7 +14,14 @@ import com.rem.designsystem.chat.MessageRole
  * What the page must do in response to a handled action (presentation, not effects). [PresentActivity]
  * opens the Agent activity screen (header identity), built from [ChatPlaygroundFixture.activity].
  */
-enum class ChatPlaygroundEffect { Exit, PresentHostControls, PresentAddToChat, PresentActivity }
+sealed interface ChatPlaygroundEffect {
+    data object Exit : ChatPlaygroundEffect
+    data object PresentHostControls : ChatPlaygroundEffect
+    data object PresentAddToChat : ChatPlaygroundEffect
+    data object PresentActivity : ChatPlaygroundEffect
+    /** Present [MessageActionSheet] for a long-pressed message. Any action from the sheet dismisses it. */
+    data class PresentMessageActions(val display: ChatMessageActionsDisplay) : ChatPlaygroundEffect
+}
 
 data class ChatPlaygroundFixture(
     val entries: List<ChatTranscriptEntry> = PopulatedEntries,
@@ -74,7 +81,11 @@ data class ChatPlaygroundFixture(
             }
             else -> copy(composer = composer.apply(action.action)) to null
         }
-        is ChatScreenAction.Transcript -> handle(action.action) to null
+        is ChatScreenAction.Transcript -> when (val transcript = action.action) {
+            is ChatTranscriptAction.RequestActions ->
+                this to message(transcript.messageId)?.let { ChatPlaygroundEffect.PresentMessageActions(ChatMessageActionsDisplay(it)) }
+            else -> handle(transcript) to null
+        }
     }
 
     private fun handle(action: ChatTranscriptAction): ChatPlaygroundFixture = when (action) {
@@ -89,8 +100,22 @@ data class ChatPlaygroundFixture(
                 retryingId = m.id,
             )
         }
-        is ChatTranscriptAction.RequestReaction -> copy(note = ReactionNote)
+        is ChatTranscriptAction.RequestActions -> this // Presented by handle(ChatScreenAction).
         is ChatTranscriptAction.React -> message(action.messageId)?.let { replace(it.copy(reaction = action.reaction)) } ?: this
+        is ChatTranscriptAction.RequestMoreReactions -> copy(note = MoreReactionsNote)
+        is ChatTranscriptAction.MessageAction -> message(action.messageId)?.let { m ->
+            when (action.action) {
+                // The reply accessory above the same composer now targets this message.
+                ChatMessageAction.Reply -> copy(
+                    replyContext = ChatReplyContext(m.id, if (m.role == MessageRole.Assistant) ReplyTitle else OwnReplyTitle, m.text),
+                    note = null,
+                )
+                ChatMessageAction.MarkUnread -> copy(note = MarkUnreadNote)
+                ChatMessageAction.Copy -> copy(note = CopyNote)
+                ChatMessageAction.SelectText -> copy(note = SelectTextNote)
+                ChatMessageAction.Report -> copy(note = ReportNote)
+            }
+        } ?: this
     }
 
     /** Send: append the outgoing message with no receipt and enter Sending. */
@@ -177,8 +202,14 @@ data class ChatPlaygroundFixture(
         /** Illustrative fixture time for simulated host evidence. Not a clock reading. */
         const val FixtureTime = "10:24"
         const val ReplyTitle = "Replying to Rem"
+        /** Reply context title when the person replies to their own message. */
+        const val OwnReplyTitle = "Replying to yourself"
         const val CallNote = "The app starts an in-app voice session with Rem."
-        const val ReactionNote = "The app presents the reaction picker."
+        const val MoreReactionsNote = "The app presents its full emoji picker."
+        const val MarkUnreadNote = "The app marks the conversation unread from this message."
+        const val CopyNote = "The app copies the message text."
+        const val SelectTextNote = "The app presents the message text for selection."
+        const val ReportNote = "The app opens its report flow for this message."
         const val RetryNote = "Retry resubmitted; no receipt until the host accepts it."
         const val EmptyMessage = "Start a conversation with Rem. Plan your day, explore an idea or get a task moving."
         val Starters = listOf(ChatStarter("plan-day", "Help me plan my day"))

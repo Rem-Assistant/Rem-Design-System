@@ -59,7 +59,10 @@ import com.rem.designsystem.screens.AgendaSuggestionsOverflowContent
 import com.rem.designsystem.screens.AgendaSuggestionsPlayground
 import com.rem.designsystem.screens.AddTaskField
 import com.rem.designsystem.screens.InboxScreen
+import com.rem.designsystem.screens.ChatMessageActionsDisplay
+import com.rem.designsystem.screens.ChatMessageDisplay
 import com.rem.designsystem.screens.ChatScreen
+import com.rem.designsystem.screens.MessageActionSheet
 import com.rem.designsystem.screens.TaskDetailScreen
 import com.rem.designsystem.screens.SettingsScreen
 import com.rem.designsystem.rows.ListRow
@@ -538,6 +541,23 @@ class EvidenceSnapshots {
             }
         }
     }
+
+    /** Long-press sheet `2603:19498`: the assistant reference, then the own-message variant (no Report). */
+    @Composable
+    private fun MessageActionSheetShot(role: MessageRole) = RemTheme {
+        Column(Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary)) {
+            MessageActionSheet(
+                ChatMessageActionsDisplay(ChatMessageDisplay("m1", role, "Here’s a clearer introduction you can review.")),
+                onAction = {},
+            )
+        }
+    }
+
+    @Test
+    fun messageActionSheetAssistant() = shot("MessageActionSheet-assistant-light") { MessageActionSheetShot(MessageRole.Assistant) }
+
+    @Test
+    fun messageActionSheetOwn() = shot("MessageActionSheet-own-light") { MessageActionSheetShot(MessageRole.User) }
 
     @Test
     fun agendaScreen() = shot("AgendaScreen-light") {

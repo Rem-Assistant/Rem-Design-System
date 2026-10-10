@@ -810,6 +810,27 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "Reply complete ends the retried turn")
     }
 
+    /// Long-press sheet `2603:19498`: Report only on assistant messages; Reply targets the reply accessory.
+    func testChatScreenLongPressMessageActions() {
+        openChatScreen()
+        let assistant = element("message.a2.bubble")
+        XCTAssertTrue(assistant.waitForExistence(timeout: 3))
+        assistant.press(forDuration: 1.0)
+        XCTAssertTrue(app.buttons["message.a2.actions.report"].waitForExistence(timeout: 3), "Report on assistant messages")
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "message.a2.actions.reactions.")).count, 12)
+        capture("ChatScreen-messageActions-light")
+        app.buttons["message.a2.actions.reply"].tap()
+        XCTAssertTrue(element("chat.replyContext.label").waitForExistence(timeout: 3), "Reply targets the reply accessory")
+
+        let own = element("message.u2.bubble")
+        own.press(forDuration: 1.0)
+        XCTAssertTrue(app.buttons["message.u2.actions.copy"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["message.u2.actions.report"].exists, "Never Report on the person's own message")
+        XCTAssertFalse(app.buttons["message.u2.actions.markUnread"].exists)
+        app.buttons["message.u2.actions.reactions.10"].tap()
+        XCTAssertTrue(element("message.u2.reaction").waitForExistence(timeout: 3))
+    }
+
     /// Photos and Files open the real system pickers, which UI tests cannot drive; this asserts the
     /// canonical options exist and no sample chip is injected. Picked-content mapping and attachment-only
     /// send are covered by `ChatComposerFixtureTests`.

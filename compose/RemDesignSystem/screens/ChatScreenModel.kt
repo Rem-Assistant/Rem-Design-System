@@ -136,9 +136,82 @@ class ChatMessageDisplay(
 /** Interactions on a transcript message. */
 sealed interface ChatTranscriptAction {
     data class Retry(val messageId: String) : ChatTranscriptAction
-    data class RequestReaction(val messageId: String) : ChatTranscriptAction
+    /**
+     * Long press (accessibility "Message actions"): the host presents [MessageActionSheet] for the
+     * message, built from [ChatMessageActionsDisplay].
+     */
+    data class RequestActions(val messageId: String) : ChatTranscriptAction
     /** The person chose (or, with null, cleared) a reaction. */
     data class React(val messageId: String, val reaction: MessageReaction?) : ChatTranscriptAction
+    /** The sheet's `+` cell: the host presents its full emoji picker. */
+    data class RequestMoreReactions(val messageId: String) : ChatTranscriptAction
+    /**
+     * A sheet row. Presentation only — the host performs it (reply target, unread state, clipboard,
+     * text selection, report flow) and dismisses the sheet.
+     */
+    data class MessageAction(val messageId: String, val action: ChatMessageAction) : ChatTranscriptAction
+}
+
+// Long-press message actions (Figma `2603:19498`).
+
+/**
+ * One row of the long-press message sheet — twin of SwiftUI `ChatMessageAction`. The DS only reports
+ * the choice; the host performs it. [key] is the tag segment ("message.<id>.actions.<key>").
+ */
+enum class ChatMessageAction(val key: String, val title: String) {
+    Reply("reply", "Reply"),
+    MarkUnread("markUnread", "Mark as unread"),
+    Copy("copy", "Copy"),
+    SelectText("selectText", "Select Text"),
+    Report("report", "Report"),
+}
+
+/**
+ * What [MessageActionSheet] renders for one message: the 2 × 6 reaction grid and the grouped rows —
+ * twin of SwiftUI `ChatMessageActionsDisplay`. The reference is an assistant message ([Reply, Mark as
+ * unread], [Copy, Select Text], [Report]). The person's own messages show only what applies to them:
+ * Report is never offered on them, and Mark as unread has no meaning for a message they sent. Rows the
+ * host cannot perform are left out through `available`; an emptied group disappears.
+ */
+data class ChatMessageActionsDisplay(
+    val messageId: String,
+    val role: MessageRole,
+    /** The message's current reaction; choosing it again clears it. */
+    val selection: MessageReaction?,
+    val reactions: List<MessageReaction>,
+    /** The trailing `+` cell, shown only when the host can present a full emoji picker. */
+    val showsMoreReactions: Boolean,
+    val groups: List<List<ChatMessageAction>>,
+) {
+    constructor(
+        message: ChatMessageDisplay,
+        available: Set<ChatMessageAction> = ChatMessageAction.entries.toSet(),
+        reactions: List<MessageReaction> = MessageReaction.SheetChoices,
+        showsMoreReactions: Boolean = true,
+    ) : this(
+        messageId = message.id,
+        role = message.role,
+        selection = message.reaction,
+        reactions = reactions,
+        showsMoreReactions = showsMoreReactions,
+        groups = groups(message.role, available),
+    )
+
+    companion object {
+        /** The grouped rows for [role], in reference order, keeping only [available] actions. */
+        fun groups(role: MessageRole, available: Set<ChatMessageAction>): List<List<ChatMessageAction>> {
+            val reference = if (role == MessageRole.Assistant) {
+                listOf(
+                    listOf(ChatMessageAction.Reply, ChatMessageAction.MarkUnread),
+                    listOf(ChatMessageAction.Copy, ChatMessageAction.SelectText),
+                    listOf(ChatMessageAction.Report),
+                )
+            } else {
+                listOf(listOf(ChatMessageAction.Reply), listOf(ChatMessageAction.Copy, ChatMessageAction.SelectText))
+            }
+            return reference.map { group -> group.filter { it in available } }.filter { it.isNotEmpty() }
+        }
+    }
 }
 
 /**

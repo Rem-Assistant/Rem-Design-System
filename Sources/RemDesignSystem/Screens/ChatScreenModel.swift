@@ -170,10 +170,91 @@ public struct ChatMessageDisplay: Identifiable, Equatable, Sendable {
 public enum ChatTranscriptAction: Equatable, Sendable {
     /// Try again on a failed outgoing message (only offered when `canRetry`).
     case retry(messageID: String)
-    /// The person asked to react (long press / accessibility "React"); the host presents the picker.
-    case requestReaction(messageID: String)
+    /// Long press (accessibility "Message actions"): the host presents `MessageActionSheet` for the
+    /// message, built from `ChatMessageActionsDisplay`.
+    case requestActions(messageID: String)
     /// The person chose (or, with `nil`, cleared) a reaction.
     case react(messageID: String, reaction: MessageReaction?)
+    /// The sheet's `+` cell: the host presents its full emoji picker.
+    case requestMoreReactions(messageID: String)
+    /// A sheet row. Presentation only — the host performs it (reply target, unread state, clipboard,
+    /// text selection, report flow) and dismisses the sheet.
+    case messageAction(messageID: String, action: ChatMessageAction)
+}
+
+// MARK: - Long-press message actions (Figma `2603:19498`)
+
+/// One row of the long-press message sheet. The DS only reports the choice; the host performs it.
+public enum ChatMessageAction: String, CaseIterable, Equatable, Sendable {
+    case reply
+    case markUnread
+    case copy
+    case selectText
+    case report
+
+    public var title: String {
+        switch self {
+        case .reply: return "Reply"
+        case .markUnread: return "Mark as unread"
+        case .copy: return "Copy"
+        case .selectText: return "Select Text"
+        case .report: return "Report"
+        }
+    }
+
+    /// SF Symbol from the reference; Compose maps each case to its Material twin. Copy uses
+    /// `doc.on.doc`, the iOS 17 name of the reference's `document.on.document`.
+    public var systemImage: String {
+        switch self {
+        case .reply: return "arrowshape.turn.up.left"
+        case .markUnread: return "message"
+        case .copy: return "doc.on.doc"
+        case .selectText: return "selection.pin.in.out"
+        case .report: return "flag.fill"
+        }
+    }
+}
+
+/// What `MessageActionSheet` renders for one message: the 2 × 6 reaction grid and the grouped rows.
+/// The reference is an **assistant** message ([Reply, Mark as unread], [Copy, Select Text], [Report]).
+/// The person's own messages show only what applies to them: Report is never offered on them, and
+/// Mark as unread has no meaning for a message they sent. Rows the host cannot perform are left out
+/// through `available`; an emptied group disappears, never leaving a placeholder.
+public struct ChatMessageActionsDisplay: Identifiable, Equatable, Sendable {
+    public let messageID: String
+    public var role: MessageBubble.Role
+    /// The message's current reaction; choosing it again clears it.
+    public var selection: MessageReaction?
+    public var reactions: [MessageReaction]
+    /// The trailing `+` cell, shown only when the host can present a full emoji picker.
+    public var showsMoreReactions: Bool
+    public var groups: [[ChatMessageAction]]
+
+    public var id: String { messageID }
+
+    public init(
+        message: ChatMessageDisplay,
+        available: Set<ChatMessageAction> = Set(ChatMessageAction.allCases),
+        reactions: [MessageReaction] = MessageReaction.sheetChoices,
+        showsMoreReactions: Bool = true
+    ) {
+        self.messageID = message.id
+        self.role = message.role
+        self.selection = message.reaction
+        self.reactions = reactions
+        self.showsMoreReactions = showsMoreReactions
+        self.groups = Self.groups(for: message.role, available: available)
+    }
+
+    /// The grouped rows for `role`, in reference order, keeping only `available` actions.
+    public static func groups(for role: MessageBubble.Role, available: Set<ChatMessageAction>) -> [[ChatMessageAction]] {
+        let reference: [[ChatMessageAction]] = role == .assistant
+            ? [[.reply, .markUnread], [.copy, .selectText], [.report]]
+            : [[.reply], [.copy, .selectText]]
+        return reference
+            .map { $0.filter(available.contains) }
+            .filter { !$0.isEmpty }
+    }
 }
 
 // MARK: - Inbox

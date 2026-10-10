@@ -26,6 +26,8 @@ public enum ChatPlaygroundEffect: Equatable, Sendable {
     case presentAddToChat
     /// Push the Agent activity screen (header identity), built from `ChatPlaygroundFixture.activity`.
     case presentActivity
+    /// Present `MessageActionSheet` for a long-pressed message. Any action from the sheet dismisses it.
+    case presentMessageActions(ChatMessageActionsDisplay)
 }
 
 public struct ChatPlaygroundFixture: Equatable, Sendable {
@@ -37,8 +39,14 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     /// Illustrative fixture time for simulated host evidence. Not a clock reading.
     public static let fixtureTime = "10:24"
     public static let replyTitle = "Replying to Rem"
+    /// Reply context title when the person replies to their own message.
+    public static let ownReplyTitle = "Replying to yourself"
     public static let callNote = "The app starts an in-app voice session with Rem."
-    public static let reactionNote = "The app presents the reaction picker."
+    public static let moreReactionsNote = "The app presents its full emoji picker."
+    public static let markUnreadNote = "The app marks the conversation unread from this message."
+    public static let copyNote = "The app copies the message text."
+    public static let selectTextNote = "The app presents the message text for selection."
+    public static let reportNote = "The app opens its report flow for this message."
     public static let retryNote = "Retry resubmitted; no receipt until the host accepts it."
     public static let emptyMessage = "Start a conversation with Rem. Plan your day, explore an idea or get a task moving."
     public static let starters = [ChatStarter(id: "plan-day", title: "Help me plan my day")]
@@ -145,18 +153,18 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
             default: composer.apply(composerAction)
             }
         case .transcript(let transcriptAction):
-            handle(transcriptAction)
+            return handle(transcriptAction)
         }
         return nil
     }
 
-    private mutating func handle(_ action: ChatTranscriptAction) {
+    private mutating func handle(_ action: ChatTranscriptAction) -> ChatPlaygroundEffect? {
         switch action {
         case .retry(let id):
             // One turn at a time: a retry never switches the active turn mid-flight.
             guard !composer.state.phase.isInFlight,
                   let index = messageIndex(id), case .message(var message) = entries[index],
-                  message.delivery == .failed, message.canRetry else { return }
+                  message.delivery == .failed, message.canRetry else { return nil }
             message.delivery = .none
             message.canRetry = false
             entries[index] = .message(message)
@@ -164,13 +172,32 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
             retryingID = id
             composer.select(.sending)
             note = Self.retryNote
-        case .requestReaction:
-            note = Self.reactionNote
+        case .requestActions(let id):
+            guard let message = self.message(id) else { return nil }
+            return .presentMessageActions(ChatMessageActionsDisplay(message: message))
         case .react(let id, let reaction):
-            guard let index = messageIndex(id), case .message(var message) = entries[index] else { return }
+            guard let index = messageIndex(id), case .message(var message) = entries[index] else { return nil }
             message.reaction = reaction
             entries[index] = .message(message)
+        case .requestMoreReactions:
+            note = Self.moreReactionsNote
+        case .messageAction(let id, let messageAction):
+            guard let message = self.message(id) else { return nil }
+            switch messageAction {
+            case .reply:
+                // The reply accessory above the same composer now targets this message.
+                replyContext = ChatReplyContext(
+                    targetID: id, title: message.role == .assistant ? Self.replyTitle : Self.ownReplyTitle,
+                    summary: message.text
+                )
+                note = nil
+            case .markUnread: note = Self.markUnreadNote
+            case .copy: note = Self.copyNote
+            case .selectText: note = Self.selectTextNote
+            case .report: note = Self.reportNote
+            }
         }
+        return nil
     }
 
     /// Send: append the outgoing message with **no receipt** and enter Sending.

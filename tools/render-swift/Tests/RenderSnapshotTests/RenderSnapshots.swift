@@ -115,6 +115,9 @@ final class RenderSnapshots: XCTestCase {
         render("AddToChatSheet-light", width: 402, height: nil, dark: false) { addToChatSheet }
         render("ChatHeader-light", width: 402, height: nil, dark: false) { chatHeaders }
         render("MessageReactionPicker-light", width: 402, height: nil, dark: false) { reactionPicker }
+        // Long-press sheet `2603:19498`: the assistant reference, then the own-message variant (no Report).
+        render("MessageActionSheet-assistant-light", width: 402, height: nil, dark: false) { messageActionSheet(.assistant) }
+        render("MessageActionSheet-own-light", width: 402, height: nil, dark: false) { messageActionSheet(.user) }
         // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
         render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
             AgendaSuggestionsPlaygroundView(fixture: .loaded)
@@ -462,6 +465,13 @@ final class RenderSnapshots: XCTestCase {
         MessageReactionPicker(selection: .heart) { _ in }
             .padding(DesignTokens.Spacing.lg)
             .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    private func messageActionSheet(_ role: MessageBubble.Role) -> some View {
+        MessageActionSheet(
+            ChatMessageActionsDisplay(message: ChatMessageDisplay(id: "m1", role: role, text: "Here’s a clearer introduction you can review."))
+        ) { _ in }
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 
     // MARK: - Wave 2 galleries

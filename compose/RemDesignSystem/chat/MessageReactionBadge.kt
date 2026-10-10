@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,8 +44,16 @@ data class MessageReaction(val emoji: String, val name: String) {
         val Laugh = MessageReaction("😂", "Laugh")
         val Party = MessageReaction("🎉", "Party")
         val Surprised = MessageReaction("😮", "Surprised")
+        val Fire = MessageReaction("🔥", "Fire")
+        val Eyes = MessageReaction("👀", "Eyes")
+        val Thanks = MessageReaction("🙏", "Thanks")
+        val Crying = MessageReaction("😢", "Crying")
+        val Hundred = MessageReaction("💯", "Hundred")
 
         val StandardChoices: List<MessageReaction> = listOf(ThumbsUp, ThumbsDown, Heart, Laugh, Party, Surprised)
+
+        /** The long-press sheet's 2 × 6 grid: the standard row, then five more before the `+` cell. */
+        val SheetChoices: List<MessageReaction> = StandardChoices + listOf(Fire, Eyes, Thanks, Crying, Hundred)
     }
 }
 
@@ -67,6 +78,10 @@ fun MessageReactionBadge(reaction: MessageReaction, modifier: Modifier = Modifie
 /**
  * The approved long-press reaction row: 44dp secondary-pill circles with a 27sp emoji, spread edge to
  * edge. Choosing the current reaction again clears it (`onSelect(null)`). The host owns the selection.
+ *
+ * With [columns] the choices wrap into rows of that many cells, 12dp apart — the sheet's 2 × 6 grid.
+ * [onMore] appends the trailing `+` cell (brand-blue glyph) that asks the host for its full picker;
+ * without it no `+` is drawn.
  */
 @Composable
 fun MessageReactionPicker(
@@ -74,33 +89,68 @@ fun MessageReactionPicker(
     onSelect: (MessageReaction?) -> Unit,
     modifier: Modifier = Modifier,
     choices: List<MessageReaction> = MessageReaction.StandardChoices,
+    columns: Int? = null,
     accessibilityPrefix: String = "reactions",
+    onMore: (() -> Unit)? = null,
 ) {
-    Row(
+    // A cell is a reaction's index in [choices], or -1 for the `+` cell.
+    val cells = choices.indices.toList() + if (onMore != null) listOf(MoreCell) else emptyList()
+    Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(MessageReactionMetrics.GridRowGap),
     ) {
-        choices.forEachIndexed { index, choice ->
-            val selected = choice == selection
-            Box(
-                modifier = Modifier
-                    .size(MessageReactionMetrics.PickerTarget)
-                    .background(RemColors.current.fillTertiary, CircleShape)
-                    .clickable(role = Role.Button) { onSelect(if (selected) null else choice) }
-                    .semantics { contentDescription = choice.name; this.selected = selected }
-                    .testTag("$accessibilityPrefix.$index"),
-                contentAlignment = Alignment.Center,
+        cells.chunked((columns ?: cells.size).coerceAtLeast(1)).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(choice.emoji, style = TextStyle(fontSize = 27.sp, lineHeight = 30.sp))
+                row.forEach { index ->
+                    if (index == MoreCell) MoreReactionsCell("$accessibilityPrefix.more") { onMore?.invoke() }
+                    else ReactionCell(choices[index], choices[index] == selection, "$accessibilityPrefix.$index", onSelect)
+                }
             }
         }
+    }
+}
+
+private const val MoreCell = -1
+
+@Composable
+private fun ReactionCell(choice: MessageReaction, selected: Boolean, tag: String, onSelect: (MessageReaction?) -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(MessageReactionMetrics.PickerTarget)
+            .background(RemColors.current.fillTertiary, CircleShape)
+            .clickable(role = Role.Button) { onSelect(if (selected) null else choice) }
+            .semantics { contentDescription = choice.name; this.selected = selected }
+            .testTag(tag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(choice.emoji, style = TextStyle(fontSize = 27.sp, lineHeight = 30.sp))
+    }
+}
+
+@Composable
+private fun MoreReactionsCell(tag: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(MessageReactionMetrics.PickerTarget)
+            .background(RemColors.current.fillTertiary, CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = "More reactions" }
+            .testTag(tag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Filled.Add, contentDescription = null, tint = RemColors.current.brandBlue, modifier = Modifier.size(20.dp))
     }
 }
 
 internal object MessageReactionMetrics {
     val Badge = 28.dp
     val PickerTarget = 44.dp
+    /** Vertical gap between grid rows in the long-press sheet. */
+    val GridRowGap = RemSpacing.md
 }
 
 @Preview(name = "MessageReactionBadge", showBackground = true)
@@ -113,6 +163,9 @@ private fun MessageReactionBadgePreview() {
         ) {
             MessageReactionBadge(MessageReaction.Heart)
             MessageReactionPicker(selection = MessageReaction.Heart, onSelect = {})
+            MessageReactionPicker(
+                selection = MessageReaction.Heart, onSelect = {}, choices = MessageReaction.SheetChoices, columns = 6, onMore = {},
+            )
         }
     }
 }

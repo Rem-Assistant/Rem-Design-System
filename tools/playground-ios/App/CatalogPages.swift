@@ -532,6 +532,7 @@ struct PlaygroundChatScreen: View {
     @State private var showFiles = false
     @State private var showActivity = false
     @State private var activityTab = AgentActivityTab.activity
+    @State private var messageActions: ChatMessageActionsDisplay?
 
     init(fixture: ChatPlaygroundFixture) {
         _fixture = State(initialValue: fixture)
@@ -612,6 +613,15 @@ struct PlaygroundChatScreen: View {
             photoItems = []
             showAddToChat = false
         }
+        // Long press on a transcript message (Figma `2603:19498`): the sheet dims the chat behind it.
+        .sheet(item: $messageActions) { display in
+            MessageActionSheet(display) { action in
+                messageActions = nil
+                handle(.transcript(action))
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     private func handle(_ action: ChatScreenAction) {
@@ -622,6 +632,7 @@ struct PlaygroundChatScreen: View {
         case .presentActivity?:
             activityTab = .activity
             showActivity = true
+        case .presentMessageActions(let display)?: messageActions = display
         case nil: break
         }
     }

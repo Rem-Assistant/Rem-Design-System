@@ -803,6 +803,24 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
     }
 
+    /** Long-press sheet `2603:19498`: Report only on assistant messages; Reply targets the reply accessory. */
+    @Test fun chatScreenLongPressMessageActions() {
+        openChatScreen()
+        compose.onNodeWithTag("message.a2.bubble").performScrollTo().performTouchInput { longClick() }
+        waitForTag("message.a2.actions.report")
+        compose.onAllNodes(hasTestTagStartingWith("message.a2.actions.reactions.")).assertCountEquals(12)
+        capture("ChatScreen-messageActions-light")
+        compose.onNodeWithTag("message.a2.actions.reply").performClick()
+        waitForTag("chat.replyContext.label")
+
+        compose.onNodeWithTag("message.u2.bubble").performScrollTo().performTouchInput { longClick() }
+        waitForTag("message.u2.actions.copy")
+        compose.onNodeWithTag("message.u2.actions.report").assertDoesNotExist()
+        compose.onNodeWithTag("message.u2.actions.markUnread").assertDoesNotExist()
+        compose.onNodeWithTag("message.u2.actions.reactions.10").performClick()
+        compose.onNodeWithTag("message.u2.reaction").assertExists()
+    }
+
     /**
      * Photos and Files launch the real system pickers, which instrumented tests cannot drive; this
      * asserts the canonical options exist and no sample chip is injected. Picked-content mapping and

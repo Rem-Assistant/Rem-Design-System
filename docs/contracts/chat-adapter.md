@@ -27,6 +27,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 | `ChatTranscriptEntry` | `.message` / `.timestamp` (Kotlin: `Message` / `Timestamp`) |
 | `ChatReplyContext` | `targetID` (Kotlin `targetId`), title, summary — the task and conversation ids stay in the app |
 | `ChatEmptyState`, `ChatStarter` | empty conversation copy and starters (host lists only what it can do) |
+| `ChatMessageActionsDisplay` | the long-press sheet for one message: the reaction grid (`MessageReaction.sheetChoices`), the current reaction, whether the `+` cell is shown, and the action groups for its role, narrowed to the host's `available` actions |
 | `InboxItemDisplay`, `InboxItemState` | Inbox rows and their host-reported run state: none / loading / executing / needsApproval / blocked / unknown / completed |
 | `AgentActivityDisplay` | the Agent activity screen: `current` (`AgentActivityCurrent` — name, activity, status, working; built from the same `ChatHeaderDisplay`) and `days` (`AgentActivityDay` → `AgentActivityEvent`: action title, outcome, host-formatted time) |
 
@@ -35,7 +36,11 @@ UTC). Component contract: [`chat.md`](chat.md).
 `ChatScreenAction`: `back`, `overflow`, `call`, `activityDetails`, `starter(id)`, `dismissReplyContext(targetID)`,
 `composer(ChatComposerAction)`, `transcript(ChatTranscriptAction)`.
 `ChatComposerAction`: `draftChanged`, `send`, `cancel`, `speak`, `add`, `removeAttachment(id)`, `focusChanged`.
-`ChatTranscriptAction`: `retry(messageID)`, `requestReaction(messageID)`, `react(messageID, reaction?)`.
+`ChatTranscriptAction`: `retry(messageID)`, `requestActions(messageID)`, `react(messageID, reaction?)`,
+`requestMoreReactions(messageID)`, `messageAction(messageID, ChatMessageAction)` (Kotlin `RequestActions`,
+`RequestMoreReactions`, `MessageAction`). `requestActions` replaces the former `requestReaction`: a long press now
+asks for the whole message sheet, not only reactions.
+`ChatMessageAction`: `reply`, `markUnread`, `copy`, `selectText`, `report` (Kotlin `Reply`, `MarkUnread`, …).
 `InboxAction`: `open(itemID)`.
 
 `activityDetails` (tapping the identity / activity capsule under the Rem face) **routes to the Agent activity
@@ -65,6 +70,15 @@ no prototype reaction; this routing is explicit.
    current state. Rows are not interactive (no verified destination). Approvals has no verified design (`2002:76915`
    only repeats timeline rows), so it shows a labeled data gap, never invented approvals or an implied "none". The
    screen is separate from agent settings, card outcomes and voice state.
+8. **Message actions** (Figma `2603:19498`): a long press emits `.requestActions`; the host presents
+   `MessageActionSheet` with `ChatMessageActionsDisplay(message:)` over the dimmed chat. An assistant message
+   shows the 2 × 6 reaction grid (eleven reactions and `+`) and the groups [Reply, Mark as unread],
+   [Copy, Select Text], [Report]. The person's own message shows [Reply], [Copy, Select Text]: **Report is
+   never offered on it**, and Mark as unread does not apply. Actions the host cannot perform are left out
+   (`available`); an emptied group disappears, with no placeholder. Choosing the current reaction clears it.
+   Every row, the `+` cell and each reaction are presentation-only actions: the host performs them (reply
+   target, unread state, clipboard, text selection, report flow, full emoji picker) and dismisses the sheet.
+   Identifiers: `message.<id>.actions.reactions.<index>`, `….reactions.more`, `message.<id>.actions.<action>`.
 
 ## Rules the adapter applies (truth)
 
@@ -87,6 +101,9 @@ Playground exactly as an adapter would. `ChatPlaygroundFixture` answers `activit
 neutral sample history (the Figma master's sample rows are not reproduced). A message sent in a fixture carries **no receipt**. Delivered / Read / Not delivered appear only
 through the explicitly named `simulateHost…` controls (Playground: header overflow → *Fixture host*), at the
 illustrative `fixtureTime` "10:24". They prove composition and interaction, never runtime behaviour.
+In the message sheet, a reaction updates the message, Reply targets the reply accessory at that message
+("Replying to Rem" / "Replying to yourself"), and the host-owned actions (Mark as unread, Copy, Select Text,
+Report, `+`) only show a fixture note naming what the app does; nothing is copied, reported or stored.
 
 ## Not claimed
 

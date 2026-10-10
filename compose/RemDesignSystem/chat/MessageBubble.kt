@@ -81,6 +81,8 @@ sealed interface MessageDelivery {
  *
  * @param meta Optional metadata (e.g. a timestamp) beneath the message, in chatMeta.
  * @param onLongPress Long press (and the accessibility "React" action) — hosts open [MessageReactionPicker].
+ *   The [ChatMessageDisplay] overload emits [ChatTranscriptAction.RequestActions] instead, for
+ *   `MessageActionSheet` (accessibility "Message actions").
  */
 @Composable
 fun MessageBubble(
@@ -94,9 +96,27 @@ fun MessageBubble(
     onRetry: (() -> Unit)? = null,
     onLongPress: (() -> Unit)? = null,
 ) {
+    MessageBubbleContent(text, role, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, LongPress("React", onLongPress))
+}
+
+/** A long-press handler and its accessibility name ("React", or "Message actions" in a transcript). */
+private class LongPress(val label: String, val action: (() -> Unit)?)
+
+@Composable
+private fun MessageBubbleContent(
+    text: String,
+    role: MessageRole,
+    modifier: Modifier,
+    meta: String?,
+    delivery: MessageDelivery,
+    reaction: MessageReaction?,
+    accessibilityPrefix: String,
+    onRetry: (() -> Unit)?,
+    longPress: LongPress,
+) {
     when (role) {
-        MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, onLongPress)
-        MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reaction, accessibilityPrefix, onLongPress)
+        MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, longPress)
+        MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reaction, accessibilityPrefix, longPress)
     }
 }
 
@@ -115,7 +135,7 @@ fun MessageBubble(
     val retry: (() -> Unit)? = if (message.canRetry && message.delivery == MessageDelivery.Failed) {
         { onAction(ChatTranscriptAction.Retry(message.id)) }
     } else null
-    MessageBubble(
+    MessageBubbleContent(
         text = message.text,
         role = message.role,
         modifier = modifier,
@@ -124,7 +144,7 @@ fun MessageBubble(
         reaction = message.reaction,
         accessibilityPrefix = accessibilityPrefix,
         onRetry = retry,
-        onLongPress = { onAction(ChatTranscriptAction.RequestReaction(message.id)) },
+        longPress = LongPress("Message actions") { onAction(ChatTranscriptAction.RequestActions(message.id)) },
     )
 }
 
@@ -137,7 +157,7 @@ private fun OutgoingMessage(
     reaction: MessageReaction?,
     prefix: String,
     onRetry: (() -> Unit)?,
-    onLongPress: (() -> Unit)?,
+    longPress: LongPress,
 ) {
     val colors = RemColors.current
     val failed = delivery == MessageDelivery.Failed
@@ -165,7 +185,7 @@ private fun OutgoingMessage(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(colors.brandBlue, RoundedCornerShape(MessageBubbleGeometry.CornerRadius.dp))
-                            .longPress(onLongPress)
+                            .longPress(longPress)
                             .bubbleCenterLine()
                             .testTag("$prefix.bubble")
                             .padding(
@@ -269,7 +289,7 @@ private fun IncomingMessage(
     meta: String?,
     reaction: MessageReaction?,
     prefix: String,
-    onLongPress: (() -> Unit)?,
+    longPress: LongPress,
 ) {
     val colors = RemColors.current
     Column(
@@ -289,7 +309,7 @@ private fun IncomingMessage(
                 color = colors.labelPrimary,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .longPress(onLongPress)
+                    .longPress(longPress)
                     .bubbleCenterLine()
                     .testTag("$prefix.bubble")
                     .padding(vertical = RemSpacing.xs),
@@ -308,11 +328,12 @@ private fun IncomingMessage(
     }
 }
 
-private fun Modifier.longPress(action: (() -> Unit)?): Modifier =
-    if (action == null) this
-    else this
+private fun Modifier.longPress(longPress: LongPress): Modifier {
+    val action = longPress.action ?: return this
+    return this
         .pointerInput(action) { detectTapGestures(onLongPress = { action() }) }
-        .semantics { onLongClick(label = "React") { action(); true } }
+        .semantics { onLongClick(label = longPress.label) { action(); true } }
+}
 
 /**
  * Responsive message geometry in dp, shared with the SwiftUI `MessageBubbleGeometry` and the JVM tests.

@@ -3,7 +3,10 @@ package com.rem.designsystem
 import com.rem.designsystem.chat.ChatHeaderStatus
 import com.rem.designsystem.chat.MessageDelivery
 import com.rem.designsystem.screens.AgentActivityCurrent
+import com.rem.designsystem.chat.MessageReaction
 import com.rem.designsystem.screens.ChatComposerAction
+import com.rem.designsystem.screens.ChatMessageAction
+import com.rem.designsystem.screens.ChatMessageActionsDisplay
 import com.rem.designsystem.screens.ChatPlaygroundEffect
 import com.rem.designsystem.screens.ChatPlaygroundFixture
 import com.rem.designsystem.screens.ChatReplyContext
@@ -209,6 +212,49 @@ class ChatPlaygroundFixtureTest {
         val task = InboxPlaygroundFixture().route(InboxAction.Open("venue-booking"))!!
         assertEquals(task.header.activity, task.activity.display.current.activity)
         assertEquals(ChatHeaderStatus.NeedsYou, task.activity.display.current.status)
+    }
+
+    @Test fun longPressPresentsTheMessageActionSheetForThatMessage() {
+        val fixture = ChatPlaygroundFixture()
+        val (same, effect) = fixture.handle(ChatScreenAction.Transcript(ChatTranscriptAction.RequestActions("a1")))
+        assertEquals(ChatPlaygroundEffect.PresentMessageActions(ChatMessageActionsDisplay(fixture.message("a1")!!)), effect)
+        assertEquals("Presenting the sheet changes nothing else", fixture, same)
+        val own = fixture.handle(ChatScreenAction.Transcript(ChatTranscriptAction.RequestActions("u1"))).second
+        assertEquals(
+            "No Report on the person's own message",
+            listOf(listOf(ChatMessageAction.Reply), listOf(ChatMessageAction.Copy, ChatMessageAction.SelectText)),
+            (own as ChatPlaygroundEffect.PresentMessageActions).display.groups,
+        )
+        assertNull(fixture.handle(ChatScreenAction.Transcript(ChatTranscriptAction.RequestActions("missing"))).second)
+    }
+
+    @Test fun sheetReactionAndReplyChangeOnlyPresentation() {
+        var fixture = ChatPlaygroundFixture().act(ChatScreenAction.Transcript(ChatTranscriptAction.React("a1", MessageReaction.Fire)))
+        assertEquals(MessageReaction.Fire, fixture.message("a1")!!.reaction)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.MessageAction("a1", ChatMessageAction.Reply)))
+        assertEquals(ChatReplyContext("a1", ChatPlaygroundFixture.ReplyTitle, fixture.message("a1")!!.text), fixture.replyContext)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.MessageAction("u2", ChatMessageAction.Reply)))
+        assertEquals(ChatPlaygroundFixture.OwnReplyTitle, fixture.replyContext!!.title)
+        assertEquals("u2", fixture.replyContext!!.targetId)
+        assertEquals("Receipts untouched", MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message("u2")!!.delivery)
+    }
+
+    @Test fun hostOwnedSheetActionsSendNothing() {
+        val notes = listOf(
+            ChatTranscriptAction.RequestMoreReactions("a1") to ChatPlaygroundFixture.MoreReactionsNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.MarkUnread) to ChatPlaygroundFixture.MarkUnreadNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.Copy) to ChatPlaygroundFixture.CopyNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.SelectText) to ChatPlaygroundFixture.SelectTextNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.Report) to ChatPlaygroundFixture.ReportNote,
+        )
+        for ((action, note) in notes) {
+            val before = ChatPlaygroundFixture()
+            val (after, effect) = before.handle(ChatScreenAction.Transcript(action))
+            assertNull(effect)
+            assertEquals(note, after.note)
+            assertEquals(before.entries, after.entries)
+            assertEquals(before.composer, after.composer)
+        }
     }
 
     @Test fun callButtonIsAnInAppVoiceEntryThatDialsNothing() {

@@ -54,6 +54,9 @@ public struct MessageBubble: View {
     private let onLongPress: (() -> Void)?
     /// Spoken time ("Sent at 10:24"), so the swipe-revealed timestamp never needs the gesture.
     fileprivate(set) var accessibilityTime: String?
+    /// Accessibility name of the long-press action: "React" for a bare reaction host, "Message
+    /// actions" when a transcript host presents `MessageActionSheet`.
+    fileprivate(set) var longPressLabel = "React"
 
     /// - Parameters:
     ///   - text: The message body. Plain text; the assistant role reads as prose.
@@ -63,7 +66,8 @@ public struct MessageBubble: View {
     ///   - reaction: Optional reaction badge, anchored toward the conversation centre.
     ///   - accessibilityPrefix: Prefix for this message's accessibility identifiers.
     ///   - onRetry: Called from the failure control's Try again menu.
-    ///   - onLongPress: Called on long press — hosts present `MessageReactionPicker` from it.
+    ///   - onLongPress: Called on long press — hosts present `MessageReactionPicker` from it. The
+    ///     `ChatMessageDisplay` initializer emits `.requestActions` instead, for `MessageActionSheet`.
     public init(
         _ text: String,
         role: Role,
@@ -128,7 +132,7 @@ public struct MessageBubble: View {
                 DesignTokens.Color.brandBlue,
                 in: RoundedRectangle(cornerRadius: MessageBubbleGeometry.cornerRadius, style: .continuous)
             )
-            .modifier(LongPressAction(action: onLongPress))
+            .modifier(LongPressAction(label: longPressLabel, action: onLongPress))
             .accessibilityElement(children: .combine)
             .modifier(AccessibilityTimeValue(time: accessibilityTime))
             .accessibilityIdentifier("\(accessibilityPrefix).bubble")
@@ -186,7 +190,7 @@ public struct MessageBubble: View {
                 .padding(.vertical, DesignTokens.Spacing.xs)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .alignmentGuide(.messageBubbleCenter) { $0[VerticalAlignment.center] }
-                .modifier(LongPressAction(action: onLongPress))
+                .modifier(LongPressAction(label: longPressLabel, action: onLongPress))
                 .accessibilityElement(children: .combine)
                 .modifier(AccessibilityTimeValue(time: accessibilityTime))
                 .accessibilityIdentifier("\(accessibilityPrefix).bubble")
@@ -236,9 +240,10 @@ extension MessageBubble {
             reaction: message.reaction,
             accessibilityPrefix: accessibilityPrefix ?? "message.\(id)",
             onRetry: retry,
-            onLongPress: { onAction(.requestReaction(messageID: id)) }
+            onLongPress: { onAction(.requestActions(messageID: id)) }
         )
         accessibilityTime = ChatTimestampReveal.accessibilityTime(message)
+        longPressLabel = "Message actions"
     }
 }
 
@@ -360,13 +365,14 @@ private struct AccessibilityTimeValue: ViewModifier {
 }
 
 private struct LongPressAction: ViewModifier {
+    let label: String
     let action: (() -> Void)?
 
     func body(content: Content) -> some View {
         if let action {
             content
                 .onLongPressGesture(perform: action)
-                .accessibilityAction(named: "React", action)
+                .accessibilityAction(named: Text(label), action)
         } else {
             content
         }

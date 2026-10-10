@@ -194,6 +194,49 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertEqual(task.activity.display.current.status, .needsYou)
     }
 
+    func testLongPressPresentsTheMessageActionSheetForThatMessage() {
+        var fixture = ChatPlaygroundFixture()
+        XCTAssertEqual(fixture.handle(.transcript(.requestActions(messageID: "a1"))),
+                       .presentMessageActions(ChatMessageActionsDisplay(message: fixture.message("a1")!)))
+        guard case .presentMessageActions(let own)? = fixture.handle(.transcript(.requestActions(messageID: "u1"))) else {
+            return XCTFail("Own messages present the sheet too")
+        }
+        XCTAssertEqual(own.groups, [[.reply], [.copy, .selectText]], "No Report on the person's own message")
+        XCTAssertNil(fixture.handle(.transcript(.requestActions(messageID: "missing"))))
+        XCTAssertNil(fixture.note, "Presenting the sheet adds no note")
+    }
+
+    func testSheetReactionAndReplyChangeOnlyPresentation() {
+        var fixture = ChatPlaygroundFixture()
+        XCTAssertNil(fixture.handle(.transcript(.react(messageID: "a1", reaction: .fire))))
+        XCTAssertEqual(fixture.message("a1")?.reaction, .fire)
+        fixture.handle(.transcript(.messageAction(messageID: "a1", action: .reply)))
+        XCTAssertEqual(fixture.replyContext, ChatReplyContext(targetID: "a1", title: ChatPlaygroundFixture.replyTitle,
+                                                              summary: fixture.message("a1")!.text))
+        fixture.handle(.transcript(.messageAction(messageID: "u2", action: .reply)))
+        XCTAssertEqual(fixture.replyContext?.title, ChatPlaygroundFixture.ownReplyTitle)
+        XCTAssertEqual(fixture.replyContext?.targetID, "u2")
+        XCTAssertEqual(fixture.message("u2")?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime), "Receipts untouched")
+    }
+
+    func testHostOwnedSheetActionsSendNothing() {
+        let notes: [(ChatTranscriptAction, String)] = [
+            (.requestMoreReactions(messageID: "a1"), ChatPlaygroundFixture.moreReactionsNote),
+            (.messageAction(messageID: "a1", action: .markUnread), ChatPlaygroundFixture.markUnreadNote),
+            (.messageAction(messageID: "a1", action: .copy), ChatPlaygroundFixture.copyNote),
+            (.messageAction(messageID: "a1", action: .selectText), ChatPlaygroundFixture.selectTextNote),
+            (.messageAction(messageID: "a1", action: .report), ChatPlaygroundFixture.reportNote),
+        ]
+        for (action, note) in notes {
+            var fixture = ChatPlaygroundFixture()
+            let before = fixture
+            XCTAssertNil(fixture.handle(.transcript(action)))
+            XCTAssertEqual(fixture.note, note)
+            XCTAssertEqual(fixture.entries, before.entries)
+            XCTAssertEqual(fixture.composer, before.composer)
+        }
+    }
+
     func testCallButtonIsAnInAppVoiceEntryThatDialsNothing() {
         var fixture = ChatPlaygroundFixture()
         XCTAssertFalse(fixture.header.showsCall, "call would replace overflow, the Playground's host-controls route")

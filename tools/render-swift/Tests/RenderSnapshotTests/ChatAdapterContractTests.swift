@@ -47,8 +47,14 @@ private enum MockAppOperation: Equatable {
     case removeAttachment(String)
     case setComposerFocus(Bool)
     case retry(String)
-    case presentReactionPicker(String)
+    case presentMessageActions(String)
     case setReaction(String, emoji: String?)
+    case presentEmojiPicker(String)
+    case setReplyTarget(String)
+    case markUnread(String)
+    case copyText(String)
+    case presentTextSelection(String)
+    case presentReport(String)
 }
 
 private enum MockChatAdapter {
@@ -115,8 +121,17 @@ private enum MockChatAdapter {
     static func operation(for action: ChatTranscriptAction) -> MockAppOperation {
         switch action {
         case .retry(let id): return .retry(id)
-        case .requestReaction(let id): return .presentReactionPicker(id)
+        case .requestActions(let id): return .presentMessageActions(id)
         case .react(let id, let reaction): return .setReaction(id, emoji: reaction?.emoji)
+        case .requestMoreReactions(let id): return .presentEmojiPicker(id)
+        case .messageAction(let id, let action):
+            switch action {
+            case .reply: return .setReplyTarget(id)
+            case .markUnread: return .markUnread(id)
+            case .copy: return .copyText(id)
+            case .selectText: return .presentTextSelection(id)
+            case .report: return .presentReport(id)
+            }
         }
     }
 }
@@ -206,8 +221,19 @@ final class ChatAdapterContractTests: XCTestCase {
 
     func testTranscriptActionsRouteToAppOperations() {
         XCTAssertEqual(MockChatAdapter.operation(for: .retry(messageID: "m1")), .retry("m1"))
-        XCTAssertEqual(MockChatAdapter.operation(for: .requestReaction(messageID: "m1")), .presentReactionPicker("m1"))
+        XCTAssertEqual(MockChatAdapter.operation(for: .requestActions(messageID: "m1")), .presentMessageActions("m1"))
         XCTAssertEqual(MockChatAdapter.operation(for: .react(messageID: "m1", reaction: .heart)), .setReaction("m1", emoji: "❤️"))
         XCTAssertEqual(MockChatAdapter.operation(for: .react(messageID: "m1", reaction: nil)), .setReaction("m1", emoji: nil))
+        XCTAssertEqual(MockChatAdapter.operation(for: .requestMoreReactions(messageID: "m1")), .presentEmojiPicker("m1"))
+    }
+
+    func testMessageSheetActionsRouteToAppOperations() {
+        let expected: [ChatMessageAction: MockAppOperation] = [
+            .reply: .setReplyTarget("a1"), .markUnread: .markUnread("a1"), .copy: .copyText("a1"),
+            .selectText: .presentTextSelection("a1"), .report: .presentReport("a1"),
+        ]
+        for action in ChatMessageAction.allCases {
+            XCTAssertEqual(MockChatAdapter.operation(for: .messageAction(messageID: "a1", action: action)), expected[action])
+        }
     }
 }

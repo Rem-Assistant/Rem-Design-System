@@ -32,6 +32,7 @@ import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.ThinkingLevel
 import com.rem.designsystem.screens.AgentActivityScreen
 import com.rem.designsystem.screens.AgentActivityTab
+import com.rem.designsystem.screens.ChatMessageActionsDisplay
 import com.rem.designsystem.screens.ChatPlaygroundEffect
 import com.rem.designsystem.screens.ChatPlaygroundFixture
 import com.rem.designsystem.screens.ChatScreen
@@ -40,6 +41,7 @@ import com.rem.designsystem.screens.ChatTranscriptList
 import com.rem.designsystem.screens.InboxAction
 import com.rem.designsystem.screens.InboxPlaygroundFixture
 import com.rem.designsystem.screens.InboxScreen
+import com.rem.designsystem.screens.MessageActionSheet
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTypography
@@ -61,6 +63,7 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
     var showAddToChat by remember { mutableStateOf(false) }
     var showActivity by remember { mutableStateOf(false) }
     var activityTab by remember { mutableStateOf(AgentActivityTab.Activity) }
+    var messageActions by remember { mutableStateOf<ChatMessageActionsDisplay?>(null) }
 
     val handle: (ChatScreenAction) -> Unit = { action ->
         val (next, effect) = fixture.handle(action)
@@ -70,6 +73,7 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
             ChatPlaygroundEffect.PresentHostControls -> showHostControls = true
             ChatPlaygroundEffect.PresentAddToChat -> showAddToChat = true
             ChatPlaygroundEffect.PresentActivity -> { activityTab = AgentActivityTab.Activity; showActivity = true }
+            is ChatPlaygroundEffect.PresentMessageActions -> messageActions = effect.display
             null -> Unit
         }
     }
@@ -158,6 +162,15 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
                 onDone = { showAddToChat = false },
                 accessibilityPrefix = "chat.addToChat",
             )
+        }
+    }
+    // Long press on a transcript message (Figma `2603:19498`): the sheet's scrim dims the chat behind it.
+    messageActions?.let { display ->
+        ModalBottomSheet(onDismissRequest = { messageActions = null }) {
+            MessageActionSheet(display, onAction = { action ->
+                messageActions = null
+                handle(ChatScreenAction.Transcript(action))
+            })
         }
     }
 }

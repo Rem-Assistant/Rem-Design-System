@@ -31,8 +31,9 @@ These stay explicit boundaries. No component here persists, transmits or enforce
   states supplied by the host. Read must only be shown after an explicit acknowledgement.
 - **No always-allow grant.** Permission or Secure Store visuals, where they appear, are fixtures only.
   No persistent grant exists.
-- Out of scope: app adoption, Inbox redesign, the long-press action rows (Reply / Mark as unread / Copy /
-  Select Text / Report).
+- Out of scope: app adoption, Inbox redesign. The long-press action rows (Reply / Mark as unread / Copy /
+  Select Text / Report) are presentation-only actions the host performs; see
+  [`chat-adapter.md`](chat-adapter.md) rule 7.
 
 ## Layout and geometry — responsive, never a fixed width
 
@@ -52,9 +53,15 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 1. **Reaction** (independent of delivery) is anchored at the upper corner toward the conversation
    centre: **outgoing upper-left** (−14, −14), **incoming upper-right** (+14, −10). Top clearance is
    reserved so it never overlaps the message above. Badge: 28 circle, `fillTertiary`, 20pt emoji.
-2. **Long press** (and the accessibility "React" action) asks the host to present the **approved
-   six-choice row** `👍 👎 ❤️ 😂 🎉 😮` — 44 circles, `fillTertiary`, 27pt emoji. Choosing the current
-   reaction again clears it. The choices are data (`standardChoices`); hosts may pass others.
+2. **Long press** on a transcript message (accessibility "Message actions") asks the host to present
+   **`MessageActionSheet`** (`2603:19498`): a 2 × 6 reaction grid — the approved row `👍 👎 ❤️ 😂 🎉 😮`,
+   then `🔥 👀 🙏 😢 💯` and a brand-blue `+` — 44 circles, `fillTertiary`, 27pt emoji, rows 12 apart;
+   then inset-grouped `RemSection`s of `ListRow`s (29 leading symbol, 60 min height, divider inset 56):
+   [Reply, Mark as unread], [Copy, Select Text], [Report] for an assistant message; [Reply],
+   [Copy, Select Text] for the person's own message (never Report). Choosing the current reaction again
+   clears it. The choices are data (`sheetChoices`, `standardChoices`); hosts may pass others. A bare
+   `MessageBubble(onLongPress:)` still offers the single six-choice `MessageReactionPicker` row
+   (accessibility "React"), as in the component catalog.
 3. **Failure:** an outlined `exclamationmark.circle` / `ErrorOutline` in `systemRed`, **entirely outside
    the bubble on the right**, bottom-aligned. It opens a **Try again** menu. Below the bubble, gap 8:
    **"Not delivered"** in footnote semibold `systemRed`, right-aligned to the bubble's edge, with
@@ -89,7 +96,7 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 tests: `testCatalogChatReactionsDeliveryModelMenuAndAttachments` (XCUITest) /
 `catalogChatReactionsDeliveryModelMenuAndAttachments` (instrumentation). Render pairs:
 `ChatMessageStates-narrow-light`, `ChatComposerAuto-light`, `AddToChatSheet-light`, `ChatHeader-light`,
-`MessageReactionPicker-light`.
+`MessageReactionPicker-light`, `MessageActionSheet-assistant-light`, `MessageActionSheet-own-light`.
 
 ## Full-screen composition and app boundary
 
@@ -111,8 +118,10 @@ context accessory (`2682:22298`), the empty state (`2054:22089`) and the present
   [`icon-registry.md`](icon-registry.md#chat-slice--open-rows-recorded-as-implemented-not-yet-graduated)
   (Android uses the Material Icons vector fallback until the Symbols subset carries them).
 
-- The Figma long-press sheet draws a 2 × 6 grid with a "+" More cell. The approved six-choice row is
-  implemented; the second row and More are not.
+- The long-press sheet reference has a 34pt top inset that includes its grabber. Code relies on the platform
+  sheet's grabber / drag handle and adds 24pt (iOS) or 8pt (Android, whose drag handle carries its own
+  padding) above the grid; flagged for review against device evidence. iOS Copy uses `doc.on.doc`, the
+  iOS 17 name of the reference's `document.on.document`.
 - The Figma composer has separate Sending (progress) and Streaming (Stop) states. Code keeps the
   existing `SendState` (`.sending` = red Stop) and adopts the Figma rules for disabled Auto and hidden
   Speak.
