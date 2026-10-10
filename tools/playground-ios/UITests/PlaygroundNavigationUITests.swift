@@ -29,8 +29,61 @@ final class PlaygroundNavigationUITests: XCTestCase {
     }
 
     private func reveal(_ element: XCUIElement) {
+        if app.keyboards.count > 0 {
+            revealAboveKeyboard(element)
+            return
+        }
         for _ in 0..<8 where !element.isHittable { app.swipeUp() }
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
+    }
+
+    /// The part of the page's scroll view a person can see while typing: below the navigation bar and
+    /// above the keyboard and its input-assistant bar (a full-window swipe would start over the
+    /// keyboard and scroll nothing).
+    private func visibleScrollRegion(_ scrollView: XCUIElement) -> CGRect {
+        let frame = scrollView.frame
+        let keyboard = app.keyboards.firstMatch
+        var top = keyboard.exists ? keyboard.frame.minY : frame.maxY
+        let assistant = app.otherElements["SystemInputAssistantView"]
+        if assistant.exists { top = min(top, assistant.frame.minY) }
+        var minY = frame.minY
+        let bar = app.navigationBars.firstMatch
+        if bar.exists { minY = max(minY, bar.frame.maxY) } // the scroll view extends under the bar
+        return CGRect(x: frame.minX, y: minY, width: frame.width, height: max(0, min(frame.maxY, top) - minY))
+    }
+
+    /// With the keyboard up, drags inside the scroll view's blank leading margin and only within the
+    /// visible region, until `element` sits fully inside that region and is hittable. Bounded: stops
+    /// when a drag makes no progress.
+    private func revealAboveKeyboard(_ element: XCUIElement) {
+        // The page's scroll view is the one holding `element`: with the keyboard up, the input-assistant
+        // bar's typing-predictions scroll view is also in the tree and can be the first match.
+        let holds = element.identifier.isEmpty
+            ? NSPredicate(format: "label == %@", element.label)
+            : NSPredicate(format: "identifier == %@", element.identifier)
+        let scrollView = app.scrollViews.containing(holds).firstMatch
+        XCTAssertTrue(scrollView.exists, "The page exposes the scroll view holding \(element.identifier)")
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        var lastMinY: CGFloat?
+        for _ in 0..<8 {
+            let visible = visibleScrollRegion(scrollView)
+            let target = element.frame
+            // Success falls through to the shared final assertions (keyboard still up, fully visible).
+            if element.exists && visible.contains(target) && element.isHittable { break }
+            if let lastMinY, abs(lastMinY - target.minY) < 1 { break }
+            lastMinY = target.minY
+            let up = target.minY < visible.minY
+            let x = scrollView.frame.minX + 8
+            let near = visible.minY + visible.height * 0.3
+            let far = visible.maxY - visible.height * 0.15
+            let from = origin.withOffset(CGVector(dx: x, dy: up ? near : far))
+            let to = origin.withOffset(CGVector(dx: x, dy: up ? far : near))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        let visible = visibleScrollRegion(scrollView)
+        XCTAssertGreaterThan(app.keyboards.count, 0, "The keyboard stays up while revealing \(element.identifier)")
+        XCTAssertTrue(element.exists && visible.contains(element.frame) && element.isHittable,
+                      "Expected \(element.identifier) fully visible above the keyboard (\(element.frame) in \(visible))")
     }
 
     /// Taps a text input and requires it to take keyboard focus before anything is typed, so a tap
@@ -38,8 +91,20 @@ final class PlaygroundNavigationUITests: XCTestCase {
     private func focus(_ field: XCUIElement) {
         field.tap()
         dismissKeyboardIntroduction()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        let result = XCTWaiter.wait(for: [focused], timeout: 2)
+        // Accessibility snapshots of a busy hierarchy can take seconds, so poll a freshly resolved
+        // element (by type + identifier) for a bounded 10s, then evaluate once more before failing.
+        // Keyboard focus itself stays the requirement.
+        let hasFocus = NSPredicate(format: "hasKeyboardFocus == true")
+        let type = field.elementType, identifier = field.identifier
+        let fresh = { self.app.descendants(matching: type).matching(identifier: identifier).firstMatch }
+        let deadline = Date().addingTimeInterval(10)
+        var isFocused = false
+        while !isFocused && Date() < deadline {
+            isFocused = hasFocus.evaluate(with: fresh())
+            if !isFocused { RunLoop.current.run(until: Date().addingTimeInterval(0.25)) }
+        }
+        if !isFocused { isFocused = hasFocus.evaluate(with: fresh()) }
+        let result: XCTWaiter.Result = isFocused ? .completed : .timedOut
         if result != .completed {
             // Evidence for a failure: what the tap hit and what, if anything, holds focus. Printed
             // (bounded) so it reaches the job log, since attachments are exported only after a pass.
@@ -186,12 +251,17 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     /// Scrolls in short drags held at the end (no fling) until `element` is hittable, so it stops just
     /// inside the edge it entered from: the bottom when scrolling down, with its component above it,
-    /// or the top when scrolling up, with its component below it. Drags start at the trailing margin,
-    /// clear of the page's controls.
+    /// or the top when scrolling up, with its component below it. Drags start in the scroll view's
+    /// leading margin, clear of the page's controls and of the scroll indicator.
     private func scroll(to element: XCUIElement, named anchor: String, up: Bool) {
-        let window = app.windows.firstMatch
-        let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.35 : 0.65))
-        let to = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.65 : 0.35))
+        // Drag inside the page's scroll view, in its blank leading margin: the trailing edge is the
+        // interactive scroll indicator on long pages, which absorbs a short drag without scrolling.
+        // Form-based pages (Controls) expose a collection view rather than a scroll view.
+        let scroller = app.scrollViews.firstMatch.exists ? app.scrollViews.firstMatch : app.collectionViews.firstMatch
+        XCTAssertTrue(scroller.exists, "The page exposes its scroller")
+        let dx = 8 / max(scroller.frame.width, 1)
+        let from = scroller.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.35 : 0.65))
+        let to = scroller.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.65 : 0.35))
         for _ in 0..<24 {
             if element.exists && element.isHittable { break }
             from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
@@ -310,11 +380,93 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // A vertical-axis TextField is exposed as a text view.
         let field = app.textViews["catalog.composerField"]
         XCTAssertTrue(field.waitForExistence(timeout: 3))
+        reveal(field)
         focus(field)
         field.typeText("Plan my afternoon")
         tap("catalog.composerSend")
-        XCTAssertTrue(app.staticTexts["Plan my afternoon"].waitForExistence(timeout: 3), "Send adds a message bubble")
+        let sentBubble = element("chat.sent.0.bubble")
+        XCTAssertTrue(sentBubble.waitForExistence(timeout: 3), "Send adds a message bubble")
+        XCTAssertTrue(sentBubble.label.contains("Plan my afternoon"))
         capture("Catalog-chat-light")
+    }
+
+    /// First element anywhere in the tree with this accessibility identifier.
+    private func element(_ identifier: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// Chat slice journey, all local fixture state: header activity, long-press reaction (outgoing
+    /// upper-left), failed delivery and Try again, the Auto model menu, the Cloud browser chip and the
+    /// Thinking level. No message, reaction, model choice or attachment leaves the page.
+    func testCatalogChatReactionsDeliveryModelMenuAndAttachments() {
+        openCatalogPage("openChat", title: "Chat")
+
+        let identity = element("chat.header.identity")
+        XCTAssertTrue(identity.waitForExistence(timeout: 3))
+        XCTAssertTrue(identity.label.contains("Connected"), "Header shows the agent's current activity")
+
+        let outgoing = element("chat.outgoing.bubble")
+        reveal(outgoing)
+        XCTAssertFalse(element("chat.outgoing.reaction").exists)
+        outgoing.press(forDuration: 1.0)
+        let heart = app.buttons["chat.reactions.2"]
+        XCTAssertTrue(heart.waitForExistence(timeout: 3), "Long press opens the six-choice reaction row")
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "chat.reactions.")).count, 6)
+        heart.tap()
+        let reaction = element("chat.outgoing.reaction")
+        XCTAssertTrue(reaction.waitForExistence(timeout: 3), "Chosen reaction shows on the message")
+        // Outgoing reaction sits at the upper-left, overlapping toward the conversation centre.
+        XCTAssertLessThan(reaction.frame.minX, outgoing.frame.minX)
+        XCTAssertLessThan(reaction.frame.minY, outgoing.frame.minY)
+
+        let failedBubble = element("chat.failed.bubble")
+        let failure = element("chat.failed.failure")
+        reveal(failure)
+        let receipt = element("chat.failed.receipt")
+        XCTAssertEqual(receipt.label, "Not delivered")
+        // The failure control sits entirely outside the bubble on the right; the label is right-aligned to it.
+        XCTAssertGreaterThanOrEqual(failure.frame.minX, failedBubble.frame.maxX)
+        XCTAssertEqual(receipt.frame.maxX, failedBubble.frame.maxX, accuracy: 1)
+        failure.tap()
+        let tryAgain = app.buttons["Try again"]
+        XCTAssertTrue(tryAgain.waitForExistence(timeout: 3), "Failure control opens the Try again menu")
+        tryAgain.tap()
+        XCTAssertTrue(element("chat.failed.receipt").label.contains("Delivered"), "Try again resolves the fixture failure")
+
+        let menu = app.buttons["catalog.modelMenu"]
+        reveal(menu)
+        XCTAssertTrue(menu.label.contains("Auto"))
+        menu.tap()
+        XCTAssertTrue(app.buttons["Automatic"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Manage Models"].exists)
+        app.buttons["Provider A"].tap()
+        let modelA2 = app.buttons["Model A2"]
+        XCTAssertTrue(modelA2.waitForExistence(timeout: 3), "Provider submenu lists its models")
+        modelA2.tap()
+        XCTAssertTrue(menu.label.contains("Model A2"), "Trigger shows the selected model")
+        menu.tap()
+        app.buttons["Automatic"].tap()
+        XCTAssertTrue(menu.label.contains("Auto"), "Automatic returns the trigger to Auto")
+
+        tap("catalog.composerAdd")
+        XCTAssertTrue(app.buttons["catalog.addToChat.photos"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["catalog.addToChat.files"].exists)
+        tap("catalog.addToChat.cloudBrowser")
+        let removeBrowser = app.buttons["catalog.removeAttachment.cloud-browser"]
+        XCTAssertTrue(removeBrowser.waitForExistence(timeout: 3), "Cloud browser adds a removable chip and dismisses")
+        removeBrowser.tap()
+        waitUntilGone(removeBrowser, "Removing the chip clears it")
+
+        tap("catalog.composerAdd")
+        let thinking = app.buttons["catalog.addToChat.thinking"]
+        XCTAssertTrue(thinking.waitForExistence(timeout: 3))
+        XCTAssertTrue(thinking.label.contains("Medium"))
+        thinking.tap()
+        app.buttons["High"].tap()
+        XCTAssertTrue(thinking.label.contains("High"), "Thinking level is chosen from four options")
+        tap("catalog.addToChat.done")
+        waitUntilGone(thinking, "Done dismisses Add to Chat")
+        capture("Catalog-chat-journey-light")
     }
 
     func testCatalogAgentSurfaces() {
@@ -529,5 +681,171 @@ final class PlaygroundNavigationUITests: XCTestCase {
         connect.firstMatch.tap()
         let oneLeft = expectation(for: NSPredicate(format: "count == 1"), evaluatedWith: connect)
         wait(for: [oneLeft], timeout: 3)
+    }
+
+    // MARK: Full-screen Chat, task reply and Inbox (Playground 7 candidate)
+    //
+    // Canonical compositions driven by the DS `ChatPlaygroundFixture` / `InboxPlaygroundFixture`.
+    // Receipts appear only through the explicit fixture-host controls behind the header overflow.
+
+    /// Picks a root fixture segment, revealing the picker first (root rows below the fold).
+    private func chooseRootFixture(_ picker: String, _ segment: String) {
+        let control = app.segmentedControls[picker]
+        XCTAssertTrue(control.waitForExistence(timeout: 3), "Missing \(picker)")
+        reveal(control)
+        control.buttons[segment].tap()
+    }
+
+    private func openChatScreen(_ conversation: String = "Populated") {
+        chooseRootFixture("chatFixturePicker", conversation)
+        tap("openChatScreen")
+        XCTAssertTrue(app.buttons["chat.header.back"].waitForExistence(timeout: 3), "The header owns Back")
+    }
+
+    private func sendFromChat(_ text: String) {
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        focus(field)
+        field.typeText(text)
+        app.buttons["chat.composerSend"].tap()
+    }
+
+    private func hostControl(_ identifier: String) {
+        app.buttons["chat.header.overflow"].tap()
+        let control = app.buttons[identifier]
+        XCTAssertTrue(control.waitForExistence(timeout: 3), "Missing fixture host control \(identifier)")
+        control.tap()
+    }
+
+    func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
+        openChatScreen()
+        XCTAssertTrue(app.buttons["chat.header.overflow"].exists, "The header owns overflow")
+        XCTAssertEqual(app.navigationBars.count, 0, "No second navigation-title row above the header")
+        XCTAssertEqual(element("chat.header.identity").exists, true)
+        XCTAssertTrue(element("message.u2.receipt").waitForExistence(timeout: 3))
+        XCTAssertTrue(element("message.u2.receipt").label.contains("Delivered"))
+        XCTAssertFalse(element("message.u1.receipt").exists, "Older outgoing messages carry no receipt")
+        XCTAssertFalse(app.buttons["chat.composerSend"].isEnabled, "Empty draft disables send")
+        capture("ChatScreen-default-light")
+    }
+
+    func testChatScreenEmptyShowsStartersWithoutASecondFace() {
+        openChatScreen("Empty")
+        XCTAssertTrue(app.buttons["chat.starter.plan-day"].waitForExistence(timeout: 3))
+        capture("ChatScreen-empty-light")
+        app.buttons["chat.starter.plan-day"].tap()
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3), "A starter sends")
+        XCTAssertFalse(element("message.sent.1.receipt").exists, "No receipt without host acceptance")
+    }
+
+    func testChatScreenKeyboardOpenDocksComposerAboveKeyboard() {
+        openChatScreen()
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        focus(field)
+        XCTAssertGreaterThan(app.keyboards.count, 0)
+        let send = app.buttons["chat.composerSend"]
+        XCTAssertLessThanOrEqual(send.frame.maxY, app.keyboards.firstMatch.frame.minY + 1, "Composer docks above the keyboard")
+        XCTAssertTrue(app.buttons["chat.header.back"].isHittable, "Header stays visible with the keyboard open")
+        capture("ChatScreen-keyboard-light")
+    }
+
+    func testChatScreenSendStopAcceptAndRead() {
+        openChatScreen()
+        sendFromChat("Plan my afternoon")
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3))
+        XCTAssertFalse(element("message.sent.1.receipt").exists, "No receipt without host acceptance")
+        let control = app.buttons["chat.composerSend"]
+        XCTAssertEqual(control.label, "Stop", "In flight, the control is Stop")
+        control.tap()
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "Stop cancels back to Send")
+        XCTAssertFalse(element("message.sent.1.receipt").exists, "Stop never fabricates a receipt")
+
+        sendFromChat("Again")
+        hostControl("chat.host.accept")
+        let receipt = element("message.sent.2.receipt")
+        XCTAssertTrue(receipt.waitForExistence(timeout: 3))
+        XCTAssertTrue(receipt.label.contains("Delivered · 10:24"))
+        hostControl("chat.host.read")
+        XCTAssertTrue(element("message.sent.2.receipt").label.contains("Read · 10:24"))
+        hostControl("chat.host.reply")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send")
+        capture("ChatScreen-receipts-light")
+    }
+
+    func testChatScreenFailureRetry() {
+        openChatScreen()
+        sendFromChat("Share the agenda")
+        hostControl("chat.host.fail")
+        let failure = element("message.sent.1.failure")
+        XCTAssertTrue(failure.waitForExistence(timeout: 3))
+        XCTAssertTrue(element("message.sent.1.receipt").label.contains("Not delivered"))
+        capture("ChatScreen-failed-light")
+        failure.tap()
+        let retry = app.buttons["Try again"]
+        XCTAssertTrue(retry.waitForExistence(timeout: 3))
+        retry.tap()
+        XCTAssertTrue(element("chat.fixtureNote").waitForExistence(timeout: 3))
+        XCTAssertFalse(element("message.sent.1.failure").exists)
+        // The retried message's own turn completes: acceptance lands on it and the reply ends the turn.
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Stop", "Retry starts a turn")
+        hostControl("chat.host.accept")
+        let receipt = element("message.sent.1.receipt")
+        XCTAssertTrue(receipt.waitForExistence(timeout: 3))
+        XCTAssertTrue(receipt.label.contains("Delivered · 10:24"))
+        hostControl("chat.host.reply")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "Reply complete ends the retried turn")
+    }
+
+    func testChatScreenAttachmentOnlySend() {
+        openChatScreen()
+        app.buttons["chat.composerAdd"].tap()
+        let photos = app.buttons["chat.addToChat.photos"]
+        XCTAssertTrue(photos.waitForExistence(timeout: 3))
+        photos.tap()
+        XCTAssertTrue(element("chat.attachment.photo.0").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["chat.composerSend"].isEnabled, "A content attachment alone can be sent")
+        app.buttons["chat.composerSend"].tap()
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 3))
+    }
+
+    func testChatScreenBackExits() {
+        openChatScreen()
+        app.buttons["chat.header.back"].tap()
+        XCTAssertTrue(app.buttons["openChatScreen"].waitForExistence(timeout: 3), "Back returns to the root")
+    }
+
+    func testInboxStatesRouteIntoTaskReplyAndDismissAccessory() {
+        chooseRootFixture("inboxFixturePicker", "Items")
+        tap("openInbox")
+        // The row is one button; its label folds in the title and the host-reported status.
+        let venue = app.buttons["inbox.item.venue-booking"]
+        XCTAssertTrue(venue.waitForExistence(timeout: 3))
+        XCTAssertTrue(venue.label.contains("Needs approval"))
+        XCTAssertTrue(app.buttons["inbox.item.calendar-holds"].label.contains("Status unknown"))
+        let plain = app.buttons["inbox.item.plan-next-step"].label
+        for label in ["Working", "Needs", "Status unknown", "Done", "Loading"] {
+            XCTAssertFalse(plain.contains(label), "No state, no status")
+        }
+        capture("Inbox-states-light")
+
+        app.buttons["inbox.item.venue-booking"].tap()
+        let context = element("chat.replyContext.label")
+        XCTAssertTrue(context.waitForExistence(timeout: 3))
+        XCTAssertTrue(context.label.contains("Approve the venue booking"))
+        XCTAssertTrue(element("chat.header.identity").label.contains("Needs approval"), "Task chat shows the same state")
+        XCTAssertEqual(app.textViews["chat.composerField"].exists, true, "The same composer")
+        capture("ChatScreen-taskReply-light")
+        app.buttons["chat.replyContext.dismiss"].tap()
+        waitUntilGone(element("chat.replyContext.label"), "Dismiss clears the reply target")
+        XCTAssertTrue(app.textViews["chat.composerField"].exists, "The composer stays")
+        app.buttons["chat.header.back"].tap()
+        XCTAssertTrue(app.buttons["inbox.item.venue-booking"].waitForExistence(timeout: 3), "Back returns to the Inbox")
+    }
+
+    func testInboxEmpty() {
+        chooseRootFixture("inboxFixturePicker", "Empty")
+        tap("openInbox")
+        XCTAssertTrue(element("inbox.empty").waitForExistence(timeout: 3))
     }
 }

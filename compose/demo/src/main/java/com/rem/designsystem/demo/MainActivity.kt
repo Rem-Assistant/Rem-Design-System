@@ -27,6 +27,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.screens.ChatPlaygroundFixture
+import com.rem.designsystem.screens.InboxAction
+import com.rem.designsystem.screens.InboxPlaygroundFixture
 import com.rem.designsystem.buttons.RemButton
 import com.rem.designsystem.buttons.RemButtonVariant
 import com.rem.designsystem.icons.RemMaterialSymbols
@@ -87,7 +90,7 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class LoadFixture { Success, Slow, Error }
-private enum class Route { Home, Components, Controls, Rows, CatalogAgenda, Chat, AgentCatalog, Brand, Loading, Settings, Agent, AgendaSuggestions, Onboarding }
+private enum class Route { Home, Components, Controls, Rows, CatalogAgenda, Chat, AgentCatalog, Brand, Loading, Settings, Agent, AgendaSuggestions, Onboarding, ChatScreen, Inbox, TaskReply }
 
 /** Catalog pages, in browse order: title, route and the tag tests use to open each. */
 private val catalogPages = listOf(
@@ -118,27 +121,35 @@ fun Playground() {
     var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
     var checkInFailsOnce by rememberSaveable { mutableStateOf(false) }
+    var chatConversation by rememberSaveable { mutableStateOf(ChatPlaygroundFixture.Conversation.Populated) }
+    var inboxContent by rememberSaveable { mutableStateOf(InboxPlaygroundFixture.Content.Items) }
+    var taskItemId by rememberSaveable { mutableStateOf<String?>(null) }
     // Pushed onboarding steps (ordinals), mirroring the iOS navigation stack: Continue / Skip push the
     // next step, Back pops, and an empty stack is the onboarding hub.
     var onboardingStack by rememberSaveable { mutableStateOf(listOf<Int>()) }
     var onboardingComplete by rememberSaveable { mutableStateOf<String?>(null) }
     val inOnboardingFlow = route == Route.Onboarding && (onboardingStack.isNotEmpty() || onboardingComplete != null)
     // Settings destinations and onboarding steps own their chrome and Back handling.
-    val fullScreen = destination != null || inOnboardingFlow
+    // Full-screen Chat and task reply own their header (back + overflow): no app bar above them.
+    val fullScreen = destination != null || inOnboardingFlow || route == Route.ChatScreen || route == Route.TaskReply
     val back = {
         route = when (route) {
             Route.Agent -> Route.Settings
+            Route.TaskReply -> Route.Inbox
             Route.Controls, Route.Rows, Route.CatalogAgenda, Route.Chat, Route.AgentCatalog, Route.Brand, Route.Loading -> Route.Components
             else -> Route.Home
         }
     }
     BackHandler(route != Route.Home && !fullScreen) { back() }
+    BackHandler(route == Route.ChatScreen || route == Route.TaskReply) { back() }
     val title = when (route) {
         Route.Home -> "Rem Playground"; Route.Components -> "Components"; Route.Controls -> "Controls"
         Route.Rows -> "Rows"; Route.CatalogAgenda -> "Agenda"; Route.Chat -> "Chat"; Route.AgentCatalog -> "Agent"
         Route.Brand -> "Brand & empty states"
         Route.Loading -> "Loading"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"
         Route.AgendaSuggestions -> "Agenda New"; Route.Onboarding -> "Onboarding"
+        // Inbox draws its own large title; Chat and task reply have no app bar.
+        Route.ChatScreen, Route.Inbox, Route.TaskReply -> ""
     }
     Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
         if (!fullScreen) {
@@ -161,7 +172,13 @@ fun Playground() {
                             ChipRow { LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) } }
                             RowDivider()
                             NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
-                            ChipRow { AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }) } }
+                            ChipRow { AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }, modifier = Modifier.testTag("agendaFixture.${value.name}")) } }
+                            RowDivider()
+                            NavRow("Chat", "openChatScreen") { route = Route.ChatScreen }
+                            ChipRow { ChatPlaygroundFixture.Conversation.entries.forEach { value -> FilterChip(selected = chatConversation == value, onClick = { chatConversation = value }, label = { Text(value.label) }, modifier = Modifier.testTag("chatFixture.${value.label}")) } }
+                            RowDivider()
+                            NavRow("Inbox", "openInbox") { route = Route.Inbox }
+                            ChipRow { InboxPlaygroundFixture.Content.entries.forEach { value -> FilterChip(selected = inboxContent == value, onClick = { inboxContent = value }, label = { Text(value.label) }, modifier = Modifier.testTag("inboxFixture.${value.label}")) } }
                             RowDivider()
                             NavRow("Onboarding", "openOnboarding") { onboardingStack = emptyList(); onboardingComplete = null; route = Route.Onboarding }
                         }
@@ -197,6 +214,12 @@ fun Playground() {
                     onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
                     onCancel = { route = Route.Settings })
                 Route.AgendaSuggestions -> AgendaSuggestionsPlayground(fixture = agendaFixture)
+                Route.ChatScreen -> PlaygroundChatScreen(ChatPlaygroundFixture.conversation(chatConversation), onExit = back)
+                Route.Inbox -> PlaygroundInboxScreen(InboxPlaygroundFixture.content(inboxContent)) { id -> taskItemId = id; route = Route.TaskReply }
+                Route.TaskReply -> {
+                    val chat = taskItemId?.let { InboxPlaygroundFixture.content(inboxContent).route(InboxAction.Open(it)) }
+                    if (chat != null) PlaygroundChatScreen(chat, onExit = back) else LaunchedEffect(Unit) { back() }
+                }
                 Route.Onboarding -> {
                     val completed = onboardingComplete
                     val current = onboardingStack.lastOrNull()?.let { PlaygroundOnboardingStep.entries[it] }

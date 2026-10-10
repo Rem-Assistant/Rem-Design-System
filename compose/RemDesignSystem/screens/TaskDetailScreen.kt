@@ -57,6 +57,41 @@ fun TaskDetailScreen(
     composerState: ComposerSendState = ComposerSendState.Idle,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    TaskDetailLayout(title, modifier, dateText, metaPills, content) { composerModifier ->
+        RemComposerBar(modifier = composerModifier, text = composerText, placeholder = composerPlaceholder, state = composerState)
+    }
+}
+
+/**
+ * Task reply — twin of SwiftUI `TaskDetailScreen(title:…composer:onComposerAction:content:)`: the reply
+ * composer is the **same canonical composer** as Chat, so an empty reply can never act as a navigation
+ * doorway; any "open in Chat" route is a separate host action. The task-context reply accessory (Figma
+ * `2682:22298`) is pending the canonical full-screen review.
+ */
+@Composable
+fun TaskDetailScreen(
+    title: String,
+    composer: ChatComposerState,
+    onComposerAction: (ChatComposerAction) -> Unit,
+    modifier: Modifier = Modifier,
+    dateText: String? = null,
+    metaPills: List<String> = emptyList(),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    TaskDetailLayout(title, modifier, dateText, metaPills, content) { composerModifier ->
+        RemComposerBar(state = composer, onAction = onComposerAction, modifier = composerModifier, accessibilityPrefix = "task")
+    }
+}
+
+@Composable
+private fun TaskDetailLayout(
+    title: String,
+    modifier: Modifier,
+    dateText: String?,
+    metaPills: List<String>,
+    content: @Composable ColumnScope.() -> Unit,
+    composer: @Composable (Modifier) -> Unit,
+) {
     val colors = RemColors.current
     Column(modifier = modifier.fillMaxSize().background(colors.backgroundPrimary)) {
         Column(
@@ -70,13 +105,10 @@ fun TaskDetailScreen(
             Header(title = title, dateText = dateText, metaPills = metaPills)
             content()
         }
-        RemComposerBar(
-            modifier = Modifier
+        composer(
+            Modifier
                 .padding(horizontal = RemSpacing.lg)
                 .padding(bottom = RemSpacing.md),
-            text = composerText,
-            placeholder = composerPlaceholder,
-            state = composerState,
         )
     }
 }

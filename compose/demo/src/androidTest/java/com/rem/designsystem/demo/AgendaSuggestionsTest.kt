@@ -62,7 +62,8 @@ class AgendaSuggestionsTest {
     }
 
     private fun openAgenda(fixture: String = "Loaded") {
-        if (fixture != "Loaded") compose.onNodeWithText(fixture).performScrollTo().performClick()
+        // Select the Agenda data chip by its stable tag: other root pickers share labels such as "Empty".
+        if (fixture != "Loaded") compose.onNodeWithTag("agendaFixture.$fixture").performScrollTo().performClick()
         compose.onNodeWithTag("openAgendaSuggestions").performScrollTo().performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("Aug 13 2026").fetchSemanticsNodes().isNotEmpty() }
     }

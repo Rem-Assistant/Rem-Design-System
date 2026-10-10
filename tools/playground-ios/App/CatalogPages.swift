@@ -1,4 +1,6 @@
+import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 import RemDesignSystem
 
 // Component catalog pages. Each page renders the shared RemDesignSystem components with the states
@@ -14,6 +16,9 @@ struct CatalogPage<Content: View>: View {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xl) { content() }
                 .padding(DesignTokens.Spacing.lg)
         }
+        // Like ChatScreen: scrolling above the keyboard keeps it up (only a drag into it dismisses),
+        // so a person can scroll a mid-page composer's controls into view while typing.
+        .scrollDismissesKeyboard(.interactively)
         .background(DesignTokens.Color.backgroundPrimary)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -197,19 +202,81 @@ struct CatalogAgenda: View {
 
 // MARK: - Chat
 
+/// Neutral fictional Chat fixture. Paired with `ChatFixture` in the Android `CatalogPages.kt`: keep the
+/// copy, ids and catalog identical. Providers and models are placeholders, never a production catalog;
+/// reactions, delivery and attachments live only in this page's local state.
+enum ChatFixture {
+    static let outgoing = "Can you move the planning sync to Thursday?"
+    static let incoming = "Done \u{2014} the planning sync is now Thursday at 10:00, and both attendees have the update."
+    static let readMessage = "Thanks, that works."
+    static let failedMessage = "Please share the agenda with the group as well."
+    /// Illustrative only: the fixture's delivery time, kept when the message is marked Read.
+    static let deliveredAt = "10:24"
+    static let activities: [(text: String, status: ChatHeader.Status)] = [
+        ("Connected", .connected),
+        ("Reading the shared notes", .connected),
+        ("Needs you", .needsYou),
+    ]
+    static let providers = [
+        ChatModelProvider(id: "provider-a", name: "Provider A", models: [
+            ChatModelOption(id: "model-a1", name: "Model A1"),
+            ChatModelOption(id: "model-a2", name: "Model A2"),
+        ]),
+        ChatModelProvider(id: "provider-b", name: "Provider B", models: [
+            ChatModelOption(id: "model-b1", name: "Model B1"),
+        ]),
+    ]
+    static let manageModelsNote = "Manage Models opens model settings in the app."
+    static let cameraNote = "Camera opens the system camera in the app."
+}
+
+private struct ReactionTarget: Identifiable { let id: String }
+
 struct CatalogChat: View {
     @State private var draft = ""
     @State private var sent: [String] = []
     @State private var voice: VoiceBarState = .listening
+    @State private var activity = 0
+    @State private var reactions: [String: MessageReaction] = ["chat.incoming": .thumbsUp]
+    @State private var reactingTo: ReactionTarget?
+    @State private var failedDelivered = false
+    @State private var model: ChatModelSelection = .automatic
+    @State private var attachments: [ComposerAttachment] = []
+    @State private var showAddToChat = false
+    @State private var browserAvailable = true
+    @State private var thinking: ThinkingLevel = .medium
+    @State private var showPhotos = false
+    @State private var photoItems: [PhotosPickerItem] = []
+    @State private var showFiles = false
+    @State private var feedback: String?
 
     var body: some View {
         CatalogPage(title: "Chat") {
+            CatalogGroup(title: "Header") {
+                ChatHeader(
+                    activity: ChatFixture.activities[activity].text,
+                    status: ChatFixture.activities[activity].status,
+                    accessibilityPrefix: "chat.header"
+                )
+                Picker("Agent activity", selection: $activity) {
+                    ForEach(ChatFixture.activities.indices, id: \.self) { index in
+                        Text(ChatFixture.activities[index].text).tag(index)
+                    }
+                }
+                .pickerStyle(.menu)
+                .accessibilityIdentifier("chat.headerActivity")
+            }
             CatalogGroup(title: "Message bubbles") {
                 VStack(spacing: DesignTokens.Spacing.md) {
-                    MessageBubble("Can you tidy up my inbox before I start my day?", role: .user)
-                    MessageBubble("Done — I archived 38 newsletters and snoozed 5 low-priority threads.", role: .assistant)
+                    message(ChatFixture.outgoing, role: .user, id: "chat.outgoing")
+                    message(ChatFixture.incoming, role: .assistant, id: "chat.incoming")
+                    message(ChatFixture.readMessage, role: .user, id: "chat.read", delivery: .read(at: ChatFixture.deliveredAt))
+                    message(
+                        ChatFixture.failedMessage, role: .user, id: "chat.failed",
+                        delivery: failedDelivered ? .delivered(at: ChatFixture.deliveredAt) : .failed
+                    )
                     ForEach(sent.indices, id: \.self) { index in
-                        MessageBubble(sent[index], role: .user, meta: "Now")
+                        message(sent[index], role: .user, id: "chat.sent.\(index)")
                     }
                 }
             }
@@ -217,9 +284,29 @@ struct CatalogChat: View {
                 RemComposerBar(
                     text: $draft,
                     state: draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .idle : .active,
+                    attachments: attachments,
+                    modelMenu: ChatModelMenu(
+                        providers: ChatFixture.providers, selection: model, accessibilityPrefix: "catalog",
+                        onSelect: { model = $0 },
+                        onManageModels: { feedback = ChatFixture.manageModelsNote }
+                    ),
                     accessibilityPrefix: "catalog",
+                    onAdd: { showAddToChat = true },
+                    onRemoveAttachment: { removed in attachments.removeAll { $0.id == removed.id } },
                     onSend: send
                 )
+                Toggle("Cloud browser available", isOn: $browserAvailable)
+                    .font(DesignTokens.Typography.footnote)
+                    .accessibilityIdentifier("chat.browserAvailable")
+                if let feedback {
+                    Text(feedback)
+                        .font(DesignTokens.Typography.footnote)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                        .accessibilityIdentifier("chat.feedback")
+                }
+            }
+            CatalogGroup(title: "Composer \u{00B7} sending") {
+                RemComposerBar(text: "Plan the rest of my day", state: .sending)
             }
             CatalogGroup(title: "Voice bar") {
                 Picker("Voice state", selection: $voice) {
@@ -232,13 +319,74 @@ struct CatalogChat: View {
                 VoiceBar(voice)
             }
         }
+        .sheet(item: $reactingTo) { target in
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                Text("Reactions")
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                MessageReactionPicker(selection: reactions[target.id], accessibilityPrefix: "chat.reactions") { choice in
+                    reactions[target.id] = choice
+                    reactingTo = nil
+                }
+            }
+            .padding(DesignTokens.Spacing.lg)
+            .presentationDetents([.height(140)])
+        }
+        .sheet(isPresented: $showAddToChat) {
+            AddToChatSheet(
+                showsCamera: UIImagePickerController.isSourceTypeAvailable(.camera),
+                browserAvailable: browserAvailable,
+                thinking: $thinking,
+                accessibilityPrefix: "catalog.addToChat",
+                onCamera: { feedback = ChatFixture.cameraNote; showAddToChat = false },
+                onPhotos: { showPhotos = true },
+                onFiles: { showFiles = true },
+                onCloudBrowser: {
+                    if !attachments.contains(.cloudBrowser) { attachments.append(.cloudBrowser) }
+                    showAddToChat = false
+                },
+                onDone: { showAddToChat = false }
+            )
+            .photosPicker(
+                isPresented: $showPhotos, selection: $photoItems,
+                maxSelectionCount: AddToChatSheet.maxPhotoSelection, matching: .images
+            )
+            .fileImporter(isPresented: $showFiles, allowedContentTypes: [.image], allowsMultipleSelection: true) { result in
+                if case .success(let urls) = result {
+                    attachments += urls.map { ComposerAttachment(id: "file.\($0.lastPathComponent)", title: $0.lastPathComponent, kind: .file) }
+                    showAddToChat = false
+                }
+            }
+            .presentationDetents([.medium])
+        }
+        .onChange(of: photoItems) { _, items in
+            guard !items.isEmpty else { return }
+            // Only the count is used: picked photos stay on the device and are never read here.
+            attachments.removeAll { $0.kind == .image }
+            attachments += items.indices.map { ComposerAttachment(id: "photo.\($0)", title: "Photo \($0 + 1)", kind: .image) }
+            photoItems = []
+            showAddToChat = false
+        }
     }
 
+    private func message(
+        _ text: String, role: MessageBubble.Role, id: String, delivery: MessageBubble.Delivery = .none
+    ) -> some View {
+        MessageBubble(
+            text, role: role, delivery: delivery, reaction: reactions[id], accessibilityPrefix: id,
+            onRetry: { failedDelivered = true },
+            onLongPress: { reactingTo = ReactionTarget(id: id) }
+        )
+    }
+
+    /// Same rule as the composer: text, or a content attachment alone (fixture chips; nothing is read).
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        sent.append(text)
+        let content = attachments.filter { $0.kind != .capability }
+        guard !text.isEmpty || !content.isEmpty else { return }
+        sent.append(text.isEmpty ? content.map(\.title).joined(separator: ", ") : text)
         draft = ""
+        attachments.removeAll { $0.kind != .capability }
     }
 }
 
@@ -350,5 +498,109 @@ struct CatalogBrand: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Full-screen Chat, task reply and Inbox (Playground 7 candidate)
+
+/// Full-screen canonical Chat driven by the DS `ChatPlaygroundFixture`, exactly as an app adapter would
+/// drive it. The header owns Back (exit) and overflow, which opens the **fixture host** controls — the
+/// stand-ins for host evidence (acceptance, read acknowledgement, failure, reply). Nothing leaves the
+/// page: no message is sent and no receipt exists without one of those explicit fixture controls.
+struct PlaygroundChatScreen: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var fixture: ChatPlaygroundFixture
+    @State private var model: ChatModelSelection = .automatic
+    @State private var thinking: ThinkingLevel = .medium
+    @State private var showHostControls = false
+    @State private var showAddToChat = false
+
+    init(fixture: ChatPlaygroundFixture) {
+        _fixture = State(initialValue: fixture)
+    }
+
+    var body: some View {
+        ChatScreen(
+            header: fixture.header,
+            composer: fixture.composer.state,
+            replyContext: fixture.replyContext,
+            emptyState: fixture.emptyState,
+            modelMenu: ChatModelMenu(
+                providers: ChatFixture.providers, selection: model, accessibilityPrefix: "chat",
+                onSelect: { model = $0 },
+                onManageModels: { fixture.composer.show(note: ChatFixture.manageModelsNote) }
+            ),
+            onAction: handle
+        ) {
+            ChatTranscriptList(fixture.entries) { handle(.transcript($0)) }
+            if let note = fixture.note ?? fixture.composer.note {
+                Text(note)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("chat.fixtureNote")
+            }
+        }
+        .confirmationDialog("Fixture host", isPresented: $showHostControls, titleVisibility: .visible) {
+            Button("Host accepted the message") { fixture.simulateHostAcceptance() }
+                .accessibilityIdentifier("chat.host.accept")
+            Button("Recipient acknowledged (Read)") { fixture.simulateReadAcknowledgement() }
+                .accessibilityIdentifier("chat.host.read")
+            Button("Host reported not delivered") { fixture.simulateDeliveryFailure() }
+                .accessibilityIdentifier("chat.host.fail")
+            Button("Reply complete") { fixture.simulateReplyComplete() }
+                .accessibilityIdentifier("chat.host.reply")
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Stand-ins for evidence the app receives from its runtime. Fixture only.")
+        }
+        .sheet(isPresented: $showAddToChat) {
+            AddToChatSheet(
+                showsCamera: false,
+                browserAvailable: true,
+                thinking: $thinking,
+                accessibilityPrefix: "chat.addToChat",
+                // Fixture chips only: no picker is opened and no content is read.
+                onPhotos: { attach(ComposerAttachment(id: "photo.0", title: "Photo 1", kind: .image)) },
+                onFiles: { attach(ComposerAttachment(id: "file.notes", title: "notes.png", kind: .file)) },
+                onCloudBrowser: { attach(.cloudBrowser) },
+                onDone: { showAddToChat = false }
+            )
+            .presentationDetents([.medium])
+        }
+    }
+
+    private func handle(_ action: ChatScreenAction) {
+        switch fixture.handle(action) {
+        case .exit?: dismiss()
+        case .presentHostControls?: showHostControls = true
+        case .presentAddToChat?: showAddToChat = true
+        case nil: break
+        }
+    }
+
+    private func attach(_ attachment: ComposerAttachment) {
+        fixture.composer.attach(attachment)
+        showAddToChat = false
+    }
+}
+
+/// The unified Inbox fixture: host-reported item states; tapping an item opens its task reply chat.
+struct PlaygroundInboxScreen: View {
+    let inbox: InboxPlaygroundFixture
+    let open: (String) -> Void
+
+    var body: some View {
+        InboxScreen(items: inbox.items, onAction: { action in
+            if case .open(let id) = action { open(id) }
+        }) {
+            Text(InboxPlaygroundFixture.emptyMessage)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Color.labelSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.top, DesignTokens.Spacing.xl)
+                .accessibilityIdentifier("inbox.empty")
+        }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

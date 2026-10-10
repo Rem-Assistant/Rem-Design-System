@@ -1,5 +1,8 @@
 package com.rem.designsystem.demo
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -51,10 +56,23 @@ import com.rem.designsystem.agentsurfaces.RunningTaskTone
 import com.rem.designsystem.brand.RemAppIcon
 import com.rem.designsystem.brand.RemFaceMark
 import com.rem.designsystem.brand.RemFaceMarkMode
+import com.rem.designsystem.chat.AddToChatMaxPhotoSelection
+import com.rem.designsystem.chat.AddToChatSheet
+import com.rem.designsystem.chat.ChatHeader
+import com.rem.designsystem.chat.ChatHeaderStatus
+import com.rem.designsystem.chat.ChatModelMenu
+import com.rem.designsystem.chat.ChatModelOption
+import com.rem.designsystem.chat.ChatModelProvider
+import com.rem.designsystem.chat.ChatModelSelection
+import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.ComposerSendState
 import com.rem.designsystem.chat.MessageBubble
+import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.chat.MessageReaction
+import com.rem.designsystem.chat.MessageReactionPicker
 import com.rem.designsystem.chat.MessageRole
 import com.rem.designsystem.chat.RemComposerBar
+import com.rem.designsystem.chat.ThinkingLevel
 import com.rem.designsystem.chat.VoiceBar
 import com.rem.designsystem.chat.VoiceBarState
 import com.rem.designsystem.icons.RemMaterialSymbols
@@ -240,21 +258,102 @@ internal fun CatalogAgenda() {
     }
 }
 
+/**
+ * Neutral fictional Chat fixture. Paired with `ChatFixture` in the iOS `CatalogPages.swift`: keep the copy,
+ * ids and catalog identical. Providers and models are placeholders, never a production catalog;
+ * reactions, delivery and attachments live only in this page's local state.
+ */
+internal object ChatFixture {
+    const val Outgoing = "Can you move the planning sync to Thursday?"
+    const val Incoming = "Done \u2014 the planning sync is now Thursday at 10:00, and both attendees have the update."
+    const val ReadMessage = "Thanks, that works."
+    const val FailedMessage = "Please share the agenda with the group as well."
+    /** Illustrative only: the fixture's delivery time, kept when the message is marked Read. */
+    const val DeliveredAt = "10:24"
+    val Activities = listOf(
+        "Connected" to ChatHeaderStatus.Connected,
+        "Reading the shared notes" to ChatHeaderStatus.Connected,
+        "Needs you" to ChatHeaderStatus.NeedsYou,
+    )
+    val Providers = listOf(
+        ChatModelProvider("provider-a", "Provider A", listOf(ChatModelOption("model-a1", "Model A1"), ChatModelOption("model-a2", "Model A2"))),
+        ChatModelProvider("provider-b", "Provider B", listOf(ChatModelOption("model-b1", "Model B1"))),
+    )
+    const val ManageModelsNote = "Manage Models opens model settings in the app."
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CatalogChat() {
     var draft by rememberSaveable { mutableStateOf("") }
     var sent by rememberSaveable { mutableStateOf(listOf<String>()) }
     var voice by rememberSaveable { mutableStateOf(VoiceBarState.Listening) }
+    var activity by rememberSaveable { mutableIntStateOf(0) }
+    var reactions by remember { mutableStateOf(mapOf("chat.incoming" to MessageReaction.ThumbsUp)) }
+    var reactingTo by remember { mutableStateOf<String?>(null) }
+    var failedDelivered by rememberSaveable { mutableStateOf(false) }
+    var model by remember { mutableStateOf<ChatModelSelection>(ChatModelSelection.Automatic) }
+    var attachments by remember { mutableStateOf(listOf<ComposerAttachment>()) }
+    var showAddToChat by rememberSaveable { mutableStateOf(false) }
+    var browserAvailable by rememberSaveable { mutableStateOf(true) }
+    var thinking by rememberSaveable { mutableStateOf(ThinkingLevel.Medium) }
+    var feedback by rememberSaveable { mutableStateOf<String?>(null) }
+    // Same rule as the composer: text, or a content attachment alone (fixture chips, nothing is read).
     val send = {
         val text = draft.trim()
-        if (text.isNotEmpty()) { sent = sent + text; draft = "" }
+        val content = attachments.filter { it.kind != ComposerAttachment.Kind.Capability }
+        if (text.isNotEmpty() || content.isNotEmpty()) {
+            sent = sent + text.ifEmpty { content.joinToString(", ") { it.title } }
+            draft = ""
+            attachments = attachments - content.toSet()
+        }
+    }
+    // System pickers only report a count here: picked content stays on the device and is never read.
+    val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(AddToChatMaxPhotoSelection)) { uris ->
+        if (uris.isNotEmpty()) {
+            attachments = attachments.filter { it.kind != ComposerAttachment.Kind.Image } +
+                uris.indices.map { ComposerAttachment("photo.$it", "Photo ${it + 1}", ComposerAttachment.Kind.Image) }
+            showAddToChat = false
+        }
+    }
+    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) {
+            val start = attachments.count { it.kind == ComposerAttachment.Kind.File }
+            attachments = attachments + uris.indices.map {
+                ComposerAttachment("file.${start + it}", "Image file ${start + it + 1}", ComposerAttachment.Kind.File)
+            }
+            showAddToChat = false
+        }
+    }
+    @Composable
+    fun message(text: String, role: MessageRole, id: String, delivery: MessageDelivery = MessageDelivery.None) {
+        MessageBubble(
+            text, role = role, delivery = delivery, reaction = reactions[id], accessibilityPrefix = id,
+            onRetry = { failedDelivered = true },
+            onLongPress = { reactingTo = id },
+        )
     }
     CatalogPage {
+        CatalogGroup("Header") {
+            val (activityText, status) = ChatFixture.Activities[activity]
+            ChatHeader(activity = activityText, status = status, accessibilityPrefix = "chat.header")
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ChatFixture.Activities.forEachIndexed { index, (text, _) ->
+                    FilterChip(selected = activity == index, onClick = { activity = index }, label = { Text(text) },
+                        modifier = Modifier.testTag("chat.headerActivity.$index"))
+                }
+            }
+        }
         CatalogGroup("Message bubbles") {
             Column(verticalArrangement = Arrangement.spacedBy(RemSpacing.md)) {
-                MessageBubble("Can you tidy up my inbox before I start my day?", role = MessageRole.User)
-                MessageBubble("Done — I archived 38 newsletters and snoozed 5 low-priority threads.", role = MessageRole.Assistant)
-                sent.forEach { MessageBubble(it, role = MessageRole.User, meta = "Now") }
+                message(ChatFixture.Outgoing, MessageRole.User, "chat.outgoing")
+                message(ChatFixture.Incoming, MessageRole.Assistant, "chat.incoming")
+                message(ChatFixture.ReadMessage, MessageRole.User, "chat.read", MessageDelivery.Read(ChatFixture.DeliveredAt))
+                message(
+                    ChatFixture.FailedMessage, MessageRole.User, "chat.failed",
+                    if (failedDelivered) MessageDelivery.Delivered(ChatFixture.DeliveredAt) else MessageDelivery.Failed,
+                )
+                sent.forEachIndexed { index, text -> message(text, MessageRole.User, "chat.sent.$index") }
             }
         }
         CatalogGroup("Composer") {
@@ -263,8 +362,28 @@ internal fun CatalogChat() {
                 state = if (draft.isBlank()) ComposerSendState.Idle else ComposerSendState.Active,
                 onTextChange = { draft = it },
                 onSend = send,
+                onAdd = { showAddToChat = true },
                 accessibilityPrefix = "catalog",
+                attachments = attachments,
+                onRemoveAttachment = { removed -> attachments = attachments.filter { it.id != removed.id } },
+                modelMenu = { enabled ->
+                    ChatModelMenu(
+                        providers = ChatFixture.Providers, selection = model, onSelect = { model = it },
+                        enabled = enabled, accessibilityPrefix = "catalog",
+                        onManageModels = { feedback = ChatFixture.ManageModelsNote },
+                    )
+                },
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Cloud browser available", style = RemTypography.footnote, color = RemColors.current.labelPrimary, modifier = Modifier.weight(1f))
+                Switch(checked = browserAvailable, onCheckedChange = { browserAvailable = it }, modifier = Modifier.testTag("chat.browserAvailable"))
+            }
+            feedback?.let {
+                Text(it, style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("chat.feedback"))
+            }
+        }
+        CatalogGroup("Composer \u00b7 sending") {
+            RemComposerBar(text = "Plan the rest of my day", state = ComposerSendState.Sending)
         }
         CatalogGroup("Voice bar") {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -273,6 +392,40 @@ internal fun CatalogChat() {
                 }
             }
             VoiceBar(state = voice)
+        }
+    }
+    reactingTo?.let { target ->
+        ModalBottomSheet(onDismissRequest = { reactingTo = null }) {
+            Column(Modifier.padding(RemSpacing.lg), verticalArrangement = Arrangement.spacedBy(RemSpacing.md)) {
+                Text("Reactions", style = RemTypography.footnote, color = RemColors.current.labelSecondary)
+                MessageReactionPicker(
+                    selection = reactions[target],
+                    onSelect = { choice ->
+                        reactions = if (choice == null) reactions - target else reactions + (target to choice)
+                        reactingTo = null
+                    },
+                    accessibilityPrefix = "chat.reactions",
+                )
+            }
+        }
+    }
+    if (showAddToChat) {
+        ModalBottomSheet(onDismissRequest = { showAddToChat = false }) {
+            AddToChatSheet(
+                // The shipped Android app has no camera flow; none is invented here.
+                showsCamera = false,
+                browserAvailable = browserAvailable,
+                thinking = thinking,
+                onThinkingChange = { thinking = it },
+                onPhotos = { photos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                onFiles = { files.launch(arrayOf("image/*")) },
+                onCloudBrowser = {
+                    if (ComposerAttachment.CloudBrowser !in attachments) attachments = attachments + ComposerAttachment.CloudBrowser
+                    showAddToChat = false
+                },
+                onDone = { showAddToChat = false },
+                accessibilityPrefix = "catalog.addToChat",
+            )
         }
     }
 }
