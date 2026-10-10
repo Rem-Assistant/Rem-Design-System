@@ -158,12 +158,9 @@ fun PollCard(
 @Composable
 private fun PollRow(item: PollLetteredOption, selected: Boolean, modifier: Modifier) {
     val colors = RemColors.current
-    val shape = RoundedCornerShape(RemRadius.small)
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(colors.backgroundPrimary, shape)
+            .chatChoiceSurface()
             .then(modifier)
             .padding(RemSpacing.md),
         horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
@@ -173,6 +170,27 @@ private fun PollRow(item: PollLetteredOption, selected: Boolean, modifier: Modif
         Text(item.option.label, style = RemTypography.subheadline, color = colors.labelPrimary, modifier = Modifier.weight(1f))
         if (selected) Text("✓", style = RemTypography.subheadline, color = colors.systemGreen)
     }
+}
+
+/**
+ * Emphasis of a stacked, full-width chat choice. Poll options are all [Standard]; `PermissionCard` reuses
+ * the same choice for its decisions and fills its single [Primary] one.
+ */
+internal enum class ChatChoiceEmphasis { Standard, Primary }
+
+/**
+ * The shared stacked-choice surface (PollCard option rows, PermissionCard decisions): fills the card
+ * width, clipped to the small radius on the primary background — brand blue for the one primary choice.
+ * Callers chain their click/semantics modifier, then the 12dp inset.
+ */
+@Composable
+internal fun Modifier.chatChoiceSurface(emphasis: ChatChoiceEmphasis = ChatChoiceEmphasis.Standard): Modifier {
+    val colors = RemColors.current
+    val shape = RoundedCornerShape(RemRadius.small)
+    return this
+        .fillMaxWidth()
+        .clip(shape)
+        .background(if (emphasis == ChatChoiceEmphasis.Primary) colors.brandBlue else colors.backgroundPrimary, shape)
 }
 
 @Preview(name = "PollCard", showBackground = true, widthDp = 402)

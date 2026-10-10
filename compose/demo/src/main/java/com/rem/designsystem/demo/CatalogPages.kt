@@ -99,6 +99,8 @@ import com.rem.designsystem.chat.LoginSiteMark
 import com.rem.designsystem.chat.PermissionCard
 import com.rem.designsystem.chat.PermissionCardModel
 import com.rem.designsystem.chat.PermissionCardState
+import com.rem.designsystem.chat.PermissionParameter
+import com.rem.designsystem.chat.PermissionRisk
 import com.rem.designsystem.chat.PermissionRequestDetails
 import com.rem.designsystem.chat.loginFormCanSave
 import com.rem.designsystem.icons.RemMaterialSymbols
@@ -607,7 +609,8 @@ private fun CatalogLoginCardGroup() {
 
 /**
  * PermissionCard specimen: the inline card expands and collapses in place. Allow once / Deny resolve and
- * collapse it; Always allow is only a proposal (no grant); Review again returns to Awaiting.
+ * collapse it; Always allow is only a proposal (no grant); Review again returns to Awaiting. A second,
+ * elevated-risk email request (no Always allow) shows the risk label and the Full parameters disclosure.
  */
 @Composable
 private fun CatalogPermissionCardGroup() {
@@ -615,6 +618,9 @@ private fun CatalogPermissionCardGroup() {
     var expanded by rememberSaveable { mutableStateOf(PermissionCardState.Awaiting.defaultExpanded) }
     var note by rememberSaveable { mutableStateOf<String?>(null) }
     val resolve = { newState: PermissionCardState -> note = null; state = newState; expanded = newState.defaultExpanded }
+    var emailState by rememberSaveable { mutableStateOf(PermissionCardState.Awaiting) }
+    var emailExpanded by rememberSaveable { mutableStateOf(PermissionCardState.Awaiting.defaultExpanded) }
+    val resolveEmail = { newState: PermissionCardState -> emailState = newState; emailExpanded = newState.defaultExpanded }
     CatalogGroup("Permission card") {
         SegmentedPicker(PermissionCardState.entries, state, { resolve(it) }, { it.name }, tag = { "catalog.card.permission.state.${it.name}" })
         PermissionCard(
@@ -635,6 +641,21 @@ private fun CatalogPermissionCardGroup() {
         note?.let {
             Text(it, style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("catalog.card.permission.note"))
         }
+        PermissionCard(
+            PermissionCardModel(
+                title = "Email permission", question = "Allow Rem to send this email?",
+                summary = "Sends from your Gmail account. This can’t be undone.",
+                details = PermissionRequestDetails("Q3 investor update", "Sends immediately", "Gmail · samuel@example.com"),
+                state = emailState, risk = PermissionRisk.Elevated,
+                parameters = listOf(PermissionParameter("to", "investors@example.com"), PermissionParameter("subject", "Q3 investor update")),
+            ),
+            expanded = emailExpanded,
+            onExpandedChange = { emailExpanded = it },
+            onAllow = { resolveEmail(PermissionCardState.Allowed) },
+            onDeny = { resolveEmail(PermissionCardState.Denied) },
+            onReviewAgain = { resolveEmail(PermissionCardState.Awaiting) },
+            accessibilityPrefix = "catalog.card.permissionRisk",
+        )
     }
 }
 

@@ -162,13 +162,29 @@ public struct PollCard: View {
         }
         .font(DesignTokens.Typography.subheadline)
         .foregroundStyle(DesignTokens.Color.labelPrimary)
-        .padding(DesignTokens.Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            DesignTokens.Color.backgroundPrimary,
-            in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous))
+        .chatChoiceSurface()
+    }
+}
+
+/// Emphasis of a stacked, full-width chat choice. Poll options are all `.standard`; `PermissionCard`
+/// reuses the same choice for its decisions and fills its single `.primary` one.
+enum ChatChoiceEmphasis {
+    case standard
+    case primary
+}
+
+extension View {
+    /// The shared stacked-choice surface (PollCard option rows, PermissionCard decisions): 12pt inset,
+    /// fills the card width, small radius on the primary background — brand blue for the one primary
+    /// choice — and the whole rounded rect is the hit target.
+    func chatChoiceSurface(_ emphasis: ChatChoiceEmphasis = .standard) -> some View {
+        padding(DesignTokens.Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                emphasis == .primary ? DesignTokens.Color.brandBlue : DesignTokens.Color.backgroundPrimary,
+                in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous))
     }
 }
 

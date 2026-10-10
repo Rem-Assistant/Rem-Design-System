@@ -111,4 +111,27 @@ final class ChatCardsTests: XCTestCase {
         let details = Set([PermissionCardState.awaiting, .allowed, .denied].map { permission($0).details })
         XCTAssertEqual(details.count, 1)
     }
+
+    func testRiskLabelOnlyWhenElevated() {
+        XCTAssertEqual(permission(.awaiting).risk, .standard)
+        XCTAssertNil(permission(.awaiting).riskLabel)
+        var elevated = permission(.awaiting)
+        elevated.risk = .elevated
+        XCTAssertEqual(elevated.riskLabel, "Elevated risk")
+    }
+
+    func testFullParametersHiddenWhenEmpty() {
+        XCTAssertFalse(permission(.awaiting).showsParameters)
+        var withParameters = permission(.awaiting)
+        withParameters.parameters = [PermissionParameter(label: "to", value: "investors@example.com")]
+        XCTAssertTrue(withParameters.showsParameters)
+    }
+
+    func testDetailRowsAreLabelValuePairsOfTheRequest() {
+        XCTAssertEqual(permission(.awaiting).detailRows, [
+            PermissionParameter(label: "Action", value: "Send investor update"),
+            PermissionParameter(label: "When", value: "Oct 10, 2026 · 9:00 AM UTC"),
+            PermissionParameter(label: "Source", value: "Reminders · Personal"),
+        ])
+    }
 }
