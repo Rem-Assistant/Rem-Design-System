@@ -177,7 +177,9 @@ public struct MessageDraftCard: View {
         from: "me@example.com", to: "alex@example.com",
         subject: "Re: Next steps", body: "Hi Alex,\n\nThanks for reaching out. I've put time on the calendar.\n\nBest"
     )
-    ScrollView {
+    // An explicit return: with a local `let`, the builder body is ambiguous between the View and
+    // UIViewController #Preview overloads.
+    return ScrollView {
         VStack(spacing: DesignTokens.Spacing.lg) {
             ForEach(MessageDraftCardState.allCases, id: \.self) { state in
                 MessageDraftCard(draft, state: state)

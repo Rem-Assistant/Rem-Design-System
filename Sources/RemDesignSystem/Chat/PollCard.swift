@@ -178,7 +178,9 @@ public struct PollCard: View {
         PollOption(id: "calendar", label: "Check my calendar"),
         PollOption(id: "later", label: "Remind me later"),
     ]
-    VStack(spacing: DesignTokens.Spacing.lg) {
+    // An explicit return: with a local `let`, the builder body is ambiguous between the View and
+    // UIViewController #Preview overloads.
+    return VStack(spacing: DesignTokens.Spacing.lg) {
         PollCard(question: "What would you like to do next?", options: options, purpose: .suggestion)
         PollCard(question: "What would you like to do next?", options: options, purpose: .suggestion, selection: "calendar")
     }
