@@ -372,6 +372,8 @@ public struct RemComposerBar: View {
             DesignTokens.Color.backgroundPrimary,
             in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small, style: .continuous)
         )
+        // A container, so the chip's identifier does not propagate onto its Remove button.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("\(accessibilityPrefix).attachment.\(attachment.id)")
     }
 }

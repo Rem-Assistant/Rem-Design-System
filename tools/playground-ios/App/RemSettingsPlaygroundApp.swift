@@ -83,6 +83,10 @@ struct PlaygroundHome: View {
                     Picker("Agenda data", selection: $agendaFixture) {
                         ForEach(AgendaSuggestionsFixture.allCases, id: \.self) { Text($0.title).tag($0) }
                     }.pickerStyle(.segmented).accessibilityIdentifier("agendaFixturePicker")
+                    NavigationLink("Onboarding", value: PlaygroundRoute.onboarding)
+                        .accessibilityIdentifier("openOnboarding")
+                    // Chat and Inbox follow Onboarding so the established root rows keep their place
+                    // (the large-text root list realizes only the first rows on screen).
                     NavigationLink("Chat", value: PlaygroundRoute.chatScreen(chatConversation))
                         .accessibilityIdentifier("openChatScreen")
                     Picker("Chat data", selection: $chatConversation) {
@@ -93,8 +97,6 @@ struct PlaygroundHome: View {
                     Picker("Inbox data", selection: $inboxContent) {
                         ForEach(InboxPlaygroundFixture.Content.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).accessibilityIdentifier("inboxFixturePicker")
-                    NavigationLink("Onboarding", value: PlaygroundRoute.onboarding)
-                        .accessibilityIdentifier("openOnboarding")
                 } header: {
                     Text("Screens")
                 } footer: {

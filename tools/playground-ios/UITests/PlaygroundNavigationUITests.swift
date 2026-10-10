@@ -29,8 +29,53 @@ final class PlaygroundNavigationUITests: XCTestCase {
     }
 
     private func reveal(_ element: XCUIElement) {
+        if app.keyboards.count > 0 {
+            revealAboveKeyboard(element)
+            return
+        }
         for _ in 0..<8 where !element.isHittable { app.swipeUp() }
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
+    }
+
+    /// The part of the page's scroll view a person can see while typing: below the navigation bar and
+    /// above the keyboard and its input-assistant bar (a full-window swipe would start over the
+    /// keyboard and scroll nothing).
+    private func visibleScrollRegion(_ scrollView: XCUIElement) -> CGRect {
+        var top = app.keyboards.firstMatch.frame.minY
+        let assistant = app.otherElements["SystemInputAssistantView"]
+        if assistant.exists { top = min(top, assistant.frame.minY) }
+        let frame = scrollView.frame
+        var minY = frame.minY
+        let bar = app.navigationBars.firstMatch
+        if bar.exists { minY = max(minY, bar.frame.maxY) } // the scroll view extends under the bar
+        return CGRect(x: frame.minX, y: minY, width: frame.width, height: max(0, min(frame.maxY, top) - minY))
+    }
+
+    /// With the keyboard up, drags inside the scroll view's blank leading margin and only within the
+    /// visible region, until `element` sits fully inside that region and is hittable. Bounded: stops
+    /// when a drag makes no progress.
+    private func revealAboveKeyboard(_ element: XCUIElement) {
+        let scrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(scrollView.exists, "The page exposes its scroll view")
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        var lastMinY: CGFloat?
+        for _ in 0..<8 {
+            let visible = visibleScrollRegion(scrollView)
+            let target = element.frame
+            if element.exists && visible.contains(target) && element.isHittable { return }
+            if let lastMinY, abs(lastMinY - target.minY) < 1 { break }
+            lastMinY = target.minY
+            let up = target.minY < visible.minY
+            let x = scrollView.frame.minX + 8
+            let near = visible.minY + visible.height * 0.3
+            let far = visible.maxY - visible.height * 0.15
+            let from = origin.withOffset(CGVector(dx: x, dy: up ? near : far))
+            let to = origin.withOffset(CGVector(dx: x, dy: up ? far : near))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        let visible = visibleScrollRegion(scrollView)
+        XCTAssertTrue(element.exists && visible.contains(element.frame) && element.isHittable,
+                      "Expected \(element.identifier) fully visible above the keyboard (\(element.frame) in \(visible))")
     }
 
     /// Taps a text input and requires it to take keyboard focus before anything is typed, so a tap
@@ -38,8 +83,19 @@ final class PlaygroundNavigationUITests: XCTestCase {
     private func focus(_ field: XCUIElement) {
         field.tap()
         dismissKeyboardIntroduction()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        let result = XCTWaiter.wait(for: [focused], timeout: 2)
+        // Accessibility snapshots of a busy hierarchy can take seconds, so poll a freshly resolved
+        // element (by type + identifier) for a bounded 10s, then evaluate once more before failing.
+        // Keyboard focus itself stays the requirement.
+        let hasFocus = NSPredicate(format: "hasKeyboardFocus == true")
+        let fresh = { self.app.descendants(matching: field.elementType).matching(identifier: field.identifier).firstMatch }
+        let deadline = Date().addingTimeInterval(10)
+        var isFocused = false
+        while !isFocused && Date() < deadline {
+            isFocused = hasFocus.evaluate(with: fresh())
+            if !isFocused { RunLoop.current.run(until: Date().addingTimeInterval(0.25)) }
+        }
+        if !isFocused { isFocused = hasFocus.evaluate(with: fresh()) }
+        let result: XCTWaiter.Result = isFocused ? .completed : .timedOut
         if result != .completed {
             // Evidence for a failure: what the tap hit and what, if anything, holds focus. Printed
             // (bounded) so it reaches the job log, since attachments are exported only after a pass.
@@ -186,12 +242,15 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     /// Scrolls in short drags held at the end (no fling) until `element` is hittable, so it stops just
     /// inside the edge it entered from: the bottom when scrolling down, with its component above it,
-    /// or the top when scrolling up, with its component below it. Drags start at the trailing margin,
-    /// clear of the page's controls.
+    /// or the top when scrolling up, with its component below it. Drags start in the scroll view's
+    /// leading margin, clear of the page's controls and of the scroll indicator.
     private func scroll(to element: XCUIElement, named anchor: String, up: Bool) {
-        let window = app.windows.firstMatch
-        let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.35 : 0.65))
-        let to = window.coordinate(withNormalizedOffset: CGVector(dx: 0.985, dy: up ? 0.65 : 0.35))
+        // Drag inside the page's scroll view, in its blank leading margin: the trailing edge is the
+        // interactive scroll indicator on long pages, which absorbs a short drag without scrolling.
+        let scrollView = app.scrollViews.firstMatch
+        let dx = 8 / max(scrollView.frame.width, 1)
+        let from = scrollView.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.35 : 0.65))
+        let to = scrollView.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: up ? 0.65 : 0.35))
         for _ in 0..<24 {
             if element.exists && element.isHittable { break }
             from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
@@ -618,8 +677,16 @@ final class PlaygroundNavigationUITests: XCTestCase {
     // Canonical compositions driven by the DS `ChatPlaygroundFixture` / `InboxPlaygroundFixture`.
     // Receipts appear only through the explicit fixture-host controls behind the header overflow.
 
+    /// Picks a root fixture segment, revealing the picker first (root rows below the fold).
+    private func chooseRootFixture(_ picker: String, _ segment: String) {
+        let control = app.segmentedControls[picker]
+        XCTAssertTrue(control.waitForExistence(timeout: 3), "Missing \(picker)")
+        reveal(control)
+        control.buttons[segment].tap()
+    }
+
     private func openChatScreen(_ conversation: String = "Populated") {
-        app.segmentedControls["chatFixturePicker"].buttons[conversation].tap()
+        chooseRootFixture("chatFixturePicker", conversation)
         tap("openChatScreen")
         XCTAssertTrue(app.buttons["chat.header.back"].waitForExistence(timeout: 3), "The header owns Back")
     }
@@ -738,7 +805,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     }
 
     func testInboxStatesRouteIntoTaskReplyAndDismissAccessory() {
-        app.segmentedControls["inboxFixturePicker"].buttons["Items"].tap()
+        chooseRootFixture("inboxFixturePicker", "Items")
         tap("openInbox")
         // The row is one button; its label folds in the title and the host-reported status.
         let venue = app.buttons["inbox.item.venue-booking"]
@@ -766,7 +833,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     }
 
     func testInboxEmpty() {
-        app.segmentedControls["inboxFixturePicker"].buttons["Empty"].tap()
+        chooseRootFixture("inboxFixturePicker", "Empty")
         tap("openInbox")
         XCTAssertTrue(element("inbox.empty").waitForExistence(timeout: 3))
     }
