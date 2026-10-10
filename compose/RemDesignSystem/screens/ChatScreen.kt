@@ -1,5 +1,26 @@
 package com.rem.designsystem.screens
 
+import android.provider.Settings
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -183,11 +204,49 @@ fun ChatEmptyStateView(state: ChatEmptyState, onStarter: (String) -> Unit, modif
  * timestamps, [MessageBubble]s, and [ChatTranscriptRules] receipt placement (latest outgoing only;
  * failures stay visible). Delivery values are rendered as supplied.
  */
+/** Width of the right-side swipe-to-reveal timestamp column (fits "10:24 AM" at footnote size). For review. */
+private val TimeColumnWidth = 64.dp
+
 @Composable
 fun ChatTranscriptList(entries: List<ChatTranscriptEntry>, onAction: (ChatTranscriptAction) -> Unit, modifier: Modifier = Modifier) {
     val colors = RemColors.current
     val latest = ChatTranscriptRules.latestOutgoingId(entries)
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(RemSpacing.lg)) {
+    // Swipe left to reveal timestamps (WS1d): one shared offset moves every row together; the header,
+    // composer and keyboard live outside the transcript and stay put. Rows snap back on release.
+    val context = LocalContext.current
+    val reduceMotion = remember(context) {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    val columnPx = with(LocalDensity.current) { TimeColumnWidth.toPx() }
+    val reveal = remember { Animatable(ChatTimestampReveal.SETTLED) }
+    val scope = rememberCoroutineScope()
+    var dragX by remember { mutableFloatStateOf(0f) }
+    val settle: () -> Unit = {
+        scope.launch {
+            if (reduceMotion) reveal.snapTo(ChatTimestampReveal.SETTLED)
+            else reveal.animateTo(ChatTimestampReveal.SETTLED, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
+        }
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .pointerInput(reduceMotion, columnPx) {
+                // Horizontal-axis detector: vertical drags stay with the enclosing scroll.
+                detectHorizontalDragGestures(
+                    onDragStart = { dragX = 0f },
+                    onDragEnd = settle,
+                    onDragCancel = settle,
+                ) { change, amount ->
+                    dragX += amount
+                    if (reveal.value > 0f || dragX <= -ChatTimestampReveal.MIN_TRAVEL) {
+                        change.consume()
+                        scope.launch { reveal.snapTo(ChatTimestampReveal.reveal(dragX, columnPx, reduceMotion)) }
+                    }
+                }
+            }
+            .offset { IntOffset(-reveal.value.roundToInt(), 0) },
+        verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
+    ) {
         entries.forEach { entry ->
             when (entry) {
                 is ChatTranscriptEntry.Timestamp -> Text(
@@ -197,12 +256,26 @@ fun ChatTranscriptList(entries: List<ChatTranscriptEntry>, onAction: (ChatTransc
                 )
                 is ChatTranscriptEntry.Message -> {
                     val m = entry.message
-                    val shown = ChatMessageDisplay(
-                        id = m.id, role = m.role, text = m.text, meta = m.meta,
-                        delivery = ChatTranscriptRules.displayedDelivery(m, latest),
-                        reaction = m.reaction, canRetry = m.canRetry,
-                    )
-                    MessageBubble(message = shown, onAction = onAction)
+                    val shown = m.copy(delivery = ChatTranscriptRules.displayedDelivery(m, latest))
+                    Box(Modifier.fillMaxWidth()) {
+                        MessageBubble(message = shown, onAction = onAction)
+                        val time = m.time
+                        if (time != null) {
+                            // Just past the row's trailing edge: off-screen at rest, slides in outside the bubble.
+                            Text(
+                                time, style = RemTypography.footnote, color = colors.labelSecondary,
+                                textAlign = TextAlign.End, maxLines = 1,
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .offset(x = TimeColumnWidth)
+                                    .width(TimeColumnWidth)
+                                    .graphicsLayer { alpha = (reveal.value / columnPx).coerceIn(0f, 1f) }
+                                    // Spoken without the gesture: "Sent at 10:24" / "Received at 10:24".
+                                    .semantics { contentDescription = ChatTimestampReveal.accessibilityTime(m) ?: time }
+                                    .testTag("message.${m.id}.time"),
+                            )
+                        }
+                    }
                 }
             }
         }

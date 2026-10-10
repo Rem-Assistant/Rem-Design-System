@@ -52,6 +52,8 @@ public struct MessageBubble: View {
     private let accessibilityPrefix: String
     private let onRetry: (() -> Void)?
     private let onLongPress: (() -> Void)?
+    /// Spoken time ("Sent at 10:24"), so the swipe-revealed timestamp never needs the gesture.
+    fileprivate(set) var accessibilityTime: String?
 
     /// - Parameters:
     ///   - text: The message body. Plain text; the assistant role reads as prose.
@@ -128,6 +130,7 @@ public struct MessageBubble: View {
             )
             .modifier(LongPressAction(action: onLongPress))
             .accessibilityElement(children: .combine)
+            .modifier(AccessibilityTimeValue(time: accessibilityTime))
             .accessibilityIdentifier("\(accessibilityPrefix).bubble")
             // After the bubble's accessibility element, so the reaction stays its own element.
             .overlay(alignment: .topLeading) {
@@ -184,6 +187,7 @@ public struct MessageBubble: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .modifier(LongPressAction(action: onLongPress))
                 .accessibilityElement(children: .combine)
+                .modifier(AccessibilityTimeValue(time: accessibilityTime))
                 .accessibilityIdentifier("\(accessibilityPrefix).bubble")
                 .overlay(alignment: .topTrailing) {
                     if let reaction {
@@ -233,6 +237,7 @@ extension MessageBubble {
             onRetry: retry,
             onLongPress: { onAction(.requestReaction(messageID: id)) }
         )
+        accessibilityTime = ChatTimestampReveal.accessibilityTime(message)
     }
 }
 
@@ -324,6 +329,18 @@ struct MessageBubbleRowLayout: Layout {
 }
 
 /// Attaches the long-press (and its accessibility equivalent) only when the host supplies one.
+private struct AccessibilityTimeValue: ViewModifier {
+    let time: String?
+
+    func body(content: Content) -> some View {
+        if let time {
+            content.accessibilityValue(time)
+        } else {
+            content
+        }
+    }
+}
+
 private struct LongPressAction: ViewModifier {
     let action: (() -> Void)?
 

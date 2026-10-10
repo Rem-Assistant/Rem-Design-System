@@ -115,4 +115,40 @@ final class ChatScreenModelTests: XCTestCase {
         XCTAssertEqual(ChatScreenAction.dismissReplyContext(targetID: context.targetID), .dismissReplyContext(targetID: "target-1"))
         XCTAssertEqual(ChatEmptyState(message: "m").title, "What can I help with?")
     }
+
+    // MARK: WS1d — swipe left to reveal timestamps (thresholds marked for review)
+
+    func testMessageTimeIsHostSuppliedAndOptional() {
+        var message = ChatMessageDisplay(id: "u", role: .user, text: "Hi", time: "10:24")
+        XCTAssertEqual(message.time, "10:24")
+        XCTAssertNil(ChatMessageDisplay(id: "a", role: .assistant, text: "Hi").time)
+        let original = message
+        message.time = nil
+        XCTAssertNotEqual(message, original)
+    }
+
+    func testOnlyAClearlyHorizontalLeftDragReveals() {
+        XCTAssertTrue(ChatTimestampReveal.isRevealDrag(dx: -20, dy: 5))
+        XCTAssertFalse(ChatTimestampReveal.isRevealDrag(dx: 20, dy: 0), "rightward")
+        XCTAssertFalse(ChatTimestampReveal.isRevealDrag(dx: -9, dy: 0), "below travel")
+        XCTAssertFalse(ChatTimestampReveal.isRevealDrag(dx: -20, dy: 40), "vertical scroll")
+        XCTAssertFalse(ChatTimestampReveal.isRevealDrag(dx: -15, dy: 12), "diagonal")
+    }
+
+    func testRevealTracksTheFingerThenResistsOrClamps() {
+        XCTAssertEqual(ChatTimestampReveal.reveal(dx: 30, columnWidth: 60, reduceMotion: false), 0)
+        XCTAssertEqual(ChatTimestampReveal.reveal(dx: -40, columnWidth: 60, reduceMotion: false), 40)
+        XCTAssertEqual(ChatTimestampReveal.reveal(dx: -60, columnWidth: 60, reduceMotion: false), 60)
+        XCTAssertEqual(ChatTimestampReveal.reveal(dx: -100, columnWidth: 60, reduceMotion: false), 72, accuracy: 0.001)
+        XCTAssertEqual(ChatTimestampReveal.reveal(dx: -100, columnWidth: 60, reduceMotion: true), 60, "Reduce Motion clamps")
+        XCTAssertEqual(ChatTimestampReveal.settled, 0)
+    }
+
+    func testTimeIsAlwaysAvailableToAssistiveTechnology() {
+        XCTAssertEqual(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id: "u", role: .user, text: "Hi", time: "10:24")),
+                       "Sent at 10:24")
+        XCTAssertEqual(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id: "a", role: .assistant, text: "Hi", time: "10:25")),
+                       "Received at 10:25")
+        XCTAssertNil(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id: "x", role: .user, text: "Hi")))
+    }
 }

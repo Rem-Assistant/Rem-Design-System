@@ -146,10 +146,14 @@ public struct ChatMessageDisplay: Identifiable, Equatable, Sendable {
     public var reaction: MessageReaction?
     /// Offer Try again on a failed message only when the host can actually retry it.
     public var canRetry: Bool
+    /// Host-formatted send/receive time shown in the swipe-to-reveal timestamp column (e.g. "10:24").
+    /// The DS never reads a clock or formats dates; `nil` shows no timestamp for this message.
+    public var time: String?
 
     public init(
         id: String, role: MessageBubble.Role, text: String, meta: String? = nil,
-        delivery: MessageBubble.Delivery = .none, reaction: MessageReaction? = nil, canRetry: Bool = false
+        delivery: MessageBubble.Delivery = .none, reaction: MessageReaction? = nil, canRetry: Bool = false,
+        time: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -158,6 +162,7 @@ public struct ChatMessageDisplay: Identifiable, Equatable, Sendable {
         self.delivery = role == .user ? delivery : .none
         self.reaction = reaction
         self.canRetry = canRetry
+        self.time = time
     }
 }
 
@@ -335,6 +340,39 @@ public enum ChatTranscriptRules {
         guard message.role == .user else { return .none }
         if message.delivery == .failed { return .failed }
         return message.id == latest ? message.delivery : .none
+    }
+}
+
+/// Swipe-left-to-reveal timestamps (approved Chat requirement WS1d): one shared offset translates every
+/// transcript row together while header, composer and keyboard stay fixed. Pure rules so both platforms
+/// agree. Thresholds, rubber-band factor and snapback are platform-convention choices marked for review;
+/// the reference screenshot does not establish them. Twin of Compose `ChatTimestampReveal`.
+public enum ChatTimestampReveal {
+    /// Minimum leftward travel before the transcript claims the drag.
+    public static let minTravel: CGFloat = 10
+    /// Horizontal travel must exceed vertical travel by this ratio, so vertical scrolling stays untouched.
+    public static let horizontalRatio: CGFloat = 1.5
+    /// Resistance applied to travel beyond the column width (no overshoot with Reduce Motion).
+    public static let rubberBand: CGFloat = 0.3
+    /// Rows always return when the finger lifts: the reveal is a peek, never a persistent state.
+    public static let settled: CGFloat = 0
+
+    /// Whether a drag of (`dx`, `dy`) is a leftward reveal rather than a scroll or a rightward swipe.
+    public static func isRevealDrag(dx: CGFloat, dy: CGFloat) -> Bool {
+        dx <= -minTravel && abs(dx) > abs(dy) * horizontalRatio
+    }
+
+    /// How far rows move left (>= 0) for a drag translation `dx`, given the timestamp `columnWidth`.
+    public static func reveal(dx: CGFloat, columnWidth: CGFloat, reduceMotion: Bool) -> CGFloat {
+        let travel = max(0, -dx)
+        guard travel > columnWidth else { return travel }
+        return reduceMotion ? columnWidth : columnWidth + (travel - columnWidth) * rubberBand
+    }
+
+    /// Accessible description of a message's time, so timestamps never require the gesture.
+    public static func accessibilityTime(_ message: ChatMessageDisplay) -> String? {
+        guard let time = message.time else { return nil }
+        return message.role == .user ? "Sent at \(time)" : "Received at \(time)"
     }
 }
 

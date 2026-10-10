@@ -87,13 +87,14 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     static let populatedEntries: [ChatTranscriptEntry] = [
         .timestamp(id: "t1", text: "Today 10:20 AM"),
         .message(ChatMessageDisplay(id: "u1", role: .user, text: "Help me plan the rest of my day.",
-                                    delivery: .delivered(at: "10:20"))),
+                                    delivery: .delivered(at: "10:20"), time: "10:20")),
         .message(ChatMessageDisplay(id: "a1", role: .assistant,
-                                    text: "Start with your highest-priority task, then leave time for your next commitment.")),
+                                    text: "Start with your highest-priority task, then leave time for your next commitment.",
+                                    time: "10:21")),
         .message(ChatMessageDisplay(id: "u2", role: .user, text: "Turn this into a reminder for tomorrow.",
-                                    delivery: .delivered(at: fixtureTime))),
+                                    delivery: .delivered(at: fixtureTime), time: fixtureTime)),
         .message(ChatMessageDisplay(id: "a2", role: .assistant, text: "I can help you prepare that reminder.",
-                                    meta: "Automatic · Reply complete")),
+                                    meta: "Automatic · Reply complete", time: fixtureTime)),
     ]
 
     // MARK: Presentation inputs

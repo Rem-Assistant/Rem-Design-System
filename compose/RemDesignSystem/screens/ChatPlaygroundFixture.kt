@@ -175,10 +175,10 @@ data class ChatPlaygroundFixture(
         /** Default populated conversation (`2054:21981`) with a consistent sample timeline. */
         val PopulatedEntries: List<ChatTranscriptEntry> = listOf(
             ChatTranscriptEntry.Timestamp("t1", "Today 10:20 AM"),
-            ChatTranscriptEntry.Message(ChatMessageDisplay("u1", MessageRole.User, "Help me plan the rest of my day.", delivery = MessageDelivery.Delivered("10:20"))),
-            ChatTranscriptEntry.Message(ChatMessageDisplay("a1", MessageRole.Assistant, "Start with your highest-priority task, then leave time for your next commitment.")),
-            ChatTranscriptEntry.Message(ChatMessageDisplay("u2", MessageRole.User, "Turn this into a reminder for tomorrow.", delivery = MessageDelivery.Delivered(FixtureTime))),
-            ChatTranscriptEntry.Message(ChatMessageDisplay("a2", MessageRole.Assistant, "I can help you prepare that reminder.", meta = "Automatic · Reply complete")),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("u1", MessageRole.User, "Help me plan the rest of my day.", delivery = MessageDelivery.Delivered("10:20"), time = "10:20")),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("a1", MessageRole.Assistant, "Start with your highest-priority task, then leave time for your next commitment.", time = "10:21")),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("u2", MessageRole.User, "Turn this into a reminder for tomorrow.", delivery = MessageDelivery.Delivered(FixtureTime), time = FixtureTime)),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("a2", MessageRole.Assistant, "I can help you prepare that reminder.", meta = "Automatic · Reply complete", time = FixtureTime)),
         )
 
         fun conversation(conversation: Conversation) =

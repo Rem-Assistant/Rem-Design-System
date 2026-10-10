@@ -23,7 +23,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 |---|---|
 | `ChatHeaderDisplay` | name, agent activity copy, status (connected / needs you), working face, which header controls are shown |
 | `ChatComposerState` | draft, placeholder, model label, attachments, `ComposerAvailability` (`enabled` / `disabled(reason)`), `ComposerPhase` (`idle` / `sending` / `streaming`), `voiceAvailable`, `isFocused` |
-| `ChatMessageDisplay` | id, role, text, meta, **host-supplied** `delivery`, reaction, `canRetry` |
+| `ChatMessageDisplay` | id, role, text, meta, **host-supplied** `delivery`, reaction, `canRetry`, optional **host-formatted** `time` (swipe-to-reveal timestamp) |
 | `ChatTranscriptEntry` | `.message` / `.timestamp` (Kotlin: `Message` / `Timestamp`) |
 | `ChatReplyContext` | `targetID` (Kotlin `targetId`), title, summary — the task and conversation ids stay in the app |
 | `ChatEmptyState`, `ChatStarter` | empty conversation copy and starters (host lists only what it can do) |
@@ -56,6 +56,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 - `.delivered(at:)` only with durable **host acceptance** evidence; `at` is the host-formatted acceptance time.
 - `.read(at:)` only with an **explicit acknowledgement**, keeping the delivered time. Never because a reply appeared.
 - `.failed` only when the host reports the send failed; `canRetry` only when the host can actually retry.
+- `time` is the host's formatted send or receive time for that message (for example "10:24"). The DS never reads a clock or formats dates; `nil` shows no timestamp. A left swipe on `ChatTranscriptList` reveals these times in a right-side column for incoming and outgoing messages alike, and every row moves together while the header and composer stay fixed. The receipt stays below the latest outgoing bubble. Assistive technology hears "Sent at …" or "Received at …" without the gesture. Snapback, thresholds and timing follow platform conventions and are open for review.
 - Otherwise `.none` — no receipt.
 - `ComposerAvailability.disabled`, `voiceAvailable`, attachment content and `InboxItemState` come from runtime
   state; a fixture or mock must not imply capability.

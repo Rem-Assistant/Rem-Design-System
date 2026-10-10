@@ -109,6 +109,11 @@ class ChatMessageDisplay(
     val reaction: MessageReaction? = null,
     /** Offer Try again on a failed message only when the host can actually retry it. */
     val canRetry: Boolean = false,
+    /**
+     * Host-formatted send/receive time shown in the swipe-to-reveal timestamp column (e.g. "10:24").
+     * The DS never reads a clock or formats dates; null shows no timestamp for this message.
+     */
+    val time: String? = null,
 ) {
     val delivery: MessageDelivery = if (role == MessageRole.User) delivery else MessageDelivery.None
 
@@ -118,13 +123,14 @@ class ChatMessageDisplay(
         delivery: MessageDelivery = this.delivery,
         reaction: MessageReaction? = this.reaction,
         canRetry: Boolean = this.canRetry,
-    ) = ChatMessageDisplay(id, role, text, meta, delivery, reaction, canRetry)
+        time: String? = this.time,
+    ) = ChatMessageDisplay(id, role, text, meta, delivery, reaction, canRetry, time)
 
     override fun equals(other: Any?): Boolean = other is ChatMessageDisplay &&
         id == other.id && role == other.role && text == other.text && meta == other.meta &&
-        delivery == other.delivery && reaction == other.reaction && canRetry == other.canRetry
+        delivery == other.delivery && reaction == other.reaction && canRetry == other.canRetry && time == other.time
 
-    override fun hashCode(): Int = listOf(id, role, text, meta, delivery, reaction, canRetry).hashCode()
+    override fun hashCode(): Int = listOf(id, role, text, meta, delivery, reaction, canRetry, time).hashCode()
 }
 
 /** Interactions on a transcript message. */
@@ -243,6 +249,40 @@ object ChatTranscriptRules {
         message.delivery == MessageDelivery.Failed -> MessageDelivery.Failed
         message.id == latestOutgoingId -> message.delivery
         else -> MessageDelivery.None
+    }
+}
+
+/**
+ * Swipe-left-to-reveal timestamps (approved Chat requirement WS1d): one shared offset translates every
+ * transcript row together while header, composer and keyboard stay fixed. Pure rules so both platforms
+ * agree. Thresholds, rubber-band factor and snapback are platform-convention choices marked for review;
+ * the reference screenshot does not establish them. Twin of SwiftUI `ChatTimestampReveal`.
+ */
+object ChatTimestampReveal {
+    /** Minimum leftward travel before the transcript claims the drag. */
+    const val MIN_TRAVEL = 10f
+    /** Horizontal travel must exceed vertical travel by this ratio, so vertical scrolling stays untouched. */
+    const val HORIZONTAL_RATIO = 1.5f
+    /** Resistance applied to travel beyond the column width (no overshoot with Reduce Motion). */
+    const val RUBBER_BAND = 0.3f
+
+    /** Whether a drag of ([dx], [dy]) is a leftward reveal rather than a scroll or a rightward swipe. */
+    fun isRevealDrag(dx: Float, dy: Float): Boolean =
+        dx <= -MIN_TRAVEL && kotlin.math.abs(dx) > kotlin.math.abs(dy) * HORIZONTAL_RATIO
+
+    /** How far rows move left (>= 0) for a drag translation [dx], given the timestamp [columnWidth]. */
+    fun reveal(dx: Float, columnWidth: Float, reduceMotion: Boolean): Float {
+        val travel = (-dx).coerceAtLeast(0f)
+        if (travel <= columnWidth) return travel
+        return if (reduceMotion) columnWidth else columnWidth + (travel - columnWidth) * RUBBER_BAND
+    }
+
+    /** Rows always return when the finger lifts: the reveal is a peek, never a persistent state. */
+    const val SETTLED = 0f
+
+    /** Accessible description of a message including its time, so timestamps never require the gesture. */
+    fun accessibilityTime(message: ChatMessageDisplay): String? = message.time?.let {
+        if (message.role == MessageRole.User) "Sent at $it" else "Received at $it"
     }
 }
 

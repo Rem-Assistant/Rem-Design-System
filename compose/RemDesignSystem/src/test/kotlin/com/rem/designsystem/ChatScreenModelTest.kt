@@ -11,6 +11,7 @@ import com.rem.designsystem.screens.ChatMessageDisplay
 import com.rem.designsystem.screens.ChatReplyContext
 import com.rem.designsystem.screens.ChatScreenAction
 import com.rem.designsystem.screens.ChatTranscriptEntry
+import com.rem.designsystem.screens.ChatTimestampReveal
 import com.rem.designsystem.screens.ChatTranscriptRules
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
@@ -135,5 +136,40 @@ class ChatScreenModelTest {
         val context = ChatReplyContext("target-1", "Replying to Rem", "Plan the next step")
         assertEquals(ChatScreenAction.DismissReplyContext("target-1"), ChatScreenAction.DismissReplyContext(context.targetId))
         assertEquals("What can I help with?", ChatEmptyState(message = "m").title)
+    }
+
+    // WS1d — swipe left to reveal timestamps (thresholds marked for review).
+
+    @Test fun messageTimeIsHostSuppliedAndOptional() {
+        val m = ChatMessageDisplay(id = "u", role = MessageRole.User, text = "Hi", time = "10:24")
+        assertEquals("10:24", m.time)
+        assertNull(ChatMessageDisplay(id = "a", role = MessageRole.Assistant, text = "Hi").time)
+        assertEquals("10:30", m.copy(time = "10:30").time)
+        assertFalse(m == m.copy(time = null))
+    }
+
+    @Test fun onlyAClearlyHorizontalLeftDragReveals() {
+        assertTrue(ChatTimestampReveal.isRevealDrag(dx = -20f, dy = 5f))
+        assertFalse("rightward", ChatTimestampReveal.isRevealDrag(dx = 20f, dy = 0f))
+        assertFalse("below travel", ChatTimestampReveal.isRevealDrag(dx = -9f, dy = 0f))
+        assertFalse("vertical scroll", ChatTimestampReveal.isRevealDrag(dx = -20f, dy = 40f))
+        assertFalse("diagonal", ChatTimestampReveal.isRevealDrag(dx = -15f, dy = 12f))
+    }
+
+    @Test fun revealTracksTheFingerThenResistsOrClamps() {
+        assertEquals(0f, ChatTimestampReveal.reveal(dx = 30f, columnWidth = 60f, reduceMotion = false), 0f)
+        assertEquals(40f, ChatTimestampReveal.reveal(dx = -40f, columnWidth = 60f, reduceMotion = false), 0f)
+        assertEquals(60f, ChatTimestampReveal.reveal(dx = -60f, columnWidth = 60f, reduceMotion = false), 0f)
+        assertEquals(72f, ChatTimestampReveal.reveal(dx = -100f, columnWidth = 60f, reduceMotion = false), 0.001f)
+        assertEquals("Reduce Motion clamps", 60f, ChatTimestampReveal.reveal(dx = -100f, columnWidth = 60f, reduceMotion = true), 0f)
+        assertEquals(0f, ChatTimestampReveal.SETTLED, 0f)
+    }
+
+    @Test fun timeIsAlwaysAvailableToAssistiveTechnology() {
+        assertEquals("Sent at 10:24", ChatTimestampReveal.accessibilityTime(
+            ChatMessageDisplay(id = "u", role = MessageRole.User, text = "Hi", time = "10:24")))
+        assertEquals("Received at 10:25", ChatTimestampReveal.accessibilityTime(
+            ChatMessageDisplay(id = "a", role = MessageRole.Assistant, text = "Hi", time = "10:25")))
+        assertNull(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id = "x", role = MessageRole.User, text = "Hi")))
     }
 }

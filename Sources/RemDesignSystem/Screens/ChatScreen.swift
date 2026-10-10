@@ -220,6 +220,11 @@ public struct ChatEmptyStateView: View {
 public struct ChatTranscriptList: View {
     private let entries: [ChatTranscriptEntry]
     private let onAction: (ChatTranscriptAction) -> Void
+    /// Swipe-to-reveal timestamps (WS1d): one shared offset moves every row together.
+    @State private var reveal: CGFloat = ChatTimestampReveal.settled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Width of the right-side timestamp column (fits "10:24 AM" at footnote size). For review.
+    static let timeColumnWidth: CGFloat = 64
 
     public init(_ entries: [ChatTranscriptEntry], onAction: @escaping (ChatTranscriptAction) -> Void) {
         self.entries = entries
@@ -239,9 +244,44 @@ public struct ChatTranscriptList: View {
                         .accessibilityIdentifier("chat.timestamp.\(id)")
                 case .message(let message):
                     MessageBubble(displayed(message, latest: latest), onAction: onAction)
+                        .overlay(alignment: .trailing) { timeColumn(message) }
                 }
             }
         }
+        // Rows move together; the header, composer and keyboard live outside the transcript and stay put.
+        .offset(x: -reveal)
+        .simultaneousGesture(revealGesture)
+    }
+
+    /// Right-side time for one message, just past the row's trailing edge so it is off-screen at rest and
+    /// slides in, outside the bubble, as the rows move left. Spoken through the bubble instead.
+    @ViewBuilder
+    private func timeColumn(_ message: ChatMessageDisplay) -> some View {
+        if let time = message.time {
+            Text(time)
+                .font(DesignTokens.Typography.footnote)
+                .foregroundStyle(DesignTokens.Color.labelSecondary)
+                .lineLimit(1)
+                .frame(width: Self.timeColumnWidth, alignment: .trailing)
+                .offset(x: Self.timeColumnWidth)
+                .opacity(min(1, reveal / Self.timeColumnWidth))
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Leftward horizontal drags only; vertical scrolling keeps working. Rows snap back on release.
+    private var revealGesture: some Gesture {
+        DragGesture(minimumDistance: ChatTimestampReveal.minTravel)
+            .onChanged { value in
+                let dx = value.translation.width, dy = value.translation.height
+                guard reveal > 0 || ChatTimestampReveal.isRevealDrag(dx: dx, dy: dy) else { return }
+                reveal = ChatTimestampReveal.reveal(dx: dx, columnWidth: Self.timeColumnWidth, reduceMotion: reduceMotion)
+            }
+            .onEnded { _ in
+                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
+                    reveal = ChatTimestampReveal.settled
+                }
+            }
     }
 
     private func displayed(_ message: ChatMessageDisplay, latest: String?) -> ChatMessageDisplay {
