@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,24 +57,41 @@ sealed interface ChatModelSelection {
 }
 
 /**
- * Trigger label for a selection: [automaticLabel] for Automatic, otherwise the model's name. An id the
- * catalog does not (yet) contain is shown as-is rather than disguised as Automatic.
+ * Trigger label for a selection: [automaticLabel] for Automatic, otherwise the model's name. For an id
+ * the providers do not (yet) contain, the host's [fallbackLabel] (typically
+ * `ChatComposerState.modelLabel`) when it is non-blank and not the Automatic label, else the raw id —
+ * never disguised as Automatic.
  */
 fun chatModelTriggerLabel(
     selection: ChatModelSelection,
     providers: List<ChatModelProvider>,
     automaticLabel: String = "Auto",
+    fallbackLabel: String? = null,
 ): String = when (selection) {
     ChatModelSelection.Automatic -> automaticLabel
-    is ChatModelSelection.Model -> providers.asSequence().flatMap { it.models }.firstOrNull { it.id == selection.id }?.name ?: selection.id
+    is ChatModelSelection.Model ->
+        providers.asSequence().flatMap { it.models }.firstOrNull { it.id == selection.id }?.name
+            ?: fallbackLabel?.trim()?.takeIf { it.isNotEmpty() && it != automaticLabel }
+            ?: selection.id
 }
 
 /**
+ * The enclosing composer's `ChatComposerState.modelLabel`, provided by `RemComposerBar` around its
+ * `modelMenu` slot: the default unresolved-selection label for a [ChatModelMenu] without `fallbackLabel`.
+ */
+internal val LocalComposerModelLabel = staticCompositionLocalOf<String?> { null }
+
+/**
  * **ChatModelMenu** — Compose sibling of the SwiftUI `ChatModelMenu`: the composer's secondary-pill
- * model trigger ("Auto" while Automatic is selected) and its menu — **Automatic**, one entry per
+ * model trigger ("Auto" while Automatic is selected; the host's fallback label while the selection is
+ * not among [providers]) and its menu — **Automatic**, one entry per
  * configured provider opening that provider's models (checkmark on the selection), then **Manage
  * Models** when [onManageModels] is supplied. Everything listed comes from [providers]. Disabled at 45%
  * opacity when [enabled] is false (the composer disables it while sending).
+ *
+ * [fallbackLabel] is the host's label for an explicit selection the providers do not (yet) list — e.g. a
+ * bring-your-own-key model whose provider evidence is still pending. When null, a menu placed in
+ * `RemComposerBar` uses the composer state's `modelLabel`. See [chatModelTriggerLabel].
  *
  * Android has no native nested menu, so a provider entry swaps the menu to that provider's models with
  * a back row — the same information architecture as the iOS submenu.
@@ -90,10 +108,11 @@ fun ChatModelMenu(
     automaticLabel: String = "Auto",
     accessibilityPrefix: String = "composer",
     onManageModels: (() -> Unit)? = null,
+    fallbackLabel: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var openProvider by remember { mutableStateOf<ChatModelProvider?>(null) }
-    val label = chatModelTriggerLabel(selection, providers, automaticLabel)
+    val label = chatModelTriggerLabel(selection, providers, automaticLabel, fallbackLabel ?: LocalComposerModelLabel.current)
     val listed = providers.filter { it.models.isNotEmpty() }
     val close = { expanded = false; openProvider = null }
 

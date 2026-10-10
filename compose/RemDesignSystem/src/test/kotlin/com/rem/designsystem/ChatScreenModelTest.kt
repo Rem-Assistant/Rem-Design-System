@@ -97,6 +97,21 @@ class ChatScreenModelTest {
         }
     }
 
+    @Test fun modelMenuEnabledOverridesTheDerivedRuleOnlyWhenSet() {
+        // null keeps the derived rule.
+        assertTrue(ChatComposerState().modelEnabled)
+        assertFalse(ChatComposerState(availability = ComposerAvailability.Disabled(null)).modelEnabled)
+        // Input blocked (pending provider evidence, quota out) but the menu stays open to escape to Automatic.
+        val escape = ChatComposerState(draft = "Hi", availability = ComposerAvailability.Disabled("Quota reached"), modelMenuEnabled = true)
+        assertTrue(escape.modelEnabled)
+        assertFalse(escape.canSend)
+        assertFalse(escape.showsSpeak)
+        assertNull(escape.primaryAction)
+        // The host closes the menu while preparing / sending even with input enabled.
+        assertFalse(ChatComposerState(modelMenuEnabled = false).modelEnabled)
+        assertTrue(ChatComposerState(phase = ComposerPhase.Sending, modelMenuEnabled = true).modelEnabled)
+    }
+
     @Test fun cancelStaysAvailableWhenInputIsExternallyDisabledMidTurn() {
         val state = ChatComposerState(availability = ComposerAvailability.Disabled(null), phase = ComposerPhase.Streaming)
         assertEquals(ChatComposerAction.Cancel, state.primaryAction)

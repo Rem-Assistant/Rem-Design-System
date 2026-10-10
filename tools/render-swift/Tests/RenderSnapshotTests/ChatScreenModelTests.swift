@@ -70,6 +70,21 @@ final class ChatScreenModelTests: XCTestCase {
         }
     }
 
+    func testModelMenuEnabledOverridesTheDerivedRuleOnlyWhenSet() {
+        // nil keeps the derived rule.
+        XCTAssertTrue(ChatComposerState().modelEnabled)
+        XCTAssertFalse(ChatComposerState(availability: .disabled(reason: nil)).modelEnabled)
+        // Input blocked (pending provider evidence, quota out) but the menu stays open to escape to Automatic.
+        let escape = ChatComposerState(draft: "Hi", availability: .disabled(reason: "Quota reached"), modelMenuEnabled: true)
+        XCTAssertTrue(escape.modelEnabled)
+        XCTAssertFalse(escape.canSend)
+        XCTAssertFalse(escape.showsSpeak)
+        XCTAssertNil(escape.primaryAction)
+        // The host closes the menu while preparing / sending even with input enabled.
+        XCTAssertFalse(ChatComposerState(modelMenuEnabled: false).modelEnabled)
+        XCTAssertTrue(ChatComposerState(phase: .sending, modelMenuEnabled: true).modelEnabled)
+    }
+
     func testCancelStaysAvailableWhenInputIsExternallyDisabledMidTurn() {
         let state = ChatComposerState(availability: .disabled(reason: nil), phase: .streaming)
         XCTAssertEqual(state.primaryAction, .cancel)

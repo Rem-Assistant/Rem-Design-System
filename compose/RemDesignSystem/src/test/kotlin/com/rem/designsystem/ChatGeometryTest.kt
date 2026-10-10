@@ -65,6 +65,20 @@ class ChatGeometryTest {
         assertEquals("Auto", chatModelTriggerLabel(ChatModelSelection.Automatic, emptyList()))
     }
 
+    @Test fun modelTriggerPrefersTheHostLabelForAnUnlistedSelection() {
+        val providers = listOf(ChatModelProvider("p", "Provider", listOf(ChatModelOption("m1", "Model One"))))
+        val byok = ChatModelSelection.Model("anthropic/claude-sonnet-4-5")
+        assertEquals("Claude Sonnet 4.5", chatModelTriggerLabel(byok, providers, fallbackLabel = "Claude Sonnet 4.5"))
+        // A listed model keeps its catalog name; Automatic keeps the Automatic label.
+        assertEquals("Model One", chatModelTriggerLabel(ChatModelSelection.Model("m1"), providers, fallbackLabel = "Other"))
+        assertEquals("Auto", chatModelTriggerLabel(ChatModelSelection.Automatic, providers, fallbackLabel = "Other"))
+        // Blank or Automatic-label fallbacks never disguise the selection: the raw id is shown.
+        for (fallback in listOf(null, "", "  ", "Auto")) {
+            assertEquals("$fallback", "anthropic/claude-sonnet-4-5", chatModelTriggerLabel(byok, providers, fallbackLabel = fallback))
+        }
+        assertEquals("Auto", chatModelTriggerLabel(byok, emptyList(), automaticLabel = "Automatic", fallbackLabel = "Auto"))
+    }
+
     @Test fun standardReactionsAreTheApprovedSixInOrder() {
         assertEquals(
             listOf("👍", "👎", "❤️", "😂", "🎉", "😮"),
