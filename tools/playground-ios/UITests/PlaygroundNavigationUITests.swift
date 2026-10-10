@@ -149,6 +149,20 @@ final class PlaygroundNavigationUITests: XCTestCase {
         element.tap()
     }
 
+    /// Diagnostics build only (not evidence): timing, windows and the hittability/frame of `element`,
+    /// plus a bounded slice of the top of the hierarchy, printed to the job log.
+    private func diag(_ step: String, _ element: XCUIElement) {
+        let tree = app.debugDescription
+        let windows = app.windows.allElementsBoundByIndex.map { "\($0.frame)" }.joined(separator: " ")
+        print("""
+        [diag] \(Date().timeIntervalSince1970) \(step): exists=\(element.exists) hittable=\(element.isHittable) \
+        frame=\(element.frame) label='\(element.label)' windows=\(app.windows.count) [\(windows)] \
+        sheets=\(app.sheets.count) menus=\(app.menus.count) collectionViews=\(app.collectionViews.count)
+        \(tree.prefix(2500))
+        [/diag]
+        """)
+    }
+
     private func waitUntilGone(_ element: XCUIElement, _ message: String) {
         let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
         XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 3), .completed, message)
@@ -452,12 +466,26 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(modelA2.waitForExistence(timeout: 3), "Provider submenu lists its models")
         modelA2.tap()
         XCTAssertTrue(menu.label.contains("Model A2"), "Trigger shows the selected model")
+        diag("before second menu open", menu)
         menu.tap()
+        diag("after second menu open", menu)
         app.buttons["Automatic"].tap()
+        diag("after Automatic", menu)
         XCTAssertTrue(menu.label.contains("Auto"), "Automatic returns the trigger to Auto")
 
+        let add = app.buttons["catalog.composerAdd"]
+        diag("before Add", add)
         tap("catalog.composerAdd")
-        XCTAssertTrue(app.buttons["catalog.addToChat.photos"].waitForExistence(timeout: 3))
+        let opened = app.buttons["catalog.addToChat.photos"].waitForExistence(timeout: 3)
+        diag("after Add (sheet \(opened ? "open" : "missing"))", add)
+        if !opened {
+            // Diagnostic only: does a fresh tap after the app has settled open the sheet?
+            RunLoop.current.run(until: Date().addingTimeInterval(2))
+            add.tap()
+            let second = app.buttons["catalog.addToChat.photos"].waitForExistence(timeout: 5)
+            diag("after second Add tap (sheet \(second ? "open" : "missing"))", add)
+        }
+        XCTAssertTrue(opened)
         XCTAssertTrue(app.buttons["catalog.addToChat.files"].exists)
         tap("catalog.addToChat.cloudBrowser")
         let removeBrowser = app.buttons["catalog.removeAttachment.cloud-browser"]
