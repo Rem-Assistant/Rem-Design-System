@@ -231,7 +231,15 @@ final class PlaygroundNavigationUITests: XCTestCase {
     private func openCatalogPage(_ identifier: String, title: String) {
         tap("openComponents")
         tap(identifier)
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 3), "\(title) page opens")
+        let bar = app.navigationBars[title]
+        // A synthesized row tap is occasionally dropped: the app goes idle at once, no push starts and
+        // the catalog stays put (Chat, run 38092241592). Tap the still-reachable row once more; the page
+        // must still open.
+        if !bar.waitForExistence(timeout: 3) {
+            let row = app.buttons[identifier]
+            if row.exists && row.isHittable { row.tap() }
+        }
+        XCTAssertTrue(bar.waitForExistence(timeout: 5), "\(title) page opens")
     }
 
     private func slug(_ text: String) -> String {

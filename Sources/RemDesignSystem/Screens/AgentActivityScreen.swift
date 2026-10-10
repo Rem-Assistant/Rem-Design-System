@@ -105,6 +105,9 @@ public struct AgentActivityScreen: View {
                         ForEach(day.events) { event in row(event) }
                     }
                     .settingsHeader()
+                    // `.contain` keeps the section a container so the day id
+                    // does not overwrite each row's `agentActivity.event.*` id.
+                    .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("agentActivity.day.\(day.id)")
                 }
             }

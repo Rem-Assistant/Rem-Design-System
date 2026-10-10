@@ -118,23 +118,34 @@ public struct ChatScreen<Transcript: View>: View {
             )
             .padding(.bottom, DesignTokens.Spacing.sm)
 
-            ScrollView {
-                Group {
-                    if let empty = c.emptyState {
-                        ChatEmptyStateView(empty) { c.onAction(.starter(id: $0)) }
-                    } else {
-                        VStack(spacing: DesignTokens.Spacing.lg) {
-                            transcript()
+            // The reader measures the visible transcript area (inside the docked composer's inset), so a
+            // short conversation fills it itself, bottom-aligned, instead of relying on the scroll view's
+            // default anchor to shift undersized content down. That shift moves the rows on screen but not
+            // their accessibility container, leaving the latest rows outside it (unreachable by
+            // VoiceOver's scroll-to-visible and UI automation).
+            GeometryReader { viewport in
+                ScrollView {
+                    Group {
+                        if let empty = c.emptyState {
+                            ChatEmptyStateView(empty) { c.onAction(.starter(id: $0)) }
+                        } else {
+                            VStack(spacing: DesignTokens.Spacing.lg) {
+                                transcript()
+                            }
                         }
                     }
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .padding(.vertical, DesignTokens.Spacing.md)
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: viewport.size.height,
+                        alignment: c.emptyState == nil ? .bottom : .top
+                    )
                 }
-                .padding(.horizontal, DesignTokens.Spacing.lg)
-                .padding(.vertical, DesignTokens.Spacing.md)
-                .frame(maxWidth: .infinity)
+                .defaultScrollAnchor(c.emptyState == nil ? .bottom : .top)
+                .scrollDismissesKeyboard(.interactively)
+                .accessibilityIdentifier("chat.content")
             }
-            .defaultScrollAnchor(c.emptyState == nil ? .bottom : .top)
-            .scrollDismissesKeyboard(.interactively)
-            .accessibilityIdentifier("chat.content")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .safeAreaInset(edge: .bottom, spacing: 0) { dock(c) }
