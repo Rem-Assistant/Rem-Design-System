@@ -222,13 +222,18 @@ public struct RemComposerBar: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            HStack(spacing: DesignTokens.Spacing.sm) {
+            // Control row. Add and Send keep 44pt hit frames; those frames already carry the visual gap
+            // to their neighbours (17pt glyph / 32pt circle inside 44), so no extra row spacing is
+            // added beside them. Speak keeps its one-line intrinsic width; the Spacer and then the
+            // model label give way, so Speak never wraps at a 320pt screen (288pt composer, 264pt row).
+            HStack(spacing: 0) {
                 if let addAction {
                     Button(action: addAction) { addGlyph.frame(minWidth: 44, minHeight: 44) }
                         .buttonStyle(.plain).accessibilityLabel("Add")
                         .disabled(!inputEnabled)
                         .accessibilityIdentifier("\(accessibilityPrefix).composerAdd")
-                } else { addGlyph }
+                } else { addGlyph.padding(.trailing, DesignTokens.Spacing.sm) } // display-only: no 44pt frame
+                // The model label is host data and may truncate; Speak (layoutPriority 1) never does.
                 if resolved.showsModel { modelSelector.disabled(!modelEnabled) }
                 Spacer(minLength: DesignTokens.Spacing.sm)
                 if showsSpeak {
@@ -237,6 +242,7 @@ public struct RemComposerBar: View {
                             .buttonStyle(.plain)
                             .accessibilityLabel("Speak")
                             .accessibilityIdentifier("\(accessibilityPrefix).composerSpeak")
+                            .layoutPriority(1) // the HStack reads priority from its direct child
                     } else { speakPill }
                 }
                 if isInteractive {
@@ -245,7 +251,7 @@ public struct RemComposerBar: View {
                         .disabled(!primaryEnabled)
                         .accessibilityLabel(sendDisplay == .stop ? "Stop" : "Send")
                         .accessibilityIdentifier("\(accessibilityPrefix).composerSend")
-                } else { sendButton }
+                } else { sendButton.padding(.leading, DesignTokens.Spacing.sm) } // display-only: no 44pt frame
             }
         }
         .padding(DesignTokens.Spacing.md)
@@ -293,11 +299,14 @@ public struct RemComposerBar: View {
                 .font(.system(size: 13, weight: .semibold))
             Text("Speak")
                 .font(DesignTokens.Typography.subheadline.weight(.semibold))
+                .lineLimit(1)
         }
         .foregroundStyle(DesignTokens.Color.labelOnColor)
         .padding(.horizontal, DesignTokens.Spacing.md)
         .padding(.vertical, 7)
         .background(DesignTokens.Color.brandBlue, in: Capsule())
+        .fixedSize()
+        .layoutPriority(1)
     }
 
     private var sendButton: some View {
