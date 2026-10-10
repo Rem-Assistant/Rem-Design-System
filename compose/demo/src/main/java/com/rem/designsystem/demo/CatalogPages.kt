@@ -167,11 +167,8 @@ internal fun CatalogRows() {
             }
         }
         CatalogGroup("Connector row") {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ConnectorRowState.entries.forEach { state ->
-                    FilterChip(selected = connector == state, onClick = { connector = state }, label = { Text(state.name) })
-                }
-            }
+            SegmentedPicker(ConnectorRowState.entries, connector, { connector = it }, { it.name },
+                tag = { "catalog.connectorState.${it.name}" })
             Card {
                 ConnectorRow(
                     title = "Gmail",
@@ -453,12 +450,8 @@ internal fun CatalogAgent() {
             }
         }
         CatalogGroup("Browser card") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BrowserLiveCardState.entries.forEach { state ->
-                    FilterChip(selected = browser == state, onClick = { browser = state }, label = { Text(state.name) },
-                        modifier = Modifier.testTag("catalog.browserState.${state.name}"))
-                }
-            }
+            SegmentedPicker(BrowserLiveCardState.entries, browser, { browser = it }, { it.name },
+                tag = { "catalog.browserState.${it.name}" })
             BrowserLiveCard(browser)
         }
         CatalogGroup("Execution trace") {

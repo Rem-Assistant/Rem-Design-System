@@ -169,16 +169,16 @@ fun Playground() {
                     Column {
                         RemSection(header = "Screens") {
                             NavRow("Settings", "openSettings") { route = Route.Settings }
-                            ChipRow { LoadFixture.entries.forEach { value -> FilterChip(selected = fixture == value, onClick = { fixture = value }, label = { Text(value.name) }) } }
+                            SegmentedPicker(LoadFixture.entries, fixture, { fixture = it }, { it.name }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
                             RowDivider()
                             NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
-                            ChipRow { AgendaSuggestionsFixture.entries.forEach { value -> FilterChip(selected = agendaFixture == value, onClick = { agendaFixture = value }, label = { Text(value.name) }, modifier = Modifier.testTag("agendaFixture.${value.name}")) } }
+                            SegmentedPicker(AgendaSuggestionsFixture.entries, agendaFixture, { agendaFixture = it }, { it.name }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "agendaFixture.${it.name}" })
                             RowDivider()
                             NavRow("Chat", "openChatScreen") { route = Route.ChatScreen }
-                            ChipRow { ChatPlaygroundFixture.Conversation.entries.forEach { value -> FilterChip(selected = chatConversation == value, onClick = { chatConversation = value }, label = { Text(value.label) }, modifier = Modifier.testTag("chatFixture.${value.label}")) } }
+                            SegmentedPicker(ChatPlaygroundFixture.Conversation.entries, chatConversation, { chatConversation = it }, { it.label }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "chatFixture.${it.label}" })
                             RowDivider()
                             NavRow("Inbox", "openInbox") { route = Route.Inbox }
-                            ChipRow { InboxPlaygroundFixture.Content.entries.forEach { value -> FilterChip(selected = inboxContent == value, onClick = { inboxContent = value }, label = { Text(value.label) }, modifier = Modifier.testTag("inboxFixture.${value.label}")) } }
+                            SegmentedPicker(InboxPlaygroundFixture.Content.entries, inboxContent, { inboxContent = it }, { it.label }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "inboxFixture.${it.label}" })
                             RowDivider()
                             NavRow("Onboarding", "openOnboarding") { onboardingStack = emptyList(); onboardingComplete = null; route = Route.Onboarding }
                         }
@@ -241,13 +241,12 @@ fun Playground() {
                                 PlaygroundOnboardingStep.entries.forEachIndexed { index, step ->
                                     if (index > 0) RowDivider()
                                     NavRow(step.title, step.tag) { onboardingStack = listOf(step.ordinal) }
-                                    if (step == PlaygroundOnboardingStep.CheckIn) ChipRow {
-                                        // The Check-in step's save fixture, beside its row like the root's data pickers.
-                                        listOf(false to "Succeeds", true to "Fails once").forEach { (fails, label) ->
-                                            FilterChip(selected = checkInFailsOnce == fails, onClick = { checkInFailsOnce = fails },
-                                                label = { Text(label) }, modifier = Modifier.testTag("checkInSave.$label"))
-                                        }
-                                    }
+                                    // The Check-in step's save fixture, beside its row like the root's data pickers.
+                                    if (step == PlaygroundOnboardingStep.CheckIn) SegmentedPicker(
+                                        listOf(false, true), checkInFailsOnce, { checkInFailsOnce = it },
+                                        { if (it) "Fails once" else "Succeeds" }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                                        tag = { "checkInSave." + if (it) "Fails once" else "Succeeds" },
+                                    )
                                 }
                             }
                         }
@@ -262,13 +261,6 @@ fun Playground() {
 @Composable
 private fun NavRow(label: String, tag: String, onClick: () -> Unit) {
     ListRow(title = label, onClick = onClick, trailing = { DisclosureChevron() }, modifier = Modifier.testTag(tag))
-}
-
-/** Data pickers for the screen row above, inside the same section. */
-@Composable
-private fun ChipRow(content: @Composable RowScope.() -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp), content = content)
 }
 
 @Composable
