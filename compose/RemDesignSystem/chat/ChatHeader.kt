@@ -81,13 +81,12 @@ fun ChatHeader(
                     HeaderControl(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Back", "$accessibilityPrefix.back", onBack)
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm)) {
-                    if (onCall != null) {
-                        HeaderControl(Icons.Outlined.Call, "Call Rem", "$accessibilityPrefix.call", onCall)
-                    }
-                    if (onOverflow != null) {
-                        HeaderControl(Icons.Filled.MoreHoriz, "More", "$accessibilityPrefix.overflow", onOverflow)
-                    }
+                // One trailing slot: the in-app call entry replaces overflow when offered (WS1e), never
+                // a second icon beside it.
+                if (onCall != null) {
+                    HeaderControl(Icons.Outlined.Call, "Call Rem", "$accessibilityPrefix.call", onCall)
+                } else if (onOverflow != null) {
+                    HeaderControl(Icons.Filled.MoreHoriz, "More", "$accessibilityPrefix.overflow", onOverflow)
                 }
             }
         }

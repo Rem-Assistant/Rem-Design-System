@@ -61,21 +61,20 @@ public struct ChatHeader: View {
             }
     }
 
-    /// Back (leading) and overflow (trailing), level with the avatar. The row stretches to the
-    /// available width so the overflow control stays visible on narrow screens.
+    /// Back (leading) and one trailing action, level with the avatar. The trailing slot holds a single
+    /// control: the in-app call entry when the host offers it, which **replaces** overflow (WS1e — never
+    /// a second icon beside it), otherwise overflow. The row stretches to the available width so the
+    /// trailing control stays visible on narrow screens.
     private var controls: some View {
         HStack {
             if let onBack {
                 headerControl("chevron.left", label: "Back", id: "back", action: onBack)
             }
             Spacer(minLength: 0)
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                if let onCall {
-                    headerControl("phone", label: "Call Rem", id: "call", action: onCall)
-                }
-                if let onOverflow {
-                    headerControl("ellipsis", label: "More", id: "overflow", action: onOverflow)
-                }
+            if let onCall {
+                headerControl("phone", label: "Call Rem", id: "call", action: onCall)
+            } else if let onOverflow {
+                headerControl("ellipsis", label: "More", id: "overflow", action: onOverflow)
             }
         }
         .padding(.horizontal, DesignTokens.Spacing.lg)

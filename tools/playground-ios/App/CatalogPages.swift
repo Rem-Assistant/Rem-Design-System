@@ -249,15 +249,25 @@ struct CatalogChat: View {
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var showFiles = false
     @State private var feedback: String?
+    @State private var headerCall = false
 
     var body: some View {
         CatalogPage(title: "Chat") {
             CatalogGroup(title: "Header") {
+                // The trailing slot holds one action: the in-app call entry replaces More (WS1e).
                 ChatHeader(
                     activity: ChatFixture.activities[activity].text,
                     status: ChatFixture.activities[activity].status,
-                    accessibilityPrefix: "chat.header"
+                    accessibilityPrefix: "chat.header",
+                    onOverflow: {},
+                    onCall: headerCall ? {} : nil
                 )
+                Picker("Trailing action", selection: $headerCall) {
+                    Text("More").tag(false)
+                    Text("Call").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("chat.headerTrailing")
                 Picker("Agent activity", selection: $activity) {
                     ForEach(ChatFixture.activities.indices, id: \.self) { index in
                         Text(ChatFixture.activities[index].text).tag(index)

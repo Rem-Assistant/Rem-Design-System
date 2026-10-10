@@ -38,7 +38,7 @@ data class ChatPlaygroundFixture(
             composer.state.phase.isInFlight -> ChatHeaderDisplay(activity = "Working on your request", isWorking = true)
             taskId == null -> ChatHeaderDisplay(activity = "Connected")
             else -> taskState.header()
-        }.copy(showsCall = true) // Fixture host: shows the call entry; nothing is dialled.
+        } // No call entry: it would replace overflow, the Playground's route to its host controls.
 
     val emptyState: ChatEmptyState?
         get() = if (entries.isEmpty()) ChatEmptyState(message = EmptyMessage, starters = Starters) else null

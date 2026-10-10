@@ -181,7 +181,7 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
 
     func testCallButtonIsAnInAppVoiceEntryThatDialsNothing() {
         var fixture = ChatPlaygroundFixture()
-        XCTAssertTrue(fixture.header.showsCall)
+        XCTAssertFalse(fixture.header.showsCall, "call would replace overflow, the Playground's host-controls route")
         let before = fixture
         XCTAssertNil(fixture.handle(.call), "no presentation")
         XCTAssertEqual(fixture.note, ChatPlaygroundFixture.callNote)
@@ -195,10 +195,7 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
             let chat = inbox.route(.open(itemID: item.id))!
             XCTAssertEqual(chat.taskID, item.id)
             XCTAssertEqual(chat.replyContext, ChatReplyContext(targetID: item.id, title: ChatPlaygroundFixture.replyTitle, summary: item.title))
-            // Same host-reported state; the fixture host additionally offers the in-app call entry.
-            var expected = item.state.header()
-            expected.showsCall = true
-            XCTAssertEqual(chat.header, expected)
+            XCTAssertEqual(chat.header, item.state.header())
             XCTAssertEqual(chat.composer.state.placeholder, "Write your reply…")
         }
         XCTAssertNil(inbox.route(.open(itemID: "missing")))

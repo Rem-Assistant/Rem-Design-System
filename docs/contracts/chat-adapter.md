@@ -31,7 +31,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 
 ## Actions
 
-`ChatScreenAction`: `back`, `overflow`, `activityDetails`, `starter(id)`, `dismissReplyContext(targetID)`,
+`ChatScreenAction`: `back`, `overflow`, `call`, `activityDetails`, `starter(id)`, `dismissReplyContext(targetID)`,
 `composer(ChatComposerAction)`, `transcript(ChatTranscriptAction)`.
 `ChatComposerAction`: `draftChanged`, `send`, `cancel`, `speak`, `add`, `removeAttachment(id)`, `focusChanged`.
 `ChatTranscriptAction`: `retry(messageID)`, `requestReaction(messageID)`, `react(messageID, reaction?)`.
@@ -47,7 +47,9 @@ UTC). Component contract: [`chat.md`](chat.md).
    it emits `.speak`.
 4. **Receipt placement:** only the latest outgoing message shows its Delivered / Read receipt; older outgoing
    messages show none; a Not delivered failure stays visible wherever it is.
-5. **Header:** one avatar and one identity/activity capsule; the header owns back and overflow; the platform
+5. **Header:** one avatar and one identity/activity capsule; the header owns back and one trailing action:
+   overflow, or — when the host sets `showsCall` because in-app voice is available — the call entry, which
+   **replaces** overflow (never a second icon beside it; in-app voice only, no PSTN). The platform
    navigation bar is hidden by the composition. The empty state has no second face.
 6. **Reply context** is an accessory above the same composer. Dismiss reports the target id only.
 

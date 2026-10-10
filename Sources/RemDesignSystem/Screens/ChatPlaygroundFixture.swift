@@ -101,11 +101,11 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     // MARK: Presentation inputs
 
     public var header: ChatHeaderDisplay {
-        var header = composer.state.phase.isInFlight
+        // No call entry here: it would replace overflow, which is how the Playground reaches its
+        // host controls. The call variant is shown in the Chat catalog's Header group.
+        composer.state.phase.isInFlight
             ? ChatHeaderDisplay(activity: "Working on your request", isWorking: true)
             : (taskID == nil ? ChatHeaderDisplay(activity: "Connected") : taskState.header())
-        header.showsCall = true // Fixture host: shows the call entry; nothing is dialled.
-        return header
     }
 
     public var emptyState: ChatEmptyState? {

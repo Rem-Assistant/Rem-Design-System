@@ -292,6 +292,7 @@ internal fun CatalogChat() {
     var sent by rememberSaveable { mutableStateOf(listOf<String>()) }
     var voice by rememberSaveable { mutableStateOf(VoiceBarState.Listening) }
     var activity by rememberSaveable { mutableIntStateOf(0) }
+    var headerCall by rememberSaveable { mutableStateOf(false) }
     var reactions by remember { mutableStateOf(mapOf("chat.incoming" to MessageReaction.ThumbsUp)) }
     var reactingTo by remember { mutableStateOf<String?>(null) }
     var failedDelivered by rememberSaveable { mutableStateOf(false) }
@@ -339,7 +340,11 @@ internal fun CatalogChat() {
     CatalogPage {
         CatalogGroup("Header") {
             val (activityText, status) = ChatFixture.Activities[activity]
-            ChatHeader(activity = activityText, status = status, accessibilityPrefix = "chat.header")
+            // The trailing slot holds one action: the in-app call entry replaces More (WS1e).
+            ChatHeader(activity = activityText, status = status, accessibilityPrefix = "chat.header",
+                onOverflow = {}, onCall = if (headerCall) ({}) else null)
+            SegmentedPicker(listOf(false, true), headerCall, { headerCall = it }, { if (it) "Call" else "More" },
+                tag = { "chat.headerTrailing.${if (it) "Call" else "More"}" })
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ChatFixture.Activities.forEachIndexed { index, (text, _) ->
                     FilterChip(selected = activity == index, onClick = { activity = index }, label = { Text(text) },
