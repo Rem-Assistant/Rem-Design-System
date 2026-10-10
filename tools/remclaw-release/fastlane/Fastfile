@@ -1,0 +1,116 @@
+# RemClaw iOS TestFlight lanes. Invoked only from remclaw-ios-release.yml after admission, protected
+# environment approval and exact-SHA verification. Runs on the locked bundle in
+# tools/playground-distribution (BUNDLE_GEMFILE). All output is redirected to a private log by the
+# workflow; messages here never include response bodies, credential material or RemClaw source.
+require 'json'
+require 'digest'
+require 'net/http'
+require 'uri'
+
+skip_docs
+
+REMCLAW_BUNDLE_ID = 'com.remapp.rem'
+APPLE_API = 'https://api.appstoreconnect.apple.com'
+
+def require_release(ok, message)
+  UI.user_error!(message) unless ok
+end
+
+def apple_request(method, path, payload = nil)
+  uri = URI(APPLE_API + path)
+  request = { get: Net::HTTP::Get, post: Net::HTTP::Post }.fetch(method).new(uri)
+  request['Authorization'] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+  request['Content-Type'] = 'application/json'
+  request.body = JSON.generate(payload) if payload
+  response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) { |http| http.request(request) }
+  require_release(response.code.to_i.between?(200, 299), "Apple API failed (HTTP #{response.code}); no response body printed")
+  response.body.to_s.empty? ? {} : JSON.parse(response.body)
+end
+
+# Same environment-scoped App Store Connect key names as the Playground lane.
+def apple_key
+  issuer = ENV.fetch('PLAYGROUND_ASC_ISSUER_ID', '').strip
+  app_store_connect_api_key(key_id: ENV.fetch('PLAYGROUND_ASC_KEY_ID'), issuer_id: issuer.empty? ? nil : issuer,
+    key_content: ENV.fetch('PLAYGROUND_ASC_KEY_BASE64'), is_key_content_base64: true, duration: 1200)
+end
+
+# The App Store Connect app is located by its exact bundle identifier, never by a guessed numeric ID.
+def remclaw_app_id
+  apps = apple_request(:get, "/v1/apps?filter%5BbundleId%5D=#{REMCLAW_BUNDLE_ID}&limit=200")['data']
+  matches = apps.select { |a| a.dig('attributes', 'bundleId') == REMCLAW_BUNDLE_ID }
+  require_release(matches.length == 1 && matches[0]['id'].to_s.match?(/\A\d+\z/), 'Exactly one App Store Connect app for com.remapp.rem required')
+  matches[0]['id']
+end
+
+# Every existing build number for the app, across all pages and versions.
+def existing_build_numbers(app_id)
+  path = "/v1/builds?filter%5Bapp%5D=#{app_id}&limit=200"
+  seen = []
+  pages = 0
+  while path
+    pages += 1
+    require_release(pages <= 100, 'Build pagination exceeded')
+    page = apple_request(:get, path)
+    seen.concat(page['data'].map { |b| b.dig('attributes', 'version').to_s })
+    next_url = page.dig('links', 'next')
+    require_release(!next_url || next_url.start_with?("#{APPLE_API}/v1/builds?"), 'Unexpected Apple pagination host/path')
+    path = next_url&.delete_prefix(APPLE_API)
+  end
+  require_release(seen.all? { |n| n.match?(/\A\d+\z/) }, 'Existing non-integer build numbers; choose numbering explicitly before releasing')
+  seen.map(&:to_i)
+end
+
+def next_build_number(numbers)
+  number = (numbers.max || 0) + 1
+  require_release(number < 1_000_000_000, 'Build number space exhausted')
+  number.to_s
+end
+
+def write_state(path, state)
+  File.write(path, JSON.pretty_generate(state))
+end
+
+def hosted_main!
+  require_release(ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REF'] == 'refs/heads/main', 'Hosted main dispatch required')
+end
+
+# Reads only; reserves the next integer build number above every existing build of the app.
+lane :reserve_build_number do
+  hosted_main!
+  apple_key
+  number = next_build_number(existing_build_numbers(remclaw_app_id))
+  File.write(ENV.fetch('REMCLAW_BUILD_NUMBER_FILE'), number + "\n")
+end
+
+lane :upload do
+  hosted_main!
+  out = ENV.fetch('REMCLAW_OUTPUT')
+  sha = ENV.fetch('REMCLAW_SHA')
+  number = ENV.fetch('REMCLAW_BUILD_NUMBER')
+  admission = JSON.parse(File.read(ENV.fetch('REMCLAW_ADMISSION')))
+  packaging = JSON.parse(File.read(File.join(out, 'packaging.json')))
+  require_release(packaging['signing'] == 'verified' && packaging['remclaw_sha'] == sha && admission['remclaw_sha'] == sha &&
+    packaging['build_number'] == number, 'Package/admission mismatch')
+  binary = File.join(out, 'RemClaw.ipa')
+  require_release(Digest::SHA256.file(binary).hexdigest == packaging['binary_sha256'], 'Signed binary changed')
+  state_path = File.join(out, 'distribution.json')
+  state = admission.merge('remclaw_sha' => sha, 'build_number' => number,
+    'release_branch' => packaging['release_branch'], 'processing_state' => 'not_started')
+  write_state(state_path, state)
+  key = apple_key
+  app_id = remclaw_app_id
+  require_release(existing_build_numbers(app_id).all? { |n| n < number.to_i }, 'Reserved build number is no longer the highest; do not re-upload blindly')
+  state['processing_state'] = 'upload_started'
+  write_state(state_path, state)
+  # TestFlight only: no beta review submission, no external testers, no production release, no group edits.
+  upload_to_testflight(api_key: key, apple_id: app_id, app_identifier: REMCLAW_BUNDLE_ID,
+    ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
+    wait_processing_timeout_duration: 1800, distribute_external: false, notify_external_testers: false,
+    expire_previous_builds: false, app_version: packaging['marketing_version'], build_number: number)
+  apple_key # Refresh the short-lived token after processing.
+  builds = apple_request(:get, "/v1/builds?filter%5Bapp%5D=#{app_id}&filter%5Bversion%5D=#{number}")['data']
+  processing = builds.length == 1 ? builds[0].dig('attributes', 'processingState') : nil
+  state['processing_state'] = %w[PROCESSING VALID INVALID FAILED].include?(processing) ? processing : 'unresolved'
+  write_state(state_path, state)
+  require_release(state['processing_state'] == 'VALID', 'Build uploaded but not VALID; reconcile in App Store Connect before retrying')
+end

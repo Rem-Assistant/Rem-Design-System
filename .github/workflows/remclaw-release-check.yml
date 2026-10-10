@@ -1,0 +1,54 @@
+name: RemClaw release checks
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/remclaw-*.yml'
+      - 'tools/remclaw-release/**'
+      - 'tools/playground-distribution/**'
+permissions:
+  contents: read
+concurrency:
+  group: remclaw-release-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  guards:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      BUNDLE_FROZEN: 'true'
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+      FASTLANE_OPT_OUT_USAGE: '1'
+    steps:
+      - name: Initialize ephemeral dependency path
+        run: |
+          echo "BUNDLE_PATH=$RUNNER_TEMP/remclaw-check-gems" >> "$GITHUB_ENV"
+          echo "BUNDLE_GEMFILE=$GITHUB_WORKSPACE/tools/playground-distribution/Gemfile" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Validate workflow schemas and expression contexts (pinned Actionlint)
+        run: python3 tools/playground-distribution/lint_workflows.py
+      - name: Run secret-free release control tests (no RemClaw source, no credentials)
+        run: |
+          python3 -m unittest discover -s tools/remclaw-release -p 'test_*.py' -v
+          python3 -m unittest discover -s tools/playground-distribution -p 'test_*.py'
+          ruby tools/remclaw-release/test_workflow.rb
+          ruby tools/remclaw-release/test_fastfile.rb
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8
+        with:
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Load the RemClaw lanes on the locked Fastlane bundle (no store access)
+        working-directory: tools/remclaw-release
+        run: |
+          bundle install --jobs 4 --retry 2
+          bundle check
+          git diff --exit-code -- ../playground-distribution/Gemfile.lock
+          bundle exec ruby ../playground-distribution/test_dependencies.rb
+          bundle exec fastlane lanes

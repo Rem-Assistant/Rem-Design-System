@@ -1,0 +1,10 @@
+Command line invocation:
+    /Applications/Xcode_26.0.app/Contents/Developer/usr/bin/xcodebuild -project RemClaw.xcodeproj -scheme RemClaw archive
+Resolve Package Graph
+SwiftCompile normal arm64 /Users/runner/work/PRIVATE_PATH_MARKER/RemClaw/Chat/SecretFeatureView.swift (in target 'RemClaw' from project 'RemClaw')
+/Users/runner/work/PRIVATE_PATH_MARKER/RemClaw/Chat/SecretFeatureView.swift:42:17: error: cannot find 'privateBackendToken_SOURCE_LEAK_MARKER' in scope
+        let key = privateBackendToken_SOURCE_LEAK_MARKER
+                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/PRIVATE_PATH_MARKER/RemClaw/Billing/Paywall.swift:7:1: error: expected declaration
+Command SwiftCompile failed with a nonzero exit code
+** ARCHIVE FAILED **
