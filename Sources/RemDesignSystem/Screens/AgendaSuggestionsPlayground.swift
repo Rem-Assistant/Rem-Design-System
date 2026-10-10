@@ -40,10 +40,14 @@ public struct AgendaRowItem: Identifiable, Equatable, Sendable {
     public var sortMinutes: Int
     public var pills: [String]
     public var pending: Bool
+    /// The event's calendar (tints its bar dot); `nil` keeps the default Personal blue.
+    public var calendar: AgendaCreationDraft.EventCalendar?
     public init(id: String, kind: Kind, title: String, timeLabel: String, sortMinutes: Int,
-                pills: [String] = [], pending: Bool = false) {
+                pills: [String] = [], pending: Bool = false,
+                calendar: AgendaCreationDraft.EventCalendar? = nil) {
         self.id = id; self.kind = kind; self.title = title; self.timeLabel = timeLabel
         self.sortMinutes = sortMinutes; self.pills = pills; self.pending = pending
+        self.calendar = calendar
     }
 }
 
@@ -82,6 +86,10 @@ final class AgendaSuggestionsModel: ObservableObject {
     @Published private(set) var rows: [AgendaRowItem]
     @Published private(set) var suggestions: [AgendaSuggestionItem]
     @Published var overflowOpen: Bool = false
+    /// Agenda entry routing: Add New → creation, Schedule → Schedule Tasks.
+    @Published private(set) var entry = AgendaEntryFixture()
+    @Published var creationOpen: Bool = false
+    @Published var scheduleOpen: Bool = false
 
     private var resolutions: [String: AgendaSuggestionResolution]
     private var restorationArmed: Bool
@@ -140,6 +148,20 @@ final class AgendaSuggestionsModel: ObservableObject {
                 insert(fallback)
             }
         }
+    }
+
+    /// Save from the creation sheet: a valid draft lands on the day and the sheet closes. A blank draft
+    /// changes nothing (Save is disabled for it).
+    func create(_ draft: AgendaCreationDraft) {
+        guard let row = entry.create(draft) else { return }
+        insert(row)
+        creationOpen = false
+    }
+
+    /// Done from Schedule Tasks: the selected tasks are scheduled together and the sheet closes.
+    func schedule(_ request: AgendaScheduleRequest) {
+        entry.schedule(request).forEach(insert)
+        scheduleOpen = false
     }
 
     private func insert(_ item: AgendaRowItem) {
@@ -316,8 +338,9 @@ public struct AgendaSuggestionsOverflowSheet: View {
 /// **AgendaSuggestionsPlaygroundView** — the bounded Agenda New *Suggestions* journey. Composes the
 /// reused `DateNavigationHeader`, the day's `TaskEventRow`s (or the empty `RemContentUnavailableView`),
 /// the Add New / Schedule bar, and the Suggestions slot which follows the bar with exactly 24pt spacing
-/// while present. Shell affordances outside this slice (date paging, sort, Add New, Schedule) call host
-/// callbacks; this view does not invent their destinations.
+/// while present. **Add New** opens `AgendaCreationSheet` and **Schedule** opens `AgendaScheduleSheet`;
+/// their results are applied to this fixture in memory (`AgendaEntryFixture`). `onAddNew` / `onSchedule`
+/// are notified when an entry opens. Date paging and sort still call host callbacks only.
 public struct AgendaSuggestionsPlaygroundView: View {
     @StateObject private var model: AgendaSuggestionsModel
     private let onAddNew: () -> Void
@@ -354,7 +377,7 @@ public struct AgendaSuggestionsPlaygroundView: View {
                         sortTrigger
                         ForEach(model.rows) { row in
                             TaskEventRow(
-                                kind: row.kind == .task ? .task : .event(DesignTokens.Color.systemBlue),
+                                kind: row.kind == .task ? .task : .event(eventColor(row.calendar)),
                                 title: row.title,
                                 leading: .time(row.timeLabel),
                                 pills: row.pills,
@@ -389,6 +412,23 @@ public struct AgendaSuggestionsPlaygroundView: View {
                 onDone: { model.overflowOpen = false }
             )
         }
+        .sheet(isPresented: $model.creationOpen) {
+            AgendaCreationSheet(
+                onCancel: { model.creationOpen = false },
+                onSave: { model.create($0) }
+            )
+        }
+        .sheet(isPresented: $model.scheduleOpen) {
+            AgendaScheduleSheet(
+                fixture: model.entry,
+                onCancel: { model.scheduleOpen = false },
+                onDone: { model.schedule($0) }
+            )
+        }
+    }
+
+    private func eventColor(_ calendar: AgendaCreationDraft.EventCalendar?) -> Color {
+        calendarColor(calendar ?? .personal)
     }
 
     private var sortTrigger: some View {
@@ -409,7 +449,7 @@ public struct AgendaSuggestionsPlaygroundView: View {
 
     private var addScheduleBar: some View {
         HStack(spacing: DesignTokens.Spacing.md) {
-            Button(action: onAddNew) {
+            Button(action: { model.creationOpen = true; onAddNew() }) {
                 HStack(spacing: 6) {
                     Image(systemName: "plus")
                     Text("Add New")
@@ -423,15 +463,18 @@ public struct AgendaSuggestionsPlaygroundView: View {
             Rectangle()
                 .fill(DesignTokens.Color.separator)
                 .frame(width: 1, height: 20)
-            Button(action: onSchedule) {
+            Button(action: { model.scheduleOpen = true; onSchedule() }) {
                 HStack(spacing: 6) {
                     Image(systemName: "calendar.badge.clock")
                     Text("Schedule")
-                    Text("3")
-                        .font(DesignTokens.Typography.caption1Bold)
-                        .foregroundStyle(DesignTokens.Color.backgroundPrimary)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Capsule().fill(DesignTokens.Color.labelTertiary))
+                    // The badge counts tasks still waiting to be scheduled; it leaves with the last one.
+                    if model.entry.scheduleCount > 0 {
+                        Text("\(model.entry.scheduleCount)")
+                            .font(DesignTokens.Typography.caption1Bold)
+                            .foregroundStyle(DesignTokens.Color.backgroundPrimary)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Capsule().fill(DesignTokens.Color.labelTertiary))
+                    }
                 }
                 .font(DesignTokens.Typography.body.weight(.semibold))
                 .foregroundStyle(DesignTokens.Color.labelSecondary)

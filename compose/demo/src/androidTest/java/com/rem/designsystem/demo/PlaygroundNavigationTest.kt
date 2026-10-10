@@ -665,6 +665,118 @@ class PlaygroundNavigationTest {
         compose.onAllNodesWithText("Connect").assertCountEquals(1)
     }
 
+    // Agenda entry routing: Add New → creation (2390:28498) and Schedule → Schedule Tasks (2295:13691).
+    // The DS `AgendaEntryFixture` applies results in memory. Twin of the iOS entry journeys in
+    // `AgendaSuggestionsUITests.swift`.
+
+    private fun openAgenda() {
+        compose.onNodeWithTag("openAgendaSuggestions").performScrollTo().performClick()
+        waitForTag("agenda.addNew")
+    }
+
+    private fun openCreation() {
+        compose.onNodeWithTag("agenda.addNew").performScrollTo().performClick()
+        waitForTag("agendaCreate.save")
+    }
+
+    private fun openSchedule() {
+        compose.onNodeWithTag("agenda.schedule").performScrollTo().performClick()
+        waitForTag("agendaSchedule.filter.All")
+    }
+
+    private fun scheduleBadge() = compose.onNodeWithTag("agenda.scheduleCount", useUnmergedTree = true)
+
+    @Test fun agendaAddNewSavesTaskAndEventAndCancelChangesNothing() {
+        openAgenda()
+        openCreation()
+        compose.onNodeWithTag("agendaCreate.save").assertIsNotEnabled()
+        compose.onNodeWithTag("agendaCreate.title").performTextInput("Prepare rehearsal notes")
+        compose.onNodeWithTag("agendaCreate.chooser").performClick()
+        waitForTag("agendaCreate.option.Work")
+        compose.onNodeWithTag("agendaCreate.option.FollowUps").assertExists()
+        compose.onNodeWithTag("agendaCreate.option.Work").performClick()
+        compose.onNodeWithTag("agendaCreate.save").assertIsEnabled()
+        capture("AgendaEntry-new-task-light")
+        compose.onNodeWithTag("agendaCreate.save").performClick()
+        waitForTag("agenda.row.created-task-1")
+        compose.onNodeWithText("5:00 PM").assertExists()
+        compose.onAllNodesWithText("Work", useUnmergedTree = true).onFirst().assertExists()
+        compose.onNodeWithText("Reply to the venue").assertExists()
+
+        openCreation()
+        compose.onNodeWithTag("agendaCreate.mode.Event").performClick()
+        compose.onNodeWithTag("agendaCreate.title").performTextInput("Evening rehearsal")
+        capture("AgendaEntry-new-event-light")
+        compose.onNodeWithTag("agendaCreate.save").performClick()
+        waitForTag("agenda.row.created-event-2")
+        compose.onNodeWithText("6:00 PM").assertExists()
+
+        openCreation()
+        compose.onNodeWithTag("agendaCreate.title").performTextInput("Discarded draft")
+        compose.onNodeWithTag("agendaCreate.cancel").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agendaCreate.save").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("Discarded draft").assertDoesNotExist()
+        capture("AgendaEntry-created-light")
+    }
+
+    @Test fun agendaScheduleAddToTodayThenPlanWithRetainedSelection() {
+        openAgenda()
+        scheduleBadge().assertTextEquals("3")
+        openSchedule()
+        compose.onNodeWithTag("agendaSchedule.task.draft").assertExists()
+        compose.onNodeWithTag("agendaSchedule.task.specs").assertExists()
+        compose.onNodeWithTag("agendaSchedule.task.dentist").assertExists()
+        compose.onNodeWithTag("agendaSchedule.task.walkthrough").assertDoesNotExist() // events are never listed
+        compose.onNodeWithTag("agendaSchedule.addTo").assertIsNotEnabled()
+
+        // Add to Today → Pick a Time (default 9:00) → Done.
+        compose.onNodeWithTag("agendaSchedule.task.draft").performClick()
+        compose.onNodeWithTag("agendaSchedule.task.draft").assertIsSelected()
+        capture("AgendaEntry-schedule-selected-light")
+        compose.onNodeWithTag("agendaSchedule.addTo").performClick()
+        waitForTag("agendaSchedule.done")
+        compose.onNodeWithText("Today, August 13").assertExists()
+        compose.onNodeWithTag("agendaSchedule.timePicker").assertExists()
+        capture("AgendaEntry-pick-time-light")
+        compose.onNodeWithTag("agendaSchedule.done").performClick()
+        waitForTag("agenda.row.scheduled-draft")
+        compose.onNodeWithText("9:00 AM").assertExists()
+        scheduleBadge().assertTextEquals("2")
+
+        // Plan: selection survives filter changes, then Pick a Date → Next → Pick a Time → Done.
+        openSchedule()
+        compose.onNodeWithTag("agendaSchedule.task.draft").assertDoesNotExist() // scheduled tasks leave the list
+        compose.onNodeWithTag("agendaSchedule.task.dentist").performClick()
+        compose.onNodeWithTag("agendaSchedule.filter.Overdue").performClick()
+        compose.onNodeWithTag("agendaSchedule.task.dentist").assertDoesNotExist()
+        compose.onNodeWithTag("agendaSchedule.task.specs").performClick()
+        compose.onNodeWithTag("agendaSchedule.filter.Inbox").performClick()
+        compose.onNodeWithTag("agendaSchedule.empty").assertTextEquals("No tasks in Inbox")
+        compose.onNodeWithTag("agendaSchedule.plan").assertIsEnabled().performClick()
+        waitForTag("agendaSchedule.next")
+        compose.onNodeWithTag("agendaSchedule.datePicker").assertExists()
+        capture("AgendaEntry-pick-date-light")
+        compose.onNodeWithTag("agendaSchedule.next").performClick()
+        waitForTag("agendaSchedule.done")
+        compose.onNodeWithTag("agendaSchedule.dateRow").performClick()
+        waitForTag("agendaSchedule.datePicker")
+        compose.onNodeWithTag("agendaSchedule.done").performClick()
+        waitForTag("agenda.row.scheduled-dentist")
+        compose.onNodeWithTag("agenda.row.scheduled-specs").assertExists() // scheduled together
+        scheduleBadge().assertDoesNotExist() // the last tasks are scheduled; the badge leaves
+        capture("AgendaEntry-scheduled-light")
+    }
+
+    @Test fun agendaScheduleCloseChangesNothing() {
+        openAgenda()
+        openSchedule()
+        compose.onNodeWithTag("agendaSchedule.task.draft").performClick()
+        compose.onNodeWithTag("agendaSchedule.close").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agendaSchedule.sheet").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("agenda.row.scheduled-draft").assertDoesNotExist()
+        scheduleBadge().assertTextEquals("3")
+    }
+
     // Full-screen Chat, task reply and Inbox (Playground 7 candidate). Canonical compositions driven by
     // the DS `ChatPlaygroundFixture` / `InboxPlaygroundFixture`; receipts appear only through the
     // explicit fixture-host controls behind the header overflow. Twin of the iOS journeys.

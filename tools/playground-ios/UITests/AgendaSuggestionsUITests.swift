@@ -3,6 +3,8 @@ import XCTest
 /// Drives the Agenda New · Suggestions playground journey. Proves the optimistic Add / Move / Dismiss
 /// outcomes, three-inline-versus-four-in-overflow, overflow persistence, last-removal / gap removal, the
 /// empty day becoming populated, deterministic restoration, Done / back, and large-text reachability.
+/// Also drives the two entries in the Add New / Schedule bar: creation (Save / Cancel) and Schedule Tasks
+/// (Add to Today, Plan with retained selection, close).
 /// Screenshots alone do not establish these interactions — each assertion checks the resulting state.
 final class AgendaSuggestionsUITests: XCTestCase {
     let app = XCUIApplication()
@@ -203,6 +205,127 @@ final class AgendaSuggestionsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["agendaSuggestions.done"].waitForExistence(timeout: 3))
         capture("AgendaSuggestions-large-text-overflow")
         app.buttons["agendaSuggestions.done"].tap()
+    }
+
+    // MARK: Entry routing · Add New → creation (2390:28498)
+
+    private func openCreation() -> XCUIElement {
+        let addNew = app.buttons["agenda.addNew"]
+        reveal(addNew)
+        addNew.tap()
+        let save = app.buttons["agendaCreate.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 3), "Add New opens New Task or Event")
+        return save
+    }
+
+    private func typeTitle(_ text: String) {
+        let field = app.textFields["agendaCreate.title"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        field.tap()
+        field.typeText(text)
+    }
+
+    func testAddNewSavesTaskAndEventAndCancelChangesNothing() {
+        openAgenda()
+        var save = openCreation()
+        XCTAssertFalse(save.isEnabled, "Save waits for a title")
+        typeTitle("Prepare rehearsal notes")
+        app.buttons["agendaCreate.chooser"].tap()
+        let work = app.buttons["Work"]
+        XCTAssertTrue(work.waitForExistence(timeout: 3), "The task-list chooser offers No List / Follow-ups / Work")
+        XCTAssertTrue(app.buttons["Follow-ups"].exists)
+        work.tap()
+        XCTAssertTrue(save.isEnabled)
+        capture("AgendaEntry-new-task-light")
+        save.tap()
+        XCTAssertTrue(app.staticTexts["Prepare rehearsal notes"].waitForExistence(timeout: 3), "Save adds the task")
+        XCTAssertTrue(app.staticTexts["5:00 PM"].exists, "The authored task slot is 5PM")
+        XCTAssertTrue(app.staticTexts["Work"].exists, "The chosen list is kept")
+        XCTAssertTrue(app.staticTexts["Reply to the venue"].exists, "The rest of the day is preserved")
+
+        save = openCreation()
+        app.segmentedControls["agendaCreate.mode"].buttons["New Event"].tap()
+        typeTitle("Evening rehearsal")
+        capture("AgendaEntry-new-event-light")
+        save.tap()
+        XCTAssertTrue(app.staticTexts["Evening rehearsal"].waitForExistence(timeout: 3), "Save adds the event")
+        XCTAssertTrue(app.staticTexts["6:00 PM"].exists, "The authored event slot is 6PM")
+
+        _ = openCreation()
+        typeTitle("Discarded draft")
+        app.buttons["agendaCreate.cancel"].tap()
+        XCTAssertTrue(app.staticTexts["Aug 13 2026"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Discarded draft"].exists, "Cancel leaves the Agenda unchanged")
+        capture("AgendaEntry-created-light")
+    }
+
+    // MARK: Entry routing · Schedule → Schedule Tasks (2295:13691)
+
+    private func openSchedule() {
+        let schedule = app.buttons["agenda.schedule"]
+        reveal(schedule)
+        schedule.tap()
+        XCTAssertTrue(app.segmentedControls["agendaSchedule.filter"].waitForExistence(timeout: 3),
+                      "Schedule opens Schedule Tasks")
+    }
+
+    func testScheduleAddToTodayThenPlanWithRetainedSelection() {
+        openAgenda()
+        XCTAssertTrue(app.buttons["agenda.schedule"].label.contains("3"), "Three tasks wait to be scheduled")
+        openSchedule()
+        XCTAssertTrue(app.buttons["agendaSchedule.task.draft"].exists)
+        XCTAssertTrue(app.buttons["agendaSchedule.task.specs"].exists)
+        XCTAssertTrue(app.buttons["agendaSchedule.task.dentist"].exists)
+        XCTAssertFalse(app.buttons["agendaSchedule.task.walkthrough"].exists, "Events are never listed")
+        XCTAssertFalse(app.buttons["agendaSchedule.addTo"].isEnabled, "Nothing selected yet")
+
+        // Add to Today → Pick a Time (default 9:00) → Done.
+        app.buttons["agendaSchedule.task.draft"].tap()
+        XCTAssertTrue(app.buttons["agendaSchedule.task.draft"].isSelected)
+        capture("AgendaEntry-schedule-selected-light")
+        app.buttons["agendaSchedule.addTo"].tap()
+        let done = app.buttons["agendaSchedule.done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 3), "Add to Today opens Pick a Time")
+        XCTAssertTrue(app.buttons["agendaSchedule.dateRow"].label.contains("Today, August 13"))
+        capture("AgendaEntry-pick-time-light")
+        done.tap()
+        XCTAssertTrue(app.staticTexts["Draft project update"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["9:00 AM"].exists, "Scheduled at the default 9:00 AM")
+        XCTAssertTrue(app.buttons["agenda.schedule"].label.contains("2"), "The badge counts the remaining tasks")
+
+        // Plan: selection survives filter changes, then Pick a Date → Next → Pick a Time → Done.
+        openSchedule()
+        XCTAssertFalse(app.buttons["agendaSchedule.task.draft"].exists, "Scheduled tasks leave the list")
+        app.buttons["agendaSchedule.task.dentist"].tap()
+        let filter = app.segmentedControls["agendaSchedule.filter"]
+        filter.buttons["Overdue"].tap()
+        XCTAssertFalse(app.buttons["agendaSchedule.task.dentist"].exists)
+        app.buttons["agendaSchedule.task.specs"].tap()
+        filter.buttons["Inbox"].tap()
+        XCTAssertEqual(app.staticTexts["agendaSchedule.empty"].label, "No tasks in Inbox", "The empty filter state")
+        XCTAssertTrue(app.buttons["agendaSchedule.plan"].isEnabled, "Selection is retained across filters")
+        app.buttons["agendaSchedule.plan"].tap()
+        let next = app.buttons["agendaSchedule.next"]
+        XCTAssertTrue(next.waitForExistence(timeout: 3), "Plan opens Pick a Date")
+        capture("AgendaEntry-pick-date-light")
+        next.tap()
+        XCTAssertTrue(done.waitForExistence(timeout: 3), "Next opens Pick a Time")
+        app.buttons["agendaSchedule.dateRow"].tap()
+        XCTAssertTrue(app.datePickers["agendaSchedule.datePicker"].waitForExistence(timeout: 3), "The Date row expands")
+        done.tap()
+        XCTAssertTrue(app.staticTexts["Book dentist appointment"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Review design specs"].exists, "Done schedules the selection together")
+        capture("AgendaEntry-scheduled-light")
+    }
+
+    func testScheduleCloseChangesNothing() {
+        openAgenda()
+        openSchedule()
+        app.buttons["agendaSchedule.task.draft"].tap()
+        app.buttons["agendaSchedule.close"].tap()
+        XCTAssertTrue(app.staticTexts["Aug 13 2026"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Draft project update"].exists, "Close leaves the Agenda unchanged")
+        XCTAssertTrue(app.buttons["agenda.schedule"].label.contains("3"))
     }
 
     // MARK: helpers

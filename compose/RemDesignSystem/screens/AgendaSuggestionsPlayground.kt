@@ -82,6 +82,8 @@ data class AgendaRowData(
     val sortMinutes: Int,
     val pills: List<String> = emptyList(),
     val pending: Boolean = false,
+    /** The event's calendar (tints its bar dot); `null` keeps the default Personal blue. */
+    val calendar: AgendaCreationDraft.EventCalendar? = null,
 )
 
 /** How a suggestion resolves when accepted — the authored example fixtures, not app-wide defaults. */
@@ -95,17 +97,22 @@ private sealed interface Resolution {
     ) : Resolution
 }
 
-private data class RestoreRequest(val item: AgendaSuggestionData, val index: Int)
+internal data class RestoreRequest(val item: AgendaSuggestionData, val index: Int)
 
 /**
  * Owns the deterministic local Agenda Suggestions model. No network, no fetch, no invented spinner /
  * success badge / error card / Retry.
  */
-private class AgendaSuggestionsState(fixture: AgendaSuggestionsFixture) {
+internal class AgendaSuggestionsState(fixture: AgendaSuggestionsFixture) {
     val rows = mutableStateListOf<AgendaRowData>()
     val suggestions = mutableStateListOf<AgendaSuggestionData>()
     var overflowOpen by mutableStateOf(false)
     var restoreRequest by mutableStateOf<RestoreRequest?>(null)
+    /** Agenda entry routing: Add New → creation, Schedule → Schedule Tasks. */
+    var entry by mutableStateOf(AgendaEntryFixture())
+        private set
+    var creationOpen by mutableStateOf(false)
+    var scheduleOpen by mutableStateOf(false)
 
     private val resolutions: Map<String, Resolution>
     private var restorationArmed: Boolean = fixture == AgendaSuggestionsFixture.Restoration
@@ -179,6 +186,23 @@ private class AgendaSuggestionsState(fixture: AgendaSuggestionsFixture) {
         }
     }
 
+    /** Save from the creation sheet: a valid draft lands on the day and the sheet closes. */
+    fun create(draft: AgendaCreationDraft) {
+        val (next, row) = entry.create(draft)
+        if (row == null) return
+        entry = next
+        insert(row)
+        creationOpen = false
+    }
+
+    /** Done from Schedule Tasks: the selected tasks are scheduled together and the sheet closes. */
+    fun schedule(request: AgendaScheduleRequest) {
+        val (next, scheduled) = entry.schedule(request)
+        entry = next
+        scheduled.forEach(::insert)
+        scheduleOpen = false
+    }
+
     private fun insert(row: AgendaRowData) {
         if (rows.any { it.id == row.id }) return
         rows.add(row)
@@ -195,8 +219,10 @@ private class AgendaSuggestionsState(fixture: AgendaSuggestionsFixture) {
  * **AgendaSuggestionsPlayground** — Compose sibling of the SwiftUI `AgendaSuggestionsPlaygroundView`.
  * The bounded Agenda New Suggestions journey: the reused [DateNavigationHeader], the day's
  * [TaskEventRow]s (or the empty [RemContentUnavailableView]), the Add New / Schedule bar, and the
- * Suggestions slot which follows the bar with exactly 24dp spacing while present. Shell affordances call
- * host callbacks; this screen does not invent their destinations.
+ * Suggestions slot which follows the bar with exactly 24dp spacing while present. **Add New** opens
+ * [AgendaCreationSheet] and **Schedule** opens [AgendaScheduleSheet]; their results are applied to this
+ * fixture in memory ([AgendaEntryFixture]). [onAddNew] / [onSchedule] are notified when an entry opens.
+ * Date paging and sort still call host callbacks only.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -243,7 +269,7 @@ fun AgendaSuggestionsPlayground(
                 SortTrigger(onSort)
                 state.rows.forEach { row ->
                     TaskEventRow(
-                        kind = if (row.isEvent) TaskEventKind.Event(colors.systemBlue) else TaskEventKind.Task,
+                        kind = if (row.isEvent) TaskEventKind.Event(calendarColor(row.calendar)) else TaskEventKind.Task,
                         title = row.title,
                         leading = TaskEventLeading.Time(row.timeLabel),
                         pills = row.pills,
@@ -252,7 +278,11 @@ fun AgendaSuggestionsPlayground(
                     )
                 }
             }
-            AddScheduleBar(onAddNew = onAddNew, onSchedule = onSchedule)
+            AddScheduleBar(
+                scheduleCount = state.entry.scheduleCount,
+                onAddNew = { state.creationOpen = true; onAddNew() },
+                onSchedule = { state.scheduleOpen = true; onSchedule() },
+            )
             if (state.suggestions.isNotEmpty()) {
                 AgendaSuggestionsSection(
                     suggestions = state.inline,
@@ -279,6 +309,21 @@ fun AgendaSuggestionsPlayground(
                 onDone = { state.overflowOpen = false },
             )
         }
+    }
+
+    if (state.creationOpen) {
+        AgendaCreationSheet(
+            onCancel = { state.creationOpen = false },
+            onSave = state::create,
+        )
+    }
+
+    if (state.scheduleOpen) {
+        AgendaScheduleSheet(
+            fixture = state.entry,
+            onCancel = { state.scheduleOpen = false },
+            onDone = state::schedule,
+        )
     }
 }
 
@@ -395,7 +440,7 @@ private fun SortTrigger(onSort: () -> Unit) {
 }
 
 @Composable
-private fun AddScheduleBar(onAddNew: () -> Unit, onSchedule: () -> Unit) {
+private fun AddScheduleBar(scheduleCount: Int, onAddNew: () -> Unit, onSchedule: () -> Unit) {
     val colors = RemColors.current
     Row(
         modifier = Modifier.padding(top = RemSpacing.sm),
@@ -418,12 +463,20 @@ private fun AddScheduleBar(onAddNew: () -> Unit, onSchedule: () -> Unit) {
         ) {
             Icon(Icons.Filled.CalendarMonth, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.width(18.dp))
             Text("Schedule", style = RemTypography.body.copy(fontWeight = FontWeight.SemiBold), color = colors.labelSecondary)
-            Box(
-                modifier = Modifier
-                    .background(colors.labelTertiary, RoundedCornerShape(999.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-            ) {
-                Text("3", style = RemTypography.caption1.copy(fontWeight = FontWeight.Bold), color = colors.backgroundPrimary)
+            // The badge counts tasks still waiting to be scheduled; it leaves with the last one.
+            if (scheduleCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .background(colors.labelTertiary, RoundedCornerShape(999.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        "$scheduleCount",
+                        style = RemTypography.caption1.copy(fontWeight = FontWeight.Bold),
+                        color = colors.backgroundPrimary,
+                        modifier = Modifier.testTag("agenda.scheduleCount"),
+                    )
+                }
             }
         }
     }
