@@ -1,0 +1,51 @@
+name: Playground distribution checks
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/playground-distribut*.yml'
+      - 'tools/playground-distribution/**'
+permissions:
+  contents: read
+concurrency:
+  group: playground-distribution-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  guards-and-dependencies:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      BUNDLE_FROZEN: 'true'
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+      FASTLANE_OPT_OUT_USAGE: '1'
+    steps:
+      - name: Initialize ephemeral dependency path
+        run: echo "BUNDLE_PATH=$RUNNER_TEMP/playground-check-gems" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Validate workflow schema and expression contexts
+        run: python3 tools/playground-distribution/lint_workflows.py
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8
+        with:
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Install only committed locked dependencies (no app build or store access)
+        working-directory: tools/playground-distribution
+        run: |
+          bundle install --jobs 4 --retry 2
+          bundle check
+          git diff --exit-code -- Gemfile.lock
+      - name: Run guard tests and installed provider API contract checks
+        working-directory: tools/playground-distribution
+        run: |
+          python3 -m unittest discover -p 'test_*.py' -v
+          bundle exec ruby test_store.rb
+          bundle exec ruby test_dependencies.rb
+          bundle exec ruby test_workflows.rb
+          bundle exec fastlane lanes

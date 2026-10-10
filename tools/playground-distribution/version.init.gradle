@@ -1,0 +1,21 @@
+// Packaging-only override; code, dependencies, target SDK and resources remain committed source.
+gradle.beforeProject { p ->
+    p.plugins.withId('com.android.application') {
+        p.androidComponents.finalizeDsl { android ->
+            android.defaultConfig.versionCode = Integer.parseInt(System.getenv('PLAYGROUND_BUILD_NUMBER'))
+        }
+    }
+}
+gradle.projectsEvaluated {
+    def root = gradle.rootProject
+    root.tasks.register('verifyPlaygroundBundle', JavaExec) {
+        classpath = root.buildscript.configurations.classpath
+        mainClass = 'com.android.tools.build.bundletool.BundleToolMain'
+        args 'validate', '--bundle=' + System.getenv('REM_VERIFY_AAB')
+    }
+    root.tasks.register('inspectPlaygroundBundle', JavaExec) {
+        classpath = root.buildscript.configurations.classpath
+        mainClass = 'com.android.tools.build.bundletool.BundleToolMain'
+        args 'dump', 'manifest', '--bundle=' + System.getenv('REM_VERIFY_AAB'), '--module=base'
+    }
+}
