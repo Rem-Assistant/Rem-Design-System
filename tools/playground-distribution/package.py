@@ -76,6 +76,8 @@ def ephemeral_root(root):
     # candidate checkout and the package output, and are removed by the workflow's cleanup step.
     path = Path(os.environ.get('PLAYGROUND_EPHEMERAL', '')).resolve()
     require(os.environ.get('PLAYGROUND_EPHEMERAL') and path.is_dir(), 'Missing ephemeral build directory')
+    # Compare resolved paths: macOS temporary directories sit behind the /var -> /private/var symlink.
+    root = Path(root).resolve()
     require(root != path and root not in path.parents, 'Ephemeral build directory must be outside the candidate')
     return path
 

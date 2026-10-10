@@ -318,16 +318,20 @@ class StorageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root, out = Path(tmp) / 'candidate', Path(tmp) / 'package'
             root.mkdir()
+            # Also covers a symlinked temporary path (macOS /var -> /private/var): the candidate is
+            # passed through a symlink while the ephemeral path resolves to the real location.
+            (Path(tmp) / 'via-link').symlink_to(root)
             with patch.object(storage.shutil, 'disk_usage', self.usage(storage.MIN_FREE['ios']['build'] - 1)), \
                     patch.object(package, 'command') as command, self.assertRaisesRegex(ValueError, 'Insufficient'):
                 package.build(root, out, 'ios', SHA, '5')
             command.assert_not_called()
             self.assertFalse(out.exists())
-            for value in ('', str(root / 'inside')):
-                (root / 'inside').mkdir(exist_ok=True)
+            (root / 'inside').mkdir()
+            cases = [(root, ''), (root, str(root / 'inside')), (Path(tmp) / 'via-link', str((root / 'inside').resolve()))]
+            for candidate, value in cases:
                 with patch.dict(os.environ, {'PLAYGROUND_EPHEMERAL': value}), \
                         patch.object(storage.shutil, 'disk_usage', self.usage(10 ** 15)), \
                         patch.object(package, 'command') as command, self.assertRaisesRegex(ValueError, 'Ephemeral|ephemeral'):
-                    package.build(root, out, 'ios', SHA, '5')
+                    package.build(candidate, out, 'ios', SHA, '5')
                 command.assert_not_called()
                 self.assertFalse(out.exists())
