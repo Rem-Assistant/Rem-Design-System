@@ -94,6 +94,8 @@ import com.rem.designsystem.chat.LoginCard
 import com.rem.designsystem.chat.LoginCardModel
 import com.rem.designsystem.chat.LoginCardState
 import com.rem.designsystem.chat.LoginForm
+import com.rem.designsystem.chat.LoginSiteBrand
+import com.rem.designsystem.chat.LoginSiteMark
 import com.rem.designsystem.chat.PermissionCard
 import com.rem.designsystem.chat.PermissionCardModel
 import com.rem.designsystem.chat.PermissionCardState
@@ -578,6 +580,7 @@ private fun CatalogLoginCardGroup() {
             onOpenSaved = { note = "Saved login details open in Settings → Cloud browser in the app." },
             showsChevron = showsChevron,
             accessibilityPrefix = "catalog.card.login",
+            leading = { LoginSiteMark(LoginSiteBrand.GitHub) },
         )
         note?.let {
             Text(it, style = RemTypography.footnote, color = RemColors.current.labelSecondary, modifier = Modifier.testTag("catalog.card.login.note"))

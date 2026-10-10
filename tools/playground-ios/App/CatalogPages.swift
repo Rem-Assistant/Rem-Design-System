@@ -528,7 +528,8 @@ struct CatalogLoginCardGroup: View {
                 showsChevron: showsChevron,
                 accessibilityPrefix: "catalog.card.login",
                 onAddLogin: { note = nil; showForm = true },
-                onOpenSaved: { note = "Saved login details open in Settings → Cloud browser in the app." }
+                onOpenSaved: { note = "Saved login details open in Settings → Cloud browser in the app." },
+                leading: { LoginSiteMark(.github) }
             )
             if let note {
                 Text(note)

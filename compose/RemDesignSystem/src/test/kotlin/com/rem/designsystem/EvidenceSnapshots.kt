@@ -128,6 +128,8 @@ import com.rem.designsystem.chat.ConnectorCardState
 import com.rem.designsystem.chat.LoginCard
 import com.rem.designsystem.chat.LoginCardModel
 import com.rem.designsystem.chat.LoginCardState
+import com.rem.designsystem.chat.LoginSiteMark
+import com.rem.designsystem.chat.LoginSiteBrand
 import com.rem.designsystem.chat.LoginForm
 import com.rem.designsystem.chat.PermissionCard
 import com.rem.designsystem.chat.PermissionCardModel
@@ -907,10 +909,10 @@ class EvidenceSnapshots {
     fun chatLoginCard() = shot("ChatLoginCard-light") {
         RemTheme {
             chatCardColumn {
-                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Entry), onAddLogin = {}, onOpenSaved = {})
-                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Saved), onAddLogin = {}, onOpenSaved = {})
+                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Entry), onAddLogin = {}, onOpenSaved = {}, leading = { LoginSiteMark(LoginSiteBrand.GitHub) })
+                LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Saved), onAddLogin = {}, onOpenSaved = {}, leading = { LoginSiteMark(LoginSiteBrand.GitHub) })
                 LoginCard(LoginCardModel("GitHub login details", "github.com", LoginCardState.Entry), onAddLogin = {}, onOpenSaved = {},
-                    showsChevron = false)
+                    showsChevron = false, leading = { LoginSiteMark(LoginSiteBrand.GitHub) })
             }
         }
     }

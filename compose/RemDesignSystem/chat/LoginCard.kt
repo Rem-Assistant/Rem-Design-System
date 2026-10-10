@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.rem.designsystem.R
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -67,8 +69,8 @@ data class LoginCardModel(val title: String, val site: String, val state: LoginC
  * login to the native [LoginForm], or to the saved login's details. Never stores, reads or transmits a
  * credential. Anatomy (Figma `428:37`): ListRow identity with the site mark leading and [ListRowLabel]
  * title + site in the content slot (row not interactive), the state copy, then one [RemButton] whose
- * Trailing slot carries the optional chevron. [leading] defaults to the generic [LoginSiteMark] because
- * the library has no GitHub brand asset yet.
+ * Trailing slot carries the optional chevron. [leading] defaults to the generic [LoginSiteMark]; pass
+ * `LoginSiteMark(LoginSiteBrand.GitHub)` for the library's GitHub logo (`1328:433`).
  */
 @Composable
 fun LoginCard(
@@ -112,12 +114,25 @@ fun LoginCard(
     }
 }
 
-/** Generic site icon for the login card's leading slot, in the 26×29 provider-mark slot. */
+/** A site whose brand mark is in the library (Figma `Logo/*`). */
+enum class LoginSiteBrand {
+    /** Figma `Logo/GitHub` `1328:433`; the black source mark is tinted `labelPrimary` for dark mode. */
+    GitHub,
+}
+
+/**
+ * Site icon for the login card's leading slot, in the 26×29 provider-mark slot. A site without a library
+ * brand asset gets the generic globe, never an invented mark.
+ */
 @Composable
-fun LoginSiteMark(modifier: Modifier = Modifier) {
+fun LoginSiteMark(brand: LoginSiteBrand? = null, modifier: Modifier = Modifier) {
     Box(modifier.size(width = 26.dp, height = 29.dp), contentAlignment = Alignment.Center) {
-        Icon(Icons.Outlined.Public, contentDescription = null, tint = RemColors.current.labelSecondary,
-            modifier = Modifier.size(22.dp))
+        when (brand) {
+            LoginSiteBrand.GitHub -> Icon(painterResource(R.drawable.login_site_github), contentDescription = null,
+                tint = RemColors.current.labelPrimary, modifier = Modifier.size(26.dp))
+            null -> Icon(Icons.Outlined.Public, contentDescription = null, tint = RemColors.current.labelSecondary,
+                modifier = Modifier.size(22.dp))
+        }
     }
 }
 

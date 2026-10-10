@@ -260,10 +260,10 @@ final class RenderSnapshots: XCTestCase {
 
     @ViewBuilder private var chatLoginCards: some View {
         VStack(spacing: DesignTokens.Spacing.md) {
-            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), onAddLogin: {}, onOpenSaved: {})
-            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .saved), onAddLogin: {}, onOpenSaved: {})
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), onAddLogin: {}, onOpenSaved: {}, leading: { LoginSiteMark(.github) })
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .saved), onAddLogin: {}, onOpenSaved: {}, leading: { LoginSiteMark(.github) })
             LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), showsChevron: false,
-                      onAddLogin: {}, onOpenSaved: {})
+                      onAddLogin: {}, onOpenSaved: {}, leading: { LoginSiteMark(.github) })
         }
         .padding(DesignTokens.Spacing.lg)
         .background(DesignTokens.Color.backgroundPrimary)

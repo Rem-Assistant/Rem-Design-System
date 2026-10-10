@@ -57,8 +57,8 @@ public struct LoginCardModel: Hashable, Sendable {
 /// interactive), the state copy, then one Rem Button — `Rect · Blue` "Add login" or `Rect · Secondary`
 /// "Saved" — whose trailing slot carries the optional canonical Chevron.
 ///
-/// The leading slot takes the site's mark. There is no GitHub brand asset in the library yet, so the
-/// default is the documented generic site icon (`LoginSiteMark`), never an invented brand mark.
+/// The leading slot takes the site's mark: `LoginSiteMark(.github)` for the library's GitHub logo
+/// (`1328:433`), otherwise the generic site icon, never an invented brand mark.
 /// Compose sibling: `chat/LoginCard.kt`.
 public struct LoginCard<Leading: View>: View {
     private let model: LoginCardModel
@@ -135,16 +135,36 @@ public extension LoginCard where Leading == LoginSiteMark {
     }
 }
 
-/// Generic service/site icon for the login card's leading slot, sized to the provider-mark slot (26×29)
-/// so a site without a library brand asset never gets an invented mark.
+/// A site whose brand mark is in the library (Figma `Logo/*`).
+public enum LoginSiteBrand: Sendable {
+    /// Figma `Logo/GitHub` `1328:433`. The source mark is black, so it renders as a template in
+    /// `labelPrimary` and stays visible in dark mode.
+    case github
+}
+
+/// Site icon for the login card's leading slot, sized to the provider-mark slot (26×29). A site
+/// without a library brand asset gets the generic globe, never an invented mark.
 public struct LoginSiteMark: View {
-    public init() {}
+    private let brand: LoginSiteBrand?
+    public init(_ brand: LoginSiteBrand? = nil) { self.brand = brand }
     public var body: some View {
-        Image(systemName: "globe")
-            .font(.system(size: 20, weight: .regular))
-            .foregroundStyle(DesignTokens.Color.labelSecondary)
-            .frame(width: 26, height: 29)
-            .accessibilityHidden(true)
+        Group {
+            switch brand {
+            case .github:
+                Image("LoginSiteGitHub", bundle: .module)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 26, height: 26)
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+            case nil:
+                Image(systemName: "globe")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+            }
+        }
+        .frame(width: 26, height: 29)
+        .accessibilityHidden(true)
     }
 }
 
