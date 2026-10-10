@@ -15,7 +15,11 @@ DIGESTS = {
     'darwin_amd64': '5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644',
     'darwin_arm64': 'aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f',
 }
-target = platform.system().lower() + '_' + {'x86_64': 'amd64', 'arm64': 'arm64'}[platform.machine()]
+arch = {'x86_64': 'amd64', 'amd64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}.get(platform.machine())
+target = f'{platform.system().lower()}_{arch}'
+if arch is None or target not in DIGESTS:
+    raise SystemExit(f'Unsupported runner for pinned Actionlint: {platform.system()}/{platform.machine()}. '
+                     'Add its release digest to DIGESTS before using this runner.')
 url = f'https://github.com/rhysd/actionlint/releases/download/v{VERSION}/actionlint_{VERSION}_{target}.tar.gz'
 with urllib.request.urlopen(url, timeout=60) as response:
     data = response.read(20 * 1024 * 1024)
