@@ -12,8 +12,10 @@ import RemDesignSystem
 ///
 /// Drives the real composition with `ChatPlaygroundFixture` in a live window and counts brand-blue
 /// (12, 80, 255) pixels in the avatar region of layer renders sampled over more than one 1.6s
-/// outline-draw cycle. A sanity phase requires the thinking draw to visibly animate in this harness,
-/// so the idle assertion cannot pass vacuously.
+/// outline-draw cycle. A sanity phase requires the thinking draw to visibly animate in this harness
+/// (a near-complete frame, a mostly undrawn frame and a wide range between them), so the idle
+/// assertion cannot pass vacuously. `layer.render(in:)` captures the in-process layer tree, not
+/// the render server's presentation; post-transition journey screenshots remain the visual evidence.
 @MainActor
 final class ChatHeaderFaceLifecycleTests: XCTestCase {
     private final class Model: ObservableObject {
@@ -94,10 +96,25 @@ final class ChatHeaderFaceLifecycleTests: XCTestCase {
         model.fixture.composer.apply(.draftChanged("Plan my afternoon"))
         model.fixture.handle(.composer(.send))
         XCTAssertTrue(model.fixture.header.isWorking, "\(name): sending shows the thinking face", file: file, line: line)
+        // Sanity: the self-draw must be observable in this harness, not a static frame. Thinking shows
+        // the outline only (no eyes or smile), drawn 0→1 every 1.6s at 1.25× the idle pen (0.075 vs
+        // 0.06 of the size). The outline is roughly 80% of the idle ink, so a complete thinking outline
+        // is about 1.0 × idle and one ~70% drawn is about 0.7 × idle. Over the 0.1s samples (> one
+        // cycle) require (a) a near-complete draw, max ≥ 0.7 × idle; (b) an early, mostly undrawn
+        // frame, min < 0.5 × idle; and (c) a swing of at least 0.4 × idle between them. A static frame
+        // (empty, partial or full) has max == min and cannot meet both (a) and (b); (c) also rules out
+        // a small jitter straddling the 0.5–0.7 band. The idle bound below is unchanged.
         let thinking = samples(view, seconds: 1.8)
-        XCTAssertLessThan(Double(thinking.min() ?? 0), Double(before) * 0.5,
-                          "\(name) sanity: the thinking outline visibly self-draws here (\(thinking), idle \(before))",
+        let low = Double(thinking.min() ?? 0), high = Double(thinking.max() ?? 0), idle = Double(before)
+        XCTAssertGreaterThanOrEqual(high, idle * 0.7,
+                                    "\(name) sanity: a near-complete thinking outline is observed (\(thinking), idle \(before))",
+                                    file: file, line: line)
+        XCTAssertLessThan(low, idle * 0.5,
+                          "\(name) sanity: an early, mostly undrawn thinking frame is observed (\(thinking), idle \(before))",
                           file: file, line: line)
+        XCTAssertGreaterThanOrEqual(high - low, idle * 0.4,
+                                    "\(name) sanity: the thinking outline visibly self-draws here (\(thinking), idle \(before))",
+                                    file: file, line: line)
 
         endTurn(&model.fixture)
         XCTAssertFalse(model.fixture.header.isWorking, "\(name): the turn ended", file: file, line: line)
