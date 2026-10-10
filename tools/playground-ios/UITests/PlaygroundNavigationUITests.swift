@@ -33,7 +33,19 @@ final class PlaygroundNavigationUITests: XCTestCase {
             revealAboveKeyboard(element)
             return
         }
-        for _ in 0..<8 where !element.isHittable { app.swipeUp() }
+        // A control can be hittable yet sit in the bottom home-indicator strip, where synthesized taps
+        // are intermittently swallowed (run 38094402869: the composer's Add at y 808-852 of 852 never
+        // opened its sheet). Scroll it clear of that strip as well.
+        // A docked control that scrolling cannot move stops after one unproductive swipe.
+        let bottomGestureEdge = app.windows.firstMatch.frame.maxY - 34
+        var lastMaxY: CGFloat?
+        for _ in 0..<8 {
+            let hittable = element.isHittable
+            if hittable && element.frame.maxY <= bottomGestureEdge { break }
+            if hittable, let lastMaxY, abs(lastMaxY - element.frame.maxY) < 1 { break }
+            lastMaxY = hittable ? element.frame.maxY : nil
+            app.swipeUp()
+        }
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
     }
 
@@ -147,6 +159,17 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(element.waitForExistence(timeout: 3), "Missing button containing \(text)")
         reveal(element)
         element.tap()
+    }
+
+    /// Opens the catalog composer's Add to Chat sheet. Same dropped-tap guard as `openCatalogPage`:
+    /// if the sheet has not appeared after 3s and Add is still hittable, tap it once more, and still
+    /// require the sheet to open.
+    private func openAddToChat() {
+        tap("catalog.composerAdd")
+        let photos = app.buttons["catalog.addToChat.photos"]
+        let add = app.buttons["catalog.composerAdd"]
+        if !photos.waitForExistence(timeout: 3) && add.exists && add.isHittable { add.tap() }
+        XCTAssertTrue(photos.waitForExistence(timeout: 5), "Add opens the Add to Chat sheet")
     }
 
     private func waitUntilGone(_ element: XCUIElement, _ message: String) {
@@ -454,10 +477,11 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(menu.label.contains("Model A2"), "Trigger shows the selected model")
         menu.tap()
         app.buttons["Automatic"].tap()
+        // The next tap must not land while the menu's dismissal layer is still up.
+        waitUntilGone(app.buttons["Automatic"], "Choosing Automatic closes the model menu")
         XCTAssertTrue(menu.label.contains("Auto"), "Automatic returns the trigger to Auto")
 
-        tap("catalog.composerAdd")
-        XCTAssertTrue(app.buttons["catalog.addToChat.photos"].waitForExistence(timeout: 3))
+        openAddToChat()
         XCTAssertTrue(app.buttons["catalog.addToChat.files"].exists)
         tap("catalog.addToChat.cloudBrowser")
         let removeBrowser = app.buttons["catalog.removeAttachment.cloud-browser"]
@@ -465,7 +489,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         removeBrowser.tap()
         waitUntilGone(removeBrowser, "Removing the chip clears it")
 
-        tap("catalog.composerAdd")
+        openAddToChat()
         let thinking = app.buttons["catalog.addToChat.thinking"]
         XCTAssertTrue(thinking.waitForExistence(timeout: 3))
         XCTAssertTrue(thinking.label.contains("Medium"))
