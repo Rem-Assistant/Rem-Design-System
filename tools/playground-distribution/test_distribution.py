@@ -82,6 +82,21 @@ class AdmissionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gate.validate_run(self.run, jobs, SHA, '123')
 
+    def test_sharded_ios_jobs(self):
+        # Shape of native run 38075668310 (exact head c23521b), which the unsharded check rejected.
+        shard = lambda n, c='success': dict(name=n, status='completed', conclusion=c)
+        base = [j for j in self.jobs if j['name'] != 'ios']
+        sharded = base + [shard('ios (0)'), shard('ios (1)'), shard('ios (2)'), shard('ios-evidence')]
+        gate.validate_run(self.run, sharded, SHA, '123')
+        for jobs in [base + [shard('ios (0)'), shard('ios (2)'), shard('ios-evidence')],            # gap
+                     base + [shard('ios (0)'), shard('ios (0)'), shard('ios-evidence')],            # duplicate
+                     base + [shard('ios (0)'), shard('ios (1)', 'failure'), shard('ios-evidence')],  # failed
+                     base + [shard('ios (0)')],                                                        # no evidence
+                     base + [shard('ios (0)'), shard('ios-evidence', 'skipped')],                    # skipped evidence
+                     self.jobs + [shard('ios (0)'), shard('ios-evidence')]]:                          # mixed forms
+            with self.subTest(jobs=[j['name'] for j in jobs]), self.assertRaises(ValueError):
+                gate.validate_run(self.run, jobs, SHA, '123')
+
     def test_partial_filtered_duplicate_or_stale_receipt(self):
         for field, value in [('unfiltered', False), ('passed_count', 2), ('passed_methods', []),
                              ('passed_methods', ['Tests/testOne'] * 2), ('source_sha', 'b' * 40),

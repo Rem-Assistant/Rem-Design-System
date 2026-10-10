@@ -52,10 +52,19 @@ def validate_run(run, jobs, sha, run_id):
     require(run['path'] == WORKFLOW, 'Wrong native workflow')
     require(run['event'] in ('workflow_dispatch', 'pull_request'), 'Unexpected native event')
     require(run['status'] == 'completed' and run['conclusion'] == 'success', 'Native run is not successful')
-    for name in ('preflight', 'ios', 'android', 'native-evidence'):
+    def passed(job):
+        return job['status'] == 'completed' and job['conclusion'] == 'success'
+    # The native workflow runs iOS either as one `ios` job or as `ios (N)` shards whose method sets
+    # `ios-evidence` merges into the single exact receipt. Accept exactly one form, never a mix.
+    shards = sorted(j['name'] for j in jobs if re.fullmatch(r'ios \([0-9]+\)', j['name']))
+    ios = ('ios-evidence',) if shards else ('ios',)
+    require(shards == sorted(f'ios ({i})' for i in range(len(shards))) and
+            all(passed(j) for j in jobs if j['name'] in shards),
+            'Missing, duplicate or unsuccessful native iOS shard')
+    require(not (shards and any(j['name'] == 'ios' for j in jobs)), 'Mixed sharded and unsharded iOS jobs')
+    for name in ('preflight', *ios, 'android', 'native-evidence'):
         matches = [j for j in jobs if j['name'] == name]
-        require(len(matches) == 1 and matches[0]['conclusion'] == 'success' and
-                matches[0]['status'] == 'completed', 'Missing, duplicate or unsuccessful native job: ' + name)
+        require(len(matches) == 1 and passed(matches[0]), 'Missing, duplicate or unsuccessful native job: ' + name)
 
 
 def expected_methods(root, platform):
