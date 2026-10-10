@@ -49,7 +49,7 @@ UTC). Component contract: [`chat.md`](chat.md).
    messages show none; a Not delivered failure stays visible wherever it is.
 5. **Header:** one avatar and one identity/activity capsule; the header owns back and one trailing action:
    overflow, or — when the host sets `showsCall` because in-app voice is available — the call entry, which
-   **replaces** overflow (never a second icon beside it; in-app voice only, no PSTN). The platform
+   **replaces** overflow (never a second icon beside it; in-app voice only, no PSTN). A host that shows the call entry keeps every action it had in overflow reachable through an existing surface it already owns (for example its agent settings or the activity screen). The DS adds no new menu for them. The platform
    navigation bar is hidden by the composition. The empty state has no second face.
 6. **Reply context** is an accessory above the same composer. Dismiss reports the target id only.
 
