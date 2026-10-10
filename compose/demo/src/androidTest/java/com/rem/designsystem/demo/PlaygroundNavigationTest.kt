@@ -776,7 +776,8 @@ class PlaygroundNavigationTest {
 
         compose.onNodeWithTag("inbox.item.venue-booking").performClick()
         waitForTag("chat.replyContext.label")
-        compose.onNodeWithTag("chat.replyContext.label", useUnmergedTree = true).assertTextContains("Approve the venue booking", substring = true)
+        // The label Column merges its two Text children; only the merged node carries the text.
+        compose.onNodeWithTag("chat.replyContext.label").assertTextContains("Approve the venue booking", substring = true)
         compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Needs approval", substring = true))
         compose.onNodeWithTag("chat.composerField").assertExists()
         capture("ChatScreen-taskReply-light")

@@ -298,9 +298,15 @@ internal fun CatalogChat() {
     var browserAvailable by rememberSaveable { mutableStateOf(true) }
     var thinking by rememberSaveable { mutableStateOf(ThinkingLevel.Medium) }
     var feedback by rememberSaveable { mutableStateOf<String?>(null) }
+    // Same rule as the composer: text, or a content attachment alone (fixture chips, nothing is read).
     val send = {
         val text = draft.trim()
-        if (text.isNotEmpty()) { sent = sent + text; draft = "" }
+        val content = attachments.filter { it.kind != ComposerAttachment.Kind.Capability }
+        if (text.isNotEmpty() || content.isNotEmpty()) {
+            sent = sent + text.ifEmpty { content.joinToString(", ") { it.title } }
+            draft = ""
+            attachments = attachments - content.toSet()
+        }
     }
     // System pickers only report a count here: picked content stays on the device and is never read.
     val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(AddToChatMaxPhotoSelection)) { uris ->

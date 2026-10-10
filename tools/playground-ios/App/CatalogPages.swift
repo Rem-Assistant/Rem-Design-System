@@ -376,11 +376,14 @@ struct CatalogChat: View {
         )
     }
 
+    /// Same rule as the composer: text, or a content attachment alone (fixture chips; nothing is read).
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        sent.append(text)
+        let content = attachments.filter { $0.kind != .capability }
+        guard !text.isEmpty || !content.isEmpty else { return }
+        sent.append(text.isEmpty ? content.map(\.title).joined(separator: ", ") : text)
         draft = ""
+        attachments.removeAll { $0.kind != .capability }
     }
 }
 

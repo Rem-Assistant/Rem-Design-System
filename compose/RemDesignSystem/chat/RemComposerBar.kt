@@ -141,7 +141,7 @@ fun RemComposerBar(
             ComposerSendDisplay.Send -> onSend != null
             ComposerSendDisplay.Stop -> onCancel != null
         },
-        onPrimary = if (onSend == null) null else ({ if (display == ComposerSendDisplay.Stop) onCancel?.invoke() else onSend() }),
+        onPrimary = if (onSend == null && onCancel == null) null else ({ if (display == ComposerSendDisplay.Stop) onCancel?.invoke() else onSend?.invoke() }),
         onAdd = onAdd,
         onRemoveAttachment = onRemoveAttachment,
         accessibilityPrefix = accessibilityPrefix,
@@ -248,7 +248,14 @@ private fun ComposerPill(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
-                        .onFocusChanged { fieldHasFocus = it.isFocused; onFocusChanged?.invoke(it.isFocused) }
+                        .onFocusChanged {
+                            // Report real changes only: the attach callback (false while unfocused) must not
+                            // override a host that starts focused.
+                            if (it.isFocused != fieldHasFocus) {
+                                fieldHasFocus = it.isFocused
+                                onFocusChanged?.invoke(it.isFocused)
+                            }
+                        }
                         .then(if (disabledReason != null) Modifier.semantics { stateDescription = disabledReason } else Modifier)
                         .testTag("$accessibilityPrefix.composerField"),
                 )
