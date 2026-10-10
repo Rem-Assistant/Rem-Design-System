@@ -120,11 +120,9 @@ fun ConnectorCard(
                 modifier = Modifier.semantics { contentDescription = "Adding ${model.title}" }
                     .testTag("$accessibilityPrefix.progress"),
             )
-            is ConnectorCardModel.Control.Receipt -> ChatCardReceipt(
-                control.label,
-                modifier = Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = "${model.title} ${control.label.lowercase()}"
-                }.testTag("$accessibilityPrefix.receipt"),
+            // The shared receipt (Figma ActionReceipt `2566:2645`, Confirmed); the card title reads just before it.
+            is ConnectorCardModel.Control.Receipt -> ActionReceipt(
+                ActionReceiptOutcome.Confirmed, control.label, accessibilityPrefix = "$accessibilityPrefix.receipt",
             )
             is ConnectorCardModel.Control.Retry -> RemButton(
                 control.label, onClick = onRetry, variant = RemButtonVariant.RectBlue,
@@ -132,24 +130,6 @@ fun ConnectorCard(
                     .testTag("$accessibilityPrefix.retry"),
             )
         }
-    }
-}
-
-/**
- * Non-interactive outcome receipt in the Rect Button geometry with the confirmed success tint (Figma
- * ActionReceipt `2566:2645`, Outcome=Confirmed). Status text, never a button. Internal until the shared
- * ActionReceipt component lands.
- */
-@Composable
-internal fun ChatCardReceipt(label: String, modifier: Modifier = Modifier) {
-    val colors = RemColors.current
-    Box(
-        modifier = modifier.fillMaxWidth()
-            .background(colors.systemGreen.copy(alpha = 0.12f), RoundedCornerShape(RemRadius.medium))
-            .padding(RemSpacing.md),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(label, style = RemTypography.bodyBold, color = colors.labelPrimary, textAlign = TextAlign.Center)
     }
 }
 

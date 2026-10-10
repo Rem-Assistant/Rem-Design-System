@@ -123,36 +123,14 @@ public struct ConnectorCard: View {
                 .accessibilityLabel("Adding \(model.title)")
                 .accessibilityIdentifier("\(accessibilityPrefix).progress")
         case .receipt(let label):
-            ChatCardReceipt(label)
-                .accessibilityLabel("\(model.title) \(label.lowercased())")
-                .accessibilityIdentifier("\(accessibilityPrefix).receipt")
+            // The shared receipt (Figma ActionReceipt `2566:2645`, Confirmed); the card title reads just before it.
+            ActionReceipt(.confirmed, label: label, accessibilityPrefix: "\(accessibilityPrefix).receipt")
         case .retry(let label):
             Button(label, action: onRetry)
                 .remButton(.rectBlue)
                 .accessibilityLabel("\(label) \(model.title)")
                 .accessibilityIdentifier("\(accessibilityPrefix).retry")
         }
-    }
-}
-
-/// Non-interactive outcome receipt in the Rect Button geometry with the confirmed success tint
-/// (Figma ActionReceipt `2566:2645`, Outcome=Confirmed). Exposes status text, never a button.
-/// Kept internal to the chat cards until the shared ActionReceipt component lands; then switch over.
-struct ChatCardReceipt: View {
-    private let label: String
-    init(_ label: String) { self.label = label }
-    var body: some View {
-        Text(label)
-            .font(DesignTokens.Typography.bodyBold)
-            .foregroundStyle(DesignTokens.Color.labelPrimary)
-            .frame(maxWidth: .infinity)
-            .padding(DesignTokens.Spacing.md)
-            .background(
-                DesignTokens.Color.systemGreen.opacity(0.12),
-                in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium, style: .continuous)
-            )
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isStaticText)
     }
 }
 
