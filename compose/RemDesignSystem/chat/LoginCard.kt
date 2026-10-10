@@ -114,7 +114,7 @@ fun LoginCard(
     }
 }
 
-/** A site whose brand mark is in the library (Figma `Logo/*`). */
+/** A site whose brand mark is in the library (Figma `Logo/…` marks). */
 enum class LoginSiteBrand {
     /** Figma `Logo/GitHub` `1328:433`; the black source mark is tinted `labelPrimary` for dark mode. */
     GitHub,

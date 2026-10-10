@@ -135,7 +135,7 @@ public extension LoginCard where Leading == LoginSiteMark {
     }
 }
 
-/// A site whose brand mark is in the library (Figma `Logo/*`).
+/// A site whose brand mark is in the library (Figma `Logo/…` marks).
 public enum LoginSiteBrand: Sendable {
     /// Figma `Logo/GitHub` `1328:433`. The source mark is black, so it renders as a template in
     /// `labelPrimary` and stays visible in dark mode.
