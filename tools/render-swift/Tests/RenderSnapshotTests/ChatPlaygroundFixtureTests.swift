@@ -143,6 +143,22 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertEqual(fixture.composer.state.phase, .idle)
     }
 
+    func testCancelledRetryRestoresNotDeliveredAndTryAgain() {
+        var fixture = ChatPlaygroundFixture(.empty)
+        fixture.handle(.composer(.draftChanged("A")))
+        fixture.handle(.composer(.send))
+        let a = fixture.activeOutgoingID!
+        fixture.simulateDeliveryFailure()
+        fixture.handle(.transcript(.retry(messageID: a)))
+        fixture.handle(.composer(.cancel))
+        XCTAssertNil(fixture.activeOutgoingID)
+        XCTAssertEqual(fixture.message(a)?.delivery, .failed, "A cancelled retry is still not delivered")
+        XCTAssertEqual(fixture.message(a)?.canRetry, true, "and can be retried again")
+        fixture.handle(.transcript(.retry(messageID: a)))
+        fixture.simulateHostAcceptance()
+        XCTAssertEqual(fixture.message(a)?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime))
+    }
+
     func testCancelEndsTheActiveTurnWithoutAReceipt() {
         var fixture = ChatPlaygroundFixture(.empty)
         fixture.handle(.composer(.draftChanged("A")))

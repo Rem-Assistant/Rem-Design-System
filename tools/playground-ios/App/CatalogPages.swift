@@ -539,7 +539,7 @@ struct PlaygroundChatScreen: View {
             }
         }
         .confirmationDialog("Fixture host", isPresented: $showHostControls, titleVisibility: .visible) {
-            Button("Host accepted latest message") { fixture.simulateHostAcceptance() }
+            Button("Host accepted the message") { fixture.simulateHostAcceptance() }
                 .accessibilityIdentifier("chat.host.accept")
             Button("Recipient acknowledged (Read)") { fixture.simulateReadAcknowledgement() }
                 .accessibilityIdentifier("chat.host.read")

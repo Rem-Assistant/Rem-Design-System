@@ -160,6 +160,21 @@ class ChatPlaygroundFixtureTest {
         assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
     }
 
+    @Test fun cancelledRetryRestoresNotDeliveredAndTryAgain() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.activeOutgoingId!!
+        fixture = fixture.simulateDeliveryFailure()
+            .act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertNull(fixture.activeOutgoingId)
+        assertEquals("A cancelled retry is still not delivered", MessageDelivery.Failed, fixture.message(a)!!.delivery)
+        assertTrue("and can be retried again", fixture.message(a)!!.canRetry)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a))).simulateHostAcceptance()
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(a)!!.delivery)
+    }
+
     @Test fun cancelEndsTheActiveTurnWithoutAReceipt() {
         var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
             .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))

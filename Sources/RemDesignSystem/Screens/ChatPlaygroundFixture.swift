@@ -52,6 +52,9 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     /// evidence applies to this message — never to "whichever is latest" — so a retried older message
     /// is the one accepted or failed. `nil` when no turn is in flight.
     public private(set) var activeOutgoingID: String?
+    /// Set while the active turn is a retry, so cancelling it restores the message's failure and
+    /// Try again instead of stranding it with no receipt and no retry.
+    private var retryingID: String?
     private var nextID = 0
 
     // MARK: Construction
@@ -127,7 +130,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
             case .send: send()
             case .cancel:
                 composer.apply(.cancel)
-                if !composer.state.phase.isInFlight { activeOutgoingID = nil }
+                if !composer.state.phase.isInFlight { endTurn(cancelled: true) }
             default: composer.apply(composerAction)
             }
         case .transcript(let transcriptAction):
@@ -147,6 +150,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
             message.canRetry = false
             entries[index] = .message(message)
             activeOutgoingID = id
+            retryingID = id
             composer.select(.sending)
             note = Self.retryNote
         case .requestReaction:
@@ -180,6 +184,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
               case .message(var message) = entries[index], message.delivery == .none else { return }
         message.delivery = .delivered(at: Self.fixtureTime)
         entries[index] = .message(message)
+        retryingID = nil
         composer.select(.streaming)
     }
 
@@ -198,7 +203,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         message.delivery = .failed
         message.canRetry = true
         entries[index] = .message(message)
-        activeOutgoingID = nil
+        endTurn(cancelled: false)
         composer.select(.ready)
     }
 
@@ -208,11 +213,23 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         nextID += 1
         entries.append(.message(ChatMessageDisplay(id: "reply.\(nextID)", role: .assistant,
                                                    text: "Here is a fixture reply.", meta: "Automatic · Reply complete")))
-        activeOutgoingID = nil
+        endTurn(cancelled: false)
         composer.select(.ready)
     }
 
     // MARK: Helpers
+
+    /// Ends the active turn. A cancelled, not-yet-accepted retry returns to Not delivered + Try again.
+    private mutating func endTurn(cancelled: Bool) {
+        if cancelled, let id = retryingID, let index = messageIndex(id), case .message(var message) = entries[index],
+           message.delivery == .none {
+            message.delivery = .failed
+            message.canRetry = true
+            entries[index] = .message(message)
+        }
+        activeOutgoingID = nil
+        retryingID = nil
+    }
 
     private var activeOutgoingIndex: Int? {
         activeOutgoingID.flatMap { messageIndex($0) }

@@ -90,7 +90,7 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
                 Text("Stand-ins for evidence the app receives from its runtime. Fixture only.",
                     style = RemTypography.footnote, color = RemColors.current.labelSecondary)
                 listOf(
-                    Triple("Host accepted latest message", "chat.host.accept") { fixture = fixture.simulateHostAcceptance() },
+                    Triple("Host accepted the message", "chat.host.accept") { fixture = fixture.simulateHostAcceptance() },
                     Triple("Recipient acknowledged (Read)", "chat.host.read") { fixture = fixture.simulateReadAcknowledgement() },
                     Triple("Host reported not delivered", "chat.host.fail") { fixture = fixture.simulateDeliveryFailure() },
                     Triple("Reply complete", "chat.host.reply") { fixture = fixture.simulateReplyComplete() },

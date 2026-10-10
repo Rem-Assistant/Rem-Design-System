@@ -723,7 +723,7 @@ class PlaygroundNavigationTest {
     }
 
     @Test fun chatScreenKeyboardOpenKeepsHeaderAndComposer() {
-        check(Build.VERSION.SDK_INT >= 30) { "The soft-IME visibility check needs API 30+ window insets" }
+        if (Build.VERSION.SDK_INT < 30) error("The soft-IME visibility check needs API 30+ window insets")
         // A hardware-keyboard emulator would otherwise hide the soft IME and let this journey pass without
         // a keyboard on screen. Require the soft IME for this test only, then restore the device setting.
         val previous = shell("settings get secure show_ime_with_hard_keyboard")
@@ -732,7 +732,11 @@ class PlaygroundNavigationTest {
             openChatScreen()
             compose.onNodeWithTag("chat.composerField").performClick()
             compose.onNodeWithTag("chat.composerField").assertIsFocused()
-            compose.waitUntil(5000) { imeTopInWindow() != null }
+            // Wait for the IME and for the layout that docks the composer above it (IME animation).
+            compose.waitUntil(5000) {
+                val top = imeTopInWindow() ?: return@waitUntil false
+                compose.onNodeWithTag("chat.composerSend").fetchSemanticsNode().boundsInWindow.bottom <= top + 1
+            }
             compose.waitForIdle()
             val imeTop = checkNotNull(imeTopInWindow()) { "The soft IME is not visible" }
             val send = compose.onNodeWithTag("chat.composerSend").fetchSemanticsNode().boundsInWindow
