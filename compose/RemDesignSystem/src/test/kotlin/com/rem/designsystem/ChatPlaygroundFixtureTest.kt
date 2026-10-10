@@ -196,13 +196,24 @@ class ChatPlaygroundFixtureTest {
         assertEquals(ChatPlaygroundFixture.ActivityNote, noted.note)
     }
 
+    @Test fun callButtonIsAnInAppVoiceEntryThatDialsNothing() {
+        val fixture = ChatPlaygroundFixture()
+        assertTrue(fixture.header.showsCall)
+        val (called, effect) = fixture.handle(ChatScreenAction.Call)
+        assertNull("no presentation, transcript or composer change", effect)
+        assertEquals(ChatPlaygroundFixture.CallNote, called.note)
+        assertEquals(fixture.entries, called.entries)
+        assertEquals(fixture.composer, called.composer)
+    }
+
     @Test fun inboxRoutesEachStateIntoTaskReplyWithTheSameTruth() {
         val inbox = InboxPlaygroundFixture()
         for (item in inbox.items) {
             val chat = inbox.route(InboxAction.Open(item.id))!!
             assertEquals(item.id, chat.taskId)
             assertEquals(ChatReplyContext(item.id, ChatPlaygroundFixture.ReplyTitle, item.title), chat.replyContext)
-            assertEquals(item.state.header(), chat.header)
+            // Same host-reported state; the fixture host additionally offers the in-app call entry.
+            assertEquals(item.state.header().copy(showsCall = true), chat.header)
             assertEquals("Write your reply…", chat.composer.state.placeholder)
         }
         assertNull(inbox.route(InboxAction.Open("missing")))

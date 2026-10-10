@@ -250,10 +250,13 @@ public struct ChatHeaderDisplay: Equatable, Sendable {
     public var showsOverflow: Bool
     /// The capsule disclosure opens the host's agent activity details.
     public var showsActivityDetails: Bool
+    /// Top-right call button (WS1e): the host shows it only when it can start an in-app voice session.
+    /// Off by default; the DS only emits `.call`, voice admission stays with the host.
+    public var showsCall: Bool
 
     public init(
         name: String = "Rem", activity: String, status: ChatHeader.Status = .connected, isWorking: Bool = false,
-        showsBack: Bool = true, showsOverflow: Bool = true, showsActivityDetails: Bool = true
+        showsBack: Bool = true, showsOverflow: Bool = true, showsActivityDetails: Bool = true, showsCall: Bool = false
     ) {
         self.name = name
         self.activity = activity
@@ -262,6 +265,7 @@ public struct ChatHeaderDisplay: Equatable, Sendable {
         self.showsBack = showsBack
         self.showsOverflow = showsOverflow
         self.showsActivityDetails = showsActivityDetails
+        self.showsCall = showsCall
     }
 }
 
@@ -380,6 +384,8 @@ public enum ChatTimestampReveal {
 public enum ChatScreenAction: Equatable, Sendable {
     case back
     case overflow
+    /// The header call button: start the host's in-app voice session with Rem (never PSTN).
+    case call
     /// The header capsule disclosure: open agent activity details.
     case activityDetails
     case starter(id: String)

@@ -111,6 +111,7 @@ final class ChatScreenModelTests: XCTestCase {
         let header = ChatHeaderDisplay(activity: "Connected")
         XCTAssertTrue(header.showsBack && header.showsOverflow && header.showsActivityDetails)
         XCTAssertFalse(header.isWorking)
+        XCTAssertFalse(header.showsCall, "call is opt-in: hosts show it only when in-app voice is available")
         let context = ChatReplyContext(targetID: "target-1", title: "Replying to Rem", summary: "Plan the next step")
         XCTAssertEqual(ChatScreenAction.dismissReplyContext(targetID: context.targetID), .dismissReplyContext(targetID: "target-1"))
         XCTAssertEqual(ChatEmptyState(message: "m").title, "What can I help with?")

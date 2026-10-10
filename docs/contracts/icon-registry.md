@@ -49,6 +49,7 @@ font subset (Rule 2). They graduate only after a subset regeneration and standal
 |---|---|---|---|---|
 | header back | `chevron.left` | `Icons.AutoMirrored.Filled.KeyboardArrowLeft` | **0** | `ChatHeader`; stroke glyph, no fill variant |
 | header overflow | `ellipsis` | `Icons.Filled.MoreHoriz` | **0** | `ChatHeader`; dots, no fill variant |
+| header call | `phone` | `Icons.Outlined.Call` | **0** | `ChatHeader` (WS1e); outline handset, in-app voice entry only (not PSTN) |
 | activity disclosure | `chevron.right` | `Icons.AutoMirrored.Filled.KeyboardArrowRight` | **0** | `ChatHeader` capsule; matches the registry disclosure row |
 | add to chat | `plus` | `Icons.Filled.Add` | **0** | `RemComposerBar`; stroke glyph |
 | model trigger | `chevron.up.chevron.down` | `Icons.Filled.UnfoldMore` | **0** | `ChatModelMenu` / composer Auto pill |

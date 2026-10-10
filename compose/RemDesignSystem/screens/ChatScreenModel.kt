@@ -196,6 +196,11 @@ data class ChatHeaderDisplay(
     val showsOverflow: Boolean = true,
     /** The capsule disclosure opens the host's agent activity details. */
     val showsActivityDetails: Boolean = true,
+    /**
+     * Top-right call button (WS1e): the host shows it only when it can start an in-app voice session.
+     * Off by default; the DS only emits [ChatScreenAction.Call], voice admission stays with the host.
+     */
+    val showsCall: Boolean = false,
 )
 
 /**
@@ -290,6 +295,8 @@ object ChatTimestampReveal {
 sealed interface ChatScreenAction {
     data object Back : ChatScreenAction
     data object Overflow : ChatScreenAction
+    /** The header call button: start the host's in-app voice session with Rem (never PSTN). */
+    data object Call : ChatScreenAction
     /** The header capsule disclosure: open agent activity details. */
     data object ActivityDetails : ChatScreenAction
     data class Starter(val id: String) : ChatScreenAction

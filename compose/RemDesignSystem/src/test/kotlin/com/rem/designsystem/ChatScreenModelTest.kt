@@ -133,6 +133,7 @@ class ChatScreenModelTest {
         val header = ChatHeaderDisplay(activity = "Connected")
         assertTrue(header.showsBack && header.showsOverflow && header.showsActivityDetails)
         assertFalse(header.isWorking)
+        assertFalse("call is opt-in: hosts show it only when in-app voice is available", header.showsCall)
         val context = ChatReplyContext("target-1", "Replying to Rem", "Plan the next step")
         assertEquals(ChatScreenAction.DismissReplyContext("target-1"), ChatScreenAction.DismissReplyContext(context.targetId))
         assertEquals("What can I help with?", ChatEmptyState(message = "m").title)

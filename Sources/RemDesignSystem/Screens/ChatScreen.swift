@@ -113,7 +113,8 @@ public struct ChatScreen<Transcript: View>: View {
                 accessibilityPrefix: "chat.header",
                 onTap: c.header.showsActivityDetails ? { c.onAction(.activityDetails) } : nil,
                 onBack: c.header.showsBack ? { c.onAction(.back) } : nil,
-                onOverflow: c.header.showsOverflow ? { c.onAction(.overflow) } : nil
+                onOverflow: c.header.showsOverflow ? { c.onAction(.overflow) } : nil,
+                onCall: c.header.showsCall ? { c.onAction(.call) } : nil
             )
             .padding(.bottom, DesignTokens.Spacing.sm)
 

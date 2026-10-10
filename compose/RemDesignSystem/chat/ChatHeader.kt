@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -64,10 +65,11 @@ fun ChatHeader(
     onTap: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
     onOverflow: (() -> Unit)? = null,
+    onCall: (() -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
         HeaderIdentity(name, activity, status, faceMode, accessibilityPrefix, onTap)
-        if (onBack != null || onOverflow != null) {
+        if (onBack != null || onOverflow != null || onCall != null) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -79,8 +81,13 @@ fun ChatHeader(
                     HeaderControl(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Back", "$accessibilityPrefix.back", onBack)
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                if (onOverflow != null) {
-                    HeaderControl(Icons.Filled.MoreHoriz, "More", "$accessibilityPrefix.overflow", onOverflow)
+                Row(horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm)) {
+                    if (onCall != null) {
+                        HeaderControl(Icons.Outlined.Call, "Call Rem", "$accessibilityPrefix.call", onCall)
+                    }
+                    if (onOverflow != null) {
+                        HeaderControl(Icons.Filled.MoreHoriz, "More", "$accessibilityPrefix.overflow", onOverflow)
+                    }
                 }
             }
         }

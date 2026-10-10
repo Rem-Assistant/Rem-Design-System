@@ -38,7 +38,7 @@ data class ChatPlaygroundFixture(
             composer.state.phase.isInFlight -> ChatHeaderDisplay(activity = "Working on your request", isWorking = true)
             taskId == null -> ChatHeaderDisplay(activity = "Connected")
             else -> taskState.header()
-        }
+        }.copy(showsCall = true) // Fixture host: shows the call entry; nothing is dialled.
 
     val emptyState: ChatEmptyState?
         get() = if (entries.isEmpty()) ChatEmptyState(message = EmptyMessage, starters = Starters) else null
@@ -48,6 +48,7 @@ data class ChatPlaygroundFixture(
         ChatScreenAction.Back -> this to ChatPlaygroundEffect.Exit
         ChatScreenAction.Overflow -> this to ChatPlaygroundEffect.PresentHostControls
         ChatScreenAction.ActivityDetails -> copy(note = ActivityNote) to null
+        ChatScreenAction.Call -> copy(note = CallNote) to null
         is ChatScreenAction.Starter -> {
             val starter = Starters.firstOrNull { it.id == action.id }
             (if (starter == null) this else copy(composer = composer.apply(ChatComposerAction.DraftChanged(starter.title))).send()) to null
@@ -167,6 +168,7 @@ data class ChatPlaygroundFixture(
         const val FixtureTime = "10:24"
         const val ReplyTitle = "Replying to Rem"
         const val ActivityNote = "Agent activity details open in the app."
+        const val CallNote = "The app starts an in-app voice session with Rem."
         const val ReactionNote = "The app presents the reaction picker."
         const val RetryNote = "Retry resubmitted; no receipt until the host accepts it."
         const val EmptyMessage = "Start a conversation with Rem. Plan your day, explore an idea or get a task moving."

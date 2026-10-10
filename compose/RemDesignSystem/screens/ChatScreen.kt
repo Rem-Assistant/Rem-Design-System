@@ -120,6 +120,7 @@ fun ChatScreen(
             onTap = if (header.showsActivityDetails) ({ onAction(ChatScreenAction.ActivityDetails) }) else null,
             onBack = if (header.showsBack) ({ onAction(ChatScreenAction.Back) }) else null,
             onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
+            onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
             modifier = Modifier.padding(bottom = RemSpacing.sm),
         )
         val scroll = rememberScrollState()

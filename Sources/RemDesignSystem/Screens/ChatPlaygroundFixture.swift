@@ -36,6 +36,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     public static let fixtureTime = "10:24"
     public static let replyTitle = "Replying to Rem"
     public static let activityNote = "Agent activity details open in the app."
+    public static let callNote = "The app starts an in-app voice session with Rem."
     public static let reactionNote = "The app presents the reaction picker."
     public static let retryNote = "Retry resubmitted; no receipt until the host accepts it."
     public static let emptyMessage = "Start a conversation with Rem. Plan your day, explore an idea or get a task moving."
@@ -100,10 +101,11 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     // MARK: Presentation inputs
 
     public var header: ChatHeaderDisplay {
-        if composer.state.phase.isInFlight {
-            return ChatHeaderDisplay(activity: "Working on your request", isWorking: true)
-        }
-        return taskID == nil ? ChatHeaderDisplay(activity: "Connected") : taskState.header()
+        var header = composer.state.phase.isInFlight
+            ? ChatHeaderDisplay(activity: "Working on your request", isWorking: true)
+            : (taskID == nil ? ChatHeaderDisplay(activity: "Connected") : taskState.header())
+        header.showsCall = true // Fixture host: shows the call entry; nothing is dialled.
+        return header
     }
 
     public var emptyState: ChatEmptyState? {
@@ -119,6 +121,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         case .back: return .exit
         case .overflow: return .presentHostControls
         case .activityDetails: note = Self.activityNote
+        case .call: note = Self.callNote
         case .starter(let id):
             guard let starter = Self.starters.first(where: { $0.id == id }) else { return nil }
             composer.apply(.draftChanged(starter.title))

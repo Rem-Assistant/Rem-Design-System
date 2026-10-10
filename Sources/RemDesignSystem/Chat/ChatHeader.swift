@@ -26,6 +26,7 @@ public struct ChatHeader: View {
     private let onTap: (() -> Void)?
     private let onBack: (() -> Void)?
     private let onOverflow: (() -> Void)?
+    private let onCall: (() -> Void)?
 
     /// Height of the header-owned controls; their centre sits on the 64pt avatar's centre.
     public static let controlSize: CGFloat = 44
@@ -39,7 +40,8 @@ public struct ChatHeader: View {
         accessibilityPrefix: String = "chatHeader",
         onTap: (() -> Void)? = nil,
         onBack: (() -> Void)? = nil,
-        onOverflow: (() -> Void)? = nil
+        onOverflow: (() -> Void)? = nil,
+        onCall: (() -> Void)? = nil
     ) {
         self.name = name
         self.activity = activity
@@ -49,12 +51,13 @@ public struct ChatHeader: View {
         self.onTap = onTap
         self.onBack = onBack
         self.onOverflow = onOverflow
+        self.onCall = onCall
     }
 
     public var body: some View {
         identityStack
             .overlay(alignment: .top) {
-                if onBack != nil || onOverflow != nil { controls }
+                if onBack != nil || onOverflow != nil || onCall != nil { controls }
             }
     }
 
@@ -66,8 +69,13 @@ public struct ChatHeader: View {
                 headerControl("chevron.left", label: "Back", id: "back", action: onBack)
             }
             Spacer(minLength: 0)
-            if let onOverflow {
-                headerControl("ellipsis", label: "More", id: "overflow", action: onOverflow)
+            HStack(spacing: DesignTokens.Spacing.sm) {
+                if let onCall {
+                    headerControl("phone", label: "Call Rem", id: "call", action: onCall)
+                }
+                if let onOverflow {
+                    headerControl("ellipsis", label: "More", id: "overflow", action: onOverflow)
+                }
             }
         }
         .padding(.horizontal, DesignTokens.Spacing.lg)
