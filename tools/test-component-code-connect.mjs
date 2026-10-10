@@ -1,3 +1,5 @@
+// Keep composition rejection fixtures in the existing dependency-free contract test entrypoint.
+import './test-playground-mappings.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parserlessMappingMatches } from './component-code-connect.mjs';

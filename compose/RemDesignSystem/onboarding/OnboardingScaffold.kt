@@ -29,6 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -84,41 +88,7 @@ fun OnboardingScaffold(
             .fillMaxSize()
             .background(background.color()),
     ) {
-        // Top bar — back chevron (leading) mirrors the reference frames' top-left back button. When
-        // there is nowhere to go back to, the sequencer passes onBack = null and we keep the same
-        // vertical rhythm with an empty spacer so the hero doesn't jump between steps.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(44.dp)
-                .padding(horizontal = RemSpacing.xl),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (onBack != null) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clickableRole(onClick = onBack, label = "Back"),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Back",
-                        tint = colors.labelPrimary,
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-            } else {
-                Spacer(Modifier.size(44.dp))
-            }
-            Spacer(Modifier.width(RemSpacing.sm))
-            if (progress != null) {
-                OnboardingProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier.padding(start = RemSpacing.xs),
-                )
-            }
-        }
+        OnboardingNavigationBar(progress = progress, onBack = onBack)
 
         // Body is the explicit fill-height region below the top bar. It owns the one shared 24dp
         // horizontal inset and contains both the scrollable content and the pinned ActionArea.
@@ -326,7 +296,8 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
                     // `SignInButton`, so the paired CTA reads as the same treatment on both platforms.
                     .clip(RoundedCornerShape(RemRadius.medium))
                     .background(containerColor)
-                    .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)
+                    .then(if (interactive) Modifier.clickableRole(action.onClick, action.label)
+                        else Modifier.semantics(mergeDescendants = true) { role = Role.Button; disabled() })
                     .padding(vertical = RemSpacing.md, horizontal = RemSpacing.lg),
                 contentAlignment = Alignment.Center,
             ) {
@@ -364,7 +335,8 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             Box(
                 modifier = modifier
                     .heightIn(min = 44.dp)
-                    .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)
+                    .then(if (interactive) Modifier.clickableRole(action.onClick, action.label)
+                        else Modifier.semantics(mergeDescendants = true) { role = Role.Button; disabled() })
                     .padding(vertical = RemSpacing.sm),
                 contentAlignment = Alignment.Center,
             ) {
@@ -372,4 +344,46 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             }
         }
     }
+}
+
+/** Shared step navigation, also used by the existing Connectors body. */
+@Composable
+internal fun OnboardingNavigationBar(progress: OnboardingProgress? = null, onBack: (() -> Unit)? = null) {
+    val colors = RemColors.current
+        // Top bar — back chevron (leading) mirrors the reference frames' top-left back button. When
+        // there is nowhere to go back to, the sequencer passes onBack = null and we keep the same
+        // vertical rhythm with an empty spacer so the hero doesn't jump between steps.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .padding(horizontal = RemSpacing.xl),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onBack != null) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clickableRole(onClick = onBack, label = "Back"),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "Back",
+                        tint = colors.labelPrimary,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+            } else {
+                Spacer(Modifier.size(44.dp))
+            }
+            Spacer(Modifier.width(RemSpacing.sm))
+            if (progress != null) {
+                OnboardingProgressIndicator(
+                    progress = progress,
+                    modifier = Modifier.padding(start = RemSpacing.xs),
+                )
+            }
+        }
+
 }

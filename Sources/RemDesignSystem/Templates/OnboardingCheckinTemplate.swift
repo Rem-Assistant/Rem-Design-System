@@ -141,31 +141,72 @@ public struct OnboardingCheckinTemplate: View {
 
     private var cadenceCard: some View {
         RemSection(rows: periods) { period in
-            ListRow(
-                period.title,
-                emphasis: rowsInteractive ? .standard : .deemphasized,
-                leading: { ContainedIcon(period.symbol, fill: .subtle) },
-                trailing: { rowTrailing(period) }
-            )
+            // The title never wraps. Time and switch sit beside it when all three share one line; at
+            // narrow widths or accessibility text sizes the time moves under the title, and if the
+            // title still cannot fit beside the switch, the switch follows it. The Compose twin makes
+            // the same ordered choice with `FirstThatFits`. The final fallback stacks the controls when
+            // their combined width would also exceed the supporting slot.
+            ViewThatFits(in: .horizontal) {
+                ListRow(
+                    period.title,
+                    emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
+                    leading: { ContainedIcon(period.symbol, fill: .subtle) },
+                    trailing: { accessories(period, includesTime: true) }
+                )
+                ListRow(
+                    period.title,
+                    emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
+                    leading: { ContainedIcon(period.symbol, fill: .subtle) },
+                    supporting: { timeValue(period) },
+                    trailing: { accessories(period, includesTime: false) }
+                )
+                ListRow(
+                    period.title,
+                    emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
+                    leading: { ContainedIcon(period.symbol, fill: .subtle) },
+                    supporting: { accessories(period, includesTime: true) },
+                    trailing: { EmptyView() }
+                )
+                ListRow(
+                    period.title,
+                    emphasis: rowsInteractive ? .standard : .deemphasized,
+                    titleOnOneLine: true,
+                    leading: { ContainedIcon(period.symbol, fill: .subtle) },
+                    supporting: {
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                            timeValue(period)
+                            accessories(period, includesTime: false)
+                        }
+                    },
+                    trailing: { EmptyView() }
+                )
+            }
         }
     }
 
-    /// Trailing accessory: the value pill (only while the row is on) sits directly left of the switch.
-    @ViewBuilder private func rowTrailing(_ period: Period) -> some View {
+    /// The value pill (only while the row is on) sits directly left of the switch.
+    @ViewBuilder private func accessories(_ period: Period, includesTime: Bool) -> some View {
         HStack(spacing: DesignTokens.Spacing.sm) {
-            if period.isOn, let time = period.time {
-                TimePickerValue(
-                    text: time,
-                    hour24: period.hour24,
-                    minute: period.minute,
-                    enabled: rowsInteractive,
-                    onTimeChange: period.changeTime
-                )
-            }
+            if includesTime { timeValue(period) }
             // The platform switch, unwrapped (founder decision 2026-10-09: default platform switches).
             Toggle(period.title, isOn: Binding(get: { period.isOn }, set: { period.toggle($0) }))
                 .labelsHidden()
                 .disabled(!rowsInteractive)
+        }
+    }
+
+    @ViewBuilder private func timeValue(_ period: Period) -> some View {
+        if period.isOn, let time = period.time {
+            TimePickerValue(
+                text: time,
+                hour24: period.hour24,
+                minute: period.minute,
+                enabled: rowsInteractive,
+                onTimeChange: period.changeTime
+            )
         }
     }
 

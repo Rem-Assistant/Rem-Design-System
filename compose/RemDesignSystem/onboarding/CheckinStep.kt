@@ -4,10 +4,17 @@ import android.app.TimePickerDialog
 import android.view.ContextThemeWrapper
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlarmOn
@@ -23,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.rem.designsystem.R
 import com.rem.designsystem.primitives.ContainedIcon
@@ -30,6 +38,7 @@ import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.rows.ListRow
+import com.rem.designsystem.rows.ListRowTitleLayout
 import com.rem.designsystem.rows.ListRowEmphasis
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
@@ -129,6 +138,7 @@ fun OnboardingCheckinScreen(
     subtitle: String = CHECKIN_SUBTITLE,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
+    onSkip: (() -> Unit)? = null,
 ) {
     val anyEnabled = periods.any { it.enabled }
     val rowsInteractive = status.rowsInteractive()
@@ -147,6 +157,7 @@ fun OnboardingCheckinScreen(
     OnboardingScaffold(
         modifier = modifier,
         primary = primary,
+        secondary = onSkip?.let { OnboardingAction("Skip", it, style = OnboardingActionStyle.TextAccent, enabled = rowsInteractive) },
         bottomToast = toast,
         // Registry hero: `alarm_on` (pairs with the iOS `clock.badge.checkmark.fill`, FILL 1) — a
         // scheduled, confirmed check-in time — on the brand-blue squircle.
@@ -175,6 +186,12 @@ fun OnboardingCheckinScreen(
 /**
  * A single cadence configuration of canonical [ListRow]. The enabled time is an editable value: it
  * opens Android's native [TimePickerDialog] and reports the canonical slot id with the chosen time.
+ *
+ * The title never wraps. The time and switch sit beside it when all three share one line; at narrow
+ * widths or large text the time moves under the title ([ListRow]'s `supporting` slot), and if the
+ * title still cannot fit beside the switch, the switch follows it. If the time and switch cannot share
+ * that supporting line either, they stack vertically. The SwiftUI twin makes the same
+ * ordered choice with `ViewThatFits`.
  */
 @Composable
 private fun CheckinPeriodRow(
@@ -185,42 +202,108 @@ private fun CheckinPeriodRow(
     showSeparator: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    ListRow(
-        title = period.title,
-        enabled = interactive,
-        emphasis = if (interactive) ListRowEmphasis.Standard else ListRowEmphasis.Deemphasized,
-        showSeparator = showSeparator,
-        modifier = modifier,
-        leading = {
-            ContainedIcon(
-                icon = period.icon,
-                fill = ContainedIconFill.Subtle,
-                size = ContainedIconSize.Small,
-                contentDescription = null,
-            )
-        },
-        trailing = {
-            val time = period.time
-            if (period.enabled && time != null) {
-                CheckinTimePickerValue(
-                    text = time,
-                    hour24 = period.hour24,
-                    minute = period.minute,
-                    enabled = interactive,
-                    onTimeChange = { hour, minute -> onTimeChange(period.id, hour, minute) },
-                )
-                Spacer(Modifier.width(RemSpacing.sm))
-            }
-            // The platform switch with Material defaults (founder decision 2026-10-09).
-            Switch(
-                checked = period.enabled,
-                onCheckedChange = if (interactive) { checked -> onToggle(period.id, checked) } else null,
+    val time = period.time
+    val timeValue: (@Composable () -> Unit)? = if (period.enabled && time != null) {
+        {
+            CheckinTimePickerValue(
+                text = time,
+                hour24 = period.hour24,
+                minute = period.minute,
                 enabled = interactive,
-                // Name the switch for TalkBack, matching the iOS Toggle's period label.
-                modifier = Modifier.semantics { contentDescription = period.title },
+                onTimeChange = { hour, minute -> onTimeChange(period.id, hour, minute) },
             )
-        },
+        }
+    } else {
+        null
+    }
+    val switch: @Composable () -> Unit = {
+        // The platform switch with Material defaults (founder decision 2026-10-09).
+        Switch(
+            checked = period.enabled,
+            onCheckedChange = if (interactive) { checked -> onToggle(period.id, checked) } else null,
+            enabled = interactive,
+            // Name the switch for TalkBack, matching the iOS Toggle's period label.
+            modifier = Modifier.semantics { contentDescription = period.title },
+        )
+    }
+    val accessories: @Composable (includeTime: Boolean) -> Unit = { includeTime ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(RemSpacing.sm),
+        ) {
+            if (includeTime) timeValue?.invoke()
+            switch()
+        }
+    }
+    val accessoriesBelow: @Composable () -> Unit = { accessories(true) }
+    val accessoriesStacked: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(RemSpacing.sm)) {
+            timeValue?.invoke()
+            switch()
+        }
+    }
+    val accessoriesTrailing: @Composable RowScope.() -> Unit = { accessories(true) }
+    val switchTrailing: @Composable RowScope.() -> Unit = { switch() }
+    val row: @Composable (CheckinRowLayout, Boolean) -> Unit = { layout, measuring ->
+        ListRow(
+            title = period.title,
+            titleLayout = if (measuring) ListRowTitleLayout.Hug else ListRowTitleLayout.Fill,
+            enabled = interactive,
+            emphasis = if (interactive) ListRowEmphasis.Standard else ListRowEmphasis.Deemphasized,
+            showSeparator = showSeparator,
+            leading = {
+                ContainedIcon(
+                    icon = period.icon,
+                    fill = ContainedIconFill.Subtle,
+                    size = ContainedIconSize.Small,
+                    contentDescription = null,
+                )
+            },
+            supporting = when (layout) {
+                CheckinRowLayout.SideBySide -> null
+                CheckinRowLayout.TimeBelow -> timeValue
+                CheckinRowLayout.AllBelow -> accessoriesBelow
+                CheckinRowLayout.ControlsStacked -> accessoriesStacked
+            },
+            trailing = when (layout) {
+                CheckinRowLayout.SideBySide -> accessoriesTrailing
+                CheckinRowLayout.TimeBelow -> switchTrailing
+                CheckinRowLayout.AllBelow, CheckinRowLayout.ControlsStacked -> null
+            },
+        )
+    }
+    FirstThatFits(
+        candidates = CheckinRowLayout.entries.map { layout -> @Composable { measuring -> row(layout, measuring) } },
+        modifier = modifier,
     )
+}
+
+private enum class CheckinRowLayout { SideBySide, TimeBelow, AllBelow, ControlsStacked }
+
+/**
+ * Shows the first candidate whose single-line width fits the available width, else the last — the
+ * Compose counterpart of SwiftUI's `ViewThatFits(in: .horizontal)`. Fit uses ordinary, unbounded-width measurement on unplaced probes, not intrinsic queries: native
+ * accessories may contain a SubcomposeLayout, which does not support intrinsic measurement. Probe
+ * semantics are cleared, so TalkBack and tests only see the placed candidate. The probe uses a hug
+ * label: a weighted label has no remaining width under unbounded constraints and cannot measure fit.
+ */
+@Composable
+private fun FirstThatFits(
+    candidates: List<@Composable (measuring: Boolean) -> Unit>,
+    modifier: Modifier = Modifier,
+) {
+    SubcomposeLayout(modifier) { constraints ->
+        val probeConstraints = constraints.copy(minWidth = 0, maxWidth = Constraints.Infinity, minHeight = 0)
+        val chosen = candidates.indices.first { index ->
+            index == candidates.lastIndex ||
+                subcompose("probe$index") { Box(Modifier.clearAndSetSemantics {}) { candidates[index](true) } }
+                    .all { it.measure(probeConstraints).width <= constraints.maxWidth }
+        }
+        val placeables = subcompose("shown$chosen") { candidates[chosen](false) }.map { it.measure(constraints) }
+        val width = placeables.maxOfOrNull { it.width } ?: constraints.minWidth
+        val height = placeables.maxOfOrNull { it.height } ?: constraints.minHeight
+        layout(width, height) { placeables.forEach { it.place(0, 0) } }
+    }
 }
 
 /**
@@ -247,7 +330,8 @@ private fun CheckinTimePickerValue(
         )
     }
     Text(
-        text = text,
+        // Keep semantics backed by the rendered layout, as for the canonical row title.
+        text = AnnotatedString(text),
         style = RemTypography.body,
         color = colors.labelPrimary,
         modifier = Modifier
@@ -282,6 +366,7 @@ fun checkinStep(
         onRetry = onRetry,
         progress = scope.progress,
         onBack = scope.onBack,
+        onSkip = scope::skip,
     )
 }
 

@@ -910,7 +910,8 @@ final class SettingsPlaygroundUITests: XCTestCase {
             ("pairedDevices", "Paired devices", "PairedDevices", "pairedDevices.peer.mac-studio"),
             ("memory", "Memory", "Memory", "memory.summaryRow"),
             ("models", "Models", "Models", "models.addProviderKey"),
-            ("cloudBrowser", "Cloud browser", "CloudBrowser", "cloudBrowser.seeAllSites")
+            // Cloud browser ends on its Browser data section: Clear all site data and its footer.
+            ("cloudBrowser", "Cloud browser", "CloudBrowser", "cloudBrowser.clearAllData")
         ] {
             app.terminate()
             app.launchArguments = arguments
@@ -918,6 +919,24 @@ final class SettingsPlaygroundUITests: XCTestCase {
             openDestination(route, title: title)
             capture("\(name)-\(suffix)")
             reveal(app.buttons[finalControl])
+            if route == "cloudBrowser" {
+                revealFully(app.buttons[finalControl])
+                revealFully(app.staticTexts["Saved passwords remain until you remove them."])
+                let clearAll = app.buttons[finalControl]
+                let footer = app.staticTexts["Saved passwords remain until you remove them."]
+                let bounds = app.frame
+                let top = app.navigationBars.firstMatch.frame.maxY
+                let viewport = CGRect(x: bounds.minX, y: top, width: bounds.width,
+                                      height: bounds.maxY - 34 - top)
+                // Check both after the final scroll: revealing the footer must not push the button
+                // behind navigation chrome while leaving only a hittable fragment visible.
+                for target in [clearAll, footer] {
+                    XCTAssertFalse(target.frame.isEmpty)
+                    XCTAssertTrue(viewport.contains(target.frame),
+                                  "Cloud browser bottom capture must contain all of \(target.identifier): \(target.frame)")
+                }
+                XCTAssertTrue(clearAll.isHittable, "Clear all site data stays on screen with its footer")
+            }
             if suffix == "large-text" { capture("\(name)-large-text-bottom") }
         }
     }

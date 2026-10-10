@@ -41,6 +41,8 @@ import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
 import com.rem.designsystem.rows.RemSection
+import com.rem.designsystem.rows.ConnectorProvider
+import com.rem.designsystem.rows.ConnectorProviderMark
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -60,6 +62,7 @@ data class Connector(
     val name: String,
     val status: String,
     val isConnected: Boolean,
+    val provider: ConnectorProvider? = null,
     val onClick: () -> Unit,
 )
 
@@ -74,9 +77,11 @@ fun OnboardingConnectorsScreen(
     message: String = "Connect Rem to the tools you use so it can keep you up to date and surface what needs doing.",
     showSeeMore: Boolean = true,
     onSeeMore: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
 ) {
     val colors = RemColors.current
     Column(modifier = modifier.fillMaxSize().background(colors.backgroundPrimary)) {
+        if (onBack != null) OnboardingNavigationBar(onBack = onBack)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -130,7 +135,8 @@ private fun ConnectorRow(c: Connector) {
         modifier = Modifier.fillMaxWidth().padding(horizontal = RemSpacing.md, vertical = RemSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ContainedIcon(icon = c.icon, fill = ContainedIconFill.Tint(c.tint), size = ContainedIconSize.Small)
+        if (c.provider != null) ConnectorProviderMark(c.provider)
+        else ContainedIcon(icon = c.icon, fill = ContainedIconFill.Tint(c.tint), size = ContainedIconSize.Small)
         Spacer(Modifier.width(RemSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = c.name, style = RemTypography.bodyBold, color = colors.labelPrimary)

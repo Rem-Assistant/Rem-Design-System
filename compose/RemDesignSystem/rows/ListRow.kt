@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
@@ -42,6 +43,11 @@ enum class ListRowEmphasis { Standard, Deemphasized }
  * `Switch`, a value label, a badge); for a navigation row use [DisclosureChevron]. When [onClick] is
  * set the whole row is the tap target; [emphasis] de-emphasizes a locked row with the foundation
  * opacity token, and [showSeparator] draws an inset separator for rows outside a [RemSection].
+ * [supporting] is an optional accessory under the title (Material `ListItem.supportingContent`), used
+ * when a trailing value cannot share one line with the title, so the title never wraps.
+ *
+ * [titleLayout] normally fills the available label space; `Hug` permits natural-width measurement
+ * for adaptive row composition without querying intrinsic sizes of interactive accessories.
  *
  * Figma canonical: ListRow (`101:18`) + ListRowLabel (`188:2`). Compose has no native `List`/`Section`
  * disclosure chrome, so — unlike iOS, which leans on `NavigationLink` — the chevron is explicit here.
@@ -56,6 +62,8 @@ fun ListRow(
     emphasis: ListRowEmphasis = ListRowEmphasis.Standard,
     showSeparator: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
+    supporting: (@Composable () -> Unit)? = null,
+    titleLayout: ListRowTitleLayout = ListRowTitleLayout.Fill,
     trailing: (@Composable RowScope.() -> Unit)? = null,
 ) {
     val colors = RemColors.current
@@ -78,11 +86,14 @@ fun ListRow(
         ) {
             leading?.invoke()
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = if (titleLayout == ListRowTitleLayout.Fill) Modifier.weight(1f) else Modifier,
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
-                    text = title,
+                    // Compose 1.7.3's String fast path reconstructs semantics at the parent
+                    // maxWidth rather than the rendered paragraph width. The annotated overload
+                    // exposes the actual cached layout for accessibility and overflow inspection.
+                    text = AnnotatedString(title),
                     style = RemTypography.body.copy(fontWeight = FontWeight.SemiBold),
                     color = colors.labelPrimary,
                 )
@@ -92,6 +103,9 @@ fun ListRow(
                         style = RemTypography.caption1,
                         color = colors.labelSecondary,
                     )
+                }
+                if (supporting != null) {
+                    Box(Modifier.padding(top = RemSpacing.xs)) { supporting() }
                 }
             }
             trailing?.invoke(this)

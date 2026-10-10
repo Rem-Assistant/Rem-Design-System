@@ -110,17 +110,35 @@ final class PlaygroundNavigationUITests: XCTestCase {
     // MARK: Components
 
     func testCatalogLoadingShowsSkeletonThenContentAndActionProgress() {
+        app.terminate()
+        app.launchArguments = ["--settings-light", "--loading-hold"]
+        app.launch()
         tap("openComponents")
         XCTAssertTrue(app.buttons["openControls"].waitForExistence(timeout: 3))
         capture("Playground-components-light")
         tap("openLoading")
         let skeleton = app.descendants(matching: .any)["loading.skeleton"].firstMatch
+        let memory = app.staticTexts["Memory"]
         XCTAssertTrue(skeleton.waitForExistence(timeout: 2), "Content load starts on the skeleton")
         XCTAssertEqual(skeleton.label, "Loading content")
-        capture("Loading-skeleton-light")
-        XCTAssertTrue(app.staticTexts["Memory"].waitForExistence(timeout: 8), "Skeleton resolves to content")
+        XCTAssertFalse(memory.exists, "Held loading contains no loaded rows")
+        tap("loading.completeFixture")
+        XCTAssertTrue(memory.waitForExistence(timeout: 8), "Skeleton resolves to content")
         waitUntilGone(skeleton, "Skeleton is removed once content arrives")
         capture("Loading-content-light")
+        // Reload holds the fixture in place, without navigation competing for the capture.
+        // Every skeleton assertion has a deterministic window, including the initial push above.
+        // Bracket the screenshot with state checks so mislabeled loaded-content proof fails.
+        tap("loading.reload")
+        XCTAssertTrue(skeleton.waitForExistence(timeout: 2), "Reload returns to the skeleton")
+        waitUntilGone(memory, "Reload replaces the content with the skeleton")
+        XCTAssertTrue(skeleton.exists && !memory.exists, "Capture starts on the skeleton only")
+        capture("Loading-skeleton-light")
+        XCTAssertTrue(skeleton.exists && !memory.exists,
+                      "The load finished before Loading-skeleton-light was captured, so it may not show the skeleton")
+        tap("loading.completeFixture")
+        XCTAssertTrue(memory.waitForExistence(timeout: 8), "Reloaded skeleton resolves to content")
+        waitUntilGone(skeleton, "Skeleton is removed once reloaded content arrives")
         tap("loading.refresh")
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Refreshing")).firstMatch.waitForExistence(timeout: 2),
                       "Actions show inline progress")
@@ -128,6 +146,19 @@ final class PlaygroundNavigationUITests: XCTestCase {
         capture("Loading-action-progress-light")
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == %@", "Refresh")).firstMatch.waitForExistence(timeout: 6),
                       "Action progress clears")
+    }
+
+    /// The test fixture must not replace the normal Playground's automatic completion path.
+    func testCatalogLoadingCompletesAutomaticallyWithoutFixtureHold() {
+        tap("openComponents")
+        tap("openLoading")
+        XCTAssertFalse(app.buttons["loading.completeFixture"].exists,
+                       "Normal Playground use exposes no fixture completion action")
+        XCTAssertTrue(app.staticTexts["Memory"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.descendants(matching: .any)["loading.skeleton"].firstMatch.exists)
+        tap("loading.reload")
+        XCTAssertTrue(app.staticTexts["Memory"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["loading.refresh"].isEnabled)
     }
 
     // MARK: Catalog pages
@@ -325,6 +356,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         capture("Onboarding-connectors-light")
         tap("Continue")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Connectors → Check-in")
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-light")
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 5), "Check-in saves → Voice")
@@ -377,6 +409,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         top.press(forDuration: 0.1, thenDragTo: app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.98)))
         waitUntilGone(picker, "The picker sheet closes")
         XCTAssertTrue(app.buttons["Edit 9:00 AM"].waitForExistence(timeout: 2), "The chosen time shows in the row")
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-edited-light")
         // The one-second Saving state is not asserted here: its spinner keeps the app from idling, so
         // XCUITest may not observe it before Saved. The failure test pins the persistence states.
@@ -395,9 +428,85 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let retry = app.buttons["Try again"]
         XCTAssertTrue(retry.waitForExistence(timeout: 4), "A failed save offers Try again")
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "save your check-in times")).firstMatch.exists, "The failure toast explains it")
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-failure-light")
         retry.tap()
         XCTAssertTrue(app.buttons["onboardingVoice.continue"].waitForExistence(timeout: 5), "Retry saves → Voice")
+    }
+
+    /// Check-in at accessibility text size: every title stays on one line and every time stays on screen.
+    func testCheckInRowsFitAtLargeText() {
+        app.terminate()
+        app.launchArguments = ["--settings-light", "--settings-large-text"]
+        app.launch()
+        openOnboardingStep("openOnboardingCheckIn")
+        XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Check-in opens")
+        assertCheckInRowsFit()
+        revealCheckInControl(app.buttons["Edit 8:00 AM"])
+        XCTAssertTrue(app.staticTexts["Morning"].isHittable, "The capture includes the Morning title")
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-large-text")
+        let midday = app.switches["Midday"]
+        revealCheckInControl(midday)
+        midday.tap()
+        let middayTime = app.buttons["Edit 12:30 PM"]
+        XCTAssertTrue(middayTime.waitForExistence(timeout: 2), "Turning Midday on shows its time")
+        assertCheckInRowsFit()
+        revealCheckInControl(middayTime)
+        capture("Onboarding-checkin-large-text-edited")
+        for title in ["Morning", "Midday", "Evening"] {
+            let control = app.switches[title]
+            revealCheckInControl(control)
+            XCTAssertTrue(control.isHittable, "The \(title) switch remains reachable")
+        }
+    }
+
+    /// Check-in insets its scroll view by 24pt. Window-edge gestures fall outside that view, so drag
+    /// within its blank leading margin and require the entire target inside the scroll viewport.
+    private func revealCheckInControl(_ element: XCUIElement) {
+        let scrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(scrollView.exists, "Check-in exposes its scrollable content")
+        for _ in 0..<12 {
+            let viewport = scrollView.frame
+            if element.exists && !element.frame.isEmpty && viewport.contains(element.frame) && element.isHittable {
+                return
+            }
+            let up = element.exists && element.frame.minY < viewport.minY
+            let from = scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: up ? 0.35 : 0.75))
+            let to = scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: up ? 0.75 : 0.35))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(element.exists && !element.frame.isEmpty && scrollView.frame.contains(element.frame) && element.isHittable,
+                      "Expected the complete Check-in control inside the scroll viewport: \(element.identifier)")
+    }
+
+    /// The Check-in row regression: each period title lays out on one line and each time is fully on
+    /// screen. XCUITest exposes no line count, so a title is compared with a time value set in the same
+    /// body style: one line is shorter than the time pill (one line + 8pt padding) × 1.4, two lines are
+    /// not, for any line height of 19pt or more (default body is 22pt).
+    private func assertCheckInRowsFit() {
+        let times = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Edit "))
+        XCTAssertTrue(times.firstMatch.waitForExistence(timeout: 2), "A Check-in time is shown")
+        let reference = times.firstMatch.frame.height
+        // iOS exposes a named SwiftUI Toggle wrapper and an anonymous native UISwitch child.
+        // Count the named cadence controls; hidden fit candidates must not duplicate those labels.
+        let cadenceSwitches = app.switches.matching(NSPredicate(format: "label IN %@",
+            ["Morning", "Midday", "Evening"]))
+        XCTAssertEqual(cadenceSwitches.count, 3, "Exactly three named cadence switches are exposed")
+        for title in ["Morning", "Midday", "Evening"] {
+            let text = app.staticTexts[title]
+            XCTAssertTrue(text.exists, "The \(title) title is shown")
+            XCTAssertGreaterThan(text.frame.width, 0)
+            XCTAssertGreaterThan(text.frame.height, 0)
+            XCTAssertTrue(text.frame.minX >= app.frame.minX && text.frame.maxX <= app.frame.maxX,
+                          "The \(title) title is clipped horizontally")
+            XCTAssertLessThan(text.frame.height, reference * 1.4,
+                              "The \(title) title wraps: \(text.frame) against a one-line time of height \(reference)")
+        }
+        for time in times.allElementsBoundByIndex {
+            XCTAssertTrue(time.frame.minX >= app.frame.minX && time.frame.maxX <= app.frame.maxX,
+                          "\(time.label) is clipped horizontally: \(time.frame)")
+        }
     }
 
     func testConsentLegalRowsOpenDocuments() {

@@ -1,8 +1,27 @@
 # Private playground candidates
 
-Scope is **Settings + Onboarding Voice**. Agenda is a separate candidate and is not included.
-This is fixture UI: no audio playback or connected services. Continue/Skip report host callbacks.
+Scope is **Settings, the full fixture Onboarding flow, Agenda suggestions, and the component catalog**.
+Onboarding includes Sign in, Consent, Connectors, Check-in, and Voice. This is fixture UI: no audio
+playback or connected services. Continue/Skip advance the fixture flow to its completion state.
+The exact scope list in `delivery.py` is bound into both native receipts and package manifests.
 Package identifiers remain `com.rem.playground.settings` and `com.rem.designsystem.demo`.
+
+
+### Candidate route inventory
+
+The iOS `PlaygroundHome` routes and Android `MainActivity` routes contain the same fixture surfaces:
+
+| Entry | Included routes and boundaries |
+| --- | --- |
+| Settings | Agent settings; paired devices, connectors, memory, models, Cloud browser, wallet, voice; local mutations and documented external handoff shells |
+| Agenda | Suggestion list, bounded inline rows, overflow, add/move/dismiss and fixture recovery states |
+| Onboarding | Sign in → Consent/legal documents → Connectors → Check-in → Voice → completion; native Back and local fixture actions |
+| Component catalog | Controls, rows, Agenda components, Chat component samples, agent surfaces, brand, and loading demo |
+
+This inventory does not claim a connected Chat product flow, live authorization, wallet checkout,
+audio playback, or backend synchronization. Chat is a catalog sample here; the separate new Chat
+implementation remains outside this candidate. An “all Playground flows” claim requires the full
+native suites and visual review of these included fixture routes at the final exact SHA.
 
 ## Native evidence before a new package
 
@@ -49,3 +68,12 @@ No merge, upload, tester invitation, account modification, or automatic promotio
 ## Draft validation limits
 
 The guard tests exercise stale SHA, skipped/filtered/partial/duplicate native results, scope mismatch, binary mutation, and overwrites. Hosted native suites still have to execute on this draft's exact committed revision. Prior PR87 results cannot qualify the changed draft. Device verification of PR87 does not qualify a newer package.
+
+## Deterministic loading capture
+
+The debug-only `--loading-hold` launch argument holds the catalog Loading demo until its explicit
+`Complete fixture load` control is activated. It changes only this fixture's completion timing;
+the same skeleton and loaded-content views render. The native test verifies the initial held state,
+completes it, reloads in place, brackets the screenshot with skeleton-present/content-absent checks,
+and completes again. A separate normal-launch test verifies automatic completion without the control.
+Normal Playground use retains the three-second load; release builds ignore the hold argument.

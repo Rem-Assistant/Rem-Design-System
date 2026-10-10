@@ -339,7 +339,7 @@ internal fun CatalogBrand() {
                 Text("Thinking", Modifier.weight(1f))
                 Switch(checked = thinking, onCheckedChange = { thinking = it }, modifier = Modifier.testTag("catalog.faceThinking"))
             }
-            RemFaceMark(mode = if (thinking) RemFaceMarkMode.Thinking else RemFaceMarkMode.Idle, tint = RemColors.current.brandBlue, size = 96.dp)
+            RemFaceMark(modifier = Modifier.testTag("catalog.faceMark"), mode = if (thinking) RemFaceMarkMode.Thinking else RemFaceMarkMode.Idle, tint = RemColors.current.brandBlue, size = 96.dp)
         }
         CatalogGroup("App icon") {
             RemAppIcon(size = 64.dp, cornerRadius = RemRadius.large)

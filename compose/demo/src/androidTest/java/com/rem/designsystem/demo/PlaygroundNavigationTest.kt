@@ -1,6 +1,11 @@
 package com.rem.designsystem.demo
 
 import android.graphics.Bitmap
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.toPixelMap
 import android.os.Build
 import android.view.inspector.WindowInspector
 import android.content.ContentValues
@@ -8,6 +13,8 @@ import android.provider.MediaStore
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -199,6 +206,70 @@ class PlaygroundNavigationTest {
         capture("Catalog-controls-light")
     }
 
+    /** Real touch-down/up verifies visible press feedback and the most recent action receipt. */
+    @Test fun controlsPressFeedbackAndLatestStatus() {
+        openCatalogPage("openControls")
+        val variants = listOf("Rect · Black", "Rect · Blue", "Rect · Secondary", "Rect · Destructive",
+            "Text · Accent", "Text · Destructive", "Pill · Secondary")
+        variants.forEachIndexed { index, title ->
+            val button = compose.onNodeWithText(title).performScrollTo()
+            val resting = button.captureToImage().toPixelMap()
+            button.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(200)
+            val pressed = button.captureToImage().toPixelMap()
+            org.junit.Assert.assertTrue("$title must visibly react while held",
+                (0 until resting.width).any { x -> (0 until resting.height).any { y -> resting[x, y] != pressed[x, y] } })
+            if (index == 1) capture("Build6-controls-blue-held")
+            button.performTouchInput { up() }
+            compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped $title")
+        }
+        compose.onNodeWithText("Disabled").performScrollTo().performTouchInput { click() }
+        compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped Pill · Secondary")
+        capture("Build6-controls-latest-status")
+    }
+
+    @Test fun settingsAndTermsRowsShowNativePressFeedback() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val resolver = instrumentation.targetContext.contentResolver
+        val key = android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+        val original = android.provider.Settings.Global.getString(resolver, key)
+        fun setting(value: String?) {
+            val command = if (value == null) "settings delete global animator_duration_scale"
+                else "settings put global animator_duration_scale $value"
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+            org.junit.Assert.assertEquals(value?.toFloat(), android.provider.Settings.Global.getString(resolver, key)?.toFloat())
+        }
+        fun holdAndCompare(node: SemanticsNodeInteraction, name: String) {
+            val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+            val bounds = node.fetchSemanticsNode().boundsInWindow
+            capture("$name-resting")
+            val resting = automation.takeScreenshot()
+            node.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(200)
+            // Native ripple uses RenderThread time and must be measured in the device framebuffer.
+            android.os.SystemClock.sleep(250)
+            capture(name)
+            val pressed = automation.takeScreenshot()
+            org.junit.Assert.assertTrue("$name must visibly react while held",
+                (bounds.left.toInt() until bounds.right.toInt()).any { x ->
+                    (bounds.top.toInt() until bounds.bottom.toInt()).any { y -> resting.getPixel(x, y) != pressed.getPixel(x, y) } })
+            node.performTouchInput { up() }
+        }
+        try {
+        // CI disables system animations. Native ripple needs normal animator scale for this check.
+        setting("1")
+        compose.onNodeWithTag("openSettings").performClick()
+        holdAndCompare(compose.onNodeWithTag("openAgent"), "Build6-agent-row-held")
+        compose.onNodeWithText("Agent settings").assertExists()
+        compose.onNodeWithTag("back").performClick()
+        compose.onNodeWithTag("back").performClick()
+        openOnboardingStep("openOnboardingConsent")
+        holdAndCompare(compose.onNodeWithText("Terms of Service"), "Build6-terms-row-held")
+        compose.onNodeWithText("Done").assertExists()
+        } finally { setting(original) }
+    }
+
     @Test fun catalogRowsListAndConnectorStates() {
         openCatalogPage("openRows")
         compose.onNodeWithTag("catalog.listRow").performClick()
@@ -264,6 +335,7 @@ class PlaygroundNavigationTest {
         capture("Onboarding-connectors-light")
         compose.onNodeWithText("Continue").performClick()
         compose.onNodeWithText("When should Rem check in?").assertExists()
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-light")
         compose.onNodeWithText("Continue").performClick()
         waitForTag("onboardingVoice")
@@ -275,18 +347,100 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("openOnboardingSignIn").assertExists()
     }
 
-    /** Connectors and Voice offer Skip, which moves the flow on like Continue. Check-in has no Skip
-     *  (it asks for at least one time), so the flow passes it with Continue. */
+    /** Every optional onboarding step can be skipped without submitting its fixture. */
     @Test fun skipAdvancesFromConnectorsToCompletion() {
         openOnboardingStep("openOnboardingConnectors")
         compose.onNodeWithText("Skip").performClick()
         compose.onNodeWithText("When should Rem check in?").assertExists()
-        compose.onNodeWithText("Skip").assertDoesNotExist()
-        compose.onNodeWithText("Continue").performClick()
+        compose.onNodeWithText("Skip").assertIsEnabled().performClick()
         waitForTag("onboardingVoice")
         compose.onNodeWithTag("onboardingVoice.skip").performClick()
         compose.onNodeWithTag("onboarding.complete")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "skip"))
+    }
+
+    @Test fun connectorsVisibleBackReturnsWithoutRelaunch() {
+        openOnboardingStep("openOnboardingConnectors")
+        capture("Build6-connectors-back-and-provider-marks")
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("openOnboardingConnectors").assertIsDisplayed()
+    }
+
+    @Test fun checkInSkipWorksWithAllCadencesOff() {
+        openOnboardingStep("openOnboardingCheckIn")
+        compose.onNode(isToggleable() and hasContentDescription("Morning")).performClick()
+        compose.onNodeWithText("Continue").assertIsNotEnabled()
+        capture("Build6-checkin-all-off-skip")
+        compose.onNodeWithText("Skip").assertIsEnabled().performClick()
+        waitForTag("onboardingVoice")
+        capture("Build6-checkin-skip-landed-voice")
+    }
+
+    /** CI disables animations globally. This one test enables them temporarily, checks pixels,
+     * then checks Remove animations and restores the original setting even on failure. */
+    @Test fun thinkingOutlineChangesOverTime() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val resolver = instrumentation.targetContext.contentResolver
+        val dark = if (compose.activity.intent.hasExtra("settingsDark"))
+            compose.activity.intent.getBooleanExtra("settingsDark", false)
+        else (compose.activity.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val key = android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+        val original = android.provider.Settings.Global.getString(resolver, key)
+        fun setting(value: String?) {
+            val command = if (value == null) "settings delete global animator_duration_scale"
+                else "settings put global animator_duration_scale $value"
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+            val actual = android.provider.Settings.Global.getString(resolver, key)
+            org.junit.Assert.assertEquals("Animator setting must take effect", value?.toFloat(), actual?.toFloat())
+        }
+        fun changed(before: androidx.compose.ui.graphics.PixelMap, after: androidx.compose.ui.graphics.PixelMap) =
+            (0 until before.width).any { x -> (0 until before.height).any { y -> before[x, y] != after[x, y] } }
+        try {
+            setting("1")
+            openCatalogPage("openBrand")
+            compose.onNodeWithTag("catalog.faceThinking").assertIsDisplayed()
+            compose.mainClock.autoAdvance = false
+            compose.onNodeWithTag("catalog.faceThinking").performClick()
+            compose.mainClock.advanceTimeBy(160)
+            val before = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            compose.mainClock.advanceTimeBy(500)
+            val after = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            org.junit.Assert.assertTrue("Thinking must change visible pixels over time", changed(before, after))
+            setting("0")
+            instrumentation.waitForIdleSync()
+            compose.mainClock.advanceTimeBy(32)
+            val reducedBefore = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            compose.mainClock.advanceTimeBy(500)
+            val reducedAfter = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            org.junit.Assert.assertFalse("Remove animations must keep the outline still", changed(reducedBefore, reducedAfter))
+            // The inspection path draws the complete canonical outline. Compare real pixels against
+            // it as well: stillness alone would wrongly accept a blank or partly frozen outline.
+            compose.runOnIdle {
+                compose.activity.setContent {
+                    com.rem.designsystem.tokens.RemTheme(darkTheme = dark) {
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            androidx.compose.ui.platform.LocalInspectionMode provides true) {
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.background(com.rem.designsystem.tokens.RemColors.current.backgroundPrimary)) {
+                                com.rem.designsystem.brand.RemFaceMark(
+                                    mode = com.rem.designsystem.brand.RemFaceMarkMode.Thinking,
+                                    tint = com.rem.designsystem.tokens.RemColors.current.brandBlue,
+                                    modifier = Modifier.testTag("thinking.reference"))
+                            }
+                        }
+                    }
+                }
+            }
+            compose.mainClock.advanceTimeBy(32)
+            val complete = compose.onNodeWithTag("thinking.reference").captureToImage().toPixelMap()
+            org.junit.Assert.assertEquals(complete.width, reducedAfter.width)
+            org.junit.Assert.assertEquals(complete.height, reducedAfter.height)
+            org.junit.Assert.assertFalse("Remove animations must show the complete resting outline", changed(complete, reducedAfter))
+        } finally {
+            setting(original)
+            compose.mainClock.autoAdvance = true
+        }
     }
 
     /** System Back walks the pushed steps in reverse. */
@@ -311,6 +465,7 @@ class PlaygroundNavigationTest {
         capture("Onboarding-checkin-picker-light")
         onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
         compose.onNodeWithText("9:00 AM").assertExists()
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-edited-light")
         compose.mainClock.autoAdvance = false
         compose.onNodeWithText("Continue").performClick()
@@ -328,10 +483,90 @@ class PlaygroundNavigationTest {
         compose.onNodeWithText("Continue").performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("Try again").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("We couldn't save your check-in times. Check your connection and try again.", substring = true).assertExists()
+        assertCheckInRowsFit()
         capture("Onboarding-checkin-failure-light")
         compose.onNodeWithText("Try again").performClick()
         waitForTag("onboardingVoice")
     }
+
+    /** Check-in at large text: every title stays on one line and every time stays fully on screen. */
+    @Test fun checkInRowsFitAtLargeText() {
+        compose.activityRule.scenario.onActivity { it.intent.putExtra("settingsLargeText", true) }
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag("openOnboardingCheckIn").performScrollTo().performClick()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        assertCheckInRowsFit()
+        compose.onNodeWithText("8:00 AM").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText("Morning") and !isToggleable()).assertIsDisplayed()
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-large-text")
+        compose.onNode(isToggleable() and hasContentDescription("Midday")).performScrollTo().performClick()
+        compose.onNodeWithText("12:30 PM").assertExists()
+        assertCheckInRowsFit()
+        compose.onNodeWithText("12:30 PM").performScrollTo()
+        capture("Onboarding-checkin-large-text-edited")
+        listOf("Morning", "Midday", "Evening").forEach { title ->
+            compose.onNode(isToggleable() and hasContentDescription(title)).performScrollTo().assertIsDisplayed()
+        }
+        listOf("8:00 AM", "12:30 PM").forEach { time ->
+            compose.onNodeWithText(time).performScrollTo().assertIsDisplayed().assertHasClickAction()
+        }
+    }
+
+    /**
+     * The Check-in row regression: each period title lays out on exactly one line (a single word like
+     * "Morning" must never break across lines), and each visible time value is fully inside the window.
+     */
+    private fun assertCheckInRowsFit() {
+        compose.waitForIdle()
+        listOf("Morning", "Midday", "Evening").forEach { title ->
+            val node = compose.onNode(hasText(title) and !isToggleable()).fetchSemanticsNode()
+            val layouts = mutableListOf<TextLayoutResult>()
+            checkNotNull(node.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
+            val textLayout = layouts.single()
+            check(!textLayout.hasVisualOverflow) {
+                "Check-in title \"$title\" is clipped or truncated; " +
+                    "bounds=${node.boundsInRoot}; ${describeTextLayout(textLayout)}"
+            }
+            val lines = textLayout.lineCount
+            check(lines == 1) {
+                "Check-in title \"$title\" laid out on $lines lines; " +
+                    "bounds=${node.boundsInRoot}; ${describeTextLayout(textLayout)}"
+            }
+        }
+        // Hidden fit probes must never expose extra controls to accessibility or tests.
+        compose.onAllNodes(isToggleable()).assertCountEquals(3)
+        val window = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        val timeValue = SemanticsMatcher("Check-in time value") {
+            it.config.getOrNull(SemanticsActions.OnClick)?.label?.startsWith("Edit ") == true
+        }
+        val times = compose.onAllNodes(timeValue).fetchSemanticsNodes()
+        check(times.isNotEmpty()) { "No Check-in time value is shown" }
+        times.forEach { time ->
+            val layouts = mutableListOf<TextLayoutResult>()
+            checkNotNull(time.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
+            check(layouts.single().lineCount == 1 && !layouts.single().hasVisualOverflow) {
+                "Check-in time value is clipped or truncated; bounds=${time.boundsInRoot}; " +
+                    describeTextLayout(layouts.single())
+            }
+            check(time.boundsInRoot.left >= window.left && time.boundsInRoot.right <= window.right) {
+                "Check-in time ${time.config.getOrNull(SemanticsProperties.Text)} is clipped horizontally: ${time.boundsInRoot}"
+            }
+        }
+    }
+
+    /** Distinguishes glyph clipping from a mismatch between rendered and semantic paragraph sizes. */
+    private fun describeTextLayout(layout: TextLayoutResult): String =
+        "text=${layout.layoutInput.text.text}, size=${layout.size}, " +
+            "paragraph=${layout.multiParagraph.width}x${layout.multiParagraph.height}, " +
+            "constraints=${layout.layoutInput.constraints}, lines=${layout.lineCount}, " +
+            "overflowWidth=${layout.didOverflowWidth}, overflowHeight=${layout.didOverflowHeight}, " +
+            "lineBounds=" + (0 until layout.lineCount).joinToString { line ->
+                "${layout.getLineLeft(line)}..${layout.getLineRight(line)}; " +
+                    "top=${layout.getLineTop(line)}, bottom=${layout.getLineBottom(line)}, " +
+                    "ellipsized=${layout.isLineEllipsized(line)}"
+            }
 
     /** Sets a framework TimePicker directly — the dialog's own dial has no stable touch targets. */
     private fun setTime(hour: Int, minute: Int) = object : ViewAction {
@@ -361,7 +596,8 @@ class PlaygroundNavigationTest {
         // Gmail starts connected; Google Calendar and Slack offer Connect.
         compose.onAllNodesWithText("Connected").assertCountEquals(1)
         compose.onAllNodesWithText("Connect").assertCountEquals(2)
-        compose.onAllNodesWithText("Connect")[1].performClick()
+        // The Back bar can put Slack below the fold on shorter devices. Drive the visible control.
+        compose.onAllNodesWithText("Connect")[1].performScrollTo().assertIsDisplayed().performClick()
         compose.onAllNodesWithText("Connected").assertCountEquals(2)
         compose.onAllNodesWithText("Connect").assertCountEquals(1)
     }
