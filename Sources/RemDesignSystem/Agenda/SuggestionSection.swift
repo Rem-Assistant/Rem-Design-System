@@ -9,12 +9,15 @@ import SwiftUI
 ///    reading as "next steps" and starts reading as a backlog).
 /// 2. **Overflow behind "See more"** — the remainder is one tap away via `onSeeMore`; nothing is
 ///    dropped. The host owns where the overflow goes (the app presents a sheet from a stable ancestor).
-/// 3. **One header everywhere** — "Suggestions", sentence case, footnote semibold, `labelSecondary`.
+/// 3. **One header everywhere** — "Suggestions", sentence case, SectionHeader (`161:68`) metrics:
+///    Headline (body semibold), `labelSecondary`, 16pt horizontal inset, 6pt below.
 ///
 /// It renders the list it is given; contextual ordering (`SuggestionBriefRelevance`) is app logic the
-/// host applies first. Rows are the canonical `AgendaSuggestionRow` (`2336:19583`). The design
-/// composes Section (`1307:667`, Plain `1307:660`); this behavioral wrapper has no standalone master.
-/// See `code-connect/SuggestionSection.composition.json` and `docs/contracts/playground-mappings.md`.
+/// host applies first. Authority: the "Suggestions region" frame `2336:19714` — a SectionHeader, then
+/// **standalone** `AgendaSuggestionRow`s (`2336:19583`, 4pt apart, no Section/rows surface around them),
+/// then the "See more · Plain" Button (`377:8`), i.e. the `.textAccent` button style, hugging its label
+/// at the leading edge. This behavioral wrapper has no standalone master. See
+/// `code-connect/SuggestionSection.composition.json` and `docs/contracts/playground-mappings.md`.
 public struct SuggestionSection: View {
     private let suggestions: [AgendaSuggestionItem]
     private let inlineLimit: Int
@@ -43,10 +46,12 @@ public struct SuggestionSection: View {
         let inline = Array(suggestions.prefix(max(0, inlineLimit)))
         let overflow = suggestions.count - inline.count
         if !suggestions.isEmpty {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                 Text("Suggestions")
-                    .font(DesignTokens.Typography.footnote.weight(.semibold))
+                    .font(DesignTokens.Typography.body.weight(.semibold))
                     .foregroundStyle(DesignTokens.Color.labelSecondary)
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .padding(.bottom, 6)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.isHeader)
                 ForEach(inline) { suggestion in
@@ -60,16 +65,11 @@ public struct SuggestionSection: View {
                 }
                 // Founder-specified copy, deliberately without a count.
                 if overflow > 0, let onSeeMore {
-                    // The whole row is the tap target: frame and shape sit inside the label, because a
-                    // plain-style button only hit-tests its label.
-                    Button(action: onSeeMore) {
-                        Text("See more")
-                            .font(DesignTokens.Typography.footnote.weight(.semibold))
-                            .foregroundStyle(DesignTokens.Color.brandBlueOnFill)
-                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
+                    // The canonical text button, hugging its label (`fixedSize` collapses the regular
+                    // size's full-width frame) so it sits at the leading edge as in `2336:19751`.
+                    Button("See more", action: onSeeMore)
+                        .buttonStyle(RemButtonStyle(.textAccent))
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
         }

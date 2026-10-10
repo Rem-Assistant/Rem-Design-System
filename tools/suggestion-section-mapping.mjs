@@ -5,16 +5,24 @@ import { parserlessMappingMatches } from './component-code-connect.mjs';
 
 export const suggestionSectionSource = 'Sources/RemDesignSystem/Agenda/SuggestionSection.swift';
 const composeSource = 'compose/RemDesignSystem/rows/SuggestionSection.kt';
+// The "Suggestions region" frame 2336:19714 is a SectionHeader, standalone rows and a Text · Accent
+// Button ("See more · Plain" is the instance's layer name). No Section/rows surface wraps the rows.
 const expectedConstituents = [
-  { component: 'Section', nodeId: '1307:667', variant: { Style: 'Plain' }, variantNodeId: '1307:660',
-    templates: { swiftui: 'code-connect/swiftui/Section.figma.ts', compose: 'code-connect/compose/Section.figma.ts' } },
+  { component: 'SectionHeader', nodeId: '161:68',
+    templates: { swiftui: 'code-connect/swiftui/SectionHeader.figma.ts', compose: 'code-connect/compose/SectionHeader.figma.ts' } },
   { component: 'AgendaSuggestionRow', nodeId: '2336:19583',
     templates: { swiftui: 'code-connect/swiftui/AgendaSuggestionRow.figma.ts', compose: 'code-connect/compose/AgendaSuggestionRow.figma.ts' } },
+  { component: 'Button', nodeId: '377:8', variant: { Style: 'Text · Accent' }, variantNodeId: '377:4',
+    templates: { swiftui: 'Sources/RemDesignSystem/Buttons/RemButton.figma.swift', compose: 'code-connect/compose/RemButton.figma.ts' } },
 ];
 const identities = {
-  Section: {
-    swiftui: { source: 'Sources/RemDesignSystem/Rows/RemSection.swift', component: 'SwiftUI.Section' },
-    compose: { source: 'compose/RemDesignSystem/rows/RemSection.kt', component: 'RemSection' },
+  SectionHeader: {
+    swiftui: { source: 'Sources/RemDesignSystem/Rows/RemSection.swift', component: 'SectionHeader' },
+    compose: { source: 'compose/RemDesignSystem/rows/RemSection.kt', component: 'SectionHeader' },
+  },
+  Button: {
+    swiftui: { source: 'Sources/RemDesignSystem/Buttons/RemButtonStyle.swift', component: 'RemButtonStyle' },
+    compose: { source: 'compose/RemDesignSystem/buttons/RemButton.kt', component: 'RemButton' },
   },
   AgendaSuggestionRow: {
     swiftui: { source: 'Sources/RemDesignSystem/Agenda/AgendaSuggestionRow.swift', component: 'AgendaSuggestionRow' },
@@ -34,7 +42,7 @@ export function suggestionSectionMappingErrors(read) {
       'SuggestionSection must declare its composition identity with no standalone master');
     check(contract.figmaFileKey === 'af4yDqCzp57jds9lkFiIaO', 'wrong Figma file');
     check(isDeepStrictEqual(contract.sources, { swiftui: suggestionSectionSource, compose: composeSource }), 'wrong native composition sources');
-    check(isDeepStrictEqual(contract.constituents, expectedConstituents), 'canonical Section Plain and AgendaSuggestionRow constituent bindings changed');
+    check(isDeepStrictEqual(contract.constituents, expectedConstituents), 'canonical SectionHeader, AgendaSuggestionRow and Text · Accent Button constituent bindings changed');
     check(isDeepStrictEqual(contract.references, [
       { nodeId: '2049:10080', type: 'INSTANCE' }, { nodeId: '2336:19714', type: 'FRAME' },
     ]), 'instance/frame references must not become mapping targets');
@@ -43,17 +51,27 @@ export function suggestionSectionMappingErrors(read) {
     for (const entry of expectedConstituents) for (const platform of ['swiftui', 'compose']) {
       const text = read(entry.templates[platform]);
       const identity = identities[entry.component][platform];
-      check(parserlessMappingMatches(text, identity), `${platform} ${entry.component}: invalid source/component/template`);
       read(identity.source); // a matching annotation cannot stand in for a missing native source
+      if (entry.component === 'Button' && platform === 'swiftui') {
+        // SwiftUI's Button mapping is the co-located Swift Code Connect file, not a parserless template.
+        const swiftCode = stripComments(text);
+        check(/let component = RemButtonStyle\.self/.test(swiftCode) &&
+          /"https:\/\/www\.figma\.com\/design\/af4yDqCzp57jds9lkFiIaO\/[^"?]*\?node-id=377-8"/.test(swiftCode) &&
+          /"Text · Accent":\s*RemButtonVariant\.textAccent/.test(swiftCode), 'swiftui Button: Text · Accent mapping missing');
+        continue;
+      }
+      check(parserlessMappingMatches(text, identity), `${platform} ${entry.component}: invalid source/component/template`);
       const urlLine = text.match(/^\/\/ url=(.+)$/m)?.[1];
       const url = new URL(urlLine);
       check(url.pathname.startsWith('/design/af4yDqCzp57jds9lkFiIaO/') &&
         url.searchParams.get('node-id')?.replace('-', ':') === entry.nodeId,
         `${platform} ${entry.component}: wrong canonical node`);
       const templateCode = stripComments(text);
-      if (entry.component === 'Section') {
-        check(/^\s*const rows\s*=\s*instance\.getSlot\('Rows'\)/m.test(templateCode) && /^\s*const style\s*=\s*instance\.getEnum\('Style',/m.test(templateCode) &&
-          /'Plain':\s*'(?:\.plain|RemSectionStyle\.Plain)'/.test(templateCode), `${platform} Section: Plain/Rows mapping missing`);
+      if (entry.component === 'SectionHeader') {
+        check(/^\s*const text\s*=\s*instance\.getString\('Header'\)/m.test(templateCode), `${platform} SectionHeader: Header mapping missing`);
+      } else if (entry.component === 'Button') {
+        check(/^\s*const variant\s*=\s*instance\.getEnum\('Style',/m.test(templateCode) &&
+          /'Text · Accent':\s*'RemButtonVariant\.TextAccent'/.test(templateCode), `${platform} Button: Text · Accent mapping missing`);
       } else {
         check(/^\s*const action\s*=\s*instance\.getEnum\('action',/m.test(templateCode) && /add:/.test(templateCode) && /move:/.test(templateCode) &&
           /^\s*const title\s*=\s*instance\.getString\('Title'\)/m.test(templateCode) && /^\s*const metadata\s*=\s*instance\.getString\('Metadata'\)/m.test(templateCode),
@@ -79,6 +97,9 @@ export function suggestionSectionMappingErrors(read) {
       check(text.includes('"Suggestions"') && text.includes('"See more"') && text.includes('overflow > 0'), `${platform}: header/overflow contract missing`);
       check(text.includes('onAccept(suggestion)') && text.includes('onDismiss(suggestion)'), `${platform}: callbacks must retain item identity`);
     }
+    check(/RemButtonStyle\(\.textAccent\)/.test(swift) && /RemButtonVariant\.TextAccent/.test(compose),
+      'See more must be the canonical Text · Accent Button');
+    check(!/RemSection\(|Section\s*\{/.test(swift) && !/RemSection\(/.test(compose), 'suggestion rows stay standalone, with no Section wrapper');
   } catch (error) { errors.push(`unreadable composition dependency: ${error.message}`); }
   return errors;
 }

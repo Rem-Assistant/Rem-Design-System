@@ -42,23 +42,25 @@ claim this proposal is shipped or weaken current evidence gates to accommodate i
 
 ## SuggestionSection
 
-This is a behavioral composition. Figma uses Section set `1307:667`, Plain component
-`1307:660`, and AgendaSuggestionRow set `2336:19583` (add/move). Suggestions instance
-`2049:10080` and rich region FRAME `2336:19714` are reference locations, never mapping targets.
+This is a behavioral composition. The authority is the "Suggestions region" FRAME `2336:19714`:
+SectionHeader `161:68` ("Suggestions"), then **standalone** AgendaSuggestionRow set `2336:19583`
+(add/move) instances 4pt apart with no Section or rows surface around them, then the See more
+Button `377:8` at Style Text · Accent (`377:4`; the instance layer is named "See more · Plain").
+The older Suggestions instance `2049:10080` (a generic Section wrapper) and the region frame are
+reference locations, never mapping targets.
 No standalone SuggestionSection `.figma.ts` is created, so generic Section's existing bindings
 are neither duplicated nor overwritten.
 
 `code-connect/SuggestionSection.composition.json` is the explicit relationship contract.
 SwiftUI's VStack directly renders AgendaSuggestionRow; Compose's Column renders
 SuggestedTaskRow, which forwards `accept/title/subtitle` to the canonical row's
-`action/title/metadata`. Section is the design composition reference, not a claim that either
-native wrapper calls RemSection. Both own a sentence-case Suggestions header, at most three
+`action/title/metadata`. Neither native wrapper calls RemSection; the lint rejects one. Both own a sentence-case Suggestions header, at most three
 inline rows by default, hidden empty content, and an optional See more action for overflow.
 The host orders data and handles accept/dismiss/overflow; no ordering or backend API is invented.
 
 The component lint accepts this exact source only after validating the contract's source/file/
-node identities, both platforms' existing constituent templates and source files, Plain/Rows
-and add/move/text properties, and the native adapter/behavior relationships. Mutation tests
+node identities, both platforms' existing constituent templates and source files, Header,
+Text · Accent and add/move/text properties, and the native adapter/behavior relationships. Mutation tests
 reject missing templates, wrong targets, fake standalone masters, wrong platforms, and broken
 adapter forwarding. The `SuggestionSection:figma` baseline is removed. This deliberately narrow
 composition rule is not a general exemption for unbound components.

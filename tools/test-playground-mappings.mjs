@@ -76,7 +76,8 @@ test('composition rejects false master, frame/instance targets, swapped sources 
     c => { c.sources.swiftui = c.sources.compose; },
     c => { c.figmaFileKey = 'other'; },
     c => { c.constituents[0].nodeId = '2049:10080'; },
-    c => { c.constituents[0].variant.Style = 'Inset Grouped'; },
+    c => { c.constituents[0].nodeId = '1307:667'; },
+    c => { c.constituents[2].variant.Style = 'Rect · Black'; },
     c => { c.constituents[1].nodeId = '2336:19714'; },
     c => { c.constituents[1].templates.swiftui = c.constituents[1].templates.compose; },
     c => { c.constituents.pop(); },
@@ -98,15 +99,23 @@ test('composition rejects missing native/template dependencies and wrong node/so
       return read(path);
     }).length > 0, missing);
   }
-  for (const platform of ['swiftui', 'compose']) for (const component of ['Section', 'AgendaSuggestionRow']) {
+  for (const platform of ['swiftui', 'compose']) for (const component of ['SectionHeader', 'AgendaSuggestionRow']) {
     const target = `code-connect/${platform}/${component}.figma.ts`;
     for (const [pattern, replacement] of [
       [/node-id=\d+-\d+/, 'node-id=2336-19714'],
       [/\/\/ source=.*/, '// source=wrong/source.swift'],
-      [component === 'Section' ? /getSlot\('Rows'\)/ : /getString\('Metadata'\)/, "getString('Unknown')"],
+      [component === 'SectionHeader' ? /getString\('Header'\)/ : /getString\('Metadata'\)/, "getString('Unknown')"],
     ]) {
       assert.ok(suggestionSectionMappingErrors(path => path === target ? read(path).replace(pattern, replacement) : read(path)).length > 0);
     }
+  }
+  for (const [target, before, after] of [
+    ['code-connect/compose/RemButton.figma.ts', "'Text · Accent': 'RemButtonVariant.TextAccent'", "'Text · Accent': 'RemButtonVariant.RectBlack'"],
+    ['code-connect/compose/RemButton.figma.ts', 'node-id=377-8', 'node-id=2336-19751'],
+    ['Sources/RemDesignSystem/Buttons/RemButton.figma.swift', 'node-id=377-8', 'node-id=2336-19751'],
+    ['Sources/RemDesignSystem/Buttons/RemButton.figma.swift', 'RemButtonVariant.textAccent', 'RemButtonVariant.rectBlack'],
+  ]) {
+    assert.ok(suggestionSectionMappingErrors(path => path === target ? read(path).replace(before, after) : read(path)).length > 0, before);
   }
 });
 
@@ -121,6 +130,9 @@ test('composition rejects broken row forwarding, item identity, and loss of empt
     [contract.sources.compose, 'if (suggestions.isEmpty()) return', ''],
     [contract.sources.compose, 'suggestions.take(inlineLimit.coerceAtLeast(0))', 'suggestions'],
     [contract.sources.swiftui, 'suggestions.prefix(max(0, inlineLimit))', 'suggestions'],
+    [contract.sources.swiftui, 'RemButtonStyle(.textAccent)', 'PlainButtonStyle()'],
+    [contract.sources.compose, 'RemButtonVariant.TextAccent', 'RemButtonVariant.RectBlack'],
+    [contract.sources.compose, 'Column(', 'RemSection(Column('],
   ]) {
     assert.ok(suggestionSectionMappingErrors(path => path === target ? read(path).replace(before, after) : read(path)).length > 0, before);
   }
@@ -128,10 +140,10 @@ test('composition rejects broken row forwarding, item identity, and loss of empt
 
 
 test('constituent template comments cannot impersonate executable property bindings', () => {
-  const target = 'code-connect/compose/Section.figma.ts';
-  const modified = read(target).replace("instance.getSlot('Rows')", "undefined // instance.getSlot('Rows')");
+  const target = 'code-connect/compose/SectionHeader.figma.ts';
+  const modified = read(target).replace("instance.getString('Header')", "undefined // instance.getString('Header')");
   assert.ok(suggestionSectionMappingErrors(path => path === target ? modified : read(path)).length > 0);
-  const commentOnly = modified.replace("undefined // instance.getSlot('Rows')", "undefined\n// instance.getSlot('Rows')");
+  const commentOnly = modified.replace("undefined // instance.getString('Header')", "undefined\n// instance.getString('Header')");
   assert.ok(suggestionSectionMappingErrors(path => path === target ? commentOnly : read(path)).length > 0);
 });
 

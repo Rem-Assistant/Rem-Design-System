@@ -10,15 +10,11 @@
   },
   "constituents": [
     {
-      "component": "Section",
-      "nodeId": "1307:667",
-      "variant": {
-        "Style": "Plain"
-      },
-      "variantNodeId": "1307:660",
+      "component": "SectionHeader",
+      "nodeId": "161:68",
       "templates": {
-        "swiftui": "code-connect/swiftui/Section.figma.ts",
-        "compose": "code-connect/compose/Section.figma.ts"
+        "swiftui": "code-connect/swiftui/SectionHeader.figma.ts",
+        "compose": "code-connect/compose/SectionHeader.figma.ts"
       }
     },
     {
@@ -27,6 +23,18 @@
       "templates": {
         "swiftui": "code-connect/swiftui/AgendaSuggestionRow.figma.ts",
         "compose": "code-connect/compose/AgendaSuggestionRow.figma.ts"
+      }
+    },
+    {
+      "component": "Button",
+      "nodeId": "377:8",
+      "variant": {
+        "Style": "Text · Accent"
+      },
+      "variantNodeId": "377:4",
+      "templates": {
+        "swiftui": "Sources/RemDesignSystem/Buttons/RemButton.figma.swift",
+        "compose": "code-connect/compose/RemButton.figma.ts"
       }
     }
   ],
@@ -47,5 +55,5 @@
     "orderingOwner": "host",
     "empty": "hidden"
   },
-  "nativeComposition": "VStack/Column owns bounds and overflow; Section is the design composition reference, not a native RemSection call."
+  "nativeComposition": "VStack/Column owns bounds and overflow: SectionHeader metrics, then standalone rows 4pt apart (no Section or rows surface), then the Text · Accent Button for See more, per region frame 2336:19714."
 }
