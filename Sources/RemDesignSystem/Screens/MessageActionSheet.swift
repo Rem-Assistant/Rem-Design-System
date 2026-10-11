@@ -26,8 +26,18 @@ public struct MessageActionSheet: View {
     }
 
     public var body: some View {
+        // Top-aligned scroll container: at a detent shorter than the content (the host's `.medium`), a
+        // bare VStack is centred and clipped, which pushed the reaction grid under the system grabber.
+        // Scrolling keeps the grabber inset at every detent and only bounces when the content overflows.
+        ScrollView {
+            content
+        }
+        .scrollBounceBehavior(.basedOnSize)
+    }
+
+    private var content: some View {
         let id = display.messageID
-        VStack(spacing: DesignTokens.Spacing.md) {
+        return VStack(spacing: DesignTokens.Spacing.md) {
             MessageReactionPicker(
                 choices: display.reactions,
                 selection: display.selection,
