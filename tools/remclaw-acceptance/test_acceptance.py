@@ -16,6 +16,16 @@ a = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(a)
 
 class AdmissionTests(unittest.TestCase):
+    def test_real_release_helper_contract(self):
+        release = a.load_release()
+        for name in ('run_identity', 'git_env'):
+            self.assertTrue(callable(getattr(release, name)))
+        for name in ('gh', 'paged', 'validate_environment'):
+            self.assertTrue(callable(getattr(release.gate, name)))
+        self.assertEqual(release.gate.REPO, 'Rem-Assistant/Rem-Design-System')
+        self.assertEqual(release.REMCLAW_SSH_URL, 'git@github.com:Rem-Assistant/RemClaw.git')
+        self.assertTrue(release.GITHUB_HOST_KEY.startswith('github.com ssh-ed25519 '))
+
     def setUp(self):
         self.now = datetime(2026, 10, 11, 18, 0, tzinfo=timezone.utc)
         self.receipt = dict(sha=a.SHA, project_id=a.PROJECT, environment_id=a.RAILWAY_ENV,

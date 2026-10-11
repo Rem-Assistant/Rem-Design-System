@@ -147,3 +147,7 @@ method receipts to be accepted and an exit-zero skipped method to be rejected. N
 created. This proves parser compatibility only; it is not signed-in app, staging, or UI coverage.
 The fixture's local entry point refuses execution unless running in hosted macOS CI. Its public
 synthetic build diagnostics may be printed on failure; no private source or credentials are present.
+
+The standard runner image must retain Xcode26.3 at the pinned path. If it disappears or differs,
+the fixture fails with an explicit capability_gap message; it never silently switches Xcode.
+The controller tests import the real shared release helpers to catch interface drift before use.

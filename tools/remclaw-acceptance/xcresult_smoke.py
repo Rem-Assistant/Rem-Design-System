@@ -38,8 +38,11 @@ def main():
     assert os.environ.get('RUNNER_OS') == 'macOS'
     # Dedicated no-secret job. Do not reuse in an environment-protected acceptance job.
     assert not any(k.startswith('TEST_RUNNER_') or k in ('REMCLAW_DEPLOY_KEY', 'RUNTIME_ATTESTATION') for k in os.environ)
+    if not Path('/Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild').is_file():
+        raise SystemExit('capability_gap: runner image lacks required Xcode26.3; no fixture executed')
     version = subprocess.check_output(['xcodebuild', '-version'], text=True)
-    assert version.splitlines()[0] == 'Xcode 26.3', version
+    if version.splitlines()[0] != 'Xcode 26.3':
+        raise SystemExit('capability_gap: selected Xcode is not26.3; no fixture executed')
     assert shutil.disk_usage(os.environ['RUNNER_TEMP']).free >= 6 * 1024**3
     print(version.strip())
     with tempfile.TemporaryDirectory(prefix='rem-public-xcresult-fixture-', dir=os.environ['RUNNER_TEMP']) as temp:
