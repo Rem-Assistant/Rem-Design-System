@@ -1356,6 +1356,37 @@ final class PlaygroundNavigationUITests: XCTestCase {
         returnToShell()
         XCTAssertFalse(element("message.sent.1.bubble").exists, "A new fixture starts afresh")
         XCTAssertNotEqual(field.value as? String, "Keep this draft")
+
+        // A -> B -> A is fresh too (route-map Retention): work on Populated, Developer -> Long -> Close, then
+        // Developer -> Populated -> Close. Only the live conversation key is kept.
+        sendFromChat("Populated message")
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 5))
+        focus(field)
+        field.typeText("Populated draft")
+        openDeveloperFromShell()
+        chooseRootFixture("chatFixturePicker", "Long")
+        returnToShell()
+        XCTAssertFalse(element("message.sent.1.bubble").exists, "Long starts afresh")
+        XCTAssertNotEqual(field.value as? String, "Populated draft")
+        openDeveloperFromShell()
+        chooseRootFixture("chatFixturePicker", "Populated")
+        returnToShell()
+        XCTAssertFalse(element("message.sent.1.bubble").exists, "Choosing Populated again starts afresh")
+        XCTAssertNotEqual(field.value as? String, "Populated draft", "The earlier draft is not restored")
+
+        // Switching agents replaces the conversation as well: Rem -> Health -> Rem starts Rem afresh.
+        sendFromChat("Rem message")
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 5))
+        focus(field)
+        field.typeText("Rem draft")
+        openSidebar()
+        chooseSidebarRow("sidebar.agent.health")
+        assertChatShows("Health")
+        openSidebar()
+        chooseSidebarRow("sidebar.agent.main")
+        assertChatShows("Rem")
+        XCTAssertFalse(element("message.sent.1.bubble").exists, "Rem starts afresh after an agent switch")
+        XCTAssertNotEqual(field.value as? String, "Rem draft", "Rem's draft is not restored")
     }
 }
 

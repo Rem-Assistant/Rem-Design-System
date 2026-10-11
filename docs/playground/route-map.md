@@ -37,18 +37,25 @@ Approved designs used:
   - New agent Create (trimmed, non-blank name) appends the agent, selects it and dismisses.
   - Settings Done or Back at its root dismisses it.
   - Search has no approved surface yet, so it changes nothing.
-- **Retention:** returning from Settings, New agent or Developer finds the same agent, the same
-  conversation (sent messages and the draft included) and the same scroll position. Switching agents
-  shows that agent's conversation; a side agent's conversation starts as a fresh fixture.
+- **Retention:** the on-screen conversation is identified by its key, the selected agent
+  (`PlaygroundShellFixture.conversationKey`) plus the Developer Chat fixture. Only the live key is kept.
+  - **Same key survives:** returning from the sidebar (choosing the agent already selected), Settings,
+    New agent Cancel or Developer with no fixture change finds the same agent, the same conversation
+    (sent messages and the draft included) and the same scroll position.
+  - **A key change replaces the conversation, on both platforms:** switching agents starts that agent's
+    conversation afresh (a side agent opens on its empty fixture, Rem on the Developer fixture), and so
+    does switching back: the earlier agent's messages, draft and scroll are not kept. Choosing a different
+    Chat fixture in Developer is the same explicit reset, and choosing the earlier fixture again also
+    starts afresh (A → B → A is fresh). Creating a new agent selects it, so it is a key change too.
   - Covered surfaces stay out of UI automation and TalkBack, because the Developer hub hosts its own
     Chat with the same identifiers.
   - **iOS:** the Developer hub is a full-screen cover. UIKit removes the shell's views from the window,
-    and SwiftUI keeps their state.
-  - **Android:** the shell is not composed under the hub. Its conversation fixture is hoisted per
-    conversation into `Playground()`, and its scroll position into a `SaveableStateProvider`.
-    `ChatScreen` keeps a restored position instead of re-pinning to the latest message.
-  - Choosing a different Chat fixture in Developer is an explicit reset: that conversation starts
-    afresh.
+    and SwiftUI keeps their state. The chat is `.id("<conversationKey>|<fixture>")`, so a key change
+    destroys the old conversation.
+  - **Android:** the shell is not composed under the hub. The live conversation's fixture is hoisted
+    into `Playground()`, and its scroll position into a `SaveableStateProvider` with the same key; when
+    the key changes, every other key's fixture and saved state are removed (`removeState`).
+    `ChatScreen` restores a saved position relative to the bottom (chat.md rule 10).
 - **Developer-owned inputs:** the Chat conversation fixture (Populated, Empty or Long) and the Settings
   load fixture (Success, Slow or Error). They are chosen only in the Developer hub, and the shell reads
   them. Choosing a different Chat fixture restarts Rem's conversation.
@@ -68,7 +75,7 @@ Approved designs used:
 | Settings → **Billing, Permissions, About, Help & Support** | `settingsDestination.*` | Back | Pops to Settings | as above (About) |
 | Chat → **Agent activity** (pushed) | Header identity `chat.header.identity` | Back (`Chat`, `agentActivity.back`) | Pops to the same conversation | `testShellChatSheetsDismissAndActivityPops` · `shellChatSheetsDismissAndActivityPops` |
 | Chat → **Add to Chat** sheet, **message actions** sheet | `chat.composerAdd`; long press on a message | Done, an action, or Android system Back | Sheets dismiss back to the chat | as above |
-| **Developer** hub: the earlier Playground root, titled "Developer" | Settings' **Developer** button (`settings.developer`); `--developer` at launch on iOS (journey seam) | Close (`developer.close`) | Android system Back at its root closes it; inside, every route behaves as in Build 8 | `testShellDeveloperEntryStaysSeparate` · `shellDeveloperEntryStaysSeparate`; round trip keeps the conversation, draft and scroll, and a fixture change resets: `testShellDeveloperRoundTripKeepsConversationDraftAndScroll` · `shellDeveloperRoundTripKeepsConversationDraftAndScroll`; every Build 8 journey runs inside it |
+| **Developer** hub: the earlier Playground root, titled "Developer" | Settings' **Developer** button (`settings.developer`); `--developer` at launch on iOS (journey seam) | Close (`developer.close`) | Android system Back at its root closes it; inside, every route behaves as in Build 8 | `testShellDeveloperEntryStaysSeparate` · `shellDeveloperEntryStaysSeparate`; round trip keeps the conversation, draft and scroll, and a fixture change and back (Populated → Long → Populated) resets: `testShellDeveloperRoundTripKeepsConversationDraftAndScroll` · `shellDeveloperRoundTripKeepsConversationDraftAndScroll`; every Build 8 journey runs inside it |
 
 ## Developer entry
 

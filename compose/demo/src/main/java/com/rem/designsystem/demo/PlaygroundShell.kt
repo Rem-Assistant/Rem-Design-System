@@ -68,18 +68,28 @@ import com.rem.designsystem.tokens.RemTypography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Playground() {
-    // Returning from Settings, New agent or Developer finds the same agent, conversation (sent messages and
-    // draft included) and scroll position.
+    // Returning from Settings, New agent or Developer (with no fixture change) finds the same agent,
+    // conversation (sent messages and draft included) and scroll position.
     var shell by remember { mutableStateOf(PlaygroundShellFixture()) }
     var developerOpen by rememberSaveable { mutableStateOf(false) }
     // Developer-owned fixtures the shell reads; changed only in the Developer hub.
     var settingsFixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     var chatConversation by rememberSaveable { mutableStateOf(ChatPlaygroundFixture.Conversation.Populated) }
-    // Hoisted per conversation so the shell can leave the composition under the Developer hub without losing
-    // work: the fixture (messages, draft) lives here, and the saveable state holder keeps the transcript's
-    // scroll position. A fixture chosen in Developer is a new key, so that conversation starts afresh.
+    // Hoisted so the shell can leave the composition under the Developer hub without losing work: the live
+    // conversation's fixture (messages, draft) lives here, and the saveable state holder keeps its transcript
+    // scroll position. Only the live key survives (twin of iOS `.id(conversationKey|fixture)`): switching
+    // agents or choosing a different Chat fixture in Developer replaces the conversation, and returning to the
+    // earlier key starts it afresh.
+    val conversationKey = "${shell.conversationKey}|${chatConversation.name}"
     val conversations = remember { mutableMapOf<String, MutableState<ChatPlaygroundFixture>>() }
     val saveable = rememberSaveableStateHolder()
+    LaunchedEffect(conversationKey) {
+        // Runs after the old key's provider has left the composition (and saved), so its state is dropped.
+        conversations.keys.filter { it != conversationKey }.forEach { old ->
+            conversations.remove(old)
+            saveable.removeState(old)
+        }
+    }
     val settingsOpen = shell.presented == PlaygroundShellPresentation.Settings && !developerOpen
     val covered = developerOpen || settingsOpen
     // Leaving the conversation (sidebar, Settings, Developer) ends editing: the composer loses focus and the
@@ -112,8 +122,7 @@ fun Playground() {
                     )
                 },
             ) {
-                // A new agent (or a different fixture chosen in Developer) is a different conversation.
-                val conversationKey = "${shell.conversationKey}|${chatConversation.name}"
+                // A different agent (or a different fixture chosen in Developer) is a different conversation.
                 key(conversationKey) {
                     val agent = shell.selectedAgent
                     val initial = if (shell.selection == RemSidebarSelection.Main) ChatPlaygroundFixture.root(chatConversation)

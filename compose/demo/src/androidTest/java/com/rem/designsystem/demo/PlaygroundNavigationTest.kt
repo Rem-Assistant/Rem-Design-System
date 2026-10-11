@@ -1384,7 +1384,8 @@ class PlaygroundNavigationTest {
 
     /**
      * Developer round trip keeps the work: a sent message, a draft and the scroll position survive Settings →
-     * Developer → Close when no fixture changes; choosing a different Chat fixture in Developer starts afresh.
+     * Developer → Close when no fixture changes; choosing a different Chat fixture in Developer starts afresh,
+     * and so does choosing the earlier one again (A → B → A) or switching agents and back.
      */
     @Test fun shellDeveloperRoundTripKeepsConversationDraftAndScroll() {
         compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
@@ -1418,6 +1419,40 @@ class PlaygroundNavigationTest {
         openDeveloperFromShell()
         compose.onNodeWithTag("chatFixture.Populated").performScrollTo().performClick()
         returnToShell()
+        assertFreshConversation()
+
+        // A → B → A is fresh too (route-map Retention): work on Populated, Developer → Long → Close, then
+        // Developer → Populated → Close. Only the live conversation key is kept.
+        sendFromChat("Populated message")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerField").performTextInput("Populated draft")
+        openDeveloperFromShell()
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        assertFreshConversation()
+        openDeveloperFromShell()
+        compose.onNodeWithTag("chatFixture.Populated").performScrollTo().performClick()
+        returnToShell()
+        assertFreshConversation()
+
+        // Switching agents replaces the conversation as well (iOS `.id`): Rem → Health → Rem starts Rem afresh.
+        sendFromChat("Rem message")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerField").performTextInput("Rem draft")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.health").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.main").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+        assertFreshConversation()
+    }
+
+    /** The on-screen conversation is a fresh fixture: no message sent in this run and an empty draft. */
+    private fun assertFreshConversation() {
+        compose.waitForIdle()
         compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithTag("chat.composerField")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
