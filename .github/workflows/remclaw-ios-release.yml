@@ -118,9 +118,9 @@ jobs:
       - name: Reserve next TestFlight build number (read-only store query)
         working-directory: control/tools/remclaw-release
         env:
-          PLAYGROUND_ASC_KEY_ID: ${{ secrets.PLAYGROUND_ASC_KEY_ID }}
-          PLAYGROUND_ASC_ISSUER_ID: ${{ secrets.PLAYGROUND_ASC_ISSUER_ID }}
-          PLAYGROUND_ASC_KEY_BASE64: ${{ secrets.PLAYGROUND_ASC_KEY_BASE64 }}
+          REMCLAW_ASC_KEY_ID: ${{ secrets.REMCLAW_ASC_KEY_ID }}
+          REMCLAW_ASC_ISSUER_ID: ${{ secrets.REMCLAW_ASC_ISSUER_ID }}
+          REMCLAW_ASC_KEY_BASE64: ${{ secrets.REMCLAW_ASC_KEY_BASE64 }}
         run: |
           if ! bundle exec fastlane reserve_build_number > "$REMCLAW_PRIVATE/reserve.log" 2>&1; then
             python3 classify_failure.py --record "$REMCLAW_PRIVATE/failure_class" "$REMCLAW_PRIVATE/reserve.log"
@@ -150,9 +150,9 @@ jobs:
       - name: Upload directly to TestFlight
         working-directory: control/tools/remclaw-release
         env:
-          PLAYGROUND_ASC_KEY_ID: ${{ secrets.PLAYGROUND_ASC_KEY_ID }}
-          PLAYGROUND_ASC_ISSUER_ID: ${{ secrets.PLAYGROUND_ASC_ISSUER_ID }}
-          PLAYGROUND_ASC_KEY_BASE64: ${{ secrets.PLAYGROUND_ASC_KEY_BASE64 }}
+          REMCLAW_ASC_KEY_ID: ${{ secrets.REMCLAW_ASC_KEY_ID }}
+          REMCLAW_ASC_ISSUER_ID: ${{ secrets.REMCLAW_ASC_ISSUER_ID }}
+          REMCLAW_ASC_KEY_BASE64: ${{ secrets.REMCLAW_ASC_KEY_BASE64 }}
         run: |
           umask 077
           if ! bundle exec fastlane upload > "$REMCLAW_PRIVATE/upload.log" 2>&1; then

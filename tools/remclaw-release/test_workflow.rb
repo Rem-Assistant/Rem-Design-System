@@ -69,9 +69,9 @@ check(all_runs.scan(/classify_failure\.py/).length == 3, 'Every redirected shell
 secret_steps = steps.each_with_index.map { |s, i| [i, s.fetch('env', {}).values.join(' ').scan(/secrets\.([A-Z0-9_]+)/).flatten] }
 expect = {
   'Fetch exact RemClaw commit' => %w[REMCLAW_DEPLOY_KEY],
-  'Reserve next TestFlight build number' => %w[PLAYGROUND_ASC_KEY_ID PLAYGROUND_ASC_ISSUER_ID PLAYGROUND_ASC_KEY_BASE64],
+  'Reserve next TestFlight build number' => %w[REMCLAW_ASC_KEY_ID REMCLAW_ASC_ISSUER_ID REMCLAW_ASC_KEY_BASE64],
   'Sign com.remapp.rem' => %w[REMCLAW_IOS_CERTIFICATE_BASE64 REMCLAW_IOS_CERTIFICATE_PASSWORD REMCLAW_IOS_PROFILE_BASE64 REMCLAW_IOS_WIDGET_PROFILE_BASE64],
-  'Upload directly to TestFlight' => %w[PLAYGROUND_ASC_KEY_ID PLAYGROUND_ASC_ISSUER_ID PLAYGROUND_ASC_KEY_BASE64]
+  'Upload directly to TestFlight' => %w[REMCLAW_ASC_KEY_ID REMCLAW_ASC_ISSUER_ID REMCLAW_ASC_KEY_BASE64]
 }
 secret_steps.each do |i, used|
   prefix = expect.keys.find { |k| names[i].start_with?(k) }

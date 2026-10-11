@@ -29,9 +29,9 @@ end
 
 # Same environment-scoped App Store Connect key names as the Playground lane.
 def apple_key
-  issuer = ENV.fetch('PLAYGROUND_ASC_ISSUER_ID', '').strip
-  app_store_connect_api_key(key_id: ENV.fetch('PLAYGROUND_ASC_KEY_ID'), issuer_id: issuer.empty? ? nil : issuer,
-    key_content: ENV.fetch('PLAYGROUND_ASC_KEY_BASE64'), is_key_content_base64: true, duration: 1200)
+  issuer = ENV.fetch('REMCLAW_ASC_ISSUER_ID', '').strip
+  app_store_connect_api_key(key_id: ENV.fetch('REMCLAW_ASC_KEY_ID'), issuer_id: issuer.empty? ? nil : issuer,
+    key_content: ENV.fetch('REMCLAW_ASC_KEY_BASE64'), is_key_content_base64: true, duration: 1200)
 end
 
 # The App Store Connect app is located by its exact bundle identifier, never by a guessed numeric ID.

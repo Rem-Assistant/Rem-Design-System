@@ -108,9 +108,9 @@ Same model as `playground-ios`, re-verified at run time by `gate.validate_enviro
 | Kind | Name | Meaning |
 | --- | --- | --- |
 | secret | `REMCLAW_DEPLOY_KEY` | Private half (OpenSSH) of a **read-only** deploy key on `Rem-Assistant/RemClaw` |
-| secret | `PLAYGROUND_ASC_KEY_ID` | App Store Connect API key ID (same names as the Playground lane) |
-| secret | `PLAYGROUND_ASC_ISSUER_ID` | Issuer ID for a team key; omit for an individual key |
-| secret | `PLAYGROUND_ASC_KEY_BASE64` | Base64 of the `.p8` key |
+| secret | `REMCLAW_ASC_KEY_ID` | App Store Connect API key ID for com.remapp.rem. Its own key, not the Playground-only key: either a separately approved identity scoped to the Rem app, or an explicitly chosen key covering both apps |
+| secret | `REMCLAW_ASC_ISSUER_ID` | Issuer ID for a team key; omit for an individual key |
+| secret | `REMCLAW_ASC_KEY_BASE64` | Base64 of the `.p8` key |
 | secret | `REMCLAW_IOS_CERTIFICATE_BASE64` | Base64 P12 of the Apple Distribution certificate and private key (the Playground certificate may be reused) |
 | secret | `REMCLAW_IOS_CERTIFICATE_PASSWORD` | P12 password |
 | secret | `REMCLAW_IOS_PROFILE_BASE64` | Base64 App Store profile for `R6A892D599.com.remapp.rem` (push, Sign in with Apple, app group) |
