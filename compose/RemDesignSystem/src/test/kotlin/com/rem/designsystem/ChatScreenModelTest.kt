@@ -20,6 +20,7 @@ import com.rem.designsystem.screens.ChatTranscriptKeyboardDismissConnection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import com.rem.designsystem.screens.ChatJumpToLatest
+import com.rem.designsystem.screens.ChatEdgeBackdrop
 import com.rem.designsystem.screens.ChatTranscriptRules
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
@@ -197,6 +198,92 @@ class ChatScreenModelTest {
         assertEquals(72f, ChatTimestampReveal.reveal(dx = -100f, columnWidth = 60f, reduceMotion = false), 0.001f)
         assertEquals("Reduce Motion clamps", 60f, ChatTimestampReveal.reveal(dx = -100f, columnWidth = 60f, reduceMotion = true), 0f)
         assertEquals(0f, ChatTimestampReveal.SETTLED, 0f)
+    }
+
+    // Edge backdrops (paired with `ChatScreenModelTests.swift`).
+
+    @Test fun edgeBackdropContentInsetsEqualTheChromeAndDockHeights() {
+        for (h in listOf(0f, 128f, 152f, 177.5f, 260f)) {
+            assertEquals("top inset == chrome $h", h, ChatEdgeBackdrop.contentTopInset(h), 0f)
+            assertEquals("bottom inset == dock $h", h, ChatEdgeBackdrop.contentBottomInset(h), 0f)
+        }
+        assertEquals("never negative", 0f, ChatEdgeBackdrop.contentTopInset(-4f), 0f)
+        assertEquals("never negative", 0f, ChatEdgeBackdrop.contentBottomInset(-4f), 0f)
+    }
+
+    @Test fun edgeBackdropFirstMessageIsFullyVisibleAtTheTop() {
+        for (chrome in listOf(96f, 128f, 152f, 260f)) {
+            val top = ChatEdgeBackdrop.firstMessageTop(chrome)
+            assertTrue("below the header at chrome $chrome", ChatEdgeBackdrop.isBelowHeader(top, chrome))
+            assertTrue("clear of the fade at chrome $chrome", ChatEdgeBackdrop.isClearOfBackdrop(top, chrome))
+        }
+        // A row scrolled up by even 1dp from that resting place starts to pass under the fade.
+        val chrome = 128f
+        assertFalse(ChatEdgeBackdrop.isClearOfBackdrop(ChatEdgeBackdrop.firstMessageTop(chrome) - 1f, chrome))
+        assertFalse(ChatEdgeBackdrop.isBelowHeader(chrome - 1f, chrome))
+    }
+
+    @Test fun edgeBackdropLatestMessageIsFullyVisibleAboveTheDock() {
+        val viewport = 874f
+        // Dock heights: composer alone; with reply accessory; with the IME up (dock + IME).
+        for (dock in listOf(96f, 160f, 420f)) {
+            val bottom = ChatEdgeBackdrop.latestMessageBottom(viewport, dock)
+            assertTrue("above the dock at $dock", bottom <= viewport - dock)
+            assertTrue("clear of the fade at $dock", ChatEdgeBackdrop.isClearOfDockBackdrop(bottom, viewport, dock))
+            assertFalse("1dp lower passes under the fade", ChatEdgeBackdrop.isClearOfDockBackdrop(bottom + 1f, viewport, dock))
+        }
+    }
+
+    @Test fun edgeBackdropJumpToLatestHidesAtTheLatestMessageAndClearsTheDock() {
+        // At rest at the latest message the scroll sits at its max (dock inset included): distance 0, hidden.
+        assertEquals(0f, ChatEdgeBackdrop.distanceFromLatest(maxScroll = 2400f, scroll = 2400f), 0f)
+        assertFalse(ChatJumpToLatest.isVisible(ChatEdgeBackdrop.distanceFromLatest(2400f, 2400f)))
+        assertFalse(ChatJumpToLatest.isVisible(ChatEdgeBackdrop.distanceFromLatest(2400f, 2200f)))
+        assertTrue(ChatJumpToLatest.isVisible(ChatEdgeBackdrop.distanceFromLatest(2400f, 2199f)))
+        // The button keeps its 12dp gap above the dock's top edge.
+        assertEquals(96f + 12f, ChatEdgeBackdrop.jumpButtonBottomPadding(96f), 0f)
+        assertEquals(12f, ChatEdgeBackdrop.jumpButtonBottomPadding(0f), 0f)
+    }
+
+    @Test fun edgeBackdropScrimsFadeToClearJustPastTheChrome() {
+        assertEquals(20f, ChatEdgeBackdrop.FADE_HEIGHT, 0f)
+        assertEquals("fade overhang == transcript padding", ChatEdgeBackdrop.TRANSCRIPT_PADDING, ChatEdgeBackdrop.FADE_OVERHANG, 0f)
+        assertEquals(0.85f, ChatEdgeBackdrop.SCRIM_EDGE_ALPHA, 0f)
+        assertEquals(0f, ChatEdgeBackdrop.SCRIM_CLEAR_ALPHA, 0f)
+        assertEquals(0.5f, ChatEdgeBackdrop.HAIRLINE, 0f)
+        // Header: full to 8dp (the header's bottom gap) above its bottom edge, clear 12dp below it.
+        val chrome = 128f
+        assertEquals(140f, ChatEdgeBackdrop.backdropHeight(chrome), 0f)
+        val top = ChatEdgeBackdrop.scrimStops(chrome)
+        assertEquals(3, top.size)
+        assertEquals(0f to 0.85f, top[0])
+        assertEquals((chrome - 8f) / 140f, top[1].first, 1e-6f)
+        assertEquals(0.85f, top[1].second, 0f)
+        assertEquals(1f to 0f, top[2])
+        assertEquals(listOf(0f to 0.85f, 0f to 0.85f, 1f to 0f), ChatEdgeBackdrop.scrimStops(-12f))
+        // Dock: clear 12dp above its top edge, full from 8dp (the dock's top padding) below it to the edge.
+        val dock = 96f
+        assertEquals(108f, ChatEdgeBackdrop.dockBackdropHeight(dock), 0f)
+        val bottom = ChatEdgeBackdrop.dockScrimStops(dock)
+        assertEquals(3, bottom.size)
+        assertEquals(0f to 0f, bottom[0])
+        assertEquals(20f / 108f, bottom[1].first, 1e-6f)
+        assertEquals(0.85f, bottom[1].second, 0f)
+        assertEquals(1f to 0.85f, bottom[2])
+        assertEquals(listOf(0f to 0f, 1f to 0.85f, 1f to 0.85f), ChatEdgeBackdrop.dockScrimStops(0f))
+    }
+
+    @Test fun edgeBackdropBlurMasksMatchTheScrimsAndTheGlassStaysLegible() {
+        assertEquals(20f, ChatEdgeBackdrop.BLUR_RADIUS, 0f)
+        assertEquals(0.7f, ChatEdgeBackdrop.BLUR_TINT_ALPHA, 0f)
+        assertEquals(0.6f, ChatJumpToLatest.GLASS_TINT_ALPHA, 0f)
+        for (h in listOf(0f, 96f, 128f, 187f)) {
+            // The blur mask runs 1 -> 0 exactly where the API < 32 scrim runs 0.85 -> 0.
+            assertEquals(ChatEdgeBackdrop.maskStops(h).map { it.first }, ChatEdgeBackdrop.scrimStops(h).map { it.first })
+            assertEquals(listOf(1f, 1f, 0f), ChatEdgeBackdrop.maskStops(h).map { it.second })
+            assertEquals(ChatEdgeBackdrop.dockMaskStops(h).map { it.first }, ChatEdgeBackdrop.dockScrimStops(h).map { it.first })
+            assertEquals(listOf(0f, 1f, 1f), ChatEdgeBackdrop.dockMaskStops(h).map { it.second })
+        }
     }
 
     // Jump to latest (paired with `ChatScreenModelTests.swift`).

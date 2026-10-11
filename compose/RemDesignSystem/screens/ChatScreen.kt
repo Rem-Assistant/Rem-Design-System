@@ -47,7 +47,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
@@ -112,7 +111,10 @@ fun ChatScreen(
  * Figma shell `2054:21958` / board `2681:21977`: the shared header (`2054:19725`, which owns back and
  * overflow — hosts add no app bar), the Screen state slot (scrolling transcript, or the empty state
  * `2054:22089` with no second face), and bottom chrome docking the one canonical composer (`2071:11555`)
- * above the IME or navigation bar with the optional task-reply accessory (`2682:22298`). Insets come
+ * above the IME or navigation bar with the optional task-reply accessory (`2682:22298`). The transcript
+ * scrolls under the header and the dock, each on a masked backdrop blur (API 32+; a 0.85 scrim below), clear just past the
+ * chrome, with top and bottom content padding equal to their measured heights so the first and latest
+ * messages are never hidden ([ChatEdgeBackdrop]; hosts wire nothing). Insets come
  * from the host window (`imePadding` / `navigationBarsPadding` / `statusBarsPadding`); the 320dp board
  * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
  * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
@@ -137,23 +139,14 @@ fun ChatScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.backgroundPrimary)
-            .statusBarsPadding(),
+            .background(colors.backgroundPrimary),
     ) {
-        ChatHeader(
-            activity = header.activity,
-            name = header.name,
-            status = header.status,
-            faceMode = if (header.isWorking) RemFaceMarkMode.Thinking else RemFaceMarkMode.Idle,
-            accessibilityPrefix = "chat.header",
-            onTap = if (header.showsActivityDetails) ({ onAction(ChatScreenAction.ActivityDetails) }) else null,
-            onBack = if (header.showsBack) ({ onAction(ChatScreenAction.Back) }) else null,
-            onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
-            onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
-            modifier = Modifier.padding(bottom = RemSpacing.sm),
-        )
-        val scroll = rememberScrollState()
         val density = LocalDensity.current
+        // Edge-backdrop evidence opens the transcript scrolled a fixed distance from its oldest message.
+        val backdropEvidence = LocalChatEdgeBackdropEvidence.current
+        val scroll = rememberScrollState(
+            if (backdropEvidence) with(density) { ChatEdgeBackdrop.EVIDENCE_SCROLL.dp.roundToPx() } else 0,
+        )
         val context = LocalContext.current
         val reduceMotion = remember(context) {
             Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
@@ -166,7 +159,9 @@ fun ChatScreen(
         val showsJump by remember(emptyState == null) {
             derivedStateOf {
                 emptyState == null && if (scroll.maxValue == Int.MAX_VALUE) jumpEvidence
-                else ChatJumpToLatest.isVisible((scroll.maxValue - scroll.value) / density.density)
+                else ChatJumpToLatest.isVisible(
+                    ChatEdgeBackdrop.distanceFromLatest(scroll.maxValue.toFloat(), scroll.value.toFloat()) / density.density,
+                )
             }
         }
         val jumpScope = rememberCoroutineScope()
@@ -182,12 +177,76 @@ fun ChatScreen(
                 onDismiss = { focusManager.clearFocus(); keyboard?.hide() },
             )
         }
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        // Edge backdrops: the transcript fills the window (under the status bar, the dock and the navigation bar
+        // or IME) and the header and dock float over it on their backdrops; `insets` are their measured heights.
+        ChatEdgeOverlayLayout(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            header = {
+                ChatHeader(
+                    activity = header.activity,
+                    name = header.name,
+                    status = header.status,
+                    faceMode = if (header.isWorking) RemFaceMarkMode.Thinking else RemFaceMarkMode.Idle,
+                    accessibilityPrefix = "chat.header",
+                    onTap = if (header.showsActivityDetails) ({ onAction(ChatScreenAction.ActivityDetails) }) else null,
+                    onBack = if (header.showsBack) ({ onAction(ChatScreenAction.Back) }) else null,
+                    onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
+                    onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
+                    modifier = Modifier.padding(bottom = RemSpacing.sm),
+                )
+            },
+            dock = {
+                // No fill of its own: the dock backdrop is drawn behind it by `ChatEdgeOverlayLayout`.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .imePadding()
+                        .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
+                ) {
+                    if (voiceBar != null) VoiceBar(state = voiceBar)
+                    if (replyContext != null) {
+                        ChatReplyContextAccessory(
+                            context = replyContext,
+                            accessibilityPrefix = "chat.replyContext",
+                            onDismiss = { onAction(ChatScreenAction.DismissReplyContext(replyContext.targetId)) },
+                        )
+                    }
+                    RemComposerBar(
+                        state = composer,
+                        onAction = { onAction(ChatScreenAction.Composer(it)) },
+                        accessibilityPrefix = "chat",
+                        modelMenu = modelMenu,
+                    )
+                }
+            },
+            overlay = { insets ->
+                // Over the transcript (and its blur source), lifted by the dock inset so it never covers the docked
+                // composer or the IME. Qualified so the outer Column's scope does not pick the ColumnScope overload.
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showsJump,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                        .padding(bottom = ChatEdgeBackdrop.jumpButtonBottomPadding(insets.bottom.value).dp),
+                    enter = if (!jumpMotion) EnterTransition.None
+                    else fadeIn(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleIn(tween(ChatJumpToLatest.APPEAR_MILLIS), initialScale = ChatJumpToLatest.APPEAR_SCALE),
+                    exit = if (!jumpMotion) ExitTransition.None
+                    else fadeOut(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleOut(tween(ChatJumpToLatest.APPEAR_MILLIS), targetScale = ChatJumpToLatest.APPEAR_SCALE),
+                ) {
+                    ChatJumpToLatestButton(onClick = {
+                        jumpScope.launch {
+                            if (jumpMotion) scroll.animateScrollTo(scroll.maxValue) else scroll.scrollTo(scroll.maxValue)
+                        }
+                    })
+                }
+            },
+        ) { insets ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(transcriptDismiss)
                     .verticalScroll(scroll)
+                    .padding(top = insets.top, bottom = insets.bottom)
                     .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
                     .testTag("chat.content"),
                 // A short transcript sits just above the composer (Swift: minHeight = viewport, .bottom
@@ -201,22 +260,6 @@ fun ChatScreen(
                     transcript()
                 }
             }
-            // Over the transcript area only, so it never covers the docked composer or the IME. Qualified so
-            // the outer Column's scope does not pick the ColumnScope overload.
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showsJump,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = ChatJumpToLatest.BOTTOM_SPACING.dp),
-                enter = if (!jumpMotion) EnterTransition.None
-                else fadeIn(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleIn(tween(ChatJumpToLatest.APPEAR_MILLIS), initialScale = ChatJumpToLatest.APPEAR_SCALE),
-                exit = if (!jumpMotion) ExitTransition.None
-                else fadeOut(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleOut(tween(ChatJumpToLatest.APPEAR_MILLIS), targetScale = ChatJumpToLatest.APPEAR_SCALE),
-            ) {
-                ChatJumpToLatestButton(onClick = {
-                    jumpScope.launch {
-                        if (jumpMotion) scroll.animateScrollTo(scroll.maxValue) else scroll.scrollTo(scroll.maxValue)
-                    }
-                })
-            }
         }
         // Keep the newest content in view (Swift: defaultScrollAnchor(.bottom)) while the person is at or
         // near the latest message. Scrolled further up, their position is kept and jump to latest stays.
@@ -227,30 +270,6 @@ fun ChatScreen(
                 if (nearLatest) scroll.scrollTo(scroll.maxValue)
                 followedMax[0] = scroll.maxValue
             }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.backgroundPrimary)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
-        ) {
-            if (voiceBar != null) VoiceBar(state = voiceBar)
-            if (replyContext != null) {
-                ChatReplyContextAccessory(
-                    context = replyContext,
-                    accessibilityPrefix = "chat.replyContext",
-                    onDismiss = { onAction(ChatScreenAction.DismissReplyContext(replyContext.targetId)) },
-                )
-            }
-            RemComposerBar(
-                state = composer,
-                onAction = { onAction(ChatScreenAction.Composer(it)) },
-                accessibilityPrefix = "chat",
-                modelMenu = modelMenu,
-            )
         }
     }
 }
@@ -263,6 +282,14 @@ fun ChatScreen(
  * instrumentation tests. Not part of the public API.
  */
 internal val LocalChatJumpToLatestEvidence = staticCompositionLocalOf { false }
+
+/**
+ * Evidence seam (internal, never set by hosts): open the transcript [ChatEdgeBackdrop.EVIDENCE_SCROLL] dp
+ * below its oldest message (combine with [LocalChatJumpToLatestEvidence] so it is not then snapped to the
+ * latest), so a still render shows messages passing under the header and dock backdrops. Twin of SwiftUI
+ * `chatEdgeBackdropEvidence`. Not part of the public API.
+ */
+internal val LocalChatEdgeBackdropEvidence = staticCompositionLocalOf { false }
 
 /** The empty conversation (`2054:22089`): title, message and starters as full-width capsules. No face. */
 @Composable

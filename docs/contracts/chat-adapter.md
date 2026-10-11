@@ -99,6 +99,11 @@ no prototype reaction; this routing is explicit.
    Compose also hides the IME on a transcript drag toward older messages (iOS already dismisses interactively).
    No new input or action: the host hears the existing `focusChanged(false)` and must not re-request focus in
    response. The focused field offers a "Dismiss keyboard" accessibility action.
+13. **Edge backdrops** are presentation the composition owns ([`chat.md`](chat.md) rule 12): the transcript scrolls
+   under the header and the composer dock, whose backdrops are progressive blurs (iOS material; Compose Haze
+   blur on API 32+, scrim below) instead of solid fills, and the transcript's top and bottom insets equal
+   their heights. No input, action or host wiring; hosts still add no navigation bar or app bar above the
+   composition, and supply the window and keyboard / IME insets as before.
 
 ## Rules the adapter applies (truth)
 
