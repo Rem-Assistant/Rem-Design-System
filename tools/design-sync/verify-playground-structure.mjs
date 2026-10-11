@@ -14,6 +14,18 @@ function identity(actual, expected) {
   return actual && actual.id === expected.id && actual.name === expected.name &&
     actual.type === restType(expected.type);
 }
+// Figma REST omits a zero-valued auto-layout padding/spacing property: the file-node schema
+// (HasFramePropertiesTrait) marks paddingBottom and itemSpacing optional with numeric default 0
+// for auto-layout frames. Restore that documented default only for these exact fields.
+const ZERO_DEFAULT_FIELDS = new Set(['paddingBottom', 'itemSpacing']);
+const NORMALIZABLE_TYPES = new Set(['FRAME', 'SLOT']);
+const AUTO_LAYOUT_MODES = new Set(['HORIZONTAL', 'VERTICAL']);
+function zeroDefaultSchemaBasis(type) {
+  const base = 'Figma REST file-node schema (HasFramePropertiesTrait): paddingBottom and itemSpacing are optional with numeric default 0 for auto-layout frames, so a 0 value is omitted from the REST response.';
+  return type === 'SLOT'
+    ? `${base} SlotNode is documented as a child auto-layout frame listed as supporting paddingBottom and itemSpacing (Plugin API node-properties); the independent exact-node Plugin read (2026-10-08) confirmed each property exists and equals 0. The REST spec does not separately enumerate SLOT.`
+    : base;
+}
 function visibleNodes(node, result = []) {
   if (!node || node.visible === false) return result;
   result.push(node);
@@ -30,6 +42,7 @@ function laneFor(contract, scope) {
 export function verifyPlaygroundStructure(contract, scope, nodes) {
   const lane = laneFor(contract, scope);
   const errors = [];
+  const defaultsApplied = [];
   const check = (ok, message) => { if (!ok) errors.push(message); };
   const node = (id) => nodes[id];
   const checkIdentity = (expected) => check(identity(node(expected.id), expected), `${expected.id} identity changed`);
@@ -81,10 +94,31 @@ export function verifyPlaygroundStructure(contract, scope, nodes) {
       equal((node(assertion.parentId)?.children || []).map(({ id }) => id), assertion.childIds), `${assertion.parentId} exact child order changed`);
     canonicalScreens.push({ id: state.root.id, name: state.root.name, status: start === errors.length && laneStart === 0 ? 'conformant' : 'nonconformant' });
   }
-  const numeric = (actual, properties, label) => {
+  const numeric = (actual, properties, label, expected) => {
     for (const [key, value] of Object.entries(properties)) {
       // REST exposes local coordinates in relativeTransform when geometry=paths.
       const observed = key === 'y' ? actual?.relativeTransform?.[1]?.[2] : actual?.[key];
+      // The REST transport drops a zero-valued paddingBottom/itemSpacing. Restore the schema
+      // default 0 only when the field is genuinely absent (no own property) on an existing,
+      // identity-matched FRAME/SLOT whose explicit layoutMode is auto-layout, and only when the
+      // trusted assertion itself expects zero. Everything else still fails closed below. This
+      // never writes to the node or hides a broken identity/ancestry — those are checked apart.
+      const absent = actual != null && !Object.hasOwn(actual, key);
+      if (value === 0 && ZERO_DEFAULT_FIELDS.has(key) && absent && expected &&
+        identity(actual, expected) && NORMALIZABLE_TYPES.has(actual.type) &&
+        AUTO_LAYOUT_MODES.has(actual.layoutMode)) {
+        defaultsApplied.push({
+          nodeId: actual.id,
+          field: key,
+          rawPresence: 'absent',
+          hadOwnProperty: false,
+          appliedValue: 0,
+          nodeType: actual.type,
+          layoutMode: actual.layoutMode,
+          schemaBasis: zeroDefaultSchemaBasis(actual.type),
+        });
+        continue;
+      }
       if (typeof observed !== 'number' || observed !== value) {
         // Only selected public geometry fields are logged; never the whole REST response.
         // Bound unexpected values so malformed source data cannot flood diagnostics.
@@ -113,15 +147,15 @@ export function verifyPlaygroundStructure(contract, scope, nodes) {
     check(slot.pageToNodePathIds[0] === lane.page.id && slot.pageToNodePathIds.at(-2) === slot.directParent.id &&
       slot.pageToNodePathIds.at(-1) === slot.node.id, `${slot.node.id} invalid slot path`);
     const actual = node(slot.node.id); const parent = node(slot.directParent.id);
-    numeric(actual, slot.numericProperties, slot.node.id);
-    numeric(parent, slot.parentNumericProperties, slot.directParent.id);
+    numeric(actual, slot.numericProperties, slot.node.id, slot.node);
+    numeric(parent, slot.parentNumericProperties, slot.directParent.id, slot.directParent);
     const index = (parent?.children || []).findIndex(({ id }) => id === slot.node.id);
     check(index > 0 && identity(parent.children[index - 1], slot.immediatelyPrecededBy), `${slot.node.id} preceding AddSchedule changed`);
     check(identity(actual?.children?.[0], slot.firstChild.node), `${slot.node.id} first child changed`);
-    numeric(node(slot.firstChild.node.id), slot.firstChild.numericProperties, slot.firstChild.node.id);
+    numeric(node(slot.firstChild.node.id), slot.firstChild.numericProperties, slot.firstChild.node.id, slot.firstChild.node);
   }
   const structure = { canonicalScreens, screens: [], sourceAmendments: lane.limits };
-  return { errors, structure, structureDigest: createHash('sha256').update(JSON.stringify(structure)).digest('hex') };
+  return { errors, structure, defaultsApplied, structureDigest: createHash('sha256').update(JSON.stringify(structure)).digest('hex') };
 }
 
 export async function createPlaygroundStructureReport(contract, scope, { fetchFigma = figma, head } = {}) {
@@ -156,7 +190,7 @@ export async function createPlaygroundStructureReport(contract, scope, { fetchFi
     const result = verifyPlaygroundStructure(contract, scope, nodes);
     return { ...report, ...result, status: result.errors.length ? 'failed' : 'completed' };
   } catch (error) {
-    return { ...report, status: 'error', errors: [error.message], structure: null, structureDigest: null };
+    return { ...report, status: 'error', errors: [error.message], structure: null, structureDigest: null, defaultsApplied: [] };
   }
 }
 async function main() {
