@@ -38,19 +38,22 @@ public struct TaskEventRow: View {
     private let leading: Leading
     private let pills: [String]
     private let showPills: Bool
+    private let pending: Bool
 
     public init(
         kind: Kind,
         title: String,
         leading: Leading = .none,
         pills: [String] = [],
-        showPills: Bool = true
+        showPills: Bool = true,
+        pending: Bool = false
     ) {
         self.kind = kind
         self.title = title
         self.leading = leading
         self.pills = pills
         self.showPills = showPills
+        self.pending = pending
     }
 
     // Leading column width so titles align across timed rows; matches Figma's ~64pt leading region.
@@ -131,9 +134,16 @@ public struct TaskEventRow: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    // The status ring. A **pending** row (a just-accepted suggestion that has not yet "committed")
+    // draws a dashed ring — matching the authored Agenda Suggestions `Add` outcome.
     private var statusRing: some View {
         Circle()
-            .strokeBorder(DesignTokens.Color.labelSecondary, lineWidth: 1.5)
+            .strokeBorder(
+                DesignTokens.Color.labelSecondary,
+                style: pending
+                    ? StrokeStyle(lineWidth: 1.5, dash: [3, 2])
+                    : StrokeStyle(lineWidth: 1.5)
+            )
             .frame(width: statusRingSize, height: statusRingSize)
     }
 

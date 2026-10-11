@@ -88,9 +88,9 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
-        // Wave 1 onboarding flows — paired with the Compose `Connectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
-        render("Connectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
-        render("Voice-light", width: 393, height: 852, dark: false) { voiceScreen() }
+        // Wave 1 onboarding flows — paired with the Compose `LegacyOnboardingConnectors-*`/`LegacyOnboardingVoice-*`/`AgendaEmpty-*` shots.
+        render("LegacyOnboardingConnectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
+        render("LegacyOnboardingVoice-light", width: 393, height: 852, dark: false) { voiceScreen() }
         render("AgendaEmpty-light", width: 393, height: 852, dark: false) {
             RemContentUnavailableView(
                 symbol: "calendar.badge.plus",
@@ -106,6 +106,16 @@ final class RenderSnapshots: XCTestCase {
         render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
         render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
         render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+        // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
+        render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .loaded)
+        }
+        render("AgendaSuggestions-overflow-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsOverflowSheet(suggestions: AgendaSuggestionItem.referenceSuggestions)
+        }
+        render("AgendaSuggestions-none-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .none)
+        }
         // Wave 2 screens — components composed into surfaces.
         render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
         render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
