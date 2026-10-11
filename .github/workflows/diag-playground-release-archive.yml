@@ -1,4 +1,5 @@
 # Temporary diagnostic (never merged): reproduce package.py's unsigned iOS Release archive on the
+# Rerun 2: with the committed complete Info.plist (04b3a9d).
 # same hosted runner image, and show the failing step that package.py deliberately suppresses.
 # No secrets, no signing, no upload. Read-only permissions.
 name: Diagnostic · Playground Release archive
