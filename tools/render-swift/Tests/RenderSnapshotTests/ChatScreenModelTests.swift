@@ -199,6 +199,34 @@ final class ChatScreenModelTests: XCTestCase {
         XCTAssertEqual(ChatJumpToLatest.accessibilityIdentifier, "chat.jumpToLatest")
     }
 
+    // MARK: Swipe down to dismiss the keyboard (paired with `ChatScreenModelTest.kt`)
+
+    func testKeyboardDismissNeedsAClearDownwardSwipe() {
+        XCTAssertEqual(ChatKeyboardDismiss.threshold, 24)
+        XCTAssertEqual(ChatKeyboardDismiss.verticalDominance, 1.5)
+        XCTAssertTrue(ChatKeyboardDismiss.isDismissSwipe(dx: 0, dy: 24), "straight down at the threshold")
+        XCTAssertTrue(ChatKeyboardDismiss.isDismissSwipe(dx: 10, dy: 60))
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: 0, dy: 23.9), "short of the threshold")
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: 0, dy: -80), "upward never dismisses")
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: 0, dy: 0), "no movement")
+    }
+
+    func testKeyboardDismissNeedsVerticalTravelToDominate() {
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: 40, dy: 40), "diagonal")
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: 20, dy: 30), "exactly at the dominance ratio")
+        XCTAssertTrue(ChatKeyboardDismiss.isDismissSwipe(dx: 20, dy: 30.1), "just past the dominance ratio")
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: -40, dy: 50), "leftward slip counts the same")
+        XCTAssertFalse(ChatKeyboardDismiss.isDismissSwipe(dx: 120, dy: 25), "sideways")
+    }
+
+    func testKeyboardDismissIgnoresPressAndHoldDrags() {
+        XCTAssertEqual(ChatKeyboardDismiss.holdLimit, 0.35)
+        XCTAssertTrue(ChatKeyboardDismiss.isSwipeStart(holdBeforeMoving: 0))
+        XCTAssertTrue(ChatKeyboardDismiss.isSwipeStart(holdBeforeMoving: 0.349))
+        XCTAssertFalse(ChatKeyboardDismiss.isSwipeStart(holdBeforeMoving: 0.35), "text selection starts with a hold")
+        XCTAssertEqual(ChatKeyboardDismiss.accessibilityActionName, "Dismiss keyboard")
+    }
+
     // MARK: Long-press message actions (`2603:19498`)
 
     func testAssistantMessageSheetMatchesTheReferenceGroups() {

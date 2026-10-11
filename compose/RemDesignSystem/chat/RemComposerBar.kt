@@ -38,6 +38,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -47,6 +50,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.screens.ChatComposerAction
 import com.rem.designsystem.screens.ChatComposerState
+import com.rem.designsystem.screens.ChatKeyboardDismiss
+import com.rem.designsystem.screens.chatKeyboardDismissSwipe
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
 import com.rem.designsystem.screens.ComposerSendDisplay
@@ -72,6 +77,10 @@ import com.rem.designsystem.tokens.RemTypography
  * `ChatComposerState.modelMenuEnabled`; a menu's selection missing from its providers is labelled with
  * `ChatComposerState.modelLabel`. [attachments]
  * are removable chips owned by the host — a Cloud browser chip is a capability for the next message.
+ *
+ * Keyboard: while the field is focused, a clear downward swipe that starts on the composer clears focus
+ * and hides the IME, and TalkBack gets a "Dismiss keyboard" custom action (`screens/ChatKeyboardDismiss`). Hosts
+ * wire nothing; host-driven composers hear it as `FocusChanged(false)`.
  */
 enum class ComposerSendState { Idle, Active, Sending }
 
@@ -223,6 +232,11 @@ private fun ComposerPill(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     var fieldHasFocus by remember { mutableStateOf(false) }
+    // Swipe down / TalkBack action to dismiss the keyboard ([ChatKeyboardDismiss], chat.md rule 11).
+    val keyboard = LocalSoftwareKeyboardController.current
+    val dismissKeyboard: () -> Unit = remember(focusManager, keyboard) {
+        { focusManager.clearFocus(); keyboard?.hide() }
+    }
     if (focused != null) {
         // Host-owned focus: follow the requested value; report changes through onFocusChanged.
         LaunchedEffect(focused) {
@@ -233,6 +247,8 @@ private fun ComposerPill(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            // Only while the field is focused: a clear downward swipe on the composer hides the IME.
+            .chatKeyboardDismissSwipe(enabled = onTextChange != null && fieldHasFocus, onDismiss = dismissKeyboard)
             .background(colors.backgroundSecondary, RoundedCornerShape(30.dp))
             .padding(RemSpacing.md),
         verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
@@ -261,6 +277,14 @@ private fun ComposerPill(
                             }
                         }
                         .then(if (disabledReason != null) Modifier.semantics { stateDescription = disabledReason } else Modifier)
+                        // TalkBack: the IME's own dismiss stays; this adds a named action while focused.
+                        .then(
+                            if (fieldHasFocus) Modifier.semantics {
+                                customActions = listOf(
+                                    CustomAccessibilityAction(ChatKeyboardDismiss.ACCESSIBILITY_ACTION_NAME) { dismissKeyboard(); true },
+                                )
+                            } else Modifier,
+                        )
                         .testTag("$accessibilityPrefix.composerField"),
                 )
             }
