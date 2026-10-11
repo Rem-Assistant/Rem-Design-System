@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.runtime.staticCompositionLocalOf
+import kotlinx.coroutines.delay
 import com.rem.designsystem.agents.NewAgentSetupScreen
 import com.rem.designsystem.navigation.RemSidebar
 import com.rem.designsystem.navigation.RemSidebarContainer
@@ -83,6 +85,24 @@ fun Playground() {
     val conversationKey = "${shell.conversationKey}|${chatConversation.name}"
     val conversations = remember { mutableMapOf<String, MutableState<ChatPlaygroundFixture>>() }
     val saveable = rememberSaveableStateHolder()
+    val liveConversation = conversations.getOrPut(conversationKey) {
+        mutableStateOf(
+            if (shell.selection == RemSidebarSelection.Main) ChatPlaygroundFixture.root(chatConversation)
+            else ChatPlaygroundFixture.root(ChatPlaygroundFixture.Conversation.Empty, agentName = shell.selectedAgent.name),
+        )
+    }
+    // The shell has no fixture-host controls, so the root conversation simulates its reply (twin of the iOS
+    // `.task(id: fixture.autoReplyStep)`): the host accepts, then the reply completes, after the fixture's fixed
+    // delays. Keyed by the conversation and the step, so Stop, the next step or a key change cancels the wait.
+    // It runs here, above the shell, so it keeps running under Settings and Developer as on iOS.
+    val holdsReplies = LocalPlaygroundHoldsReplies.current
+    val autoReplyStep = liveConversation.value.autoReplyStep
+    LaunchedEffect(conversationKey, autoReplyStep) {
+        val step = autoReplyStep ?: return@LaunchedEffect
+        if (holdsReplies) return@LaunchedEffect
+        delay(step.delayMillis)
+        liveConversation.value = liveConversation.value.advanceAutoReply(step)
+    }
     LaunchedEffect(conversationKey) {
         // Runs after the old key's provider has left the composition (and saved), so its state is dropped.
         conversations.keys.filter { it != conversationKey }.forEach { old ->
@@ -124,12 +144,9 @@ fun Playground() {
             ) {
                 // A different agent (or a different fixture chosen in Developer) is a different conversation.
                 key(conversationKey) {
-                    val agent = shell.selectedAgent
-                    val initial = if (shell.selection == RemSidebarSelection.Main) ChatPlaygroundFixture.root(chatConversation)
-                    else ChatPlaygroundFixture.root(ChatPlaygroundFixture.Conversation.Empty, agentName = agent.name)
-                    val state = conversations.getOrPut(conversationKey) { mutableStateOf(initial) }
                     saveable.SaveableStateProvider(conversationKey) {
-                        PlaygroundChatScreen(initial, onExit = {}, onOpenSidebar = { shell = shell.openSidebar() }, fixtureState = state)
+                        PlaygroundChatScreen(liveConversation.value, onExit = {}, onOpenSidebar = { shell = shell.openSidebar() },
+                            fixtureState = liveConversation)
                     }
                 }
             }
@@ -175,6 +192,13 @@ fun Playground() {
         }
     }
 }
+
+/**
+ * Launch seam (route-map "Test seams"): true holds the shell's simulated reply in flight, so Stop stays shown.
+ * Provided by [MainActivity.PlaygroundContent] from the `holdReplies` intent extra; only the active-reply journey
+ * sets it. Twin of iOS `--hold-replies`.
+ */
+val LocalPlaygroundHoldsReplies = staticCompositionLocalOf { false }
 
 /** An opaque full-screen layer that takes every touch, so nothing below it reacts. */
 @Composable

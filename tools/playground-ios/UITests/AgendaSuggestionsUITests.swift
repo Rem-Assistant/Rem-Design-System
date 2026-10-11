@@ -12,7 +12,7 @@ final class AgendaSuggestionsUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["--developer", "--settings-light"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light"])
         app.launch()
     }
 
@@ -184,7 +184,7 @@ final class AgendaSuggestionsUITests: XCTestCase {
 
     func testDarkAppearance() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-dark"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-dark"])
         app.launch()
         openAgenda()
         XCTAssertTrue(app.staticTexts["Suggestions"].exists)
@@ -193,7 +193,7 @@ final class AgendaSuggestionsUITests: XCTestCase {
 
     func testLargeTextReachability() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-light", "--settings-large-text"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--settings-large-text"])
         app.launch()
         openAgenda()
         XCTAssertTrue(app.staticTexts["Suggestions"].exists)

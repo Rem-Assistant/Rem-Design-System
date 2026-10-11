@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
-import RemDesignSystem
+// `PlaygroundTesting` SPI: the repeating-motion test seam (`remRepeatingMotionDisabled`), set from `--no-motion`.
+@_spi(PlaygroundTesting) import RemDesignSystem
 
 @main
 struct RemSettingsPlaygroundApp: App {
@@ -8,10 +9,22 @@ struct RemSettingsPlaygroundApp: App {
     var body: some Scene {
         WindowGroup {
             PlaygroundShell()
+                .environment(\.remRepeatingMotionDisabled, PlaygroundLaunch.motionOff)
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--settings-dark") ? .dark : (ProcessInfo.processInfo.arguments.contains("--settings-light") ? .light : nil))
                 .dynamicTypeSize(ProcessInfo.processInfo.arguments.contains("--settings-large-text") ? .accessibility3 : systemTypeSize)
         }
     }
+}
+
+/// Launch seams the journeys pass as launch arguments (route-map "Test seams"). Fixtures only.
+enum PlaygroundLaunch {
+    /// `--no-motion`: the design system's repeating animations stop (RemFaceMark's idle and thinking loops;
+    /// the Playground's skeleton shimmer), so the app reaches idle between journey steps. Every journey
+    /// launches with it. To make motion-off the Playground default later, change only this line.
+    static let motionOff = ProcessInfo.processInfo.arguments.contains("--no-motion")
+    /// `--hold-replies`: the shell's simulated reply never advances, so a turn stays in flight (Stop shown).
+    /// Only the active-reply journey uses it; every other journey sees the reply complete.
+    static let holdsReplies = ProcessInfo.processInfo.arguments.contains("--hold-replies")
 }
 
 enum LoadFixture: String, CaseIterable { case success = "Success", slow = "Slow", error = "Error" }
@@ -86,13 +99,18 @@ struct PlaygroundShell: View {
             // A different agent (or a fixture chosen in Developer) is a different conversation.
             .id("\(shell.conversationKey)|\(chatConversation.rawValue)")
         }
-        // The Developer hub is a full-screen cover: UIKit takes the shell's views out of the window (and so out
-        // of UI automation; the hub hosts its own Chat with the same identifiers) while SwiftUI keeps the
-        // shell's state, so closing Developer finds the same agent, conversation, draft and scroll position.
+        // The Developer hub is a full-screen cover. SwiftUI presents it over full screen and leaves the shell's
+        // views in the window, so they stayed in UI automation (run 38177680171: two `chat.composerField`s; the
+        // hub hosts its own Chat with the same identifiers). Once the cover is up, `HidesPresenterWhileVisible`
+        // hides the shell's hosting view (UIKit `isHidden`, as UIKit's own `.fullScreen` style removes the
+        // presenter's views) and shows it again as the cover starts to leave. The shell stays alive, so closing
+        // Developer finds the same agent, conversation, draft and scroll position.
         .fullScreenCover(isPresented: $developerOpen) {
             PlaygroundHome(fixture: $settingsFixture, chatConversation: $chatConversation) {
                 developerOpen = false
             }
+            .background(HidesPresenterWhileVisible().frame(width: 0, height: 0).accessibilityHidden(true))
+            .environment(\.remRepeatingMotionDisabled, PlaygroundLaunch.motionOff)
         }
         // Leaving the conversation (sidebar, Settings, Developer) ends editing, so the keyboard never covers
         // the next surface; the draft is fixture state and stays. New agent focuses its own name field.
@@ -138,6 +156,57 @@ struct PlaygroundShell: View {
                 if current == .newAgent { shell.handle(NewAgentSetupAction.cancel) } else { shell.dismissPresentation() }
             }
         )
+    }
+}
+
+/// Takes the covered shell out of the window's visible hierarchy while the Developer hub is on screen, so
+/// VoiceOver and UI automation reach only the hub (route-map "Covered surfaces stay out of UI automation").
+///
+/// SwiftUI's `fullScreenCover` keeps the presenting view in the window, and SwiftUI `.accessibilityHidden`
+/// did not remove nodes from the XCUITest tree (run 38177680171 lists every button of the closed sidebar,
+/// which is `.accessibilityHidden(true)`). UIKit `isHidden` does: a hidden view and its subviews are skipped
+/// by accessibility. The presenter's hosting controller and its SwiftUI state live on (only drawing stops),
+/// which is what UIKit's own `.fullScreen` presentation does when it removes the presenter's views after
+/// the presentation completes. Placed in the cover's background: a child of the cover's hosting controller,
+/// so it gets the cover's appearance callbacks.
+private struct HidesPresenterWhileVisible: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+    func updateUIViewController(_ controller: Controller, context: Context) {}
+    static func dismantleUIViewController(_ controller: Controller, coordinator: ()) {
+        controller.revealPresenter()
+    }
+
+    final class Controller: UIViewController {
+        private weak var hiddenPresenter: UIView?
+
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            view.isUserInteractionEnabled = false
+        }
+
+        /// The cover is fully on screen: hide the view that presented it (the shell).
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            // `presentingViewController` of a contained controller is its presented ancestor's presenter.
+            guard let presenter = presentingViewController?.view, presenter.window != nil,
+                  !view.isDescendant(of: presenter) else { return }
+            presenter.isHidden = true
+            hiddenPresenter = presenter
+        }
+
+        /// Show the shell again as soon as the cover itself starts to leave, so it is drawn under the
+        /// dismissal. Another full-screen presentation from inside the hub keeps it hidden.
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            var top: UIViewController = self
+            while let parent = top.parent { top = parent }
+            if top.isBeingDismissed || top.presentingViewController == nil { revealPresenter() }
+        }
+
+        func revealPresenter() {
+            hiddenPresenter?.isHidden = false
+            hiddenPresenter = nil
+        }
     }
 }
 
@@ -805,7 +874,9 @@ struct OnboardingComplete: View {
 /// (`RemClaw/Shared/Views/DesignTokens.swift`), with one addition: when Reduce Motion is on the
 /// placeholder stays static instead of sweeping.
 struct ShimmerModifier: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    /// Static under Reduce Motion, and with `--no-motion` (journeys).
+    private var reduceMotion: Bool { systemReduceMotion || PlaygroundLaunch.motionOff }
     @State private var phase: CGFloat = -1
 
     func body(content: Content) -> some View {

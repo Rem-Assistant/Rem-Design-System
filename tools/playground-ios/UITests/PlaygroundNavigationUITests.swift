@@ -1,5 +1,15 @@
 import XCTest
 
+/// Launch arguments every journey in this target starts with (all four UI test classes). `--no-motion` stops
+/// the design system's repeating animations (RemFaceMark's idle and thinking loops) and the skeleton shimmer, so
+/// the app reaches idle between steps and each step does not wait on a never-ending animation (route-map
+/// "Test seams"). Pass the journey's own arguments; this appends the shared ones.
+enum JourneyLaunch {
+    static let shared = ["--no-motion"]
+
+    static func arguments(_ arguments: [String]) -> [String] { arguments + shared }
+}
+
 /// Root structure, the component catalog's loading demo, and the onboarding flow's step routing.
 /// Everything is local fixture state — no account, service, audio, or persistence.
 final class PlaygroundNavigationUITests: XCTestCase {
@@ -7,7 +17,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["--developer", "--settings-light"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light"])
         app.launch()
     }
 
@@ -202,7 +212,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testCatalogLoadingShowsSkeletonThenContentAndActionProgress() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-light", "--loading-hold"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--loading-hold"])
         app.launch()
         tap("openComponents")
         XCTAssertTrue(app.buttons["openControls"].waitForExistence(timeout: 3))
@@ -643,7 +653,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// Check-in at accessibility text size: every title stays on one line and every time stays on screen.
     func testCheckInRowsFitAtLargeText() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-light", "--settings-large-text"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--settings-large-text"])
         app.launch()
         openOnboardingStep("openOnboardingCheckIn")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Check-in opens")
@@ -801,6 +811,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// scrolled up, and a tap returns to the newest message and hides it again. The DS owns it.
     func testChatJumpToLatestAppearsWhenScrolledUpAndReturns() {
         openChatScreen("Long")
+        // Developer covers the shell, whose Chat uses the same identifiers: only the hub's Chat is in the tree.
+        XCTAssertEqual(app.textViews.matching(identifier: "chat.composerField").count, 1,
+                       "Exactly one composer under Developer: the covered shell stays out of UI automation")
         let latest = element("message.a2.bubble")
         XCTAssertTrue(latest.waitForExistence(timeout: 3))
         XCTAssertTrue(latest.isHittable, "The conversation opens at the latest message")
@@ -1304,6 +1317,34 @@ final class PlaygroundNavigationUITests: XCTestCase {
         return Set(bubbles.filter { $0.frame.minY >= viewport.minY && $0.frame.maxY <= viewport.maxY }.map(\.identifier))
     }
 
+    /// Swipe down on the composer to end editing (chat.md rule 11). The drag starts in the composer pill's top
+    /// padding, just above the field: still the composer (the pill, field included), but clear of the text
+    /// view's own caret and selection gestures over typed text, which the earlier field-centre press met in
+    /// run 38177680171 (the keyboard stayed up). A short press, then a quick 80pt drag down.
+    private func swipeDownOnComposer(_ field: XCUIElement) {
+        let start = field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: -6))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 80)),
+                    withVelocity: .fast, thenHoldForDuration: 0)
+    }
+
+    /// Up to four slow drags toward older messages in the transcript's leading gutter (a mid-screen drag can
+    /// start on a bubble), stopping once `jump` (jump to latest) shows.
+    private func dragTranscriptUp(until jump: XCUIElement) {
+        let content = element("chat.content")
+        XCTAssertTrue(content.exists)
+        for _ in 0..<4 where !jump.exists {
+            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
+            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+    }
+
+    /// The shell's simulated reply has landed (accepted after 0.6s, complete 1.5s later) and the turn has ended.
+    private func waitForShellReply(_ identifier: String) {
+        XCTAssertTrue(element(identifier).waitForExistence(timeout: 10), "The shell's simulated reply completes")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "The reply ends the turn")
+    }
+
     private func openDeveloperFromShell() {
         openSidebar()
         element("sidebar.account").tap()
@@ -1311,6 +1352,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(developer.waitForExistence(timeout: 5))
         developer.tap()
         XCTAssertTrue(app.buttons["openComponents"].waitForExistence(timeout: 10), "Developer opens the hub")
+        // The covered shell leaves the tree once the hub is up (route-map "Covered surfaces").
+        waitGone(app.textViews["chat.composerField"], "The covered shell's composer is not in the tree under Developer")
+        waitGone(app.buttons["chat.header.menu"], "The covered shell's header is not in the tree under Developer")
     }
 
     /// Developer round trip keeps the work: a sent message, a draft and the scroll position survive
@@ -1320,6 +1364,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
         returnToShell()
         sendFromChat("Round trip message")
         XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 5))
+        // The shell simulates the reply (route-map "Simulated reply"); let it land first, so the transcript is
+        // settled before scrolling and the round trip compares the same content.
+        waitForShellReply("message.reply.2.bubble")
         let field = app.textViews["chat.composerField"]
         focus(field)
         field.typeText("Keep this draft")
@@ -1327,25 +1374,20 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // dismisses it, the viewport grows by the keyboard height and the remaining distance can fall within
         // the near-latest threshold; the visible set would also be taken with a different viewport than the
         // one the round trip returns to (route changes end editing). The composer swipe-down is rule 11.
-        let dismiss = field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        dismiss.press(forDuration: 0.05, thenDragTo: dismiss.withOffset(CGVector(dx: 0, dy: 80)),
-                      withVelocity: .fast, thenHoldForDuration: 0)
+        swipeDownOnComposer(field)
         waitUntilGone(app.keyboards.firstMatch, "The keyboard is down before scrolling up")
         let jump = app.buttons["chat.jumpToLatest"]
-        let content = element("chat.content")
-        for _ in 0..<4 where !jump.exists {
-            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
-            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
-            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
-        }
+        dragTranscriptUp(until: jump)
         XCTAssertTrue(jump.waitForExistence(timeout: 3), "Scrolled up")
         let before = visibleBubbles()
         XCTAssertFalse(before.isEmpty)
         XCTAssertFalse(before.contains("message.sent.1.bubble"), "Scrolled away from the latest message")
+        XCTAssertFalse(before.contains("message.reply.2.bubble"), "Scrolled away from the latest message")
 
         openDeveloperFromShell()
         returnToShell()
         XCTAssertTrue(element("message.sent.1.bubble").exists, "The sent message is kept")
+        XCTAssertTrue(element("message.reply.2.bubble").exists, "The reply is kept")
         XCTAssertEqual(field.value as? String, "Keep this draft", "The draft is kept")
         XCTAssertTrue(jump.waitForExistence(timeout: 3), "Still scrolled up")
         XCTAssertEqual(visibleBubbles(), before, "The same messages are visible after the round trip")
@@ -1388,5 +1430,36 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertFalse(element("message.sent.1.bubble").exists, "Rem starts afresh after an agent switch")
         XCTAssertNotEqual(field.value as? String, "Rem draft", "Rem's draft is not restored")
     }
-}
 
+    /// Regression: scrolling while a reply is in flight. Run 38176095096 sent in the shell and four slow drags
+    /// did not move the transcript while Stop showed. `--hold-replies` keeps the simulated reply in flight (motion
+    /// is off, as in every journey); the drags must move the transcript: jump to latest appears and the message
+    /// just sent leaves view, while Stop is still shown. Twin of `shellScrollsWhileAReplyIsInFlight`.
+    func testShellScrollsWhileAReplyIsInFlight() {
+        app.terminate()
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--hold-replies"])
+        app.launch()
+        chooseRootFixture("chatFixturePicker", "Long")
+        returnToShell()
+        sendFromChat("Scroll while you reply")
+        let sent = element("message.sent.1.bubble")
+        XCTAssertTrue(sent.waitForExistence(timeout: 5))
+        let control = app.buttons["chat.composerSend"]
+        XCTAssertEqual(control.label, "Stop", "The reply is in flight")
+        XCTAssertTrue(element("chat.header.identity").label.contains("Working on your request"))
+
+        let field = app.textViews["chat.composerField"]
+        swipeDownOnComposer(field)
+        waitUntilGone(app.keyboards.firstMatch, "The keyboard is down before scrolling up")
+        let jump = app.buttons["chat.jumpToLatest"]
+        waitUntilGone(jump, "The transcript is at the message just sent")
+        XCTAssertTrue(visibleBubbles().contains("message.sent.1.bubble"), "The message just sent is in view")
+
+        dragTranscriptUp(until: jump)
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "The transcript scrolls while the reply is in flight")
+        XCTAssertFalse(sent.isHittable, "The message just sent has left view")
+        XCTAssertFalse(visibleBubbles().contains("message.sent.1.bubble"), "The message just sent has left view")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Stop", "The reply is still in flight")
+        XCTAssertFalse(element("message.reply.2.bubble").exists, "--hold-replies holds the reply")
+    }
+}

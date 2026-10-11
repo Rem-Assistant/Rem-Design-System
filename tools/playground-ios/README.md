@@ -15,6 +15,8 @@ xcodebuild -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
 
 **Build 9 app shell.** The app opens on a full-screen conversation. The header's sidebar button opens the sidebar (Main agent, Side agents, New agent, account pill → Settings). The earlier Playground root — component catalog, screens with their fixture pickers, onboarding — is the **Developer** hub, reached from Settings' Developer button, or with the `--developer` launch argument, which the established journeys use. Routes, back behaviour and journeys: [`docs/playground/route-map.md`](../../docs/playground/route-map.md).
 
+Journeys launch through `JourneyLaunch.arguments` (in `UITests/PlaygroundNavigationUITests.swift`), which adds `--no-motion` so the design system's repeating animations stop and the app reaches idle between steps. Launch seams (`--developer`, `--loading-hold`, `--no-motion`, `--hold-replies`): route map "Test seams".
+
 Tests exercise Settings → Rem → Back; simulated error → Cancel/Retry; cancellation before a 10-second slow load finishes; and name edit → Cancel/Save. Screenshot attachments are retained in the result bundle. Do not erase an existing personal device.
 
 The gallery identifies scope: the Rem row is connected; other rows are visual references. See `docs/contracts/settings-playground.md` for the bounded design and behavior contract.

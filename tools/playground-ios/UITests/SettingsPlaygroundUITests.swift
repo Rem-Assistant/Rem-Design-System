@@ -4,7 +4,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     let app = XCUIApplication()
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["--developer", "--settings-light"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light"])
         app.launch()
     }
     private func capture(_ name: String) {
@@ -37,7 +37,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     }
     func testDarkSettingsFoundation() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-dark"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-dark"])
         app.launch()
         openSettings()
         capture("SettingsEntry-dark")
@@ -47,7 +47,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     }
     func testLargeTextSettingsScrolls() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-light", "--settings-large-text"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--settings-large-text"])
         app.launch()
         openSettings()
         capture("SettingsEntry-large-text")
@@ -344,7 +344,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
     func testConnectorsGmailDarkAndLargeTextReachability() {
         for (arguments, suffix) in [(["--settings-dark"], "dark"), (["--settings-light", "--settings-large-text"], "large-text")] {
             app.terminate()
-            app.launchArguments = ["--developer"] + arguments
+            app.launchArguments = JourneyLaunch.arguments(["--developer"] + arguments)
             app.launch()
             openDestination("connectors", title: "Connectors")
             capture("Connectors-\(suffix)")
@@ -979,7 +979,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
             ("cloudBrowser", "Cloud browser", "CloudBrowser", "cloudBrowser.clearAllData")
         ] {
             app.terminate()
-            app.launchArguments = ["--developer"] + arguments
+            app.launchArguments = JourneyLaunch.arguments(["--developer"] + arguments)
             app.launch()
             openDestination(route, title: title)
             capture("\(name)-\(suffix)")
@@ -1138,7 +1138,7 @@ final class SettingsPlaygroundUITests: XCTestCase {
 
     private func captureWalletVoiceAppearance(arguments: [String], suffix: String) {
         app.terminate()
-        app.launchArguments = ["--developer"] + arguments
+        app.launchArguments = JourneyLaunch.arguments(["--developer"] + arguments)
         app.launch()
         openDestination("wallet", title: "Wallet")
         capture("Wallet-\(suffix)")

@@ -54,39 +54,54 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            val dark = if (intent.hasExtra("settingsDark")) intent.getBooleanExtra("settingsDark", false) else isSystemInDarkTheme()
-            val density = LocalDensity.current
-            val scale = if (intent.getBooleanExtra("settingsLargeText", false)) 2f else density.fontScale
-            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
-                RemTheme(darkTheme = dark) {
-                    val background = RemColors.current.backgroundPrimary
-                    SideEffect {
-                        window.statusBarColor = background.toArgb()
-                        window.navigationBarColor = background.toArgb()
-                        WindowCompat.getInsetsController(window, window.decorView).apply {
-                            isAppearanceLightStatusBars = !dark
-                            isAppearanceLightNavigationBars = !dark
-                        }
+        setContent { PlaygroundContent() }
+    }
+
+    /**
+     * The Playground in its theme. Intent extras are the journeys' launch seams (route-map "Test seams"):
+     * `settingsDark`, `settingsLargeText` and [HoldRepliesExtra] (the shell's simulated reply never advances,
+     * so a turn stays in flight; only the active-reply journey uses it, through this parameter).
+     */
+    @Composable
+    fun PlaygroundContent(holdsReplies: Boolean = intent.getBooleanExtra(HoldRepliesExtra, false)) {
+        val dark = if (intent.hasExtra("settingsDark")) intent.getBooleanExtra("settingsDark", false) else isSystemInDarkTheme()
+        val density = LocalDensity.current
+        val scale = if (intent.getBooleanExtra("settingsLargeText", false)) 2f else density.fontScale
+        CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+            RemTheme(darkTheme = dark) {
+                val background = RemColors.current.backgroundPrimary
+                SideEffect {
+                    window.statusBarColor = background.toArgb()
+                    window.navigationBarColor = background.toArgb()
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !dark
+                        isAppearanceLightNavigationBars = !dark
                     }
-                    val rem = RemColors.current
-                    val nativeColors = (if (dark) darkColorScheme() else lightColorScheme()).copy(
-                        primary = rem.brandBlue, onPrimary = rem.labelOnColor,
-                        primaryContainer = rem.backgroundSecondary, onPrimaryContainer = rem.labelPrimary,
-                        secondary = rem.brandBlue, onSecondary = rem.labelOnColor,
-                        secondaryContainer = rem.backgroundSecondary, onSecondaryContainer = rem.labelPrimary,
-                        surface = rem.backgroundPrimary, onSurface = rem.labelPrimary,
-                        surfaceVariant = rem.backgroundSecondary, onSurfaceVariant = rem.labelSecondary,
-                        surfaceTint = rem.backgroundSecondary,
-                        surfaceContainer = rem.backgroundSecondary,
-                        surfaceContainerHigh = rem.backgroundSecondary,
-                        background = rem.backgroundPrimary, onBackground = rem.labelPrimary,
-                        error = rem.systemRed,
-                    )
-                    MaterialTheme(colorScheme = nativeColors) { Playground() }
+                }
+                val rem = RemColors.current
+                val nativeColors = (if (dark) darkColorScheme() else lightColorScheme()).copy(
+                    primary = rem.brandBlue, onPrimary = rem.labelOnColor,
+                    primaryContainer = rem.backgroundSecondary, onPrimaryContainer = rem.labelPrimary,
+                    secondary = rem.brandBlue, onSecondary = rem.labelOnColor,
+                    secondaryContainer = rem.backgroundSecondary, onSecondaryContainer = rem.labelPrimary,
+                    surface = rem.backgroundPrimary, onSurface = rem.labelPrimary,
+                    surfaceVariant = rem.backgroundSecondary, onSurfaceVariant = rem.labelSecondary,
+                    surfaceTint = rem.backgroundSecondary,
+                    surfaceContainer = rem.backgroundSecondary,
+                    surfaceContainerHigh = rem.backgroundSecondary,
+                    background = rem.backgroundPrimary, onBackground = rem.labelPrimary,
+                    error = rem.systemRed,
+                )
+                MaterialTheme(colorScheme = nativeColors) {
+                    CompositionLocalProvider(LocalPlaygroundHoldsReplies provides holdsReplies) { Playground() }
                 }
             }
         }
+    }
+
+    companion object {
+        /** Intent extra: hold the shell's simulated reply in flight (twin of iOS `--hold-replies`). */
+        const val HoldRepliesExtra = "holdReplies"
     }
 }
 

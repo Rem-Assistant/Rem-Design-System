@@ -164,6 +164,10 @@ struct RemSmileShape: Shape {
 ///
 /// Respects Reduce Motion: `.idle` becomes a static happy face; `.thinking`
 /// becomes a gentle full-face opacity pulse (no stroke draw).
+///
+/// With the `remRepeatingMotionDisabled` test seam (SPI, below) nothing repeats: `.idle` is the static happy
+/// face and `.thinking` its complete resting outline (features hidden), as Compose draws it with animations
+/// removed.
 public struct RemFaceMark: View {
     public enum Mode {
         /// Happy, living face — occasional blinks + a subtle smile motion.
@@ -187,6 +191,7 @@ public struct RemFaceMark: View {
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.remRepeatingMotionDisabled) private var repeatingMotionDisabled
 
     // Idle animation state.
     @State private var leftEyeScaleY: CGFloat = 1
@@ -221,16 +226,24 @@ public struct RemFaceMark: View {
     private var mouthYOffset: CGFloat { size * 0.20 }
     private var mouthWidthStroke: CGFloat { penWeight }
 
+    /// The full animation runs: neither Reduce Motion nor the repeating-motion test seam is on.
+    private var animates: Bool { !reduceMotion && !repeatingMotionDisabled }
+
     /// Outline trim: full circle unless we're actively self-drawing.
     private var effectiveTrim: CGFloat {
-        (mode == .thinking && !reduceMotion) ? trimEnd : 1
+        (mode == .thinking && animates) ? trimEnd : 1
     }
 
     /// Eyes + mouth are hidden while the outline is drawing itself (normal
-    /// thinking); everything shows in idle and in reduce-motion thinking (where
-    /// the whole face pulses).
+    /// thinking) and in its resting outline (repeating motion off); everything
+    /// shows in idle and in reduce-motion thinking (where the whole face pulses).
     private var featuresVisible: Bool {
-        !(mode == .thinking && !reduceMotion)
+        !(mode == .thinking && (!reduceMotion || repeatingMotionDisabled))
+    }
+
+    /// Reduce-motion thinking pulses the whole face, unless repeating motion is off.
+    private var pulses: Bool {
+        mode == .thinking && reduceMotion && !repeatingMotionDisabled
     }
 
     public var body: some View {
@@ -244,7 +257,7 @@ public struct RemFaceMark: View {
             }
         }
         .frame(width: size, height: size)
-        .opacity((mode == .thinking && reduceMotion) ? pulseOpacity : 1)
+        .opacity(pulses ? pulseOpacity : 1)
         .accessibilityHidden(true)
         // Re-run the animation whenever mode or the Reduce Motion setting flips.
         .task(id: taskKey) { await runAnimation() }
@@ -277,11 +290,14 @@ public struct RemFaceMark: View {
     // MARK: - Animation driving
 
     /// Identity for `.task` so a mode / reduce-motion change restarts the loop.
-    private var taskKey: String { "\(mode)-\(reduceMotion)" }
+    private var taskKey: String { "\(mode)-\(reduceMotion)-\(repeatingMotionDisabled)" }
 
     private func runAnimation() async {
         // Reset to a clean happy resting state before (re)starting.
         resetState()
+
+        // Test seam: no blink, breathing, stroke draw or pulse.
+        guard !repeatingMotionDisabled else { return }
 
         guard !reduceMotion else {
             if mode == .thinking { await runReduceMotionPulse() }
@@ -305,7 +321,7 @@ public struct RemFaceMark: View {
         rightEyeScaleY = 1
         mouthScale = 1
         mouthRotation = 0
-        trimEnd = (mode == .thinking && !reduceMotion) ? 0 : 1
+        trimEnd = (mode == .thinking && animates) ? 0 : 1
         pulseOpacity = 1
     }
 
@@ -365,6 +381,24 @@ public struct RemFaceMark: View {
         while !Task.isCancelled {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
+    }
+}
+
+// MARK: - Repeating-motion test seam
+
+/// Test seam (SPI `PlaygroundTesting`, never set by hosts): when true, the design system's repeating
+/// animations stop — `RemFaceMark`'s idle blinks and smile breathing, its thinking stroke loop and its
+/// Reduce Motion pulse — so a UI test's app reaches idle between steps. One-shot transitions are unchanged.
+/// The native Playground sets it from `--no-motion` (route-map "Test seams"). Not part of the public API.
+private struct RemRepeatingMotionDisabledKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    @_spi(PlaygroundTesting)
+    public var remRepeatingMotionDisabled: Bool {
+        get { self[RemRepeatingMotionDisabledKey.self] }
+        set { self[RemRepeatingMotionDisabledKey.self] = newValue }
     }
 }
 

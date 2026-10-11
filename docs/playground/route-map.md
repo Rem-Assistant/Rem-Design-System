@@ -53,13 +53,25 @@ file is its state contract.
     starts afresh (A → B → A is fresh). Creating a new agent selects it, so it is a key change too.
   - Covered surfaces stay out of UI automation and TalkBack, because the Developer hub hosts its own
     Chat with the same identifiers.
-  - **iOS:** the Developer hub is a full-screen cover. UIKit removes the shell's views from the window,
-    and SwiftUI keeps their state. The chat is `.id("<conversationKey>|<fixture>")`, so a key change
-    destroys the old conversation.
+  - **iOS:** the Developer hub is a full-screen cover. SwiftUI's cover leaves the shell's views in the
+    window, so once the cover is up the Playground hides the shell's hosting view with UIKit `isHidden`
+    (`HidesPresenterWhileVisible`) and shows it again as the cover starts to leave. A hidden view is out of
+    VoiceOver and UI automation; SwiftUI `.accessibilityHidden` was not enough (it left nodes in the XCUITest
+    tree). The shell stays alive underneath, so its state is kept. The chat is
+    `.id("<conversationKey>|<fixture>")`, so a key change destroys the old conversation.
   - **Android:** the shell is not composed under the hub. The live conversation's fixture is hoisted
     into `Playground()`, and its scroll position into a `SaveableStateProvider` with the same key; when
     the key changes, every other key's fixture and saved state are removed (`removeState`).
     `ChatScreen` restores a saved position relative to the bottom (chat.md rule 10).
+- **Simulated reply (root conversation):** the shell's chat has no fixture-host controls (no overflow), so
+  its host simulates the turn after a send: the host accepts the message (Delivered) after **0.6s**, then
+  the reply completes (a fixture reply is appended, Stop returns to Send) **1.5s** later
+  (`ChatPlaygroundFixture.autoReplyStep` / `advanceAutoReply`, `ChatAutoReplyStep`). Each step names the
+  turn's outgoing message and applies only while that turn is current, so **Stop** (or a key change, which
+  replaces the conversation) cancels it and never fabricates a receipt. The wait keeps running under
+  Settings and Developer (iOS: the hidden shell stays alive; Android: the effect runs in `Playground()`,
+  above the shell). The Developer hub's Chat and task chat are not root conversations: they never
+  auto-advance and keep their explicit host controls. Fixture only: no reply is generated or sent.
 - **Developer-owned inputs:** the Chat conversation fixture (Populated, Empty or Long) and the Settings
   load fixture (Success, Slow or Error). They are chosen only in the Developer hub, and the shell reads
   them. Choosing a different Chat fixture restarts Rem's conversation.
@@ -71,7 +83,7 @@ file is its state contract.
 
 | Route | Entry | Exit | Back / dismiss | Journeys (iOS `PlaygroundNavigationUITests` · Android `PlaygroundNavigationTest`) |
 |---|---|---|---|---|
-| **Chat (root)**: the selected agent's full-screen conversation, header with the sidebar button (`chat.header.menu`), no Back, no overflow | App launch; every surface below returns here | The surfaces below | Android system Back leaves the app (root) | `testShellSidebarSelectsAnAgentAndClosesIt` · `shellSidebarSelectsAnAgentAndBackCloses` |
+| **Chat (root)**: the selected agent's full-screen conversation, header with the sidebar button (`chat.header.menu`), no Back, no overflow | App launch; every surface below returns here | The surfaces below | Android system Back leaves the app (root) | `testShellSidebarSelectsAnAgentAndClosesIt` · `shellSidebarSelectsAnAgentAndBackCloses`; scrolling while a reply is in flight: `testShellScrollsWhileAReplyIsInFlight` · `shellScrollsWhileAReplyIsInFlight` |
 | **Sidebar** (`sidebar`): Main agent, Side agents, New agent, account pill | `chat.header.menu` | Choose an agent; tap the visible chat card (`sidebar.close`) | Android system Back closes it; selection kept | as above |
 | **New agent** sheet (`newAgent.*`) | Sidebar `sidebar.newAgent` | Close (`newAgent.cancel`); Create (`newAgent.create`) opens the new agent's chat | iOS swipe down and Android system Back / scrim tap all cancel | `testShellNewAgentCancelsAndCreates` · `shellNewAgentCancelsAndCreates` |
 | **Settings**: Build 8 entry over the conversation (iOS sheet with `settings.done`; Android full screen with Back `back`) | Sidebar account pill `sidebar.account` | Done / Back to the same chat | Pushed pages pop (top-bar Back and Android system Back); iOS swipe down dismisses the sheet | `testShellSettingsFromAccountReturnsToTheSelectedChat` · `shellSettingsFromAccountReturnsToTheSelectedChat`; scroll kept: `testShellKeepsScrollPositionAcrossSettings` · `shellKeepsScrollPositionAcrossSettings` |
@@ -80,6 +92,26 @@ file is its state contract.
 | Chat → **Agent activity** (pushed) | Header identity `chat.header.identity` | Back (`Chat`, `agentActivity.back`) | Pops to the same conversation | `testShellChatSheetsDismissAndActivityPops` · `shellChatSheetsDismissAndActivityPops` |
 | Chat → **Add to Chat** sheet, **message actions** sheet | `chat.composerAdd`; long press on a message | Done, an action, or Android system Back | Sheets dismiss back to the chat | as above |
 | **Developer** hub: the earlier Playground root, titled "Developer" | Settings' **Developer** button (`settings.developer`); `--developer` at launch on iOS (journey seam) | Close (`developer.close`) | Android system Back at its root closes it; inside, every route behaves as in Build 8 | `testShellDeveloperEntryStaysSeparate` · `shellDeveloperEntryStaysSeparate`; round trip keeps the conversation, draft and scroll, and a fixture change and back (Populated → Long → Populated) resets: `testShellDeveloperRoundTripKeepsConversationDraftAndScroll` · `shellDeveloperRoundTripKeepsConversationDraftAndScroll`; every Build 8 journey runs inside it |
+
+## Test seams
+
+Launch inputs the journeys use (iOS launch arguments; Android intent extras or the same Compose input).
+Ordinary use passes none of them.
+- `--developer` (iOS): open straight into the Developer hub.
+- `--loading-hold` (iOS): the catalog Loading page waits for its explicit completion control.
+- `--no-motion` (iOS): the design system's repeating animations stop (`RemFaceMark` idle blinks and smile
+  breathing, the thinking stroke loop and its Reduce Motion pulse; the Playground's skeleton shimmer):
+  thinking shows its complete resting outline. It reaches the DS through the internal
+  `remRepeatingMotionDisabled` environment seam (`@_spi(PlaygroundTesting)`, never set by hosts). Every
+  XCUITest journey launches with it (`JourneyLaunch.arguments`), the active-reply journey included, so the
+  app reaches idle between steps. The product default is unchanged (open question for Samuel); making it
+  the Playground default is one line (`PlaygroundLaunch.motionOff`). Android has no twin: Compose tests
+  drive time through the test clock, which infinite transitions do not block, and `RemFaceMark` already
+  stops with Android's Remove animations (`thinkingOutlineChangesOverTime`).
+- `--hold-replies` (iOS) / `holdReplies` extra, `MainActivity.PlaygroundContent(holdsReplies = true)`
+  (Android): the shell's simulated reply never advances, so a turn stays in flight with Stop shown. Only
+  the active-reply journey uses it (`testShellScrollsWhileAReplyIsInFlight` ·
+  `shellScrollsWhileAReplyIsInFlight`).
 
 ## Developer entry
 

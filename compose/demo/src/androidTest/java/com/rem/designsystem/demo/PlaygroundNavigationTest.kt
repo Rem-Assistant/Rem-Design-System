@@ -1383,6 +1383,12 @@ class PlaygroundNavigationTest {
             .toSet()
     }
 
+    /** The shell's simulated reply has landed (accepted after 0.6s, complete 1.5s later) and the turn has ended. */
+    private fun waitForShellReply(tag: String) {
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+    }
+
     private fun openDeveloperFromShell() {
         openSidebar()
         compose.onNodeWithTag("sidebar.account").performClick()
@@ -1401,6 +1407,9 @@ class PlaygroundNavigationTest {
         returnToShell()
         sendFromChat("Round trip message")
         waitForTag("message.sent.1.bubble")
+        // The shell simulates the reply (route-map "Simulated reply"); let it land first, so the transcript is
+        // settled before scrolling and the round trip compares the same content.
+        waitForShellReply("message.reply.2.bubble")
         compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
         // Scroll up with the keyboard down. With the IME up, the swipe is a drag toward older messages, which
         // dismisses it (#121); the viewport then grows by the IME height and the remaining distance can fall
@@ -1413,12 +1422,14 @@ class PlaygroundNavigationTest {
         waitForTag("chat.jumpToLatest")
         compose.waitForIdle()
         val before = visibleBubbles()
-        assertTrue("Scrolled away from the latest message: $before", "message.sent.1.bubble" !in before && before.isNotEmpty())
+        assertTrue("Scrolled away from the latest message: $before",
+            "message.sent.1.bubble" !in before && "message.reply.2.bubble" !in before && before.isNotEmpty())
 
         openDeveloperFromShell()
         returnToShell()
         compose.waitForIdle()
         compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("message.reply.2.bubble", useUnmergedTree = true).assertExists()
         compose.onNodeWithTag("chat.composerField").assertTextContains("Keep this draft")
         compose.onNodeWithTag("chat.jumpToLatest").assertExists()
         val after = visibleBubbles()
@@ -1457,6 +1468,38 @@ class PlaygroundNavigationTest {
         compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
         assertChatShows("Rem")
         assertFreshConversation()
+    }
+
+    /**
+     * Regression: scrolling while a reply is in flight (twin of iOS `testShellScrollsWhileAReplyIsInFlight`; iOS run
+     * 38176095096 saw four drags fail to move the transcript while Stop showed). The Playground is re-rendered with
+     * the shell's simulated reply held (`holdsReplies`, the `holdReplies` intent extra's input); the drag must move
+     * the transcript: jump to latest appears and the message just sent leaves view, while Stop is still shown.
+     */
+    @Test fun shellScrollsWhileAReplyIsInFlight() {
+        compose.runOnIdle { compose.activity.run { setContent { PlaygroundContent(holdsReplies = true) } } }
+        compose.openDeveloperHub()
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        sendFromChat("Scroll while you reply")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Working on your request", substring = true))
+
+        // Scroll with the IME down, as in the round trip.
+        Espresso.closeSoftKeyboard()
+        compose.waitForIdle()
+        compose.onNodeWithTag("chat.jumpToLatest").assertDoesNotExist()
+        assertTrue("The message just sent is in view: ${visibleBubbles()}", "message.sent.1.bubble" in visibleBubbles())
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        compose.onNodeWithTag("chat.jumpToLatest").assertIsDisplayed()
+        compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertIsNotDisplayed()
+        assertTrue("The message just sent has left view: ${visibleBubbles()}", "message.sent.1.bubble" !in visibleBubbles())
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        compose.onNodeWithTag("message.reply.2.bubble", useUnmergedTree = true).assertDoesNotExist()
     }
 
     /** The on-screen conversation is a fresh fixture: no message sent in this run and an empty draft. */
