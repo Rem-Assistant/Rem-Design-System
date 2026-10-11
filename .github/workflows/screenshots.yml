@@ -75,13 +75,13 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
       # macos-14 runners ship the Android SDK pre-installed (ANDROID_HOME set); the
       # android-actions/setup-android action fails trying to install the obsolete "tools"
       # package, so we rely on the pre-installed SDK instead.
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.9"
+          gradle-version: "8.14.4"
       - name: Render components (Paparazzi record)
         working-directory: compose
         run: gradle :RemDesignSystem:recordPaparazziDebug --stacktrace --no-daemon
