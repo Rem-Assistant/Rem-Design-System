@@ -172,4 +172,34 @@ class EvidenceSnapshots {
             state = rememberOnboardingSequencerState(stepCount = 2, initialIndex = 1),
         )
     }
+
+    // Sidebar / New agent / Agent profile (docs/contracts/sidebar-new-agent.md).
+    private val sidebar get() = SidebarEvidence(paparazzi)
+
+    @Test
+    fun sidebarOpen() = sidebar.sidebarOpen()
+
+    @Test
+    fun sidebarClosed() = sidebar.sidebarClosed()
+
+    @Test
+    fun sidebarEmpty() = sidebar.sidebarEmpty()
+
+    @Test
+    fun accountPill() = sidebar.accountPill()
+
+    @Test
+    fun newAgentEmpty() = sidebar.newAgentEmpty()
+
+    @Test
+    fun newAgentFilled() = sidebar.newAgentFilled()
+
+    @Test
+    fun newAgentLargeText() = sidebar.newAgentLargeText()
+
+    @Test
+    fun agentProfileSide() = sidebar.agentProfileSide()
+
+    @Test
+    fun agentProfileMain() = sidebar.agentProfileMain()
 }
