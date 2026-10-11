@@ -15,7 +15,7 @@ import com.rem.designsystem.screens.ChatReplyContext
 import com.rem.designsystem.screens.ChatScreenAction
 import com.rem.designsystem.screens.ChatTranscriptEntry
 import com.rem.designsystem.screens.ChatTimestampReveal
-import com.rem.designsystem.chat.ChatJumpToLatest
+import com.rem.designsystem.screens.ChatJumpToLatest
 import com.rem.designsystem.screens.ChatHeaderBackdrop
 import com.rem.designsystem.screens.ChatTranscriptRules
 import com.rem.designsystem.screens.ComposerAvailability
