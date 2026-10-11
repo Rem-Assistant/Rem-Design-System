@@ -106,7 +106,7 @@ Fixed:
 ### Screens (Wave 3 — Task-detail, Settings; paired SwiftUI + Compose, CI-verified)
 | Screen | Figma | Code | Status |
 |--------|-------|------|--------|
-| TaskDetailScreen (header title/date/meta pills + content slot + pinned RemComposerBar; reuses RemPill/RemSection/RemFaceMark) | master `299:2` · Doc `1071:216` · Proto `1069:145` (Task & Events page) | `Screens/TaskDetailScreen.swift` · `screens/TaskDetailScreen.kt` | ✓ code + Figma doc/proto |
+| TaskDetailScreen (header title/date/meta pills + content slot + pinned RemComposerBar; reuses RemPill/RemSection/RemFaceMark) | master `299:2` · Doc `1071:216` · Proto `1069:145` (Task & Events page) | `Screens/TaskDetailScreen.swift` · `screens/TaskDetailScreen.kt` | ✓ code + Figma doc/proto · contract [`docs/contracts/task-detail.md`](docs/contracts/task-detail.md) |
 | SettingsScreen (large title + grouped RemSection/ListRow, iOS-green toggles, single-row-no-divider) | master `130:44` · Doc `1071:8125` · Proto `1070:858` (Settings page) | `Screens/SettingsScreen.swift` · `screens/SettingsScreen.kt` · new `rows/ListRow.kt` (Compose) | ✓ code + Figma doc/proto |
 
 ### Wave 4 — Agent surfaces (product bets) + Wallet (paired SwiftUI + Compose, CI-verified)
@@ -122,13 +122,13 @@ Fixed:
 | RunningTaskBanner (Live-Activity glass pill: thumbnail + task + status + Stop; **Tone** working/attention) | `432:39` | `AgentSurfaces/RunningTaskBanner.swift` · `agentsurfaces/RunningTaskBanner.kt` | ✓ Wave 4 code |
 | BrowserLiveCard (in-chat card; **State** Opening/Active/Ended) | `524:31` | `AgentSurfaces/BrowserLiveCard.swift` · `agentsurfaces/BrowserLiveCard.kt` | ✓ Wave 4 code |
 | ExecutionTrace (modal "show your work": status pill + ✕, title/subtitle/ts, MAIN/SUBAGENT step rows, Working footer) | `431:21` (Timeline base `482:56`) | `AgentSurfaces/ExecutionTrace.swift` · `agentsurfaces/ExecutionTrace.kt` | ✓ Wave 4 code |
-| **WalletScreen** (large-title template: balance hero + Add-funds CTA · usage + budget meter · recent activity · payment) — **PROPOSAL** | master `1075:121` · Doc `1079:2` (Proposed · Agent surfaces page) | `Screens/WalletScreen.swift` · `screens/WalletScreen.kt` | ✓ code + Figma master/doc (proposal — built to the verified render; product decisions flagged for founder review) |
+| **WalletScreen** (large-title template: balance hero + Add-funds CTA · usage + budget meter · recent activity · payment) — **PROPOSAL** | master `1075:121` · Doc `1079:2` (Proposed · Agent surfaces page) | `Screens/WalletScreen.swift` · `screens/WalletScreen.kt` | ✓ code + Figma master/doc (proposal — built to the verified render; product decisions flagged for founder review) · contract [`docs/contracts/wallet.md`](docs/contracts/wallet.md): the code is now a payment-methods screen, not the balance / Add-funds layout this row describes |
 | TypingDots | TypingDots | `17:3` | `SharedChatTypingDots` | ✓ canonical |
 | ThinkingBlock | ThinkingBlock | `63:20` | — | ✓ canonical |
 | ToolResultCard | ToolResultCard | `62:2` | — | ✓ canonical |
 | ContextualMessage | ContextualMessage | `73:39` | boolean **`Actions`** + swappable **ButtonGroup** footer (`576:31`); true instances: pairing `577:2` (warning, Review/Reset), calendar `577:31` (info, Enable) | ✓ canonical — models `RemContextualMessage` icon + title/subtitle + `actions()` slot |
 | Legacy ContextualMessage ButtonGroup | ButtonGroup | `576:31` | HStack of pill buttons (fill/tertiary, label semibold); swapped into ContextualMessage's Actions slot | ⚠ migrate into canonical `ButtonGroup` `773:17`; do not create a third source |
-| Toast — **Variant** = info / success / warning / error; Message text property; transient, non-actionable, auto-dismisses after 4s by default | Toast | `72:24` | `Sources/RemDesignSystem/Feedback/RemToast.swift` · Compose `compose/RemDesignSystem/feedback/RemToast.kt` | ✓ canonical · DocC/KDoc · parserless SwiftUI/Compose Code Connect |
+| Toast — **Variant** = info / success / warning / error; Message text property; transient, non-actionable, auto-dismisses after 4s by default | Toast | `72:24` | `Sources/RemDesignSystem/Feedback/RemToast.swift` · Compose `compose/RemDesignSystem/feedback/RemToast.kt` | ✓ canonical · DocC/KDoc · parserless SwiftUI/Compose Code Connect · contract [`docs/contracts/toast.md`](docs/contracts/toast.md) |
 | CalendarEventsCard | CalendarEventsCard | `67:2` | — | ✓ canonical |
 | RemindersCard | RemindersCard | `67:481` | — | ✓ canonical |
 | ProposalCard | ProposalCard | `54:55` | — | ✓ canonical |
