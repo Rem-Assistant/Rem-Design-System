@@ -98,6 +98,11 @@ tests: `testCatalogChatReactionsDeliveryModelMenuAndAttachments` (XCUITest) /
 `ChatMessageStates-narrow-light`, `ChatComposerAuto-light`, `AddToChatSheet-light`, `ChatHeader-light`,
 `MessageReactionPicker-light`, `MessageActionSheet-assistant-light`, `MessageActionSheet-own-light`.
 
+## Chat cards
+
+The six in-transcript cards (MessageDraftCard, PollCard, ActionReceipt, ConnectorCard, LoginCard,
+PermissionCard) have their own contract: [`chat-cards.md`](chat-cards.md).
+
 ## Full-screen composition and app boundary
 
 See [`chat-adapter.md`](chat-adapter.md): typed inputs and actions, the latest-outgoing receipt rule, the reply
