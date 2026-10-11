@@ -1383,6 +1383,12 @@ class PlaygroundNavigationTest {
             .toSet()
     }
 
+    /** The shell's simulated reply has landed (accepted after 0.6s, complete 1.5s later) and the turn has ended. */
+    private fun waitForShellReply(tag: String) {
+        waitForTag(tag, timeoutMillis = 10_000)
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+    }
+
     private fun openDeveloperFromShell() {
         openSidebar()
         compose.onNodeWithTag("sidebar.account").performClick()
@@ -1401,6 +1407,9 @@ class PlaygroundNavigationTest {
         returnToShell()
         sendFromChat("Round trip message")
         waitForTag("message.sent.1.bubble")
+        // The shell simulates the reply (route-map "Simulated reply"); let it land first, so the transcript is
+        // settled before scrolling and the round trip compares the same content.
+        waitForShellReply("message.reply.2.bubble")
         compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
         // Scroll up with the keyboard down. With the IME up, the swipe is a drag toward older messages, which
         // dismisses it (#121); the viewport then grows by the IME height and the remaining distance can fall
@@ -1413,12 +1422,14 @@ class PlaygroundNavigationTest {
         waitForTag("chat.jumpToLatest")
         compose.waitForIdle()
         val before = visibleBubbles()
-        assertTrue("Scrolled away from the latest message: $before", "message.sent.1.bubble" !in before && before.isNotEmpty())
+        assertTrue("Scrolled away from the latest message: $before",
+            "message.sent.1.bubble" !in before && "message.reply.2.bubble" !in before && before.isNotEmpty())
 
         openDeveloperFromShell()
         returnToShell()
         compose.waitForIdle()
         compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("message.reply.2.bubble", useUnmergedTree = true).assertExists()
         compose.onNodeWithTag("chat.composerField").assertTextContains("Keep this draft")
         compose.onNodeWithTag("chat.jumpToLatest").assertExists()
         val after = visibleBubbles()

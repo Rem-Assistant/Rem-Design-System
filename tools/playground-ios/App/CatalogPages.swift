@@ -801,6 +801,19 @@ struct PlaygroundChatScreen: View {
         }
         // The hidden bar's title only names Back on the pushed Agent activity screen ("‹ Chat").
         .navigationTitle(AgentActivityDisplay.backTitle)
+        // A root conversation (the shell, which has no fixture-host controls) simulates its reply: the host
+        // accepts, then the reply completes, after the fixture's fixed delays. Keyed by the step, so Stop, the
+        // next step or leaving the conversation (a key change destroys this view) cancels the wait. Other
+        // conversations have no step and keep their explicit host controls.
+        .task(id: fixture.autoReplyStep) {
+            guard let step = self.fixture.autoReplyStep, !PlaygroundLaunch.holdsReplies else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(step.delayMilliseconds))
+            } catch {
+                return // Cancelled: the step changed or the view went away.
+            }
+            self.fixture.advanceAutoReply(step)
+        }
         .navigationDestination(isPresented: $showActivity) {
             // Current state is read from the live Chat header; history never replaces it.
             AgentActivityScreen(fixture.activity.display, selection: $activityTab)

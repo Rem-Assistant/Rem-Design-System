@@ -7,8 +7,9 @@ import com.rem.designsystem.chat.MessageRole
 // `Screens/ChatPlaygroundFixture.swift`. Feeds the canonical compositions exactly as an app adapter
 // would, so the Playground and the app render the same components. It is NOT an app adapter and claims
 // no runtime truth: a message sent here carries no receipt; Delivered / Read / Not delivered appear only
-// through the explicitly named simulateHost… controls, at the illustrative [FixtureTime]. Immutable:
-// every operation returns the next fixture.
+// through the explicitly named simulateHost… controls, at the illustrative [FixtureTime]; a root conversation
+// (the Playground shell, which has no overflow) has its host apply the same acceptance and reply completion
+// after fixed delays (autoReplyStep / advanceAutoReply). Immutable: every operation returns the next fixture.
 
 /**
  * What the page must do in response to a handled action (presentation, not effects). [PresentActivity]
@@ -23,6 +24,29 @@ sealed interface ChatPlaygroundEffect {
     data class PresentMessageActions(val display: ChatMessageActionsDisplay) : ChatPlaygroundEffect
     /** Open the sidebar (header sidebar button on a root conversation). */
     data object OpenSidebar : ChatPlaygroundEffect
+}
+
+/**
+ * One step of a root conversation's simulated reply (Playground shell, route-map "Simulated reply") — twin
+ * of Swift `ChatAutoReplyStep`. The shell has no fixture-host controls, so its host advances the active
+ * turn itself: the host accepts the message, then the reply completes. A step names the turn it belongs to
+ * ([outgoingId]), so it applies only while that turn is current: Stop, a finished turn or a different
+ * conversation make it stale.
+ */
+data class ChatAutoReplyStep(val kind: Kind, val outgoingId: String) {
+    enum class Kind {
+        /** The host accepts the active message (Delivered); the reply streams. */
+        Acceptance,
+        /** The reply completes (a fixture reply is appended); the turn ends. */
+        Completion,
+    }
+
+    /** How long the host waits before applying this step, measured from the previous one (send, then acceptance). */
+    val delayMillis: Long
+        get() = when (kind) {
+            Kind.Acceptance -> ChatPlaygroundFixture.AutoAcceptanceDelayMillis
+            Kind.Completion -> ChatPlaygroundFixture.AutoCompletionDelayMillis
+        }
 }
 
 data class ChatPlaygroundFixture(
@@ -192,6 +216,36 @@ data class ChatPlaygroundFixture(
         )
     }
 
+    // Simulated reply (root conversations).
+
+    /**
+     * The next step of the active turn's simulated reply, or null. Only a root conversation (the Playground
+     * shell, which has no fixture-host controls) simulates its reply; every other conversation waits for the
+     * explicit simulateHost… controls. Sending (no receipt yet) → Acceptance; streaming → Completion; no turn
+     * in flight (never sent, Stop, reply complete) → null.
+     */
+    val autoReplyStep: ChatAutoReplyStep?
+        get() {
+            if (!isRootConversation) return null
+            val id = activeOutgoingId ?: return null
+            val m = message(id) ?: return null
+            return when {
+                composer.state.phase == ComposerPhase.Sending && m.delivery == MessageDelivery.None ->
+                    ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, id)
+                composer.state.phase == ComposerPhase.Streaming -> ChatAutoReplyStep(ChatAutoReplyStep.Kind.Completion, id)
+                else -> null
+            }
+        }
+
+    /** Applies [step] if it is still the current step (same turn, same phase); a stale step returns this unchanged. */
+    fun advanceAutoReply(step: ChatAutoReplyStep): ChatPlaygroundFixture {
+        if (autoReplyStep != step) return this
+        return when (step.kind) {
+            ChatAutoReplyStep.Kind.Acceptance -> simulateHostAcceptance()
+            ChatAutoReplyStep.Kind.Completion -> simulateReplyComplete()
+        }
+    }
+
     fun message(id: String): ChatMessageDisplay? =
         (entries.firstOrNull { it.id == id } as? ChatTranscriptEntry.Message)?.message
 
@@ -215,6 +269,10 @@ data class ChatPlaygroundFixture(
     companion object {
         /** Illustrative fixture time for simulated host evidence. Not a clock reading. */
         const val FixtureTime = "10:24"
+        /** Simulated reply on a root conversation ([autoReplyStep]): send → acceptance. */
+        const val AutoAcceptanceDelayMillis = 600L
+        /** Simulated reply on a root conversation ([autoReplyStep]): acceptance → reply complete. */
+        const val AutoCompletionDelayMillis = 1500L
         const val ReplyTitle = "Replying to Rem"
         /** Reply context title when the person replies to their own message. */
         const val OwnReplyTitle = "Replying to yourself"

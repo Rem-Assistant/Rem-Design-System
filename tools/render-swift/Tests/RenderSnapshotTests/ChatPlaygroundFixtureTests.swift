@@ -313,4 +313,64 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertFalse(ordinary.showsSidebar)
         XCTAssertEqual(ChatPlaygroundFixture.agentEmptyMessage("Rem"), ChatPlaygroundFixture.emptyMessage)
     }
+
+    /// Build 9 shell: a root conversation simulates its reply — acceptance, then completion — fenced to the
+    /// turn it belongs to (route-map "Simulated reply"; twin `rootConversationSimulatesAcceptanceThenReply`).
+    func testRootConversationSimulatesAcceptanceThenReply() {
+        var chat = ChatPlaygroundFixture.root()
+        XCTAssertNil(chat.autoReplyStep, "Nothing to simulate before a send")
+        chat.handle(.composer(.draftChanged("Plan my afternoon")))
+        chat.handle(.composer(.send))
+        let accept = ChatAutoReplyStep(kind: .acceptance, outgoingID: "sent.1")
+        XCTAssertEqual(chat.autoReplyStep, accept)
+        XCTAssertEqual(accept.delayMilliseconds, 600)
+        XCTAssertEqual(chat.message("sent.1")?.delivery, MessageBubble.Delivery.none, "No receipt before acceptance")
+
+        XCTAssertTrue(chat.advanceAutoReply(accept))
+        XCTAssertEqual(chat.message("sent.1")?.delivery, .delivered(at: ChatPlaygroundFixture.fixtureTime))
+        XCTAssertEqual(chat.composer.state.phase, .streaming)
+        let complete = ChatAutoReplyStep(kind: .completion, outgoingID: "sent.1")
+        XCTAssertEqual(chat.autoReplyStep, complete)
+        XCTAssertEqual(complete.delayMilliseconds, 1500)
+        XCTAssertFalse(chat.advanceAutoReply(accept), "A step that already applied is stale")
+
+        XCTAssertTrue(chat.advanceAutoReply(complete))
+        XCTAssertEqual(chat.entries.last?.id, "reply.2")
+        XCTAssertEqual(chat.composer.state.phase, .idle)
+        XCTAssertFalse(chat.header.isWorking)
+        XCTAssertNil(chat.autoReplyStep, "The turn has ended")
+        XCTAssertNil(chat.activeOutgoingID)
+    }
+
+    /// Stop ends the turn, so a pending step no longer applies; and only root conversations simulate.
+    func testAutoReplyStopsOnCancelAndStaysOffOutsideTheShell() throws {
+        var chat = ChatPlaygroundFixture.root()
+        chat.handle(.composer(.draftChanged("Hold on")))
+        chat.handle(.composer(.send))
+        let accept = try XCTUnwrap(chat.autoReplyStep)
+        chat.handle(.composer(.cancel))
+        XCTAssertNil(chat.autoReplyStep, "Stop cancels the simulated reply")
+        let stopped = chat
+        XCTAssertFalse(chat.advanceAutoReply(accept), "A step from the cancelled turn changes nothing")
+        XCTAssertEqual(chat, stopped)
+        XCTAssertEqual(chat.message("sent.1")?.delivery, MessageBubble.Delivery.none, "Stop never fabricates a receipt")
+
+        // The next turn has its own step; the cancelled turn's step stays stale.
+        chat.handle(.composer(.draftChanged("Again")))
+        chat.handle(.composer(.send))
+        XCTAssertEqual(chat.autoReplyStep, ChatAutoReplyStep(kind: .acceptance, outgoingID: "sent.2"))
+        XCTAssertFalse(chat.advanceAutoReply(accept))
+
+        // The Developer hub's Chat and task chat keep their explicit host controls.
+        var hub = ChatPlaygroundFixture(.populated)
+        hub.handle(.composer(.draftChanged("Plan my afternoon")))
+        hub.handle(.composer(.send))
+        XCTAssertNil(hub.autoReplyStep, "Only a root conversation simulates its reply")
+        XCTAssertFalse(hub.advanceAutoReply(ChatAutoReplyStep(kind: .acceptance, outgoingID: "sent.1")))
+        XCTAssertEqual(hub.composer.state.phase, .sending)
+        var task = ChatPlaygroundFixture.taskReply(for: InboxPlaygroundFixture().items[0])
+        task.handle(.composer(.draftChanged("Next step")))
+        task.handle(.composer(.send))
+        XCTAssertNil(task.autoReplyStep)
+    }
 }

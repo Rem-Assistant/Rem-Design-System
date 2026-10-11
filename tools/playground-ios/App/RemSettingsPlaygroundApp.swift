@@ -14,6 +14,13 @@ struct RemSettingsPlaygroundApp: App {
     }
 }
 
+/// Launch seams the journeys pass as launch arguments (route-map "Test seams"). Fixtures only.
+enum PlaygroundLaunch {
+    /// `--hold-replies`: the shell's simulated reply never advances, so a turn stays in flight (Stop shown).
+    /// Only the active-reply journey uses it; every other journey sees the reply complete.
+    static let holdsReplies = ProcessInfo.processInfo.arguments.contains("--hold-replies")
+}
+
 enum LoadFixture: String, CaseIterable { case success = "Success", slow = "Slow", error = "Error" }
 
 /// The established onboarding order (`docs/playground/expansion-design`, Compose `remOnboardingSteps`):

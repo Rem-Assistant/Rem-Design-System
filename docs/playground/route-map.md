@@ -63,6 +63,15 @@ file is its state contract.
     into `Playground()`, and its scroll position into a `SaveableStateProvider` with the same key; when
     the key changes, every other key's fixture and saved state are removed (`removeState`).
     `ChatScreen` restores a saved position relative to the bottom (chat.md rule 10).
+- **Simulated reply (root conversation):** the shell's chat has no fixture-host controls (no overflow), so
+  its host simulates the turn after a send: the host accepts the message (Delivered) after **0.6s**, then
+  the reply completes (a fixture reply is appended, Stop returns to Send) **1.5s** later
+  (`ChatPlaygroundFixture.autoReplyStep` / `advanceAutoReply`, `ChatAutoReplyStep`). Each step names the
+  turn's outgoing message and applies only while that turn is current, so **Stop** (or a key change, which
+  replaces the conversation) cancels it and never fabricates a receipt. The wait keeps running under
+  Settings and Developer (iOS: the hidden shell stays alive; Android: the effect runs in `Playground()`,
+  above the shell). The Developer hub's Chat and task chat are not root conversations: they never
+  auto-advance and keep their explicit host controls. Fixture only: no reply is generated or sent.
 - **Developer-owned inputs:** the Chat conversation fixture (Populated, Empty or Long) and the Settings
   load fixture (Success, Slow or Error). They are chosen only in the Developer hub, and the shell reads
   them. Choosing a different Chat fixture restarts Rem's conversation.
@@ -83,6 +92,17 @@ file is its state contract.
 | Chat → **Agent activity** (pushed) | Header identity `chat.header.identity` | Back (`Chat`, `agentActivity.back`) | Pops to the same conversation | `testShellChatSheetsDismissAndActivityPops` · `shellChatSheetsDismissAndActivityPops` |
 | Chat → **Add to Chat** sheet, **message actions** sheet | `chat.composerAdd`; long press on a message | Done, an action, or Android system Back | Sheets dismiss back to the chat | as above |
 | **Developer** hub: the earlier Playground root, titled "Developer" | Settings' **Developer** button (`settings.developer`); `--developer` at launch on iOS (journey seam) | Close (`developer.close`) | Android system Back at its root closes it; inside, every route behaves as in Build 8 | `testShellDeveloperEntryStaysSeparate` · `shellDeveloperEntryStaysSeparate`; round trip keeps the conversation, draft and scroll, and a fixture change and back (Populated → Long → Populated) resets: `testShellDeveloperRoundTripKeepsConversationDraftAndScroll` · `shellDeveloperRoundTripKeepsConversationDraftAndScroll`; every Build 8 journey runs inside it |
+
+## Test seams
+
+Launch inputs the journeys use (iOS launch arguments; Android intent extras or the same Compose input).
+Ordinary use passes none of them.
+- `--developer` (iOS): open straight into the Developer hub.
+- `--loading-hold` (iOS): the catalog Loading page waits for its explicit completion control.
+- `--hold-replies` (iOS) / `holdReplies` extra, `MainActivity.PlaygroundContent(holdsReplies = true)`
+  (Android): the shell's simulated reply never advances, so a turn stays in flight with Stop shown. Only
+  the active-reply journey uses it (`testShellScrollsWhileAReplyIsInFlight` ·
+  `shellScrollsWhileAReplyIsInFlight`).
 
 ## Developer entry
 

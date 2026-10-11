@@ -138,7 +138,10 @@ Playground exactly as an adapter would. `ChatPlaygroundFixture` answers `activit
 `presentActivity` effect (Kotlin `PresentActivity`) and exposes `activity`, built from its current header plus
 neutral sample history (the Figma master's sample rows are not reproduced). A message sent in a fixture carries **no receipt**. Delivered / Read / Not delivered appear only
 through the explicitly named `simulateHost…` controls (Playground: header overflow → *Fixture host*), at the
-illustrative `fixtureTime` "10:24". They prove composition and interaction, never runtime behaviour.
+illustrative `fixtureTime` "10:24". The one exception is a root conversation (the Build 9 shell, which has no
+overflow): its host applies the same acceptance and reply completion itself after fixed delays
+(`autoReplyStep` / `advanceAutoReply`, route-map "Simulated reply"). They prove composition and interaction,
+never runtime behaviour.
 In the message sheet, a reaction updates the message, Reply targets the reply accessory at that message
 ("Replying to Rem" / "Replying to yourself"), and the host-owned actions (Mark as unread, Copy, Select Text,
 Report, `+`) only show a fixture note naming what the app does; nothing is copied, reported or stored.

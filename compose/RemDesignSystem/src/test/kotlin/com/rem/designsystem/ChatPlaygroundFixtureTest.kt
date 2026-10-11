@@ -3,6 +3,7 @@ package com.rem.designsystem
 import com.rem.designsystem.chat.ChatHeaderStatus
 import com.rem.designsystem.chat.MessageDelivery
 import com.rem.designsystem.screens.AgentActivityCurrent
+import com.rem.designsystem.screens.ChatAutoReplyStep
 import com.rem.designsystem.chat.MessageReaction
 import com.rem.designsystem.screens.ChatComposerAction
 import com.rem.designsystem.screens.ChatMessageAction
@@ -332,5 +333,65 @@ class ChatPlaygroundFixtureTest {
         assertEquals("Ordinary chat keeps Back", true, ordinary.showsBack)
         assertEquals(false, ordinary.showsSidebar)
         assertEquals(ChatPlaygroundFixture.EmptyMessage, ChatPlaygroundFixture.agentEmptyMessage("Rem"))
+    }
+
+    /**
+     * Build 9 shell: a root conversation simulates its reply — acceptance, then completion — fenced to the
+     * turn it belongs to (route-map "Simulated reply"; twin `testRootConversationSimulatesAcceptanceThenReply`).
+     */
+    @Test fun rootConversationSimulatesAcceptanceThenReply() {
+        var chat = ChatPlaygroundFixture.root()
+        assertNull("Nothing to simulate before a send", chat.autoReplyStep)
+        chat = chat.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val accept = ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, "sent.1")
+        assertEquals(accept, chat.autoReplyStep)
+        assertEquals(600L, accept.delayMillis)
+        assertEquals("No receipt before acceptance", MessageDelivery.None, chat.message("sent.1")!!.delivery)
+
+        chat = chat.advanceAutoReply(accept)
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), chat.message("sent.1")!!.delivery)
+        assertEquals(ComposerPhase.Streaming, chat.composer.state.phase)
+        val complete = ChatAutoReplyStep(ChatAutoReplyStep.Kind.Completion, "sent.1")
+        assertEquals(complete, chat.autoReplyStep)
+        assertEquals(1500L, complete.delayMillis)
+        assertEquals("A step that already applied is stale", chat, chat.advanceAutoReply(accept))
+
+        chat = chat.advanceAutoReply(complete)
+        assertEquals("reply.2", chat.entries.last().id)
+        assertEquals(ComposerPhase.Idle, chat.composer.state.phase)
+        assertFalse(chat.header.isWorking)
+        assertNull("The turn has ended", chat.autoReplyStep)
+        assertNull(chat.activeOutgoingId)
+    }
+
+    /** Stop ends the turn, so a pending step no longer applies; and only root conversations simulate. */
+    @Test fun autoReplyStopsOnCancelAndStaysOffOutsideTheShell() {
+        var chat = ChatPlaygroundFixture.root()
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Hold on")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val accept = checkNotNull(chat.autoReplyStep)
+        chat = chat.act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertNull("Stop cancels the simulated reply", chat.autoReplyStep)
+        assertEquals("A step from the cancelled turn changes nothing", chat, chat.advanceAutoReply(accept))
+        assertEquals("Stop never fabricates a receipt", MessageDelivery.None, chat.message("sent.1")!!.delivery)
+
+        // The next turn has its own step; the cancelled turn's step stays stale.
+        chat = chat.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Again")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        assertEquals(ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, "sent.2"), chat.autoReplyStep)
+        assertEquals(chat, chat.advanceAutoReply(accept))
+
+        // The Developer hub's Chat and task chat keep their explicit host controls.
+        val hub = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        assertNull("Only a root conversation simulates its reply", hub.autoReplyStep)
+        assertEquals(hub, hub.advanceAutoReply(ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, "sent.1")))
+        assertEquals(ComposerPhase.Sending, hub.composer.state.phase)
+        val task = ChatPlaygroundFixture.taskReply(InboxPlaygroundFixture().items[0])
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Next step")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        assertNull(task.autoReplyStep)
     }
 }

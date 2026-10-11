@@ -10,7 +10,9 @@ import Foundation
 // It is NOT an app adapter and claims no runtime truth. A message sent here carries **no receipt**
 // (no host acceptance exists). Delivered / Read / Not delivered appear only through the explicitly
 // named `simulateHost…` controls, which stand in for evidence an app would receive; their time is the
-// illustrative `fixtureTime`. Nothing is sent, stored or routed outside this value.
+// illustrative `fixtureTime`. A root conversation (the Playground shell, which has no overflow and so no
+// controls) has its host apply the same acceptance and reply completion after fixed delays
+// (`autoReplyStep` / `advanceAutoReply`). Nothing is sent, stored or routed outside this value.
 //
 // Compose twin: `screens/ChatPlaygroundFixture.kt`. Tests: `ChatPlaygroundFixtureTests.swift` /
 // `ChatPlaygroundFixtureTest.kt`.
@@ -32,6 +34,37 @@ public enum ChatPlaygroundEffect: Equatable, Sendable {
     case openSidebar
 }
 
+/// One step of a root conversation's simulated reply (Playground shell, route-map "Simulated reply"). The
+/// shell has no fixture-host controls, so its host advances the active turn itself: the host accepts the
+/// message, then the reply completes. A step names the turn it belongs to (`outgoingID`), so it applies only
+/// while that turn is current: Stop, a finished turn or a different conversation make it stale.
+public struct ChatAutoReplyStep: Equatable, Hashable, Sendable {
+    public enum Kind: String, Sendable {
+        /// The host accepts the active message (Delivered); the reply streams.
+        case acceptance
+        /// The reply completes (a fixture reply is appended); the turn ends.
+        case completion
+    }
+
+    public let kind: Kind
+    /// The outgoing message whose turn this step advances.
+    public let outgoingID: String
+
+    public init(kind: Kind, outgoingID: String) {
+        self.kind = kind
+        self.outgoingID = outgoingID
+    }
+
+    /// How long the host waits before applying this step, measured from the previous one (the send, then
+    /// the acceptance).
+    public var delayMilliseconds: Int {
+        switch kind {
+        case .acceptance: return ChatPlaygroundFixture.autoAcceptanceDelayMilliseconds
+        case .completion: return ChatPlaygroundFixture.autoCompletionDelayMilliseconds
+        }
+    }
+}
+
 public struct ChatPlaygroundFixture: Equatable, Sendable {
     public enum Conversation: String, CaseIterable, Sendable {
         case populated = "Populated"
@@ -43,6 +76,10 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
 
     /// Illustrative fixture time for simulated host evidence. Not a clock reading.
     public static let fixtureTime = "10:24"
+    /// Simulated reply on a root conversation (`autoReplyStep`): send → acceptance.
+    public static let autoAcceptanceDelayMilliseconds = 600
+    /// Simulated reply on a root conversation (`autoReplyStep`): acceptance → reply complete.
+    public static let autoCompletionDelayMilliseconds = 1500
     public static let replyTitle = "Replying to Rem"
     /// Reply context title when the person replies to their own message.
     public static let ownReplyTitle = "Replying to yourself"
@@ -319,6 +356,35 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
                                                    text: "Here is a fixture reply.", meta: "Automatic · Reply complete")))
         endTurn(cancelled: false)
         composer.select(.ready)
+    }
+
+    // MARK: Simulated reply (root conversations)
+
+    /// The next step of the active turn's simulated reply, or `nil`. Only a root conversation (the Playground
+    /// shell, which has no fixture-host controls) simulates its reply; every other conversation waits for the
+    /// explicit `simulateHost…` controls. Sending (no receipt yet) → `.acceptance`; streaming → `.completion`;
+    /// no turn in flight (never sent, Stop, reply complete) → `nil`.
+    public var autoReplyStep: ChatAutoReplyStep? {
+        guard isRootConversation, let id = activeOutgoingID, let message = self.message(id) else { return nil }
+        if composer.state.phase == .sending && message.delivery == .none {
+            return ChatAutoReplyStep(kind: .acceptance, outgoingID: id)
+        }
+        if composer.state.phase == .streaming {
+            return ChatAutoReplyStep(kind: .completion, outgoingID: id)
+        }
+        return nil
+    }
+
+    /// Applies `step` if it is still the current step (same turn, same phase); a stale step changes nothing.
+    /// Returns whether it applied.
+    @discardableResult
+    public mutating func advanceAutoReply(_ step: ChatAutoReplyStep) -> Bool {
+        guard autoReplyStep == step else { return false }
+        switch step.kind {
+        case .acceptance: simulateHostAcceptance()
+        case .completion: simulateReplyComplete()
+        }
+        return true
     }
 
     // MARK: Helpers

@@ -1307,6 +1307,12 @@ final class PlaygroundNavigationUITests: XCTestCase {
         return Set(bubbles.filter { $0.frame.minY >= viewport.minY && $0.frame.maxY <= viewport.maxY }.map(\.identifier))
     }
 
+    /// The shell's simulated reply has landed (accepted after 0.6s, complete 1.5s later) and the turn has ended.
+    private func waitForShellReply(_ identifier: String) {
+        XCTAssertTrue(element(identifier).waitForExistence(timeout: 10), "The shell's simulated reply completes")
+        XCTAssertEqual(app.buttons["chat.composerSend"].label, "Send", "The reply ends the turn")
+    }
+
     private func openDeveloperFromShell() {
         openSidebar()
         element("sidebar.account").tap()
@@ -1326,6 +1332,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
         returnToShell()
         sendFromChat("Round trip message")
         XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 5))
+        // The shell simulates the reply (route-map "Simulated reply"); let it land first, so the transcript is
+        // settled before scrolling and the round trip compares the same content.
+        waitForShellReply("message.reply.2.bubble")
         let field = app.textViews["chat.composerField"]
         focus(field)
         field.typeText("Keep this draft")
@@ -1348,10 +1357,12 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let before = visibleBubbles()
         XCTAssertFalse(before.isEmpty)
         XCTAssertFalse(before.contains("message.sent.1.bubble"), "Scrolled away from the latest message")
+        XCTAssertFalse(before.contains("message.reply.2.bubble"), "Scrolled away from the latest message")
 
         openDeveloperFromShell()
         returnToShell()
         XCTAssertTrue(element("message.sent.1.bubble").exists, "The sent message is kept")
+        XCTAssertTrue(element("message.reply.2.bubble").exists, "The reply is kept")
         XCTAssertEqual(field.value as? String, "Keep this draft", "The draft is kept")
         XCTAssertTrue(jump.waitForExistence(timeout: 3), "Still scrolled up")
         XCTAssertEqual(visibleBubbles(), before, "The same messages are visible after the round trip")
