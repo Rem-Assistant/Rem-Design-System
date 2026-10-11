@@ -297,6 +297,29 @@ class ChatScreenModelTest {
         assertTrue(ChatJumpToLatest.isVisible(2_000f))
     }
 
+    @Test fun restoredTranscriptRePinsNearLatestAndKeepsDistanceFromTheBottomOtherwise() {
+        val density = 2.625f
+        // Fresh (nothing saved): pinned to the latest message.
+        assertEquals(4000, ChatJumpToLatest.restoredScroll(maxScroll = 4000, savedDistanceFromLatest = null, density = density))
+        // Saved at or near the latest message: re-pinned to the new layout's bottom. Rotation from portrait
+        // (viewport ~900dp) to landscape (~400dp) grows maxScroll by ~500dp; the restore must not strand the
+        // person ~500dp above the latest message (the old offset-based restore did).
+        val portraitMax = 2000
+        val landscapeMax = portraitMax + (500 * density).toInt()
+        for (saved in listOf(0f, 12f, ChatJumpToLatest.THRESHOLD)) {
+            assertEquals("near latest ($saved dp) re-pins", landscapeMax, ChatJumpToLatest.restoredScroll(landscapeMax, saved, density))
+        }
+        // Scrolled up: the same distance from the bottom, in the new layout (not the old raw offset).
+        val up = 640f
+        val restored = ChatJumpToLatest.restoredScroll(landscapeMax, up, density)
+        assertEquals(up, (landscapeMax - restored) / density, 1f / density)
+        assertTrue(ChatJumpToLatest.isVisible((landscapeMax - restored) / density))
+        // Further up than the whole transcript: clamped to the oldest message.
+        assertEquals(0, ChatJumpToLatest.restoredScroll(maxScroll = 300, savedDistanceFromLatest = 5_000f, density = 1f))
+        // A shrunk max with a far-up saved distance never goes negative or past the max.
+        assertEquals(100, ChatJumpToLatest.restoredScroll(maxScroll = 600, savedDistanceFromLatest = 500f, density = 1f))
+    }
+
     @Test fun jumpToLatestGeometryAndAccessibilityMatchSwift() {
         assertEquals("minimum touch target", 44f, ChatJumpToLatest.DIAMETER, 0f)
         assertEquals(12f, ChatJumpToLatest.BOTTOM_SPACING, 0f)

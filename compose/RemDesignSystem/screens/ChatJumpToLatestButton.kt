@@ -28,6 +28,7 @@ import com.rem.designsystem.tokens.RemTheme
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeChild
+import kotlin.math.roundToInt
 
 /**
  * Jump to latest — twin of SwiftUI `ChatJumpToLatest`: the round down-arrow control the full Chat
@@ -64,6 +65,17 @@ object ChatJumpToLatest {
      * visible area. At or near the bottom it hides.
      */
     fun isVisible(distanceFromBottom: Float): Boolean = distanceFromBottom > THRESHOLD
+
+    /**
+     * Scroll offset (px) for a transcript's first measure in a composition. [savedDistanceFromLatest] is how far
+     * (dp) the person was from the latest message when the host saved state (configuration change, or a
+     * `SaveableStateProvider` while the screen was away), or null for a fresh transcript. Fresh, or saved at or
+     * near the latest message, re-pins to [maxScroll]; saved further up keeps the same distance from the bottom
+     * of the new layout, so a rotation that grows `maxValue` does not strand someone above the latest message.
+     */
+    fun restoredScroll(maxScroll: Int, savedDistanceFromLatest: Float?, density: Float): Int =
+        if (savedDistanceFromLatest == null || !isVisible(savedDistanceFromLatest)) maxScroll
+        else (maxScroll - (savedDistanceFromLatest * density).roundToInt()).coerceIn(0, maxScroll)
 }
 
 /**

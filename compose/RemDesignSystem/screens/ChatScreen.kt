@@ -24,7 +24,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -267,24 +267,45 @@ fun ChatScreen(
         // Keep the newest content in view (Swift: defaultScrollAnchor(.bottom)) while the person is at or
         // near the latest message. Scrolled further up, their position is kept and jump to latest stays.
         if (emptyState == null && !jumpEvidence) {
-            // `anchored` is saveable with the scroll state: a transcript restored by the host (configuration
-            // change, or a SaveableStateProvider while the screen was away) keeps the person's position instead
-            // of being re-pinned to the latest message on its first measure.
-            var anchored by rememberSaveable { mutableStateOf(false) }
+            // The person's distance from the latest message is saved (dp, read at save time) rather than the raw
+            // offset: after a configuration change or a SaveableStateProvider round trip the layout may differ
+            // (rotation changes the viewport and so `maxValue`), so the restore is measured from the bottom. Near
+            // the latest message it re-pins; scrolled further up it keeps the same distance from the bottom.
             val followedMax = remember { intArrayOf(-1) }
+            val position = rememberSaveable(saver = ChatTranscriptPosition.saver) { ChatTranscriptPosition(null) }
+            position.current = {
+                if (scroll.maxValue == Int.MAX_VALUE || followedMax[0] < 0) position.restoredDistance
+                else ChatEdgeBackdrop.distanceFromLatest(scroll.maxValue.toFloat(), scroll.value.toFloat()) / density.density
+            }
             LaunchedEffect(scroll.maxValue) {
                 if (scroll.maxValue == Int.MAX_VALUE) return@LaunchedEffect // not measured yet
-                val previousMax = when {
-                    followedMax[0] >= 0 -> followedMax[0]
-                    anchored -> scroll.maxValue
-                    else -> 0
+                if (followedMax[0] < 0) {
+                    // First measure here: a fresh transcript pins to the latest message; a restored one is placed
+                    // relative to the bottom of the new layout.
+                    scroll.scrollTo(ChatJumpToLatest.restoredScroll(scroll.maxValue, position.restoredDistance, density.density))
+                } else {
+                    val nearLatest = !ChatJumpToLatest.isVisible((followedMax[0] - scroll.value) / density.density)
+                    if (nearLatest) scroll.scrollTo(scroll.maxValue)
                 }
-                val nearLatest = !anchored || !ChatJumpToLatest.isVisible((previousMax - scroll.value) / density.density)
-                if (nearLatest) scroll.scrollTo(scroll.maxValue)
-                anchored = true
                 followedMax[0] = scroll.maxValue
             }
         }
+    }
+}
+
+/**
+ * Saved transcript position: how far (dp) the person was from the latest message when the host saved state.
+ * [restoredDistance] is null for a fresh transcript (nothing saved, or saved before the first measure).
+ */
+private class ChatTranscriptPosition(val restoredDistance: Float?) {
+    /** Reads the live distance at save time; set by the composition. */
+    var current: () -> Float? = { restoredDistance }
+
+    companion object {
+        val saver = Saver<ChatTranscriptPosition, Float>(
+            save = { it.current() },
+            restore = { ChatTranscriptPosition(it) },
+        )
     }
 }
 

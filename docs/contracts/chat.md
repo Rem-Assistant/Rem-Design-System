@@ -143,6 +143,12 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      the bottom the transcript still follows new content (iOS `defaultScrollAnchor(.bottom)`, unchanged;
      Compose follows only while within the threshold, where it previously always snapped to the bottom).
      No unread indicator yet (follow-up).
+   - **Restored transcript** (configuration change, or a host's saved state while the screen was away): the
+     position is restored **relative to the bottom**, because the layout may differ (rotation changes the
+     viewport and so the scroll range). Saved at or near the latest message (within the threshold) it re-pins
+     to the latest; saved further up it keeps the same distance from the bottom. Compose saves that distance
+     (dp) at save time (`ChatJumpToLatest.restoredScroll`; `ChatScreenModelTest`,
+     `ChatScreenRestorationTest`); iOS keeps `defaultScrollAnchor(.bottom)` across size changes.
 
 11. **Swipe down to dismiss the keyboard** (`ChatKeyboardDismiss`, Swift and Kotlin share the constants and
    the rule; Samuel, 2026-10-11). While the composer field is focused, a clear downward swipe that **starts on
