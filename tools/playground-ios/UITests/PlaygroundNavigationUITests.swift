@@ -36,15 +36,29 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // A control can be hittable yet sit in the bottom home-indicator strip, where synthesized taps
         // are intermittently swallowed (run 38094402869: the composer's Add at y 808-852 of 852 never
         // opened its sheet). Scroll it clear of that strip as well.
-        // A docked control that scrolling cannot move stops after one unproductive swipe.
-        let bottomGestureEdge = app.windows.firstMatch.frame.maxY - 34
+        // Scroll with a slow drag in the page's leading gutter, as revealAboveKeyboard does: a fast
+        // full-window swipe from mid-screen starts on a long-pressable bubble and, right after a menu
+        // or dialog closes, can scroll nothing (run 38112625726: two swipes left the Chat page at
+        // offset 0 and Add in the strip). A docked control that scrolling cannot move stops after two
+        // unproductive drags in a row, so one dropped drag does not end the reveal.
+        let window = app.windows.firstMatch.frame
+        let bottomGestureEdge = window.maxY - 34
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let from = origin.withOffset(CGVector(dx: window.minX + 8, dy: window.minY + window.height * 0.75))
+        let to = origin.withOffset(CGVector(dx: window.minX + 8, dy: window.minY + window.height * 0.35))
         var lastMaxY: CGFloat?
+        var unproductive = 0
         for _ in 0..<8 {
             let hittable = element.isHittable
             if hittable && element.frame.maxY <= bottomGestureEdge { break }
-            if hittable, let lastMaxY, abs(lastMaxY - element.frame.maxY) < 1 { break }
+            if hittable, let lastMaxY, abs(lastMaxY - element.frame.maxY) < 1 {
+                unproductive += 1
+                if unproductive >= 2 { break }
+            } else {
+                unproductive = 0
+            }
             lastMaxY = hittable ? element.frame.maxY : nil
-            app.swipeUp()
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
     }
