@@ -1,0 +1,28 @@
+name: PR size
+# Every pull request changes at most 150 files and 750,000 bytes of diff (tools/pr-size). Larger work
+# lands as stacked PRs. Read-only: no secrets, no write token.
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: pr-size-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  size:
+    name: PR size limit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Self-test
+        run: python3 -m unittest discover -s tools/pr-size -p 'test_*.py'
+      - name: At most 150 files and 750,000 bytes of diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 tools/pr-size/check_pr_size.py "$BASE_SHA" "$HEAD_SHA"
