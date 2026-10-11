@@ -127,8 +127,11 @@ class ScreenshotsIOSDiagnosticsContractTests(unittest.TestCase):
         self.assertLess(package.index("tar -czf"), package.index("mv "))
         extract = steps[self.index_of(steps, "name: Extract actual playground screenshots")]
         self.assertIn("HOMEBREW_NO_AUTO_UPDATE: '1'", extract)
-        for name in ("settings-ios-build-log", "settings-ios-journeys-", "settings-swiftui-screenshots"):
+        for name in ("settings-ios-build-log", "settings-ios-journeys-"):
             self.assertIn("if-no-files-found: error", steps[self.index_of(steps, f"name: {name}")])
+        # Scratch branch only (focused dispatch): screenshots are required unless a focused list was selected.
+        self.assertIn("if-no-files-found: ${{ inputs.ios_test == '' && 'error' || 'warn' }}",
+                      steps[self.index_of(steps, "name: settings-swiftui-screenshots")])
 
 
 if __name__ == "__main__":

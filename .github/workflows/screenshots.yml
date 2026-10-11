@@ -18,6 +18,10 @@ on:
         description: Optional comma-separated iOS test methods for a focused run
         type: string
         default: ''
+      android_test:
+        description: Optional comma-separated Android test methods (Class#method) for a focused run
+        type: string
+        default: ''
   pull_request:
     paths:
       - "tools/playground-ios/**"
@@ -44,7 +48,7 @@ concurrency:
 jobs:
   swiftui:
     name: Render SwiftUI (iOS)
-    if: inputs.platform != 'android'
+    if: inputs.platform != 'android' && inputs.ios_test == '' && inputs.android_test == ''
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -84,7 +88,7 @@ jobs:
 
   compose:
     name: Render Compose (Android)
-    if: inputs.platform != 'ios'
+    if: inputs.platform != 'ios' && inputs.ios_test == '' && inputs.android_test == ''
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -117,7 +121,7 @@ jobs:
 
   settings-ios:
     name: Exercise Settings playground (iOS)
-    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence') || (github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'claude/build9-shell-integration' && github.event.pull_request.head.repo.full_name == github.repository)) && inputs.platform != 'android'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence') || (github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'claude/build9-shell-integration' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref_name == 'claude/build9-focused-journeys')) && inputs.platform != 'android'
     runs-on: macos-14
     timeout-minutes: 45
     # Full runs split the inventory (tools/playground-ios/ios_test_shards.py) across three parallel jobs on
@@ -193,7 +197,7 @@ jobs:
         with:
           name: settings-swiftui-screenshots-${{ matrix.shard }}
           path: artifacts/settings-swiftui/*.png
-          if-no-files-found: error
+          if-no-files-found: ${{ inputs.ios_test == '' && 'error' || 'warn' }}
 
   settings-ios-shards:
     name: Check iOS shard coverage
@@ -220,7 +224,7 @@ jobs:
 
   settings-android:
     name: Exercise Settings playground (Android)
-    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence') || (github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'claude/build9-shell-integration' && github.event.pull_request.head.repo.full_name == github.repository)) && inputs.platform != 'ios'
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence') || (github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'claude/build9-shell-integration' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref_name == 'claude/build9-focused-journeys')) && inputs.platform != 'ios'
     runs-on: ubuntu-latest
     steps:
       - name: Constrain expansion native evidence target
@@ -240,6 +244,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Validate focused Android selection
+        env:
+          ANDROID_TEST: ${{ inputs.android_test }}
+        run: |
+          set -euo pipefail
+          [[ -z "$ANDROID_TEST" ]] && exit 0
+          # Each entry is Class#method in the demo test package; nothing else reaches Gradle.
+          [[ "$ANDROID_TEST" =~ ^[A-Z][A-Za-z0-9]*Test#[a-z][A-Za-z0-9_]*(,[A-Z][A-Za-z0-9]*Test#[a-z][A-Za-z0-9_]*)*$ ]] || { echo 'Invalid Android test method list.' >&2; exit 2; }
+          echo "ANDROID_TEST_CLASSES=$(sed -E 's/(^|,)/\1com.rem.designsystem.demo./g' <<< "$ANDROID_TEST")" >> "$GITHUB_ENV"
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -255,16 +268,28 @@ jobs:
           # test status and capture collection in one shell process.
           script: >-
             result=0;
-            gradle :demo:connectedDebugAndroidTest --stacktrace --no-daemon || result=$?;
+            gradle :demo:connectedDebugAndroidTest ${ANDROID_TEST_CLASSES:+-Pandroid.testInstrumentationRunnerArguments.class=$ANDROID_TEST_CLASSES} --stacktrace --no-daemon || result=$?;
             mkdir -p ../artifacts/settings-compose;
             adb pull /sdcard/Pictures/RemSettingsPlayground/. ../artifacts/settings-compose/ || true;
             exit "$result"
+      - name: Confirm focused Android tests ran
+        if: inputs.android_test != ''
+        env:
+          ANDROID_TEST: ${{ inputs.android_test }}
+        run: |
+          set -euo pipefail
+          # A class filter that matches nothing reports success with 0 tests; every selected method must have run.
+          IFS=',' read -r -a selected <<< "$ANDROID_TEST"
+          for entry in "${selected[@]}"; do
+            grep -rqE "<testcase name=\"${entry#*#}\" classname=\"com\.rem\.designsystem\.demo\.${entry%%#*}\"" compose/demo/build/outputs/androidTest-results/ \
+              || { echo "Selected Android test did not run: $entry" >&2; exit 1; }
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: settings-compose-screenshots
           path: artifacts/settings-compose/*.png
-          if-no-files-found: error
+          if-no-files-found: ${{ inputs.android_test == '' && 'error' || 'warn' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
