@@ -20,6 +20,10 @@ Approved designs used:
 - `ChatScreen` (`docs/contracts/chat.md`);
 - the Build 8 Settings destinations (`docs/contracts/settings-playground.md`).
 
+Parity acceptance for the shell (retention, resets, covered-surface semantics, focus, Developer entry
+placement, render pairs): [`docs/contracts/playground-shell.md`](../contracts/playground-shell.md). This
+file is its state contract.
+
 ## Shell state contract
 
 - **Source of truth:** `PlaygroundShellFixture`, one value per app run. The hosts render it and add
@@ -117,8 +121,10 @@ The shell journeys close the hub and drive the shell itself.
 1. **Header overflow on the root conversation.** The approved frame `2702:2351` shows `⋯`, but no menu
    content is approved. The shell omits it, and the fixture-host controls it used to open stay in the
    Developer hub's Chat.
-2. **Developer entry placement.** A labelled button in Settings' top bar. The alternatives are a
-   "Developer" section at the end of Settings, or a hidden gesture with a visible label.
+2. **Developer entry placement.** A labelled button in Settings' top bar: iOS leading
+   (`.topBarLeading`, Done trailing), Android trailing `actions` (Back is the leading navigation icon),
+   each following its platform's top-bar convention. The alternatives are a "Developer" section at the
+   end of Settings, or a hidden gesture with a visible label.
 3. **Agenda and Inbox.** They are reachable only under Developer until their place in the shell is
    decided. The sidebar draft still shows them; the approved decision removed them.
 4. **Search** in the sidebar has no surface, and tapping it does nothing.
