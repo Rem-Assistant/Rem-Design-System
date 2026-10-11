@@ -5,6 +5,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 import sys
 import unittest
@@ -266,6 +267,66 @@ class PackagingTests(unittest.TestCase):
                     dict(failure, detail='provider body'), {'phase': 'upload', 'guard': 'x'}):
             with self.assertRaises(ValueError):
                 summary.public_record(dict(data, failure=bad))
+
+    def test_upload_failure_codes_and_build_record_are_allowlisted(self):
+        data = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
+                    distribution='upload_started', physical_device='unverified', visual_review_url=URL)
+        fastfile = (Path(__file__).parent / 'fastlane' / 'Fastfile').read_text()
+        classifier = fastfile[fastfile.index('UPLOAD_GUARD_PATTERNS = ['):fastfile.index('def upload_build_record')]
+        codes = set(re.findall(r"'(upload_[a-z_]+)'", classifier))
+        self.assertEqual(codes, {'upload_transporter_missing', 'upload_app_not_found', 'upload_build_number_used',
+                                 'upload_auth_failed', 'upload_processing_timeout', 'upload_user_error_unclassified',
+                                 'upload_itms_'})
+        codes = (codes - {'upload_itms_'}) | {'upload_itms_90062', 'upload_itms_90186_90062_04238'}
+        for code in sorted(codes):
+            for value in summary.UPLOAD_BUILD_RECORDS:
+                with self.subTest(code=code, record=value):
+                    failure = {'phase': 'upload', 'guard': code, 'http_status': None, 'upload_build_record': value}
+                    record = summary.public_record(dict(data, failure=failure))
+                    self.assertEqual(record['failure'], failure)
+                    self.assertEqual(summary.failure_line(record), 'Distribution state: upload_started; stopped in '
+                                     f'phase upload at guard {code}; HTTP status none; build record {value}')
+        self.assertEqual(summary.UPLOAD_BUILD_RECORDS, ('present', 'absent', 'unknown'))
+        base = {'phase': 'upload', 'guard': 'upload_auth_failed', 'http_status': None}
+        self.assertNotIn('build record', summary.failure_line(summary.public_record(dict(data, failure=base))))
+        secret = 'Authentication credentials are missing or invalid for team 9ZZ'
+        for bad in (dict(base, upload_build_record='maybe'), dict(base, upload_build_record=None),
+                    dict(base, upload_build_record=True), dict(base, upload_build_record=['absent']),
+                    dict(base, upload_build_record=secret), dict(base, guard=secret),
+                    dict(base, phase='group_check', upload_build_record='absent'),
+                    dict(base, upload_build_record='absent', message=secret)):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                summary.public_record(dict(data, failure=bad))
+
+    def test_upload_failure_summary_never_carries_provider_text(self):
+        secret = 'ITMS-90062: team 9ZZ secret@example.com'
+        record = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
+                      distribution='upload_started', physical_device='unverified', visual_review_url=URL,
+                      store_response=secret,
+                      failure={'phase': 'upload', 'guard': 'upload_itms_90062', 'http_status': None,
+                               'upload_build_record': 'absent'})
+        with tempfile.TemporaryDirectory() as tmp:
+            state, step = Path(tmp) / 'distribution.json', Path(tmp) / 'summary.md'
+            state.write_text(json.dumps(record))
+            out = io.StringIO()
+            with patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(step)}), \
+                    patch.object(sys, 'argv', ['summary.py', 'result', str(state)]), patch('sys.stdout', out):
+                summary.main()
+            self.assertEqual(out.getvalue().strip(), 'Distribution state: upload_started; stopped in phase upload '
+                             'at guard upload_itms_90062; HTTP status none; build record absent')
+            published = out.getvalue() + step.read_text()
+            for leak in ('9ZZ', 'secret@example.com', 'ITMS-90062', 'store_response'):
+                self.assertNotIn(leak, published)
+            self.assertIn('"upload_build_record": "absent"', step.read_text())
+            # A leaked message in any failure field suppresses the whole record rather than publishing it.
+            record['failure']['upload_build_record'] = secret
+            state.write_text(json.dumps(record))
+            out = io.StringIO()
+            with patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(step)}), \
+                    patch.object(sys, 'argv', ['summary.py', 'result', str(state)]), patch('sys.stdout', out):
+                summary.main()
+            self.assertEqual(out.getvalue(), '')
+            self.assertNotIn('9ZZ', step.read_text())
 
 
 class StorageTests(unittest.TestCase):

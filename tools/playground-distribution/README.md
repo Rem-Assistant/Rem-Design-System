@@ -263,6 +263,20 @@ guard code from the Fastfile (for example `group_other_access_flag_unknown`,
 the HTTP status of a failed Apple call. Never the provider's message, body or credentials.
 Read that line before reconciling provider state or asking for an account change.
 
+A failed TestFlight upload (`upload_to_testflight`) is classified in process, before the
+private log is deleted, by an allowlist of patterns in the Fastfile. The exception message is
+matched and dropped, never written, logged or printed; the exception is re-raised unchanged.
+Codes: `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up to three, in
+order, joined by `_`; these take precedence and already cover a used or lower build number),
+`upload_transporter_missing`, `upload_app_not_found`, `upload_build_number_used`,
+`upload_auth_failed`, `upload_processing_timeout`, and otherwise
+`upload_user_error_unclassified`. After an upload failure the Fastfile makes one read-only
+`GET /v1/builds?filter[app]=…&filter[version]=<build number>` in its own rescue and records
+`upload_build_record` (`present`, `absent` or `unknown`), so the public line ends with, for
+example, `build record absent`. That lookup never replaces the upload's guard code or HTTP
+status. `present` means Apple has a record for this number: reconcile it before any rerun
+and never re-upload the same number.
+
 ## Validation
 
 ```sh

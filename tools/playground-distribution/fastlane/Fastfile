@@ -12,6 +12,7 @@ skip_docs
 $release_phase = 'inputs'
 $release_guard = nil
 $release_http = nil
+$release_upload_build_record = nil # 'present' | 'absent' | 'unknown', set only after an upload failure
 
 def release_phase(name)
   $release_phase = name
@@ -34,6 +35,48 @@ def apple_request(method, path, payload = nil)
   require_release(response.code.to_i.between?(200, 299), "Apple API failed (HTTP #{response.code}); no response body printed",
     'apple_api_http')
   response.body.to_s.empty? ? {} : JSON.parse(response.body)
+end
+
+# TestFlight upload failures: fastlane/pilot raises UI.user_error! with provider text. Map that text to a
+# fixed code through an allowlist of patterns, in process; the message itself is never written, logged
+# or printed. Apple's ITMS-<5 digits> codes win (they already cover a used or lower build number).
+UPLOAD_GUARD_PATTERNS = [
+  ['upload_transporter_missing',
+   /(transporter|altool).{0,80}(not found|could not be found|cannot be found|not executable|no such file|missing)|(could ?n[o']t|unable to|cannot) (find|locate|execute|run) .{0,40}(transporter|altool)/i],
+  ['upload_app_not_found',
+   /(could ?n[o']t|unable to|cannot) find (the |an |your )?app\b|\bapp (was )?not found|no app (found|with)/i],
+  ['upload_build_number_used',
+   /(bundle ?version|build number|build version|CFBundleVersion).{0,120}(already (been )?used|already exists|already been uploaded|must be (higher|greater)|has to be (higher|greater))/i],
+  ['upload_auth_failed',
+   /authentication credentials are missing or invalid|\b(http|status(\s*code)?|statuscode|response(\s*code)?|responded with|error code)\b[\s:=#]*401\b|\b401\s+unauthori[sz]ed|unauthori[sz]ed|authentication (failed|failure|error)|not authenticated|invalid (credentials|api key)/i],
+  ['upload_processing_timeout',
+   /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i]
+].freeze
+
+def upload_guard(message)
+  text = message.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
+  itms = text.scan(/ITMS-(\d{5})/).flatten.uniq.first(3)
+  return 'upload_itms_' + itms.join('_') unless itms.empty?
+  UPLOAD_GUARD_PATTERNS.each { |code, pattern| return code if text.match?(pattern) }
+  'upload_user_error_unclassified'
+rescue StandardError
+  'upload_user_error_unclassified'
+end
+
+# One read-only lookup after an upload failure: did Apple create a build record for this number?
+# Its own rescue; never replaces the upload's guard code or HTTP status, and never prints a response.
+def upload_build_record(number)
+  guard, http = $release_guard, $release_http
+  begin
+    apple_key # Refresh the short-lived token locally (no request); an upload can outlast it.
+    data = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}")['data']
+    return 'unknown' unless data.is_a?(Array)
+    data.empty? ? 'absent' : 'present'
+  rescue StandardError
+    'unknown'
+  ensure
+    $release_guard, $release_http = guard, http
+  end
 end
 
 def apple_key
@@ -155,10 +198,18 @@ lane :distribute do
       File.write(state_path, JSON.pretty_generate(receipt))
       release_phase('upload')
       # No external distribution, beta review submission, tester changes, public links or production release.
-      upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
-        ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
-        wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
-        expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+      begin
+        upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
+          ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
+          wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
+          expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+      rescue StandardError => e
+        # pilot fails through UI.user_error! (a StandardError). Interrupts and exits pass straight through to
+        # the lane rescue, with no classification or lookup. Fixed code only; the message is dropped here.
+        $release_guard = upload_guard(e.message)
+        $release_upload_build_record = upload_build_record(number)
+        raise
+      end
       release_phase('group_recheck')
       apple_key # Refresh the short-lived API token after processing.
       apple_group # Recheck privacy/manual distribution before assignment.
@@ -205,7 +256,9 @@ lane :distribute do
     # Record where it stopped: phase, fixed guard code (or the exception class only) and an HTTP status.
     # Never the exception message, provider body or credential material.
     guard = $release_guard || ('exception_' + e.class.name.to_s.gsub(/[^A-Za-z0-9]+/, '_').downcase)[0, 64]
-    failed = (receipt || {}).merge('failure' => {'phase' => $release_phase, 'guard' => guard, 'http_status' => $release_http})
+    failure = {'phase' => $release_phase, 'guard' => guard, 'http_status' => $release_http}
+    failure['upload_build_record'] = $release_upload_build_record if $release_upload_build_record
+    failed = (receipt || {}).merge('failure' => failure)
     File.write(state_path, JSON.pretty_generate(failed)) if receipt
     raise
   end
