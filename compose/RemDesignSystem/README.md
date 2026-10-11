@@ -58,6 +58,14 @@ form diverges.
   Reproduce fidelity is verified on the render runners against `tasks/refs/onboarding/01-sign-in.png`
   and `02-consent.png` (this repo has no Android/iOS toolchain — the reference-vs-evidence split).
 
+- **`compose/RemDesignSystem/navigation/*.kt`** — the sidebar (`RemSidebar`, `RemSidebarContainer`,
+  `RemAccountPill`, inputs `RemSidebarModel.kt`) and **`compose/RemDesignSystem/agents/*.kt`** — New
+  agent setup, agent avatar and agent profile About (`NewAgentSetupScreen`, `AgentAvatar`,
+  `AgentProfileHeader` / `AgentProfileAbout`, inputs `AgentModels.kt` / `NewAgentSetupModel.kt` /
+  `AgentProfileModel.kt`). Twins of `Sources/RemDesignSystem/Navigation` + `Agents`; contract
+  `docs/contracts/sidebar-new-agent.md`. Display models + callbacks only. Tests:
+  `RemSidebarModelTest`, `AgentDisplayModelTest`, Paparazzi `SidebarEvidence` (run from `EvidenceSnapshots`).
+
 ## Status / verify
 Generator output is verified here (Node). **Compose compilation is not** — this repo has no Android
 toolchain; that's the Agent Factory Android runner's job (the reference-vs-evidence split). A follow-up

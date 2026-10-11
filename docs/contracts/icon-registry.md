@@ -23,9 +23,17 @@ to share an identical outline; platform fidelity is part of the match.
 | morning / sunrise | `sunrise` | `wb_twilight` | **0** | check-in row — provisional Android vector fallback ‡ |
 | midday / sun | `sun.max` | `wb_sunny` | **0** | check-in row — provisional Android vector fallback ‡ |
 | evening / moon | `moon.stars` | `bedtime` | **0** | check-in row — provisional Android vector fallback ‡ |
+| search | `magnifyingglass` | `search` | **0** | sidebar top action (only one) |
+| side agent chat | `bubble.left` | `chat_bubble` | **0** | sidebar side-agent row leading |
+| add / new | `plus` | `add` | **0** | sidebar **New agent** button |
+| account menu | `chevron.up.chevron.down` | `unfold_more` | **0** | sidebar account pill (opens Settings) |
+| add a service | `link` | `link` | **0** | connected-services add row (tinted tile) |
+| calendar service | `calendar` | `calendar_month` | **0** | connected calendar row (tinted tile) |
+| agent icon / heart | `heart.fill` | `favorite` | **1** | side-agent avatar glyph |
+| close sheet | `xmark` | `close` | **0** | New agent setup close button (top leading) |
 
 ‡ **Provisional Android vector fallback for the four check-in rows.** These four glyphs are **not** in the baked
-`RemMaterialSymbols` static subset (which carries only the five consent/sign-in codepoints), and
+`RemMaterialSymbols` static subset (which carries the consent/sign-in, Settings and sidebar codepoints, not these four), and
 regenerating that subset needs the offline font toolchain (`tools/material-symbols/subset.py` +
 `fonttools` + the upstream variable font). Until a subset regeneration lands, Android renders these
 rows from the **Material Icons** vector set (`androidx.compose.material:material-icons-extended`) via

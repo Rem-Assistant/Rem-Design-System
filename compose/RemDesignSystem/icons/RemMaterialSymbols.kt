@@ -166,4 +166,42 @@ object RemMaterialSymbols {
     val Models = RemMaterialSymbol("Settings models", "memory", 0xE322, 0f)
     val Wallet = RemMaterialSymbol("Settings wallet", "wallet", 0xF8FF, 0f)
     val Voice = RemMaterialSymbol("Settings voice", "graphic_eq", 0xE1B8, 0f)
+
+    // ── Sidebar + New agent flow (docs/contracts/sidebar-new-agent.md) ──────────────────────────
+
+    /** `search` — meaning "search", the sidebar's only top action. FILL **0** (pairs with iOS `magnifyingglass`). U+EF7A. */
+    val Search = RemMaterialSymbol(meaning = "search", glyphName = "search", codePoint = 0xEF7A, fill = 0f)
+
+    /**
+     * `chat_bubble` — meaning "side agent chat", the side-agent row leading glyph. FILL **0** (outline;
+     * pairs with iOS `bubble.left`). U+E0CB.
+     */
+    val SideAgentChat = RemMaterialSymbol(meaning = "side agent chat", glyphName = "chat_bubble", codePoint = 0xE0CB, fill = 0f)
+
+    /** `add` — meaning "new agent", the sidebar's New agent action. FILL **0** (pairs with iOS `plus`). U+E145. */
+    val Add = RemMaterialSymbol(meaning = "add / new", glyphName = "add", codePoint = 0xE145, fill = 0f)
+
+    /**
+     * `unfold_more` — meaning "account menu", the account pill's trailing affordance. FILL **0** (pairs
+     * with iOS `chevron.up.chevron.down`). U+E5D7.
+     */
+    val AccountMenu = RemMaterialSymbol(meaning = "account menu", glyphName = "unfold_more", codePoint = 0xE5D7, fill = 0f)
+
+    /** `link` — meaning "add a service", the connected-services add row. FILL **0** (pairs with iOS `link`). U+E250. */
+    val AddService = RemMaterialSymbol(meaning = "add a service", glyphName = "link", codePoint = 0xE250, fill = 0f)
+
+    /**
+     * `calendar_month` — meaning "calendar service", a connected calendar row. FILL **0** (outline;
+     * pairs with iOS `calendar`). U+EBCC.
+     */
+    val CalendarService = RemMaterialSymbol(meaning = "calendar service", glyphName = "calendar_month", codePoint = 0xEBCC, fill = 0f)
+
+    /**
+     * `favorite` — meaning "agent icon · heart", a side-agent avatar glyph. FILL **1** (pairs with iOS
+     * `heart.fill`). U+E87E.
+     */
+    val AgentHeart = RemMaterialSymbol(meaning = "agent icon / heart", glyphName = "favorite", codePoint = 0xE87E, fill = 1f)
+
+    /** `close` — meaning "close sheet", New agent setup's top-leading close button. FILL **0** (pairs with iOS `xmark`). U+E5CD. */
+    val Close = RemMaterialSymbol(meaning = "close sheet", glyphName = "close", codePoint = 0xE5CD, fill = 0f)
 }

@@ -47,6 +47,10 @@ data class RemColorScheme(
     val systemOrange: Color,
     val systemIndigo: Color,
     val systemPurple: Color,
+    val systemPink: Color,
+    val systemMint: Color,
+    val systemTeal: Color,
+    val systemCyan: Color,
     val brandBlue: Color,
     val brandBlueOnFill: Color
 )
@@ -70,6 +74,10 @@ val RemLightColors = RemColorScheme(
     systemOrange = Color(0xFFFF9500),
     systemIndigo = Color(0xFF5856D6),
     systemPurple = Color(0xFFAF52DE),
+    systemPink = Color(0xFFFF2D55),
+    systemMint = Color(0xFF00C7BE),
+    systemTeal = Color(0xFF30B0C7),
+    systemCyan = Color(0xFF32ADE6),
     brandBlue = Color(0xFF0C50FF),
     brandBlueOnFill = Color(0xFF0C50FF)
 )
@@ -93,6 +101,10 @@ val RemDarkColors = RemColorScheme(
     systemOrange = Color(0xFFFF9F0A),
     systemIndigo = Color(0xFF5E5CE6),
     systemPurple = Color(0xFFBF5AF2),
+    systemPink = Color(0xFFFF375F),
+    systemMint = Color(0xFF63E6E2),
+    systemTeal = Color(0xFF40C8E0),
+    systemCyan = Color(0xFF64D2FF),
     brandBlue = Color(0xFF0C50FF),
     brandBlueOnFill = Color(0xFF6E9BFF)
 )
@@ -135,6 +147,7 @@ object RemTypography {
     val largeTitle = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
     val title1 = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
     val title1Bold = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold, fontFamily = Inter)
+    val title2Bold = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = Inter, letterSpacing = -0.26.sp)
     val title3 = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, fontFamily = Inter, letterSpacing = -0.45.sp)
     val title3Bold = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = Inter, letterSpacing = -0.45.sp)
     val body = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
