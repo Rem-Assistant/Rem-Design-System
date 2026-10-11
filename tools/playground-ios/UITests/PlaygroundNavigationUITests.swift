@@ -1084,6 +1084,13 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 10), .completed, message)
     }
 
+    /// sidebar-new-agent.md, push container accessibility: on iOS the closed sidebar is not rendered, so its
+    /// controls are absent from the tree (not merely hidden behind the chat card). Waits out the close slide.
+    private func assertClosedSidebarNotInTree(_ context: String) {
+        waitGone(element("sidebar.account"), "\(context): the closed sidebar's account pill is not in the tree")
+        waitGone(element("sidebar.newAgent"), "\(context): the closed sidebar's New agent is not in the tree")
+    }
+
     private func chooseSidebarRow(_ identifier: String) {
         let row = element(identifier)
         XCTAssertTrue(row.waitForExistence(timeout: 3), "Missing \(identifier)")
@@ -1121,6 +1128,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["chat.header.overflow"].exists, "Fixture host controls live under Developer")
         XCTAssertEqual(app.buttons["chat.header.menu"].label, "Open sidebar")
         capture("Shell-chat-light")
+        assertClosedSidebarNotInTree("Before the sidebar first opens")
 
         openSidebar()
         XCTAssertTrue(element("sidebar.section.side").exists)
@@ -1128,12 +1136,16 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(element("sidebar.account").exists)
         capture("Shell-sidebar-light")
         chooseSidebarRow("sidebar.agent.health")
+        assertClosedSidebarNotInTree("After choosing an agent closes the sidebar")
         assertChatShows("Health")
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Start a conversation with Health")).firstMatch.exists)
 
         openSidebar()
+        XCTAssertTrue(element("sidebar.newAgent").exists, "The reopened sidebar is rendered again")
+        XCTAssertTrue(element("sidebar.account").exists, "The reopened sidebar is rendered again")
         element("sidebar.close").tap()
         waitGone(element("sidebar.close"), "The chat card closes the sidebar")
+        assertClosedSidebarNotInTree("After the chat card closes the sidebar")
         assertChatShows("Health")
         openSidebar()
         chooseSidebarRow("sidebar.agent.main")
