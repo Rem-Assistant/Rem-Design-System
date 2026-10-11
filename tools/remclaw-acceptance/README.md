@@ -132,9 +132,11 @@ Run local controller tests (pure/mocked commands; no native build or provider ca
 python3 -B -m unittest discover -s tools/remclaw-acceptance -p 'test_*.py' -v
 ```
 
-The new execution-receipt parser has only been tested with constructed fixtures locally. Its
-Xcode26.3 xcresult CLI/schema compatibility still needs a hosted smoke test before credentialed
-use. Unknown schema, missing/skipped/duplicate methods or failed statuses refuse success.
+The execution-receipt parser passed both constructed regressions and the hosted public XCTest
+fixture on Xcode26.3 (build17C529), run38163664010 at controller50ac6b2. The actual passing
+method records were accepted and an exit-zero skipped method was refused. This establishes
+xcresult CLI/schema compatibility for that fixture, not signed-in app or staging coverage.
+Unknown schema, missing/skipped/duplicate methods or failed statuses refuse success.
 Independent scoped review found no remaining blocking code issue after this false-pass fix.
 
 
