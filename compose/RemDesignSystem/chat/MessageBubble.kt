@@ -34,12 +34,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.screens.ChatMessageDisplay
+import com.rem.designsystem.screens.ChatTimestampReveal
 import com.rem.designsystem.screens.ChatTranscriptAction
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
@@ -113,10 +115,11 @@ private fun MessageBubbleContent(
     accessibilityPrefix: String,
     onRetry: (() -> Unit)?,
     longPress: LongPress,
+    accessibilityTime: String? = null,
 ) {
     when (role) {
-        MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, longPress)
-        MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reaction, accessibilityPrefix, longPress)
+        MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, longPress, accessibilityTime)
+        MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reaction, accessibilityPrefix, longPress, accessibilityTime)
     }
 }
 
@@ -145,6 +148,9 @@ fun MessageBubble(
         accessibilityPrefix = accessibilityPrefix,
         onRetry = retry,
         longPress = LongPress("Message actions") { onAction(ChatTranscriptAction.RequestActions(message.id)) },
+        // The swipe-revealed time is visual only; the bubble speaks it ("Sent at 10:24"), as SwiftUI's
+        // accessibilityValue does, so TalkBack never needs the gesture.
+        accessibilityTime = ChatTimestampReveal.accessibilityTime(message),
     )
 }
 
@@ -158,6 +164,7 @@ private fun OutgoingMessage(
     prefix: String,
     onRetry: (() -> Unit)?,
     longPress: LongPress,
+    accessibilityTime: String?,
 ) {
     val colors = RemColors.current
     val failed = delivery == MessageDelivery.Failed
@@ -186,6 +193,7 @@ private fun OutgoingMessage(
                             .fillMaxWidth()
                             .background(colors.brandBlue, RoundedCornerShape(MessageBubbleGeometry.CornerRadius.dp))
                             .longPress(longPress)
+                            .bubbleTime(accessibilityTime)
                             .bubbleCenterLine()
                             .testTag("$prefix.bubble")
                             .padding(
@@ -290,6 +298,7 @@ private fun IncomingMessage(
     reaction: MessageReaction?,
     prefix: String,
     longPress: LongPress,
+    accessibilityTime: String?,
 ) {
     val colors = RemColors.current
     Column(
@@ -312,6 +321,7 @@ private fun IncomingMessage(
                 modifier = Modifier
                     .background(colors.backgroundSecondary, RoundedCornerShape(MessageBubbleGeometry.CornerRadius.dp))
                     .longPress(longPress)
+                    .bubbleTime(accessibilityTime)
                     .bubbleCenterLine()
                     .testTag("$prefix.bubble")
                     .padding(
@@ -332,6 +342,13 @@ private fun IncomingMessage(
         if (meta != null) Text(text = meta, style = RemTypography.chatMeta, color = colors.labelSecondary)
     }
 }
+
+/**
+ * One TalkBack stop per bubble: its text, then the message time as state ("Received at 10:21"), the
+ * twin of SwiftUI's `accessibilityElement(children: .combine)` + `accessibilityValue(time)`.
+ */
+private fun Modifier.bubbleTime(time: String?): Modifier =
+    semantics(mergeDescendants = true) { if (time != null) stateDescription = time }
 
 private fun Modifier.longPress(longPress: LongPress): Modifier {
     val action = longPress.action ?: return this

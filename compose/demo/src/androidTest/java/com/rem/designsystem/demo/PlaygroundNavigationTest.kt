@@ -802,7 +802,16 @@ class PlaygroundNavigationTest {
     /** WS1d: a left swipe is a temporary peek; after release every row returns to its resting position. */
     @Test fun chatSwipeLeftPeeksTimesAndSnapsBack() {
         openChatScreen()
-        compose.onNodeWithTag("message.a1.time", useUnmergedTree = true).assertContentDescriptionEquals("Received at 10:21")
+        // TalkBack: the merged bubble node speaks its text, then the time, without the gesture; the visual
+        // time column carries no text or description of its own.
+        compose.onNodeWithTag("message.a1.bubble")
+            .assertTextContains("Start with your highest-priority task", substring = true)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Received at 10:21"))
+        compose.onNodeWithTag("message.u1.bubble")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Sent at 10:20"))
+        compose.onNodeWithTag("message.a1.time", useUnmergedTree = true)
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Text))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
         val bubble = compose.onNodeWithTag("message.a1.bubble", useUnmergedTree = true)
         val rest = bubble.getUnclippedBoundsInRoot().left
         bubble.performTouchInput { down(center); moveBy(Offset(-40f, 0f)); moveBy(Offset(-120f, 0f)) }

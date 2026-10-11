@@ -16,8 +16,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -282,9 +285,9 @@ fun ChatTranscriptList(
                                     textAlign = TextAlign.End, maxLines = 1,
                                     modifier = Modifier
                                         .graphicsLayer { alpha = (reveal.value / columnPx).coerceIn(0f, 1f) }
-                                        // Spoken without the gesture: "Sent at 10:24" / "Received at 10:24".
-                                        .semantics { contentDescription = ChatTimestampReveal.accessibilityTime(m) ?: time }
-                                        .testTag("message.${m.id}.time"),
+                                        // Visual only: the bubble speaks the time ("Sent at 10:24") through its
+                                        // merged semantics, so TalkBack never needs the gesture.
+                                        .clearAndSetSemantics { testTag = "message.${m.id}.time" },
                                 )
                             }
                         },
