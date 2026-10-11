@@ -1,0 +1,78 @@
+name: Compile simulator diagnostic bridge
+
+# Separate from the credentialed model diagnostic: only compile a disposable XCTest target.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-sim-qa-compile-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'claude/agent-sim-qa'
+    runs-on: macos-14
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_15.4.app/Contents/Developer
+      HARNESS_SHA: ${{ github.event.pull_request.head.sha }}
+      SOURCE_SHA: c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Check out exact bridge revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: harness
+          persist-credentials: false
+      - name: Check out fixed approved Playground baseline
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+          path: src
+          persist-credentials: false
+      - name: Verify source, test harness and inject bridge
+        run: |
+          set -euo pipefail
+          test "$(git -C harness rev-parse HEAD)" = "$HARNESS_SHA"
+          test -z "$(git -C harness status --porcelain --untracked-files=all)"
+          python3 -m unittest discover -s harness/tools/agent-sim-qa -p 'test_*.py'
+          mkdir -p "$RUNNER_TEMP/evidence"
+          python3 harness/tools/agent-sim-qa/controller.py verify-source \
+            --src src --sha "$SOURCE_SHA" --out "$RUNNER_TEMP/evidence"
+          cat harness/tools/agent-sim-qa/AgentVisualBridge.swift \
+            >> src/tools/playground-ios/UITests/PlaygroundNavigationUITests.swift
+          python3 harness/tools/agent-sim-qa/controller.py verify-source \
+            --src src --sha "$SOURCE_SHA" --out "$RUNNER_TEMP/evidence" --injected
+      - name: Compile Playground and XCTest bridge without running tests
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild build-for-testing \
+            -project src/tools/playground-ios/RemSettingsPlayground.xcodeproj \
+            -scheme RemSettingsPlayground -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/derived-data" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/packages" \
+            -packageCachePath "$RUNNER_TEMP/package-cache" -jobs 2 \
+            REM_PLAYGROUND_SOURCE_SHA="$SOURCE_SHA" CODE_SIGNING_ALLOWED=NO
+          python3 harness/tools/agent-sim-qa/controller.py verify-built \
+            --app "$RUNNER_TEMP/derived-data/Build/Products/Debug-iphonesimulator/RemSettingsPlayground.app" \
+            --sha "$SOURCE_SHA" --out "$RUNNER_TEMP/evidence"
+      - name: Record compile scope
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+        run: |
+          {
+            echo "Harness: $HARNESS_SHA"
+            echo "Playground baseline: $SOURCE_SHA"
+            echo "Result: $RESULT"
+            echo "Compile only; no boot, model, mailbox execution, signing or store upload."
+          } >> "$GITHUB_STEP_SUMMARY"

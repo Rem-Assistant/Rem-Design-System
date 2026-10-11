@@ -1,0 +1,4 @@
+Resolve Package Graph
+xcodebuild: error: Could not resolve package dependencies:
+  Failed to clone repository https://github.com/Rem-Assistant/PRIVATE_DEPENDENCY_MARKER:
+    fatal: could not read Username for 'https://github.com': terminal prompts disabled

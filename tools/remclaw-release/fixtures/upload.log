@@ -1,0 +1,3 @@
+[12:00:01]: Ready to upload new build to TestFlight (App: APP_ID_MARKER)...
+[12:00:40]: ERROR ITMS-90189: "Redundant Binary Upload. You've already uploaded a build with build number '41' for version number '1.0'. ACCOUNT_EMAIL_MARKER@example.com"
+[12:00:41]: Error uploading ipa file

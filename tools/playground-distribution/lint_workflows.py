@@ -36,5 +36,8 @@ with tempfile.TemporaryDirectory(prefix='playground-actionlint-') as temp:
     root = Path(__file__).resolve().parents[2]
     subprocess.run([str(binary), '-shellcheck=', '-pyflakes=',
         str(root / '.github/workflows/playground-distribute.yml'),
-        str(root / '.github/workflows/playground-distribution-check.yml')], check=True, cwd=root)
-print('Pinned Actionlint validated both workflow schemas and expression contexts.')
+        str(root / '.github/workflows/playground-distribution-check.yml'),
+        str(root / '.github/workflows/remclaw-ios-release.yml'),
+        str(root / '.github/workflows/remclaw-android-release.yml'),
+        str(root / '.github/workflows/remclaw-release-check.yml')], check=True, cwd=root)
+print('Pinned Actionlint validated the Playground and RemClaw release workflow schemas and expression contexts.')

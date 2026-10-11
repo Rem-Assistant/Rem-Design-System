@@ -1,0 +1,173 @@
+name: RemClaw Android release
+run-name: RemClaw Android · ${{ inputs.remclaw_sha }} · ${{ inputs.version_code }}
+
+# Builds the PRIVATE Rem-Assistant/RemClaw Android app (com.remapp.rem) at an exact SHA and uploads it
+# to the Google Play internal track only. The Android sibling of remclaw-ios-release.yml. This
+# repository is public, so its Actions logs are world-readable: every tool that sees RemClaw source or
+# provider output writes only to files under $RUNNER_TEMP/remclaw-private, which are never printed or
+# uploaded. See tools/remclaw-release/README.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      remclaw_sha:
+        description: Exact 40-character RemClaw commit, already on an allowed RemClaw release branch
+        required: true
+        type: string
+      version_code:
+        description: Play versionCode; must be above every existing com.remapp.rem version code
+        required: true
+        type: string
+      track:
+        description: Play track (internal only)
+        required: true
+        type: choice
+        options:
+          - internal
+
+permissions:
+  contents: read
+
+# Releases serialize. Never cancel an in-flight store upload.
+concurrency:
+  group: remclaw-android-release
+  cancel-in-progress: false
+
+env:
+  REMCLAW_SHA: ${{ inputs.remclaw_sha }}
+  REMCLAW_VERSION_CODE: ${{ inputs.version_code }}
+  REMCLAW_TRACK: ${{ inputs.track }}
+  FASTLANE_SKIP_UPDATE_CHECK: '1'
+  FASTLANE_HIDE_CHANGELOG: '1'
+  FASTLANE_OPT_OUT_USAGE: '1'
+  FASTLANE_SKIP_ACTION_SUMMARY: '1'
+
+jobs:
+  admission:
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # No secrets. The read-only token inspects this repository's environment protection.
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Run trusted release control tests
+        run: |
+          python3 -m unittest discover -s control/tools/remclaw-release -p 'test_*.py'
+          python3 -m unittest discover -s control/tools/playground-distribution -p 'test_*.py'
+      - name: Verify run identity, inputs and pre-existing environment protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 control/tools/remclaw-release/android_release.py admit --sha "$REMCLAW_SHA" \
+            --version-code "$REMCLAW_VERSION_CODE" --track "$REMCLAW_TRACK" --out "$RUNNER_TEMP/remclaw-admission.json"
+          python3 control/tools/remclaw-release/android_release.py summary "$RUNNER_TEMP/remclaw-admission.json"
+
+  release:
+    needs: admission
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: remclaw-android-release
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    env:
+      BUNDLE_FROZEN: 'true'
+    steps:
+      - name: Initialize ephemeral runner paths
+        run: |
+          umask 077
+          {
+            echo "REMCLAW_PRIVATE=$RUNNER_TEMP/remclaw-private"
+            echo "REMCLAW_SOURCE=$RUNNER_TEMP/remclaw-source"
+            echo "REMCLAW_OUTPUT=$RUNNER_TEMP/remclaw-package"
+            echo "REMCLAW_EPHEMERAL=$RUNNER_TEMP/remclaw-ephemeral"
+            echo "REMCLAW_ADMISSION=$RUNNER_TEMP/remclaw-admission.json"
+            echo "BUNDLE_PATH=$RUNNER_TEMP/remclaw-gems"
+            echo "BUNDLE_GEMFILE=$GITHUB_WORKSPACE/control/tools/playground-distribution/Gemfile"
+          } >> "$GITHUB_ENV"
+          mkdir -m 700 "$RUNNER_TEMP/remclaw-private" "$RUNNER_TEMP/remclaw-ephemeral"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Recheck admission after environment approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 control/tools/remclaw-release/android_release.py admit --sha "$REMCLAW_SHA" \
+            --version-code "$REMCLAW_VERSION_CODE" --track "$REMCLAW_TRACK" --out "$REMCLAW_ADMISSION"
+      # Not actions/checkout: it logs the checked-out commit's author and message and every fetched ref,
+      # which would publish private RemClaw metadata. This fetch logs nothing but a fixed result line.
+      - name: Fetch exact RemClaw commit with the read-only deploy key and verify ancestry
+        env:
+          REMCLAW_DEPLOY_KEY: ${{ secrets.REMCLAW_DEPLOY_KEY }}
+        run: python3 control/tools/remclaw-release/android_release.py fetch --sha "$REMCLAW_SHA" --dest "$REMCLAW_SOURCE"
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
+        with:
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Check runner storage before dependencies
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform android --stage dependencies
+      - name: Install frozen checksummed dependencies (no credentials present)
+        working-directory: control/tools/playground-distribution
+        run: |
+          if ! { bundle install --jobs 4 --retry 2 && bundle check; } > "$REMCLAW_PRIVATE/bundle.log" 2>&1; then
+            python3 ../remclaw-release/classify_failure.py --record "$REMCLAW_PRIVATE/failure_class" "$REMCLAW_PRIVATE/bundle.log"
+            exit 1
+          fi
+          git diff --quiet -- Gemfile.lock
+      - name: Check runner storage before build
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform android --stage build
+      - name: Build unsigned release bundle at the exact SHA (no signing or store credentials)
+        env:
+          REMCLAW_ANDROID_GOOGLE_SERVER_CLIENT_ID: ${{ vars.REMCLAW_ANDROID_GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          python3 control/tools/remclaw-release/android_release.py build --source "$REMCLAW_SOURCE" \
+            --out "$REMCLAW_OUTPUT" --sha "$REMCLAW_SHA" --version-code "$REMCLAW_VERSION_CODE"
+      - name: Check runner storage before sign
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform android --stage sign
+      - name: Sign com.remapp.rem with the environment-scoped upload key
+        env:
+          REMCLAW_ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.REMCLAW_ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          REMCLAW_ANDROID_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.REMCLAW_ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          REMCLAW_ANDROID_UPLOAD_KEY_ALIAS: ${{ vars.REMCLAW_ANDROID_UPLOAD_KEY_ALIAS }}
+          REMCLAW_ANDROID_UPLOAD_CERT_SHA256: ${{ vars.REMCLAW_ANDROID_UPLOAD_CERT_SHA256 }}
+        run: |
+          python3 control/tools/remclaw-release/android_release.py sign \
+            --out "$REMCLAW_OUTPUT" --sha "$REMCLAW_SHA" --version-code "$REMCLAW_VERSION_CODE"
+      - name: Check runner storage before upload
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform android --stage upload
+      - name: Upload to the Play internal track
+        working-directory: control/tools/remclaw-release/android
+        env:
+          REMCLAW_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.REMCLAW_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          if ! bundle exec fastlane internal_upload > "$REMCLAW_PRIVATE/upload.log" 2>&1; then
+            python3 ../classify_failure.py --record "$REMCLAW_PRIVATE/failure_class" "$REMCLAW_PRIVATE/upload.log"
+            echo 'Upload failed or is unresolved. Inspect the Play internal track before rerunning; do not blindly re-upload.'
+            exit 1
+          fi
+      - name: Publish only allowlisted release metadata
+        if: always()
+        run: |
+          python3 control/tools/remclaw-release/android_release.py summary --failure "$REMCLAW_PRIVATE/failure_class" \
+            "$REMCLAW_ADMISSION" "$REMCLAW_PRIVATE/checkout.json" "$REMCLAW_OUTPUT/distribution.json"
+      - name: Remove RemClaw source, bundle, upload key, Gradle home and private logs
+        if: always()
+        run: python3 control/tools/remclaw-release/android_release.py cleanup "$RUNNER_TEMP"
