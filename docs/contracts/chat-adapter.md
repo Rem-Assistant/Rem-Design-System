@@ -80,12 +80,23 @@ no prototype reaction; this routing is explicit.
    target, unread state, clipboard, text selection, report flow, full emoji picker) and dismisses the sheet.
    Identifiers: `message.<id>.actions.reactions.<index>`, `….reactions.more`, `message.<id>.actions.<action>`.
 
+9. **Transcript placement.** A transcript shorter than the visible area is **bottom-anchored**: its rows sit
+   just above the docked composer, with the free space under the header (iOS: content `minHeight` =
+   viewport, `.bottom` alignment, `defaultScrollAnchor(.bottom)`; Compose: `Arrangement.spacedBy(lg,
+   Alignment.Bottom)` inside the scroll, whose minimum height is the viewport). The **empty state** is
+   top-placed on both. A longer transcript opens at the latest message.
+10. **Following new content.** The transcript follows growth (a streamed reply, an expanded card) only
+   while the person is at or near the latest message; scrolled up, their position is kept. Compose meets
+   this from the jump-to-latest change (stacked PR #120); before it, Compose re-pins to the bottom on every
+   content-height change (review of #106, P2-4). iOS relies on `defaultScrollAnchor(.bottom)`; how it
+   treats growth while the person is scrolled up is not yet verified by a journey (contract question).
+
 ## Rules the adapter applies (truth)
 
 - `.delivered(at:)` only with durable **host acceptance** evidence; `at` is the host-formatted acceptance time.
 - `.read(at:)` only with an **explicit acknowledgement**, keeping the delivered time. Never because a reply appeared.
 - `.failed` only when the host reports the send failed; `canRetry` only when the host can actually retry.
-- `time` is the host's formatted send or receive time for that message (for example "10:24"). The DS never reads a clock or formats dates; `nil` shows no timestamp. A left swipe on `ChatTranscriptList` reveals these times in a right-side column for incoming and outgoing messages alike, and every row moves together while the header and composer stay fixed. Each time is centred on its own bubble, not on the bubble plus its receipt. The receipt stays below the latest outgoing bubble. The swipe is a temporary peek: on release the rows snap back. Assistive technology hears "Sent at …" or "Received at …" without the gesture. The 64pt column width is provisional, to be validated against long localized times and large text sizes; it is not a specified value. Thresholds and timing follow platform conventions. Snapback is covered by the reveal tests and journeys, not by screenshots.
+- `time` is the host's formatted send or receive time for that message (for example "10:24"). The DS never reads a clock or formats dates; `nil` shows no timestamp. A left swipe on `ChatTranscriptList` reveals these times in a right-side column for incoming and outgoing messages alike, and every row moves together while the header and composer stay fixed. Each time is centred on its own bubble, not on the bubble plus its receipt. The receipt stays below the latest outgoing bubble. The swipe is a temporary peek: on release the rows snap back. Assistive technology hears "Sent at …" or "Received at …" without the gesture: the bubble is one element that speaks its text, then the time (iOS `accessibilityValue`, Compose `stateDescription` on the merged bubble node), and the visual time column is hidden from assistive technology. **Right-to-left:** the peek mirrors — a rightward swipe moves the rows right and the times come in from the left edge (Compose: layout-relative drag, `placeRelative`; render `ChatTimestamps-revealed-rtl-light`). iOS RTL is unverified (no RTL render or journey). The 64pt column width is provisional, to be validated against long localized times and large text sizes; it is not a specified value. Thresholds and timing follow platform conventions. Snapback is covered by the reveal tests and journeys, not by screenshots.
 - Otherwise `.none` — no receipt.
 - `ComposerAvailability.disabled`, `voiceAvailable`, attachment content and `InboxItemState` come from runtime
   state; a fixture or mock must not imply capability.
@@ -104,6 +115,21 @@ illustrative `fixtureTime` "10:24". They prove composition and interaction, neve
 In the message sheet, a reaction updates the message, Reply targets the reply accessory at that message
 ("Replying to Rem" / "Replying to yourself"), and the host-owned actions (Mark as unread, Copy, Select Text,
 Report, `+`) only show a fixture note naming what the app does; nothing is copied, reported or stored.
+
+## Parity acceptance
+
+- A short transcript (`ChatComposition-default-light`) is bottom-anchored above the composer on both
+  platforms; the empty state (`ChatComposition-empty-light`) is top-placed on both.
+- Only the latest outgoing message carries its Delivered / Read receipt; a Not delivered failure stays
+  visible wherever it is.
+- The header shows one avatar and one identity capsule, back and one trailing action, and no platform
+  navigation bar.
+- Swipe timestamps: rows move together and snap back on release or cancel; each time is centred on its
+  bubble; the bubble speaks "Sent at …" / "Received at …" (journeys: `chatSwipeLeftPeeksTimesAndSnapsBack`
+  asserts the merged bubble node on Android; the iOS bubble carries `accessibilityValue`). RTL mirrors the
+  peek (`ChatTimestamps-revealed-light` / `-rtl-light`, Compose only).
+- A vertical drag that starts on a long-pressable bubble scrolls and opens nothing (iOS journey
+  `testCatalogChatReactionsDeliveryModelMenuAndAttachments`, right after the model menu closes).
 
 ## Not claimed
 
