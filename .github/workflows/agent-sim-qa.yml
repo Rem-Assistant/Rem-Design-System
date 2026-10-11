@@ -6,25 +6,33 @@ name: agent-sim-qa
 # gate, approval or waiver. See tools/agent-sim-qa/README.md.
 #
 # No pull_request/push trigger: fork code never runs beside the model token. The app under test is
-# limited to the exact SHAs listed below; adding one is a reviewed change to this file.
+# limited to the exact SHAs listed below; adding one is a reviewed change to this file. Each scenario
+# also names the SHAs it may run on (tools/agent-sim-qa/simqa.py SCENARIOS); a mismatch stops the job
+# before anything is built.
 
 on:
   workflow_dispatch:
     inputs:
       source_ref:
-        description: Exact Playground commit to build (c23521b = Build 7 baseline, 6fa6366 = Build 8 candidate)
+        description: Exact Playground commit to build (c23521b = Build 7 baseline, 6fa6366 = Build 8 candidate, 73ac818 = Build 9)
         type: choice
         default: c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
         options:
           - c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
           - 6fa6366928c41331615bf1eb1810b871df8f9378
+          - 73ac81894508035730e901476f03d5b909ef758e
       scenario:
-        description: Catalog -> Chat -> composer Add, optionally after choosing Automatic in the model menu
+        description: Builds 7/8 catalog-chat-*; Build 9 b9-* (gesture questions, or twins of passing journeys)
         type: choice
         default: catalog-chat-add
         options:
           - catalog-chat-add
           - catalog-chat-model-menu-add
+          - b9-shell-chat-gestures
+          - b9-hub-chat-gestures
+          - b9-hub-chat-jump-to-latest
+          - b9-shell-sidebar-agent
+          - b9-shell-settings-from-account
 
 permissions:
   contents: read
@@ -43,7 +51,7 @@ env:
 
 jobs:
   visual-diagnostic:
-    name: Model-driven Add check (diagnostic only)
+    name: Model-driven check (diagnostic only)
     if: github.repository == 'Rem-Assistant/Rem-Design-System'
     runs-on: macos-14
     timeout-minutes: 60
@@ -78,7 +86,12 @@ jobs:
           persist-credentials: false
 
       - name: Self-test the harness checks
-        run: python3 -m unittest discover -s harness/tools/agent-sim-qa -p 'test_*.py'
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s harness/tools/agent-sim-qa -p 'test_*.py'
+          python3 harness/tools/agent-sim-qa/controller.py check-inputs --sha "$SOURCE_SHA" --scenario "$SCENARIO"
 
       # Review fix 3 (part 1): pristine checkout at exactly the requested SHA, before anything else.
       - name: Verify pristine source at the exact SHA
@@ -184,7 +197,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: agent-sim-qa-${{ inputs.source_ref }}-${{ github.run_id }}
+          name: agent-sim-qa-${{ inputs.scenario }}-${{ inputs.source_ref }}-${{ github.run_id }}
           path: ${{ runner.temp }}/agent-sim-qa/out/
           retention-days: 7
           if-no-files-found: warn

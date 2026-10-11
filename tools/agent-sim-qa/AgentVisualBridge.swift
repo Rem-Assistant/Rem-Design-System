@@ -27,7 +27,11 @@ final class AgentVisualBridgeUITests: XCTestCase {
             throw XCTSkip("AGENT_BRIDGE_DIR is unset; this bridge only runs inside agent-sim-qa.")
         }
         mailbox = URL(fileURLWithPath: dir, isDirectory: true)
-        app.launchArguments = ["--settings-light"]
+        // A named profile, never free arguments: "journey" is JourneyLaunch's set for Build 9's journeys
+        // (Developer hub, light, no repeating motion so XCTest reaches idle); anything else is v1's.
+        let profile = ProcessInfo.processInfo.environment["AGENT_LAUNCH_PROFILE"] ?? "legacy"
+        app.launchArguments = profile == "journey" ? ["--developer", "--settings-light", "--no-motion"]
+                                                   : ["--settings-light"]
         app.launch()
         let size = app.windows.firstMatch.frame.size
         write("ready.json", ["ok": true, "width": Double(size.width), "height": Double(size.height),
@@ -74,6 +78,15 @@ final class AgentVisualBridgeUITests: XCTestCase {
         return CGFloat(value)
     }
 
+    /// An optional bounded number (the controller validates the same bounds before sending).
+    private func bounded(_ object: [String: Any], _ key: String, _ fallback: Double, _ range: ClosedRange<Double>) throws -> Double {
+        guard let raw = object[key] else { return fallback }
+        guard let value = raw as? Double, value.isFinite, range.contains(value) else {
+            throw BridgeError(description: "invalid \(key)")
+        }
+        return value
+    }
+
     private func point(_ x: CGFloat, _ y: CGFloat) -> XCUICoordinate {
         app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: y))
     }
@@ -96,7 +109,23 @@ final class AgentVisualBridgeUITests: XCTestCase {
         case "drag":
             let x = try number(object, "x"), y = try number(object, "y")
             let toX = try number(object, "to_x"), toY = try number(object, "to_y")
-            point(x, y).press(forDuration: 0.1, thenDragTo: point(toX, toY))
+            // No timing fields: exactly v1's drag, so earlier scenarios keep their input.
+            if object["speed"] == nil && object["press_s"] == nil && object["hold_s"] == nil {
+                point(x, y).press(forDuration: 0.1, thenDragTo: point(toX, toY))
+                return
+            }
+            let press = try bounded(object, "press_s", 0.1, 0.05...1.0)
+            let hold = try bounded(object, "hold_s", 0, 0...2)
+            let speeds: [String: XCUIGestureVelocity] = ["slow": .slow, "default": .default, "fast": .fast]
+            guard let speed = speeds[object["speed"] as? String ?? "default"] else {
+                throw BridgeError(description: "invalid speed")
+            }
+            point(x, y).press(forDuration: press, thenDragTo: point(toX, toY), withVelocity: speed,
+                              thenHoldForDuration: hold)
+        case "long_press":
+            let x = try number(object, "x"), y = try number(object, "y")
+            let duration = try bounded(object, "duration_s", 1.0, 0.5...2.0)
+            point(x, y).press(forDuration: duration)
         default:
             throw BridgeError(description: "unknown command")
         }

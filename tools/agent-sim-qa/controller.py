@@ -2,6 +2,7 @@
 """Hosted visual diagnostic controller (runner-local; see README.md).
 
 Subcommands:
+  check-inputs   assert the dispatched scenario may run on the dispatched exact SHA
   verify-source  assert the source checkout is pristine (or differs only by the injected bridge)
                  and HEAD is the exact SHA
   verify-built   assert the built app's Info.plist embeds that SHA
@@ -30,23 +31,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import simqa  # noqa: E402
 
 CLAUDE_ENV = ('PATH', 'HOME', 'TMPDIR', 'LANG', 'LC_ALL', 'USER', 'CI', 'GITHUB_ACTIONS')
-SCENARIOS = {
-    'catalog-chat-add': (
-        'From the Playground root, open the Component catalog (identifier openComponents), go to its '
-        'Chat page, bring the composer into view, then tap the composer Add button (identifier '
-        'catalog.composerAdd) and check whether the Add to Chat sheet appears with Photos '
-        '(catalog.addToChat.photos) and Files (catalog.addToChat.files). Then finish.'),
-    'catalog-chat-model-menu-add': (
-        'From the Playground root, open the Component catalog (identifier openComponents) and go to '
-        'its Chat page. Open the model menu (catalog.modelMenu), choose Automatic, and confirm the menu '
-        'closed. Then bring the composer into view, tap the composer Add button (identifier '
-        'catalog.composerAdd) and check whether the Add to Chat sheet appears with Photos '
-        '(catalog.addToChat.photos) and Files (catalog.addToChat.files). Then finish.'),
-}
 STALL_WINDOW = 45          # seconds to wait for one bridge command before calling it stalled
 MODEL_CALL_CAP = 180       # seconds per model decision, further bounded by the job deadline
 RESERVE = 150              # seconds kept for teardown, summary and artifact upload
 SECRET_NAME = re.compile(r'TOKEN|SECRET|KEY|PASSWORD|CREDENTIAL|AUTH', re.I)
+DURING_FRAMES = 4         # frames captured while a held gesture is still in flight
 
 
 def git(src, *args):
@@ -58,6 +47,13 @@ def record_verification(out, key, value):
     data = json.loads(path.read_text()) if path.exists() else {}
     data[key] = value
     path.write_text(json.dumps(data, indent=2) + '\n')
+
+
+def cmd_check_inputs(a):
+    problems = simqa.check_inputs(a.sha, a.scenario)
+    for problem in problems:
+        print(f'::error::{problem}')
+    return 1 if problems else 0
 
 
 def cmd_verify_source(a):
@@ -97,8 +93,11 @@ class Run:
         for path in (self.frames, self.raw, self.mailbox):
             path.mkdir(parents=True, exist_ok=True)
         self.template = Path(a.prompt).read_text()
+        self.spec = simqa.SCENARIOS[a.scenario]
+        self.max_decisions = a.max_decisions or self.spec['max_decisions']
         self.deadline = float(a.deadline)
         self.seq = 0
+        self.during = []
         self.process = None
         self.screen = (393.0, 852.0)
         self.ledger = []
@@ -112,7 +111,8 @@ class Run:
             'scenario': a.scenario,
             'model': a.model,
             'cli_version': os.environ.get('CLAUDE_CODE_VERSION'),
-            'bridge': 'xctest-file-mailbox-v1 (local; no port)',
+            'bridge': 'xctest-file-mailbox-v2 (local; no port)',
+            'launch_profile': self.spec['launch'],
             'status': 'starting',
             'job_deadline_epoch': int(self.deadline),
             'started_at': time.time(),
@@ -139,6 +139,7 @@ class Run:
     def start_bridge(self):
         env = {k: v for k, v in os.environ.items() if not SECRET_NAME.search(k)}
         env['TEST_RUNNER_AGENT_BRIDGE_DIR'] = str(self.mailbox)
+        env['TEST_RUNNER_AGENT_LAUNCH_PROFILE'] = self.spec['launch']
         allowance = max(120, int(self.deadline - time.time() - RESERVE))
         cmd = ['xcodebuild', 'test-without-building',
                '-project', str(Path(self.a.src) / 'tools/playground-ios/RemSettingsPlayground.xcodeproj'),
@@ -177,10 +178,27 @@ class Run:
         temp.rename(self.mailbox / f'cmd-{seq:03d}.json')
         return seq
 
+    def capture_during(self, seq):
+        """While a held gesture runs (acknowledged, no result yet), keep a few frames. They may precede
+        the touch itself; the model is told so, and the receipt keeps when each was taken."""
+        names = []
+        if self.wait_file(f'ack-{seq:03d}.json', 10) is None:
+            return names
+        result = self.mailbox / f'res-{seq:03d}.json'
+        while len(names) < DURING_FRAMES and not result.exists():
+            path = self.frames / f'during-{seq:03d}-{len(names)}.png'
+            taken = time.time()
+            if self.screenshot(path) and not result.exists():
+                names.append({'png': path.name, 'captured_at': taken})
+            time.sleep(0.2)
+        return names
+
     def command(self, kind, **fields):
         """Send one command; wait one stall window, then at most one more. Never resend input."""
         dispatched = time.time()
         seq = self.send(kind, **fields)
+        held = kind == 'drag' and fields.get('hold_s', 0) >= 0.5
+        self.during = self.capture_during(seq) if held else []
         result = self.wait_file(f'res-{seq:03d}.json', self.a.stall_window)
         stalled = False
         if result is None and self.bridge_alive():
@@ -228,7 +246,11 @@ class Run:
         values = {
             'FRAME_FILE': str(png), 'FRAME': str(frame), 'WIDTH': f'{self.screen[0]:g}',
             'HEIGHT': f'{self.screen[1]:g}', 'BUDGET': str(budget_left), 'UI': ui,
-            'SCENARIO': SCENARIOS[self.a.scenario],
+            'SCENARIO': self.scenario_text(),
+            'SCENARIO_RULES': self.spec['rules'],
+            'FINISH_SHAPE': self.finish_shape(frame),
+            'CHECK_FIELD': ('\nAdd `"check": "<question key>"` to every attempt at a question.'
+                            if self.spec['checks'] else ''),
             'HISTORY': json.dumps(self.history[-10:], indent=1),
             'FINISH_ONLY': ('6. The input bridge STALLED: it did not report completing the last command. '
                             'Only `finish` is accepted now. Report what THIS screenshot shows.'
@@ -244,7 +266,7 @@ class Run:
         cmd = ['claude', '-p', '--model', self.a.model,
                '--tools', 'Read', '--allowedTools', 'Read', '--add-dir', str(self.frames),
                '--strict-mcp-config', '--safe-mode', '--no-session-persistence',
-               '--prompt-suggestions', 'false', '--max-turns', '4',
+               '--prompt-suggestions', 'false', '--max-turns', '8',
                '--output-format', 'stream-json', '--verbose']
         raw_out = self.raw / f'call-{frame:02d}.jsonl'
         started = time.time()
@@ -270,6 +292,21 @@ class Run:
             return None, call
         return summary['result'], call
 
+    def scenario_text(self):
+        lines = [self.spec['brief']]
+        if self.spec['checks']:
+            lines += ['', 'Questions (answer each in `findings`):']
+            lines += [f"- `{key}`: {check['question']}" for key, check in self.spec['checks'].items()]
+        return '\n'.join(lines)
+
+    def finish_shape(self, frame):
+        outcomes = '|'.join(sorted(self.spec['outcomes']))
+        if not self.spec['checks']:
+            return f'{{"frame": {frame}, "observation": "...", "action": "finish", "outcome": "{outcomes}"}}'
+        answers = ', '.join(f'"{key}": "{"|".join(simqa.FINDINGS)}"' for key in self.spec['checks'])
+        return (f'{{"frame": {frame}, "observation": "...", "action": "finish", "outcome": "{outcomes}", '
+                f'"findings": {{{answers}}}}}')
+
     # -- loop ----------------------------------------------------------------------------------
     def finish(self, status, **extra):
         self.receipt['status'] = status
@@ -277,6 +314,9 @@ class Run:
         self.save()
 
     def loop(self):
+        problems = simqa.check_inputs(self.a.sha, self.a.scenario)
+        if problems:
+            return self.finish('input_rejected', violations=problems)
         self.start_bridge()
         ready = self.wait_file('ready.json', 600)
         if not ready:
@@ -285,7 +325,7 @@ class Run:
         self.screen = (float(ready.get('width') or 393), float(ready.get('height') or 852))
         self.receipt['screen_points'] = list(self.screen)
         stalled = False
-        for frame in range(self.a.max_decisions):
+        for frame in range(self.max_decisions):
             if not stalled and not self.bridge_alive():
                 stalled = True  # the bridge exited; nothing more can be executed, only observed
                 self.receipt['bridge_exited_early'] = True
@@ -307,7 +347,7 @@ class Run:
             self.ledger.append(frame_event)
             self.receipt['frames'].append(png.name)
             self.save()
-            text, call = self.ask(frame, png, ui, stalled, self.a.max_decisions - frame)
+            text, call = self.ask(frame, png, ui, stalled, self.max_decisions - frame)
             frame_event['read_ok'] = bool(call.get('frame_read_ok'))
             if call.get('error_category'):
                 status = 'deadline' if call['error_category'] in ('deadline', 'model_timeout') else 'model_unavailable'
@@ -315,7 +355,8 @@ class Run:
             if not frame_event['read_ok']:
                 return self.finish('png_read_failed', failed_frame=frame)
             try:
-                decision = simqa.validate_decision(simqa.extract_json(text), frame, self.screen, stalled)
+                decision = simqa.validate_decision(simqa.extract_json(text), frame, self.screen, stalled,
+                                                   self.a.scenario)
             except simqa.DecisionError as error:
                 return self.finish('invalid_decision', failed_frame=frame, detail=str(error))
             decision['observation'] = simqa.redact(decision['observation'], 400)
@@ -323,25 +364,31 @@ class Run:
             if decision['action'] == 'finish':
                 self.ledger.append({'type': 'finish', 'basis_frame': frame, 'at': time.time()})
                 return self.conclude(decision, ui, stalled)
-            fields = {k: decision[k] for k in simqa.ACTIONS[decision['action']]}
+            kind = decision['action']
+            fields = {k: decision[k] for k in simqa.ACTIONS[kind] | set(simqa.OPTIONAL.get(kind, ())) if k in decision}
             seq, dispatched, done, result, stalled = self.command(decision['action'], **fields)
             action = {'type': 'action', 'index': len(self.receipt['actions']), 'basis_frame': frame,
                       'seq': seq, 'dispatched_at': dispatched, 'done_at': done}
             self.ledger.append(action)
             record = {'basis_frame': frame, 'action': decision['action'], 'purpose': decision['purpose'],
-                      **fields, 'observation': decision['observation'],
+                      **fields, 'check': decision.get('check'), 'observation': decision['observation'],
+                      'during_frames': [d['png'] for d in self.during],
+                      'during_captured_at': [d['captured_at'] for d in self.during],
                       'bridge_ok': bool(result and result.get('ok')), 'stalled': stalled,
                       'bridge_error': simqa.redact(str(result.get('error')), 200) if result and result.get('error') else None,
                       'element_frame': result.get('element_frame') if result else None,
                       'duration_s': round(done - dispatched, 2) if done else None}
             self.receipt['actions'].append(record)
-            self.history.append({k: record[k] for k in ('basis_frame', 'action', 'purpose', 'bridge_ok', 'stalled',
-                                                        'bridge_error', 'observation')} | fields)
+            self.history.append({k: record[k] for k in ('basis_frame', 'action', 'purpose', 'check', 'bridge_ok',
+                                                        'stalled', 'bridge_error', 'during_frames',
+                                                        'observation')} | fields)
             self.save()
         return self.finish('budget_exhausted', violations=simqa.check_acknowledged(self.ledger))
 
     def conclude(self, decision, ui, stalled):
         violations = simqa.check_acknowledged(self.ledger)
+        if self.spec['checks']:
+            return self.conclude_checks(decision, violations, stalled)
         add_taps = [a for a in self.receipt['actions'] if a['purpose'] == 'add_tap']
         if decision['outcome'] == 'sheet_opened' and not add_taps:
             violations.append('sheet_opened reported without any add_tap action')
@@ -355,6 +402,17 @@ class Run:
             status = observed
         return self.finish(status, observed_outcome=observed, final_observation=decision['observation'],
                            ui_listing_confirms_sheet=confirms, chosen_add_taps=add_taps, violations=violations)
+
+    def conclude_checks(self, decision, violations, stalled):
+        listings = {}
+        for path in self.frames.glob('frame-*.ui.txt'):
+            listings[int(path.name[6:8])] = path.read_text()
+        checks = simqa.evaluate_checks(self.a.scenario, self.receipt['actions'], listings, decision['findings'])
+        status = 'unacknowledged' if violations else ('input_stalled' if stalled else decision['outcome'])
+        return self.finish(status, observed_outcome=decision['outcome'], final_observation=decision['observation'],
+                           checks=checks, violations=violations,
+                           contract_met=all(c['contract_met'] for c in checks.values()),
+                           listing_disagreements=[k for k, c in checks.items() if c['agrees_with_listing'] is False])
 
     def close(self):
         if self.bridge_alive():
@@ -405,6 +463,18 @@ def write_summary(receipt, calls, path):
         bridge = 'stalled' if action.get('stalled') else ('ok' if action.get('bridge_ok') else 'error')
         lines.append(f"| {action['basis_frame']} | {action['action']} | {action['purpose']} | `{target}` | "
                      f"{bridge} | {action.get('duration_s')} |")
+    if receipt.get('checks'):
+        lines += ['', f"Contract met: **{receipt.get('contract_met')}**; listing disagreements: "
+                      f"{receipt.get('listing_disagreements') or 'none'}", '',
+                  '| Question | Model | Counted | Listing oracle | Agrees | Attempts (frame: start, shift pt) | Note |',
+                  '|---|---|---|---|---|---|---|']
+        for key, check in receipt['checks'].items():
+            attempts = '; '.join(
+                f"{a['basis_frame']}->{a['after_frame']}: {a.get('start_bubble') or 'margin'}"
+                + (f", {a['bubble_shift_pt']}" if 'bubble_shift_pt' in a else '')
+                + (f", {a['speed']}" if 'speed' in a else '') for a in check['attempts']) or 'none'
+            lines.append(f"| `{key}` | {check['model_finding']} | {check['finding']} | {check['listing_oracle']} | "
+                         f"{check['agrees_with_listing']} | {attempts} | {check['note'] or ''} |")
     if receipt.get('final_observation'):
         lines += ['', f"Final observation: {receipt['final_observation']}"]
     path.write_text('\n'.join(lines) + '\n')
@@ -419,13 +489,20 @@ def cmd_run(a):
     finally:
         run.close()
     print(json.dumps({k: run.receipt.get(k) for k in ('status', 'observed_outcome', 'successful_png_reads')}))
-    ok = run.receipt['status'] == 'sheet_opened' and run.receipt.get('ui_listing_confirms_sheet') is not False
+    if run.spec['checks']:
+        ok = run.receipt['status'] == 'completed' and run.receipt.get('contract_met') is True \
+            and not run.receipt.get('listing_disagreements')
+    else:
+        ok = run.receipt['status'] == 'sheet_opened' and run.receipt.get('ui_listing_confirms_sheet') is not False
     return 0 if ok else 1
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest='command', required=True)
+    p = sub.add_parser('check-inputs')
+    p.add_argument('--sha', required=True); p.add_argument('--scenario', required=True)
+    p.set_defaults(func=cmd_check_inputs)
     p = sub.add_parser('verify-source')
     p.add_argument('--src', required=True); p.add_argument('--sha', required=True)
     p.add_argument('--out', required=True); p.add_argument('--injected', action='store_true')
@@ -436,9 +513,9 @@ def main(argv=None):
     p = sub.add_parser('run')
     for name in ('--src', '--sha', '--udid', '--derived-data', '--out', '--raw', '--mailbox', '--prompt', '--deadline'):
         p.add_argument(name, required=True)
-    p.add_argument('--scenario', required=True, choices=sorted(SCENARIOS))
+    p.add_argument('--scenario', required=True, choices=sorted(simqa.SCENARIOS))
     p.add_argument('--model', default='claude-opus-4-8')
-    p.add_argument('--max-decisions', type=int, default=14)
+    p.add_argument('--max-decisions', type=int, default=None, help='default: the scenario\'s budget')
     p.add_argument('--stall-window', type=float, default=STALL_WINDOW, help=argparse.SUPPRESS)
     p.set_defaults(func=cmd_run)
     a = parser.parse_args(argv)
