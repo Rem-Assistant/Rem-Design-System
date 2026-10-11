@@ -511,6 +511,43 @@ class EvidenceSnapshots {
         }
     }
 
+    // Tapback reactions (iMessage reference Samuel shared, 2026-10-11): single and stacked sets on both
+    // sides, a short bubble with a stack, and the three-badge cap. Paired with `MessageReactionTapback-*`
+    // in RenderSnapshots.swift.
+    @Test
+    fun messageReactionTapback() {
+        shot("MessageReactionTapback-light") { RemTheme(darkTheme = false) { tapbackGallery() } }
+        shot("MessageReactionTapback-dark") { RemTheme(darkTheme = true) { tapbackGallery() } }
+    }
+
+    @Composable
+    private fun tapbackGallery() {
+        Column(
+            modifier = Modifier.fillMaxSize().background(RemColors.current.backgroundPrimary).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            MessageBubble("Can you move the planning sync to Thursday?", role = MessageRole.User)
+            MessageBubble(
+                "Done \u2014 the planning sync is now Thursday at 10:00.",
+                role = MessageRole.Assistant, reaction = MessageReaction.ThumbsUp,
+            )
+            MessageBubble("Perfect, thank you!", role = MessageRole.User, reaction = MessageReaction.Heart)
+            MessageBubble(
+                "Ok", role = MessageRole.User,
+                reaction = MessageReaction.ThumbsUp, additionalReactions = listOf(MessageReaction.ThumbsUp),
+            )
+            MessageBubble(
+                "I also shared the notes with both attendees.", role = MessageRole.Assistant,
+                reaction = MessageReaction.Heart, additionalReactions = listOf(MessageReaction.Heart),
+            )
+            MessageBubble(
+                "See you there", role = MessageRole.User, delivery = MessageDelivery.Read("10:24"),
+                reaction = MessageReaction.Laugh,
+                additionalReactions = listOf(MessageReaction.Heart, MessageReaction.ThumbsUp, MessageReaction.Party),
+            )
+        }
+    }
+
     private val chatProviders = listOf(ChatModelProvider("provider-a", "Provider A", listOf(ChatModelOption("model-a1", "Model A1"))))
 
     @Test

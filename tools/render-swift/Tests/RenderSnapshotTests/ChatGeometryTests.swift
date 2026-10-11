@@ -44,6 +44,107 @@ final class ChatGeometryTests: XCTestCase {
         XCTAssertLessThanOrEqual(G.reactionOverlap, G.incomingTrailingReserve)
     }
 
+    // Tapback reactions (iMessage reference, 2026-10-11). Paired with ChatGeometryTest.kt.
+
+    private typealias T = MessageReactionBadgeMetrics
+
+    func testTapbackConstantsMatchTheComposeTwin() {
+        XCTAssertEqual(T.badge, 34)
+        XCTAssertEqual(T.ring, 2)
+        XCTAssertEqual(T.badgeOuter, 38)
+        XCTAssertEqual(T.emoji, 19)
+        XCTAssertEqual(T.outward, G.reactionOverlap)
+        XCTAssertEqual(T.lift, 20)
+        XCTAssertEqual(T.topReserve, 22)
+        XCTAssertEqual(G.incomingReactionTop, T.topReserve)
+        XCTAssertEqual(T.stackStep, 20)
+        XCTAssertEqual(T.maxVisible, 3)
+    }
+
+    func testOutgoingTapbackOverlapsTheTopLeadingCorner() {
+        XCTAssertEqual(T.Corner(role: .user), .topLeading)
+        let l = T.layout(count: 1, corner: .topLeading)
+        XCTAssertEqual(l.offsetFromCorner, CGSize(width: -16, height: -22))
+        XCTAssertEqual(l.size, CGSize(width: 38, height: 47))
+        XCTAssertEqual(l.badges, [CGRect(x: 0, y: 0, width: 38, height: 38)])
+        // The badge disc in bubble coordinates: 20 of its 34 overlap horizontally, 14 vertically.
+        let discLeft = l.offsetFromCorner.width + l.badges[0].minX + T.ring
+        let discTop = l.offsetFromCorner.height + l.badges[0].minY + T.ring
+        XCTAssertEqual(discLeft, -14)
+        XCTAssertEqual(discTop, -20)
+        XCTAssertEqual(discLeft + T.badge, 20)
+        XCTAssertEqual(discTop + T.badge, 14)
+    }
+
+    func testIncomingTapbackMirrorsToTheTopTrailingCorner() {
+        XCTAssertEqual(T.Corner(role: .assistant), .topTrailing)
+        let out = T.layout(count: 2, corner: .topLeading)
+        let inc = T.layout(count: 2, corner: .topTrailing)
+        XCTAssertEqual(inc.offsetFromCorner, CGSize(width: 16, height: out.offsetFromCorner.height))
+        XCTAssertEqual(inc.size, out.size)
+        // Front badge at the outer edge of the stack, the next one 20 further toward the bubble.
+        XCTAssertEqual(inc.badges.map(\.minX), [20, 0])
+        for (o, i) in zip(out.badges + out.dots, inc.badges + inc.dots) {
+            XCTAssertEqual(o.minX, inc.size.width - i.maxX)
+            XCTAssertEqual(o.minY, i.minY)
+        }
+    }
+
+    func testTapbackTailIsTwoShrinkingDotsBelowOutwardOfTheFrontBadge() {
+        let l = T.layout(count: 1, corner: .topLeading)
+        XCTAssertEqual(l.dots, [CGRect(x: 4, y: 30, width: 12, height: 12), CGRect(x: 1, y: 39, width: 8, height: 8)])
+        let large = l.dots[0], small = l.dots[1]
+        XCTAssertTrue(small.minX < large.minX && large.minX < l.badges[0].midX, "dots trail outward")
+        XCTAssertTrue(small.minY > large.minY && large.minY > T.badgeOuter / 2, "dots trail downward")
+    }
+
+    func testStackedTapbacksOverlapAndCapAtThree() {
+        let two = T.layout(count: 2, corner: .topLeading)
+        XCTAssertEqual(two.badges.map(\.minX), [0, 20])
+        XCTAssertGreaterThan(two.badges[0].maxX, two.badges[1].minX, "each badge overlaps the previous one")
+        XCTAssertEqual(two.size.width, 58)
+        let many = T.layout(count: 5, corner: .topLeading)
+        XCTAssertEqual(many.badges.count, 3)
+        XCTAssertEqual(many.size.width, 78)
+        let none = T.layout(count: 0, corner: .topTrailing)
+        XCTAssertTrue(none.badges.isEmpty && none.dots.isEmpty)
+    }
+
+    func testTapbackStaysInsideItsReservedClearance() {
+        for corner in [T.Corner.topLeading, .topTrailing] {
+            for count in 1...3 {
+                let l = T.layout(count: count, corner: corner)
+                let frames = l.badges + l.dots
+                // Never above the reserved top clearance, so it cannot reach the previous row.
+                XCTAssertEqual(l.offsetFromCorner.height + frames.map(\.minY).min()!, -T.topReserve)
+                // Never further outward than the incoming row's trailing reserve.
+                let outward = corner == .topLeading
+                    ? -(l.offsetFromCorner.width + frames.map(\.minX).min()!)
+                    : l.offsetFromCorner.width - l.size.width + frames.map(\.maxX).max()!
+                XCTAssertEqual(outward, 16)
+                XCTAssertLessThanOrEqual(outward, G.incomingTrailingReserve)
+            }
+        }
+    }
+
+    func testTapbackAccessibilityNamesTheWholeSet() {
+        XCTAssertEqual(T.accessibilityLabel(for: [.heart]), "Reaction: Heart")
+        XCTAssertEqual(T.accessibilityLabel(for: [.thumbsUp, .heart]), "Reactions: Thumbs up, Heart")
+    }
+
+    func testDisplayReactionsPutTheOwnReactionInFrontAndDefaultToNoExtras() {
+        var message = ChatMessageDisplay(id: "m", role: .user, text: "Hi", reaction: .heart)
+        XCTAssertEqual(message.additionalReactions, [])
+        XCTAssertEqual(message.reactions, [.heart])
+        let plain = message
+        message.additionalReactions = [.thumbsUp]
+        XCTAssertEqual(message.reactions, [.heart, .thumbsUp])
+        XCTAssertNotEqual(plain, message)
+        message.reaction = nil
+        XCTAssertEqual(message.reactions, [.thumbsUp])
+        XCTAssertEqual(T.stack(primary: .thumbsUp, additional: [.thumbsUp]), [.thumbsUp, .thumbsUp])
+    }
+
     func testModelTriggerReadsAutoForAutomaticAndTheModelNameOtherwise() {
         let providers = [
             ChatModelProvider(id: "p", name: "Provider", models: [ChatModelOption(id: "m1", name: "Model One")]),

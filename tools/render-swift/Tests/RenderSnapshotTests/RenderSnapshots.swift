@@ -115,6 +115,9 @@ final class RenderSnapshots: XCTestCase {
         render("AddToChatSheet-light", width: 402, height: nil, dark: false) { addToChatSheet }
         render("ChatHeader-light", width: 402, height: nil, dark: false) { chatHeaders }
         render("MessageReactionPicker-light", width: 402, height: nil, dark: false) { reactionPicker }
+        // Tapback reactions (iMessage reference, 2026-10-11). Paired with Compose `messageReactionTapback`.
+        render("MessageReactionTapback-light", width: 402, height: nil, dark: false) { tapbackGallery }
+        render("MessageReactionTapback-dark", width: 402, height: nil, dark: true) { tapbackGallery }
         // Long-press sheet `2603:19498`: the assistant reference, then the own-message variant (no Report).
         render("MessageActionSheet-assistant-light", width: 402, height: nil, dark: false) { messageActionSheet(.assistant) }
         render("MessageActionSheet-own-light", width: 402, height: nil, dark: false) { messageActionSheet(.user) }
@@ -547,6 +550,22 @@ final class RenderSnapshots: XCTestCase {
             ChatHeader(activity: "Needs you", status: .needsYou)
         }
         .padding(.vertical, DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var tapbackGallery: some View {
+        VStack(spacing: DesignTokens.Spacing.lg) {
+            MessageBubble("Can you move the planning sync to Thursday?", role: .user)
+            MessageBubble("Done \u{2014} the planning sync is now Thursday at 10:00.", role: .assistant, reaction: .thumbsUp)
+            MessageBubble("Perfect, thank you!", role: .user, reaction: .heart)
+            MessageBubble("Ok", role: .user, reaction: .thumbsUp, additionalReactions: [.thumbsUp])
+            MessageBubble("I also shared the notes with both attendees.", role: .assistant,
+                          reaction: .heart, additionalReactions: [.heart])
+            MessageBubble("See you there", role: .user, delivery: .read(at: "10:24"),
+                          reaction: .laugh, additionalReactions: [.heart, .thumbsUp, .party])
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
         .background(DesignTokens.Color.backgroundPrimary)
     }
 

@@ -4,6 +4,7 @@ import com.rem.designsystem.chat.ChatHeaderStatus
 import com.rem.designsystem.chat.ComposerAttachment
 import com.rem.designsystem.chat.MessageDelivery
 import com.rem.designsystem.chat.MessageReaction
+import com.rem.designsystem.chat.MessageReactionBadgeMetrics
 import com.rem.designsystem.chat.MessageRole
 
 // Chat / Inbox presentation contract — Compose twin of `Screens/ChatScreenModel.swift`.
@@ -129,8 +130,16 @@ class ChatMessageDisplay(
      * The DS never reads a clock or formats dates; null shows no timestamp for this message.
      */
     val time: String? = null,
+    /**
+     * Reactions beyond [reaction] (for example from other participants), drawn as stacked tapback badges
+     * behind it. [reaction] stays the person's own choice and the action sheet's selection.
+     */
+    val additionalReactions: List<MessageReaction> = emptyList(),
 ) {
     val delivery: MessageDelivery = if (role == MessageRole.User) delivery else MessageDelivery.None
+
+    /** Every reaction the bubble draws, front badge first. */
+    val reactions: List<MessageReaction> get() = MessageReactionBadgeMetrics.stack(reaction, additionalReactions)
 
     fun copy(
         text: String = this.text,
@@ -139,13 +148,15 @@ class ChatMessageDisplay(
         reaction: MessageReaction? = this.reaction,
         canRetry: Boolean = this.canRetry,
         time: String? = this.time,
-    ) = ChatMessageDisplay(id, role, text, meta, delivery, reaction, canRetry, time)
+        additionalReactions: List<MessageReaction> = this.additionalReactions,
+    ) = ChatMessageDisplay(id, role, text, meta, delivery, reaction, canRetry, time, additionalReactions)
 
     override fun equals(other: Any?): Boolean = other is ChatMessageDisplay &&
         id == other.id && role == other.role && text == other.text && meta == other.meta &&
-        delivery == other.delivery && reaction == other.reaction && canRetry == other.canRetry && time == other.time
+        delivery == other.delivery && reaction == other.reaction && canRetry == other.canRetry && time == other.time &&
+        additionalReactions == other.additionalReactions
 
-    override fun hashCode(): Int = listOf(id, role, text, meta, delivery, reaction, canRetry, time).hashCode()
+    override fun hashCode(): Int = listOf(id, role, text, meta, delivery, reaction, canRetry, time, additionalReactions).hashCode()
 }
 
 /** Interactions on a transcript message. */

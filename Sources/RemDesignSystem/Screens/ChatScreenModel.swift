@@ -159,11 +159,14 @@ public struct ChatMessageDisplay: Identifiable, Equatable, Sendable {
     /// Host-formatted send/receive time shown in the swipe-to-reveal timestamp column (e.g. "10:24").
     /// The DS never reads a clock or formats dates; `nil` shows no timestamp for this message.
     public var time: String?
+    /// Reactions beyond `reaction` (for example from other participants), drawn as stacked tapback
+    /// badges behind it. `reaction` stays the person's own choice and the action sheet's selection.
+    public var additionalReactions: [MessageReaction]
 
     public init(
         id: String, role: MessageBubble.Role, text: String, meta: String? = nil,
         delivery: MessageBubble.Delivery = .none, reaction: MessageReaction? = nil, canRetry: Bool = false,
-        time: String? = nil
+        time: String? = nil, additionalReactions: [MessageReaction] = []
     ) {
         self.id = id
         self.role = role
@@ -173,6 +176,12 @@ public struct ChatMessageDisplay: Identifiable, Equatable, Sendable {
         self.reaction = reaction
         self.canRetry = canRetry
         self.time = time
+        self.additionalReactions = additionalReactions
+    }
+
+    /// Every reaction the bubble draws, front badge first.
+    public var reactions: [MessageReaction] {
+        MessageReactionBadgeMetrics.stack(primary: reaction, additional: additionalReactions)
     }
 }
 
