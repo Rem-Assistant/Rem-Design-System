@@ -16,6 +16,10 @@ import com.rem.designsystem.screens.ChatScreenAction
 import com.rem.designsystem.screens.ChatTranscriptEntry
 import com.rem.designsystem.screens.ChatTimestampReveal
 import com.rem.designsystem.chat.ChatJumpToLatest
+import com.rem.designsystem.chat.ChatKeyboardDismiss
+import com.rem.designsystem.chat.ChatTranscriptKeyboardDismissConnection
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import com.rem.designsystem.screens.ChatTranscriptRules
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
@@ -213,6 +217,64 @@ class ChatScreenModelTest {
         assertEquals(200, ChatJumpToLatest.APPEAR_MILLIS)
         assertEquals("Scroll to latest message", ChatJumpToLatest.ACCESSIBILITY_LABEL)
         assertEquals("chat.jumpToLatest", ChatJumpToLatest.TEST_TAG)
+    }
+
+    // Swipe down to dismiss the keyboard (paired with `ChatScreenModelTests.swift`).
+
+    @Test fun keyboardDismissNeedsAClearDownwardSwipe() {
+        assertEquals(24f, ChatKeyboardDismiss.THRESHOLD, 0f)
+        assertEquals(1.5f, ChatKeyboardDismiss.VERTICAL_DOMINANCE, 0f)
+        assertTrue("straight down at the threshold", ChatKeyboardDismiss.isDismissSwipe(0f, 24f))
+        assertTrue(ChatKeyboardDismiss.isDismissSwipe(10f, 60f))
+        assertFalse("short of the threshold", ChatKeyboardDismiss.isDismissSwipe(0f, 23.9f))
+        assertFalse("upward never dismisses", ChatKeyboardDismiss.isDismissSwipe(0f, -80f))
+        assertFalse("no movement", ChatKeyboardDismiss.isDismissSwipe(0f, 0f))
+    }
+
+    @Test fun keyboardDismissNeedsVerticalTravelToDominate() {
+        assertFalse("diagonal", ChatKeyboardDismiss.isDismissSwipe(40f, 40f))
+        assertFalse("exactly at the dominance ratio", ChatKeyboardDismiss.isDismissSwipe(20f, 30f))
+        assertTrue("just past the dominance ratio", ChatKeyboardDismiss.isDismissSwipe(20f, 30.1f))
+        assertFalse("leftward slip counts the same", ChatKeyboardDismiss.isDismissSwipe(-40f, 50f))
+        assertFalse("sideways", ChatKeyboardDismiss.isDismissSwipe(120f, 25f))
+    }
+
+    @Test fun keyboardDismissIgnoresPressAndHoldDrags() {
+        assertEquals(350L, ChatKeyboardDismiss.HOLD_LIMIT_MILLIS)
+        assertTrue(ChatKeyboardDismiss.isSwipeStart(0L))
+        assertTrue(ChatKeyboardDismiss.isSwipeStart(349L))
+        assertFalse("text selection starts with a hold", ChatKeyboardDismiss.isSwipeStart(350L))
+        assertEquals("Dismiss keyboard", ChatKeyboardDismiss.ACCESSIBILITY_ACTION_NAME)
+    }
+
+    @Test fun transcriptDragTowardOlderMessagesDismissesOnlyWhileTheImeIsOpen() {
+        var ime = true
+        var dismissed = 0
+        val connection = ChatTranscriptKeyboardDismissConnection(
+            density = { 2f }, imeVisible = { ime }, onDismiss = { dismissed++ },
+        )
+        val user = NestedScrollSource.UserInput
+        // 2px per dp: 20 + 20 px = 20dp, short of the threshold; the next 10px reaches 25dp.
+        assertEquals("consumes nothing", Offset.Zero, connection.onPreScroll(Offset(0f, 20f), user))
+        connection.onPreScroll(Offset(0f, 20f), user)
+        assertEquals(0, dismissed)
+        connection.onPreScroll(Offset(0f, 10f), user)
+        assertEquals(1, dismissed)
+
+        // Toward the latest message (finger up) resets and never dismisses.
+        connection.onPreScroll(Offset(0f, 40f), user)
+        connection.onPreScroll(Offset(0f, -200f), user)
+        connection.onPreScroll(Offset(0f, 40f), user)
+        assertEquals(1, dismissed)
+
+        // Programmatic scrolls (jump to latest, following new content) never dismiss.
+        connection.onPreScroll(Offset(0f, 400f), NestedScrollSource.SideEffect)
+        assertEquals(1, dismissed)
+
+        // IME closed: a drag does nothing.
+        ime = false
+        connection.onPreScroll(Offset(0f, 400f), user)
+        assertEquals(1, dismissed)
     }
 
     @Test fun timeIsAlwaysAvailableToAssistiveTechnology() {

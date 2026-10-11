@@ -30,6 +30,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import org.hamcrest.Matcher
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -901,6 +902,55 @@ class PlaygroundNavigationTest {
             compose.onNodeWithTag("chat.header.back").assertIsDisplayed()
             compose.onNodeWithTag("chat.composerSend").assertIsDisplayed()
             capture("ChatScreen-keyboard-light") // taken with the soft IME on screen
+        } finally {
+            if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
+            else shell("settings put secure show_ime_with_hard_keyboard $previous")
+        }
+    }
+
+    /** Waits for the soft IME to be shown ([shown] true) or hidden. */
+    private fun waitForIme(shown: Boolean, message: String) {
+        compose.waitUntil(5000) { (imeTopInWindow() != null) == shown }
+        compose.waitForIdle()
+        check((imeTopInWindow() != null) == shown) { message }
+    }
+
+    /**
+     * Swipe down to dismiss the keyboard (`ChatKeyboardDismiss`, chat.md rule 11; twin of the iOS journey):
+     * a clear downward swipe that starts on the composer field hides the IME; after focusing again, an
+     * upward swipe leaves it up; and a drag toward older messages in the transcript hides it too.
+     */
+    @Test fun chatComposerSwipeDownDismissesKeyboard() {
+        if (Build.VERSION.SDK_INT < 30) error("The soft-IME visibility check needs API 30+ window insets")
+        val previous = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        try {
+            openChatScreen()
+            val field = compose.onNodeWithTag("chat.composerField")
+            field.performClick()
+            field.assertIsFocused()
+            waitForIme(shown = true, message = "The soft IME is shown after focusing the composer")
+
+            // A quick downward swipe (no hold) that starts on the field.
+            field.performTouchInput { swipe(center, center + Offset(0f, 80.dp.toPx()), durationMillis = 150) }
+            waitForIme(shown = false, message = "A downward swipe on the composer hides the IME")
+            field.assertIsNotFocused()
+
+            field.performClick()
+            field.assertIsFocused()
+            waitForIme(shown = true, message = "The soft IME is shown again")
+            field.performTouchInput { swipe(center, center - Offset(0f, 80.dp.toPx()), durationMillis = 150) }
+            compose.waitForIdle()
+            Thread.sleep(1000)
+            check(imeTopInWindow() != null) { "An upward swipe leaves the IME up" }
+            field.assertIsFocused()
+
+            // Parity with iOS `.scrollDismissesKeyboard`: drag the transcript toward older messages.
+            compose.onNodeWithTag("chat.content").performTouchInput {
+                swipe(Offset(width * 0.03f, height * 0.2f), Offset(width * 0.03f, height * 0.8f), durationMillis = 300)
+            }
+            waitForIme(shown = false, message = "A transcript drag toward older messages hides the IME")
+            field.assertIsNotFocused()
         } finally {
             if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
             else shell("settings put secure show_ime_with_hard_keyboard $previous")

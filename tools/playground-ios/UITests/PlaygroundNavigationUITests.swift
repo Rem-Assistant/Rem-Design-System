@@ -854,6 +854,34 @@ final class PlaygroundNavigationUITests: XCTestCase {
         capture("ChatScreen-keyboard-light")
     }
 
+    /// Swipe down on the composer (`ChatKeyboardDismiss`, chat.md rule 11): a clear downward swipe that starts
+    /// on the composer field hides the keyboard; after focusing again, an upward swipe leaves it up.
+    func testChatComposerSwipeDownDismissesKeyboard() {
+        openChatScreen()
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        focus(field)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3), "Keyboard shown after focusing the composer")
+
+        // A short press (well under `holdLimit`) then a quick downward drag that starts on the field.
+        let start = field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 80)),
+                    withVelocity: .fast, thenHoldForDuration: 0)
+        waitUntilGone(app.keyboards.firstMatch, "A downward swipe on the composer hides the keyboard")
+        XCTAssertFalse(NSPredicate(format: "hasKeyboardFocus == true").evaluate(with: field),
+                       "The composer field is no longer focused")
+
+        focus(field)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3), "Keyboard shown again")
+        let again = field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        again.press(forDuration: 0.05, thenDragTo: again.withOffset(CGVector(dx: 0, dy: -80)),
+                    withVelocity: .fast, thenHoldForDuration: 0)
+        RunLoop.current.run(until: Date().addingTimeInterval(1))
+        XCTAssertGreaterThan(app.keyboards.count, 0, "An upward swipe leaves the keyboard up")
+        XCTAssertTrue(NSPredicate(format: "hasKeyboardFocus == true").evaluate(with: field),
+                      "The composer field stays focused after an upward swipe")
+    }
+
     func testChatScreenSendStopAcceptAndRead() {
         openChatScreen()
         sendFromChat("Plan my afternoon")

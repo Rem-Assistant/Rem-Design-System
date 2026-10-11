@@ -84,6 +84,12 @@ no prototype reaction; this routing is explicit.
    down-arrow above the dock while the person is scrolled more than 200pt/dp above the newest message. No
    input, action or host wiring; it emits no `ChatScreenAction`. Identifier `chat.jumpToLatest`.
 
+10. **Swipe down to dismiss the keyboard** is presentation the composer owns ([`chat.md`](chat.md) rule 11): a
+   clear downward swipe (24pt/dp, vertical dominating) that starts on the focused composer ends editing, and
+   Compose also hides the IME on a transcript drag toward older messages (iOS already dismisses interactively).
+   No new input or action: the host hears the existing `focusChanged(false)` and must not re-request focus in
+   response. The focused field offers a "Dismiss keyboard" accessibility action.
+
 ## Rules the adapter applies (truth)
 
 - `.delivered(at:)` only with durable **host acceptance** evidence; `at` is the host-formatted acceptance time.
