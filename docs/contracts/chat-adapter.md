@@ -33,7 +33,7 @@ UTC). Component contract: [`chat.md`](chat.md).
 
 ## Actions
 
-`ChatScreenAction`: `back`, `overflow`, `call`, `activityDetails`, `starter(id)`, `dismissReplyContext(targetID)`,
+`ChatScreenAction`: `back`, `openSidebar`, `overflow`, `call`, `activityDetails`, `starter(id)`, `dismissReplyContext(targetID)`,
 `composer(ChatComposerAction)`, `transcript(ChatTranscriptAction)`.
 `ChatComposerAction`: `draftChanged`, `send`, `cancel`, `speak`, `add`, `removeAttachment(id)`, `focusChanged`.
 `ChatTranscriptAction`: `retry(messageID)`, `requestActions(messageID)`, `react(messageID, reaction?)`,
@@ -62,7 +62,10 @@ no prototype reaction; this routing is explicit.
 5. **Header:** one avatar and one identity/activity capsule; the header owns back and one trailing action:
    overflow, or — when the host sets `showsCall` because in-app voice is available — the call entry, which
    **replaces** overflow (never a second icon beside it; in-app voice only, no PSTN). A host that shows the call entry keeps every action it had in overflow reachable through an existing surface it already owns (for example its agent settings or the activity screen). The DS adds no new menu for them. The platform
-   navigation bar is hidden by the composition. The empty state has no second face.
+   navigation bar is hidden by the composition. The empty state has no second face. A **root
+   conversation** (`ChatHeaderDisplay.showsSidebar`, Figma A2 · Chat `2702:2351`) swaps Back for the
+   sidebar button (`line.3.horizontal` / `Menu`, "Open sidebar", `chat.header.menu`), which emits
+   `openSidebar`; the host owns the sidebar (Playground: `docs/playground/route-map.md`).
 6. **Reply context** is an accessory above the same composer. Dismiss reports the target id only.
 7. **Agent activity** shows the identity with the **current** activity (`AgentActivityDisplay.current`, the same
    state as the Chat header), an Activity / Approvals segmented control (iOS segmented `Picker`; Compose Material 3

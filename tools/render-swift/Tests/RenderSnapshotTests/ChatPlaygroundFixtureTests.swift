@@ -290,4 +290,27 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertNil(chat.replyContext)
         XCTAssertEqual(chat.taskID, "venue-booking", "Task identity survives dismissing the reply target")
     }
+
+    /// Build 9 shell: an agent's root conversation names the agent and opens the sidebar instead of Back.
+    func testRootConversationOpensSidebarAndNamesTheAgent() {
+        var main = ChatPlaygroundFixture.root()
+        XCTAssertEqual(main.header.name, "Rem")
+        XCTAssertTrue(main.header.showsSidebar)
+        XCTAssertFalse(main.header.showsBack, "No Back on a root conversation")
+        XCTAssertFalse(main.header.showsOverflow, "Host controls live under Developer")
+        let before = main
+        XCTAssertEqual(main.handle(.openSidebar), .openSidebar)
+        XCTAssertEqual(main, before, "Opening the sidebar changes nothing in the conversation")
+
+        var side = ChatPlaygroundFixture.root(.empty, agentName: "Health")
+        XCTAssertEqual(side.header.name, "Health")
+        XCTAssertEqual(side.emptyState?.message, "Start a conversation with Health. Plan your day, explore an idea or get a task moving.")
+        side.handle(.starter(id: "plan-day"))
+        XCTAssertEqual(side.header.name, "Health", "The agent name survives a turn")
+
+        let ordinary = ChatPlaygroundFixture(.populated).header
+        XCTAssertTrue(ordinary.showsBack, "Ordinary chat keeps Back")
+        XCTAssertFalse(ordinary.showsSidebar)
+        XCTAssertEqual(ChatPlaygroundFixture.agentEmptyMessage("Rem"), ChatPlaygroundFixture.emptyMessage)
+    }
 }

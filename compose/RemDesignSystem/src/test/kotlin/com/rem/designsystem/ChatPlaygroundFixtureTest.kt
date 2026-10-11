@@ -311,4 +311,26 @@ class ChatPlaygroundFixtureTest {
         assertNull(chat.replyContext)
         assertEquals("Task identity survives dismissing the reply target", "venue-booking", chat.taskId)
     }
+
+    /** Build 9 shell: an agent's root conversation names the agent and opens the sidebar instead of Back. */
+    @Test fun rootConversationOpensSidebarAndNamesTheAgent() {
+        val main = ChatPlaygroundFixture.root()
+        assertEquals("Rem", main.header.name)
+        assertEquals(true, main.header.showsSidebar)
+        assertEquals("No Back on a root conversation", false, main.header.showsBack)
+        assertEquals("Host controls live under Developer", false, main.header.showsOverflow)
+        val (same, effect) = main.handle(ChatScreenAction.OpenSidebar)
+        assertEquals(ChatPlaygroundEffect.OpenSidebar, effect)
+        assertEquals("Opening the sidebar changes nothing in the conversation", main, same)
+
+        val side = ChatPlaygroundFixture.root(ChatPlaygroundFixture.Conversation.Empty, agentName = "Health")
+        assertEquals("Health", side.header.name)
+        assertEquals("Start a conversation with Health. Plan your day, explore an idea or get a task moving.", side.emptyState!!.message)
+        assertEquals("The agent name survives a turn", "Health", side.handle(ChatScreenAction.Starter("plan-day")).first.header.name)
+
+        val ordinary = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated).header
+        assertEquals("Ordinary chat keeps Back", true, ordinary.showsBack)
+        assertEquals(false, ordinary.showsSidebar)
+        assertEquals(ChatPlaygroundFixture.EmptyMessage, ChatPlaygroundFixture.agentEmptyMessage("Rem"))
+    }
 }

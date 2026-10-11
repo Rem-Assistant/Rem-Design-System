@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -49,7 +50,8 @@ enum class ChatHeaderStatus { Connected, NeedsYou }
  * chevron. The header **owns** back and overflow (Figma corrections, 2026-10-10): pass [onBack] /
  * [onOverflow] and it draws 44dp circular controls level with the avatar, stretched to the screen width
  * (verified at 320 and 402). Hosts must not add another title row. Without the callbacks the controls
- * are omitted (catalog use). Activity text is host data for the agent's lifecycle, not transport.
+ * are omitted (catalog use). A root conversation passes [onMenu] instead of [onBack]: the one leading
+ * control becomes the sidebar button (`Menu`, "Open sidebar"; Figma A2 · Chat, sidebar closed `2702:2351`). Activity text is host data for the agent's lifecycle, not transport.
  *
  * Figma: **Rem/Chat v2/Header** (`2054:19725`). Compose has no material blur, so the glass pill uses
  * `backgroundPrimary` with the Figma shadow.
@@ -66,10 +68,11 @@ fun ChatHeader(
     onBack: (() -> Unit)? = null,
     onOverflow: (() -> Unit)? = null,
     onCall: (() -> Unit)? = null,
+    onMenu: (() -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
         HeaderIdentity(name, activity, status, faceMode, accessibilityPrefix, onTap)
-        if (onBack != null || onOverflow != null || onCall != null) {
+        if (onBack != null || onMenu != null || onOverflow != null || onCall != null) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,7 +80,10 @@ fun ChatHeader(
                     .padding(top = (ChatHeaderAvatarSize - ChatHeaderControlSize) / 2),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (onBack != null) {
+                // One leading control: the sidebar button on a root conversation, otherwise Back.
+                if (onMenu != null) {
+                    HeaderControl(Icons.Filled.Menu, "Open sidebar", "$accessibilityPrefix.menu", onMenu)
+                } else if (onBack != null) {
                     HeaderControl(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Back", "$accessibilityPrefix.back", onBack)
                 }
                 Spacer(modifier = Modifier.weight(1f))

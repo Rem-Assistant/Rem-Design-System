@@ -192,6 +192,7 @@ fun ChatScreen(
                     onBack = if (header.showsBack) ({ onAction(ChatScreenAction.Back) }) else null,
                     onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
                     onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
+                    onMenu = if (header.showsSidebar) ({ onAction(ChatScreenAction.OpenSidebar) }) else null,
                     modifier = Modifier.padding(bottom = RemSpacing.sm),
                 )
             },

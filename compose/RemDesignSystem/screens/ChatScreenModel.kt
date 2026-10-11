@@ -300,6 +300,11 @@ data class ChatHeaderDisplay(
      * Off by default; the DS only emits [ChatScreenAction.Call], voice admission stays with the host.
      */
     val showsCall: Boolean = false,
+    /**
+     * A root conversation (Figma A2 · Chat, sidebar closed `2702:2351`): the leading control is the sidebar
+     * button instead of Back, and it emits [ChatScreenAction.OpenSidebar]. Off by default.
+     */
+    val showsSidebar: Boolean = false,
 )
 
 /**
@@ -403,6 +408,8 @@ object ChatTimestampReveal {
 /** Every interaction the full Chat composition reports. Routing and effects stay in the host. */
 sealed interface ChatScreenAction {
     data object Back : ChatScreenAction
+    /** The header sidebar button on a root conversation ([ChatHeaderDisplay.showsSidebar]). */
+    data object OpenSidebar : ChatScreenAction
     data object Overflow : ChatScreenAction
     /** The header call button: start the host's in-app voice session with Rem (never PSTN). */
     data object Call : ChatScreenAction

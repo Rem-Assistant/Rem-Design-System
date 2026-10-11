@@ -353,10 +353,14 @@ public struct ChatHeaderDisplay: Equatable, Sendable {
     /// Top-right call button (WS1e): the host shows it only when it can start an in-app voice session.
     /// Off by default; the DS only emits `.call`, voice admission stays with the host.
     public var showsCall: Bool
+    /// A root conversation (Figma A2 · Chat, sidebar closed `2702:2351`): the leading control is the
+    /// sidebar button instead of Back, and it emits `.openSidebar`. Off by default.
+    public var showsSidebar: Bool
 
     public init(
         name: String = "Rem", activity: String, status: ChatHeader.Status = .connected, isWorking: Bool = false,
-        showsBack: Bool = true, showsOverflow: Bool = true, showsActivityDetails: Bool = true, showsCall: Bool = false
+        showsBack: Bool = true, showsOverflow: Bool = true, showsActivityDetails: Bool = true, showsCall: Bool = false,
+        showsSidebar: Bool = false
     ) {
         self.name = name
         self.activity = activity
@@ -366,6 +370,7 @@ public struct ChatHeaderDisplay: Equatable, Sendable {
         self.showsOverflow = showsOverflow
         self.showsActivityDetails = showsActivityDetails
         self.showsCall = showsCall
+        self.showsSidebar = showsSidebar
     }
 }
 
@@ -488,6 +493,8 @@ public enum ChatTimestampReveal {
 /// Every interaction the full Chat composition reports. Routing and effects stay in the host.
 public enum ChatScreenAction: Equatable, Sendable {
     case back
+    /// The header sidebar button on a root conversation (`ChatHeaderDisplay.showsSidebar`).
+    case openSidebar
     case overflow
     /// The header call button: start the host's in-app voice session with Rem (never PSTN).
     case call

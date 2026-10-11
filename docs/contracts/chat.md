@@ -107,6 +107,8 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 9. **Header** (corrected 2026-10-10, handoff notes): the header **owns back and overflow** (44pt circular
    controls level with the avatar, stretched to the screen width so overflow stays visible at 320pt) and is
    used unchanged in ordinary and task chat. No navigation-title row above it; no face in empty content.
+   On a **root conversation** (`showsSidebar`, Build 9 shell, Figma `2702:2351`) the one leading control
+   is the sidebar button (`line.3.horizontal` / `Menu`, "Open sidebar") instead of Back.
    64 avatar (`backgroundSecondary`) with the 48 Rem face in brand blue. Beneath it, the
    identity pill shows the name (title3 semibold) and a status row: a 6pt dot (green when Connected,
    orange when Needs you), the **agent's current activity** in footnote `labelSecondary`, and a chevron.

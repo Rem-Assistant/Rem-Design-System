@@ -56,6 +56,7 @@ font subset (Rule 2). They graduate only after a subset regeneration and standal
 | Meaning | iOS (SF Symbol) | Android (as implemented) | FILL | Notes |
 |---|---|---|---|---|
 | header back | `chevron.left` | `Icons.AutoMirrored.Filled.KeyboardArrowLeft` | **0** | `ChatHeader`; stroke glyph, no fill variant |
+| open sidebar | `line.3.horizontal` | `Icons.Filled.Menu` | **0** | `ChatHeader` leading control on a root conversation (`showsSidebar`, Figma `2702:2351`); replaces Back, never beside it |
 | header overflow | `ellipsis` | `Icons.Filled.MoreHoriz` | **0** | `ChatHeader`; dots, no fill variant |
 | header call | `phone` | `Icons.Outlined.Call` | **0** | `ChatHeader` (WS1e); outline handset, in-app voice entry only (not PSTN); replaces the trailing overflow control, never beside it |
 | activity disclosure | `chevron.right` | `Icons.AutoMirrored.Filled.KeyboardArrowRight` | **0** | `ChatHeader` capsule; matches the registry disclosure row |

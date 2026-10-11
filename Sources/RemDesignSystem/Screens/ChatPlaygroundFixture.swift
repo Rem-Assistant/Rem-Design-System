@@ -28,6 +28,8 @@ public enum ChatPlaygroundEffect: Equatable, Sendable {
     case presentActivity
     /// Present `MessageActionSheet` for a long-pressed message. Any action from the sheet dismisses it.
     case presentMessageActions(ChatMessageActionsDisplay)
+    /// Open the sidebar (header sidebar button on a root conversation).
+    case openSidebar
 }
 
 public struct ChatPlaygroundFixture: Equatable, Sendable {
@@ -52,6 +54,10 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     public static let reportNote = "The app opens its report flow for this message."
     public static let retryNote = "Retry resubmitted; no receipt until the host accepts it."
     public static let emptyMessage = "Start a conversation with Rem. Plan your day, explore an idea or get a task moving."
+    /// The empty-state message naming the conversation's agent ("Rem" gives `emptyMessage`).
+    public static func agentEmptyMessage(_ agentName: String) -> String {
+        agentName == "Rem" ? emptyMessage : emptyMessage.replacingOccurrences(of: "with Rem.", with: "with \(agentName).")
+    }
     public static let starters = [ChatStarter(id: "plan-day", title: "Help me plan my day")]
 
     public private(set) var entries: [ChatTranscriptEntry]
@@ -69,6 +75,10 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     /// Try again instead of stranding it with no receipt and no retry.
     private var retryingID: String?
     private var nextID = 0
+    /// The agent this conversation belongs to (header name and empty-state copy).
+    public private(set) var agentName = "Rem"
+    /// A root conversation in the Playground shell: the header's leading control opens the sidebar.
+    public private(set) var isRootConversation = false
 
     // MARK: Construction
 
@@ -80,6 +90,16 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         }
         composer = ChatComposerFixture()
         taskState = .none
+    }
+
+    /// An agent's root conversation in the Playground shell (Figma A2 · Chat, sidebar closed
+    /// `2702:2351`): the header names the agent and its leading control opens the sidebar instead of
+    /// Back. Overflow is off: the fixture-host controls live under the Playground's Developer entry.
+    public static func root(_ conversation: Conversation = .populated, agentName: String = "Rem") -> ChatPlaygroundFixture {
+        var fixture = ChatPlaygroundFixture(conversation)
+        fixture.agentName = agentName
+        fixture.isRootConversation = true
+        return fixture
     }
 
     /// Task chat for an Inbox item: the same composition plus the reply accessory, and the header
@@ -148,9 +168,16 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     public var header: ChatHeaderDisplay {
         // No call entry here: it would replace overflow, which is how the Playground reaches its
         // host controls. The call variant is shown in the Chat catalog's Header group.
-        composer.state.phase.isInFlight
+        var display = composer.state.phase.isInFlight
             ? ChatHeaderDisplay(activity: "Working on your request", isWorking: true)
             : (taskID == nil ? ChatHeaderDisplay(activity: "Connected") : taskState.header())
+        display.name = agentName
+        if isRootConversation {
+            display.showsBack = false
+            display.showsSidebar = true
+            display.showsOverflow = false
+        }
+        return display
     }
 
     /// The Agent activity screen for this conversation: the header's current state (never a timeline
@@ -160,7 +187,9 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     }
 
     public var emptyState: ChatEmptyState? {
-        entries.isEmpty ? ChatEmptyState(message: Self.emptyMessage, starters: Self.starters) : nil
+        entries.isEmpty
+            ? ChatEmptyState(message: Self.agentEmptyMessage(agentName), starters: Self.starters)
+            : nil
     }
 
     // MARK: Actions
@@ -170,6 +199,7 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     public mutating func handle(_ action: ChatScreenAction) -> ChatPlaygroundEffect? {
         switch action {
         case .back: return .exit
+        case .openSidebar: return .openSidebar
         case .overflow: return .presentHostControls
         case .activityDetails: return .presentActivity
         case .call: note = Self.callNote

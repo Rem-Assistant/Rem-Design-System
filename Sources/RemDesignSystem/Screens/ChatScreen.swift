@@ -235,7 +235,8 @@ public struct ChatScreen<Transcript: View>: View {
                 onTap: c.header.showsActivityDetails ? { c.onAction(.activityDetails) } : nil,
                 onBack: c.header.showsBack ? { c.onAction(.back) } : nil,
                 onOverflow: c.header.showsOverflow ? { c.onAction(.overflow) } : nil,
-                onCall: c.header.showsCall ? { c.onAction(.call) } : nil
+                onCall: c.header.showsCall ? { c.onAction(.call) } : nil,
+                onMenu: c.header.showsSidebar ? { c.onAction(.openSidebar) } : nil
             )
             .padding(.bottom, DesignTokens.Spacing.sm)
             .background(GeometryReader { header in

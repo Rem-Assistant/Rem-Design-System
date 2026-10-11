@@ -7,7 +7,9 @@ import SwiftUI
 /// The header **owns** the back and overflow controls (Figma corrections, 2026-10-10): pass `onBack` /
 /// `onOverflow` and it draws them as 44pt circular controls level with the avatar, stretched to the
 /// screen width (verified at 320pt and 402pt). Hosts must not add a second navigation-title row above
-/// it. Without the callbacks the controls are omitted (component catalog use). Activity text is host
+/// it. Without the callbacks the controls are omitted (component catalog use). A root conversation
+/// passes `onMenu` instead of `onBack`: the one leading control becomes the sidebar button
+/// (`line.3.horizontal`, "Open sidebar"; Figma A2 · Chat, sidebar closed `2702:2351`). Activity text is host
 /// data for the agent's lifecycle, not transport evidence; the Playground passes neutral fixture copy.
 ///
 /// Figma canonical: **Rem/Chat v2/Header** (`2054:19725`). Compose sibling: `chat/ChatHeader.kt`.
@@ -25,6 +27,7 @@ public struct ChatHeader: View {
     private let accessibilityPrefix: String
     private let onTap: (() -> Void)?
     private let onBack: (() -> Void)?
+    private let onMenu: (() -> Void)?
     private let onOverflow: (() -> Void)?
     private let onCall: (() -> Void)?
 
@@ -41,7 +44,8 @@ public struct ChatHeader: View {
         onTap: (() -> Void)? = nil,
         onBack: (() -> Void)? = nil,
         onOverflow: (() -> Void)? = nil,
-        onCall: (() -> Void)? = nil
+        onCall: (() -> Void)? = nil,
+        onMenu: (() -> Void)? = nil
     ) {
         self.name = name
         self.activity = activity
@@ -50,6 +54,7 @@ public struct ChatHeader: View {
         self.accessibilityPrefix = accessibilityPrefix
         self.onTap = onTap
         self.onBack = onBack
+        self.onMenu = onMenu
         self.onOverflow = onOverflow
         self.onCall = onCall
     }
@@ -57,7 +62,7 @@ public struct ChatHeader: View {
     public var body: some View {
         identityStack
             .overlay(alignment: .top) {
-                if onBack != nil || onOverflow != nil || onCall != nil { controls }
+                if onBack != nil || onMenu != nil || onOverflow != nil || onCall != nil { controls }
             }
     }
 
@@ -67,7 +72,10 @@ public struct ChatHeader: View {
     /// trailing control stays visible on narrow screens.
     private var controls: some View {
         HStack {
-            if let onBack {
+            // One leading control: the sidebar button on a root conversation, otherwise Back.
+            if let onMenu {
+                headerControl("line.3.horizontal", label: "Open sidebar", id: "menu", action: onMenu)
+            } else if let onBack {
                 headerControl("chevron.left", label: "Back", id: "back", action: onBack)
             }
             Spacer(minLength: 0)

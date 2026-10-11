@@ -21,6 +21,8 @@ sealed interface ChatPlaygroundEffect {
     data object PresentActivity : ChatPlaygroundEffect
     /** Present [MessageActionSheet] for a long-pressed message. Any action from the sheet dismisses it. */
     data class PresentMessageActions(val display: ChatMessageActionsDisplay) : ChatPlaygroundEffect
+    /** Open the sidebar (header sidebar button on a root conversation). */
+    data object OpenSidebar : ChatPlaygroundEffect
 }
 
 data class ChatPlaygroundFixture(
@@ -40,6 +42,10 @@ data class ChatPlaygroundFixture(
     /** Set while the active turn is a retry, so cancelling it restores Not delivered + Try again. */
     private val retryingId: String? = null,
     private val nextId: Int = 0,
+    /** The agent this conversation belongs to (header name and empty-state copy). */
+    val agentName: String = "Rem",
+    /** A root conversation in the Playground shell: the header's leading control opens the sidebar. */
+    val isRootConversation: Boolean = false,
 ) {
     /** [Long] puts earlier history above the populated conversation, so scrolling up shows jump to latest. */
     enum class Conversation(val label: String) { Populated("Populated"), Empty("Empty"), Long("Long") }
@@ -49,7 +55,13 @@ data class ChatPlaygroundFixture(
             composer.state.phase.isInFlight -> ChatHeaderDisplay(activity = "Working on your request", isWorking = true)
             taskId == null -> ChatHeaderDisplay(activity = "Connected")
             else -> taskState.header()
-        } // No call entry: it would replace overflow, the Playground's route to its host controls.
+        }.let { display ->
+            // No call entry: it would replace overflow, the Playground's route to its host controls. A root
+            // conversation (the shell) swaps Back for the sidebar button and has no overflow: the
+            // fixture-host controls live under the Playground's Developer entry.
+            if (isRootConversation) display.copy(name = agentName, showsBack = false, showsSidebar = true, showsOverflow = false)
+            else display.copy(name = agentName)
+        }
 
     /**
      * The Agent activity screen for this conversation: the header's current state (never a timeline
@@ -59,11 +71,12 @@ data class ChatPlaygroundFixture(
         get() = AgentActivityFixture.of(header)
 
     val emptyState: ChatEmptyState?
-        get() = if (entries.isEmpty()) ChatEmptyState(message = EmptyMessage, starters = Starters) else null
+        get() = if (entries.isEmpty()) ChatEmptyState(message = agentEmptyMessage(agentName), starters = Starters) else null
 
     /** Handle one composition action the way a host would; returns the next fixture and what to present. */
     fun handle(action: ChatScreenAction): Pair<ChatPlaygroundFixture, ChatPlaygroundEffect?> = when (action) {
         ChatScreenAction.Back -> this to ChatPlaygroundEffect.Exit
+        ChatScreenAction.OpenSidebar -> this to ChatPlaygroundEffect.OpenSidebar
         ChatScreenAction.Overflow -> this to ChatPlaygroundEffect.PresentHostControls
         ChatScreenAction.ActivityDetails -> this to ChatPlaygroundEffect.PresentActivity
         ChatScreenAction.Call -> copy(note = CallNote) to null
@@ -255,6 +268,17 @@ data class ChatPlaygroundFixture(
                     ),
                 )
             }
+
+        /** The empty-state message naming the conversation's agent ("Rem" gives [EmptyMessage]). */
+        fun agentEmptyMessage(agentName: String): String =
+            if (agentName == "Rem") EmptyMessage else EmptyMessage.replace("with Rem.", "with $agentName.")
+
+        /**
+         * An agent's root conversation in the Playground shell (Figma A2 · Chat, sidebar closed `2702:2351`):
+         * the header names the agent and its leading control opens the sidebar instead of Back.
+         */
+        fun root(conversation: Conversation = Conversation.Populated, agentName: String = "Rem") =
+            conversation(conversation).copy(agentName = agentName, isRootConversation = true)
 
         fun conversation(conversation: Conversation) = ChatPlaygroundFixture(
             entries = when (conversation) {
