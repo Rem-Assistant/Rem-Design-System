@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -270,7 +271,9 @@ fun ChatTranscriptList(
             .offset { IntOffset(-reveal.value.roundToInt(), 0) },
         verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
     ) {
-        entries.forEach { entry ->
+        // Keyed by entry id (SwiftUI ForEach is keyed by id): remembered per-entry state, such as a host
+        // card's expansion, stays with its entry when rows are inserted above it.
+        entries.forEach { entry -> key(entry.id) {
             when (entry) {
                 is ChatTranscriptEntry.HostContent -> Box(Modifier.fillMaxWidth()) { hostContent(entry.id) }
                 is ChatTranscriptEntry.Timestamp -> Text(
@@ -314,7 +317,7 @@ fun ChatTranscriptList(
                     }
                 }
             }
-        }
+        } }
     }
 }
 

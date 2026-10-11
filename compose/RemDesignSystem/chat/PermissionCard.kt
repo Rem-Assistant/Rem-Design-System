@@ -255,7 +255,9 @@ private fun PermissionDecision(label: String, onClick: () -> Unit, tag: String, 
 @Composable
 private fun PermissionFullParameters(parameters: List<PermissionParameter>, accessibilityPrefix: String) {
     val colors = RemColors.current
-    var open by rememberSaveable { mutableStateOf(false) }
+    // Keyed by the request (its accessibility prefix is per request) and its payload, so an expanded
+    // disclosure never carries over to a different request that lands in the same composition slot.
+    var open by rememberSaveable(accessibilityPrefix, parameters) { mutableStateOf(false) }
     Column(
         Modifier.fillMaxWidth().padding(horizontal = RemSpacing.md),
         verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
