@@ -18,6 +18,23 @@ PLATFORMS = ('ios', 'android')
 # Supporting an identity here does not assign it or grant repository access.
 REVIEWERS = {58840187: 'samuelalake', 62378296: 'oledibefrancis', 74985099: 'davidolaniran'}
 OWNER_ID = 58840187
+# Owner exceptions to the native-run requirement: one exact source commit, one platform, one build number.
+# Everything else (clean exact checkout, run identity, protected environments, the post-approval recheck,
+# signing and upload guards) still applies, and the native evidence is recorded as waived, never passed.
+NATIVE_EXCEPTIONS = {
+    ('73ac81894508035730e901476f03d5b909ef758e', 'ios', '9'): {
+        'approved_by': 'samuelalake',
+        'approved_on': '2026-10-11',
+        'reason': 'Build 9 internal TestFlight: owner shipped without waiting for a full native run',
+    },
+}
+
+
+def native_exception(sha, platforms, build):
+    """The owner exception for this exact release, or None. Applies only when every selected platform is
+    covered for this commit and build number."""
+    matches = [NATIVE_EXCEPTIONS.get((sha, platform, str(build))) for platform in platforms]
+    return matches[0] if matches and all(matches) else None
 
 
 def same_repository(value):
@@ -44,13 +61,17 @@ def visual_review(url):
     return url
 
 
-def validate_run(run, jobs, sha, run_id):
+def validate_run_identity(run, sha, run_id):
     require(str(run['id']) == str(run_id), 'Run identity mismatch')
     require(same_repository(run['repository']['full_name']) and same_repository(run['head_repository']['full_name']),
             'Foreign repository or fork')
     require(run['head_sha'] == sha, 'Native run source mismatch')
     require(run['path'] == WORKFLOW, 'Wrong native workflow')
     require(run['event'] in ('workflow_dispatch', 'pull_request'), 'Unexpected native event')
+
+
+def validate_run(run, jobs, sha, run_id):
+    validate_run_identity(run, sha, run_id)
     require(run['status'] == 'completed' and run['conclusion'] == 'success', 'Native run is not successful')
     def passed(job):
         return job['status'] == 'completed' and job['conclusion'] == 'success'
@@ -171,12 +192,22 @@ def verify(root, sha, run_id, build, platforms, check_environment=True):
     require(not subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=all']),
             'Candidate checkout must be clean')
     run = gh(f'repos/{REPO}/actions/runs/{run_id}')
-    jobs = paged(f'repos/{REPO}/actions/runs/{run_id}/attempts/{run["run_attempt"]}/jobs', 'jobs')
-    validate_run(run, jobs, sha, run_id)
-    artifacts = paged(f'repos/{REPO}/actions/runs/{run_id}/artifacts', 'artifacts')
     features = declared_features(root)
     receipts = {}
-    for platform in PLATFORMS:
+    exception = native_exception(sha, platforms, build)
+    if exception:
+        # The run must still be this repository's native-candidate run for this exact commit; its result and
+        # receipts are waived for this release only.
+        validate_run_identity(run, sha, run_id)
+        receipts = {platform: {'waived_by': exception['approved_by'], 'approved_on': exception['approved_on']}
+                    for platform in platforms}
+        print(f"Native-run requirement waived for {sha} ({', '.join(platforms)}, build {build}) "
+              f"by {exception['approved_by']}; native evidence is not passed.")
+    else:
+        jobs = paged(f'repos/{REPO}/actions/runs/{run_id}/attempts/{run["run_attempt"]}/jobs', 'jobs')
+        validate_run(run, jobs, sha, run_id)
+    artifacts = [] if exception else paged(f'repos/{REPO}/actions/runs/{run_id}/artifacts', 'artifacts')
+    for platform in ([] if exception else PLATFORMS):
         matches = [a for a in artifacts if a['name'] == f'{platform}-native-{sha}']
         require(len(matches) == 1, 'Missing or ambiguous receipt artifact: ' + platform)
         a = matches[0]
@@ -216,7 +247,10 @@ def main():
         matrix = {'include': [{'platform': x, 'runner': 'macos-15' if x == 'ios' else 'ubuntu-24.04'} for x in platforms]}
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
             f.write('matrix=' + json.dumps(matrix) + '\n')
-    print('Exact-commit native receipts and existing environment protections verified.')
+    if native_exception(a.sha, platforms, a.build):
+        print('Owner native-run exception applied (evidence waived); existing environment protections verified.')
+    else:
+        print('Exact-commit native receipts and existing environment protections verified.')
 
 
 if __name__ == '__main__':
