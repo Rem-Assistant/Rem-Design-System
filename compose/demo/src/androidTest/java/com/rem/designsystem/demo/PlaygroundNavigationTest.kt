@@ -1333,5 +1333,32 @@ class PlaygroundNavigationTest {
         returnToShell()
         assertChatShows("Travel planning: Lisbon in May")
     }
+
+    /** Leaving the chat ends editing: Settings opens with the IME hidden, and the draft is still there on return. */
+    @Test fun shellRouteChangeHidesKeyboardAndKeepsDraft() {
+        if (Build.VERSION.SDK_INT < 30) error("The soft-IME visibility check needs API 30+ window insets")
+        val previous = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        try {
+            returnToShell()
+            val field = compose.onNodeWithTag("chat.composerField")
+            field.performClick()
+            field.assertIsFocused()
+            waitForIme(shown = true, message = "The soft IME is shown after focusing the composer")
+            field.performTextInput("Keep this draft")
+            openSidebar()
+            waitForIme(shown = false, message = "Opening the sidebar hides the IME")
+            compose.onNodeWithTag("sidebar.account").performClick()
+            waitForTag("shell.settings")
+            waitForIme(shown = false, message = "Settings opens with the IME hidden")
+            capture("Shell-settings-noIme-light")
+            systemBack()
+            waitForTag("chat.header.identity")
+            compose.onNodeWithTag("chat.composerField").assertIsNotFocused().assertTextContains("Keep this draft")
+        } finally {
+            if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
+            else shell("settings put secure show_ime_with_hard_keyboard $previous")
+        }
+    }
 }
 

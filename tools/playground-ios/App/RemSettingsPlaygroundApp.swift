@@ -64,8 +64,9 @@ private enum PlaygroundRoute: Hashable {
 /// New agent, and the account pill, which opens Settings. Every state transition goes through the DS
 /// `PlaygroundShellFixture`; this view draws the native chrome only. Fixtures only: no backend, auth,
 /// voice, telephony or provider. The Developer hub (catalog, fixture pickers, every screen) is reached
-/// from Settings' **Developer** button and covers the shell, which stays alive underneath so returning
-/// finds the same agent, conversation and scroll position. Twin of the Compose `Playground()`.
+/// from Settings' **Developer** button and replaces the shell until closed; the selected agent is kept.
+/// Under Settings and New agent the shell stays alive, so returning finds the same agent, conversation
+/// and scroll position. Twin of the Compose `Playground()`.
 struct PlaygroundShell: View {
     @State private var shell = PlaygroundShellFixture()
     /// `--developer` opens straight into the Developer hub (the established journeys start there).
@@ -79,6 +80,11 @@ struct PlaygroundShell: View {
 
     var body: some View {
         ZStack {
+            // Not composed under the Developer hub: the hub hosts its own Chat with the same accessibility
+            // identifiers, and accessibilityHidden does not take a covered UIKit text view out of UI
+            // automation (run 38169016275 found two composer fields). Closing Developer keeps the selected
+            // agent (`shell` state) and opens its conversation afresh.
+            if !developerOpen {
             RemSidebarContainer(isOpen: $shell.isSidebarOpen) {
                 RemSidebar(shell.sidebar) { shell.handle($0) }
             } content: {
@@ -88,9 +94,7 @@ struct PlaygroundShell: View {
                 // A different agent (or a fixture chosen in Developer) is a different conversation.
                 .id("\(shell.conversationKey)|\(chatConversation.rawValue)")
             }
-            // Covered by the Developer hub: out of the accessibility tree and untouchable, but alive.
-            .accessibilityHidden(developerOpen)
-            .allowsHitTesting(!developerOpen)
+            }
 
             if developerOpen {
                 PlaygroundHome(fixture: $settingsFixture, chatConversation: $chatConversation) {
@@ -101,6 +105,11 @@ struct PlaygroundShell: View {
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: developerOpen)
+        // Leaving the conversation (sidebar, Settings, Developer) ends editing, so the keyboard never covers
+        // the next surface; the draft is fixture state and stays. New agent focuses its own name field.
+        .onChange(of: shell.isSidebarOpen) { _, open in if open { endEditing() } }
+        .onChange(of: shell.presented) { _, presented in if presented == .settings { endEditing() } }
+        .onChange(of: developerOpen) { _, open in if open { endEditing() } }
         .sheet(item: presentation, onDismiss: {
             if developerRequested {
                 developerRequested = false
@@ -118,6 +127,10 @@ struct PlaygroundShell: View {
                 }
             }
         }
+    }
+
+    private func endEditing() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     /// The selected agent's conversation: the Developer-chosen fixture for Rem, a fresh one for a side agent.

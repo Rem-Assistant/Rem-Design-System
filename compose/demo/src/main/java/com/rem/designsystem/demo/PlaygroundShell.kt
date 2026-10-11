@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.rem.designsystem.agents.NewAgentSetupScreen
@@ -72,6 +75,18 @@ fun Playground() {
     var chatConversation by rememberSaveable { mutableStateOf(ChatPlaygroundFixture.Conversation.Populated) }
     val settingsOpen = shell.presented == PlaygroundShellPresentation.Settings && !developerOpen
     val covered = developerOpen || settingsOpen
+    // Leaving the conversation (sidebar, Settings, Developer) ends editing: the composer loses focus and the
+    // IME hides, so it never covers the next surface. The draft is fixture state and stays. New agent is
+    // excluded: its sheet focuses the name field itself.
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val leftConversation = shell.isSidebarOpen || covered
+    LaunchedEffect(leftConversation) {
+        if (leftConversation) {
+            focusManager.clearFocus(force = true)
+            keyboard?.hide()
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         // Under Settings the shell stays composed (same agent, conversation and scroll position on return) and

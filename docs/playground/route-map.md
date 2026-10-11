@@ -39,10 +39,10 @@ Approved designs used:
   - Search has no approved surface yet, so it changes nothing.
 - **Retention:** the shell stays alive under Settings and New agent. Returning finds the same agent,
   the same conversation (sent messages and drafts included) and the same scroll position. Closing
-  Developer returns to the same selected agent. On iOS the conversation and scroll position are kept too.
-  On Android the conversation reopens fresh: the hub hosts its own Chat with the same test tags, and
-  Compose's `clearAndSetSemantics` hides covered nodes only from the merged tree, so the shell is not
-  composed under the hub.
+  Developer returns to the same selected agent, and its conversation reopens fresh. The hub hosts its
+  own Chat with the same identifiers. Neither Compose's `clearAndSetSemantics` nor SwiftUI's
+  `accessibilityHidden` takes covered nodes out of UI automation, so the shell is not composed under the
+  hub.
   Switching agents shows that agent's conversation. A side agent's conversation is a fresh fixture; a
   conversation is not kept per agent.
 - **Developer-owned inputs:** the Chat conversation fixture (Populated, Empty or Long) and the Settings

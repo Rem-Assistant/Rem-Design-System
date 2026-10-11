@@ -1065,11 +1065,17 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(element("sidebar.close").waitForExistence(timeout: 3))
     }
 
+    /// Shell presentation changes animate and the shell's tree is large, so allow a snapshot-heavy 10s.
+    private func waitGone(_ element: XCUIElement, _ message: String) {
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
+        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 10), .completed, message)
+    }
+
     private func chooseSidebarRow(_ identifier: String) {
         let row = element(identifier)
         XCTAssertTrue(row.waitForExistence(timeout: 3), "Missing \(identifier)")
         row.tap()
-        waitUntilGone(element("sidebar.close"), "Choosing an agent closes the sidebar")
+        waitGone(element("sidebar.close"), "Choosing an agent closes the sidebar")
     }
 
     private func assertChatShows(_ agent: String) {
@@ -1114,7 +1120,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
         openSidebar()
         element("sidebar.close").tap()
-        waitUntilGone(element("sidebar.close"), "The chat card closes the sidebar")
+        waitGone(element("sidebar.close"), "The chat card closes the sidebar")
         assertChatShows("Health")
         openSidebar()
         chooseSidebarRow("sidebar.agent.main")
@@ -1131,7 +1137,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["newAgent.create"].isEnabled, "Create waits for a name")
         capture("Shell-newAgent-light")
         app.buttons["newAgent.cancel"].tap()
-        waitUntilGone(name, "Close dismisses the sheet")
+        waitGone(name, "Close dismisses the sheet")
         assertChatShows("Rem")
         openSidebar()
         XCTAssertFalse(element("sidebar.agent.new.1").exists, "Cancel creates nothing")
@@ -1142,7 +1148,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         name.typeText("Garden")
         app.buttons["newAgent.color.green"].tap()
         app.buttons["newAgent.create"].tap()
-        waitUntilGone(name, "Create dismisses the sheet")
+        waitGone(name, "Create dismisses the sheet")
         assertChatShows("Garden")
         openSidebar()
         XCTAssertTrue(element("sidebar.agent.new.1").exists, "The new agent is listed")
@@ -1175,7 +1181,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         app.navigationBars["Agent settings"].buttons.element(boundBy: 0).tap()
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         app.buttons["settings.done"].tap()
-        waitUntilGone(settings, "Done dismisses Settings")
+        waitGone(settings, "Done dismisses Settings")
         assertChatShows("Money")
 
         // A swipe down dismisses the sheet too.
@@ -1184,7 +1190,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
-        waitUntilGone(settings, "A swipe down dismisses Settings")
+        waitGone(settings, "A swipe down dismisses Settings")
         assertChatShows("Money")
     }
 
@@ -1195,7 +1201,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let done = app.buttons["chat.addToChat.done"]
         XCTAssertTrue(done.waitForExistence(timeout: 3), "Add opens the Add to Chat sheet")
         done.tap()
-        waitUntilGone(done, "Done dismisses Add to Chat")
+        waitGone(done, "Done dismisses Add to Chat")
 
         let assistant = element("message.a2.bubble")
         XCTAssertTrue(assistant.waitForExistence(timeout: 3))
@@ -1203,7 +1209,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let copy = app.buttons["message.a2.actions.copy"]
         XCTAssertTrue(copy.waitForExistence(timeout: 3))
         copy.tap()
-        waitUntilGone(copy, "An action dismisses the sheet")
+        waitGone(copy, "An action dismisses the sheet")
         assertChatShows("Rem")
 
         element("chat.header.identity").tap()
@@ -1236,7 +1242,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let settings = app.navigationBars["Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         app.buttons["settings.done"].tap()
-        waitUntilGone(settings, "Done dismisses Settings")
+        waitGone(settings, "Done dismisses Settings")
         XCTAssertTrue(jump.waitForExistence(timeout: 3), "Still scrolled up after Settings")
         XCTAssertEqual(marker.frame.minY, before, accuracy: 1, "The conversation keeps its scroll position")
     }
@@ -1266,6 +1272,27 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertFalse(app.navigationBars["Settings"].exists, "Settings closed behind the hub")
         returnToShell()
         assertChatShows("Travel planning: Lisbon in May")
+    }
+
+    /// Leaving the chat ends editing: Settings opens with the keyboard hidden, and the draft is still there.
+    func testShellRouteChangeHidesKeyboardAndKeepsDraft() {
+        returnToShell()
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        focus(field)
+        field.typeText("Keep this draft")
+        XCTAssertGreaterThan(app.keyboards.count, 0, "The keyboard is up while typing")
+        openSidebar()
+        waitGone(app.keyboards.firstMatch, "Opening the sidebar hides the keyboard")
+        element("sidebar.account").tap()
+        let settings = app.navigationBars["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        XCTAssertEqual(app.keyboards.count, 0, "Settings opens with the keyboard hidden")
+        capture("Shell-settings-noKeyboard-light")
+        app.buttons["settings.done"].tap()
+        waitGone(settings, "Done dismisses Settings")
+        XCTAssertEqual(app.keyboards.count, 0)
+        XCTAssertEqual(field.value as? String, "Keep this draft", "The draft is kept")
     }
 }
 
