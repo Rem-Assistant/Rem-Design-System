@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import tempfile
 import sys
 import unittest
@@ -279,7 +280,7 @@ class PackagingTests(unittest.TestCase):
                                  'upload_altool_format_259', 'upload_asc_transfer_failed',
                                  'upload_ipa_error_unclassified', 'upload_itms_', 'upload_apple_code_m',
                                  'upload_altool_exit_', 'upload_altool_flag_rejected',
-                                 'upload_output_encoding_error'})
+                                 'upload_output_encoding_error', 'upload_sdk_too_old'})
         self.assertEqual(set(re.findall(r"'(_errlines_[a-z0-9]+)'", classifier)),
                          {'_errlines_1', '_errlines_2to5', '_errlines_6plus'})
         codes = (codes - {'upload_itms_', 'upload_apple_code_m', 'upload_altool_exit_'}) | {
@@ -397,6 +398,36 @@ class StorageTests(unittest.TestCase):
             with patch.dict(storage.OUTPUT_BUDGET, {'android': {'sign': 999}}), self.assertRaisesRegex(ValueError, 'budget'):
                 storage.require_budget(out, 'android', 'sign')
 
+    def test_toolchain_and_altool_probe_are_published_in_fixed_shapes(self):
+        data = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8', platform='ios',
+                    distribution='upload_started', physical_device='unverified', visual_review_url=URL,
+                    toolchain={'xcode': '26.3', 'xcode_build': '17C529', 'sdk': 'iphoneos26.2'},
+                    altool_old_flag='unsupported',
+                    failure={'phase': 'upload', 'guard': 'upload_sdk_too_old', 'http_status': None,
+                             'upload_build_record': 'absent'})
+        record = summary.public_record(data)
+        self.assertEqual(record['toolchain'], data['toolchain'])
+        self.assertEqual(summary.failure_line(record), 'Distribution state: upload_started; Xcode 26.3 (17C529), SDK '
+                         'iphoneos26.2; old altool flag unsupported; stopped in phase upload at guard upload_sdk_too_old; '
+                         'HTTP status none; build record absent')
+        refused = dict(data, distribution='not_started', toolchain={'xcode': '16.4', 'xcode_build': '16F6',
+                       'sdk': 'iphoneos18.5'}, failure={'phase': 'toolchain', 'guard': 'package_sdk_too_old',
+                       'http_status': None})
+        del refused['altool_old_flag']
+        self.assertEqual(summary.failure_line(summary.public_record(refused)), 'Distribution state: not_started; '
+                         'Xcode 16.4 (16F6), SDK iphoneos18.5; stopped in phase toolchain at guard package_sdk_too_old; '
+                         'HTTP status none')
+        secret = 'team 9ZZ'
+        for bad in (dict(data, toolchain={'xcode': '26.3', 'xcode_build': '17C529'}),
+                    dict(data, toolchain={'xcode': '26.3 ' + secret, 'xcode_build': '17C529', 'sdk': 'iphoneos26.2'}),
+                    dict(data, toolchain={'xcode': '26.3', 'xcode_build': '17C529', 'sdk': 'iphoneos26.2',
+                                          'developer_dir': '/Applications/Xcode_26.3.app'}),
+                    dict(data, toolchain={'xcode': '26.3', 'xcode_build': '17C529', 'sdk': 'macosx26.2'}),
+                    dict(data, toolchain='Xcode 26.3'), dict(data, platform='android'),
+                    dict(data, altool_old_flag='yes'), dict(data, altool_old_flag=secret)):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                summary.public_record(bad)
+
     def test_completed_requires_a_final_state_without_failure(self):
         # The store step also needs this: under `bundle exec` an Errno::EPIPE escaping fastlane exits 0.
         base = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
@@ -507,6 +538,63 @@ class StorageTests(unittest.TestCase):
                     package.build(candidate, out, 'ios', SHA, '5')
                 command.assert_not_called()
                 self.assertFalse(out.exists())
+
+
+    def test_pinned_xcode_selection_fails_closed(self):
+        self.assertEqual(package.XCODE_APP, 'Xcode_26.3.app')
+        self.assertGreaterEqual(package.xcode_version(package.XCODE_APP)[:2], (26, 1))
+        with tempfile.TemporaryDirectory() as tmp:
+            apps = Path(tmp)
+            for name in ('Xcode_16.4.app', 'Xcode_26.2.app', 'Xcode_26.4_beta.app'):
+                (apps / name / 'Contents/Developer').mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, 'not installed'):
+                package.select_xcode(apps)  # never falls back to the default 16.4 or a nearby version
+            (apps / 'Xcode_26.3.app/Contents/Developer').mkdir(parents=True)
+            self.assertEqual(package.select_xcode(apps), apps / 'Xcode_26.3.app/Contents/Developer')
+        with patch.object(package, 'XCODE_APP', 'Xcode_26.0.1.app'), self.assertRaisesRegex(ValueError, 'minimum'):
+            package.select_xcode(Path('/Applications'))
+
+    def test_xcode_toolchain_reads_only_fixed_shapes(self):
+        def run(version, sdk):
+            outputs = iter([version.encode(), sdk.encode()])
+            with patch.object(package, 'command', side_effect=lambda argv, **_: next(outputs)):
+                return package.xcode_toolchain(Path('/Applications/Xcode_26.3.app/Contents/Developer'))
+        self.assertEqual(run('Xcode 26.3\nBuild version 17C529\n', '26.2\n'),
+                         {'xcode': '26.3', 'xcode_build': '17C529', 'sdk': 'iphoneos26.2',
+                          'developer_dir': '/Applications/Xcode_26.3.app/Contents/Developer'})
+        for version, sdk, error in [('Xcode 16.4\nBuild version 16F6\n', '18.5', 'pinned'),
+                                    ('Xcode 26.2\nBuild version 17C52\n', '26.2', 'pinned'),
+                                    ('Xcode 26.3\nBuild version 17C529\n', '18.5', 'iOS 26 SDK'),
+                                    ('Xcode 26.3 team 9ZZ\nBuild version 17C529\n', '26.2', 'Unexpected'),
+                                    ('Xcode 26.3\nBuild version 17C529\n', '26.2 secret', 'iOS 26 SDK')]:
+            with self.subTest(version=version, sdk=sdk), self.assertRaisesRegex(ValueError, error):
+                run(version, sdk)
+
+    def test_archive_must_come_from_the_selected_xcode_26(self):
+        xcode = {'xcode': '26.3', 'xcode_build': '17C529', 'sdk': 'iphoneos26.2'}
+        good = {'DTXcode': '2630', 'DTXcodeBuild': '17C529', 'DTSDKName': 'iphoneos26.2', 'DTPlatformVersion': '26.2'}
+        package.archived_toolchain(good, xcode)
+        for change, error in [({'DTXcode': '1640', 'DTPlatformVersion': '18.5'}, 'older than 26'),
+                              ({'DTPlatformVersion': '18.5'}, 'older than 26'),
+                              ({'DTXcode': None}, 'lacks'), ({'DTPlatformVersion': None}, 'lacks'),
+                              ({'DTXcodeBuild': '16F6'}, 'not built by'), ({'DTSDKName': 'iphoneos26.1'}, 'not built by')]:
+            info = {k: v for k, v in dict(good, **change).items() if v is not None}
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, error):
+                package.archived_toolchain(info, xcode)
+
+    def test_ios_build_requires_the_selected_xcode_first(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, out, scratch = Path(tmp) / 'candidate', Path(tmp) / 'package', Path(tmp) / 'scratch'
+            (root / 'tools/playground-ios/RemSettingsPlayground.xcodeproj').mkdir(parents=True)
+            scratch.mkdir()
+            for developer in ('', '/Applications/Xcode_16.4.app/Contents/Developer', '/x'):
+                with self.subTest(developer=developer), \
+                        patch.dict(os.environ, {'PLAYGROUND_EPHEMERAL': str(scratch), 'DEVELOPER_DIR': developer}), \
+                        patch.object(storage.shutil, 'disk_usage', self.usage(10 ** 15)), \
+                        patch.object(package, 'command') as command, self.assertRaises((ValueError, IndexError)):
+                    package.build(root, out, 'ios', SHA, '5')
+                command.assert_not_called()
+                shutil.rmtree(out, ignore_errors=True)
 
 
 if __name__ == '__main__':

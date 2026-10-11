@@ -2,6 +2,7 @@
 """Only allowlisted public metadata; no binaries, URLs to private downloads or provider logs."""
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -9,10 +10,15 @@ from gate import arguments, visual_review, require, REVIEWERS
 
 
 # Where fastlane distribute stopped (Fastfile release_phase); fixed values only.
-FAILURE_PHASES = ('inputs', 'apple_key', 'group_check', 'build_numbers', 'upload', 'group_recheck',
+FAILURE_PHASES = ('inputs', 'toolchain', 'apple_key', 'group_check', 'build_numbers', 'upload', 'group_recheck',
                   'processing_check', 'assign', 'play_auth', 'play_precheck', 'play_readback')
 # After a TestFlight upload failure only: did Apple create a build record for this number (one read-only GET).
 UPLOAD_BUILD_RECORDS = ('present', 'absent', 'unknown')
+# iOS only: the Xcode that built the IPA (package.py xcode / Fastfile ios_toolchain), in fixed shapes.
+TOOLCHAIN_SHAPES = {'xcode': r'\d{2}\.\d{1,2}(?:\.\d{1,2})?', 'xcode_build': r'\d{2}[A-Z]\d{1,5}[a-z]?',
+                    'sdk': r'iphoneos\d{2}\.\d{1,2}(?:\.\d{1,2})?'}
+# Credential-free `xcrun altool --help` probe: was --use-old-altool passed to the upload?
+ALTOOL_OLD_FLAG = ('supported', 'unsupported', 'unknown')
 # The only states a successful store step may end in.
 COMPLETED_STATES = ('assigned_existing_internal_group', 'published_existing_internal_track')
 
@@ -21,6 +27,11 @@ def failure_line(record):
     """One allowlisted line for the public job log: state, and where and why the store step stopped."""
     f = record.get('failure')
     line = f"Distribution state: {record.get('distribution')}"
+    t = record.get('toolchain')
+    if t:
+        line += f"; Xcode {t['xcode']} ({t['xcode_build']}), SDK {t['sdk']}"
+    if 'altool_old_flag' in record:
+        line += f"; old altool flag {record['altool_old_flag']}"
     if f:
         line += f"; stopped in phase {f['phase']} at guard {f['guard']}; HTTP status {f['http_status'] or 'none'}"
         if 'upload_build_record' in f:
@@ -38,7 +49,6 @@ def public_record(data):
     if 'platform' in data:
         require(data['platform'] in ('ios', 'android'), 'Invalid platform')
     if 'binary_sha256' in data:
-        import re
         require(re.fullmatch('[0-9a-f]{64}', data['binary_sha256']), 'Invalid binary digest')
     require(data.get('distribution') in ('not_started', 'upload_started', 'processed',
             'assigned_existing_internal_group', 'published_existing_internal_track'), 'Unknown state')
@@ -52,8 +62,14 @@ def public_record(data):
                     approval['reviewer'] in REVIEWERS.values(), 'Unknown approval model or reviewer')
             require(approval['model'] != 'owner-approval' or approval['reviewer'] == 'samuelalake',
                     'Invalid owner approval identity')
+    if 'toolchain' in data:
+        t = data['toolchain']
+        require(data.get('platform') == 'ios' and isinstance(t, dict) and set(t) == set(TOOLCHAIN_SHAPES) and
+                all(isinstance(t[k], str) and re.fullmatch(v, t[k], flags=re.ASCII) for k, v in TOOLCHAIN_SHAPES.items()),
+                'Invalid toolchain metadata')
+    if 'altool_old_flag' in data:
+        require(data.get('platform') == 'ios' and data['altool_old_flag'] in ALTOOL_OLD_FLAG, 'Invalid altool probe state')
     if 'failure' in data:
-        import re
         f = data['failure']
         require(isinstance(f, dict) and set(f) in ({'phase', 'guard', 'http_status'},
                 {'phase', 'guard', 'http_status', 'upload_build_record'}), 'Invalid failure metadata')
@@ -64,7 +80,8 @@ def public_record(data):
         require(f['http_status'] is None or (isinstance(f['http_status'], int) and 100 <= f['http_status'] <= 599),
                 'Invalid failure HTTP status')
     allowed = ('source_sha', 'native_run_id', 'native_run_attempt', 'build_number', 'platform',
-               'binary_sha256', 'distribution', 'physical_device', 'visual_review_url', 'approvals', 'failure')
+               'binary_sha256', 'toolchain', 'altool_old_flag', 'distribution', 'physical_device', 'visual_review_url',
+               'approvals', 'failure')
     return {k: data[k] for k in allowed if k in data}
 
 

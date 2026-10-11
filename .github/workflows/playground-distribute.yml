@@ -147,6 +147,11 @@ jobs:
           bundle install --jobs 4 --retry 2
           bundle check
           git diff --exit-code -- Gemfile.lock
+      - name: Select the pinned Xcode 26 for build, sign and upload
+        if: matrix.platform == 'ios'
+        # macos-15 defaults to Xcode 16.4; App Store Connect requires Xcode 26 / the iOS 26 SDK. Fails closed if the
+        # pinned bundle is missing, writes DEVELOPER_DIR for later steps and prints only the fixed-shape version.
+        run: python3 control/tools/playground-distribution/package.py xcode --applications /Applications
       - name: Check runner storage before build
         run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage build
       - name: Build and inspect committed store-ready source (no signing or store credentials)

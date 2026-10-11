@@ -75,9 +75,9 @@ FIXTURES = {
     altool_log("ERROR: [altool.10190B070] Failed to get json from defaults for #{SECRET_TEXT}",
       'UPLOAD SUCCEEDED with no errors'), 1, nil, 'absent',
     'stopped in phase processing_check at guard build_not_valid; HTTP status none'],
-  'g_pre_altool_bad_ipa' => ['pre-altool pilot failure: unreadable IPA (rubyzip Zip::Error)',
+  'g_unreadable_ipa' => ['unreadable IPA: refused before any provider call (no Xcode/SDK metadata)',
     nil, nil, 'bad_ipa', 'absent',
-    'stopped in phase upload at guard upload_user_error_unclassified; HTTP status none; build record absent'],
+    'stopped in phase toolchain at guard package_toolchain_unknown; HTTP status none'],
   'h_wrapped_runtime' => ['RuntimeError wrapper; pilot\'s 259 error is its cause',
     altool_log("ERROR: [altool.600] The file couldn't be opened because it isn't in the correct format. (259) " \
       "#{SECRET_TEXT}"), 1, 'wrapped_runtime', 'absent',
@@ -91,9 +91,9 @@ FIXTURES = {
   'j_flag_rejected_error_line' => ['--use-old-altool rejected on an ERROR: line',
     altool_log("ERROR: [altool.600] Unknown option '--use-old-altool'. #{SECRET_TEXT}"), 64, nil, 'absent',
     'stopped in phase upload at guard upload_altool_flag_rejected; HTTP status none; build record absent'],
-  'j_flag_rejected_plain' => ['--use-old-altool rejected without ERROR: (text stays in the private log)',
+  'j_flag_rejected_plain' => ['--use-old-altool rejected without ERROR: (seen in altool output, kept as a symbol)',
     "altool: unrecognized option '--use-old-altool' #{SECRET_TEXT}\nUsage: altool --upload-app ...\n", 64, nil,
-    'absent', 'stopped in phase upload at guard upload_altool_exit_64; HTTP status none; build record absent'],
+    'absent', 'stopped in phase upload at guard upload_altool_flag_rejected; HTTP status none; build record absent'],
   'k_c_locale_still_classified' => ['the 259 fixture with the job in a C locale: the step and Fastfile read UTF-8',
     altool_log("ERROR: [altool.600003A1C000] The file \u201CPlayground.ipa\u201D couldn\u2019t be opened because it " \
       "isn\u2019t in the correct format. (259) #{SECRET_TEXT}"), 1, nil, 'absent',
@@ -103,9 +103,38 @@ FIXTURES = {
     altool_log("ERROR: [altool.600003A1C000] The file \u201CPlayground.ipa\u201D couldn\u2019t be opened because it " \
       "isn\u2019t in the correct format. (259) #{SECRET_TEXT}"), 1, 'no_utf8_scope', 'absent',
     'stopped in phase upload at guard upload_output_encoding_error; HTTP status none; build record absent',
-    {'LANG' => 'C', 'LC_ALL' => 'C', 'PATHWAY_RUBYOPT' => '-EUS-ASCII'}]
+    {'LANG' => 'C', 'LC_ALL' => 'C', 'PATHWAY_RUBYOPT' => '-EUS-ASCII'}],
+  'm_xcode_16_4_refused' => ['IPA built by Xcode 16.4 / iOS 18.5 SDK (macos-15 default): refused before upload',
+    nil, nil, nil, 'absent', 'stopped in phase toolchain at guard package_sdk_too_old; HTTP status none',
+    {'PATHWAY_XCODE' => '16.4'}],
+  'n_flag_unsupported' => ['altool --help lacks --use-old-altool: upload runs without the flag, state recorded',
+    altool_log("ERROR: [altool.600] Something unexpected #{SECRET_TEXT}"), 1, nil, 'absent',
+    'stopped in phase upload at guard upload_altool_exit_1_errlines_1; HTTP status none; build record absent',
+    {'PATHWAY_ALTOOL_HELP' => 'unsupported'}],
+  'n_probe_unknown' => ['altool --help fails: no flag, state unknown',
+    altool_log("ERROR: [altool.600] Something unexpected #{SECRET_TEXT}"), 1, nil, 'absent',
+    'stopped in phase upload at guard upload_altool_exit_1_errlines_1; HTTP status none; build record absent',
+    {'PATHWAY_ALTOOL_HELP' => 'fail'}],
+  'o_sdk_too_old_error_line' => ['ITMS-90725 SDK requirement on an ERROR: line',
+    altool_log("ERROR: [ContentDelivery.Uploader.600] Validation failed (409) SDK version issue. ITMS-90725: This app " \
+      "was built with the iOS 18.5 SDK. All iOS and iPadOS apps must be built with the iOS 26 SDK or later. #{SECRET_TEXT}"),
+    1, nil, 'absent', 'stopped in phase upload at guard upload_sdk_too_old; HTTP status none; build record absent'],
+  'p_sdk_too_old_plain' => ['SDK requirement only in plain altool output (no ERROR: line)',
+    "Validation failed. This app was built with the iOS 18.5 SDK #{SECRET_TEXT}\nUPLOAD FAILED\n", 1, nil, 'absent',
+    'stopped in phase upload at guard upload_sdk_too_old; HTTP status none; build record absent']
+}.freeze
+# What each fixture's Xcode puts in the IPA and in packaging.json (package.py xcode / build).
+XCODES = {
+  '26.3' => {'xcode' => '26.3', 'xcode_build' => '17C529', 'sdk' => 'iphoneos26.2', 'dt_xcode' => '2630', 'platform' => '26.2'},
+  '16.4' => {'xcode' => '16.4', 'xcode_build' => '16F6', 'sdk' => 'iphoneos18.5', 'dt_xcode' => '1640', 'platform' => '18.5'}
+}.freeze
+ALTOOL_HELP = {
+  'supported' => "Usage: altool --upload-app -f <file> -t <platform>\n  --use-old-altool   Use the previous altool\n",
+  'unsupported' => "Usage: altool --upload-app -f <file> -t <platform>\n  --apple-id <id>\n",
+  'fail' => ''
 }.freeze
 # The job's ambient locale before the store step (hosted runners: UTF-8; macOS has no C.UTF-8).
+BUILD_RECORD_PATH = '/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=8'
 UTF8_LOCALE = RUBY_PLATFORM.include?('darwin') ? 'en_US.UTF-8' : 'C.UTF-8'
 # The workflow's own store step script (umask, task-owned TMPDIR, UTF-8 locale, private log redirect).
 WORKFLOW = File.expand_path('../../.github/workflows/playground-distribute.yml', HERE)
@@ -115,7 +144,7 @@ STORE_STEP = RELEASE['jobs']['distribute']['steps'].find { |step| step['name'].t
 # The workflow's static environment (FASTLANE_* switches, BUNDLE_FROZEN); expressions are set per fixture.
 WORKFLOW_ENV = RELEASE['env'].merge(RELEASE['jobs']['distribute']['env']).reject { |_, v| v.to_s.include?('${{') }
 
-def write_ipa(path, valid)
+def write_ipa(path, valid, xcode)
   return File.binwrite(path, "not a zip #{SECRET_TEXT}") unless valid
   plist = <<~PLIST
     <?xml version="1.0" encoding="UTF-8"?>
@@ -125,6 +154,10 @@ def write_ipa(path, valid)
     <key>CFBundleShortVersionString</key><string>0.1.0</string>
     <key>CFBundleVersion</key><string>8</string>
     <key>DTPlatformName</key><string>iphoneos</string>
+    <key>DTXcode</key><string>#{xcode['dt_xcode']}</string>
+    <key>DTXcodeBuild</key><string>#{xcode['xcode_build']}</string>
+    <key>DTSDKName</key><string>#{xcode['sdk']}</string>
+    <key>DTPlatformVersion</key><string>#{xcode['platform']}</string>
     </dict></plist>
   PLIST
   Zip::OutputStream.open(path) do |zip|
@@ -148,6 +181,10 @@ end
 def run_fixture(name, (_, output, exit_code, mode, record, expected, overrides))
   overrides = (overrides || {}).dup
   extra_rubyopt = overrides.delete('PATHWAY_RUBYOPT')
+  version = overrides.delete('PATHWAY_XCODE') || '26.3'
+  help = overrides.delete('PATHWAY_ALTOOL_HELP') || 'supported'
+  xcode = XCODES.fetch(version)
+  developer = "/Applications/Xcode_#{version}.app/Contents/Developer"
   Dir.mktmpdir('pathway') do |root|
     # system-tmp is the job's ordinary TMPDIR/TMP/TEMP; home is HOME. Neither is a cleaned path.
     runner_temp, system_tmp, home, harness, bin =
@@ -158,19 +195,29 @@ def run_fixture(name, (_, output, exit_code, mode, record, expected, overrides))
     ephemeral = File.join(runner_temp, 'playground-ephemeral')
     Dir.mkdir(ephemeral, 0o700)
     ipa = File.join(out, 'Playground.ipa')
-    write_ipa(ipa, mode != 'bad_ipa')
+    write_ipa(ipa, mode != 'bad_ipa', xcode)
     File.write(File.join(out, 'packaging.json'), JSON.generate('platform' => 'ios', 'signing' => 'verified',
-      'source_sha' => SHA, 'build_number' => '8', 'binary_sha256' => Digest::SHA256.file(ipa).hexdigest))
+      'source_sha' => SHA, 'build_number' => '8', 'binary_sha256' => Digest::SHA256.file(ipa).hexdigest,
+      'xcode' => xcode.slice('xcode', 'xcode_build', 'sdk').merge('developer_dir' => developer)))
     admission = File.join(runner_temp, 'admission.json')
     File.write(admission, JSON.generate('source_sha' => SHA, 'build_number' => '8', 'native_run_id' => 1,
       'native_run_attempt' => 1, 'visual_review_url' => REVIEW))
-    fixture, args, calls = %w[altool-output.txt altool-args.txt apple-calls.txt].map { |f| File.join(harness, f) }
+    fixture, args, calls, help_file, help_args, env_after =
+      %w[altool-output.txt altool-args.txt apple-calls.txt altool-help.txt altool-help-args.txt env-after.txt]
+      .map { |f| File.join(harness, f) }
     File.write(fixture, output.to_s)
+    File.write(help_file, ALTOOL_HELP.fetch(help))
     xcrun = File.join(bin, 'xcrun')
     File.write(xcrun, <<~SH)
       #!/bin/sh
-      printf '%s\\n' "$@" > "$PATHWAY_ARGS"
       [ "$1" = altool ] || exit 69
+      if [ "$2" = --help ]; then
+        printf '%s\\n' "$@" "DEVELOPER_DIR=$DEVELOPER_DIR" > "$PATHWAY_HELP_ARGS"
+        [ -s "$PATHWAY_ALTOOL_HELP" ] || exit 72
+        cat "$PATHWAY_ALTOOL_HELP"
+        exit 0
+      fi
+      printf '%s\\n' "$@" > "$PATHWAY_ARGS"
       cat "$PATHWAY_ALTOOL_OUTPUT"
       if [ "$PATHWAY_ALTOOL_EXIT" = segv ]; then
         # Crash as fastlane sees it: the process it spawned dies by a signal. dash keeps its `sh -c` parent
@@ -200,7 +247,8 @@ def run_fixture(name, (_, output, exit_code, mode, record, expected, overrides))
       'PLAYGROUND_TESTFLIGHT_GROUP_ID' => GROUP,
       'PATHWAY_ALTOOL_OUTPUT' => fixture, 'PATHWAY_ALTOOL_EXIT' => exit_code.to_s, 'PATHWAY_ARGS' => args,
       'PATHWAY_CALLS' => calls, 'PATHWAY_RECORD' => record, 'PATHWAY_MODE' => mode.to_s,
-      'PATHWAY_SENTINEL_TEXT' => SECRET_TEXT
+      'PATHWAY_SENTINEL_TEXT' => SECRET_TEXT, 'PATHWAY_XCODE_VERSION' => version, 'DEVELOPER_DIR' => developer,
+      'PATHWAY_ALTOOL_HELP' => help_file, 'PATHWAY_HELP_ARGS' => help_args, 'PATHWAY_ENV_AFTER' => env_after
     }.merge(WORKFLOW_ENV).merge(overrides)
     # The workflow's store step itself, in the shell GitHub uses for `run:`; stdout/stderr here is public.
     step_out, step_status = Open3.capture2e(env, 'bash', '--noprofile', '--norc', '-eo', 'pipefail', '-c', STORE_STEP,
@@ -232,19 +280,37 @@ def run_fixture(name, (_, output, exit_code, mode, record, expected, overrides))
     # Everything outside the cleaned paths that the store step could have written to.
     left = files_under(system_tmp) + files_under(home)
 
-    check(line == "Distribution state: upload_started; #{expected}", "#{name}: public line was #{line.inspect}")
-    check(step_text.include?('"distribution": "upload_started"'), "#{name}: step summary lacks the record")
+    refused = expected.start_with?('stopped in phase toolchain')
+    state = refused ? 'not_started' : 'upload_started'
+    flag_state = {'supported' => 'supported', 'unsupported' => 'unsupported', 'fail' => 'unknown'}.fetch(help)
+    prefix = "Distribution state: #{state}; Xcode #{xcode['xcode']} (#{xcode['xcode_build']}), SDK #{xcode['sdk']}"
+    prefix += "; old altool flag #{flag_state}" unless refused
+    check(line == "#{prefix}; #{expected}", "#{name}: public line was #{line.inspect}")
+    check(step_text.include?(%("distribution": "#{state}")), "#{name}: step summary lacks the record")
+    # Read-only Apple GETs: none when refused, the build list plus 6 polled lookups (1 when present) after an
+    # upload failure, and the build list plus the processing check after an accepted upload (f).
+    gets = File.exist?(calls) ? File.readlines(calls, chomp: true) : []
+    expected_gets = if refused then 0 elsif name.start_with?('f_') || record == 'present' then 2 else 7 end
+    check(gets.length == expected_gets, "#{name}: expected #{expected_gets} Apple GETs, made #{gets.length}")
+    check(gets.drop(1).all? { |g| g == "#{BUILD_RECORD_PATH} 10/20" } || name.start_with?('f_'),
+      "#{name}: build-record lookups must use the short timeouts: #{gets.inspect}")
+    if refused
+      check(!File.exist?(help_args) && !File.exist?(args), "#{name}: altool must not run for a refused IPA")
+    end
     if output
+      probe = File.read(help_args).split("\n")
+      check(probe == ['altool', '--help', "DEVELOPER_DIR=#{developer}"], "#{name}: wrong probe #{probe.inspect}")
       argv = File.read(args).split("\n")
-      check(argv.first(2) == %w[altool --upload-app] && argv.count('--use-old-altool') == 1,
-        "#{name}: altool did not get the scoped workaround: #{argv.inspect}")
+      check(argv.first(2) == %w[altool --upload-app] &&
+            argv.count('--use-old-altool') == (help == 'supported' ? 1 : 0),
+        "#{name}: altool got the wrong workaround flag for help #{help}: #{argv.inspect}")
+      check(File.read(env_after) == 'unset', "#{name}: the workaround variable survived the upload call")
       # Positive control: fastlane staged its IPA copies in the task-owned directory.
       check(staged.any? { |f| f.end_with?('.ipa') }, "#{name}: fastlane did not stage the IPA in the store tmp dir")
     else
       check(!File.exist?(args), "#{name}: altool must not run")
     end
-    lookups = File.readlines(calls, chomp: true)
-    check(lookups.first == '/v1/builds?filter%5Bapp%5D=6820738808&limit=200', "#{name}: build list not first")
+    check(refused || gets.first == '/v1/builds?filter%5Bapp%5D=6820738808&limit=200', "#{name}: build list not first")
     check(!File.exist?(log), "#{name}: private log survived cleanup")
     check(left.none? { |f| f.end_with?('.ipa', '.itmsp', 'metadata.xml', '.p8') || File.basename(f).start_with?('AuthKey_') },
       "#{name}: fastlane staging survived outside the cleaned paths: #{left}")
@@ -253,12 +319,13 @@ def run_fixture(name, (_, output, exit_code, mode, record, expected, overrides))
       'leftover contents' => left.select { |f| File.file?(f) }.map { |f| File.binread(f).force_encoding('UTF-8').scrub }.join("\n") }
       .each { |where, text| check(leaks(text).empty?, "#{name}: #{leaks(text).inspect} leaked into #{where}") }
     # Positive control: the sentinels did flow through the real path into the (now deleted) private log
-    # (f: fastlane prints nothing of an upload it judged successful; g fails before any provider text exists),
+    # (f: fastlane prints nothing of an upload it judged successful; g and m are refused before any provider
+    # text exists),
     # and fastlane's report.xml carries pilot's failure message (provider text), so it must stay in a cleaned
     # path: shown on fixture a, whose pilot message holds the sentinels.
-    check(!leaks(private_log).empty?, "#{name}: fixture never reached fastlane output") unless name =~ /\A[fg]_/
+    check(!leaks(private_log).empty?, "#{name}: fixture never reached fastlane output") unless name =~ /\A[fgm]_/
     check(!leaks(report_text).empty?, "#{name}: report.xml did not carry the action message") if name == 'a_itms'
-    [line, lookups.length, staged.count { |f| f.end_with?('.ipa') }]
+    [line, gets.length, staged.count { |f| f.end_with?('.ipa') }]
   end
 end
 

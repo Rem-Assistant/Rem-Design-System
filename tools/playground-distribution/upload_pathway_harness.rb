@@ -2,7 +2,8 @@
 # Everything after it is the real locked fastlane 2.240.1 (CLI, runner, upload_to_testflight, pilot
 # BuildManager#upload, ItunesTransporter, AltoolTransporterExecutor, FastlanePty) and the real Fastfile.
 # It replaces only what cannot exist offline on a Linux check runner:
-#   - macOS/Xcode detection (so fastlane picks altool, as it does on macos-15 with Xcode 26);
+#   - macOS/Xcode detection: macOS is reported, and the Xcode version is the fixture's (PATHWAY_XCODE_VERSION,
+#     the one the workflow's package.py xcode step selected; macos-15's default is 16.4, not 26);
 #   - all TCP connections (blocked: any provider call fails instead of leaving the machine);
 #   - the Fastfile's own App Store Connect helpers (apple_request/apple_group) and the polling wait;
 #   - pilot's post-upload Apple API steps, reached only when fastlane decides the upload succeeded;
@@ -30,7 +31,7 @@ require 'pilot'
 FastlaneCore::Helper.singleton_class.prepend(Module.new do
   def mac? = true
   def is_mac? = true
-  def xcode_version = '26.0'
+  def xcode_version = ENV.fetch('PATHWAY_XCODE_VERSION')
   def xcode_path = '/Applications/Xcode.app/Contents/Developer/'
 end)
 
@@ -43,9 +44,9 @@ module PathwayAppleApi
     ENV.fetch('PLAYGROUND_TESTFLIGHT_GROUP_ID')
   end
 
-  def apple_request(method, path, payload = nil)
+  def apple_request(method, path, payload = nil, timeouts: {})
     raise 'pathway harness: unexpected Apple mutation' unless method == :get && payload.nil?
-    File.open(ENV.fetch('PATHWAY_CALLS'), 'a') { |f| f.puts(path) }
+    File.open(ENV.fetch('PATHWAY_CALLS'), 'a') { |f| f.puts("#{path} #{timeouts.values.join('/')}".strip) }
     case path
     when BUILDS then {'data' => [{'attributes' => {'version' => '7'}}], 'links' => {}}
     when RECORD
@@ -57,6 +58,14 @@ module PathwayAppleApi
   end
 
   def upload_record_wait(_seconds); end
+
+  # Records whether the workaround variable is gone once the upload call returns or raises.
+  def with_upload_altool_parameters(*args, &block)
+    super
+  ensure
+    name = 'DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS'
+    File.write(ENV.fetch('PATHWAY_ENV_AFTER'), ENV.key?(name) ? "set:#{ENV[name]}" : 'unset')
+  end
 
   # Fixture l only: disable the Fastfile's UTF-8 scope to show the masked case still has a distinct code.
   def with_upload_utf8(&block)

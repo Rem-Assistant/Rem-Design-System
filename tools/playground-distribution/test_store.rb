@@ -1,4 +1,5 @@
 # Dependency-free tests: load helpers but never execute a lane or call a provider.
+require 'tmpdir'
 module UI
   def self.user_error!(message)
     raise message
@@ -18,7 +19,7 @@ def responses(pages)
     {'data' => {'id' => '6820738808'}}
   ] + pages
 end
-def apple_request(method, path, payload = nil)
+def apple_request(method, path, payload = nil, **_)
   raise 'Unexpected mutation' unless method == :get && payload.nil?
   raise 'Unexpected extra provider call' if @responses.empty?
   @responses.shift
@@ -199,7 +200,18 @@ exit_cases = {
   pilot_message([], 64) => 'upload_altool_exit_64',
   # fastlane's altool reader failed on non-ASCII output under a non-UTF-8 locale.
   pilot_message(['invalid byte sequence in US-ASCII'], -1) => 'upload_output_encoding_error',
-  'invalid byte sequence in UTF-8' => 'upload_output_encoding_error'
+  'invalid byte sequence in UTF-8' => 'upload_output_encoding_error',
+  # App Store Connect's Xcode 26 / iOS 26 SDK requirement, with or without its ITMS code; it wins over ITMS.
+  pilot_message(['ITMS-90725: SDK version issue. This app was built with the iOS 18.5 SDK. All iOS and iPadOS ' \
+    'apps must be built with the iOS 26 SDK or later, included in Xcode 26 or later. ' + SECRET]) => 'upload_sdk_too_old',
+  pilot_message(['Validation failed (409) SDK version issue (-19500)']) => 'upload_sdk_too_old',
+  'ITMS-90062: x. ITMS-90725: y' => 'upload_sdk_too_old',
+  'This app was built with the iPadOS 17.5 SDK' => 'upload_sdk_too_old',
+  'Apps must be built with Xcode 26 or later' => 'upload_sdk_too_old',
+  'Requires Xcode 26 or later' => 'upload_sdk_too_old',
+  'Built with an older version of Xcode' => 'upload_sdk_too_old',
+  'Upload of an app built with the iOS 26.2 SDK failed (-19209)' => 'upload_apple_code_m19209',
+  'The iOS 26 SDK is installed' => 'upload_user_error_unclassified'
 }
 upload_cases.merge!(exit_cases)
 upload_cases.each do |message, code|
@@ -210,7 +222,7 @@ end
 raise 'Three ITMS codes must fit the 64-char guard' unless upload_guard('ITMS-11111 ITMS-22222 ITMS-33333 ITMS-44444').length <= 64
 # Every code is a fixed word, a fixed word plus digits, or one of three fixed count buckets.
 UPLOAD_CODE_GRAMMAR = /\Aupload_(itms_\d{5}(_\d{5}){0,2}|apple_code_m\d{1,6}|altool_format_259|transporter_missing|
-  altool_flag_rejected|output_encoding_error|
+  altool_flag_rejected|output_encoding_error|sdk_too_old|
   app_not_found|build_number_used|auth_failed|processing_timeout|((altool_exit_m?\d{1,6}|asc_transfer_failed|
   ipa_error_unclassified|user_error_unclassified)(_errlines_(1|2to5|6plus))?))\z/x
 upload_cases.each_key do |message|
@@ -294,18 +306,84 @@ raise 'Workaround must replace, not append' unless seen == '--use-old-altool'
 raise 'Previous value not restored' unless ENV[ALTOOL_ENV] == '--previous'
 ENV.delete(ALTOOL_ENV)
 
+# Without the flag (altool's help does not list it) the variable is absent during the upload, then restored.
+ENV[ALTOOL_ENV] = '--previous'
+with_upload_altool_parameters(false) { seen = ENV.fetch(ALTOOL_ENV, :absent) }
+raise 'Unsupported flag still passed' unless seen == :absent && ENV[ALTOOL_ENV] == '--previous'
+ENV.delete(ALTOOL_ENV)
+
+# Signals taken from altool's plain output (not on an ERROR: line) keep a distinct code, as symbols only.
+{
+  [pilot_message([], 64), [:flag_rejected]] => 'upload_altool_flag_rejected',
+  [pilot_message([], 1), [:sdk_too_old]] => 'upload_sdk_too_old',
+  [pilot_message(['ITMS-90062: x']), [:sdk_too_old, :flag_rejected]] => 'upload_sdk_too_old',
+  [pilot_message(['ITMS-90062: x']), [:flag_rejected]] => 'upload_itms_90062',
+  [pilot_message([], 64), []] => 'upload_altool_exit_64'
+}.each do |(message, signals), code|
+  got = upload_guard(message, signals)
+  raise "Expected #{code} with signals #{signals}, got #{got}" unless got == code
+end
+UploadOutputSignals.observe("altool: unrecognized option '--use-old-altool' " + SECRET)
+raise 'Signals recorded while no upload runs' unless UploadOutputSignals.stop.empty?
+UploadOutputSignals.start
+["altool: unrecognized option '--use-old-altool' " + SECRET, 'Usage: altool --upload-app',
+ 'This app was built with the iOS 18.5 SDK. ' + SECRET, "\xFF\xFE".b].each { |line| UploadOutputSignals.observe(line) }
+kept = UploadOutputSignals.instance_variable_get(:@seen)
+raise "Signals must be symbols only: #{kept.inspect}" unless kept == [:flag_rejected, :sdk_too_old]
+raise 'Signals not returned' unless UploadOutputSignals.stop == [:flag_rejected, :sdk_too_old]
+raise 'Signals kept after the upload' unless UploadOutputSignals.instance_variable_get(:@seen).nil?
+
+# Credential-free probe: `xcrun altool --help` of the selected Xcode decides whether the flag is passed.
+Dir.mktmpdir do |bin|
+  path = ENV['PATH']
+  ENV['PATH'] = "#{bin}:#{path}"
+  probe = lambda do |script|
+    File.write(File.join(bin, 'xcrun'), "#!/bin/sh\n[ \"$1 $2\" = 'altool --help' ] || exit 64\n#{script}\n")
+    File.chmod(0o755, File.join(bin, 'xcrun'))
+    altool_old_flag_support
+  end
+  {
+    "echo 'Usage: altool --upload-app -f <file>'; echo '  --use-old-altool  Use the previous altool'" => 'supported',
+    "echo 'Usage: altool --upload-package <file>' >&2; exit 1" => 'unsupported',
+    "echo 'Usage: altool --upload-app --validate-app'" => 'unsupported',
+    'exit 1' => 'unknown',
+    "echo 'xcrun: error: unable to find utility \"altool\"' >&2; exit 72" => 'unknown',
+    "printf '\\377\\376'" => 'unknown'
+  }.each do |script, expected|
+    got = probe.call(script)
+    raise "Probe expected #{expected}, got #{got} for #{script}" unless got == expected
+  end
+  verbose, $VERBOSE = $VERBOSE, nil
+  limit = ALTOOL_PROBE_TIMEOUT
+  Object.const_set(:ALTOOL_PROBE_TIMEOUT, 1)
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  got = probe.call('sleep 30')
+  raise "A hung probe must be unknown within its timeout: #{got}" unless got == 'unknown' &&
+    Process.clock_gettime(Process::CLOCK_MONOTONIC) - started < 10
+  Object.const_set(:ALTOOL_PROBE_TIMEOUT, limit)
+  $VERBOSE = verbose
+  ENV['PATH'] = path
+end
+
 # Build record lookup: up to 6 read-only GETs ~30s apart, stopping at 'present'; the last observation
 # otherwise wins. Its own rescue; never replaces the upload's guard or HTTP status. Sleeps are stubbed.
 def apple_key; end
-@waits = []
+# A fake monotonic clock: waits and each GET's latency advance it; nothing sleeps.
+@waits, @now, @latency = [], 0.0, 0
 def upload_record_wait(seconds)
   @waits << seconds
+  @now += seconds
+end
+def upload_record_clock
+  @now
 end
 BUILD_PATH = '/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=8'
-def apple_request(method, path, payload = nil)
+def apple_request(method, path, payload = nil, timeouts: {})
   raise 'Unexpected mutation' unless method == :get && payload.nil?
   raise "Unexpected path #{path}" unless path == BUILD_PATH
+  raise "Lookup without short timeouts: #{timeouts}" unless timeouts == {open: 10, read: 20}
   raise 'Unexpected extra provider call' if @responses.empty?
+  @now += @latency
   response = @responses.shift
   if response == :http_error
     $release_http = 500
@@ -329,7 +407,7 @@ build_record_cases = [
   [[absent] * 7, 'absent', 6]
 ]
 build_record_cases.each do |responses, value, gets|
-  @responses, @waits = responses.dup, []
+  @responses, @waits, @now, @latency = responses.dup, [], 0.0, 0
   $release_guard, $release_http = 'upload_auth_failed', nil
   got = upload_build_record('8')
   raise "Expected build record #{value}, got #{got.inspect}" unless got == value
@@ -337,6 +415,18 @@ build_record_cases.each do |responses, value, gets|
   raise "Expected #{gets} GETs, made #{responses.length - @responses.length}" unless responses.length - @responses.length == gets
   raise "Expected #{gets - 1} waits of 30s, got #{@waits.inspect}" unless @waits == [30] * (gets - 1)
 end
+# Total wall clock is capped at three minutes: with slow lookups (each up to its 30s timeouts) fewer GETs run.
+[[0, 6], [5, 5], [10, 4], [20, 4], [30, 3]].each do |latency, gets|
+  @responses, @waits, @now, @latency = [absent] * 6, [], 0.0, latency
+  raise "Expected absent with #{latency}s lookups" unless upload_build_record('8') == 'absent'
+  made = 6 - @responses.length
+  raise "#{latency}s lookups: expected #{gets} GETs, made #{made}" unless made == gets
+  raise "#{latency}s lookups took #{@now}s, over the 180s cap" unless @now <= 180
+end
+# Worst case: every lookup uses its full 30s of timeouts and the clock still stays within the cap.
+raise 'Deadline arithmetic exceeds three minutes' unless UPLOAD_RECORD_DEADLINE <= 180 &&
+  UPLOAD_RECORD_TIMEOUTS.values.sum == 30
+@latency = 0
 # An interrupt during a wait is not swallowed, and still restores the upload's guard and status.
 @responses = [absent] * 6
 $release_guard, $release_http = 'upload_auth_failed', nil
@@ -347,17 +437,24 @@ begin
 rescue Interrupt
 end
 raise 'Interrupted lookup leaked its status' unless $release_guard == 'upload_auth_failed' && $release_http.nil?
-define_method(:upload_record_wait) { |seconds| @waits << seconds }
+define_method(:upload_record_wait) { |seconds| @waits << seconds; @now += seconds }
 
 # Whole lane, iOS upload failure: distribution.json carries only fixed codes, nothing is printed.
-require 'tmpdir'
 Dir.mktmpdir do |dir|
   number = '8'
   sha = 'a' * 40
   File.write(File.join(dir, 'Playground.ipa'), 'ipa')
   digest = Digest::SHA256.file(File.join(dir, 'Playground.ipa')).hexdigest
-  File.write(File.join(dir, 'packaging.json'), JSON.generate('platform' => 'ios', 'signing' => 'verified',
-    'source_sha' => sha, 'build_number' => number, 'binary_sha256' => digest))
+  developer = '/Applications/Xcode_26.3.app/Contents/Developer'
+  xcode = {'xcode' => '26.3', 'xcode_build' => '17C529', 'sdk' => 'iphoneos26.2', 'developer_dir' => developer}
+  packaging = {'platform' => 'ios', 'signing' => 'verified', 'source_sha' => sha, 'build_number' => number,
+               'binary_sha256' => digest, 'xcode' => xcode}
+  File.write(File.join(dir, 'packaging.json'), JSON.generate(packaging))
+  ipa_info = {'DTXcode' => '2630', 'DTXcodeBuild' => '17C529', 'DTSDKName' => 'iphoneos26.2', 'DTPlatformVersion' => '26.2'}
+  define_method(:ipa_info_plist) { |_| ipa_info }
+  flag_support = 'supported'
+  define_method(:altool_old_flag_support) { flag_support }
+  ENV['DEVELOPER_DIR'] = developer
   File.write(File.join(dir, 'admission.json'), JSON.generate('source_sha' => sha, 'build_number' => number,
     'native_run_id' => 1, 'native_run_attempt' => 1))
   ENV.update('GITHUB_ACTIONS' => 'true', 'GITHUB_REF' => 'refs/heads/main', 'PLAYGROUND_OUTPUT' => dir,
@@ -392,7 +489,7 @@ Dir.mktmpdir do |dir|
     altool = :unset
     define_method(:apple_group) { GROUP }
     define_method(:upload_to_testflight) { |**_| altool = ENV[ALTOOL_ENV]; raise message }
-    define_method(:apple_request) do |method, path, payload = nil|
+    define_method(:apple_request) do |method, path, payload = nil, **_|
       raise 'Unexpected mutation' unless method == :get && payload.nil?
       calls << path
       next {'data' => [{'attributes' => {'version' => '7'}}], 'links' => {}} if calls.length == 1
@@ -411,7 +508,10 @@ Dir.mktmpdir do |dir|
       $stdout, $stderr = stdout, stderr
     end
     text = File.read(File.join(dir, 'distribution.json'))
-    failure = JSON.parse(text)['failure']
+    written = JSON.parse(text)
+    failure = written['failure']
+    raise "Toolchain not recorded: #{written['toolchain']}" unless written['toolchain'] == xcode.slice('xcode', 'xcode_build', 'sdk')
+    raise "Flag probe not recorded: #{written['altool_old_flag']}" unless written['altool_old_flag'] == 'supported'
     expected = {'phase' => 'upload', 'guard' => code, 'http_status' => nil, 'upload_build_record' => record}
     raise "Wrong failure record #{failure.inspect}" unless failure == expected
     raise 'fastlane report.xml not routed to the ephemeral directory' unless ENV['FL_REPORT_PATH'] == File.join(dir, 'ephemeral')
@@ -427,10 +527,73 @@ Dir.mktmpdir do |dir|
       raise "Provider text printed: #{leak}" if out.string.include?(leak)
     end
   end
+  # An altool whose help does not list the flag uploads without it, and the receipt says so.
+  ['unsupported', 'unknown'].each do |support|
+    flag_support = support
+    altool = :unset
+    ENV[ALTOOL_ENV] = '--previous'
+    define_method(:upload_to_testflight) { |**_| altool = ENV.fetch(ALTOOL_ENV, :absent); raise pilot_message([], 1) }
+    define_method(:apple_request) do |method, path, payload = nil, **_|
+      raise 'Unexpected mutation' unless method == :get && payload.nil?
+      path.include?('limit=200') ? {'data' => [{'attributes' => {'version' => '7'}}], 'links' => {}} : {'data' => []}
+    end
+    $release_phase, $release_guard, $release_http, $release_upload_build_record = 'inputs', nil, nil, nil
+    begin
+      @lanes[:distribute].call
+    rescue RuntimeError
+    end
+    written = JSON.parse(File.read(File.join(dir, 'distribution.json')))
+    raise "Flag passed although altool #{support}" unless altool == :absent
+    raise 'Previous value not restored' unless ENV[ALTOOL_ENV] == '--previous'
+    raise "Flag state not recorded: #{written}" unless written['altool_old_flag'] == support &&
+      written['failure']['guard'] == 'upload_altool_exit_1'
+  end
+  ENV.delete(ALTOOL_ENV)
+  flag_support = 'supported'
+  # Toolchain: the IPA must come from the selected Xcode 26+ / iOS 26+ SDK; refused before any provider call.
+  toolchain_cases = [
+    [{'DTXcode' => '1640', 'DTXcodeBuild' => '16F6', 'DTSDKName' => 'iphoneos18.5', 'DTPlatformVersion' => '18.5'},
+     packaging, developer, 'package_sdk_too_old'],
+    [ipa_info.merge('DTPlatformVersion' => '18.5'), packaging, developer, 'package_sdk_too_old'],
+    [ipa_info.merge('DTXcodeBuild' => '17C52'), packaging, developer, 'package_toolchain_mismatch'],
+    [ipa_info.merge('DTSDKName' => 'iphoneos26.1'), packaging, developer, 'package_toolchain_mismatch'],
+    [{}, packaging, developer, 'package_toolchain_unknown'],
+    [ipa_info.merge('DTXcode' => 'x'), packaging, developer, 'package_toolchain_unknown'],
+    [ipa_info, packaging.reject { |k, _| k == 'xcode' }, developer, 'package_toolchain_unknown'],
+    [ipa_info, packaging.merge('xcode' => xcode.merge('sdk' => 'iphoneos26.2 ' + SECRET)), developer, 'package_toolchain_unknown'],
+    [ipa_info, packaging.merge('xcode' => xcode.merge('developer_dir' => '/tmp/Xcode')), '/tmp/Xcode', 'package_toolchain_unknown'],
+    [ipa_info, packaging, '/Applications/Xcode_16.4.app/Contents/Developer', 'xcode_mismatch'],
+    [ipa_info, packaging, nil, 'xcode_mismatch']
+  ]
+  toolchain_cases.each do |info, record, developer_dir, code|
+    ipa_info_now = info
+    define_method(:ipa_info_plist) { |_| ipa_info_now }
+    File.write(File.join(dir, 'packaging.json'), JSON.generate(record))
+    developer_dir ? ENV['DEVELOPER_DIR'] = developer_dir : ENV.delete('DEVELOPER_DIR')
+    provider = []
+    define_method(:apple_key) { provider << :apple_key }
+    define_method(:apple_request) { |*a, **_| provider << a }
+    define_method(:upload_to_testflight) { |**_| provider << :upload }
+    $release_phase, $release_guard, $release_http, $release_upload_build_record = 'inputs', nil, nil, nil
+    begin
+      @lanes[:distribute].call
+      raise 'Toolchain refusal was swallowed'
+    rescue RuntimeError
+    end
+    written = JSON.parse(File.read(File.join(dir, 'distribution.json')))
+    raise "Expected #{code}, got #{written['failure']}" unless written['failure'] ==
+      {'phase' => 'toolchain', 'guard' => code, 'http_status' => nil}
+    raise 'Provider touched before the toolchain check' unless provider.empty? && written['distribution'] == 'not_started'
+    raise 'Toolchain text leaked' if JSON.generate(written).include?('9ZZ')
+  end
+  File.write(File.join(dir, 'packaging.json'), JSON.generate(packaging))
+  ENV['DEVELOPER_DIR'] = developer
+  define_method(:ipa_info_plist) { |_| ipa_info }
+  define_method(:apple_key) {}
   # An interrupt is not an upload failure: no classification and no build-record lookup.
   calls = []
   define_method(:upload_to_testflight) { |**_| raise Interrupt }
-  define_method(:apple_request) do |method, path, payload = nil|
+  define_method(:apple_request) do |method, path, payload = nil, **_|
     raise 'Unexpected mutation' unless method == :get && payload.nil?
     calls << path
     {'data' => [{'attributes' => {'version' => '7'}}], 'links' => {}}
@@ -453,4 +616,5 @@ end
 puts "6 TestFlight privacy/scope guard scenarios, 15 guard-code cases, #{upload_cases.length} upload-guard cases, " \
   "8 cause-chain cases, 3 UTF-8-scope checks, 4 altool-scope checks, " \
   "#{build_record_cases.length + 1} build-record polling cases, 6 upload-failure lane runs, " \
-  '1 interrupt lane run and 1 ephemeral-directory guard passed; no store requests made.'
+  "1 interrupt lane run, 1 ephemeral-directory guard, 2 flag-probe lane runs, 11 toolchain " \
+  'refusals, 5 polling-deadline cases and the altool probe/output-signal checks passed; no store requests made.'

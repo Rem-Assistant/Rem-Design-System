@@ -22,6 +22,16 @@ IOS_ID = 'com.rem.playground.settings'
 ANDROID_ID = 'com.rem.designsystem.demo'
 TEAM = 'R6A892D599'
 UPLOAD_SHA256 = '658de1d6931622c554c564ba25ad1594c63516dc68cd02d860ca85aa0e2b8a4e'
+# App Store Connect requires Xcode 26 / the iOS 26 SDK; 26.1+ also has Apple's fix for fastlane#29698
+# (new altool picking the wrong app). macos-15 defaults to Xcode 16.4, so select the exact pinned bundle
+# (runner-images toolset-15.json installs /Applications/Xcode_26.3.app, 26.3+17C529). Mirrors
+# tools/remclaw-release/release.py select_xcode, pinned to one version instead of the newest.
+XCODE_APP = 'Xcode_26.3.app'
+XCODE_MIN = (26, 1)
+SDK_MIN_MAJOR = 26
+XCODE_SHAPE = r'\d{2}\.\d{1,2}(?:\.\d{1,2})?'
+XCODE_BUILD_SHAPE = r'\d{2}[A-Z]\d{1,5}[a-z]?'
+SDK_SHAPE = r'iphoneos\d{2}\.\d{1,2}(?:\.\d{1,2})?'
 
 
 def command(argv, *, cwd=None, env=None):
@@ -71,6 +81,44 @@ def validate_profile(profile, certificate_sha1):
     require(re.fullmatch(r'[A-Fa-f0-9-]{36}', profile.get('UUID', '')), 'Invalid profile UUID')
 
 
+def xcode_version(name):
+    m = re.fullmatch(r'Xcode_(\d+)\.(\d+)(?:\.(\d+))?\.app', name)
+    return tuple(int(x or 0) for x in m.groups()) if m else None
+
+
+def select_xcode(applications):
+    """The exact pinned Xcode bundle, failing closed when this runner image does not have it."""
+    version = xcode_version(XCODE_APP)
+    require(version and version[:2] >= XCODE_MIN, 'Pinned Xcode is below the supported minimum')
+    developer = Path(applications) / XCODE_APP / 'Contents/Developer'
+    require(developer.is_dir(), 'Pinned ' + XCODE_APP + ' is not installed on this runner image')
+    return developer
+
+
+def xcode_toolchain(developer):
+    """Version, build and iOS SDK of the selected Xcode, in fixed shapes only."""
+    env = dict(os.environ, DEVELOPER_DIR=str(developer))
+    text = command(['xcodebuild', '-version'], env=env).decode()
+    m = re.fullmatch(r'Xcode (' + XCODE_SHAPE + r')\nBuild version (' + XCODE_BUILD_SHAPE + r')\n?', text)
+    require(m, 'Unexpected xcodebuild -version output')
+    require(m[1] == XCODE_APP[len('Xcode_'):-len('.app')], 'Selected Xcode is not the pinned version')
+    sdk = command(['xcodebuild', '-version', '-sdk', 'iphoneos', 'SDKVersion'], env=env).decode().strip()
+    require(re.fullmatch(SDK_SHAPE[len('iphoneos'):], sdk) and int(sdk.split('.')[0]) >= SDK_MIN_MAJOR,
+            'Selected Xcode lacks the iOS 26 SDK')
+    return {'xcode': m[1], 'xcode_build': m[2], 'sdk': 'iphoneos' + sdk, 'developer_dir': str(developer)}
+
+
+def archived_toolchain(info, toolchain):
+    """The archive was built by the selected toolchain, with Xcode 26+ and an iOS 26+ SDK."""
+    dt_xcode, dt_platform = str(info.get('DTXcode', '')), str(info.get('DTPlatformVersion', ''))
+    require(re.fullmatch(r'\d{4}', dt_xcode) and re.fullmatch(r'\d{2}\.\d{1,2}(?:\.\d{1,2})?', dt_platform),
+            'Archive lacks Xcode/SDK build metadata')
+    require(int(dt_xcode) >= SDK_MIN_MAJOR * 100 and int(dt_platform.split('.')[0]) >= SDK_MIN_MAJOR,
+            'Archive built with an Xcode/SDK older than 26')
+    require(info.get('DTXcodeBuild') == toolchain['xcode_build'] and info.get('DTSDKName') == toolchain['sdk'],
+            'Archive was not built by the selected Xcode')
+
+
 def ephemeral_root(root):
     # Dependency, DerivedData and Gradle state live under the runner's temporary directory, outside the
     # candidate checkout and the package output, and are removed by the workflow's cleanup step.
@@ -90,6 +138,10 @@ def build(root, out, platform, sha, number):
     if platform == 'ios':
         project = root / 'tools/playground-ios/RemSettingsPlayground.xcodeproj'
         require(project.is_dir(), 'Expected committed Playground Xcode project is missing')
+        developer = Path(os.environ.get('DEVELOPER_DIR', ''))
+        require(os.environ.get('DEVELOPER_DIR') and developer == select_xcode(developer.parents[2]),
+                'Select the pinned Xcode (package.py xcode) before building')
+        xcode = xcode_toolchain(developer)
         # Only build number and source stamp vary; no target SDK/resources/dependency patches.
         command(['xcodebuild', '-project', str(project), '-scheme', 'RemSettingsPlayground',
                  '-configuration', 'Release', '-destination', 'generic/platform=iOS',
@@ -99,7 +151,9 @@ def build(root, out, platform, sha, number):
                  'REM_PLAYGROUND_SOURCE_SHA=' + sha, 'archive'])
         apps = list((out / 'Playground.xcarchive/Products/Applications').glob('*.app'))
         require(len(apps) == 1, 'Expected one archived application')
-        ios_metadata(plistlib.loads((apps[0] / 'Info.plist').read_bytes()), sha, number)
+        info = plistlib.loads((apps[0] / 'Info.plist').read_bytes())
+        ios_metadata(info, sha, number)
+        archived_toolchain(info, xcode)
         toolchain = command(['xcodebuild', '-version']).decode().strip()
         storage.remove_within(scratch, scratch / 'DerivedData')  # redundant once the archive is verified
     else:
@@ -122,9 +176,12 @@ def build(root, out, platform, sha, number):
         toolchain = command(['./gradlew', '--version'], cwd=root / 'compose', env=gradle).decode().strip()
         storage.remove_ignored_build_output(root, 'compose/demo/build')  # the AAB was copied and verified
     require(not command(['git', '-C', str(root), 'diff', '--name-only']), 'Build changed tracked source')
-    (out / 'packaging.json').write_text(json.dumps({'source_sha': sha, 'platform': platform,
+    record = {'source_sha': sha, 'platform': platform,
         'build_number': number, 'toolchain': toolchain, 'overrides': ['build_number', 'source_stamp'],
-        'signing': 'pending', 'physical_device': 'unverified'}, indent=2))
+        'signing': 'pending', 'physical_device': 'unverified'}
+    if platform == 'ios':
+        record['xcode'] = xcode
+    (out / 'packaging.json').write_text(json.dumps(record, indent=2))
     storage.require_budget(out, platform, 'build')
 
 
@@ -223,13 +280,23 @@ def sign(out, platform, sha, number):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('mode', choices=['build', 'sign'])
-    p.add_argument('--source', type=Path, required=True)
-    p.add_argument('--out', type=Path, required=True)
-    p.add_argument('--platform', choices=['ios', 'android'], required=True)
-    p.add_argument('--sha', required=True)
-    p.add_argument('--build', required=True)
+    p.add_argument('mode', choices=['build', 'sign', 'xcode'])
+    p.add_argument('--source', type=Path)
+    p.add_argument('--out', type=Path)
+    p.add_argument('--platform', choices=['ios', 'android'])
+    p.add_argument('--sha')
+    p.add_argument('--build')
+    p.add_argument('--applications', type=Path, default=Path('/Applications'))
     a = p.parse_args()
+    if a.mode == 'xcode':
+        # Credential-free: select the pinned Xcode for later steps and print its fixed-shape identity.
+        developer = select_xcode(a.applications)
+        xcode = xcode_toolchain(developer)
+        with open(os.environ['GITHUB_ENV'], 'a') as handle:
+            handle.write(f'DEVELOPER_DIR={developer}\n')
+        print(f"Selected {XCODE_APP}: Xcode {xcode['xcode']} ({xcode['xcode_build']}), SDK {xcode['sdk']}")
+        return
+    require(a.source and a.out and a.platform and a.sha and a.build, 'Missing packaging arguments')
     arguments(a.sha, '1', a.build)
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Hosted runner only; do not install credentials on a workstation')
     os.umask(0o077)

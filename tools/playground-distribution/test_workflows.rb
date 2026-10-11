@@ -44,6 +44,13 @@ init = job['steps'].first.fetch('run', '')
 check(init.include?('PLAYGROUND_EPHEMERAL=$RUNNER_TEMP/playground-ephemeral') &&
       init.include?('GRADLE_USER_HOME=$RUNNER_TEMP/playground-ephemeral/gradle-home'),
       'Build state must use ephemeral runner paths')
+select = job['steps'].index { |s| s['name'].to_s.start_with?('Select the pinned Xcode') }
+build_step = job['steps'].index { |s| s['name'].to_s.start_with?('Build and inspect') }
+check(select && build_step && select < build_step && job['steps'][select]['if'] == "matrix.platform == 'ios'" &&
+      job['steps'][select]['run'] == 'python3 control/tools/playground-distribution/package.py xcode --applications /Applications',
+  'iOS build, sign and upload must use the pinned Xcode selected before the build')
+check(job['steps'].none? { |s| s.fetch('run', '').match?(/xcode-select\s+-s|DEVELOPER_DIR=/) } &&
+      !job.fetch('env', {}).key?('DEVELOPER_DIR'), 'Only package.py xcode selects the Xcode')
 upload = job['steps'].find { |s| s['name'].to_s.start_with?('Upload directly') }['run']
 store_tmp = '"$RUNNER_TEMP/playground-store-tmp"'
 order = ['umask 077', "mkdir -m 700 #{store_tmp}", "export TMPDIR=#{store_tmp} TMP=#{store_tmp} TEMP=#{store_tmp}",
