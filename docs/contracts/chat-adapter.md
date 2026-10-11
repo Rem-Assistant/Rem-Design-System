@@ -86,10 +86,14 @@ no prototype reaction; this routing is explicit.
    Alignment.Bottom)` inside the scroll, whose minimum height is the viewport). The **empty state** is
    top-placed on both. A longer transcript opens at the latest message.
 10. **Following new content.** The transcript follows growth (a streamed reply, an expanded card) only
-   while the person is at or near the latest message; scrolled up, their position is kept. Compose meets
-   this from the jump-to-latest change (stacked PR #120); before it, Compose re-pins to the bottom on every
-   content-height change (review of #106, P2-4). iOS relies on `defaultScrollAnchor(.bottom)`; how it
-   treats growth while the person is scrolled up is not yet verified by a journey (contract question).
+   while the person is at or near the latest message (within the jump-to-latest threshold, rule 11);
+   scrolled up, their position is kept. Compose re-pins to the bottom on a content-height change only while
+   within that threshold (#120 replaced the unconditional re-pin noted in review of #106, P2-4). iOS relies
+   on `defaultScrollAnchor(.bottom)`; how it treats growth while the person is scrolled up is not yet
+   verified by a journey (contract question).
+11. **Jump to latest** is presentation the composition owns ([`chat.md`](chat.md) rule 10): a centred
+   down-arrow above the dock while the person is scrolled more than 200pt/dp above the newest message. No
+   input, action or host wiring; it emits no `ChatScreenAction`. Identifier `chat.jumpToLatest`.
 
 ## Rules the adapter applies (truth)
 

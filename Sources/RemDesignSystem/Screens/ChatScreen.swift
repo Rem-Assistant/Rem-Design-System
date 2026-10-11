@@ -16,6 +16,9 @@ import SwiftUI
 /// with the optional task-reply accessory (`2682:22298`) above it. Safe areas come from the host; the
 /// 320pt board is a width stress fixture only. The host supplies data and handles every
 /// `ChatScreenAction`; it owns sending, receipts and routing (`docs/contracts/chat-adapter.md`).
+/// The composition also owns **jump to latest** (`ChatJumpToLatest`): a round down-arrow centred above the
+/// dock while the person is scrolled more than `ChatJumpToLatest.threshold` above the newest message.
+/// Hosts wire nothing for it.
 public struct ChatScreen<Transcript: View>: View {
     private let composerText: String
     private let composerPlaceholder: String
@@ -23,6 +26,10 @@ public struct ChatScreen<Transcript: View>: View {
     private let voiceBar: VoiceBarState?
     private let transcript: () -> Transcript
     private var composition: Composition?
+    /// How far the transcript's bottom edge sits below the visible area (jump to latest).
+    @State private var distanceFromBottom: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.chatJumpToLatestEvidence) private var jumpEvidence
 
     /// The host-driven composition's inputs.
     private struct Composition {
@@ -123,28 +130,68 @@ public struct ChatScreen<Transcript: View>: View {
             // default anchor to shift undersized content down. That shift moves the rows on screen but not
             // their accessibility container, leaving the latest rows outside it (unreachable by
             // VoiceOver's scroll-to-visible and UI automation).
-            GeometryReader { viewport in
-                ScrollView {
-                    Group {
-                        if let empty = c.emptyState {
-                            ChatEmptyStateView(empty) { c.onAction(.starter(id: $0)) }
-                        } else {
-                            VStack(spacing: DesignTokens.Spacing.lg) {
-                                transcript()
+            ScrollViewReader { proxy in
+                GeometryReader { viewport in
+                    ScrollView {
+                        Group {
+                            if let empty = c.emptyState {
+                                ChatEmptyStateView(empty) { c.onAction(.starter(id: $0)) }
+                            } else {
+                                VStack(spacing: DesignTokens.Spacing.lg) {
+                                    transcript()
+                                }
                             }
                         }
+                        .padding(.horizontal, DesignTokens.Spacing.lg)
+                        .padding(.vertical, DesignTokens.Spacing.md)
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: viewport.size.height,
+                            alignment: c.emptyState == nil ? .bottom : .top
+                        )
+                        // Jump to latest: the content's bottom edge in the scroll view's own space, so its
+                        // distance below the visible area is `maxY - viewport height`.
+                        .background(GeometryReader { content in
+                            Color.clear.preference(
+                                key: ChatContentBottomKey.self,
+                                value: content.frame(in: .named(ChatScrollIDs.space)).maxY
+                            )
+                        })
+                        .overlay(alignment: .bottom) {
+                            Color.clear.frame(height: 1).id(ChatScrollIDs.latest).accessibilityHidden(true)
+                        }
                     }
-                    .padding(.horizontal, DesignTokens.Spacing.lg)
-                    .padding(.vertical, DesignTokens.Spacing.md)
-                    .frame(
-                        maxWidth: .infinity,
-                        minHeight: viewport.size.height,
-                        alignment: c.emptyState == nil ? .bottom : .top
-                    )
+                    .coordinateSpace(.named(ChatScrollIDs.space))
+                    .defaultScrollAnchor(c.emptyState == nil && !jumpEvidence ? .bottom : .top)
+                    .scrollDismissesKeyboard(.interactively)
+                    .accessibilityIdentifier("chat.content")
+                    .onPreferenceChange(ChatContentBottomKey.self) { maxY in
+                        distanceFromBottom = maxY - viewport.size.height
+                    }
                 }
-                .defaultScrollAnchor(c.emptyState == nil ? .bottom : .top)
-                .scrollDismissesKeyboard(.interactively)
-                .accessibilityIdentifier("chat.content")
+                // Over the transcript area only, so it never covers the docked composer or the keyboard.
+                // The animation is scoped to the button so it never animates transcript changes.
+                .overlay(alignment: .bottom) {
+                    let showsJump = c.emptyState == nil
+                        && ChatJumpToLatest.isVisible(distanceFromBottom: distanceFromBottom)
+                    let jumpMotion = !reduceMotion && !jumpEvidence
+                    ZStack {
+                        if showsJump {
+                            ChatJumpToLatestButton {
+                                withAnimation(jumpMotion ? .easeInOut(duration: 0.3) : nil) {
+                                    proxy.scrollTo(ChatScrollIDs.latest, anchor: .bottom)
+                                }
+                            }
+                            .transition(
+                                jumpMotion
+                                    ? AnyTransition.opacity.combined(with: .scale(scale: ChatJumpToLatest.appearScale))
+                                    : AnyTransition.identity
+                            )
+                        }
+                    }
+                    .padding(.bottom, ChatJumpToLatest.bottomSpacing)
+                    .animation(jumpMotion ? .easeOut(duration: ChatJumpToLatest.appearDuration) : nil, value: showsJump)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -176,6 +223,33 @@ public struct ChatScreen<Transcript: View>: View {
         .padding(.top, DesignTokens.Spacing.sm)
         .padding(.bottom, DesignTokens.Spacing.sm)
         .background(DesignTokens.Color.backgroundPrimary)
+    }
+}
+
+/// Scroll identifiers for jump to latest (a generic view cannot hold static stored properties).
+private enum ChatScrollIDs {
+    static let space = "chat.scroll"
+    static let latest = "chat.latest"
+}
+
+/// The transcript content's bottom edge in the scroll view's coordinate space (jump to latest).
+private struct ChatContentBottomKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
+/// Evidence seam (internal, never set by hosts): open the transcript at its oldest message instead of the
+/// latest and show jump to latest without motion, so a still render captures the scrolled-up state. Use
+/// only with a transcript taller than the screen plus `ChatJumpToLatest.threshold`. Twin of Compose
+/// `LocalChatJumpToLatestEvidence`. Not part of the public API.
+private struct ChatJumpToLatestEvidenceKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var chatJumpToLatestEvidence: Bool {
+        get { self[ChatJumpToLatestEvidenceKey.self] }
+        set { self[ChatJumpToLatestEvidenceKey.self] = newValue }
     }
 }
 

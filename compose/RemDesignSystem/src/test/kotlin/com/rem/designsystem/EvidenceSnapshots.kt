@@ -1,6 +1,10 @@
 package com.rem.designsystem
 
 import androidx.compose.foundation.background
+import androidx.compose.runtime.CompositionLocalProvider
+import com.rem.designsystem.screens.ChatPlaygroundFixture
+import com.rem.designsystem.screens.ChatTranscriptList
+import com.rem.designsystem.screens.LocalChatJumpToLatestEvidence
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -558,6 +562,27 @@ class EvidenceSnapshots {
             }
         }
     }
+
+    /**
+     * Jump to latest over a scrolled transcript: the Long fixture opened at its oldest message (internal
+     * evidence seam), so the button shows centred above the dock. Pairs with the SwiftUI
+     * `ChatJumpToLatest-light` / `-dark` renders.
+     */
+    @Composable
+    private fun JumpToLatestShot(dark: Boolean) = RemTheme(darkTheme = dark) {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Long)
+        CompositionLocalProvider(LocalChatJumpToLatestEvidence provides true) {
+            ChatScreen(header = fixture.header, composer = fixture.composer.state, onAction = {}) {
+                ChatTranscriptList(fixture.entries, onAction = {})
+            }
+        }
+    }
+
+    @Test
+    fun chatJumpToLatest() = shot("ChatJumpToLatest-light") { JumpToLatestShot(dark = false) }
+
+    @Test
+    fun chatJumpToLatestDark() = shot("ChatJumpToLatest-dark") { JumpToLatestShot(dark = true) }
 
     @Test
     fun messageReactionPicker() = shot("MessageReactionPicker-light") {

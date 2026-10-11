@@ -39,6 +39,18 @@ class ChatPlaygroundFixtureTest {
         assertEquals("Connected", fixture.header.activity)
     }
 
+    /** Jump-to-latest journeys: earlier history above the populated conversation, same latest receipt. */
+    @Test fun longPrependsHistoryAndKeepsTheLatestReceipt() {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Long)
+        val populated = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated).entries
+        assertEquals(17 + populated.size, fixture.entries.size)
+        assertEquals(populated, fixture.entries.takeLast(populated.size))
+        assertEquals("h0", fixture.entries.first().id)
+        assertEquals("u2", fixture.latest())
+        assertEquals(MessageDelivery.None, ChatTranscriptRules.displayedDelivery(fixture.message("h1")!!, "u2"))
+        assertEquals("a2", fixture.entries.last().id)
+    }
+
     @Test fun emptyHasStartersAndNoTranscript() {
         val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
         assertEquals(ChatPlaygroundFixture.Starters, fixture.emptyState!!.starters)

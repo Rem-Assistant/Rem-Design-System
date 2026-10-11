@@ -797,6 +797,38 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertNotNil(settledX, "Rows return to their resting position (minX \(rest)) after the swipe")
     }
 
+    /// Jump to latest: hidden at the newest message, shown centred above the composer once the person has
+    /// scrolled up, and a tap returns to the newest message and hides it again. The DS owns it.
+    func testChatJumpToLatestAppearsWhenScrolledUpAndReturns() {
+        openChatScreen("Long")
+        let latest = element("message.a2.bubble")
+        XCTAssertTrue(latest.waitForExistence(timeout: 3))
+        XCTAssertTrue(latest.isHittable, "The conversation opens at the latest message")
+        let jump = app.buttons["chat.jumpToLatest"]
+        XCTAssertFalse(jump.exists, "Hidden at the latest message")
+
+        // Scroll up with a slow drag in the leading gutter (a mid-screen swipe can start on a bubble).
+        let content = element("chat.content")
+        XCTAssertTrue(content.exists)
+        for _ in 0..<4 where !jump.exists {
+            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
+            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Shown after scrolling up")
+        XCTAssertEqual(jump.label, "Scroll to latest message")
+        XCTAssertFalse(latest.isHittable, "Scrolled away from the latest message")
+        let composer = app.textViews["chat.composerField"]
+        XCTAssertLessThanOrEqual(jump.frame.maxY, composer.frame.minY, "Never covers the composer")
+        XCTAssertEqual(jump.frame.midX, app.frame.midX, accuracy: 1, "Centred horizontally")
+        capture("ChatScreen-jumpToLatest-light")
+
+        jump.tap()
+        waitUntilGone(jump, "Hidden again at the latest message")
+        let back = expectation(for: NSPredicate(format: "isHittable == true"), evaluatedWith: latest)
+        wait(for: [back], timeout: 3)
+    }
+
     func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
         XCTAssertTrue(app.buttons["chat.header.overflow"].exists, "The header owns overflow")

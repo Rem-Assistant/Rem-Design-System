@@ -71,6 +71,7 @@ font subset (Rule 2). They graduate only after a subset regeneration and standal
 | select text | `selection.pin.in.out` | `Icons.Outlined.SelectAll` | **0** | `MessageActionSheet` Select Text row; closest Material meaning, not the same outline |
 | report | `flag.fill` | `Icons.Filled.Flag` | **1** | `MessageActionSheet` Report row (assistant messages only) |
 | more reactions | `plus` | `Icons.Filled.Add` | **0** | `MessageReactionPicker` `+` cell, brand blue; same pair as add to chat |
+| jump to latest | `arrow.down` | `Icons.Filled.ArrowDownward` | **0** | `ChatJumpToLatestButton`; stroke glyph, no fill variant; same family as the send `arrow.up` ↔ `ArrowUpward` pair |
 
 Open questions for the human decision: `brain` vs `brain.head.profile` (Thinking vs Memory may want distinct
 glyphs), and whether stroke-only glyphs drawn from `Icons.Filled.*` vectors are acceptable until the font
