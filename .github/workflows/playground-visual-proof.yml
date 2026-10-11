@@ -1,0 +1,52 @@
+name: Playground model visual proof (diagnostic only)
+on:
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+permissions:
+  contents: read
+jobs:
+  visual-proof:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'Rem-Assistant/Rem-Design-System'
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 6fa6366928c41331615bf1eb1810b871df8f9378
+          path: candidate
+          persist-credentials: false
+      - name: Validate bounded input policy
+        run: python3 -m unittest discover -s control/tools/playground-visual-proof -p 'test_*.py'
+      - name: Install existing Factory CLI pin
+        run: npm install -g @anthropic-ai/claude-code@2.1.236
+      - name: Run model PNG to input to PNG proof
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/visual-proof"
+          python3 control/tools/playground-visual-proof/controller.py \
+            --source "$GITHUB_WORKSPACE/candidate" --out "$RUNNER_TEMP/visual-proof" \
+            --swift control/tools/playground-visual-proof/VisualProof.swift
+      - name: Retain diagnostic evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-proof-6fa6366928c41331615bf1eb1810b871df8f9378-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/visual-proof/frame-*.png
+            ${{ runner.temp }}/visual-proof/receipt.json
+            ${{ runner.temp }}/visual-proof/xcodebuild.log
+            ${{ runner.temp }}/visual-proof/diagnostic.xcresult
+          retention-days: 3
+          if-no-files-found: warn
+      - name: State diagnostic boundary
+        if: always()
+        run: |
+          echo '### Visual diagnostic only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Exact candidate: 6fa6366928c41331615bf1eb1810b871df8f9378. This run is not native evidence or release approval. Read receipt.json for observed outcome, runtime, model, and action trace.' >> "$GITHUB_STEP_SUMMARY"
