@@ -31,6 +31,12 @@ Classify the task as one or more of:
 
 ## Organize by product domain
 
+Follow the adopting adapter's current canvas contract. Connected flows may use natural-sized
+component states, overlays and full-screen destinations at their actual scope of change.
+The documentation/prototype pairing and mobile chassis below are options for a screen
+walkthrough, not a requirement to wrap every local state in a device frame. Preserve readable
+connectors, complete in-scope outcomes and native quality in either presentation.
+
 Use one Figma page for a product domain whose flows benefit from comparison, such
 as `Onboarding`, `Settings`, or `Checkout`. Do not create a page per screen. Within
 the page, use a numbered pair of top-level Figma Sections per flow:
@@ -79,7 +85,11 @@ nearby size can expose unresponsive internal layers even when the aspect ratio l
 Search the project registry and Figma file before creating anything. If the
 concept exists as a loose template, hand-built group, or obsolete component,
 migrate its consumers and remove the competing source after the canonical master
-is proven.
+is proven. Verify actual component ancestry, anatomy, exposed properties and slot ownership
+in every consumed instance; names alone cannot prove reuse. Keep permanent content separate
+from transient status feedback. Give each control an explicit job: action, sheet/navigation
+disclosure, busy progress, disabled availability, or noninteractive outcome receipt. Put a
+disclosure affordance on the control that actually opens the destination.
 
 Run a pattern-extraction pass while composing each screen; do not wait for the
 Director to name every reusable layer. Extract a screen region when it has one
@@ -116,6 +126,12 @@ vertical columns. Each column's scan order is:
 
 1. canonical master or component set;
 2. an attached documentation-template instance containing the lightweight overview/spec surface.
+
+Keep the durable responsibility contract in the adopting product's design documentation and
+link it from the adapter. Record the component's job, owned status, variants, inputs/actions,
+relationships and reference provenance; distinguish approved direction, observed reference,
+proposal and implemented behavior. The attached description summarizes that contract rather
+than becoming another full copy.
 
 Keep the actual master directly above the template so it remains the editable source. The
 documentation template does not own or repeat the specimen through a Component slot. Do not detach
@@ -207,7 +223,11 @@ A system change is complete when:
   content uses fill/hug rather than spacer frames, and screens consume instances rather than copies;
 - a machine contract verifies page/section hierarchy, component ancestry, required
   states, critical style bindings, prototype roots, and starting points;
-- current rendered evidence is reviewed against the editable Figma states.
+- current rendered evidence is reviewed against the editable Figma states, at natural size,
+  including short/long content and relevant combined states;
+- representative full screens reuse the shared screen shell and slots, and destination/return
+  paths are checked alongside the connected component/state canvas. Isolated specimens alone
+  cannot establish contextual composition or interaction correctness.
 
 When comparing evidence from different renderers, normalize every image to its declared logical
 viewport before judging composition, spacing, or relative scale. Raw PNG dimensions, capture
