@@ -10,8 +10,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.rem.designsystem.chat.ChatJumpToLatest
-import com.rem.designsystem.chat.ChatJumpToLatestButton
 import com.rem.designsystem.chat.ChatTranscriptKeyboardDismissConnection
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets

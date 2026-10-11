@@ -15,11 +15,11 @@ import com.rem.designsystem.screens.ChatReplyContext
 import com.rem.designsystem.screens.ChatScreenAction
 import com.rem.designsystem.screens.ChatTranscriptEntry
 import com.rem.designsystem.screens.ChatTimestampReveal
-import com.rem.designsystem.chat.ChatJumpToLatest
 import com.rem.designsystem.chat.ChatKeyboardDismiss
 import com.rem.designsystem.chat.ChatTranscriptKeyboardDismissConnection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import com.rem.designsystem.screens.ChatJumpToLatest
 import com.rem.designsystem.screens.ChatTranscriptRules
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
