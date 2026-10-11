@@ -83,5 +83,48 @@ class ScreenshotsBuild9RoutingContractTests(unittest.TestCase):
                 self.assertIn("persist-credentials: false", workflow[checkout:workflow.index("\n      - ", checkout)])
 
 
+class ScreenshotsIOSDiagnosticsContractTests(unittest.TestCase):
+    """A journeys step that reaches its limit still leaves its raw iOS evidence (build log and result bundle):
+    those upload before the optional screenshot extraction, and every post-test step has its own bound."""
+
+    @staticmethod
+    def steps():
+        workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/screenshots.yml").read_text(encoding="utf-8")
+        start = workflow.index("\n  settings-ios:\n")
+        block = workflow[start:workflow.index("\n\n  settings-android:\n")]
+        return block, block.split("\n      - ")[1:]
+
+    def index_of(self, steps, marker):
+        found = [i for i, step in enumerate(steps) if marker in step]
+        self.assertEqual(len(found), 1, marker)
+        return found[0]
+
+    def test_raw_diagnostics_upload_before_screenshot_extraction(self):
+        _, steps = self.steps()
+        journeys = self.index_of(steps, "name: Run the actual playground journeys")
+        build_log = self.index_of(steps, "name: settings-ios-build-log")
+        package = self.index_of(steps, "name: Package iOS journey diagnostics")
+        bundle = self.index_of(steps, "name: settings-ios-journeys\n")
+        extract = self.index_of(steps, "name: Extract actual playground screenshots")
+        screenshots = self.index_of(steps, "name: settings-swiftui-screenshots")
+        self.assertLess(journeys, build_log)
+        self.assertLess(build_log, package)
+        self.assertLess(package, bundle)
+        self.assertLess(bundle, extract)
+        self.assertLess(extract, screenshots)
+        for index in (build_log, package, bundle, extract, screenshots):
+            self.assertIn("if: always()", steps[index])
+
+    def test_limits_and_failure_semantics_are_unchanged(self):
+        block, steps = self.steps()
+        self.assertIn("\n    timeout-minutes: 45\n", block)
+        self.assertIn("timeout-minutes: 40", steps[self.index_of(steps, "name: Run the actual playground journeys")])
+        self.assertIn("timeout-minutes: 3", steps[self.index_of(steps, "name: Package iOS journey diagnostics")])
+        self.assertIn("timeout-minutes: 5", steps[self.index_of(steps, "name: Extract actual playground screenshots")])
+        self.assertNotIn("continue-on-error", block)
+        for name in ("settings-ios-build-log", "settings-ios-journeys\n", "settings-swiftui-screenshots"):
+            self.assertIn("if-no-files-found: error", steps[self.index_of(steps, f"name: {name}")])
+
+
 if __name__ == "__main__":
     unittest.main()

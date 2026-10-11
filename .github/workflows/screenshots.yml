@@ -136,8 +136,32 @@ jobs:
         env:
           IOS_TEST: ${{ inputs.ios_test }}
         run: bash tools/playground-ios/run-hosted-journeys.sh
+      # Raw diagnostics upload before the optional screenshot extraction, and each post-test step has its
+      # own limit, so a journeys step that reaches its limit still leaves its build log and result bundle.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-ios-build-log
+          path: |
+            ${{ runner.temp }}/settings-ios-build.log
+            ${{ runner.temp }}/settings-ios-main-thread*.txt
+          if-no-files-found: error
+      - name: Package iOS journey diagnostics
+        if: always()
+        timeout-minutes: 3
+        run: |
+          if [ -d "$RUNNER_TEMP/SettingsPlayground.xcresult" ]; then
+            tar -czf "$RUNNER_TEMP/settings-ios-journeys.tar.gz" -C "$RUNNER_TEMP" SettingsPlayground.xcresult
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-ios-journeys
+          path: ${{ runner.temp }}/settings-ios-journeys.tar.gz
+          if-no-files-found: error
       - name: Extract actual playground screenshots
         if: always()
+        timeout-minutes: 5
         run: |
           set -euo pipefail
           brew install xcparse || brew install chargepoint/xcparse/xcparse
@@ -152,26 +176,6 @@ jobs:
         with:
           name: settings-swiftui-screenshots
           path: artifacts/settings-swiftui/*.png
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: settings-ios-build-log
-          path: |
-            ${{ runner.temp }}/settings-ios-build.log
-            ${{ runner.temp }}/settings-ios-main-thread*.txt
-          if-no-files-found: error
-      - name: Package iOS journey diagnostics
-        if: always()
-        run: |
-          if [ -d "$RUNNER_TEMP/SettingsPlayground.xcresult" ]; then
-            tar -czf "$RUNNER_TEMP/settings-ios-journeys.tar.gz" -C "$RUNNER_TEMP" SettingsPlayground.xcresult
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: settings-ios-journeys
-          path: ${{ runner.temp }}/settings-ios-journeys.tar.gz
           if-no-files-found: error
 
   settings-android:
