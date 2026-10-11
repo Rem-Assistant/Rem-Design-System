@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
@@ -21,6 +22,9 @@ import java.util.concurrent.TimeUnit
  */
 class AgendaSuggestionsTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+
+    /** Build 9: these journeys start in the Developer hub, reached through the app shell. */
+    @Before fun openDeveloperHub() = compose.openDeveloperHub()
     private val prepTitle = "Prep for tonight’s rehearsal"
 
     private fun capture(name: String) {

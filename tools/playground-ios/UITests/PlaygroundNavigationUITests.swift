@@ -7,7 +7,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["--settings-light"]
+        app.launchArguments = ["--developer", "--settings-light"]
         app.launch()
     }
 
@@ -202,7 +202,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testCatalogLoadingShowsSkeletonThenContentAndActionProgress() {
         app.terminate()
-        app.launchArguments = ["--settings-light", "--loading-hold"]
+        app.launchArguments = ["--developer", "--settings-light", "--loading-hold"]
         app.launch()
         tap("openComponents")
         XCTAssertTrue(app.buttons["openControls"].waitForExistence(timeout: 3))
@@ -643,7 +643,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// Check-in at accessibility text size: every title stays on one line and every time stays on screen.
     func testCheckInRowsFitAtLargeText() {
         app.terminate()
-        app.launchArguments = ["--settings-light", "--settings-large-text"]
+        app.launchArguments = ["--developer", "--settings-light", "--settings-large-text"]
         app.launch()
         openOnboardingStep("openOnboardingCheckIn")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Check-in opens")
@@ -1045,4 +1045,211 @@ final class PlaygroundNavigationUITests: XCTestCase {
         tap("openInbox")
         XCTAssertTrue(element("inbox.empty").waitForExistence(timeout: 3))
     }
+
+    // MARK: App shell (Build 9; `docs/playground/route-map.md`)
+    //
+    // setUp launches with `--developer`, straight into the Developer hub. These journeys close it and
+    // drive the shell itself: Chat full screen, the sidebar behind the header, New agent, Settings from
+    // the account pill. Twin of the Compose `shell…` journeys.
+
+    /// Developer → Close: back on the shell's full-screen conversation (the root).
+    private func returnToShell() {
+        tap("developer.close")
+        XCTAssertTrue(app.buttons["chat.header.menu"].waitForExistence(timeout: 5), "Close returns to the shell")
+    }
+
+    private func openSidebar() {
+        app.buttons["chat.header.menu"].tap()
+        XCTAssertTrue(element("sidebar.agent.main").waitForExistence(timeout: 3), "The header button opens the sidebar")
+        XCTAssertTrue(element("sidebar.close").waitForExistence(timeout: 3))
+    }
+
+    private func chooseSidebarRow(_ identifier: String) {
+        let row = element(identifier)
+        XCTAssertTrue(row.waitForExistence(timeout: 3), "Missing \(identifier)")
+        row.tap()
+        waitUntilGone(element("sidebar.close"), "Choosing an agent closes the sidebar")
+    }
+
+    private func assertChatShows(_ agent: String) {
+        let identity = element("chat.header.identity")
+        XCTAssertTrue(identity.waitForExistence(timeout: 5))
+        XCTAssertTrue(identity.label.hasPrefix(agent), "Expected \(agent)'s conversation, got \(identity.label)")
+    }
+
+    /// Root: Chat full screen with the sidebar behind the header button; choose an agent; the chat card
+    /// closes the sidebar and keeps the selection.
+    func testShellSidebarSelectsAnAgentAndClosesIt() {
+        returnToShell()
+        assertChatShows("Rem")
+        XCTAssertFalse(app.buttons["chat.header.back"].exists, "The root conversation has no Back")
+        XCTAssertFalse(app.buttons["chat.header.overflow"].exists, "Fixture host controls live under Developer")
+        XCTAssertEqual(app.buttons["chat.header.menu"].label, "Open sidebar")
+        capture("Shell-chat-light")
+
+        openSidebar()
+        XCTAssertTrue(element("sidebar.section.side").exists)
+        XCTAssertTrue(element("sidebar.newAgent").exists)
+        XCTAssertTrue(element("sidebar.account").exists)
+        capture("Shell-sidebar-light")
+        chooseSidebarRow("sidebar.agent.health")
+        assertChatShows("Health")
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Start a conversation with Health")).firstMatch.exists)
+
+        openSidebar()
+        element("sidebar.close").tap()
+        waitUntilGone(element("sidebar.close"), "The chat card closes the sidebar")
+        assertChatShows("Health")
+        openSidebar()
+        chooseSidebarRow("sidebar.agent.main")
+        assertChatShows("Rem")
+    }
+
+    /// New agent: Close cancels without change; Create adds the agent and opens its chat.
+    func testShellNewAgentCancelsAndCreates() {
+        returnToShell()
+        openSidebar()
+        element("sidebar.newAgent").tap()
+        let name = app.textFields["newAgent.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 3), "New agent opens its sheet")
+        XCTAssertFalse(app.buttons["newAgent.create"].isEnabled, "Create waits for a name")
+        capture("Shell-newAgent-light")
+        app.buttons["newAgent.cancel"].tap()
+        waitUntilGone(name, "Close dismisses the sheet")
+        assertChatShows("Rem")
+        openSidebar()
+        XCTAssertFalse(element("sidebar.agent.new.1").exists, "Cancel creates nothing")
+
+        element("sidebar.newAgent").tap()
+        XCTAssertTrue(name.waitForExistence(timeout: 3))
+        focus(name)
+        name.typeText("Garden")
+        app.buttons["newAgent.color.green"].tap()
+        app.buttons["newAgent.create"].tap()
+        waitUntilGone(name, "Create dismisses the sheet")
+        assertChatShows("Garden")
+        openSidebar()
+        XCTAssertTrue(element("sidebar.agent.new.1").exists, "The new agent is listed")
+    }
+
+    /// Settings from the account pill, into a destination and back to the same agent and conversation.
+    func testShellSettingsFromAccountReturnsToTheSelectedChat() {
+        returnToShell()
+        openSidebar()
+        chooseSidebarRow("sidebar.agent.money")
+        assertChatShows("Money")
+        openSidebar()
+        let account = element("sidebar.account")
+        XCTAssertTrue(account.label.contains("Avery Diaz"), "The account pill names the Settings profile")
+        account.tap()
+        let settings = app.navigationBars["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5), "The account pill opens Settings")
+        XCTAssertTrue(app.buttons["settings.developer"].exists)
+        capture("Shell-settings-light")
+
+        tap("openAgent")
+        XCTAssertTrue(app.navigationBars["Agent settings"].waitForExistence(timeout: 5))
+        let devices = app.buttons["agentDestination.pairedDevices"]
+        XCTAssertTrue(devices.waitForExistence(timeout: 5))
+        reveal(devices)
+        devices.tap()
+        XCTAssertTrue(app.navigationBars["Paired devices"].waitForExistence(timeout: 5), "A destination is pushed")
+        app.navigationBars["Paired devices"].buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Agent settings"].waitForExistence(timeout: 5), "Back pops one level")
+        app.navigationBars["Agent settings"].buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        app.buttons["settings.done"].tap()
+        waitUntilGone(settings, "Done dismisses Settings")
+        assertChatShows("Money")
+
+        // A swipe down dismisses the sheet too.
+        openSidebar()
+        element("sidebar.account").tap()
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
+        waitUntilGone(settings, "A swipe down dismisses Settings")
+        assertChatShows("Money")
+    }
+
+    /// Chat in the shell: Add to Chat and message actions are sheets that dismiss; Activity is pushed and pops.
+    func testShellChatSheetsDismissAndActivityPops() {
+        returnToShell()
+        app.buttons["chat.composerAdd"].tap()
+        let done = app.buttons["chat.addToChat.done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 3), "Add opens the Add to Chat sheet")
+        done.tap()
+        waitUntilGone(done, "Done dismisses Add to Chat")
+
+        let assistant = element("message.a2.bubble")
+        XCTAssertTrue(assistant.waitForExistence(timeout: 3))
+        assistant.press(forDuration: 1.0)
+        let copy = app.buttons["message.a2.actions.copy"]
+        XCTAssertTrue(copy.waitForExistence(timeout: 3))
+        copy.tap()
+        waitUntilGone(copy, "An action dismisses the sheet")
+        assertChatShows("Rem")
+
+        element("chat.header.identity").tap()
+        let bar = app.navigationBars["Agent activity"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 3), "The header identity pushes Agent activity")
+        bar.buttons["Chat"].tap()
+        XCTAssertTrue(app.buttons["chat.header.menu"].waitForExistence(timeout: 3), "Back pops to the root conversation")
+        assertChatShows("Rem")
+    }
+
+    /// The scroll position survives Settings: scrolled up in the Long conversation, jump to latest stays.
+    func testShellKeepsScrollPositionAcrossSettings() {
+        chooseRootFixture("chatFixturePicker", "Long")
+        returnToShell()
+        let latest = element("message.a2.bubble")
+        XCTAssertTrue(latest.waitForExistence(timeout: 3))
+        let jump = app.buttons["chat.jumpToLatest"]
+        let content = element("chat.content")
+        for _ in 0..<4 where !jump.exists {
+            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
+            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Scrolled up")
+        let marker = element("message.h8.bubble")
+        let before = marker.frame.minY
+
+        openSidebar()
+        element("sidebar.account").tap()
+        let settings = app.navigationBars["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        app.buttons["settings.done"].tap()
+        waitUntilGone(settings, "Done dismisses Settings")
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Still scrolled up after Settings")
+        XCTAssertEqual(marker.frame.minY, before, accuracy: 1, "The conversation keeps its scroll position")
+    }
+
+    /// Developer stays separate: no catalog or fixture control in the shell's chat or sidebar; Developer
+    /// opens from Settings only, and Close returns to the same conversation.
+    func testShellDeveloperEntryStaysSeparate() {
+        XCTAssertTrue(app.navigationBars["Developer"].waitForExistence(timeout: 3), "--developer opens the hub")
+        XCTAssertTrue(app.staticTexts["playground.build"].exists)
+        capture("Developer-hub-light")
+        returnToShell()
+        for id in ["openComponents", "openSettings", "chatFixturePicker", "playground.build"] {
+            XCTAssertFalse(element(id).exists, "\(id) stays in the Developer hub")
+        }
+        openSidebar()
+        for id in ["openComponents", "chatFixturePicker", "settings.developer"] {
+            XCTAssertFalse(element(id).exists, "\(id) is not in the sidebar")
+        }
+        chooseSidebarRow("sidebar.agent.travel")
+        openSidebar()
+        element("sidebar.account").tap()
+        let developer = app.buttons["settings.developer"]
+        XCTAssertTrue(developer.waitForExistence(timeout: 5))
+        XCTAssertEqual(developer.label, "Developer")
+        developer.tap()
+        XCTAssertTrue(app.buttons["openComponents"].waitForExistence(timeout: 5), "Developer opens the hub")
+        XCTAssertFalse(app.navigationBars["Settings"].exists, "Settings closed behind the hub")
+        returnToShell()
+        assertChatShows("Travel planning: Lisbon in May")
+    }
 }
+

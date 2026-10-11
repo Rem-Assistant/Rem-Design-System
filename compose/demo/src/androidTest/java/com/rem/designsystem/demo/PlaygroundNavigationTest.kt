@@ -32,6 +32,7 @@ import org.hamcrest.Matcher
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
@@ -43,6 +44,9 @@ import java.util.concurrent.TimeUnit
  */
 class PlaygroundNavigationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+
+    /** Build 9: these journeys start in the Developer hub, reached through the app shell. */
+    @Before fun openDeveloperHub() = compose.openDeveloperHub()
 
     private fun capture(name: String) {
         compose.waitForIdle()
@@ -1116,4 +1120,203 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("openInbox").performScrollTo().performClick()
         waitForTag("inbox.empty")
     }
+
+    // App shell (Build 9; `docs/playground/route-map.md`). The class @Before opens the Developer hub through
+    // the shell's ordinary route; these journeys close it again and drive the shell itself. Twin of the
+    // iOS `testShell…` journeys.
+
+    /** Developer → close: back on the shell's full-screen conversation (the root). */
+    private fun returnToShell() {
+        compose.onNodeWithTag("developer.close").performClick()
+        waitForTag("chat.header.menu")
+    }
+
+    private fun openSidebar() {
+        compose.onNodeWithTag("chat.header.menu").performClick()
+        waitForTag("sidebar.close")
+        compose.onNodeWithTag("sidebar.agent.main").assertIsDisplayed()
+    }
+
+    private fun assertChatShows(agent: String) {
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("$agent,", substring = true))
+        compose.onNodeWithTag("sidebar.close").assertDoesNotExist()
+    }
+
+    /** Root: Chat full screen with the sidebar behind the header button; choose an agent; Back closes it. */
+    @Test fun shellSidebarSelectsAnAgentAndBackCloses() {
+        returnToShell()
+        assertChatShows("Rem")
+        compose.onNodeWithTag("chat.header.back").assertDoesNotExist()
+        compose.onNodeWithTag("chat.header.overflow").assertDoesNotExist()
+        compose.onNodeWithTag("chat.header.menu").assert(hasContentDescription("Open sidebar"))
+        capture("Shell-chat-light")
+
+        openSidebar()
+        compose.onNodeWithTag("sidebar.section.side").assertIsDisplayed()
+        compose.onNodeWithTag("sidebar.newAgent").assertIsDisplayed()
+        compose.onNodeWithTag("sidebar.account").assertIsDisplayed()
+        capture("Shell-sidebar-light")
+        compose.onNodeWithTag("sidebar.agent.health").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        compose.onNodeWithText("Start a conversation with Health", substring = true).assertExists()
+
+        // System Back closes an open sidebar and keeps the selection; tapping the chat card closes it too.
+        openSidebar()
+        systemBack()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.close").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.main").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+    }
+
+    /** New agent: the sheet cancels without change, and Create adds the agent and opens its chat. */
+    @Test fun shellNewAgentCancelsAndCreates() {
+        returnToShell()
+        openSidebar()
+        compose.onNodeWithTag("sidebar.newAgent").performClick()
+        waitForTag("newAgent.name")
+        compose.onNodeWithTag("sidebar.close").assertDoesNotExist()
+        compose.onNodeWithTag("newAgent.create").assertIsNotEnabled()
+        capture("Shell-newAgent-light")
+        compose.onNodeWithTag("newAgent.cancel").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("newAgent.name").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.new.1").assertDoesNotExist()
+
+        compose.onNodeWithTag("sidebar.newAgent").performClick()
+        waitForTag("newAgent.name")
+        compose.onNodeWithTag("newAgent.name").performTextInput("Garden")
+        compose.onNodeWithTag("newAgent.color.green").performClick()
+        compose.onNodeWithTag("newAgent.create").assertIsEnabled().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("newAgent.name").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Garden")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.new.1").assertIsDisplayed().assertIsSelected()
+    }
+
+    /**
+     * Settings from the account pill, into a destination and back (top bar and system Back) to the same
+     * agent and conversation; the Developer action is the one route to the developer tools.
+     */
+    @Test fun shellSettingsFromAccountReturnsToTheSelectedChat() {
+        returnToShell()
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.money").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").assert(hasContentDescription("Avery Diaz", substring = true)).performClick()
+        waitForTag("shell.settings")
+        compose.onNodeWithTag("settings.developer").assertIsDisplayed()
+        compose.onNodeWithTag("chat.header.identity").assertDoesNotExist()
+        capture("Shell-settings-light")
+
+        compose.onNodeWithTag("openAgent").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agentDestination.PairedDevices").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("settings.developer").assertDoesNotExist()
+        compose.onNodeWithTag("agentDestination.PairedDevices").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agentDestination.PairedDevices").fetchSemanticsNodes().isEmpty() }
+        systemBack()
+        waitForTag("agentDestination.PairedDevices")
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("shell.settings")
+        compose.onNodeWithTag("settingsDestination.About").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("shell.settings").fetchSemanticsNodes().isEmpty() }
+        systemBack()
+        waitForTag("shell.settings")
+        systemBack()
+        waitForTag("chat.header.identity")
+        assertChatShows("Money")
+        compose.onNodeWithTag("chat.composerField").assertTextContains("Keep this draft")
+
+        // The top bar's Back also returns to the chat.
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("shell.settings")
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("chat.header.identity")
+        assertChatShows("Money")
+    }
+
+    /** Chat in the shell: Add to Chat and message actions are sheets that dismiss; Activity is pushed and pops. */
+    @Test fun shellChatSheetsDismissAndActivityPops() {
+        returnToShell()
+        compose.onNodeWithTag("chat.composerAdd").performClick()
+        waitForTag("chat.addToChat.photos")
+        systemBack()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("chat.addToChat.photos").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+
+        compose.onNodeWithTag("message.a2.bubble").performScrollTo().performTouchInput { longClick() }
+        waitForTag("message.a2.actions.copy")
+        systemBack()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("message.a2.actions.copy").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+
+        compose.onNodeWithTag("chat.header.identity").performClick()
+        waitForTag("agentActivity.title")
+        compose.onNodeWithTag("chat.header.menu").assertDoesNotExist()
+        systemBack()
+        waitForTag("chat.header.menu")
+        assertChatShows("Rem")
+    }
+
+    /** The scroll position survives Settings: scrolled up in the Long conversation, jump to latest stays. */
+    @Test fun shellKeepsScrollPositionAcrossSettings() {
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        waitForTag("message.a2.bubble")
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        val top = compose.onNodeWithTag("message.h8.bubble", useUnmergedTree = true).getUnclippedBoundsInRoot().top
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("shell.settings")
+        systemBack()
+        waitForTag("chat.header.identity")
+        compose.onNodeWithTag("chat.jumpToLatest").assertIsDisplayed()
+        assertTrue(
+            "The conversation keeps its scroll position",
+            compose.onNodeWithTag("message.h8.bubble", useUnmergedTree = true).getUnclippedBoundsInRoot().top == top,
+        )
+    }
+
+    /**
+     * Developer stays separate: no catalog or fixture control in the shell's chat, sidebar or Settings;
+     * Developer opens from Settings only, and its close control or system Back returns to the chat.
+     */
+    @Test fun shellDeveloperEntryStaysSeparate() {
+        compose.onNodeWithTag("playground.build").assertExists()
+        capture("Developer-hub-light")
+        systemBack()
+        waitForTag("chat.header.menu")
+        listOf("openComponents", "openSettings", "chatFixture.Populated", "playground.build").forEach {
+            compose.onNodeWithTag(it).assertDoesNotExist()
+        }
+        openSidebar()
+        listOf("openComponents", "chatFixture.Populated", "settings.developer").forEach {
+            compose.onNodeWithTag(it).assertDoesNotExist()
+        }
+        compose.onNodeWithTag("sidebar.agent.travel").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("settings.developer")
+        compose.onNodeWithTag("settings.developer").assertTextEquals("Developer").performClick()
+        waitForTag("openComponents")
+        compose.onNodeWithTag("developer.close").assert(hasContentDescription("Close developer"))
+        returnToShell()
+        assertChatShows("Travel planning: Lisbon in May")
+    }
 }
+

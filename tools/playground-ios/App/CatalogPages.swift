@@ -769,9 +769,12 @@ struct PlaygroundChatScreen: View {
     @State private var showActivity = false
     @State private var activityTab = AgentActivityTab.activity
     @State private var messageActions: ChatMessageActionsDisplay?
+    /// The shell's root conversation opens the sidebar from its header (`ChatPlaygroundFixture.root`).
+    private let onOpenSidebar: () -> Void
 
-    init(fixture: ChatPlaygroundFixture) {
+    init(fixture: ChatPlaygroundFixture, onOpenSidebar: @escaping () -> Void = {}) {
         _fixture = State(initialValue: fixture)
+        self.onOpenSidebar = onOpenSidebar
     }
 
     var body: some View {
@@ -863,6 +866,7 @@ struct PlaygroundChatScreen: View {
     private func handle(_ action: ChatScreenAction) {
         switch fixture.handle(action) {
         case .exit?: dismiss()
+        case .openSidebar?: onOpenSidebar()
         case .presentHostControls?: showHostControls = true
         case .presentAddToChat?: showAddToChat = true
         case .presentActivity?:

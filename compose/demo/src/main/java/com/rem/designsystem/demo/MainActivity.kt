@@ -33,6 +33,7 @@ import com.rem.designsystem.screens.InboxPlaygroundFixture
 import com.rem.designsystem.buttons.RemButton
 import com.rem.designsystem.buttons.RemButtonVariant
 import com.rem.designsystem.icons.RemMaterialSymbols
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
@@ -112,17 +113,29 @@ enum class PlaygroundOnboardingStep(val title: String, val tag: String) {
     Voice("Voice", "openOnboardingVoice"),
 }
 
+/**
+ * The **Developer** hub (Build 9): the earlier Playground root — component catalog, every screen with its
+ * fixture picker (Settings / Agenda / Chat / Inbox data) and the onboarding hub — kept apart from the
+ * app shell's ordinary navigation. Opened from Settings' **Developer** action (`settings.developer`);
+ * the close control (`developer.close`) or system Back at its root returns to the shell. The Settings
+ * load fixture and the Chat conversation fixture are shared with the shell, so a choice made here
+ * applies there too. Route map: `docs/playground/route-map.md`.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Playground() {
+fun DeveloperHub(
+    fixture: LoadFixture,
+    onFixture: (LoadFixture) -> Unit,
+    chatConversation: ChatPlaygroundFixture.Conversation,
+    onChatConversation: (ChatPlaygroundFixture.Conversation) -> Unit,
+    onClose: () -> Unit,
+) {
     val context = LocalContext.current
     var route by rememberSaveable { mutableStateOf(Route.Home) }
     var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
     var settingsPage by rememberSaveable { mutableStateOf<SettingsEntryDestination?>(null) }
-    var fixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     var agendaFixture by rememberSaveable { mutableStateOf(AgendaSuggestionsFixture.Loaded) }
     var checkInFailsOnce by rememberSaveable { mutableStateOf(false) }
-    var chatConversation by rememberSaveable { mutableStateOf(ChatPlaygroundFixture.Conversation.Populated) }
     var inboxContent by rememberSaveable { mutableStateOf(InboxPlaygroundFixture.Content.Items) }
     var taskItemId by rememberSaveable { mutableStateOf<String?>(null) }
     // Pushed onboarding steps (ordinals), mirroring the iOS navigation stack: Continue / Skip push the
@@ -142,9 +155,11 @@ fun Playground() {
         }
     }
     BackHandler(route != Route.Home && !fullScreen) { back() }
+    // At its root, system Back closes the Developer hub and returns to the app shell.
+    BackHandler(route == Route.Home) { onClose() }
     BackHandler(route == Route.ChatScreen || route == Route.TaskReply) { back() }
     val title = when (route) {
-        Route.Home -> "Rem Playground"; Route.Components -> "Components"; Route.Controls -> "Controls"
+        Route.Home -> "Developer"; Route.Components -> "Components"; Route.Controls -> "Controls"
         Route.Rows -> "Rows"; Route.CatalogAgenda -> "Agenda"; Route.Chat -> "Chat"; Route.AgentCatalog -> "Agent"
         Route.Brand -> "Brand & empty states"
         Route.Loading -> "Loading"; Route.Settings -> "Settings"; Route.Agent -> "Agent settings"
@@ -157,6 +172,8 @@ fun Playground() {
         CenterAlignedTopAppBar(title = { Text(title, style = RemTypography.bodyBold) }, navigationIcon = {
             if (route != Route.Home) IconButton(onClick = back, modifier = Modifier.testTag("back")) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            } else IconButton(onClick = onClose, modifier = Modifier.testTag("developer.close")) {
+                Icon(Icons.Filled.Close, contentDescription = "Close developer")
             }
         }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = RemColors.current.backgroundPrimary))
         }
@@ -170,13 +187,13 @@ fun Playground() {
                     Column {
                         RemSection(header = "Screens") {
                             NavRow("Settings", "openSettings") { route = Route.Settings }
-                            SegmentedPicker(LoadFixture.entries, fixture, { fixture = it }, { it.name }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
+                            SegmentedPicker(LoadFixture.entries, fixture, onFixture, { it.name }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
                             RowDivider()
                             NavRow("Agenda", "openAgendaSuggestions") { route = Route.AgendaSuggestions }
                             SegmentedPicker(AgendaSuggestionsFixture.entries, agendaFixture, { agendaFixture = it }, { it.name }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "agendaFixture.${it.name}" })
                             RowDivider()
                             NavRow("Chat", "openChatScreen") { route = Route.ChatScreen }
-                            SegmentedPicker(ChatPlaygroundFixture.Conversation.entries, chatConversation, { chatConversation = it }, { it.label }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "chatFixture.${it.label}" })
+                            SegmentedPicker(ChatPlaygroundFixture.Conversation.entries, chatConversation, onChatConversation, { it.label }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "chatFixture.${it.label}" })
                             RowDivider()
                             NavRow("Inbox", "openInbox") { route = Route.Inbox }
                             SegmentedPicker(InboxPlaygroundFixture.Content.entries, inboxContent, { inboxContent = it }, { it.label }, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), tag = { "inboxFixture.${it.label}" })
@@ -439,7 +456,7 @@ private fun OnboardingCompletePreview(lastAction: String, onDone: () -> Unit) {
 }
 
 @Composable
-private fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestination?,
+internal fun AgentPreview(fixture: LoadFixture, destination: AgentSettingsDestination?,
                          onOpenDestination: (AgentSettingsDestination) -> Unit,
                          onDestinationBack: () -> Unit, onCancel: () -> Unit) {
     var status by remember { mutableStateOf("loading") }

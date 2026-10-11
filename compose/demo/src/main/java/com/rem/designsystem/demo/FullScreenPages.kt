@@ -55,7 +55,7 @@ import com.rem.designsystem.tokens.RemTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
+fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit, onOpenSidebar: () -> Unit = {}) {
     var fixture by remember { mutableStateOf(initial) }
     var model by remember { mutableStateOf<ChatModelSelection>(ChatModelSelection.Automatic) }
     var thinking by remember { mutableStateOf(ThinkingLevel.Medium) }
@@ -70,6 +70,7 @@ fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit) {
         fixture = next
         when (effect) {
             ChatPlaygroundEffect.Exit -> onExit()
+            ChatPlaygroundEffect.OpenSidebar -> onOpenSidebar()
             ChatPlaygroundEffect.PresentHostControls -> showHostControls = true
             ChatPlaygroundEffect.PresentAddToChat -> showAddToChat = true
             ChatPlaygroundEffect.PresentActivity -> { activityTab = AgentActivityTab.Activity; showActivity = true }

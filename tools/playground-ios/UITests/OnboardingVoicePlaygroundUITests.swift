@@ -10,7 +10,7 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["--settings-light"]
+        app.launchArguments = ["--developer", "--settings-light"]
         app.launch()
     }
 
@@ -171,7 +171,7 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
 
     func testDarkAppearance() {
         app.terminate()
-        app.launchArguments = ["--settings-dark"]
+        app.launchArguments = ["--developer", "--settings-dark"]
         app.launch()
         openOnboardingVoice()
         capture("OnboardingVoice-dark")
@@ -184,7 +184,7 @@ final class OnboardingVoicePlaygroundUITests: XCTestCase {
 
     func testLargeTextReachability() {
         app.terminate()
-        app.launchArguments = ["--settings-light", "--settings-large-text"]
+        app.launchArguments = ["--developer", "--settings-light", "--settings-large-text"]
         app.launch()
         openOnboardingVoice()
         capture("OnboardingVoice-large-text")

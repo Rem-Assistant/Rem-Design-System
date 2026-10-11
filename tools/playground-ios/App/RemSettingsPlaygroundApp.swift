@@ -7,7 +7,7 @@ struct RemSettingsPlaygroundApp: App {
     @Environment(\.dynamicTypeSize) private var systemTypeSize
     var body: some Scene {
         WindowGroup {
-            PlaygroundHome()
+            PlaygroundShell()
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--settings-dark") ? .dark : (ProcessInfo.processInfo.arguments.contains("--settings-light") ? .light : nil))
                 .dynamicTypeSize(ProcessInfo.processInfo.arguments.contains("--settings-large-text") ? .accessibility3 : systemTypeSize)
         }
@@ -57,12 +57,157 @@ private enum PlaygroundRoute: Hashable {
     case onboardingComplete(lastAction: String)
 }
 
+// MARK: - App shell (Build 9)
+
+/// The Playground's app shell (`docs/playground/route-map.md`). Root: one full-screen conversation
+/// (`2702:2351`); the header's sidebar button opens the sidebar (`2702:2479`) — Main agent, Side agents,
+/// New agent, and the account pill, which opens Settings. Every state transition goes through the DS
+/// `PlaygroundShellFixture`; this view draws the native chrome only. Fixtures only: no backend, auth,
+/// voice, telephony or provider. The Developer hub (catalog, fixture pickers, every screen) is reached
+/// from Settings' **Developer** button and covers the shell, which stays alive underneath so returning
+/// finds the same agent, conversation and scroll position. Twin of the Compose `Playground()`.
+struct PlaygroundShell: View {
+    @State private var shell = PlaygroundShellFixture()
+    /// `--developer` opens straight into the Developer hub (the established journeys start there).
+    @State private var developerOpen = ProcessInfo.processInfo.arguments.contains("--developer")
+    /// Set by Settings' Developer button; the hub opens once the Settings sheet has gone.
+    @State private var developerRequested = false
+    // Developer-owned fixtures the shell reads; changed only in the Developer hub.
+    @State private var settingsFixture = LoadFixture.success
+    @State private var chatConversation = ChatPlaygroundFixture.Conversation.populated
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            RemSidebarContainer(isOpen: $shell.isSidebarOpen) {
+                RemSidebar(shell.sidebar) { shell.handle($0) }
+            } content: {
+                NavigationStack {
+                    PlaygroundChatScreen(fixture: rootConversation, onOpenSidebar: { shell.openSidebar() })
+                }
+                // A different agent (or a fixture chosen in Developer) is a different conversation.
+                .id("\(shell.conversationKey)|\(chatConversation.rawValue)")
+            }
+            // Covered by the Developer hub: out of the accessibility tree and untouchable, but alive.
+            .accessibilityHidden(developerOpen)
+            .allowsHitTesting(!developerOpen)
+
+            if developerOpen {
+                PlaygroundHome(fixture: $settingsFixture, chatConversation: $chatConversation) {
+                    developerOpen = false
+                }
+                .transition(reduceMotion ? .opacity : .move(edge: .bottom))
+                .zIndex(1)
+            }
+        }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: developerOpen)
+        .sheet(item: presentation, onDismiss: {
+            if developerRequested {
+                developerRequested = false
+                developerOpen = true
+            }
+        }) { presented in
+            switch presented {
+            case .newAgent:
+                NewAgentSetupScreen(draft: $shell.draft) { shell.handle($0) }
+                    .presentationDetents([.large])
+            case .settings:
+                ShellSettings(fixture: settingsFixture, onDone: { shell.dismissPresentation() }) {
+                    developerRequested = true
+                    shell.dismissPresentation()
+                }
+            }
+        }
+    }
+
+    /// The selected agent's conversation: the Developer-chosen fixture for Rem, a fresh one for a side agent.
+    private var rootConversation: ChatPlaygroundFixture {
+        if shell.selection == .main { return .root(chatConversation) }
+        return .root(.empty, agentName: shell.selectedAgent.name)
+    }
+
+    /// The fixture's presentation as a sheet item. A swipe-down dismissal cancels New agent (nothing is
+    /// created) and closes Settings, back to the same conversation.
+    private var presentation: Binding<PlaygroundShellPresentation?> {
+        Binding(
+            get: { shell.presented },
+            set: { value in
+                guard value == nil, let current = shell.presented else { return }
+                if current == .newAgent { shell.handle(NewAgentSetupAction.cancel) } else { shell.dismissPresentation() }
+            }
+        )
+    }
+}
+
+/// Settings opened from the account pill: the Build 8 Settings entry and its linked destinations in a
+/// sheet over the unchanged conversation. Pushed pages pop; Done (or a swipe down) returns to the chat.
+/// **Developer** is the one route into the Developer hub.
+struct ShellSettings: View {
+    let fixture: LoadFixture
+    let onDone: () -> Void
+    let onDeveloper: () -> Void
+    @State private var sharing = false
+
+    var body: some View {
+        NavigationStack {
+            SettingsEntryContent(onShare: { sharing = true }, agentRoute: .agentSettings,
+                                 availableRoutes: [.billing, .permissions, .about, .helpSupport])
+                .background(DesignTokens.Color.backgroundPrimary)
+                .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Developer", action: onDeveloper).accessibilityIdentifier("settings.developer")
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done", action: onDone).fontWeight(.semibold).accessibilityIdentifier("settings.done")
+                    }
+                }
+                .playgroundSettingsDestinations(fixture: fixture)
+                .sheet(isPresented: $sharing) { PlaygroundShareSheet() }
+        }
+    }
+}
+
+extension View {
+    /// The Build 8 Settings destinations, shared by the shell's Settings sheet and the Developer hub.
+    func playgroundSettingsDestinations(fixture: LoadFixture) -> some View {
+        navigationDestination(for: SettingsEntryDestination.self) { route in
+            switch route {
+            case .agentSettings: AgentPreview(fixture: fixture)
+            case .billing: SettingsBillingScreen()
+            case .permissions: SettingsPermissionsScreen()
+            case .about: SettingsAboutScreen(version: PlaygroundBuild.aboutVersion)
+            case .helpSupport: SettingsHelpScreen()
+            }
+        }
+        .navigationDestination(for: AgentSettingsDestination.self) { route in
+            switch route {
+            case .pairedDevices: SettingsPairedDevicesScreen()
+            case .memory: SettingsMemoryScreen()
+            case .models: SettingsModelsScreen()
+            case .cloudBrowser: SettingsCloudBrowserScreen()
+            case .wallet: SettingsWalletScreen()
+            case .voice: SettingsVoiceScreen()
+            case .connectors: SettingsConnectorsScreen()
+            case .automations: SettingsAutomationsScreen()
+            }
+        }
+    }
+}
+
+// MARK: - Developer hub
+
+/// The **Developer** hub (Build 9): the earlier Playground root — component catalog, every screen with its
+/// fixture picker and the onboarding hub — kept apart from the shell's ordinary navigation. Opened from
+/// Settings' Developer button (or `--developer` at launch); Close (`developer.close`) returns to the shell.
+/// The Settings load fixture and the Chat conversation fixture are shared with the shell.
 struct PlaygroundHome: View {
     @State private var path = NavigationPath()
-    @State private var fixture = LoadFixture.success
+    @Binding var fixture: LoadFixture
+    @Binding var chatConversation: ChatPlaygroundFixture.Conversation
+    let onClose: () -> Void
     @State private var agendaFixture = AgendaSuggestionsFixture.loaded
     @State private var checkInSave = CheckInSaveFixture.succeeds
-    @State private var chatConversation = ChatPlaygroundFixture.Conversation.populated
     @State private var inboxContent = InboxPlaygroundFixture.Content.items
 
     var body: some View {
@@ -106,7 +251,14 @@ struct PlaygroundHome: View {
                         .accessibilityIdentifier("playground.build")
                 }
             }
-            .navigationTitle("Rem Playground")
+            .navigationTitle("Developer")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close", action: onClose)
+                        .accessibilityLabel("Close developer")
+                        .accessibilityIdentifier("developer.close")
+                }
+            }
             .navigationDestination(for: PlaygroundRoute.self) { route in
                 switch route {
                 case .components: ComponentCatalog()
@@ -136,27 +288,7 @@ struct PlaygroundHome: View {
                     OnboardingComplete(lastAction: lastAction, onDone: returnToOnboardingHub)
                 }
             }
-            .navigationDestination(for: SettingsEntryDestination.self) { route in
-                switch route {
-                case .agentSettings: AgentPreview(fixture: fixture)
-                case .billing: SettingsBillingScreen()
-                case .permissions: SettingsPermissionsScreen()
-                case .about: SettingsAboutScreen(version: PlaygroundBuild.aboutVersion)
-                case .helpSupport: SettingsHelpScreen()
-                }
-            }
-            .navigationDestination(for: AgentSettingsDestination.self) { route in
-                switch route {
-                case .pairedDevices: SettingsPairedDevicesScreen()
-                case .memory: SettingsMemoryScreen()
-                case .models: SettingsModelsScreen()
-                case .cloudBrowser: SettingsCloudBrowserScreen()
-                case .wallet: SettingsWalletScreen()
-                case .voice: SettingsVoiceScreen()
-                case .connectors: SettingsConnectorsScreen()
-                case .automations: SettingsAutomationsScreen()
-                }
-            }
+            .playgroundSettingsDestinations(fixture: fixture)
         }
     }
 
@@ -376,7 +508,7 @@ enum PlaygroundBuild {
 }
 
 /// The operating system owns recipient selection and sending. Opening this sheet sends nothing.
-private struct PlaygroundShareSheet: UIViewControllerRepresentable {
+struct PlaygroundShareSheet: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: ["Rem — a personal AI assistant."], applicationActivities: nil)
     }
