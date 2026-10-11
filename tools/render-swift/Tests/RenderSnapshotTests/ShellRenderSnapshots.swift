@@ -18,19 +18,20 @@ final class ShellRenderSnapshots: XCTestCase {
         for dark in [false, true] {
             let suffix = dark ? "dark" : "light"
             render("Shell-chat-\(suffix)", width: 402, height: 874, dark: dark) {
-                rootChat()
+                Self.shellRootChat()
             }
             render("Shell-sidebar-\(suffix)", width: 402, height: 874, dark: dark) {
                 RemSidebarContainer(isOpen: .constant(open.isSidebarOpen)) {
                     RemSidebar(open.sidebar) { _ in }
                 } content: {
-                    rootChat()
+                    Self.shellRootChat()
                 }
             }
         }
     }
 
-    private func rootChat() -> some View {
+    // A free-standing builder: the sidebar container's content closure escapes, so it must not capture self.
+    private static func shellRootChat() -> some View {
         let fixture = ChatPlaygroundFixture.root()
         return ChatScreen(
             header: fixture.header,
