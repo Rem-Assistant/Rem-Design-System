@@ -49,6 +49,16 @@ The host builds `AgentActivityDisplay` and owns the route: iOS pushes the screen
 bar, "‹ Chat" back), Compose shows it with its own top app bar and routes system Back to Chat. The Figma master has
 no prototype reaction; this routing is explicit.
 
+`openSidebar` (Build 9; Swift `ChatScreenAction.openSidebar`, Kotlin `ChatScreenAction.OpenSidebar`) is emitted by
+the header's sidebar button, which shows only when the host sets `ChatHeaderDisplay.showsSidebar` on its root
+conversation (the button replaces Back, never sits beside it). The host opens its sidebar. **Adapters on a
+non-root conversation ignore it** (they never set `showsSidebar`, so it is not emitted there).
+- **Migration (source-breaking for Swift):** a Swift adapter that switches exhaustively over
+  `ChatScreenAction` with no `default` (for example RemClaw's `ChatActionRouter.handle(_:)`) fails to compile
+  against this case. Add `case .openSidebar: break` (or the sidebar route) in the same change that bumps the
+  design-system pin. Kotlin adapters with an `else` branch are unaffected; a Kotlin `when` used as an
+  exhaustive expression needs `ChatScreenAction.OpenSidebar -> Unit`.
+
 ## Rules the DS applies (presentation only)
 
 1. **Send** is available only when input is enabled, no turn is in flight, and there is visible text **or a
