@@ -267,7 +267,9 @@ public struct ChatTranscriptList: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 case .message(let message):
                     MessageBubble(displayed(message, latest: latest), onAction: onAction)
-                        .overlay(alignment: .trailing) { timeColumn(message) }
+                        .overlay(alignment: Alignment(horizontal: .trailing, vertical: .messageBubbleCenter)) {
+                            timeColumn(message)
+                        }
                 }
             }
         }
