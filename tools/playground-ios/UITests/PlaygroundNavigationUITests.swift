@@ -801,6 +801,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// scrolled up, and a tap returns to the newest message and hides it again. The DS owns it.
     func testChatJumpToLatestAppearsWhenScrolledUpAndReturns() {
         openChatScreen("Long")
+        // Developer covers the shell, whose Chat uses the same identifiers: only the hub's Chat is in the tree.
+        XCTAssertEqual(app.textViews.matching(identifier: "chat.composerField").count, 1,
+                       "Exactly one composer under Developer: the covered shell stays out of UI automation")
         let latest = element("message.a2.bubble")
         XCTAssertTrue(latest.waitForExistence(timeout: 3))
         XCTAssertTrue(latest.isHittable, "The conversation opens at the latest message")
@@ -1311,6 +1314,9 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(developer.waitForExistence(timeout: 5))
         developer.tap()
         XCTAssertTrue(app.buttons["openComponents"].waitForExistence(timeout: 10), "Developer opens the hub")
+        // The covered shell leaves the tree once the hub is up (route-map "Covered surfaces").
+        waitGone(app.textViews["chat.composerField"], "The covered shell's composer is not in the tree under Developer")
+        waitGone(app.buttons["chat.header.menu"], "The covered shell's header is not in the tree under Developer")
     }
 
     /// Developer round trip keeps the work: a sent message, a draft and the scroll position survive

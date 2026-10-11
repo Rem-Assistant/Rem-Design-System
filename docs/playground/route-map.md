@@ -53,9 +53,12 @@ file is its state contract.
     starts afresh (A → B → A is fresh). Creating a new agent selects it, so it is a key change too.
   - Covered surfaces stay out of UI automation and TalkBack, because the Developer hub hosts its own
     Chat with the same identifiers.
-  - **iOS:** the Developer hub is a full-screen cover. UIKit removes the shell's views from the window,
-    and SwiftUI keeps their state. The chat is `.id("<conversationKey>|<fixture>")`, so a key change
-    destroys the old conversation.
+  - **iOS:** the Developer hub is a full-screen cover. SwiftUI's cover leaves the shell's views in the
+    window, so once the cover is up the Playground hides the shell's hosting view with UIKit `isHidden`
+    (`HidesPresenterWhileVisible`) and shows it again as the cover starts to leave. A hidden view is out of
+    VoiceOver and UI automation; SwiftUI `.accessibilityHidden` was not enough (it left nodes in the XCUITest
+    tree). The shell stays alive underneath, so its state is kept. The chat is
+    `.id("<conversationKey>|<fixture>")`, so a key change destroys the old conversation.
   - **Android:** the shell is not composed under the hub. The live conversation's fixture is hoisted
     into `Playground()`, and its scroll position into a `SaveableStateProvider` with the same key; when
     the key changes, every other key's fixture and saved state are removed (`removeState`).
