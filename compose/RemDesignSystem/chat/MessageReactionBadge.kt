@@ -94,8 +94,8 @@ private fun ReactionDisc(diameter: Float, modifier: Modifier = Modifier, content
 
 /**
  * The reaction set on a message — twin of SwiftUI `MessageReactionStack`: the front badge at the
- * bubble's corner with its two-dot tail, up to two more badges stacked behind it toward the bubble's
- * interior. One semantics node for the whole set. Its own size is [MessageReactionBadgeMetrics.layout];
+ * bubble's corner with its two-dot tail, at most one more badge stacked behind it toward the bubble's
+ * interior (a chat has two participants, the person and Rem). One semantics node for the whole set. Its own size is [MessageReactionBadgeMetrics.layout];
  * the caller places it at the corner.
  */
 @Composable
@@ -163,9 +163,13 @@ object MessageReactionBadgeMetrics {
     const val Lift = 20f
     /** Top clearance a reacted message reserves so the set never reaches the row above. */
     const val TopReserve = Lift + Ring
-    /** 60% of a badge: each stacked badge overlaps the previous one. */
-    const val StackStep = 20f
-    const val MaxVisible = 3
+    /**
+     * The discs still overlap by 4, but the front badge covers only 8 of the back one's ring frame,
+     * short of its 19sp emoji, which stays fully visible.
+     */
+    const val StackStep = 30f
+    /** One badge per participant (the person and Rem); the accessibility label names every reaction. */
+    const val MaxVisible = 2
     const val TailLarge = 8f
     const val TailSmall = 4f
     /** Dot centres in the front badge disc's coordinates (outgoing orientation; mirrored for incoming). */

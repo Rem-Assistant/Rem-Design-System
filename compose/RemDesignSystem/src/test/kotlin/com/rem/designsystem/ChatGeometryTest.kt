@@ -73,8 +73,8 @@ class ChatGeometryTest {
         assertEquals(20f, T.Lift)
         assertEquals(22f, T.TopReserve)
         assertEquals(T.TopReserve, G.IncomingReactionTop)
-        assertEquals(20f, T.StackStep)
-        assertEquals(3, T.MaxVisible)
+        assertEquals(30f, T.StackStep)
+        assertEquals(2, T.MaxVisible)
     }
 
     @Test fun outgoingTapbackOverlapsTheTopLeadingCorner() {
@@ -101,8 +101,8 @@ class ChatGeometryTest {
         assertEquals(16f, inc.offsetX)
         assertEquals(out.offsetY, inc.offsetY)
         assertEquals(out.width, inc.width)
-        // Front badge at the outer edge of the stack, the next one 20 further toward the bubble.
-        assertEquals(20f, inc.badges[0].x)
+        // Front badge at the outer edge of the stack, the next one 30 further toward the bubble.
+        assertEquals(30f, inc.badges[0].x)
         assertEquals(0f, inc.badges[1].x)
         out.badges.zip(inc.badges).forEach { (o, i) -> assertEquals(o.x, inc.width - i.maxX) }
         out.dots.zip(inc.dots).forEach { (o, i) -> assertEquals(o.x, inc.width - i.maxX); assertEquals(o.y, i.y) }
@@ -116,20 +116,25 @@ class ChatGeometryTest {
         assertTrue("dots trail downward", small.y > large.y && large.y > T.BadgeOuter / 2)
     }
 
-    @Test fun stackedTapbacksOverlapAndCapAtThree() {
+    @Test fun stackedTapbacksOverlapShowBothEmojiAndCapAtTwo() {
         val two = T.layout(2, Corner.TopLeading)
-        assertEquals(listOf(0f, 20f), two.badges.map { it.x })
-        assertTrue("each badge overlaps the previous one", two.badges[0].maxX > two.badges[1].x)
-        assertEquals(58f, two.width)
+        assertEquals(listOf(0f, 30f), two.badges.map { it.x })
+        // The discs still overlap, so it reads as a stack...
+        assertTrue("discs overlap", two.badges[0].maxX - T.Ring > two.badges[1].x + T.Ring)
+        // ...but the front badge stops before the back badge's centred emoji begins.
+        val backEmojiLeft = two.badges[1].x + (T.BadgeOuter - T.Emoji) / 2
+        assertTrue("back emoji fully visible", two.badges[0].maxX <= backEmojiLeft)
+        assertEquals(68f, two.width)
+        // A chat has two participants: never more than two badges.
         val many = T.layout(5, Corner.TopLeading)
-        assertEquals(3, many.badges.size)
-        assertEquals(78f, many.width)
+        assertEquals(2, many.badges.size)
+        assertEquals(68f, many.width)
         val none = T.layout(0, Corner.TopTrailing)
         assertTrue(none.badges.isEmpty() && none.dots.isEmpty())
     }
 
     @Test fun tapbackStaysInsideItsReservedClearance() {
-        for (corner in Corner.values()) for (count in 1..3) {
+        for (corner in Corner.values()) for (count in 1..T.MaxVisible + 1) {
             val l = T.layout(count, corner)
             val frames = l.badges + l.dots
             // Never above the reserved top clearance, so it cannot reach the previous row.

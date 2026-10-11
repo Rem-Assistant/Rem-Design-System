@@ -66,12 +66,14 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      below-outward of the front badge (centres at (8, 34) and (3, 41) in the outgoing badge disc's
      coordinates; mirrored for incoming).
    - **Stacking:** `ChatMessageDisplay.reaction` (the person's own, the sheet's selection) is the front
-     badge at the corner; `additionalReactions` (additive, default empty) stack behind it, each **20**
-     (≈ 60% of a badge) further toward the bubble's interior. At most **3** badges are drawn.
+     badge at the corner; `additionalReactions` (additive, default empty) stack behind it, **30**
+     further toward the bubble's interior: the discs overlap by 4 so it reads as a stack, and the
+     back badge's emoji stays fully visible. At most **2** badges are drawn, because a chat has two
+     participants, the person and Rem (Samuel, 2026-10-11).
    - **Accessibility:** one element for the set, id `<prefix>.reaction`, labelled "Reaction: Heart" for
      one and "Reactions: Thumbs up, Heart" for several (every reaction is named, including any past
-     the three drawn).
-   - Renders: `MessageReactionTapback-light` / `-dark` (single and stacked, both sides, the cap).
+     the two drawn).
+   - Renders: `MessageReactionTapback-light` / `-dark` (single and stacked, both sides, the two-badge cap).
 2. **Long press** on a transcript message (accessibility "Message actions") asks the host to present
    **`MessageActionSheet`** (`2603:19498`): a 2 × 6 reaction grid — the approved row `👍 👎 ❤️ 😂 🎉 😮`,
    then `🔥 👀 🙏 😢 💯` and a brand-blue `+` — 44 circles, `fillTertiary`, 27pt emoji, rows 12 apart;

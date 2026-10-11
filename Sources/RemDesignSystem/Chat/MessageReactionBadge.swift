@@ -91,8 +91,8 @@ extension MessageReactionDisc where Content == EmptyView {
 }
 
 /// The reaction set drawn on a message: the front badge at the bubble's corner with its two-dot
-/// thought-bubble tail, and up to two more badges stacked behind it toward the bubble's interior
-/// (each 20pt further in). One accessibility element for the whole set. Positions come from
+/// thought-bubble tail, and at most one more badge stacked behind it toward the bubble's interior
+/// (30pt further in) — a chat has two participants, the person and Rem. One accessibility element for the whole set. Positions come from
 /// `MessageReactionBadgeMetrics.layout(count:corner:)`, shared with Compose and the unit tests.
 struct MessageReactionStack: View {
     let reactions: [MessageReaction]
@@ -148,10 +148,12 @@ public enum MessageReactionBadgeMetrics {
     public static let lift: CGFloat = 20
     /// Top clearance a reacted message reserves so the set never reaches the row above.
     public static let topReserve: CGFloat = lift + ring
-    /// Horizontal step between stacked badges: 60% of a badge, so each overlaps the previous one.
-    public static let stackStep: CGFloat = 20
-    /// Badges drawn at most; the accessibility label still names every reaction.
-    public static let maxVisible = 3
+    /// Horizontal step between stacked badges: the discs still overlap by 4, but the front badge
+    /// covers only 8 of the back one's ring frame, short of its 19pt emoji, which stays fully visible.
+    public static let stackStep: CGFloat = 30
+    /// Badges drawn at most — one per participant (the person and Rem); the accessibility label
+    /// still names every reaction.
+    public static let maxVisible = 2
     /// The thought-bubble tail, two dots below-outward of the front badge.
     public static let tailLarge: CGFloat = 8
     public static let tailSmall: CGFloat = 4
