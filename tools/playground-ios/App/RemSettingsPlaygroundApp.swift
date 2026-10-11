@@ -86,13 +86,18 @@ struct PlaygroundShell: View {
             // A different agent (or a fixture chosen in Developer) is a different conversation.
             .id("\(shell.conversationKey)|\(chatConversation.rawValue)")
         }
-        // The Developer hub is a full-screen cover: UIKit takes the shell's views out of the window (and so out
-        // of UI automation; the hub hosts its own Chat with the same identifiers) while SwiftUI keeps the
-        // shell's state, so closing Developer finds the same agent, conversation, draft and scroll position.
+        // The Developer hub is a full-screen cover over the shell, which keeps all of its state, so closing
+        // Developer finds the same agent, conversation, draft and scroll position.
         .fullScreenCover(isPresented: $developerOpen) {
             PlaygroundHome(fixture: $settingsFixture, chatConversation: $chatConversation) {
                 developerOpen = false
             }
+            // The cover leaves the shell's views in the window (run 38177154884 found two chat.composerField),
+            // and SwiftUI's accessibilityHidden does not reach the UIKit text views inside. Hiding the shell's
+            // root view from accessibility while the hub is up takes every covered node out of VoiceOver and
+            // UI automation, and the shell keeps all of its state.
+            .onAppear { Self.setShellAccessibilityHidden(true) }
+            .onDisappear { Self.setShellAccessibilityHidden(false) }
         }
         // Leaving the conversation (sidebar, Settings, Developer) ends editing, so the keyboard never covers
         // the next surface; the draft is fixture state and stays. New agent focuses its own name field.
@@ -115,6 +120,14 @@ struct PlaygroundShell: View {
                     shell.dismissPresentation()
                 }
             }
+        }
+    }
+
+    /// The shell is the window's root view controller; the cover is presented beside it, not inside it.
+    private static func setShellAccessibilityHidden(_ hidden: Bool) {
+        let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+        for window in windows {
+            window.rootViewController?.view.accessibilityElementsHidden = hidden
         }
     }
 

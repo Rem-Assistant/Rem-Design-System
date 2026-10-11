@@ -1392,8 +1392,15 @@ class PlaygroundNavigationTest {
         sendFromChat("Round trip message")
         waitForTag("message.sent.1.bubble")
         compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
-        compose.onRoot().performTouchInput {
-            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        // The first drag toward older messages also hides the IME, which grows the viewport by the IME's
+        // height and can bring the latest message back within the jump threshold, so drag until scrolled up.
+        repeat(4) {
+            if (compose.onAllNodesWithTag("chat.jumpToLatest").fetchSemanticsNodes().isEmpty()) {
+                compose.onRoot().performTouchInput {
+                    swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+                }
+                compose.waitForIdle()
+            }
         }
         waitForTag("chat.jumpToLatest")
         compose.waitForIdle()

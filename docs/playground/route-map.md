@@ -42,8 +42,9 @@ Approved designs used:
   shows that agent's conversation; a side agent's conversation starts as a fresh fixture.
   - Covered surfaces stay out of UI automation and TalkBack, because the Developer hub hosts its own
     Chat with the same identifiers.
-  - **iOS:** the Developer hub is a full-screen cover. UIKit removes the shell's views from the window,
-    and SwiftUI keeps their state.
+  - **iOS:** the Developer hub is a full-screen cover, so the shell keeps its state. The cover leaves the
+    shell's views in the window, and SwiftUI's `accessibilityHidden` does not reach the UIKit text views
+    inside. So while the hub is up, the shell's root view sets `accessibilityElementsHidden`.
   - **Android:** the shell is not composed under the hub. Its conversation fixture is hoisted per
     conversation into `Playground()`, and its scroll position into a `SaveableStateProvider`.
     `ChatScreen` keeps a restored position instead of re-pinning to the latest message.
