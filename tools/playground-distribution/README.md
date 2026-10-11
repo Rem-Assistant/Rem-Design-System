@@ -185,7 +185,8 @@ group, that tester is outside this lane's current scope; do not silently move th
   `CURRENT_PROJECT_VERSION` and `REM_PLAYGROUND_SOURCE_SHA` consumed by committed
   project metadata. Hosted `macos-15` uses its selected Xcode; the measured version
   is retained in private packaging metadata. No claim of native-test toolchain parity.
-- Android: `compose/gradlew`, Gradle `8.14.4`, JDK 17; `:demo:bundleRelease` produces
+- Android: `compose/gradlew`, Gradle `8.14.4`, JDK 21 (the Paparazzi 2 Gradle plugin is Java 21
+  bytecode); `:demo:bundleRelease` produces
   `demo/build/outputs/bundle/release/demo-release.aab`; marketing version `1.0`;
   `-PplaygroundSourceSha` produces `git:<SHA>` in `RemPlaygroundSourceSHA` metadata.
   The trusted init script sets the release code through AGP `finalizeDsl` and uses

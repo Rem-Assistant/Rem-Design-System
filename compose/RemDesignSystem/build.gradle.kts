@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -26,8 +27,12 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
 
 android {
     namespace = "com.rem.designsystem"
-    compileSdk = 34
+    compileSdk = 36
     defaultConfig { minSdk = 24 }
+    // A library has no runtime targetSdk of its own (consumers set it); API 36 here keeps the JVM
+    // render tests and lint evaluating the same platform behaviour a targetSdk-36 consumer gets.
+    testOptions { targetSdk = 36 }
+    lint { targetSdk = 36 }
 
     sourceSets {
         getByName("main") {
@@ -42,7 +47,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+}
+
+kotlin {
+    compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
 }
 
 // Fail before Android resource packaging if either static Material Symbols asset is missing or
