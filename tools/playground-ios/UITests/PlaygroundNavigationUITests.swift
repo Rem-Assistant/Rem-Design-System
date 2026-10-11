@@ -1323,6 +1323,14 @@ final class PlaygroundNavigationUITests: XCTestCase {
         let field = app.textViews["chat.composerField"]
         focus(field)
         field.typeText("Keep this draft")
+        // Scroll up with the keyboard down (as on Android). With it up, the drag toward older messages also
+        // dismisses it, the viewport grows by the keyboard height and the remaining distance can fall within
+        // the near-latest threshold; the visible set would also be taken with a different viewport than the
+        // one the round trip returns to (route changes end editing). The composer swipe-down is rule 11.
+        let dismiss = field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        dismiss.press(forDuration: 0.05, thenDragTo: dismiss.withOffset(CGVector(dx: 0, dy: 80)),
+                      withVelocity: .fast, thenHoldForDuration: 0)
+        waitUntilGone(app.keyboards.firstMatch, "The keyboard is down before scrolling up")
         let jump = app.buttons["chat.jumpToLatest"]
         let content = element("chat.content")
         for _ in 0..<4 where !jump.exists {

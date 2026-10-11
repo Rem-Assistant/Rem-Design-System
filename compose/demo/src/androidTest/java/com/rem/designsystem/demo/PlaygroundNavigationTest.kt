@@ -1392,6 +1392,11 @@ class PlaygroundNavigationTest {
         sendFromChat("Round trip message")
         waitForTag("message.sent.1.bubble")
         compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
+        // Scroll up with the keyboard down. With the IME up, the swipe is a drag toward older messages, which
+        // dismisses it (#121); the viewport then grows by the IME height and the remaining distance can fall
+        // within the near-latest threshold, so the transcript re-pins and jump to latest never appears.
+        Espresso.closeSoftKeyboard()
+        compose.waitForIdle()
         compose.onRoot().performTouchInput {
             swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
         }
