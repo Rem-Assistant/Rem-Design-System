@@ -19,6 +19,9 @@ import SwiftUI
 /// The composition also owns **jump to latest** (`ChatJumpToLatest`): a round down-arrow centred above the
 /// dock while the person is scrolled more than `ChatJumpToLatest.threshold` above the newest message.
 /// Hosts wire nothing for it.
+/// The transcript scrolls **under** the header (`ChatHeaderBackdrop`): the header sits on a progressive
+/// blur, opaque over the status bar and header and fading to clear just below it, and the transcript's top
+/// content inset equals the header's height so the first message is never hidden. Hosts wire nothing.
 public struct ChatScreen<Transcript: View>: View {
     private let composerText: String
     private let composerPlaceholder: String
@@ -30,6 +33,11 @@ public struct ChatScreen<Transcript: View>: View {
     @State private var distanceFromBottom: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.chatJumpToLatestEvidence) private var jumpEvidence
+    /// Header backdrop: the header's bottom edge and the transcript viewport's top edge, both in the
+    /// composition's coordinate space. Their difference is the transcript's top content inset.
+    @State private var headerBottom: CGFloat = 0
+    @State private var viewportTop: CGFloat = 0
+    @Environment(\.chatHeaderBackdropEvidence) private var backdropEvidence
 
     /// The host-driven composition's inputs.
     private struct Composition {
@@ -111,20 +119,10 @@ public struct ChatScreen<Transcript: View>: View {
     // MARK: Full-screen composition
 
     private func composed(_ c: Composition) -> some View {
-        VStack(spacing: 0) {
-            ChatHeader(
-                name: c.header.name,
-                activity: c.header.activity,
-                status: c.header.status,
-                faceMode: c.header.isWorking ? .thinking : .idle,
-                accessibilityPrefix: "chat.header",
-                onTap: c.header.showsActivityDetails ? { c.onAction(.activityDetails) } : nil,
-                onBack: c.header.showsBack ? { c.onAction(.back) } : nil,
-                onOverflow: c.header.showsOverflow ? { c.onAction(.overflow) } : nil,
-                onCall: c.header.showsCall ? { c.onAction(.call) } : nil
-            )
-            .padding(.bottom, DesignTokens.Spacing.sm)
-
+        let headerInset = ChatHeaderBackdrop.chromeHeight(headerBottom: headerBottom, viewportTop: viewportTop)
+        // Header backdrop: the transcript fills the screen (under the status bar too) and the header floats
+        // over it on a progressive blur, so messages scroll behind the header instead of clipping at it.
+        return ZStack(alignment: .top) {
             // The reader measures the visible transcript area (inside the docked composer's inset), so a
             // short conversation fills it itself, bottom-aligned, instead of relying on the scroll view's
             // default anchor to shift undersized content down. That shift moves the rows on screen but not
@@ -146,9 +144,14 @@ public struct ChatScreen<Transcript: View>: View {
                         .padding(.vertical, DesignTokens.Spacing.md)
                         .frame(
                             maxWidth: .infinity,
-                            minHeight: viewport.size.height,
+                            minHeight: ChatHeaderBackdrop.transcriptMinHeight(
+                                viewportHeight: viewport.size.height, topInset: headerInset
+                            ),
                             alignment: c.emptyState == nil ? .bottom : .top
                         )
+                        // Header backdrop: the content starts below the header, so the first message is
+                        // fully visible when scrolled to the top; scrolled further it passes under the blur.
+                        .padding(.top, headerInset)
                         // Jump to latest: the content's bottom edge in the scroll view's own space, so its
                         // distance below the visible area is `maxY - viewport height`.
                         .background(GeometryReader { content in
@@ -160,6 +163,13 @@ public struct ChatScreen<Transcript: View>: View {
                         .overlay(alignment: .bottom) {
                             Color.clear.frame(height: 1).id(ChatScrollIDs.latest).accessibilityHidden(true)
                         }
+                        .overlay(alignment: .top) {
+                            if backdropEvidence {
+                                Color.clear.frame(height: 1).id(ChatScrollIDs.backdropEvidence)
+                                    .padding(.top, ChatScrollIDs.backdropEvidenceOffset)
+                                    .accessibilityHidden(true)
+                            }
+                        }
                     }
                     .coordinateSpace(.named(ChatScrollIDs.space))
                     .defaultScrollAnchor(c.emptyState == nil && !jumpEvidence ? .bottom : .top)
@@ -168,6 +178,7 @@ public struct ChatScreen<Transcript: View>: View {
                     .onPreferenceChange(ChatContentBottomKey.self) { maxY in
                         distanceFromBottom = maxY - viewport.size.height
                     }
+                    .preference(key: ChatViewportTopKey.self, value: viewport.frame(in: .named(ChatScrollIDs.screen)).minY)
                 }
                 // Over the transcript area only, so it never covers the docked composer or the keyboard.
                 // The animation is scoped to the button so it never animates transcript changes.
@@ -192,8 +203,40 @@ public struct ChatScreen<Transcript: View>: View {
                     .padding(.bottom, ChatJumpToLatest.bottomSpacing)
                     .animation(jumpMotion ? .easeOut(duration: ChatJumpToLatest.appearDuration) : nil, value: showsJump)
                 }
+                .onAppear {
+                    guard backdropEvidence else { return }
+                    DispatchQueue.main.async { proxy.scrollTo(ChatScrollIDs.backdropEvidence, anchor: .top) }
+                }
             }
+            .ignoresSafeArea(.container, edges: .top)
+
+            ChatHeaderBackdropView(chromeHeight: headerInset)
+                .ignoresSafeArea(.container, edges: .top)
+
+            ChatHeader(
+                name: c.header.name,
+                activity: c.header.activity,
+                status: c.header.status,
+                faceMode: c.header.isWorking ? .thinking : .idle,
+                accessibilityPrefix: "chat.header",
+                onTap: c.header.showsActivityDetails ? { c.onAction(.activityDetails) } : nil,
+                onBack: c.header.showsBack ? { c.onAction(.back) } : nil,
+                onOverflow: c.header.showsOverflow ? { c.onAction(.overflow) } : nil,
+                onCall: c.header.showsCall ? { c.onAction(.call) } : nil
+            )
+            .padding(.bottom, DesignTokens.Spacing.sm)
+            .background(GeometryReader { header in
+                Color.clear.preference(
+                    key: ChatHeaderBottomKey.self,
+                    value: header.frame(in: .named(ChatScrollIDs.screen)).maxY
+                )
+            })
+            // Drawn over the transcript, but still read first.
+            .accessibilitySortPriority(1)
         }
+        .coordinateSpace(.named(ChatScrollIDs.screen))
+        .onPreferenceChange(ChatHeaderBottomKey.self) { headerBottom = $0 }
+        .onPreferenceChange(ChatViewportTopKey.self) { viewportTop = $0 }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .safeAreaInset(edge: .bottom, spacing: 0) { dock(c) }
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
@@ -230,6 +273,24 @@ public struct ChatScreen<Transcript: View>: View {
 private enum ChatScrollIDs {
     static let space = "chat.scroll"
     static let latest = "chat.latest"
+    /// The whole composition (header backdrop measurements).
+    static let screen = "chat.screen"
+    /// Header-backdrop evidence: a marker this far below the content top is scrolled to the viewport top.
+    static let backdropEvidence = "chat.backdropEvidence"
+    static let backdropEvidenceOffset: CGFloat = 96
+}
+
+/// The header's bottom edge in the composition's coordinate space (header backdrop).
+private struct ChatHeaderBottomKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
+/// The transcript viewport's top edge in the composition's coordinate space: above zero by the status bar,
+/// since the transcript extends under it (header backdrop).
+private struct ChatViewportTopKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 /// The transcript content's bottom edge in the scroll view's coordinate space (jump to latest).
@@ -250,6 +311,21 @@ extension EnvironmentValues {
     var chatJumpToLatestEvidence: Bool {
         get { self[ChatJumpToLatestEvidenceKey.self] }
         set { self[ChatJumpToLatestEvidenceKey.self] = newValue }
+    }
+}
+
+/// Evidence seam (internal, never set by hosts): after the transcript opens at its oldest message (combine
+/// with `chatJumpToLatestEvidence`), scroll it `ChatScrollIDs.backdropEvidenceOffset` down so a still render
+/// shows messages passing under the header backdrop. Twin of Compose `LocalChatHeaderBackdropEvidence`. Not
+/// part of the public API.
+private struct ChatHeaderBackdropEvidenceKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var chatHeaderBackdropEvidence: Bool {
+        get { self[ChatHeaderBackdropEvidenceKey.self] }
+        set { self[ChatHeaderBackdropEvidenceKey.self] = newValue }
     }
 }
 

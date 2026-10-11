@@ -199,6 +199,57 @@ final class ChatScreenModelTests: XCTestCase {
         XCTAssertEqual(ChatJumpToLatest.accessibilityIdentifier, "chat.jumpToLatest")
     }
 
+    // MARK: Header backdrop (paired with `ChatScreenModelTest.kt`)
+
+    func testHeaderBackdropContentInsetEqualsTheChromeHeight() {
+        for chrome: CGFloat in [0, 128, 152, 177.5, 260] {
+            XCTAssertEqual(ChatHeaderBackdrop.contentTopInset(chromeHeight: chrome), chrome, "inset == chrome \(chrome)")
+        }
+        XCTAssertEqual(ChatHeaderBackdrop.contentTopInset(chromeHeight: -4), 0, "never negative")
+        // Measured edges: status bar 59 above the safe area (viewport top -59), header bottom at 128.
+        XCTAssertEqual(ChatHeaderBackdrop.chromeHeight(headerBottom: 128, viewportTop: -59), 187)
+        XCTAssertEqual(ChatHeaderBackdrop.chromeHeight(headerBottom: 128, viewportTop: 0), 128)
+        // A short conversation fills exactly the area below the header: inset + min height == viewport.
+        XCTAssertEqual(ChatHeaderBackdrop.transcriptMinHeight(viewportHeight: 700, topInset: 187) + 187, 700)
+        XCTAssertEqual(ChatHeaderBackdrop.transcriptMinHeight(viewportHeight: 100, topInset: 187), 0)
+    }
+
+    func testHeaderBackdropFirstMessageIsFullyVisibleAtTheTop() {
+        for chrome: CGFloat in [96, 128, 152, 260] {
+            let top = ChatHeaderBackdrop.firstMessageTop(chromeHeight: chrome)
+            XCTAssertTrue(ChatHeaderBackdrop.isBelowHeader(rowTop: top, chromeHeight: chrome), "below the header at \(chrome)")
+            XCTAssertTrue(ChatHeaderBackdrop.isClearOfBackdrop(rowTop: top, chromeHeight: chrome), "clear of the fade at \(chrome)")
+        }
+        // Scrolled up by even 1pt from that resting place, the row starts to pass under the fade.
+        let chrome: CGFloat = 128
+        XCTAssertFalse(ChatHeaderBackdrop.isClearOfBackdrop(rowTop: ChatHeaderBackdrop.firstMessageTop(chromeHeight: chrome) - 1,
+                                                            chromeHeight: chrome))
+        XCTAssertFalse(ChatHeaderBackdrop.isBelowHeader(rowTop: chrome - 1, chromeHeight: chrome))
+    }
+
+    func testHeaderBackdropMaskFadesToClearJustBelowTheHeader() {
+        XCTAssertEqual(ChatHeaderBackdrop.fadeHeight, 20)
+        XCTAssertEqual(ChatHeaderBackdrop.fadeOverhang, ChatHeaderBackdrop.transcriptTopPadding,
+                       "fade overhang == transcript top padding")
+        XCTAssertEqual(ChatHeaderBackdrop.transcriptTopPadding, 12)
+        XCTAssertEqual(ChatHeaderBackdrop.topOpacity, 1)
+        XCTAssertEqual(ChatHeaderBackdrop.bottomOpacity, 0)
+        XCTAssertEqual(ChatHeaderBackdrop.hairline, 0.5)
+        let chrome: CGFloat = 128
+        XCTAssertEqual(ChatHeaderBackdrop.backdropHeight(chromeHeight: chrome), 140)
+        let stops = ChatHeaderBackdrop.maskStops(chromeHeight: chrome)
+        XCTAssertEqual(stops.count, 3)
+        XCTAssertEqual(stops[0].location, 0)
+        XCTAssertEqual(stops[0].opacity, 1)
+        // The fade starts 8pt (the header's bottom gap) above the header's bottom edge.
+        XCTAssertEqual(stops[1].location, (chrome - 8) / 140, accuracy: 1e-6)
+        XCTAssertEqual(stops[1].opacity, 1)
+        XCTAssertEqual(stops[2].location, 1)
+        XCTAssertEqual(stops[2].opacity, 0)
+        // With no measured chrome yet, the whole (overhang-high) backdrop is fade.
+        XCTAssertEqual(ChatHeaderBackdrop.maskStops(chromeHeight: -12).map { $0.location }, [0, 0, 1])
+    }
+
     // MARK: Long-press message actions (`2603:19498`)
 
     func testAssistantMessageSheetMatchesTheReferenceGroups() {

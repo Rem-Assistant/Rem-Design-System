@@ -111,6 +111,28 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      Compose follows only while within the threshold, where it previously always snapped to the bottom).
      No unread indicator yet (follow-up).
 
+11. **Header backdrop — the transcript scrolls under the header** (`ChatHeaderBackdrop`, internal, Swift and
+   Kotlin share the constants; reference: iOS bars and the Claude iOS app). The full composition draws the
+   transcript under the status bar and the header, so messages scroll behind the header instead of clipping
+   at a solid fill. The composition owns it — hosts wire nothing.
+   - **Geometry:** the transcript's top content inset equals the **chrome height** (status bar + header,
+     including the header's 8 bottom gap), so scrolled to the top the first message sits wholly below the
+     header and clear of the fade. `defaultScrollAnchor(.bottom)`, the short-conversation bottom alignment
+     and jump to latest (rule 10) are unchanged.
+   - **iOS backdrop:** a progressive blur — `.regularMaterial` masked by a vertical gradient, opacity **1**
+     over the status bar and header, fading to **0** over **20pt** that ends **12pt** below the header's
+     bottom edge (the transcript's own top padding, `Spacing.md`). Not a solid `backgroundPrimary` fill. The
+     header's controls and identity pill keep their own materials.
+   - **Compose backdrop:** a scrim only — a vertical gradient of `backgroundPrimary` at **0.95** alpha over
+     the status bar and header to **0** over the same 20dp / 12dp fade. Compose has no backdrop blur
+     (`Modifier.blur` / `RenderEffect` blur a node's own content, not what is behind it), so no blur is
+     drawn on any API level.
+   - **Reduce Transparency (iOS):** solid `backgroundPrimary` chrome with a 0.5 `separator` hairline, no
+     fade. **Android** has no reduce-transparency setting; the same fallback follows the system contrast
+     level above standard (Android 14+ `UiModeManager.contrast`); below Android 14 the scrim always shows.
+   - **Accessibility:** the backdrop is decoration (hidden, not interactive; touches reach the transcript);
+     the header is still read first.
+
 ## Paired native fixtures
 
 `ChatFixture` in `tools/playground-ios/App/CatalogPages.swift` and in
@@ -126,6 +148,11 @@ Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlayg
 `chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
+
+Header backdrop: render pair `ChatHeaderBackdrop-light`, `ChatHeaderBackdrop-dark` — the Long conversation
+opened 96pt/dp below its oldest message through internal evidence seams (`chatHeaderBackdropEvidence` /
+`LocalChatHeaderBackdropEvidence`, with the jump-to-latest seam), so messages sit under the header. Geometry
+rules: `testHeaderBackdrop…` (`ChatScreenModelTests.swift`) / `headerBackdrop…` (`ChatScreenModelTest.kt`).
 
 ## Full-screen composition and app boundary
 

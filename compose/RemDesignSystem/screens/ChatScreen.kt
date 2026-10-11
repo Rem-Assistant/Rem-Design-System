@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
@@ -109,6 +108,9 @@ fun ChatScreen(
  * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
  * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
  * scrolled more than [ChatJumpToLatest.THRESHOLD] above the newest message. Hosts wire nothing for it.
+ * The transcript scrolls **under** the header ([ChatHeaderBackdrop]): the header sits on a gradient scrim,
+ * nearly opaque over the status bar and header and clear just below it, and the transcript's top content
+ * padding equals the header's height so the first message is never hidden. Hosts wire nothing.
  */
 @Composable
 fun ChatScreen(
@@ -126,23 +128,14 @@ fun ChatScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.backgroundPrimary)
-            .statusBarsPadding(),
+            .background(colors.backgroundPrimary),
     ) {
-        ChatHeader(
-            activity = header.activity,
-            name = header.name,
-            status = header.status,
-            faceMode = if (header.isWorking) RemFaceMarkMode.Thinking else RemFaceMarkMode.Idle,
-            accessibilityPrefix = "chat.header",
-            onTap = if (header.showsActivityDetails) ({ onAction(ChatScreenAction.ActivityDetails) }) else null,
-            onBack = if (header.showsBack) ({ onAction(ChatScreenAction.Back) }) else null,
-            onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
-            onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
-            modifier = Modifier.padding(bottom = RemSpacing.sm),
-        )
-        val scroll = rememberScrollState()
         val density = LocalDensity.current
+        // Header-backdrop evidence opens the transcript scrolled a fixed distance from its oldest message.
+        val backdropEvidence = LocalChatHeaderBackdropEvidence.current
+        val scroll = rememberScrollState(
+            if (backdropEvidence) with(density) { ChatHeaderBackdrop.EVIDENCE_SCROLL.dp.roundToPx() } else 0,
+        )
         val context = LocalContext.current
         val reduceMotion = remember(context) {
             Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
@@ -159,11 +152,30 @@ fun ChatScreen(
             }
         }
         val jumpScope = rememberCoroutineScope()
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        // Header backdrop: the transcript fills the area (under the status bar too) and the header floats over
+        // it on its scrim; `headerInset` is the measured status bar + header height.
+        ChatHeaderOverlayLayout(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            header = {
+                ChatHeader(
+                    activity = header.activity,
+                    name = header.name,
+                    status = header.status,
+                    faceMode = if (header.isWorking) RemFaceMarkMode.Thinking else RemFaceMarkMode.Idle,
+                    accessibilityPrefix = "chat.header",
+                    onTap = if (header.showsActivityDetails) ({ onAction(ChatScreenAction.ActivityDetails) }) else null,
+                    onBack = if (header.showsBack) ({ onAction(ChatScreenAction.Back) }) else null,
+                    onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
+                    onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
+                    modifier = Modifier.padding(bottom = RemSpacing.sm),
+                )
+            },
+        ) { headerInset ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scroll)
+                    .padding(top = headerInset)
                     .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
                     .testTag("chat.content"),
                 verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
@@ -236,6 +248,14 @@ fun ChatScreen(
  * instrumentation tests. Not part of the public API.
  */
 internal val LocalChatJumpToLatestEvidence = staticCompositionLocalOf { false }
+
+/**
+ * Evidence seam (internal, never set by hosts): open the transcript [ChatHeaderBackdrop.EVIDENCE_SCROLL] dp
+ * below its oldest message (combine with [LocalChatJumpToLatestEvidence] so it is not then snapped to the
+ * latest), so a still render shows messages passing under the header scrim. Twin of SwiftUI
+ * `chatHeaderBackdropEvidence`. Not part of the public API.
+ */
+internal val LocalChatHeaderBackdropEvidence = staticCompositionLocalOf { false }
 
 /** The empty conversation (`2054:22089`): title, message and starters as full-width capsules. No face. */
 @Composable
