@@ -1,0 +1,198 @@
+name: Private Playground distribution
+run-name: Playground ${{ inputs.platform }} · ${{ inputs.source_sha }} · build ${{ inputs.build_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed 40-character app source SHA (store metadata must be committed)
+        required: true
+        type: string
+      native_run_id:
+        description: Successful full native-candidate run for that exact SHA
+        required: true
+        type: string
+      visual_review_url:
+        description: GitHub review record for this SHA, including paired visual acceptance
+        required: true
+        type: string
+      build_number:
+        description: Unused integer above both selected stores' current build numbers
+        required: true
+        type: string
+      platform:
+        type: choice
+        options: [both, ios, android]
+        default: both
+
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+
+# All releases serialize, including independent platform selections. Never cancel a store upload.
+concurrency:
+  group: playground-private-distribution
+  cancel-in-progress: false
+
+env:
+  PLAYGROUND_SOURCE_SHA: ${{ inputs.source_sha }}
+  PLAYGROUND_BUILD_NUMBER: ${{ inputs.build_number }}
+  PLAYGROUND_VISUAL_REVIEW_URL: ${{ inputs.visual_review_url }}
+  FASTLANE_SKIP_UPDATE_CHECK: '1'
+  FASTLANE_HIDE_CHANGELOG: '1'
+  FASTLANE_OPT_OUT_USAGE: '1'
+  FASTLANE_SKIP_ACTION_SUMMARY: '1'
+
+jobs:
+  admission:
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.gate.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Run trusted admission and privacy guard tests
+        run: |
+          python3 -m unittest discover -s control/tools/playground-distribution -p 'test_*.py'
+          ruby control/tools/playground-distribution/test_store.rb
+      - name: Validate inputs before candidate checkout
+        env:
+          NATIVE_RUN_ID: ${{ inputs.native_run_id }}
+        run: |
+          python3 - <<'PY'
+          import os,sys
+          sys.path.insert(0, 'control/tools/playground-distribution')
+          from gate import arguments, visual_review
+          arguments(os.environ['PLAYGROUND_SOURCE_SHA'], os.environ['NATIVE_RUN_ID'], os.environ['PLAYGROUND_BUILD_NUMBER'])
+          visual_review(os.environ['PLAYGROUND_VISUAL_REVIEW_URL'])
+          PY
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: candidate
+          persist-credentials: false
+      - name: Verify native receipts and pre-existing protected environments
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_RUN_ID: ${{ inputs.native_run_id }}
+          PLATFORM: ${{ inputs.platform }}
+        run: |
+          python3 control/tools/playground-distribution/gate.py --source candidate \
+            --sha "$PLAYGROUND_SOURCE_SHA" --run "$NATIVE_RUN_ID" --build "$PLAYGROUND_BUILD_NUMBER" \
+            --platform "$PLATFORM" --out "$RUNNER_TEMP/admission.json"
+          python3 control/tools/playground-distribution/summary.py admission "$RUNNER_TEMP/admission.json"
+
+  distribute:
+    needs: admission
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.admission.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    environment: playground-${{ matrix.platform }}
+    timeout-minutes: 60
+    env:
+      PLAYGROUND_PLATFORM: ${{ matrix.platform }}
+      BUNDLE_FROZEN: 'true'
+    steps:
+      - name: Initialize ephemeral runner paths
+        run: |
+          echo "PLAYGROUND_OUTPUT=$RUNNER_TEMP/playground-package" >> "$GITHUB_ENV"
+          echo "PLAYGROUND_ADMISSION=$RUNNER_TEMP/admission.json" >> "$GITHUB_ENV"
+          echo "BUNDLE_PATH=$RUNNER_TEMP/playground-gems" >> "$GITHUB_ENV"
+          # DerivedData, SwiftPM checkouts and Gradle state stay in one ephemeral directory that cleanup removes.
+          echo "PLAYGROUND_EPHEMERAL=$RUNNER_TEMP/playground-ephemeral" >> "$GITHUB_ENV"
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/playground-ephemeral/gradle-home" >> "$GITHUB_ENV"
+          mkdir -m 700 "$RUNNER_TEMP/playground-ephemeral"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: candidate
+          persist-credentials: false
+      - name: Recheck admission after environment approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_RUN_ID: ${{ inputs.native_run_id }}
+        run: |
+          python3 control/tools/playground-distribution/gate.py --source candidate \
+            --sha "$PLAYGROUND_SOURCE_SHA" --run "$NATIVE_RUN_ID" --build "$PLAYGROUND_BUILD_NUMBER" \
+            --platform "$PLAYGROUND_PLATFORM" --out "$PLAYGROUND_ADMISSION"
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
+        with:
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Check runner storage before dependencies
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage dependencies
+      - name: Install frozen checksummed dependencies (no credentials present)
+        working-directory: control/tools/playground-distribution
+        run: |
+          bundle install --jobs 4 --retry 2
+          bundle check
+          git diff --exit-code -- Gemfile.lock
+      - name: Check runner storage before build
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage build
+      - name: Build and inspect committed store-ready source (no signing or store credentials)
+        run: |
+          python3 control/tools/playground-distribution/package.py build --source candidate \
+            --out "$PLAYGROUND_OUTPUT" --platform "$PLAYGROUND_PLATFORM" \
+            --sha "$PLAYGROUND_SOURCE_SHA" --build "$PLAYGROUND_BUILD_NUMBER"
+      - name: Check runner storage before sign
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage sign
+      - name: Sign iOS using existing authorized assets
+        if: matrix.platform == 'ios'
+        env:
+          PLAYGROUND_IOS_CERTIFICATE_BASE64: ${{ secrets.PLAYGROUND_IOS_CERTIFICATE_BASE64 }}
+          PLAYGROUND_IOS_CERTIFICATE_PASSWORD: ${{ secrets.PLAYGROUND_IOS_CERTIFICATE_PASSWORD }}
+          PLAYGROUND_IOS_PROFILE_BASE64: ${{ secrets.PLAYGROUND_IOS_PROFILE_BASE64 }}
+          PLAYGROUND_IOS_CERTIFICATE_SHA1: ${{ vars.PLAYGROUND_IOS_CERTIFICATE_SHA1 }}
+        run: |
+          python3 control/tools/playground-distribution/package.py sign --source candidate \
+            --out "$PLAYGROUND_OUTPUT" --platform ios --sha "$PLAYGROUND_SOURCE_SHA" --build "$PLAYGROUND_BUILD_NUMBER"
+      - name: Sign Android with existing upload identity
+        if: matrix.platform == 'android'
+        env:
+          PLAYGROUND_ANDROID_KEYSTORE_BASE64: ${{ secrets.PLAYGROUND_ANDROID_KEYSTORE_BASE64 }}
+          PLAYGROUND_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PLAYGROUND_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          python3 control/tools/playground-distribution/package.py sign --source candidate \
+            --out "$PLAYGROUND_OUTPUT" --platform android --sha "$PLAYGROUND_SOURCE_SHA" --build "$PLAYGROUND_BUILD_NUMBER"
+      - name: Check runner storage before upload
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform "$PLAYGROUND_PLATFORM" --stage upload
+      - name: Upload directly to existing private store destination
+        env:
+          PLAYGROUND_ASC_KEY_ID: ${{ secrets.PLAYGROUND_ASC_KEY_ID }}
+          PLAYGROUND_ASC_ISSUER_ID: ${{ secrets.PLAYGROUND_ASC_ISSUER_ID }}
+          PLAYGROUND_ASC_KEY_BASE64: ${{ secrets.PLAYGROUND_ASC_KEY_BASE64 }}
+          PLAYGROUND_TESTFLIGHT_GROUP_ID: ${{ vars.PLAYGROUND_TESTFLIGHT_GROUP_ID }}
+          PLAYGROUND_GOOGLE_PLAY_JSON: ${{ secrets.PLAYGROUND_GOOGLE_PLAY_JSON }}
+        working-directory: control/tools/playground-distribution
+        run: |
+          umask 077
+          # Provider output can contain account details; never print it or publish it as an artifact.
+          if ! bundle exec fastlane distribute > "$RUNNER_TEMP/playground-store-private.log" 2>&1; then
+            echo 'Store step failed or is unresolved. Inspect provider state before rerunning; do not blindly re-upload.'
+            exit 1
+          fi
+      - name: Publish only allowlisted non-sensitive release metadata
+        if: always()
+        run: python3 control/tools/playground-distribution/summary.py result "$PLAYGROUND_OUTPUT/distribution.json"
+      - name: Remove ephemeral package, credential files and private logs
+        if: always()
+        run: |
+          python3 control/tools/playground-distribution/summary.py cleanup "$RUNNER_TEMP"

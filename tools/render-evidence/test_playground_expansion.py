@@ -50,6 +50,24 @@ class PlaygroundEvidenceTests(unittest.TestCase):
                 if change == 'two-labels': pr['labels'].append({'name':'delivery-scope:onboarding-voice'})
                 with self.subTest(change=change): self.assertNotEqual(run(broken), 0)
 
+    def test_publisher_scope_gate_rejects_wrong_candidates_before_credentials(self):
+        repo = Path(__file__).resolve().parents[2]
+        workflow = (repo / '.github/workflows/publish-builder-delivery.yml').read_text()
+        start = workflow.index('          # Expansion scope and route')
+        end = workflow.index('          run_meta=', start)
+        code = textwrap.dedent(workflow[start:end])
+        self.assertLess(end, workflow.index('      - name: Mint Builder installation token'))
+        valid = dict(os.environ, base_ref=BASE, head_ref=HEAD,
+                     pr_meta=json.dumps({'draft': True}))
+        def run(base=BASE, head=HEAD, scope='agenda-suggestions', draft=True):
+            env = dict(valid, base_ref=base, head_ref=head, pr_meta=json.dumps({'draft':draft}))
+            # The scope array is normally populated from authenticated PR metadata.
+            script = 'set -euo pipefail\nscopes=("' + scope + '")\n' + code
+            return subprocess.run(['bash','-c',script], env=env,capture_output=True).returncode
+        self.assertEqual(run(), 0)
+        for kwargs in ({'base':'main'}, {'head':HEAD+'-bad'}, {'draft':False}, {'scope':''}):
+            with self.subTest(kwargs=kwargs): self.assertNotEqual(run(**kwargs),0)
+
     def test_scope_is_bound_to_exact_branch_pair(self):
         for scope in EXPANSION_SCOPES:
             validate_manual_pair(BASE, HEAD, scope)
