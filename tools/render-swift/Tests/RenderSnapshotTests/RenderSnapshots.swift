@@ -800,6 +800,12 @@ final class RenderSnapshots: XCTestCase {
 
         let host = UIHostingController(rootView: AnyView(root))
         host.overrideUserInterfaceStyle = dark ? .dark : .light
+        // A fitted render is measured without a window (no safe area), then hosted in one whose top
+        // inset would push the content down and clip its bottom (e.g. "Not delivered" under a failed
+        // bubble). Fitted renders therefore ignore the safe area; fixed-height screens keep it.
+        if height == nil {
+            host.safeAreaRegions = []
+        }
 
         let fitHeight = height
             ?? host.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height
