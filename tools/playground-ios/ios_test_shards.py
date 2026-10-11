@@ -112,7 +112,9 @@ def check_results(log, selected):
     if unexpected:
         problems.append(f"ran tests outside this shard: {unexpected}")
     executed = [int(n) for n in EXECUTED.findall(log)]
-    if executed and executed[-1] != len(selected):
+    if not executed:
+        problems.append("no 'Selected tests' executed count in the log")
+    elif executed[-1] != len(selected):
         problems.append(f"Xcode executed {executed[-1]} tests; the shard selected {len(selected)}")
     return problems
 

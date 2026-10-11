@@ -56,6 +56,22 @@ class PartitionTests(unittest.TestCase):
                 shards.shard(["A/testA"], count, index)
 
 
+class DeliveryPlannerParityTests(unittest.TestCase):
+    """tools/playground-delivery/delivery.py shards the same suite for native candidates; the two planners
+    must name the same tests and the same partitions, or one of them silently drops tests."""
+
+    def test_same_inventory_and_partitions_as_the_delivery_planner(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("delivery", ROOT / "tools/playground-delivery/delivery.py")
+        delivery = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(delivery)
+        tests = shards.inventory()
+        self.assertEqual(set(tests), delivery.expected_tests("ios"))
+        for count in range(1, 6):
+            for index in range(count):
+                self.assertEqual(set(shards.shard(tests, count, index)), delivery.shard_tests("ios", index, count))
+
+
 class EnumerationTests(unittest.TestCase):
     TESTS = ["AUITests/testOne", "BUITests/testTwo"]
 
@@ -93,10 +109,12 @@ class ResultTests(unittest.TestCase):
                     ("AUITests/testTwo", "started"), ("AUITests/testTwo", "passed"),
                     ("BUITests/testThree", "started"), ("BUITests/testThree", "passed"), executed=3)
         unfinished = log(("AUITests/testOne", "started"), ("AUITests/testOne", "passed"), ("AUITests/testTwo", "started"))
+        uncounted = log(("AUITests/testOne", "started"), ("AUITests/testOne", "passed"),
+                        ("AUITests/testTwo", "started"), ("AUITests/testTwo", "passed"))
         miscounted = log(("AUITests/testOne", "started"), ("AUITests/testOne", "passed"),
                          ("AUITests/testTwo", "started"), ("AUITests/testTwo", "passed"), executed=5)
         for name, text in (("missing", missing), ("skipped", skipped), ("extra", extra),
-                           ("unfinished", unfinished), ("miscounted", miscounted)):
+                           ("unfinished", unfinished), ("miscounted", miscounted), ("uncounted", uncounted)):
             with self.subTest(name):
                 self.assertTrue(shards.check_results(text, self.SELECTED))
 
