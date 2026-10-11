@@ -90,6 +90,11 @@ These stay explicit boundaries. No component here persists, transmits or enforce
    identity pill shows the name (title3 semibold) and a status row: a 6pt dot (green when Connected,
    orange when Needs you), the **agent's current activity** in footnote `labelSecondary`, and a chevron.
    The status label is the agent's lifecycle copy supplied by the host, not transport evidence.
+   **Capsule and control surfaces (noted decision, review of #106 P3-9):** iOS draws the identity capsule
+   and the 44pt controls on `.regularMaterial`; Compose draws them on opaque `backgroundPrimary` with a
+   shadow (Android has no system material). Both are intended. The iOS layer-render harness cannot
+   capture materials, so the capsule looks almost invisible in the iOS `ChatHeader-light` render; judge
+   it on device or simulator screenshots, not that render.
 
 ## Paired native fixtures
 
