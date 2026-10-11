@@ -213,7 +213,9 @@ tests: `testCatalogChatReactionsDeliveryModelMenuAndAttachments` (XCUITest) /
 Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlaygroundFixture` `.long` /
 `Conversation.Long`, earlier history above the populated sample). Journeys:
 `testChatJumpToLatestAppearsWhenScrolledUpAndReturns` (XCUITest) /
-`chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). Render pair: `ChatJumpToLatest-light`,
+`chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). While a reply is in flight (Stop shown, the
+shell's simulated reply held): `testShellScrollsWhileAReplyIsInFlight` / `shellScrollsWhileAReplyIsInFlight` —
+the transcript still scrolls, jump to latest appears and the message just sent leaves view. Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
 
