@@ -141,17 +141,67 @@ upload_cases = {
   "Couldn't download/upload from App Store Connect" => 'upload_asc_transfer_failed',
   'Error uploading ipa file: Could not download/upload from App Store Connect!' => 'upload_asc_transfer_failed',
   "Error uploading ipa file: \n [Application Loader Error Output]: The call to the altool completed with a " \
-    'non-zero exit status: 1. This indicates a failure.' => 'upload_ipa_error_unclassified',
+    'non-zero exit status: 1. This indicates a failure.' => 'upload_altool_exit_1',
   "Error uploading ipa file: \n -1 indicates altool exited abnormally; try retrying " + SECRET =>
     'upload_ipa_error_unclassified',
   'Error uploading pkg file: x' => 'upload_user_error_unclassified'
 }
+# fastlane 2.240.1: pilot raises "Error uploading ipa file: \n " + one "[Application Loader Error Output]: "
+# entry per altool ERROR: line, then fastlane's own exit-status line(s), which are not counted.
+def pilot_message(errors, exit_status = 1)
+  entries = errors.dup
+  if exit_status
+    entries << "The call to the altool completed with a non-zero exit status: #{exit_status}. This indicates a failure."
+    entries << '-1 indicates altool exited abnormally; try retrying (see https://github.com/fastlane/fastlane/issues/21535)' if exit_status == -1
+  end
+  "Error uploading ipa file: \n " + entries.map { |e| "[Application Loader Error Output]: #{e}" }.join("\n")
+end
+exit_cases = {
+  pilot_message([]) => 'upload_altool_exit_1',
+  pilot_message([], 176) => 'upload_altool_exit_176',
+  pilot_message(['Failed to upload package. ' + SECRET]) => 'upload_altool_exit_1_errlines_1',
+  pilot_message(['Failed to get json from defaults ' + SECRET] * 2) => 'upload_altool_exit_1_errlines_2to5',
+  pilot_message(['x'] * 5, 9) => 'upload_altool_exit_9_errlines_2to5',
+  pilot_message(['Unexpected ' + SECRET] * 6, -1) => 'upload_altool_exit_m1_errlines_6plus',
+  pilot_message(['x'] * 40, -1) => 'upload_altool_exit_m1_errlines_6plus',
+  pilot_message([], 999_999) => 'upload_altool_exit_999999',
+  pilot_message([], -12_345) => 'upload_altool_exit_m12345',
+  # Longer than 6 characters (with the m): no exit code; the ipa fallback, still with its count.
+  pilot_message([], 1_234_567) => 'upload_ipa_error_unclassified',
+  pilot_message(['y'], -123_456) => 'upload_ipa_error_unclassified_errlines_1',
+  # Precedence: ITMS, semantic patterns (259 last), then the Apple code all beat the exit status.
+  pilot_message(['ITMS-90062: bad ' + SECRET]) => 'upload_itms_90062',
+  pilot_message(['The bundle version must be higher than the previously uploaded version']) => 'upload_build_number_used',
+  pilot_message(["The file couldn't be opened because it isn't in the correct format. (259)"]) => 'upload_altool_format_259',
+  pilot_message(['Validation failed (409) Unable to process (-19209) ' + SECRET] * 3) => 'upload_apple_code_m19209',
+  # The exit status beats the transfer-failed and ipa-error fallbacks.
+  pilot_message(['Could not download/upload from App Store Connect!']) => 'upload_altool_exit_1_errlines_1',
+  # No exit status: fallbacks carry the count bucket; counts only, never text.
+  pilot_message(['z ' + SECRET], nil) => 'upload_ipa_error_unclassified_errlines_1',
+  "Could not download/upload from App Store Connect!\n[Application Loader Error Output]: a\n" \
+    '[Application Loader Error Output]: b' => 'upload_asc_transfer_failed_errlines_2to5',
+  "ERROR: one #{SECRET}\n*** Error: two\n[altool] ERROR: three" => 'upload_user_error_unclassified_errlines_2to5',
+  "Something\nERROR: only #{SECRET}" => 'upload_user_error_unclassified_errlines_1',
+  # Empty entries, fastlane's own status lines and mid-line mentions are not altool error lines.
+  pilot_message(['', ' ']) => 'upload_altool_exit_1',
+  'Error uploading ipa file: saw ERROR: inline' => 'upload_ipa_error_unclassified',
+  'exit status: 1 but not the altool line' => 'upload_user_error_unclassified'
+}
+upload_cases.merge!(exit_cases)
 upload_cases.each do |message, code|
   got = upload_guard(message)
   raise "Expected upload guard #{code} for #{message.inspect}, got #{got.inspect}" unless got == code
   raise "Upload guard not allowlist-shaped: #{got}" unless got.match?(/\A[a-z0-9_]{1,64}\z/)
 end
 raise 'Three ITMS codes must fit the 64-char guard' unless upload_guard('ITMS-11111 ITMS-22222 ITMS-33333 ITMS-44444').length <= 64
+# Every code is a fixed word, a fixed word plus digits, or one of three fixed count buckets.
+UPLOAD_CODE_GRAMMAR = /\Aupload_(itms_\d{5}(_\d{5}){0,2}|apple_code_m\d{1,6}|altool_format_259|transporter_missing|
+  app_not_found|build_number_used|auth_failed|processing_timeout|((altool_exit_m?\d{1,6}|asc_transfer_failed|
+  ipa_error_unclassified|user_error_unclassified)(_errlines_(1|2to5|6plus))?))\z/x
+upload_cases.each_key do |message|
+  code = upload_guard(message)
+  raise "Upload guard outside the code grammar: #{code}" unless code.match?(UPLOAD_CODE_GRAMMAR) && code.length <= 64
+end
 raise 'Apple code must fit the 64-char guard' unless upload_guard('(-999999)') == 'upload_apple_code_m999999'
 # Codes are fixed or digit-only: no message text survives classification.
 upload_cases.each_key do |message|
@@ -256,7 +306,9 @@ Dir.mktmpdir do |dir|
    ["Error uploading ipa file: \n [Application Loader Error Output]: isn't in the correct format (259) " + SECRET,
     'upload_altool_format_259', {'data' => []}, 'absent', 6],
    ['Could not download/upload from App Store Connect! ' + SECRET, 'upload_asc_transfer_failed',
-    {'data' => [{'attributes' => {'version' => '8'}}]}, 'present', 1]].each do |message, code, lookup, record, gets|
+    {'data' => [{'attributes' => {'version' => '8'}}]}, 'present', 1],
+   [pilot_message(['Failed to get json from defaults ' + SECRET] * 2, -1), 'upload_altool_exit_m1_errlines_2to5',
+    {'data' => []}, 'absent', 6]].each do |message, code, lookup, record, gets|
     calls = []
     @waits = []
     altool = :unset
@@ -290,7 +342,8 @@ Dir.mktmpdir do |dir|
     raise "Upload ran without the altool workaround: #{altool.inspect}" unless altool == '--use-old-altool'
     raise 'Altool workaround leaked past the upload' if ENV.key?(ALTOOL_ENV)
     ['Provider said', 'secret@example.com', 'token=abc', '9ZZ', 'missing or invalid', 'correct format',
-     '(259)', 'download/upload', 'Error uploading', 'Application Loader'].each do |leak|
+     '(259)', 'download/upload', 'Error uploading', 'Application Loader', 'exit status', 'json from defaults',
+     'exited abnormally'].each do |leak|
       raise "Provider text leaked into distribution.json: #{leak}" if text.include?(leak)
       raise "Provider text printed: #{leak}" if out.string.include?(leak)
     end
@@ -319,5 +372,5 @@ Dir.mktmpdir do |dir|
   raise 'Altool workaround leaked past an interrupted upload' if ENV.key?(ALTOOL_ENV)
 end
 puts "6 TestFlight privacy/scope guard scenarios, 15 guard-code cases, #{upload_cases.length} upload-guard cases, " \
-  "4 altool-scope checks, #{build_record_cases.length + 1} build-record polling cases, 5 upload-failure lane runs " \
+  "4 altool-scope checks, #{build_record_cases.length + 1} build-record polling cases, 6 upload-failure lane runs " \
   'and 1 interrupt lane run passed; no store requests made.'

@@ -277,9 +277,16 @@ class PackagingTests(unittest.TestCase):
         self.assertEqual(codes, {'upload_transporter_missing', 'upload_app_not_found', 'upload_build_number_used',
                                  'upload_auth_failed', 'upload_processing_timeout', 'upload_user_error_unclassified',
                                  'upload_altool_format_259', 'upload_asc_transfer_failed',
-                                 'upload_ipa_error_unclassified', 'upload_itms_', 'upload_apple_code_m'})
-        codes = (codes - {'upload_itms_', 'upload_apple_code_m'}) | {
-            'upload_itms_90062', 'upload_itms_90186_90062_04238', 'upload_apple_code_m19209'}
+                                 'upload_ipa_error_unclassified', 'upload_itms_', 'upload_apple_code_m',
+                                 'upload_altool_exit_'})
+        self.assertEqual(set(re.findall(r"'(_errlines_[a-z0-9]+)'", classifier)),
+                         {'_errlines_1', '_errlines_2to5', '_errlines_6plus'})
+        codes = (codes - {'upload_itms_', 'upload_apple_code_m', 'upload_altool_exit_'}) | {
+            'upload_itms_90062', 'upload_itms_90186_90062_04238', 'upload_apple_code_m19209',
+            'upload_altool_exit_1', 'upload_altool_exit_m1', 'upload_altool_exit_m12345',
+            'upload_altool_exit_999999', 'upload_altool_exit_1_errlines_1', 'upload_altool_exit_m1_errlines_2to5',
+            'upload_altool_exit_m12345_errlines_6plus', 'upload_ipa_error_unclassified_errlines_1',
+            'upload_asc_transfer_failed_errlines_2to5', 'upload_user_error_unclassified_errlines_6plus'}
         for code in sorted(codes):
             for value in summary.UPLOAD_BUILD_RECORDS:
                 with self.subTest(code=code, record=value):
@@ -316,6 +323,22 @@ class PackagingTests(unittest.TestCase):
                 else:
                     self.assertNotIn('reconcile', line)
                     self.assertTrue(line.endswith(f'; build record {value}'))
+
+    def test_altool_exit_codes_publish_only_fixed_text(self):
+        secret = 'Failed to get json from defaults for team 9ZZ secret@example.com'
+        data = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
+                    distribution='upload_started', physical_device='unverified', visual_review_url=URL)
+        failure = {'phase': 'upload', 'guard': 'upload_altool_exit_m1_errlines_2to5', 'http_status': None,
+                   'upload_build_record': 'absent'}
+        record = summary.public_record(dict(data, failure=failure, store_response=secret))
+        line = summary.failure_line(record)
+        self.assertEqual(line, 'Distribution state: upload_started; stopped in phase upload at guard '
+                         'upload_altool_exit_m1_errlines_2to5; HTTP status none; build record absent')
+        self.assertNotIn('9ZZ', json.dumps(record) + line)
+        # A negative exit status must already be written with m; a raw minus or text is rejected.
+        for bad in ('upload_altool_exit_-1', 'upload_altool_exit_1_errlines_' + secret, 'upload_altool_exit_' + 'x' * 60):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                summary.public_record(dict(data, failure=dict(failure, guard=bad)))
 
     def test_upload_failure_summary_never_carries_provider_text(self):
         secret = 'ITMS-90062: team 9ZZ secret@example.com'

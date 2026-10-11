@@ -266,15 +266,25 @@ Read that line before reconciling provider state or asking for an account change
 A failed TestFlight upload (`upload_to_testflight`) is classified in process, before the
 private log is deleted, by an allowlist of patterns in the Fastfile. The exception message is
 matched and dropped, never written, logged or printed; the exception is re-raised unchanged.
-Codes, in precedence order: `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up
-to three, in order, joined by `_`; these already cover a used or lower build number);
-`upload_transporter_missing`, `upload_app_not_found`, `upload_build_number_used`,
-`upload_auth_failed`, `upload_processing_timeout`; `upload_altool_format_259` for Xcode 26
-altool's "isn't in the correct format" (Cocoa error 259); `upload_apple_code_m<digits>` for the
-first Apple negative numeric code such as `(-19209)`; `upload_asc_transfer_failed` for fastlane's
-"Could not download/upload from App Store Connect"; `upload_ipa_error_unclassified` for pilot's
-"Error uploading ipa file" with nothing more specific; and otherwise
-`upload_user_error_unclassified`.
+Codes, in precedence order (first match wins):
+
+1. `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up to three, in order,
+   joined by `_`; these already cover a used or lower build number);
+2. `upload_transporter_missing`, `upload_app_not_found`, `upload_build_number_used`,
+   `upload_auth_failed`, `upload_processing_timeout`, then `upload_altool_format_259` for Xcode 26
+   altool's "isn't in the correct format" (Cocoa error 259);
+3. `upload_apple_code_m<digits>` for the first Apple negative numeric code such as `(-19209)`;
+4. `upload_altool_exit_<N>` from fastlane's "The call to the altool completed with a non-zero exit
+   status: N", with a leading minus written `m` (`upload_altool_exit_m1`) and N at most six
+   characters;
+5. `upload_asc_transfer_failed` for fastlane's "Could not download/upload from App Store Connect";
+6. `upload_ipa_error_unclassified` for pilot's "Error uploading ipa file" with nothing more specific;
+7. otherwise `upload_user_error_unclassified`.
+
+Codes 4–7 end with a count bucket when the message carries altool error lines: `_errlines_1`,
+`_errlines_2to5` or `_errlines_6plus`. Only the count is kept, never the text. fastlane 2.240.1
+raises one `[Application Loader Error Output]:` entry per altool `ERROR:` line. Its own exit-status
+lines are not counted; a raw `ERROR:` line counts as one.
 
 After an upload failure the Fastfile polls a read-only
 `GET /v1/builds?filter[app]=…&filter[version]=<build number>` up to six times about 30 seconds

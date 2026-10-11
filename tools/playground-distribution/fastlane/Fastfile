@@ -55,14 +55,40 @@ UPLOAD_GUARD_PATTERNS = [
   ['upload_altool_format_259',
    /isn['\u2019]?t in the correct format|is not in the correct format|\bCode=259\b|\b(error|failed|failure)\b.{0,80}\(259\)/i]
 ].freeze
-# After the semantic patterns: Apple's negative numeric codes, e.g. "(-19209)", then fastlane's
-# generic wrappers. In fastlane 2.240.1 pilot raises "Error uploading ipa file: ..." and the altool
-# executor logs "Could not download/upload from App Store Connect!"; both are matched here.
+# Precedence, first match wins:
+#   1. upload_itms_<digits>            Apple ITMS-NNNNN validation codes (up to three)
+#   2. UPLOAD_GUARD_PATTERNS            semantic patterns above, ending with upload_altool_format_259
+#   3. upload_apple_code_m<digits>      first Apple negative numeric code, e.g. "(-19209)"
+#   4. upload_altool_exit_<N>           fastlane's "The call to the altool completed with a non-zero exit
+#                                       status: N"; a leading minus is written m (-1 -> m1), 1-6 characters
+#   5. upload_asc_transfer_failed       "Could not download/upload from App Store Connect"
+#   6. upload_ipa_error_unclassified    pilot's "Error uploading ipa file" with nothing more specific
+#   7. upload_user_error_unclassified
+# Codes 4-7 append an altool error-line count bucket when the message carries any (_errlines_1,
+# _errlines_2to5, _errlines_6plus): counts only, never text. In fastlane 2.240.1 pilot raises
+# "Error uploading ipa file: \n <displayable_errors>", one "[Application Loader Error Output]: ..." entry
+# per altool ERROR: line plus fastlane's own exit-status lines, which are not counted.
 UPLOAD_APPLE_CODE = /\(-(\d{1,6})\)/
+UPLOAD_ALTOOL_EXIT = /The call to the altool completed with a non-zero exit status:\s*(-?\d+)/i
+UPLOAD_ERROR_ENTRY = /\A\s*\[Application Loader Error Output\]:[ \t]*(\S.*)?\z/i
+UPLOAD_ERROR_LINE = /\A\s*(\[altool\]\s*)?(\*\*\*\s*)?ERROR:\s+\S/i
+UPLOAD_FASTLANE_STATUS = /\AThe call to the altool completed with a non-zero exit status|\A-1 indicates altool exited abnormally/i
 UPLOAD_GUARD_FALLBACKS = [
   ['upload_asc_transfer_failed', %r{could ?n[o']t download/upload from App Store Connect}i],
   ['upload_ipa_error_unclassified', /error uploading ipa file/i]
 ].freeze
+
+def upload_error_lines(text)
+  text.each_line.count do |line|
+    entry = line.chomp.match(UPLOAD_ERROR_ENTRY)
+    entry ? !entry[1].nil? && !entry[1].match?(UPLOAD_FASTLANE_STATUS) : line.match?(UPLOAD_ERROR_LINE)
+  end
+end
+
+def upload_errlines_bucket(count)
+  return '' if count < 1
+  count == 1 ? '_errlines_1' : count <= 5 ? '_errlines_2to5' : '_errlines_6plus'
+end
 
 def upload_guard(message)
   text = message.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
@@ -71,8 +97,11 @@ def upload_guard(message)
   UPLOAD_GUARD_PATTERNS.each { |code, pattern| return code if text.match?(pattern) }
   apple = text[UPLOAD_APPLE_CODE, 1]
   return 'upload_apple_code_m' + apple if apple
-  UPLOAD_GUARD_FALLBACKS.each { |code, pattern| return code if text.match?(pattern) }
-  'upload_user_error_unclassified'
+  bucket = upload_errlines_bucket(upload_error_lines(text))
+  exit_status = text[UPLOAD_ALTOOL_EXIT, 1].to_s.sub(/\A-/, 'm')
+  return 'upload_altool_exit_' + exit_status + bucket if exit_status.match?(/\Am?\d+\z/) && exit_status.length <= 6
+  UPLOAD_GUARD_FALLBACKS.each { |code, pattern| return code + bucket if text.match?(pattern) }
+  'upload_user_error_unclassified' + bucket
 rescue StandardError
   'upload_user_error_unclassified'
 end
