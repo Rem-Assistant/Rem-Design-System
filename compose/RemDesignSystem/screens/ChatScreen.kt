@@ -138,7 +138,10 @@ fun ChatScreen(
                 .verticalScroll(scroll)
                 .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
                 .testTag("chat.content"),
-            verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
+            // A short transcript sits just above the composer (Swift: minHeight = viewport, .bottom
+            // alignment). verticalScroll keeps the viewport as the minimum height, so Bottom arrangement
+            // pins the rows to the dock; the empty state stays at the top.
+            verticalArrangement = Arrangement.spacedBy(RemSpacing.lg, if (emptyState == null) Alignment.Bottom else Alignment.Top),
         ) {
             if (emptyState != null) {
                 ChatEmptyStateView(emptyState, onStarter = { onAction(ChatScreenAction.Starter(it)) })
