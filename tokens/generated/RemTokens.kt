@@ -125,6 +125,7 @@ object RemTypography {
     val largeTitle = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Normal)
     val title1 = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Normal)
     val title1Bold = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    val title2Bold = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.26.sp)
     val title3 = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, letterSpacing = -0.45.sp)
     val title3Bold = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.45.sp)
     val body = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Normal)

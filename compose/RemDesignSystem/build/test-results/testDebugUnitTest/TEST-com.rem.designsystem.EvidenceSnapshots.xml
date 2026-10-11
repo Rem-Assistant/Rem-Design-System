@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rem.designsystem.EvidenceSnapshots" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-11T04:18:02.815Z" hostname="vm" time="5.955">
+  <properties/>
+  <testcase name="signInRecovery" classname="com.rem.designsystem.EvidenceSnapshots" time="4.402"/>
+  <testcase name="consentTerms" classname="com.rem.designsystem.EvidenceSnapshots" time="0.24"/>
+  <testcase name="remFaceMark" classname="com.rem.designsystem.EvidenceSnapshots" time="0.179"/>
+  <testcase name="signInReturning" classname="com.rem.designsystem.EvidenceSnapshots" time="0.137"/>
+  <testcase name="signInChecking" classname="com.rem.designsystem.EvidenceSnapshots" time="0.181"/>
+  <testcase name="signInError" classname="com.rem.designsystem.EvidenceSnapshots" time="0.109"/>
+  <testcase name="consent" classname="com.rem.designsystem.EvidenceSnapshots" time="0.246"/>
+  <testcase name="signInNew" classname="com.rem.designsystem.EvidenceSnapshots" time="0.131"/>
+  <testcase name="consentPrivacy" classname="com.rem.designsystem.EvidenceSnapshots" time="0.147"/>
+  <testcase name="containedIcon" classname="com.rem.designsystem.EvidenceSnapshots" time="0.183"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/root/.gradle/caches/8.14.3/transforms/cd33af944efad9492362e7e597ac177c/transformed/byte-buddy-agent-1.15.10.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Oct 11, 2026 4:18:06 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:07 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:07 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:07 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:07 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:07 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:08 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:08 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:08 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+Oct 11, 2026 4:18:08 AM app.cash.paparazzi.internal.PaparazziLogger logAndroidFramework
+INFO: Settings [3]: Can't get key animator_duration_scale from content://settings/global
+]]></system-err>
+</testsuite>

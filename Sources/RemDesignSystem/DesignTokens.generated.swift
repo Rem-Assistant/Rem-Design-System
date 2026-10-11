@@ -103,6 +103,7 @@ public enum DesignTokens {
         public static let largeTitle = Font.system(.largeTitle, design: .default)
         public static let title1 = Font.system(.title, design: .default)
         public static let title1Bold = Font.system(.title, design: .default).weight(.bold)
+        public static let title2Bold = Font.system(.title2, design: .default).weight(.bold)
         public static let title3 = Font.system(.title3, design: .default)
         public static let title3Bold = Font.system(.title3, design: .default).weight(.bold)
         public static let body = Font.system(.body, design: .default)

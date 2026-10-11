@@ -19,7 +19,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rem.designsystem.rows.RemSection
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
@@ -46,7 +45,7 @@ fun AgentProfileHeader(display: AgentProfileDisplay, modifier: Modifier = Modifi
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(RemSpacing.xs)) {
             Text(
                 display.name,
-                style = RemTypography.title3Bold.copy(fontSize = 22.sp, letterSpacing = 0.35.sp),
+                style = RemTypography.title2Bold,
                 color = colors.labelPrimary,
                 textAlign = TextAlign.Center,
             )

@@ -1,0 +1,5 @@
+R_DEF: Internal format may change without notice
+local
+drawable rem_app_icon
+font material_symbols_filled
+font material_symbols_outlined

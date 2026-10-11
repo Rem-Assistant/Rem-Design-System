@@ -94,6 +94,14 @@ disabled until named.
 `compose/RemDesignSystem/src/test/kotlin/com/rem/designsystem/SidebarSnapshots.kt`. Not yet registered
 in `tools/render-evidence/contracts.json` (needs Figma reference exports for each key).
 
+## Figma status (deferred)
+
+The referenced frames on page 2693:1474 are drafts and lag the approved product decisions this code
+follows: the sidebar frame still shows Agenda and Inbox rows, which Samuel's "Search only" decision
+removed. Figma authoring and reference exports for these surfaces are deferred until Samuel decides
+where Agenda and Inbox live; the render keys are registered in `tools/render-evidence/contracts.json`
+only once those exports exist. Until then the paired iOS/Android renders are the review evidence.
+
 ## Reconciliation (open, owned by whoever lands second)
 
 - **Agent activity (PR #106).** `AgentActivityScreen` / `AgentActivityTab` are not on main. When both

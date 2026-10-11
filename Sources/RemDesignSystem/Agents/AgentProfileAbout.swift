@@ -18,7 +18,7 @@ public struct AgentProfileHeader: View {
             AgentAvatar(display.avatar, size: 96)
             VStack(spacing: DesignTokens.Spacing.xs) {
                 Text(display.name)
-                    .font(.title2.weight(.bold))
+                    .font(DesignTokens.Typography.title2Bold)
                     .foregroundStyle(DesignTokens.Color.labelPrimary)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 6) {

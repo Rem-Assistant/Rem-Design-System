@@ -1,0 +1,3 @@
+int drawable rem_app_icon 0x0
+int font material_symbols_filled 0x0
+int font material_symbols_outlined 0x0

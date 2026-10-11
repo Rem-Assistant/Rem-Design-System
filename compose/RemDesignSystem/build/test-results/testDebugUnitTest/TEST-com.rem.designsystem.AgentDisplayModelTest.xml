@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rem.designsystem.AgentDisplayModelTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-11T04:18:02.764Z" hostname="vm" time="0.043">
+  <properties/>
+  <testcase name="remCannotBePausedDeletedOrRenamed" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.009"/>
+  <testcase name="blankHandlesAreOmitted" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.008"/>
+  <testcase name="namingTheLaneIsTheOnlyRequiredStep" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.0"/>
+  <testcase name="profileCopyIsVerbatim" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.001"/>
+  <testcase name="createSendsATrimmedDraft" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.001"/>
+  <testcase name="setupCopyIsVerbatim" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.001"/>
+  <testcase name="swatchesKeepTheFigmaOrderAndDefaultLook" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.011"/>
+  <testcase name="avatarIdentityFollowsKind" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.001"/>
+  <testcase name="kindLabelsAreTheApprovedCopy" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.001"/>
+  <testcase name="statusLineJoinsKindAndLane" classname="com.rem.designsystem.AgentDisplayModelTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
