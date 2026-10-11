@@ -1,0 +1,3 @@
+> Task :app:compileReleaseKotlin FAILED
+e: file:///home/runner/work/_temp/remclaw-source/android/app/src/main/java/com/remapp/rem/MARKER_PRIVATE_FILE.kt:12:5 Unresolved reference: secretThing
+FAILURE: Build failed with an exception.
