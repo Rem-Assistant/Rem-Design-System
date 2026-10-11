@@ -502,10 +502,13 @@ lane :distribute do
       end
       unless in_group.call
         status = apple_assign_status(build_id, group_id)
-        $release_http = status unless status.between?(200, 299)
-        require_release(status.between?(200, 299) || [403, 409].include?(status),
-          "Apple API failed (HTTP #{status}); no response body printed", 'apple_api_http')
-        require_release(in_group.call, 'TestFlight assignment readback missing', 'assignment_readback_missing')
+        accepted = status.between?(200, 299) || [403, 409].include?(status)
+        # $release_http feeds only the failure receipt (the lane's rescue), so set it only when failing.
+        $release_http = status unless accepted
+        require_release(accepted, "Apple API failed (HTTP #{status}); no response body printed", 'apple_api_http')
+        present = in_group.call
+        $release_http = status unless present || status.between?(200, 299)
+        require_release(present, 'TestFlight assignment readback missing', 'assignment_readback_missing')
       end
       receipt['distribution'] = 'assigned_existing_internal_group'
     elsif platform == 'android'
