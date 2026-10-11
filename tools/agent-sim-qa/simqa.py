@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+import zlib
 from pathlib import PurePath
 
 SHA_RE = re.compile(r'^[0-9a-f]{40}$')
@@ -259,9 +260,10 @@ def call_budget(now, deadline, reserve, cap):
 # ---- Outcome checks and sanitisation ---------------------------------------------------------------
 
 def ui_confirms_sheet(ui_text):
+    """The Add to Chat sheet is confirmed only when its Photos AND Files rows are both listed."""
     if not isinstance(ui_text, str):
         return None
-    return any(f'id={sheet_id} ' in ui_text + ' ' for sheet_id in SHEET_IDS)
+    return all(f'id={sheet_id} ' in ui_text + ' ' for sheet_id in SHEET_IDS)
 
 
 _SECRET_PATTERNS = [
@@ -287,13 +289,51 @@ PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
 PNG_IEND = b'\x00\x00\x00\x00IEND\xaeB`\x82'
 
 
-def complete_png(data):
-    """A whole PNG file: the signature, at least one chunk, and the final IEND chunk.
+def inspect_png(data):
+    """Walk every chunk: (width, height) of a structurally whole PNG, else (None, problem).
 
-    `simctl io screenshot` can write a complete frame and then exit non-zero or not exit at all
-    (runs 38118674016, 38118681715), so the file, not the process status, decides."""
-    return len(data) > len(PNG_SIGNATURE) + len(PNG_IEND) and data.startswith(PNG_SIGNATURE) \
-        and data.endswith(PNG_IEND)
+    Whole means the signature, IHDR first (13 bytes), at least one IDAT, every chunk's CRC32 correct,
+    and IEND as the last chunk ending exactly at the end of the file."""
+    if not data.startswith(PNG_SIGNATURE):
+        return None, 'no PNG signature'
+    pos, first, idat, size = len(PNG_SIGNATURE), True, False, None
+    while True:
+        if pos + 12 > len(data):
+            return None, 'truncated chunk'
+        length = int.from_bytes(data[pos:pos + 4], 'big')
+        kind = data[pos + 4:pos + 8]
+        end = pos + 12 + length
+        if end > len(data):
+            return None, 'truncated chunk'
+        body = data[pos + 8:pos + 8 + length]
+        if zlib.crc32(kind + body) != int.from_bytes(data[pos + 8 + length:end], 'big'):
+            return None, f'bad CRC in {kind!r}'
+        if first:
+            if kind != b'IHDR' or length != 13:
+                return None, 'IHDR is not the first chunk'
+            size = (int.from_bytes(body[0:4], 'big'), int.from_bytes(body[4:8], 'big'))
+            first = False
+        idat = idat or kind == b'IDAT'
+        pos = end
+        if kind == b'IEND':
+            if pos != len(data):
+                return None, 'data after IEND'
+            if not idat:
+                return None, 'no image data'
+            return size, None
+
+
+def capture_problems(size, screen_points, written_at, started_at):
+    """Why a structurally whole frame still cannot be used: stale, or not this simulator's screen."""
+    problems = []
+    if written_at is None or written_at < started_at - 1:
+        problems.append('not written by this capture')
+    width, height = size
+    points_w, points_h = screen_points
+    scale = width / points_w if points_w else 0
+    if not (scale in (1, 2, 3) and abs(height - points_h * scale) < 1):
+        problems.append(f'{width}x{height} is not {points_w:g}x{points_h:g} points at 1-3x')
+    return problems
 
 
 def classify_failure(exit_code, timed_out, summary):

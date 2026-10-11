@@ -12,6 +12,7 @@ import sys
 import tempfile
 import time
 import unittest
+import zlib
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -41,6 +42,15 @@ def read_result(use_id, image=True, error=False):
 
 def result(text, is_error=False):
     return {'type': 'result', 'subtype': 'success', 'is_error': is_error, 'result': text, 'num_turns': 2}
+
+
+def chunk(kind, body):
+    return len(body).to_bytes(4, 'big') + kind + body + zlib.crc32(kind + body).to_bytes(4, 'big')
+
+
+def png(width, height):
+    ihdr = width.to_bytes(4, 'big') + height.to_bytes(4, 'big') + bytes([8, 6, 0, 0, 0])
+    return simqa.PNG_SIGNATURE + chunk(b'IHDR', ihdr) + chunk(b'IDAT', zlib.compress(b'x')) + chunk(b'IEND', b'')
 
 
 class TranscriptTests(unittest.TestCase):
@@ -194,16 +204,31 @@ class BudgetAndRedactionTests(unittest.TestCase):
         self.assertEqual(simqa.classify_failure(0, True, {}), 'model_timeout')
         self.assertIsNone(simqa.classify_failure(0, False, {'result': '{}', 'is_error': False}))
 
-    def test_complete_png(self):
-        whole = simqa.PNG_SIGNATURE + b'0' * 32 + simqa.PNG_IEND
-        self.assertTrue(simqa.complete_png(whole))
-        self.assertFalse(simqa.complete_png(whole[:-1]))
-        self.assertFalse(simqa.complete_png(simqa.PNG_SIGNATURE + b'0' * 32))
-        self.assertFalse(simqa.complete_png(b'GIF89a' + whole[6:]))
-        self.assertFalse(simqa.complete_png(simqa.PNG_SIGNATURE + simqa.PNG_IEND))
+    def test_inspect_png(self):
+        whole = png(1179, 2556)
+        self.assertEqual(simqa.inspect_png(whole), ((1179, 2556), None))
+        self.assertEqual(simqa.inspect_png(whole[:-1])[1], 'truncated chunk')
+        self.assertEqual(simqa.inspect_png(whole + b'x')[1], 'data after IEND')
+        self.assertEqual(simqa.inspect_png(b'GIF89a' + whole[6:])[1], 'no PNG signature')
+        # Arbitrary interior bytes between a signature and a valid IEND are not a PNG.
+        self.assertIsNone(simqa.inspect_png(simqa.PNG_SIGNATURE + b'0' * 32 + simqa.PNG_IEND)[0])
+        corrupted = bytearray(whole); corrupted[40] ^= 0xFF
+        self.assertIn('bad CRC', simqa.inspect_png(bytes(corrupted))[1])
+        no_idat = simqa.PNG_SIGNATURE + chunk(b'IHDR', (1179).to_bytes(4, 'big') + (2556).to_bytes(4, 'big') + bytes(5)) \
+            + chunk(b'IEND', b'')
+        self.assertEqual(simqa.inspect_png(no_idat)[1], 'no image data')
+
+    def test_capture_problems(self):
+        self.assertEqual(simqa.capture_problems((1179, 2556), (393, 852), 100.0, 100.0), [])
+        self.assertEqual(simqa.capture_problems((786, 1704), (393, 852), 100.0, 100.0), [])
+        self.assertEqual(simqa.capture_problems((1179, 2556), (393, 852), 50.0, 100.0), ['not written by this capture'])
+        self.assertEqual(len(simqa.capture_problems((1000, 2556), (393, 852), 100.0, 100.0)), 1)
 
     def test_ui_confirms(self):
-        self.assertTrue(simqa.ui_confirms_sheet('button id=catalog.addToChat.photos label="Photos" frame=1,2,3,4'))
+        both = ('button id=catalog.addToChat.photos label="Photos" frame=1,2,3,4\n'
+                'button id=catalog.addToChat.files label="Files" frame=1,2,3,4')
+        self.assertTrue(simqa.ui_confirms_sheet(both))
+        self.assertFalse(simqa.ui_confirms_sheet('button id=catalog.addToChat.photos label="Photos" frame=1,2,3,4'))
         self.assertFalse(simqa.ui_confirms_sheet('button id=catalog.composerAdd label="Add" frame=1,2,3,4'))
         self.assertIsNone(simqa.ui_confirms_sheet(None))
 
@@ -230,7 +255,8 @@ while True:
     res = {'seq': seq, 'ok': True}
     if c['kind'] == 'observe':
         ui = 'button id=catalog.composerAdd label="Add" frame=340,800,44,44'
-        if sheet: ui += '\nbutton id=catalog.addToChat.photos label="Photos" frame=0,500,393,44'
+        if sheet: ui += ('\nbutton id=catalog.addToChat.photos label="Photos" frame=0,500,393,44'
+                         '\nbutton id=catalog.addToChat.files label="Files" frame=0,544,393,44')
         res['ui'] = ui
     if c['kind'] == 'tap_id' and c['id'] == 'catalog.composerAdd':
         sheet = True
@@ -240,13 +266,19 @@ while True:
 '''
 
 FAKE_XCRUN = r'''#!/usr/bin/env python3
-import sys
+import sys, zlib
 from pathlib import Path
 assert sys.argv[1:4] == ['simctl', 'io', 'UDID'] and sys.argv[4] == 'screenshot', sys.argv
 mode = (Path(__file__).parent / 'mode').read_text().strip()
-whole = b'\x89PNG\r\n\x1a\n' + b'0' * 32 + b'\x00\x00\x00\x00IEND\xaeB`\x82'
-open(sys.argv[5], 'wb').write(whole[:20] if mode == 'shottruncated' else whole)
-if mode in ('shotexit', 'shottruncated'):
+def chunk(kind, body):
+    return len(body).to_bytes(4, 'big') + kind + body + zlib.crc32(kind + body).to_bytes(4, 'big')
+width, height = (1000, 2556) if mode == 'shotwrongsize' else (1179, 2556)
+ihdr = width.to_bytes(4, 'big') + height.to_bytes(4, 'big') + bytes([8, 6, 0, 0, 0])
+whole = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'IDAT', zlib.compress(b'x')) + chunk(b'IEND', b'')
+if mode == 'shotnone':
+    sys.exit(1)
+open(sys.argv[5], 'wb').write(whole[:30] if mode == 'shottruncated' else whole)
+if mode in ('shotexit', 'shottruncated', 'shotwrongsize'):
     sys.exit(1)
 '''
 
@@ -320,17 +352,37 @@ class FakeRunnerTests(unittest.TestCase):
         self.assertNotIn('"data"', uploaded)
         self.assertFalse(list(out.rglob('*.jsonl')), 'raw transcripts must stay out of the upload folder')
 
-    def test_complete_frame_kept_when_simctl_exits_non_zero(self):
+    def test_every_capture_is_recorded_and_clean_runs_say_so(self):
+        process, receipt, out, _ = self.run_controller('ok')
+        self.assertTrue(receipt['captures'])
+        self.assertTrue(all(c['simctl'] == 'clean' and c['kept'] and c['pixels'] == [1179, 2556]
+                            for c in receipt['captures']))
+        self.assertIn('- Capture: all ', (out / 'summary.md').read_text())
+
+    def test_fresh_whole_frame_kept_when_simctl_exits_non_zero_but_reported(self):
         process, receipt, out, _ = self.run_controller('shotexit')
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
-        self.assertEqual(receipt['status'], 'sheet_opened')
-        self.assertTrue(receipt['screenshot_notes'])
-        self.assertTrue(all(n['simctl'] == 'exit 1' and n['kept'] for n in receipt['screenshot_notes']))
+        self.assertEqual(receipt['status'], 'sheet_opened')  # the observed UI result, unchanged
+        self.assertTrue(all(c['simctl'] == 'exit 1' and c['kept'] for c in receipt['captures']))
+        summary = (out / 'summary.md').read_text()
+        self.assertIn('**sheet_opened**', summary)
+        self.assertIn('- Capture: **non-clean**', summary)
 
-    def test_truncated_frame_still_fails(self):
+    def test_truncated_frame_is_rejected(self):
         process, receipt, out, _ = self.run_controller('shottruncated')
         self.assertEqual(receipt['status'], 'screenshot_failed')
-        self.assertEqual(receipt['screenshot_notes'][0], {'png': 'frame-00.png', 'simctl': 'exit 1', 'kept': False})
+        self.assertEqual(receipt['captures'][0]['simctl'], 'exit 1')
+        self.assertFalse(receipt['captures'][0]['kept'])
+
+    def test_wrong_size_frame_is_rejected(self):
+        process, receipt, out, _ = self.run_controller('shotwrongsize')
+        self.assertEqual(receipt['status'], 'screenshot_failed')
+        self.assertIn('not 393x852 points', receipt['captures'][0]['problems'][0])
+
+    def test_no_file_is_rejected(self):
+        process, receipt, out, _ = self.run_controller('shotnone')
+        self.assertEqual(receipt['status'], 'screenshot_failed')
+        self.assertEqual(receipt['captures'][0]['problems'], ['no file written'])
 
     def test_failed_read_blocks_decision(self):
         process, receipt, out, _ = self.run_controller('readfail')

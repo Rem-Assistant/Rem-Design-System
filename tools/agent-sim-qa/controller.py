@@ -196,9 +196,19 @@ class Run:
         return seq, dispatched, (time.time() if result is not None else None), result, stalled
 
     def screenshot(self, path):
-        # The file decides, not simctl's status: it can write a complete frame and then exit
-        # non-zero or hang past the timeout. A frame kept that way is noted in the receipt.
-        outcome = 'ok'
+        """Capture one frame; every capture's simctl outcome and verdict lands in receipt.captures.
+
+        simctl can write a whole frame and then exit non-zero or hang past the timeout (runs
+        38118674016, 38118681715). Such a frame is kept only if it is fresh (the old file is removed
+        first and the new one written after the capture started), structurally whole (every chunk and
+        CRC, IEND last) and this simulator's screen size. It is still recorded as a non-clean capture,
+        which the summary reports apart from the observed UI result."""
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        started = time.time()
+        outcome = 'clean'
         try:
             subprocess.run(['xcrun', 'simctl', 'io', self.a.udid, 'screenshot', str(path)],
                            check=True, capture_output=True, timeout=30)
@@ -206,16 +216,22 @@ class Run:
             outcome = 'timeout'
         except subprocess.CalledProcessError as error:
             outcome = f'exit {error.returncode}'
-        except (subprocess.SubprocessError, OSError):
-            outcome = 'error'
+        except (subprocess.SubprocessError, OSError) as error:
+            outcome = f'error {type(error).__name__}'
+        entry = {'png': path.name, 'simctl': outcome, 'kept': False}
         try:
-            ok = path.exists() and simqa.complete_png(path.read_bytes())
+            written_at = path.stat().st_mtime
+            size, problem = simqa.inspect_png(path.read_bytes())
         except OSError:
-            ok = False
-        if outcome != 'ok':
-            self.receipt.setdefault('screenshot_notes', []).append(
-                {'png': path.name, 'simctl': outcome, 'kept': ok})
-        return ok
+            written_at, size, problem = None, None, 'no file written'
+        problems = [problem] if problem else simqa.capture_problems(size, self.screen, written_at, started)
+        if size:
+            entry['pixels'] = list(size)
+        if problems:
+            entry['problems'] = problems
+        entry['kept'] = not problems
+        self.receipt.setdefault('captures', []).append(entry)
+        return entry['kept']
 
     # -- model ---------------------------------------------------------------------------------
     def ask(self, frame, png, ui, finish_only, budget_left):
@@ -383,6 +399,16 @@ def kill_group(process):
             continue
 
 
+def capture_line(captures):
+    """How frames were captured, kept apart from the observed UI result."""
+    unclean = [c for c in captures if c['simctl'] != 'clean']
+    if not unclean:
+        return f'all {len(captures)} clean'
+    detail = ', '.join(f"{c['png']} ({c['simctl']}; {'kept: fresh whole frame' if c['kept'] else 'rejected: ' + '; '.join(c.get('problems', []))})"
+                       for c in unclean)
+    return f"**non-clean** on {len(unclean)} of {len(captures)}: {detail}"
+
+
 def write_summary(receipt, calls, path):
     v = receipt.get('source_verification', {})
     built = v.get('built_app', {})
@@ -398,6 +424,7 @@ def write_summary(receipt, calls, path):
         f"- Model: {receipt['model']} via CLI {receipt.get('cli_version')}; calls: {len(calls)}; "
         f"successful PNG reads: {receipt.get('successful_png_reads')}",
         f"- Stalls: {len(receipt.get('stalls', []))}; violations: {receipt.get('violations') or 'none'}",
+        f"- Capture: {capture_line(receipt.get('captures', []))}",
         '', '| Frame | Action | Purpose | Target | Bridge | Seconds |', '|---|---|---|---|---|---|',
     ]
     for action in receipt.get('actions', []):
