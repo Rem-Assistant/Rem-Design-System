@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -58,21 +59,154 @@ data class MessageReaction(val emoji: String, val name: String) {
 }
 
 /**
- * **MessageReactionBadge** — Compose sibling of the SwiftUI [MessageReactionBadge]: a 28dp circle in the
- * secondary-pill fill (`fillTertiary`) holding a 20sp emoji. Figma: **Rem/Chat/Reaction badge**
- * (`2654:20860`). [MessageBubble] anchors it toward the conversation centre with a 14dp overlap.
+ * **MessageReactionBadge** — Compose sibling of the SwiftUI [MessageReactionBadge]: one tapback circle,
+ * mirroring the iMessage tapback reference Samuel shared (2026-10-11). A 34dp **solid**
+ * `backgroundSecondary` disc with a 19sp emoji, inside a 2dp `backgroundPrimary` ring that cuts it out of
+ * whatever it overlaps; both fills are opaque. Figma: **Rem/Chat/Reaction badge** (`2654:20860`).
+ * [MessageBubble] places a [MessageReactionStack] (badge, thought-bubble tail, stacked badges) instead.
  */
 @Composable
 fun MessageReactionBadge(reaction: MessageReaction, modifier: Modifier = Modifier) {
+    ReactionDisc(
+        MessageReactionBadgeMetrics.Badge,
+        modifier.clearAndSetSemantics { contentDescription = MessageReactionBadgeMetrics.accessibilityLabel(listOf(reaction)) },
+    ) { ReactionEmoji(reaction) }
+}
+
+@Composable
+private fun ReactionEmoji(reaction: MessageReaction) {
+    Text(reaction.emoji, style = TextStyle(fontSize = MessageReactionBadgeMetrics.Emoji.sp, lineHeight = 22.sp))
+}
+
+/** A solid disc of [diameter] dp inside the opaque page-background ring; its size is the ring's outer edge. */
+@Composable
+private fun ReactionDisc(diameter: Float, modifier: Modifier = Modifier, content: @Composable () -> Unit = {}) {
+    val colors = RemColors.current
     Box(
         modifier = modifier
-            .size(MessageReactionMetrics.Badge)
-            .background(RemColors.current.fillTertiary, CircleShape)
-            .clearAndSetSemantics { contentDescription = "Reaction: ${reaction.name}" },
+            .size((diameter + 2 * MessageReactionBadgeMetrics.Ring).dp)
+            .background(colors.backgroundPrimary, CircleShape)
+            .padding(MessageReactionBadgeMetrics.Ring.dp)
+            .background(colors.backgroundSecondary, CircleShape),
         contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+/**
+ * The reaction set on a message — twin of SwiftUI `MessageReactionStack`: the front badge at the
+ * bubble's corner with its two-dot tail, at most one more badge stacked behind it toward the bubble's
+ * interior (a chat has two participants, the person and Rem). One semantics node for the whole set. Its own size is [MessageReactionBadgeMetrics.layout];
+ * the caller places it at the corner.
+ */
+@Composable
+internal fun MessageReactionStack(
+    reactions: List<MessageReaction>,
+    corner: MessageReactionBadgeMetrics.Corner,
+    modifier: Modifier = Modifier,
+) {
+    val layout = MessageReactionBadgeMetrics.layout(reactions.size, corner)
+    Box(
+        modifier = modifier
+            .size(layout.width.dp, layout.height.dp)
+            .clearAndSetSemantics { contentDescription = MessageReactionBadgeMetrics.accessibilityLabel(reactions) },
     ) {
-        Text(reaction.emoji, style = TextStyle(fontSize = 20.sp, lineHeight = 22.sp))
+        layout.dots.forEach { dot ->
+            ReactionDisc(dot.size - 2 * MessageReactionBadgeMetrics.Ring, Modifier.offset(dot.x.dp, dot.y.dp))
+        }
+        // Back to front: the corner badge (index 0) is drawn last, on top.
+        reactions.take(MessageReactionBadgeMetrics.MaxVisible).withIndex().reversed().forEach { (index, reaction) ->
+            val frame = layout.badges[index]
+            ReactionDisc(MessageReactionBadgeMetrics.Badge, Modifier.offset(frame.x.dp, frame.y.dp)) { ReactionEmoji(reaction) }
+        }
     }
+}
+
+/**
+ * Tapback geometry (dp), identical to the SwiftUI `MessageReactionBadgeMetrics` and asserted by
+ * `ChatGeometryTest` / `ChatGeometryTests`. Frames are in the stack's own coordinates (origin top-left);
+ * [Layout.offsetX] / [Layout.offsetY] move that origin from the bubble's anchoring top corner.
+ */
+object MessageReactionBadgeMetrics {
+    /** Which bubble corner the set anchors to: outgoing → top-start, incoming → top-end. */
+    enum class Corner {
+        TopLeading, TopTrailing;
+
+        companion object {
+            fun of(role: MessageRole): Corner = if (role == MessageRole.User) TopLeading else TopTrailing
+        }
+    }
+
+    /** A circle's outer (ring) frame: top-left and diameter. */
+    data class Frame(val x: Float, val y: Float, val size: Float) {
+        val maxX: Float get() = x + size
+        val maxY: Float get() = y + size
+    }
+
+    data class Layout(
+        val width: Float,
+        val height: Float,
+        /** Front badge first. */
+        val badges: List<Frame>,
+        /** Large then small tail dot; empty when there is no reaction. */
+        val dots: List<Frame>,
+        val offsetX: Float,
+        val offsetY: Float,
+    )
+
+    const val Badge = 34f
+    const val Ring = 2f
+    const val BadgeOuter = Badge + 2 * Ring
+    const val Emoji = 19f
+    /** How far the badge disc extends outward past the bubble's side edge (20 of its 34 overlap). */
+    const val Outward = MessageBubbleGeometry.ReactionOverlap
+    /** How far the badge disc rises above the bubble's top edge (14 of its 34 overlap). */
+    const val Lift = 20f
+    /** Top clearance a reacted message reserves so the set never reaches the row above. */
+    const val TopReserve = Lift + Ring
+    /**
+     * The discs still overlap by 4, but the front badge covers only 8 of the back one's ring frame,
+     * short of its 19sp emoji, which stays fully visible.
+     */
+    const val StackStep = 30f
+    /** One badge per participant (the person and Rem); the accessibility label names every reaction. */
+    const val MaxVisible = 2
+    const val TailLarge = 8f
+    const val TailSmall = 4f
+    /** Dot centres in the front badge disc's coordinates (outgoing orientation; mirrored for incoming). */
+    const val TailLargeCenterX = 8f
+    const val TailLargeCenterY = 34f
+    const val TailSmallCenterX = 3f
+    const val TailSmallCenterY = 41f
+
+    fun layout(count: Int, corner: Corner): Layout {
+        val visible = count.coerceIn(0, MaxVisible)
+        if (visible == 0) return Layout(0f, 0f, emptyList(), emptyList(), 0f, 0f)
+        fun dot(cx: Float, cy: Float, diameter: Float): Frame {
+            val outer = diameter + 2 * Ring
+            return Frame(cx + Ring - outer / 2, cy + Ring - outer / 2, outer)
+        }
+        val badges = (0 until visible).map { Frame(it * StackStep, 0f, BadgeOuter) }
+        val dots = listOf(dot(TailLargeCenterX, TailLargeCenterY, TailLarge), dot(TailSmallCenterX, TailSmallCenterY, TailSmall))
+        val width = BadgeOuter + (visible - 1) * StackStep
+        val height = (badges + dots).maxOf { it.maxY }
+        val reach = Outward + Ring
+        return when (corner) {
+            Corner.TopLeading -> Layout(width, height, badges, dots, -reach, -TopReserve)
+            Corner.TopTrailing -> {
+                fun mirror(f: Frame) = f.copy(x = width - f.maxX)
+                Layout(width, height, badges.map(::mirror), dots.map(::mirror), reach, -TopReserve)
+            }
+        }
+    }
+
+    /** "Reaction: Heart" for one reaction; "Reactions: Thumbs up, Heart" for several. */
+    fun accessibilityLabel(reactions: List<MessageReaction>): String =
+        if (reactions.size == 1) "Reaction: ${reactions[0].name}"
+        else "Reactions: ${reactions.joinToString(", ") { it.name }}"
+
+    /** The set a message shows: its own reaction (the picker selection) in front, then any others. */
+    fun stack(primary: MessageReaction?, additional: List<MessageReaction>): List<MessageReaction> =
+        listOfNotNull(primary) + additional
 }
 
 /**
@@ -147,7 +281,6 @@ private fun MoreReactionsCell(tag: String, onClick: () -> Unit) {
 }
 
 internal object MessageReactionMetrics {
-    val Badge = 28.dp
     val PickerTarget = 44.dp
     /** Vertical gap between grid rows in the long-press sheet. */
     val GridRowGap = RemSpacing.md
@@ -162,6 +295,10 @@ private fun MessageReactionBadgePreview() {
             verticalArrangement = Arrangement.spacedBy(RemSpacing.xl),
         ) {
             MessageReactionBadge(MessageReaction.Heart)
+            MessageBubble(
+                "Sounds good", role = MessageRole.User,
+                reaction = MessageReaction.ThumbsUp, additionalReactions = listOf(MessageReaction.ThumbsUp),
+            )
             MessageReactionPicker(selection = MessageReaction.Heart, onSelect = {})
             MessageReactionPicker(
                 selection = MessageReaction.Heart, onSelect = {}, choices = MessageReaction.SheetChoices, columns = 6, onMore = {},
