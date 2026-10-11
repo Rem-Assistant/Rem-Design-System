@@ -46,13 +46,34 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 | Failed row | Reserves **52** on the right (44 target + 8 gap) for the failure control. |
 | Narrow fixture | 320 screen → 288 row → failed bubble **236**, text **204**. |
 | Content inset | 16 horizontal, 12 vertical; radius 20 (no 20 radius token exists; accepted Figma value). |
-| Incoming | Unboxed text, width `min(320, row − 30)`; the 30 keeps its upper-right reaction inside the row. |
+| Incoming | Bubble, width `min(320, row − 30)`; the 30 keeps its upper-right tapback (16 outward) inside the row. |
+| Reaction clearance | A reacted message reserves **22** above its bubble (both roles), so the tapback never reaches the row above. |
 
 ## States and rules
 
-1. **Reaction** (independent of delivery) is anchored at the upper corner toward the conversation
-   centre: **outgoing upper-left** (−14, −14), **incoming upper-right** (+14, −10). Top clearance is
-   reserved so it never overlaps the message above. Badge: 28 circle, `fillTertiary`, 20pt emoji.
+1. **Reaction — tapback** (independent of delivery). Mirrors the iMessage tapback reference Samuel shared
+   (2026-10-11); geometry is `MessageReactionBadgeMetrics` in both platforms, asserted by
+   `ChatGeometryTests.swift` / `ChatGeometryTest.kt`:
+   - **Badge:** a **34** disc with a centred **19pt** emoji, filled with **solid `backgroundSecondary`**
+     (#F2F2F7 light / #1C1C1E dark) inside a **2** ring of **solid `backgroundPrimary`** (page
+     background) that cuts it out of the bubble it overlaps. Both fills are opaque — no translucency
+     or material — so the bubble never shows through (Samuel, 2026-10-11).
+   - **Placement:** overlapping the upper corner toward the conversation centre — **outgoing
+     top-leading, incoming top-trailing**. The disc extends **14** outward past the bubble's side and
+     rises **20** above its top, so 20 × 14 of it overlaps the bubble. The whole set (ring included)
+     reaches 16 outward and 22 up; the message reserves that 22 above itself.
+   - **Thought-bubble tail:** two solid dots, **8** and **4**, with the same fill and ring, trailing
+     below-outward of the front badge (centres at (8, 34) and (3, 41) in the outgoing badge disc's
+     coordinates; mirrored for incoming).
+   - **Stacking:** `ChatMessageDisplay.reaction` (the person's own, the sheet's selection) is the front
+     badge at the corner; `additionalReactions` (additive, default empty) stack behind it, **30**
+     further toward the bubble's interior: the discs overlap by 4 so it reads as a stack, and the
+     back badge's emoji stays fully visible. At most **2** badges are drawn, because a chat has two
+     participants, the person and Rem (Samuel, 2026-10-11).
+   - **Accessibility:** one element for the set, id `<prefix>.reaction`, labelled "Reaction: Heart" for
+     one and "Reactions: Thumbs up, Heart" for several (every reaction is named, including any past
+     the two drawn).
+   - Renders: `MessageReactionTapback-light` / `-dark` (single and stacked, both sides, the two-badge cap).
 2. **Long press** on a transcript message (accessibility "Message actions") asks the host to present
    **`MessageActionSheet`** (`2603:19498`): a 2 × 6 reaction grid — the approved row `👍 👎 ❤️ 😂 🎉 😮`,
    then `🔥 👀 🙏 😢 💯` and a brand-blue `+` — 44 circles, `fillTertiary`, 27pt emoji, rows 12 apart;
@@ -96,7 +117,8 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 tests: `testCatalogChatReactionsDeliveryModelMenuAndAttachments` (XCUITest) /
 `catalogChatReactionsDeliveryModelMenuAndAttachments` (instrumentation). Render pairs:
 `ChatMessageStates-narrow-light`, `ChatComposerAuto-light`, `AddToChatSheet-light`, `ChatHeader-light`,
-`MessageReactionPicker-light`, `MessageActionSheet-assistant-light`, `MessageActionSheet-own-light`.
+`MessageReactionPicker-light`, `MessageReactionTapback-light`, `MessageReactionTapback-dark`,
+`MessageActionSheet-assistant-light`, `MessageActionSheet-own-light`.
 
 ## Full-screen composition and app boundary
 
@@ -125,13 +147,16 @@ context accessory (`2682:22298`), the empty state (`2054:22089`) and the present
 - The Figma composer has separate Sending (progress) and Streaming (Stop) states. Code keeps the
   existing `SendState` (`.sending` = red Stop) and adopts the Figma rules for disabled Auto and hidden
   Speak.
+- The Figma **Reaction badge** master (`2654:20860`) still shows the earlier 28 `fillTertiary` chip. Code
+  follows the 2026-10-11 tapback direction (rule 1); the Figma master has not been updated.
 - The Figma Code Connect property names could not be read (the context API needs a Dev seat). The
   templates therefore emit the real call statically and bind no properties.
 
 ## Parity acceptance
 
 - The same geometry constants on both platforms, and both unit suites pass.
-- The outgoing reaction is left of and above the bubble's origin. The failure control's left edge is at
+- The outgoing reaction is left of and above the bubble's origin; the incoming reaction is right of and
+  above the bubble's top-trailing corner. The failure control's left edge is at
   or past the bubble's right edge. "Not delivered" is right-aligned to the bubble.
 - Auto ↔ model-name round trip through the menu. The Cloud browser chip can be added and removed.
   The Thinking value changes. Done dismisses.

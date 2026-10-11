@@ -15,9 +15,10 @@ import SwiftUI
 /// 320pt screen (288pt row) the bubble is 236pt wide with 204pt of text — the accepted Figma fixture
 /// (`2659:21942`).
 ///
-/// **Reaction** (optional, independent of delivery): anchored at the upper corner toward the
-/// conversation centre — outgoing upper-left, incoming upper-right — overlapping by 14pt. Top
-/// clearance is reserved so the badge never collides with the message above.
+/// **Reaction** (optional, independent of delivery): an iMessage-style tapback overlapping the upper
+/// corner toward the conversation centre — outgoing top-leading, incoming top-trailing — with a two-dot
+/// thought-bubble tail; further reactions stack behind it (`MessageReactionBadgeMetrics`). 22pt of top
+/// clearance is reserved so the set never collides with the message above.
 ///
 /// **Delivery** (outgoing only): `.delivered(at:)` / `.read(at:)` show a right-aligned receipt under
 /// the bubble; the `at` text is supplied by the host (illustrative in fixtures). `.failed` shows an
@@ -49,6 +50,7 @@ public struct MessageBubble: View {
     private let meta: String?
     private let delivery: Delivery
     private let reaction: MessageReaction?
+    private let additionalReactions: [MessageReaction]
     private let accessibilityPrefix: String
     private let onRetry: (() -> Void)?
     private let onLongPress: (() -> Void)?
@@ -64,6 +66,7 @@ public struct MessageBubble: View {
     ///   - meta: Optional metadata (e.g. a timestamp) shown beneath the message in `chatMeta`.
     ///   - delivery: Outgoing delivery state. `.none` by default.
     ///   - reaction: Optional reaction badge, anchored toward the conversation centre.
+    ///   - additionalReactions: Further reactions stacked behind `reaction` (iMessage tapback stack).
     ///   - accessibilityPrefix: Prefix for this message's accessibility identifiers.
     ///   - onRetry: Called from the failure control's Try again menu.
     ///   - onLongPress: Called on long press — hosts present `MessageReactionPicker` from it. The
@@ -74,6 +77,7 @@ public struct MessageBubble: View {
         meta: String? = nil,
         delivery: Delivery = .none,
         reaction: MessageReaction? = nil,
+        additionalReactions: [MessageReaction] = [],
         accessibilityPrefix: String = "message",
         onRetry: (() -> Void)? = nil,
         onLongPress: (() -> Void)? = nil
@@ -83,9 +87,26 @@ public struct MessageBubble: View {
         self.meta = meta
         self.delivery = delivery
         self.reaction = reaction
+        self.additionalReactions = additionalReactions
         self.accessibilityPrefix = accessibilityPrefix
         self.onRetry = onRetry
         self.onLongPress = onLongPress
+    }
+
+    private var reactions: [MessageReaction] {
+        MessageReactionBadgeMetrics.stack(primary: reaction, additional: additionalReactions)
+    }
+
+    private var reactionTopReserve: CGFloat {
+        reactions.isEmpty ? 0 : MessageReactionBadgeMetrics.topReserve
+    }
+
+    @ViewBuilder
+    private var reactionStack: some View {
+        if !reactions.isEmpty {
+            MessageReactionStack(reactions: reactions, corner: MessageReactionBadgeMetrics.Corner(role: role))
+                .accessibilityIdentifier("\(accessibilityPrefix).reaction")
+        }
     }
 
     public var body: some View {
@@ -116,7 +137,7 @@ public struct MessageBubble: View {
             }
             if let meta { metaLine(meta, alignment: .trailing) }
         }
-        .padding(.top, reaction == nil ? 0 : MessageBubbleGeometry.reactionOverlap)
+        .padding(.top, reactionTopReserve)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
@@ -137,13 +158,7 @@ public struct MessageBubble: View {
             .modifier(AccessibilityTimeValue(time: accessibilityTime))
             .accessibilityIdentifier("\(accessibilityPrefix).bubble")
             // After the bubble's accessibility element, so the reaction stays its own element.
-            .overlay(alignment: .topLeading) {
-                if let reaction {
-                    MessageReactionBadge(reaction)
-                        .offset(x: -MessageBubbleGeometry.reactionOverlap, y: -MessageBubbleGeometry.reactionOverlap)
-                        .accessibilityIdentifier("\(accessibilityPrefix).reaction")
-                }
-            }
+            .overlay(alignment: .topLeading) { reactionStack }
     }
 
     @ViewBuilder
@@ -200,18 +215,12 @@ public struct MessageBubble: View {
                 .accessibilityElement(children: .combine)
                 .modifier(AccessibilityTimeValue(time: accessibilityTime))
                 .accessibilityIdentifier("\(accessibilityPrefix).bubble")
-                .overlay(alignment: .topTrailing) {
-                    if let reaction {
-                        MessageReactionBadge(reaction)
-                            .offset(x: MessageBubbleGeometry.reactionOverlap, y: -MessageBubbleGeometry.incomingReactionTop)
-                            .accessibilityIdentifier("\(accessibilityPrefix).reaction")
-                    }
-                }
+                .overlay(alignment: .topTrailing) { reactionStack }
             if let meta { metaLine(meta, alignment: .leading) }
         }
         .frame(maxWidth: MessageBubbleGeometry.maxWidth, alignment: .leading)
         .padding(.trailing, MessageBubbleGeometry.incomingTrailingReserve)
-        .padding(.top, reaction == nil ? 0 : MessageBubbleGeometry.incomingReactionTop)
+        .padding(.top, reactionTopReserve)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -244,6 +253,7 @@ extension MessageBubble {
             meta: message.meta,
             delivery: message.delivery,
             reaction: message.reaction,
+            additionalReactions: message.additionalReactions,
             accessibilityPrefix: accessibilityPrefix ?? "message.\(id)",
             onRetry: retry,
             onLongPress: { onAction(.requestActions(messageID: id)) }
@@ -271,10 +281,11 @@ public enum MessageBubbleGeometry {
     public static let failureLabelGap: CGFloat = DesignTokens.Spacing.sm
     /// Gap between a bubble and its Delivered / Read receipt.
     public static let receiptGap: CGFloat = DesignTokens.Spacing.xs
-    /// How far the reaction badge overlaps outward and upward from an outgoing bubble's corner.
+    /// How far the reaction badge disc extends outward past the bubble's side edge (both roles).
     public static let reactionOverlap: CGFloat = 14
-    /// Upward overlap of an incoming reaction (incoming text has 4pt of its own top padding).
-    public static let incomingReactionTop: CGFloat = 10
+    /// Top clearance of a reacted message, the same for both roles. Kept under its original name for
+    /// source compatibility; equals `MessageReactionBadgeMetrics.topReserve`.
+    public static let incomingReactionTop: CGFloat = MessageReactionBadgeMetrics.topReserve
     /// Trailing space an incoming text block keeps so its upper-right reaction stays in the row.
     public static let incomingTrailingReserve: CGFloat = 30
 
@@ -391,7 +402,8 @@ private struct LongPressAction: ViewModifier {
         MessageBubble(
             "Done — the planning sync is now Thursday at 10:00. I let the two attendees know.",
             role: .assistant,
-            reaction: .thumbsUp
+            reaction: .heart,
+            additionalReactions: [.heart]
         )
         MessageBubble("Thanks, that works.", role: .user, delivery: .read(at: "10:24"))
         MessageBubble("Also share the agenda with the group.", role: .user, delivery: .failed, onRetry: {})

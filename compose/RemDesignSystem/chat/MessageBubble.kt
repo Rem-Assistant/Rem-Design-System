@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -75,11 +74,13 @@ sealed interface MessageDelivery {
  *
  * Geometry is responsive ([MessageBubbleGeometry]): an outgoing bubble hugs its text up to 320dp and
  * fills when the row is narrower; a failed row reserves 52dp on the right for the outside failure
- * control. The optional [reaction] sits at the upper corner toward the conversation centre (outgoing
- * upper-left, incoming upper-right) with a 14dp overlap. A failed message shows an outlined error icon
+ * control. The optional [reaction] is an iMessage-style tapback overlapping the upper corner toward the
+ * conversation centre (outgoing top-start, incoming top-end) with a two-dot thought-bubble tail;
+ * [additionalReactions] stack behind it ([MessageReactionBadgeMetrics]). A failed message shows an outlined error icon
  * outside the bubble (opening a Try again menu) and "Not delivered" right-aligned beneath, no time.
  *
  * @param meta Optional metadata (e.g. a timestamp) beneath the message, in chatMeta.
+ * @param additionalReactions Further reactions stacked behind [reaction].
  * @param onLongPress Long press (and the accessibility "React" action) — hosts open [MessageReactionPicker].
  *   The [ChatMessageDisplay] overload emits [ChatTranscriptAction.RequestActions] instead, for
  *   `MessageActionSheet` (accessibility "Message actions").
@@ -92,11 +93,15 @@ fun MessageBubble(
     meta: String? = null,
     delivery: MessageDelivery = MessageDelivery.None,
     reaction: MessageReaction? = null,
+    additionalReactions: List<MessageReaction> = emptyList(),
     accessibilityPrefix: String = "message",
     onRetry: (() -> Unit)? = null,
     onLongPress: (() -> Unit)? = null,
 ) {
-    MessageBubbleContent(text, role, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, LongPress("React", onLongPress))
+    MessageBubbleContent(
+        text, role, modifier, meta, delivery, MessageReactionBadgeMetrics.stack(reaction, additionalReactions),
+        accessibilityPrefix, onRetry, LongPress("React", onLongPress),
+    )
 }
 
 /** A long-press handler and its accessibility name ("React", or "Message actions" in a transcript). */
@@ -109,14 +114,14 @@ private fun MessageBubbleContent(
     modifier: Modifier,
     meta: String?,
     delivery: MessageDelivery,
-    reaction: MessageReaction?,
+    reactions: List<MessageReaction>,
     accessibilityPrefix: String,
     onRetry: (() -> Unit)?,
     longPress: LongPress,
 ) {
     when (role) {
-        MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reaction, accessibilityPrefix, onRetry, longPress)
-        MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reaction, accessibilityPrefix, longPress)
+        MessageRole.User -> OutgoingMessage(text, modifier, meta, delivery, reactions, accessibilityPrefix, onRetry, longPress)
+        MessageRole.Assistant -> IncomingMessage(text, modifier, meta, reactions, accessibilityPrefix, longPress)
     }
 }
 
@@ -141,7 +146,7 @@ fun MessageBubble(
         modifier = modifier,
         meta = message.meta,
         delivery = message.delivery,
-        reaction = message.reaction,
+        reactions = message.reactions,
         accessibilityPrefix = accessibilityPrefix,
         onRetry = retry,
         longPress = LongPress("Message actions") { onAction(ChatTranscriptAction.RequestActions(message.id)) },
@@ -154,7 +159,7 @@ private fun OutgoingMessage(
     modifier: Modifier,
     meta: String?,
     delivery: MessageDelivery,
-    reaction: MessageReaction?,
+    reactions: List<MessageReaction>,
     prefix: String,
     onRetry: (() -> Unit)?,
     longPress: LongPress,
@@ -171,7 +176,7 @@ private fun OutgoingMessage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = if (reaction == null) 0.dp else MessageBubbleGeometry.ReactionOverlap.dp),
+            .padding(top = reactionTopReserve(reactions)),
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(
             if (failed) MessageBubbleGeometry.FailureLabelGap.dp else MessageBubbleGeometry.ReceiptGap.dp,
@@ -195,15 +200,7 @@ private fun OutgoingMessage(
                     ) {
                         Text(text = text, style = RemTypography.chatMessage, color = colors.labelOnColor)
                     }
-                    if (reaction != null) {
-                        MessageReactionBadge(
-                            reaction,
-                            Modifier
-                                .align(Alignment.TopStart)
-                                .offset(x = -MessageBubbleGeometry.ReactionOverlap.dp, y = -MessageBubbleGeometry.ReactionOverlap.dp)
-                                .testTag("$prefix.reaction"),
-                        )
-                    }
+                    ReactionStackAt(reactions, MessageReactionBadgeMetrics.Corner.TopLeading, prefix, Modifier.align(Alignment.TopStart))
                 }
             },
             failure = { FailureControl(prefix, onRetry) },
@@ -287,7 +284,7 @@ private fun IncomingMessage(
     text: String,
     modifier: Modifier,
     meta: String?,
-    reaction: MessageReaction?,
+    reactions: List<MessageReaction>,
     prefix: String,
     longPress: LongPress,
 ) {
@@ -296,7 +293,7 @@ private fun IncomingMessage(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                top = if (reaction == null) 0.dp else MessageBubbleGeometry.IncomingReactionTop.dp,
+                top = reactionTopReserve(reactions),
                 end = MessageBubbleGeometry.IncomingTrailingReserve.dp,
             ),
         horizontalAlignment = Alignment.Start,
@@ -319,18 +316,42 @@ private fun IncomingMessage(
                         vertical = MessageBubbleGeometry.ContentInsetVertical.dp,
                     ),
             )
-            if (reaction != null) {
-                MessageReactionBadge(
-                    reaction,
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = MessageBubbleGeometry.ReactionOverlap.dp, y = -MessageBubbleGeometry.IncomingReactionTop.dp)
-                        .testTag("$prefix.reaction"),
-                )
-            }
+            ReactionStackAt(reactions, MessageReactionBadgeMetrics.Corner.TopTrailing, prefix, Modifier.align(Alignment.TopEnd))
         }
         if (meta != null) Text(text = meta, style = RemTypography.chatMeta, color = colors.labelSecondary)
     }
+}
+
+private fun reactionTopReserve(reactions: List<MessageReaction>) =
+    if (reactions.isEmpty()) 0.dp else MessageReactionBadgeMetrics.TopReserve.dp
+
+/**
+ * Places the tapback set at the bubble corner [modifier] aligns it to, without affecting the bubble's
+ * size or intrinsic width: the stack is measured unconstrained, reports zero size, and is drawn at
+ * [MessageReactionBadgeMetrics.Layout]'s corner offset (the trailing corner subtracts its width).
+ */
+@Composable
+private fun ReactionStackAt(
+    reactions: List<MessageReaction>,
+    corner: MessageReactionBadgeMetrics.Corner,
+    prefix: String,
+    modifier: Modifier,
+) {
+    if (reactions.isEmpty()) return
+    val geometry = MessageReactionBadgeMetrics.layout(reactions.size, corner)
+    MessageReactionStack(
+        reactions,
+        corner,
+        modifier
+            .layout { measurable, _ ->
+                val placeable = measurable.measure(Constraints())
+                layout(0, 0) {
+                    val x = geometry.offsetX.dp.roundToPx() - if (corner == MessageReactionBadgeMetrics.Corner.TopTrailing) placeable.width else 0
+                    placeable.placeRelative(x, geometry.offsetY.dp.roundToPx())
+                }
+            }
+            .testTag("$prefix.reaction"),
+    )
 }
 
 private fun Modifier.longPress(longPress: LongPress): Modifier {
@@ -356,8 +377,10 @@ object MessageBubbleGeometry {
     const val FailureReserve = FailureControl + FailureGap
     const val FailureLabelGap = 8f
     const val ReceiptGap = 4f
+    /** How far the reaction badge disc extends outward past the bubble's side edge (both roles). */
     const val ReactionOverlap = 14f
-    const val IncomingReactionTop = 10f
+    /** Top clearance of a reacted message, both roles; equals [MessageReactionBadgeMetrics.TopReserve]. */
+    const val IncomingReactionTop = MessageReactionBadgeMetrics.TopReserve
     const val IncomingTrailingReserve = 30f
 
     /** The widest an outgoing bubble may be in a row [available] dp wide. */
@@ -390,7 +413,8 @@ private fun MessageBubblePreview() {
             MessageBubble(
                 "Done — the planning sync is now Thursday at 10:00. I let the two attendees know.",
                 role = MessageRole.Assistant,
-                reaction = MessageReaction.ThumbsUp,
+                reaction = MessageReaction.Heart,
+                additionalReactions = listOf(MessageReaction.Heart),
             )
             MessageBubble("Thanks, that works.", role = MessageRole.User, delivery = MessageDelivery.Read("10:24"))
             MessageBubble("Also share the agenda with the group.", role = MessageRole.User, delivery = MessageDelivery.Failed, onRetry = {})
