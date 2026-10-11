@@ -120,6 +120,21 @@ final class ChatHeaderFaceLifecycleTests: XCTestCase {
         }
     }
 
+    /// Applies a model change to the rendered layer tree before sampling. The mode swap itself has no
+    /// animation (`ChatHeader` gives the mark a fresh identity per mode, outside any animated
+    /// transaction), so its "transition" is complete once the hosting view has run the pending SwiftUI
+    /// update and committed it. Without this, the first 0.1s sample can still be the previous frame:
+    /// CI run 38148823335 recorded Reply complete `thinking=[…, 62]` then `after=[62, 542, 542, …]` —
+    /// the first "after" sample was the last thinking frame, unchanged (an idle face without its outline
+    /// would still show its eyes and smile, about 100 px, and a fresh mark cannot blink for 2s). Reply
+    /// complete also grows the transcript, adding layout work to that update, which is why it is the
+    /// case that lagged.
+    private func commit(_ view: UIView) {
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        CATransaction.flush()
+    }
+
     /// Idle → send (thinking) → `endTurn` → idle; the idle face after the turn matches the one before.
     private func assertOutlineSurvivesTurn(_ name: String, endTurn: (inout ChatPlaygroundFixture) -> Void,
                                            file: StaticString = #filePath, line: UInt = #line) {
@@ -135,6 +150,7 @@ final class ChatHeaderFaceLifecycleTests: XCTestCase {
         model.fixture.composer.apply(.draftChanged("Plan my afternoon"))
         model.fixture.handle(.composer(.send))
         XCTAssertTrue(model.fixture.header.isWorking, "\(name): sending shows the thinking face", file: file, line: line)
+        commit(view)
         // Sanity: the self-draw must be observable in this harness, not a static frame. Thinking shows
         // the outline only (no eyes or smile), drawn 0→1 every 1.6s at 1.25× the idle pen (0.075 vs
         // 0.06 of the size). The outline is roughly 80% of the idle ink, so a complete thinking outline
@@ -157,6 +173,7 @@ final class ChatHeaderFaceLifecycleTests: XCTestCase {
 
         endTurn(&model.fixture)
         XCTAssertFalse(model.fixture.header.isWorking, "\(name): the turn ended", file: file, line: line)
+        commit(view)
         let after = samples(view, seconds: 2.0)
         FaceInkReport.shared.note("\(name): before=\(beforeSamples) thinking=\(thinking) after=\(after)")
         XCTAssertGreaterThanOrEqual(Double(after.min() ?? 0), Double(before) * 0.8,

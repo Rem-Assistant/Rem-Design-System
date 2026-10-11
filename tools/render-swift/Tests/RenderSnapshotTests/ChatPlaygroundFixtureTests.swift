@@ -15,6 +15,17 @@ final class ChatPlaygroundFixtureTests: XCTestCase {
         XCTAssertEqual(fixture.header.activity, "Connected")
     }
 
+    /// Jump-to-latest journeys: earlier history above the populated conversation, same latest receipt.
+    func testLongPrependsHistoryAndKeepsTheLatestReceipt() {
+        let fixture = ChatPlaygroundFixture(.long)
+        XCTAssertEqual(fixture.entries.count, 17 + ChatPlaygroundFixture(.populated).entries.count)
+        XCTAssertEqual(Array(fixture.entries.suffix(5)), ChatPlaygroundFixture(.populated).entries)
+        XCTAssertEqual(fixture.entries.first?.id, "h0")
+        XCTAssertEqual(ChatTranscriptRules.latestOutgoingID(in: fixture.entries), "u2")
+        XCTAssertEqual(ChatTranscriptRules.displayedDelivery(for: fixture.message("h1")!, latestOutgoingID: "u2"), .none)
+        XCTAssertEqual(fixture.entries.last?.id, "a2")
+    }
+
     func testEmptyHasStartersAndNoTranscript() {
         let fixture = ChatPlaygroundFixture(.empty)
         XCTAssertEqual(fixture.emptyState?.starters, ChatPlaygroundFixture.starters)

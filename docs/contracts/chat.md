@@ -89,6 +89,28 @@ These stay explicit boundaries. No component here persists, transmits or enforce
    orange when Needs you), the **agent's current activity** in footnote `labelSecondary`, and a chevron.
    The status label is the agent's lifecycle copy supplied by the host, not transport evidence.
 
+10. **Jump to latest** (`ChatJumpToLatest`, Swift and Kotlin share the constants; reference: the Claude iOS
+   app). The full composition shows a round down-arrow button **centred horizontally just above the docked
+   composer** while the person has scrolled away from the newest message; tapping it scrolls (animated) to
+   the latest message, and it disappears at or near the bottom. The composition owns it — hosts wire nothing.
+   - **Visibility:** shown when the transcript's bottom edge is more than **200pt/dp** below the visible
+     area (`threshold`), hidden at or below it (including overscroll). A fixed distance (about four short
+     rows) rather than a third of the viewport, so the rule reads the same with the keyboard open or closed.
+     Never shown in the empty state.
+   - **Look:** 44 circle, solid `backgroundTertiary` fill (white light / `#2C2C2E` dark — no translucent
+     material), 0.5 hairline `separator`, soft shadow; `arrow.down` / `ArrowDownward` in `labelPrimary`
+     (17pt semibold SF Symbol; 20dp Material icon). 12 (`Spacing.md`) above the top of the dock chrome.
+     It overlays the transcript area only, so it never covers the composer, the reply accessory or the
+     keyboard-docked composer. Large text: fixed icon-only chrome; iOS offers the Large Content Viewer.
+   - **Motion:** fade + scale from 0.8 over 0.2s; with Reduce Motion (iOS) or animator scale 0 (Android) it
+     appears, disappears and jumps without animation.
+   - **Accessibility:** a button labelled "Scroll to latest message", identifier / test tag
+     `chat.jumpToLatest`; absent from the accessibility tree while hidden.
+   - **New messages while scrolled up:** the person's position is kept and the button stays. At or near
+     the bottom the transcript still follows new content (iOS `defaultScrollAnchor(.bottom)`, unchanged;
+     Compose follows only while within the threshold, where it previously always snapped to the bottom).
+     No unread indicator yet (follow-up).
+
 ## Paired native fixtures
 
 `ChatFixture` in `tools/playground-ios/App/CatalogPages.swift` and in
@@ -97,6 +119,13 @@ tests: `testCatalogChatReactionsDeliveryModelMenuAndAttachments` (XCUITest) /
 `catalogChatReactionsDeliveryModelMenuAndAttachments` (instrumentation). Render pairs:
 `ChatMessageStates-narrow-light`, `ChatComposerAuto-light`, `AddToChatSheet-light`, `ChatHeader-light`,
 `MessageReactionPicker-light`, `MessageActionSheet-assistant-light`, `MessageActionSheet-own-light`.
+
+Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlaygroundFixture` `.long` /
+`Conversation.Long`, earlier history above the populated sample). Journeys:
+`testChatJumpToLatestAppearsWhenScrolledUpAndReturns` (XCUITest) /
+`chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). Render pair: `ChatJumpToLatest-light`,
+`ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
+shows the scrolled-up state).
 
 ## Full-screen composition and app boundary
 

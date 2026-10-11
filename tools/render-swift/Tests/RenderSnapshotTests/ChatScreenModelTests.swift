@@ -178,6 +178,27 @@ final class ChatScreenModelTests: XCTestCase {
         XCTAssertNil(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id: "x", role: .user, text: "Hi")))
     }
 
+    // MARK: Jump to latest (paired with `ChatScreenModelTest.kt`)
+
+    func testJumpToLatestShowsOnlyBeyondTheThreshold() {
+        XCTAssertEqual(ChatJumpToLatest.threshold, 200)
+        XCTAssertFalse(ChatJumpToLatest.isVisible(distanceFromBottom: 0), "at the bottom")
+        XCTAssertFalse(ChatJumpToLatest.isVisible(distanceFromBottom: -40), "overscrolled past the bottom")
+        XCTAssertFalse(ChatJumpToLatest.isVisible(distanceFromBottom: 200), "near the bottom")
+        XCTAssertTrue(ChatJumpToLatest.isVisible(distanceFromBottom: 201))
+        XCTAssertTrue(ChatJumpToLatest.isVisible(distanceFromBottom: 2_000))
+    }
+
+    func testJumpToLatestGeometryAndAccessibilityMatchCompose() {
+        XCTAssertEqual(ChatJumpToLatest.diameter, 44, "minimum touch target")
+        XCTAssertEqual(ChatJumpToLatest.glyphSize, 17)
+        XCTAssertEqual(ChatJumpToLatest.bottomSpacing, 12)
+        XCTAssertEqual(ChatJumpToLatest.appearScale, 0.8)
+        XCTAssertEqual(ChatJumpToLatest.appearDuration, 0.2)
+        XCTAssertEqual(ChatJumpToLatest.accessibilityLabel, "Scroll to latest message")
+        XCTAssertEqual(ChatJumpToLatest.accessibilityIdentifier, "chat.jumpToLatest")
+    }
+
     // MARK: Long-press message actions (`2603:19498`)
 
     func testAssistantMessageSheetMatchesTheReferenceGroups() {

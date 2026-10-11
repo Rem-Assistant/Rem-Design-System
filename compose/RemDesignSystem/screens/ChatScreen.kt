@@ -1,6 +1,15 @@
 package com.rem.designsystem.screens
 
 import android.provider.Settings
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -15,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -94,7 +104,9 @@ fun ChatScreen(
  * `2054:22089` with no second face), and bottom chrome docking the one canonical composer (`2071:11555`)
  * above the IME or navigation bar with the optional task-reply accessory (`2682:22298`). Insets come
  * from the host window (`imePadding` / `navigationBarsPadding` / `statusBarsPadding`); the 320dp board
- * is a width stress fixture only. [transcript] is the rich-content slot.
+ * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
+ * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
+ * scrolled more than [ChatJumpToLatest.THRESHOLD] above the newest message. Hosts wire nothing for it.
  */
 @Composable
 fun ChatScreen(
@@ -128,24 +140,64 @@ fun ChatScreen(
             modifier = Modifier.padding(bottom = RemSpacing.sm),
         )
         val scroll = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(scroll)
-                .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
-                .testTag("chat.content"),
-            verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
-        ) {
-            if (emptyState != null) {
-                ChatEmptyStateView(emptyState, onStarter = { onAction(ChatScreenAction.Starter(it)) })
-            } else {
-                transcript()
+        val density = LocalDensity.current
+        val context = LocalContext.current
+        val reduceMotion = remember(context) {
+            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+        }
+        val jumpEvidence = LocalChatJumpToLatestEvidence.current
+        // Previews and screenshot renders (inspection mode) show the settled state, without motion.
+        val jumpMotion = !reduceMotion && !LocalInspectionMode.current
+        // Jump to latest: how far (dp) the transcript's bottom edge sits below the visible area. Before the
+        // first layout `maxValue` is Int.MAX_VALUE (unmeasured), which must not flash the button.
+        val showsJump by remember(emptyState == null) {
+            derivedStateOf {
+                emptyState == null && if (scroll.maxValue == Int.MAX_VALUE) jumpEvidence
+                else ChatJumpToLatest.isVisible((scroll.maxValue - scroll.value) / density.density)
             }
         }
-        // Keep the newest content in view (Swift: defaultScrollAnchor(.bottom)).
-        if (emptyState == null) {
-            LaunchedEffect(scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
+        val jumpScope = rememberCoroutineScope()
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scroll)
+                    .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
+                    .testTag("chat.content"),
+                verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
+            ) {
+                if (emptyState != null) {
+                    ChatEmptyStateView(emptyState, onStarter = { onAction(ChatScreenAction.Starter(it)) })
+                } else {
+                    transcript()
+                }
+            }
+            // Over the transcript area only, so it never covers the docked composer or the IME. Qualified so
+            // the outer Column's scope does not pick the ColumnScope overload.
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showsJump,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = ChatJumpToLatest.BOTTOM_SPACING.dp),
+                enter = if (!jumpMotion) EnterTransition.None
+                else fadeIn(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleIn(tween(ChatJumpToLatest.APPEAR_MILLIS), initialScale = ChatJumpToLatest.APPEAR_SCALE),
+                exit = if (!jumpMotion) ExitTransition.None
+                else fadeOut(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleOut(tween(ChatJumpToLatest.APPEAR_MILLIS), targetScale = ChatJumpToLatest.APPEAR_SCALE),
+            ) {
+                ChatJumpToLatestButton(onClick = {
+                    jumpScope.launch {
+                        if (jumpMotion) scroll.animateScrollTo(scroll.maxValue) else scroll.scrollTo(scroll.maxValue)
+                    }
+                })
+            }
+        }
+        // Keep the newest content in view (Swift: defaultScrollAnchor(.bottom)) while the person is at or
+        // near the latest message. Scrolled further up, their position is kept and jump to latest stays.
+        if (emptyState == null && !jumpEvidence) {
+            val followedMax = remember { intArrayOf(0) }
+            LaunchedEffect(scroll.maxValue) {
+                val nearLatest = !ChatJumpToLatest.isVisible((followedMax[0] - scroll.value) / density.density)
+                if (nearLatest) scroll.scrollTo(scroll.maxValue)
+                followedMax[0] = scroll.maxValue
+            }
         }
         Column(
             modifier = Modifier
@@ -173,6 +225,15 @@ fun ChatScreen(
         }
     }
 }
+
+/**
+ * Evidence seam (internal, never set by hosts): open the transcript at its oldest message instead of
+ * following the latest, and present jump to latest from the first frame — a single-frame screenshot render
+ * cannot wait for the post-layout pass that measures the distance. Use only with a transcript taller than
+ * the screen plus [ChatJumpToLatest.THRESHOLD]; the visibility rule itself is covered by unit and
+ * instrumentation tests. Not part of the public API.
+ */
+internal val LocalChatJumpToLatestEvidence = staticCompositionLocalOf { false }
 
 /** The empty conversation (`2054:22089`): title, message and starters as full-width capsules. No face. */
 @Composable

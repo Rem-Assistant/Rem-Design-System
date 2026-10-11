@@ -41,7 +41,8 @@ data class ChatPlaygroundFixture(
     private val retryingId: String? = null,
     private val nextId: Int = 0,
 ) {
-    enum class Conversation(val label: String) { Populated("Populated"), Empty("Empty") }
+    /** [Long] puts earlier history above the populated conversation, so scrolling up shows jump to latest. */
+    enum class Conversation(val label: String) { Populated("Populated"), Empty("Empty"), Long("Long") }
 
     val header: ChatHeaderDisplay
         get() = when {
@@ -223,8 +224,45 @@ data class ChatPlaygroundFixture(
             ChatTranscriptEntry.Message(ChatMessageDisplay("a2", MessageRole.Assistant, "I can help you prepare that reminder.", meta = "Automatic · Reply complete", time = FixtureTime)),
         )
 
-        fun conversation(conversation: Conversation) =
-            ChatPlaygroundFixture(entries = if (conversation == Conversation.Empty) emptyList() else PopulatedEntries)
+        /**
+         * Neutral earlier history for the [Conversation.Long] conversation (ids `h1`…). Older outgoing
+         * messages show no receipt ([ChatTranscriptRules]), so the latest receipt is still `u2`'s.
+         */
+        val EarlierEntries: List<ChatTranscriptEntry> = listOf<ChatTranscriptEntry>(ChatTranscriptEntry.Timestamp("h0", "Yesterday 4:02 PM")) +
+            listOf(
+                MessageRole.User to "What does my week look like?",
+                MessageRole.Assistant to "Three meetings, two deadlines and a free Thursday afternoon.",
+                MessageRole.User to "Which deadline comes first?",
+                MessageRole.Assistant to "The project brief is due Tuesday at noon; the budget review follows on Friday.",
+                MessageRole.User to "Block two hours on Monday for the brief.",
+                MessageRole.Assistant to "Monday 9 to 11 is free. Shall I hold it as focus time?",
+                MessageRole.User to "Yes, please.",
+                MessageRole.Assistant to "Held. I also moved the reminder to review the draft to Monday evening.",
+                MessageRole.User to "What about the budget review?",
+                MessageRole.Assistant to "You have the numbers from last quarter. I can outline the summary on Wednesday.",
+                MessageRole.User to "Good. Keep Thursday afternoon open.",
+                MessageRole.Assistant to "Thursday afternoon stays clear. Nothing else is scheduled then.",
+                MessageRole.User to "Remind me to call the venue tomorrow.",
+                MessageRole.Assistant to "I'll remind you tomorrow morning to call the venue.",
+                MessageRole.User to "Thanks. That's all for today.",
+                MessageRole.Assistant to "You're set for the week. Talk tomorrow.",
+            ).mapIndexed { index, (role, text) ->
+                ChatTranscriptEntry.Message(
+                    ChatMessageDisplay(
+                        "h${index + 1}", role, text,
+                        delivery = if (role == MessageRole.User) MessageDelivery.Delivered("4:02") else MessageDelivery.None,
+                        time = "4:02",
+                    ),
+                )
+            }
+
+        fun conversation(conversation: Conversation) = ChatPlaygroundFixture(
+            entries = when (conversation) {
+                Conversation.Populated -> PopulatedEntries
+                Conversation.Empty -> emptyList()
+                Conversation.Long -> EarlierEntries + PopulatedEntries
+            },
+        )
 
         /** Task chat for an Inbox item: the same composition plus the reply accessory and the item's state. */
         fun taskReply(item: InboxItemDisplay) = ChatPlaygroundFixture(
