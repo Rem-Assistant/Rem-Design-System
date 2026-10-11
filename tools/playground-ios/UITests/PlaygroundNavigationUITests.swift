@@ -1,5 +1,15 @@
 import XCTest
 
+/// Launch arguments every journey in this target starts with (all four UI test classes). `--no-motion` stops
+/// the design system's repeating animations (RemFaceMark's idle and thinking loops) and the skeleton shimmer, so
+/// the app reaches idle between steps and each step does not wait on a never-ending animation (route-map
+/// "Test seams"). Pass the journey's own arguments; this appends the shared ones.
+enum JourneyLaunch {
+    static let shared = ["--no-motion"]
+
+    static func arguments(_ arguments: [String]) -> [String] { arguments + shared }
+}
+
 /// Root structure, the component catalog's loading demo, and the onboarding flow's step routing.
 /// Everything is local fixture state — no account, service, audio, or persistence.
 final class PlaygroundNavigationUITests: XCTestCase {
@@ -7,7 +17,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app.launchArguments = ["--developer", "--settings-light"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light"])
         app.launch()
     }
 
@@ -202,7 +212,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testCatalogLoadingShowsSkeletonThenContentAndActionProgress() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-light", "--loading-hold"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--loading-hold"])
         app.launch()
         tap("openComponents")
         XCTAssertTrue(app.buttons["openControls"].waitForExistence(timeout: 3))
@@ -643,7 +653,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// Check-in at accessibility text size: every title stays on one line and every time stays on screen.
     func testCheckInRowsFitAtLargeText() {
         app.terminate()
-        app.launchArguments = ["--developer", "--settings-light", "--settings-large-text"]
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--settings-large-text"])
         app.launch()
         openOnboardingStep("openOnboardingCheckIn")
         XCTAssertTrue(app.staticTexts["When should Rem check in?"].waitForExistence(timeout: 3), "Check-in opens")

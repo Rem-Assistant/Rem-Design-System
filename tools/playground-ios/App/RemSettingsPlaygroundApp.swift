@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
-import RemDesignSystem
+// `PlaygroundTesting` SPI: the repeating-motion test seam (`remRepeatingMotionDisabled`), set from `--no-motion`.
+@_spi(PlaygroundTesting) import RemDesignSystem
 
 @main
 struct RemSettingsPlaygroundApp: App {
@@ -8,6 +9,7 @@ struct RemSettingsPlaygroundApp: App {
     var body: some Scene {
         WindowGroup {
             PlaygroundShell()
+                .environment(\.remRepeatingMotionDisabled, PlaygroundLaunch.motionOff)
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--settings-dark") ? .dark : (ProcessInfo.processInfo.arguments.contains("--settings-light") ? .light : nil))
                 .dynamicTypeSize(ProcessInfo.processInfo.arguments.contains("--settings-large-text") ? .accessibility3 : systemTypeSize)
         }
@@ -16,6 +18,10 @@ struct RemSettingsPlaygroundApp: App {
 
 /// Launch seams the journeys pass as launch arguments (route-map "Test seams"). Fixtures only.
 enum PlaygroundLaunch {
+    /// `--no-motion`: the design system's repeating animations stop (RemFaceMark's idle and thinking loops;
+    /// the Playground's skeleton shimmer), so the app reaches idle between journey steps. Every journey
+    /// launches with it. To make motion-off the Playground default later, change only this line.
+    static let motionOff = ProcessInfo.processInfo.arguments.contains("--no-motion")
     /// `--hold-replies`: the shell's simulated reply never advances, so a turn stays in flight (Stop shown).
     /// Only the active-reply journey uses it; every other journey sees the reply complete.
     static let holdsReplies = ProcessInfo.processInfo.arguments.contains("--hold-replies")
@@ -104,6 +110,7 @@ struct PlaygroundShell: View {
                 developerOpen = false
             }
             .background(HidesPresenterWhileVisible().frame(width: 0, height: 0).accessibilityHidden(true))
+            .environment(\.remRepeatingMotionDisabled, PlaygroundLaunch.motionOff)
         }
         // Leaving the conversation (sidebar, Settings, Developer) ends editing, so the keyboard never covers
         // the next surface; the draft is fixture state and stays. New agent focuses its own name field.
@@ -867,7 +874,9 @@ struct OnboardingComplete: View {
 /// (`RemClaw/Shared/Views/DesignTokens.swift`), with one addition: when Reduce Motion is on the
 /// placeholder stays static instead of sweeping.
 struct ShimmerModifier: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    /// Static under Reduce Motion, and with `--no-motion` (journeys).
+    private var reduceMotion: Bool { systemReduceMotion || PlaygroundLaunch.motionOff }
     @State private var phase: CGFloat = -1
 
     func body(content: Content) -> some View {

@@ -99,6 +99,15 @@ Launch inputs the journeys use (iOS launch arguments; Android intent extras or t
 Ordinary use passes none of them.
 - `--developer` (iOS): open straight into the Developer hub.
 - `--loading-hold` (iOS): the catalog Loading page waits for its explicit completion control.
+- `--no-motion` (iOS): the design system's repeating animations stop (`RemFaceMark` idle blinks and smile
+  breathing, the thinking stroke loop and its Reduce Motion pulse; the Playground's skeleton shimmer):
+  thinking shows its complete resting outline. It reaches the DS through the internal
+  `remRepeatingMotionDisabled` environment seam (`@_spi(PlaygroundTesting)`, never set by hosts). Every
+  XCUITest journey launches with it (`JourneyLaunch.arguments`), the active-reply journey included, so the
+  app reaches idle between steps. The product default is unchanged (open question for Samuel); making it
+  the Playground default is one line (`PlaygroundLaunch.motionOff`). Android has no twin: Compose tests
+  drive time through the test clock, which infinite transitions do not block, and `RemFaceMark` already
+  stops with Android's Remove animations (`thinkingOutlineChangesOverTime`).
 - `--hold-replies` (iOS) / `holdReplies` extra, `MainActivity.PlaygroundContent(holdsReplies = true)`
   (Android): the shell's simulated reply never advances, so a turn stays in flight with Stop shown. Only
   the active-reply journey uses it (`testShellScrollsWhileAReplyIsInFlight` ·
