@@ -20,6 +20,8 @@ val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     from("rows")
     from("brand")
     from("icons")
+    from("navigation")
+    from("agents")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }
     exclude("**/*.figma.kt")
 }
@@ -144,7 +146,11 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
             return 0
         }
 
-        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686)
+        val requiredCodepoints = listOf(
+            0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686,
+            // Sidebar + New agent flow.
+            0xEF7A, 0xE0CB, 0xE145, 0xE5D7, 0xE250, 0xEBCC, 0xE87E,
+        )
         val verified = listOf("outline" to outline, "filled" to filled).associate { (label, resource) ->
             check(resource.isFile) { "missing packaged Material Symbols $label resource: $resource" }
             val bytes = resource.readBytes()

@@ -113,6 +113,21 @@ Fixed:
 | PollCard (in-chat) — question header + selectable option rows (title wraps + right-aligned status label: "On your list" / "New") + "None of these" row; container = proposal-card style (backgroundSecondary, radius 16, white option pills) | `458:56` | founder screenshot — in-chat priority/choice card. **Net-new (not in code** — closest is `RemProposalCardView`, a single Approve/Dismiss proposal; protocol has a non-UI `PollParams`). |
 | MessageDraftCard (in-chat) — provider header (logo tile + name) + To/Subject/body fields + full-width **Send** (blue) | `458:69` | founder screenshot — agent-drafted message-send card. **Net-new (not in code** — reuse `RemRemoteLogoView` provider logos + proposal-card shell). Logo = neutral tile placeholder (brand-logo debt). |
 
+## Navigation & New agent (page `Proposed · Navigation & Daily Brief` `2693:1474` — built in code from the approved draft)
+
+> Product decisions (Samuel): Search is the only sidebar top action; **Main agent** / **Side agents**
+> sections with lane subtitles; one **New agent** entry; the account pill is the Settings entry (no
+> gear); New agent setup names the lane first. Contract: [`docs/contracts/sidebar-new-agent.md`](docs/contracts/sidebar-new-agent.md).
+
+| Component | Node | SwiftUI source | Compose source | Status |
+|---|---|---|---|---|
+| RemSidebar — title + Search, Main agent / Side agents sections, floating account pill + New agent | `2702:2479` (column `2702:2514`, bottom `2702:2682`) | `Sources/RemDesignSystem/Navigation/RemSidebar.swift` · model `RemSidebarModel.swift` | `compose/RemDesignSystem/navigation/RemSidebar.kt` · `RemSidebarModel.kt` | code ✓ · Figma frame is a draft (still shows Agenda/Inbox rows — superseded by "Search only") |
+| RemSidebarContainer — Claude-style push (70pt chat peek, tap to close) | `2702:2479` open / `2702:2351` closed | `Navigation/RemSidebarContainer.swift` | `navigation/RemSidebarContainer.kt` | code ✓ |
+| RemAccountPill — initial + name + `chevron.up.chevron.down`; opens Settings | `2709:2648` | `Navigation/RemAccountPill.swift` | `navigation/RemAccountPill.kt` | code ✓ |
+| AgentAvatar — Rem face disc (Main) / glyph on colour (Side) | `2714:3587`, `2718:3061` | `Agents/AgentAvatar.swift` | `agents/AgentAvatar.kt` | code ✓ |
+| NewAgentSetupScreen — icon + swatches, Name (first), Handles, Connected services, Create agent | `2714:3538` | `Agents/NewAgentSetupScreen.swift` · `NewAgentSetupModel.swift` | `agents/NewAgentSetupScreen.kt` · `NewAgentSetupModel.kt` | code ✓ |
+| AgentProfileHeader + AgentProfileAbout — identity + About tab (Lane, services, Pause/Delete for side agents) | `2718:3055` (About `2718:3205`), `2718:3396` | `Agents/AgentProfileAbout.swift` · `AgentProfileModel.swift` | `agents/AgentProfileAbout.kt` · `AgentProfileModel.kt` | code ✓ · reconcile into Agent activity tabs (PR #106) |
+
 ## Screens (one generation — device-framed on the Screens page)
 
 > **Navigation map** lives on the `Flows` page (`420:15`): a static screen-graph (labeled boxes by nav

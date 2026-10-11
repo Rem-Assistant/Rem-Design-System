@@ -36,6 +36,7 @@ data class RemColorScheme(
     val systemOrange: Color,
     val systemIndigo: Color,
     val systemPurple: Color,
+    val systemPink: Color,
     val brandBlue: Color,
     val brandBlueOnFill: Color
 )
@@ -58,6 +59,7 @@ val RemLightColors = RemColorScheme(
     systemOrange = Color(0xFFFF9500),
     systemIndigo = Color(0xFF5856D6),
     systemPurple = Color(0xFFAF52DE),
+    systemPink = Color(0xFFFF2D55),
     brandBlue = Color(0xFF0C50FF),
     brandBlueOnFill = Color(0xFF0C50FF)
 )
@@ -80,6 +82,7 @@ val RemDarkColors = RemColorScheme(
     systemOrange = Color(0xFFFF9F0A),
     systemIndigo = Color(0xFF5E5CE6),
     systemPurple = Color(0xFFBF5AF2),
+    systemPink = Color(0xFFFF375F),
     brandBlue = Color(0xFF0C50FF),
     brandBlueOnFill = Color(0xFF6E9BFF)
 )

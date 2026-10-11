@@ -18,6 +18,13 @@ never by "whatever Material icon looks close." One text layer per platform; no S
 | terms / document | `doc.text` | `description` | **0** | legal row |
 | disclosure chevron | `chevron.right` | `chevron_right` | **0** | list-row accessory |
 | error / warning | `exclamationmark.triangle.fill` | `error` | **1** | notice card |
+| search | `magnifyingglass` | `search` | **0** | sidebar top action (only one) |
+| side agent chat | `bubble.left` | `chat_bubble` | **0** | sidebar side-agent row leading |
+| add / new | `plus` | `add` | **0** | sidebar **New agent** button |
+| account menu | `chevron.up.chevron.down` | `unfold_more` | **0** | sidebar account pill (opens Settings) |
+| add a service | `link` | `link` | **0** | connected-services add row (tinted tile) |
+| calendar service | `calendar` | `calendar_month` | **0** | connected calendar row (tinted tile) |
+| agent icon / heart | `heart.fill` | `favorite` | **1** | side-agent avatar glyph |
 
 **Brand marks are assets, not registry glyphs** (they have no font twin):
 `RemAppIcon` (raster, both platforms) · Apple mark (SF `apple.logo` / bundled monochrome vector) ·

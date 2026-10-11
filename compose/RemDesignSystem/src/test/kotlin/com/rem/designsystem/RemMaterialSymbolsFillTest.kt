@@ -40,6 +40,13 @@ class RemMaterialSymbolsFillTest {
         Row(RemMaterialSymbols.PrivacyPolicy, true),
         Row(RemMaterialSymbols.TermsDocument, true),
         Row(RemMaterialSymbols.DisclosureChevron, false),
+        Row(RemMaterialSymbols.Search, false),
+        Row(RemMaterialSymbols.SideAgentChat, true),
+        Row(RemMaterialSymbols.Add, false),
+        Row(RemMaterialSymbols.AccountMenu, false),
+        Row(RemMaterialSymbols.AddService, false),
+        Row(RemMaterialSymbols.CalendarService, true),
+        Row(RemMaterialSymbols.AgentHeart, true),
     )
 
     private val outline by lazy { TrueTypeFont(loadFontBytes("material_symbols_outlined.ttf")) }

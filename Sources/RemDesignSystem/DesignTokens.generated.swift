@@ -67,6 +67,7 @@ public enum DesignTokens {
         public static let systemOrange = SwiftUI.Color.orange
         public static let systemIndigo = SwiftUI.Color.indigo
         public static let systemPurple = SwiftUI.Color.purple
+        public static let systemPink = SwiftUI.Color.pink
         public static let brandBlue = SwiftUI.Color(red: 12/255, green: 80/255, blue: 255/255)
         public static let brandBlueOnFill: SwiftUI.Color = {
         #if os(iOS)

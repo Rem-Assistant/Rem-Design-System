@@ -32,6 +32,8 @@ If no path is given it downloads the upstream variable font. The upstream
 codepoints (verified against the repo's `.codepoints` file):
     error e000 (legacy PUA, also f8b6) · shield_lock f686 · shield e9e0
     description e873 · chevron_right e5cc
+    search ef7a · chat_bubble e0cb · add e145 · unfold_more e5d7 · link e250
+    calendar_month ebcc · favorite e87e
 """
 import sys
 import urllib.request
@@ -55,6 +57,14 @@ GLYPHS = {
     "shield": 0xE9E0,
     "description": 0xE873,
     "chevron_right": 0xE5CC,
+    # Sidebar + New agent flow (docs/contracts/sidebar-new-agent.md).
+    "search": 0xEF7A,
+    "chat_bubble": 0xE0CB,
+    "add": 0xE145,
+    "unfold_more": 0xE5D7,
+    "link": 0xE250,
+    "calendar_month": 0xEBCC,
+    "favorite": 0xE87E,
 }
 
 # Both outputs carry ALL registry codepoints so an off-fill request still renders the
