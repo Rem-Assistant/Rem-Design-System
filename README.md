@@ -33,6 +33,16 @@ validation use the parserless `code-connect/*.figma.ts` templates and `npm run c
 Any co-located `.figma.swift` / `.figma.kt` files are archived implementation examples: shipping
 targets exclude them and Code Connect configs do not parse or validate them.
 
+The default `figma.config.json` now selects the same parserless SwiftUI templates. The manual
+publishing workflow checks both platform configs with the locked CLI, without needing a token for
+local validation; publishing both platforms still requires its explicit `run_publish` opt-in.
+Run `node --test tools/test-settings-code-connect.mjs` to exercise the saved Settings fixtures.
+The seven observed ConnectorLogo brands now resolve through `ConnectorProviderMark` on both
+platforms, and the saved Voice speaker/play/pause glyphs are mapped. Fresh Figma inspection remains
+paused: the full Logo variant domain and raw laptop/Help glyph identities are still pending.
+See [the coverage record](docs/playground/verification.md#code-only-mapping-follow-up) before claiming
+complete Settings coverage or publication readiness.
+
 **They cannot be published on the current Figma plan.** Verified via the API: using Code Connect
 requires a **Full or Dev seat on an Organization or Enterprise plan**. This account has Full seats
 but only on **Starter/Pro** teams (Pro is *not* enough — the gate is Org/Enterprise). So publishing

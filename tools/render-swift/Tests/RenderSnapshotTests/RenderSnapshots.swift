@@ -12,6 +12,21 @@ private func chevron() -> some View {
         .foregroundStyle(DesignTokens.Color.labelTertiary)
 }
 
+// A Settings nav row: flat monochrome SF Symbol + title + chevron. File-scope so the ListRow trailing
+// closure doesn't capture `self`. Mirrors the Compose `SettingsNavRow`.
+private func settingsNavRow(_ title: String, symbol: String) -> some View {
+    ListRow(
+        title,
+        leading: {
+            Image(systemName: symbol)
+                .font(.system(size: 17))
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .frame(width: 28)
+        },
+        trailing: { chevron() }
+    )
+}
+
 // Faithful iOS screenshot evidence. Runs on an iOS Simulator (via `xcodebuild test`) so the tokens
 // resolve to real iOS UIColor semantics — `.systemBackground` is WHITE on iOS (it is grey on macOS,
 // which is why the earlier macOS `ImageRenderer` renders looked inverted). Snapshots a real
@@ -31,6 +46,8 @@ final class RenderSnapshots: XCTestCase {
             render("ContainedIcon-\(suffix)", width: 260, height: nil, dark: dark) { iconRow }
             render("RemFaceMark-\(suffix)", width: 220, height: nil, dark: dark) { faceMark }
             render("ListRow-\(suffix)", width: 380, height: nil, dark: dark) { listRowCard }
+            render("Pill-\(suffix)", width: 240, height: nil, dark: dark) { pillGallery }
+            render("Slider-\(suffix)", width: 320, height: nil, dark: dark) { sliderGallery }
         }
         render("Consent-default-light", width: 393, height: 852, dark: false) { consentScreen() }
         // Reusable legal content chrome. The host-owned page-sheet container, scrim, and return
@@ -71,6 +88,597 @@ final class RenderSnapshots: XCTestCase {
                 onPrimary: {}
             )
         }
+        // Wave 1 onboarding flows — paired with the Compose `LegacyOnboardingConnectors-*`/`Voice-*`/`AgendaEmpty-*` shots.
+        render("LegacyOnboardingConnectors-light", width: 393, height: 852, dark: false) { connectorsScreen() }
+        // Onboarding Voice now has its own interactive native journey (OnboardingVoice-* captures)
+        // that reuses the shared VoiceControlsContent/VoiceChooserContent cores; the legacy static
+        // gallery render was retired so it cannot drift from, or collide with, those journey shots.
+        render("AgendaEmpty-light", width: 393, height: 852, dark: false) {
+            RemContentUnavailableView(
+                symbol: "calendar.badge.plus",
+                title: "No agenda yet",
+                message: "Create a new task or schedule existing ones",
+                actionLabel: "Add New",
+                action: {}
+            )
+        }
+        // Wave 2 core components — paired with the Compose shots of the same names.
+        render("DateNavigationHeader-light", width: 402, height: nil, dark: false) { dateNavHeader }
+        render("MessageBubble-light", width: 402, height: nil, dark: false) { messageBubbles }
+        render("TaskEventRow-light", width: 390, height: nil, dark: false) { taskEventRows }
+        render("VoiceBar-light", width: 418, height: nil, dark: false) { voiceBarStack }
+        render("ComposerBar-light", width: 420, height: nil, dark: false) { composerBars }
+        // Chat slice: 320pt screen = 288pt row (accepted narrow fixture 2659:21942), then the wide composer,
+        // Add to Chat, header and reaction row. Paired with the Compose `chat*` shots in EvidenceSnapshots.kt.
+        render("ChatMessageStates-narrow-light", width: 320, height: nil, dark: false) { chatMessageStates }
+        render("ChatComposerAuto-light", width: 402, height: nil, dark: false) { chatComposerAuto }
+        render("AddToChatSheet-light", width: 402, height: nil, dark: false) { addToChatSheet }
+        render("ChatHeader-light", width: 402, height: nil, dark: false) { chatHeaders }
+        render("MessageReactionPicker-light", width: 402, height: nil, dark: false) { reactionPicker }
+        // Long-press sheet `2603:19498`: the assistant reference, then the own-message variant (no Report).
+        render("MessageActionSheet-assistant-light", width: 402, height: nil, dark: false) { messageActionSheet(.assistant) }
+        render("MessageActionSheet-own-light", width: 402, height: nil, dark: false) { messageActionSheet(.user) }
+        // Chat cards (MessageDraftCard 2555:1550, PollCard 2559:1524, ActionReceipt 2566:2645), every state.
+        // Paired with the Compose `ChatCard*` shots in EvidenceSnapshots.kt.
+        render("ChatCardMessageDraft-light", width: 402, height: nil, dark: false) { chatCardDrafts }
+        render("ChatCardPoll-light", width: 402, height: nil, dark: false) { chatCardPolls }
+        render("ChatCardActionReceipt-light", width: 402, height: nil, dark: false) { chatCardReceipts }
+        // Agenda New · Suggestions — paired with the Compose `AgendaSuggestions-*` shots.
+        render("AgendaSuggestions-inline-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .loaded)
+        }
+        render("AgendaSuggestions-overflow-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsOverflowSheet(suggestions: AgendaSuggestionItem.referenceSuggestions)
+        }
+        render("AgendaSuggestions-none-light", width: 402, height: 874, dark: false) {
+            AgendaSuggestionsPlaygroundView(fixture: .none)
+        }
+        // Wave 2 screens — components composed into surfaces.
+        render("AgendaScreen-light", width: 402, height: 780, dark: false) { agendaScreen() }
+        render("InboxScreen-light", width: 402, height: 780, dark: false) { inboxScreen() }
+        render("ChatScreen-light", width: 402, height: 820, dark: false) { chatScreen() }
+        // Full-screen composition (board `2681:21977`): default, 320pt width stress, empty, task reply,
+        // and the Inbox states that route into task chat. Fixture data from the DS Playground fixtures.
+        render("ChatComposition-default-light", width: 402, height: 874, dark: false) {
+            chatComposition(ChatPlaygroundFixture(.populated))
+        }
+        render("ChatComposition-narrow-light", width: 320, height: 874, dark: false) {
+            chatComposition(ChatPlaygroundFixture(.populated))
+        }
+        render("ChatComposition-empty-light", width: 402, height: 874, dark: false) {
+            chatComposition(ChatPlaygroundFixture(.empty))
+        }
+        render("ChatComposition-taskReply-light", width: 402, height: 874, dark: false) {
+            chatComposition(InboxPlaygroundFixture().route(.open(itemID: "plan-next-step"))!)
+        }
+        render("ChatComposition-taskReply-narrow-light", width: 320, height: 874, dark: false) {
+            chatComposition(InboxPlaygroundFixture().route(.open(itemID: "plan-next-step"))!)
+        }
+        render("InboxStates-light", width: 402, height: 780, dark: false) {
+            InboxScreen(items: InboxPlaygroundFixture().items, onAction: { _ in }) { EmptyView() }
+        }
+        // Agent activity (`2002:76914`), opened from the Chat header identity; pair with the Compose
+        // `AgentActivity-*` shots. Activity timeline and the labeled Approvals data gap.
+        for tab in AgentActivityTab.allCases {
+            render("AgentActivity-\(tab.rawValue.lowercased())-light", width: 402, height: 874, dark: false) {
+                NavigationStack {
+                    AgentActivityScreen(ChatPlaygroundFixture().activity.display, selection: .constant(tab))
+                }
+            }
+        }
+        // Wave 3 screens
+        render("TaskDetailScreen-light", width: 402, height: 820, dark: false) { taskDetailScreen() }
+        render("SettingsScreen-light", width: 402, height: 820, dark: false) { settingsScreen() }
+        // Wave 4 — agent surfaces (product bets) + Wallet proposal
+        render("AgentStatusPill-light", width: 320, height: nil, dark: false) { agentStatusPills }
+        render("AgentStatusPill-dark", width: 320, height: nil, dark: true) { agentStatusPills }
+        render("RunningTaskBanner-light", width: 440, height: nil, dark: false) { runningTaskBanners }
+        render("BrowserLiveCard-light", width: 380, height: nil, dark: false) { browserLiveCards }
+        render("ExecutionTrace-light", width: 430, height: nil, dark: false) { executionTrace }
+        // Pair with the Compose `DailyBriefCard-light` / `SuggestionSection-light` shots.
+        render("DailyBriefCard-light", width: 402, height: nil, dark: false) {
+            DailyBriefCard(
+                title: "Daily brief",
+                summary: "Sent to damilola.ogunnaike@gmail.com at 9:37 am — “Hi Damilola, I’ll send you the notes from yesterday’s call before 2pm. Best, Larissa.” 1 task overdue needs attention.",
+                onTap: {}, onRead: {}
+            )
+            .padding(16)
+            .background(DesignTokens.Color.backgroundPrimary)
+        }
+        render("SuggestionSection-light", width: 402, height: nil, dark: false) {
+            SuggestionSection(
+                suggestions: [
+                    AgendaSuggestionItem(id: "testflight", action: .add, title: "Set up the TestFlight pipeline using ASC CLI", metadata: "Samuel · Granola · 8h ago"),
+                    AgendaSuggestionItem(id: "compose", action: .add, title: "Pull the Claude/DSFlows branch and confirm the Compose UI renders", metadata: "Damilola · Granola · 8h ago"),
+                    AgendaSuggestionItem(id: "deposit", action: .move, title: "Reply to the venue about the deposit", metadata: "‘Confirm Saturday’ · overdue 3d"),
+                ],
+                onAccept: { _ in }, onDismiss: { _ in }, onSeeMore: {}
+            )
+            .padding(16)
+            .background(DesignTokens.Color.backgroundPrimary)
+        }
+        render("WalletScreen-light", width: 402, height: 900, dark: false) { walletScreen() }
+        // Check-in cadence states, keyed to pair with the Compose `Checkin-*` shots. Default has only
+        // Morning on; the edited/saving/saved/failure set carries the added Midday selection so the
+        // states are visibly distinct in the paired table.
+        render("Checkin-default-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .default, morningOn: true, middayOn: false, nightOn: false)
+        }
+        render("Checkin-edited-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .edited, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-saving-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saving, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-saved-light", width: 393, height: 852, dark: false) {
+            checkinScreen(status: .saved, morningOn: true, middayOn: true, nightOn: false)
+        }
+        render("Checkin-failure-light", width: 393, height: 852, dark: false) {
+            checkinScreen(
+                status: .failure(message: "We couldn't save your check-in times. Check your connection and try again."),
+                morningOn: true,
+                middayOn: true,
+                nightOn: false
+            )
+        }
+        // Chat cards (transcript width 370 = 402pt screen − 2×16 gutters). Every state of each card,
+        // paired with the Compose `ChatConnectorCard-*` / `ChatLoginCard-*` / `ChatPermissionCard-*` shots.
+        render("ChatConnectorCard-light", width: 402, height: nil, dark: false) { chatConnectorCards }
+        render("ChatLoginCard-light", width: 402, height: nil, dark: false) { chatLoginCards }
+        render("ChatLoginForm-light", width: 402, height: 874, dark: false) {
+            NavigationStack {
+                LoginForm(site: "github.com", username: .constant("samuel@example.com"), password: .constant("illustrative"))
+                    .navigationTitle("Add login")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        for state in [PermissionCardState.awaiting, .allowed, .denied] {
+            render("ChatPermissionCard-\(state)-light", width: 402, height: nil, dark: false) { chatPermissionCards(state) }
+        }
+        render("ChatPermissionCard-narrow-light", width: 320, height: nil, dark: false) {
+            PermissionCard(Self.permissionRequest(.awaiting), isExpanded: .constant(true),
+                           onAllow: {}, onAlwaysAllow: {}, onDeny: {})
+                .padding(DesignTokens.Spacing.lg)
+                .background(DesignTokens.Color.backgroundPrimary)
+        }
+        // Elevated risk + raw parameters (Full parameters starts collapsed); no Always allow scope.
+        render("ChatPermissionCard-elevated-light", width: 402, height: nil, dark: false) {
+            PermissionCard(Self.elevatedPermissionRequest, isExpanded: .constant(true), onAllow: {}, onDeny: {})
+                .padding(DesignTokens.Spacing.lg)
+                .background(DesignTokens.Color.backgroundPrimary)
+        }
+    }
+
+    // MARK: - Chat cards
+
+    @ViewBuilder private var chatConnectorCards: some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            ForEach([ConnectorCardState.authorize, .connecting, .added, .error()], id: \.self) { state in
+                ConnectorCard(
+                    ConnectorCardModel(provider: .gmail, subtitle: "Search, read, draft, and manage email.", state: state),
+                    onAuthorize: {}, onRetry: {}
+                )
+            }
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatLoginCards: some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), onAddLogin: {}, onOpenSaved: {}, leading: { LoginSiteMark(.github) })
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .saved), onAddLogin: {}, onOpenSaved: {}, leading: { LoginSiteMark(.github) })
+            LoginCard(LoginCardModel(title: "GitHub login details", site: "github.com", state: .entry), showsChevron: false,
+                      onAddLogin: {}, onOpenSaved: {}, leading: { LoginSiteMark(.github) })
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    static func permissionRequest(_ state: PermissionCardState) -> PermissionCardModel {
+        PermissionCardModel(
+            title: "Reminder permission", question: "Allow Rem to create this reminder?",
+            summary: "One reminder in your Personal list.",
+            details: PermissionRequestDetails(title: "Send investor update", schedule: "Oct 10, 2026 · 9:00 AM UTC", source: "Reminders · Personal"),
+            alwaysAllowScope: "create reminders in Personal only.", state: state
+        )
+    }
+
+    static let elevatedPermissionRequest = PermissionCardModel(
+        title: "Email permission", question: "Allow Rem to send this email?",
+        summary: "Sends from your Gmail account. This can’t be undone.",
+        details: PermissionRequestDetails(title: "Q3 investor update", schedule: "Sends immediately", source: "Gmail · samuel@example.com"),
+        state: .awaiting, risk: .elevated,
+        parameters: [
+            PermissionParameter(label: "to", value: "investors@example.com"),
+            PermissionParameter(label: "subject", value: "Q3 investor update"),
+        ]
+    )
+
+    /// One state, Expanded then Collapsed (the three renders together cover the six Figma variants).
+    private func chatPermissionCards(_ state: PermissionCardState) -> some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            ForEach([true, false], id: \.self) { expanded in
+                PermissionCard(Self.permissionRequest(state), isExpanded: .constant(expanded),
+                               onAllow: {}, onAlwaysAllow: {}, onDeny: {}, onReviewAgain: {})
+            }
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // MARK: - Wave 4 galleries (agent surfaces) + Wallet
+
+    @ViewBuilder private var agentStatusPills: some View {
+        VStack(spacing: 14) {
+            AgentStatusPill("Working")
+            AgentStatusPill("Needs you", tone: .attention)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var runningTaskBanners: some View {
+        VStack(spacing: 14) {
+            RunningTaskBanner(task: "Browser", status: "Signing in to my.dnb.com")
+            RunningTaskBanner(task: "Browser", status: "Needs you · Password rejected", tone: .attention)
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var browserLiveCards: some View {
+        VStack(spacing: 14) {
+            BrowserLiveCard(.opening)
+            BrowserLiveCard(.active)
+            BrowserLiveCard(.ended)
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var executionTrace: some View {
+        ExecutionTrace(
+            status: .inProgress,
+            title: "Build RFE checklist",
+            subtitle: "Writing the RFE checklist PDF template",
+            timestamp: "10:49pm",
+            steps: [
+                .init(label: "Launched H-1B RFE Checklist Tailoring Subagent",
+                      detail: "Delegated the checklist prep to a subagent via artifact.send_input, covering a tailored checklist for USCIS.",
+                      lane: .main, status: .done),
+                .init(label: "Prepared RFE Checklist Source Directories",
+                      detail: "Staged the checklist sources; the concatenate step returned an incomplete JSON payload.",
+                      lane: .subagent("01"), status: .failed),
+                .init(label: "Found USCIS RFE Official Results",
+                      detail: "Web search targeting USCIS official guidance for H-1B Requests for Evidence.",
+                      lane: .subagent("01"), status: .done),
+                .init(label: "Created index.html source file",
+                      detail: "Wrote the RFE checklist HTML template used to render the PDF.",
+                      lane: .subagent("01"), status: .done),
+            ],
+            footer: "Working"
+        )
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // Wallet — the payment-methods screen (Settings → Wallet), rendered from the public API so the
+    // iOS evidence matches the Compose `WalletScreen` side-by-side.
+    private func walletScreen() -> some View {
+        WalletScreen(providers: WalletScreen.referenceProviders())
+    }
+
+    private func taskDetailScreen() -> some View {
+        TaskDetailScreen(title: "Draft the investor update", dateText: "Oct 1 2026", metaPills: ["Fundraise"], composerState: .idle) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                Text("LAST ACTIVITY")
+                    .font(DesignTokens.Typography.caption1)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                Text("Rem drafted the investor update and pulled last quarter's metrics — want me to send it?")
+                    .font(DesignTokens.Typography.body)
+                    .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                RemSection(header: "Notes") {
+                    Text("Add your notes here")
+                        .font(DesignTokens.Typography.body)
+                        .foregroundStyle(DesignTokens.Color.labelTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(DesignTokens.Spacing.md)
+                }
+            }
+        }
+    }
+
+    private func settingsScreen() -> some View {
+        SettingsScreen {
+            // Free-plan usage card
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                HStack {
+                    Text("Free plan")
+                        .font(DesignTokens.Typography.body.weight(.semibold))
+                        .foregroundStyle(DesignTokens.Color.labelPrimary)
+                    Spacer()
+                    Text("0% used")
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Color.labelSecondary)
+                }
+                Text("Weekly limit resets on Oct 8")
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+                Capsule().fill(DesignTokens.Color.fillTertiary).frame(height: 8)
+                Divider()
+                Text("Upgrade")
+                    .font(DesignTokens.Typography.body.weight(.semibold))
+                    .foregroundStyle(DesignTokens.Color.brandBlue)
+            }
+            .padding(DesignTokens.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignTokens.Color.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+
+            // Core surfaces
+            RemSection {
+                settingsNavRow("Connectors", symbol: "square.grid.2x2.fill")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Devices", symbol: "eyeglasses")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Wallet", symbol: "wallet.pass")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Secure credentials store", symbol: "lock.shield")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Permissions", symbol: "hand.raised")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Messaging channels", symbol: "bubble.left")
+            }
+            RemSection {
+                settingsNavRow("Notifications", symbol: "bell")
+                Divider().padding(.leading, 56)
+                settingsNavRow("Appearance", symbol: "paintbrush")
+            }
+        }
+    }
+
+    private func agendaScreen() -> some View {
+        AgendaScreen(dateText: "Oct 1 2026", onPrevious: {}, onNext: {}) {
+            TaskEventRow(kind: .task, title: "Reply to Alex about the audition", leading: .time("9:00"), pills: ["3 tasks"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .event(DesignTokens.Color.systemBlue), title: "Team standup", leading: .time("10:30"), pills: ["Work"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Draft the investor update", leading: .time("14:00"), pills: ["Fundraise"])
+        }
+    }
+
+    private func inboxScreen() -> some View {
+        InboxScreen {
+            TaskEventRow(kind: .task, title: "Follow up with the Freestyle team", leading: .none, showPills: false)
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Review the Q4 roadmap draft", leading: .none, showPills: false)
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Book the venue for the offsite", leading: .none, showPills: false)
+        }
+    }
+
+    private func chatComposition(_ fixture: ChatPlaygroundFixture) -> some View {
+        ChatScreen(
+            header: fixture.header,
+            composer: fixture.composer.state,
+            replyContext: fixture.replyContext,
+            emptyState: fixture.emptyState,
+            onAction: { _ in }
+        ) {
+            ChatTranscriptList(fixture.entries) { _ in }
+        }
+    }
+
+    private func chatScreen() -> some View {
+        ChatScreen(composerText: "", composerState: .idle) {
+            MessageBubble("Can you tidy up my inbox before I start my day?", role: .user)
+            MessageBubble(
+                "Done — I archived 38 newsletters and snoozed 5 low-priority threads. Want me to draft replies to the two that still need you?",
+                role: .assistant
+            )
+            MessageBubble("Yes, go ahead.", role: .user)
+        }
+    }
+
+    @ViewBuilder private var composerBars: some View {
+        VStack(spacing: 20) {
+            RemComposerBar()
+            RemComposerBar(text: "Remind me to send the investor update tomorrow", state: .active, showAttachments: true)
+            RemComposerBar(text: "Plan the rest of my day", state: .sending)
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // MARK: - Chat slice
+
+    @ViewBuilder private var chatMessageStates: some View {
+        VStack(spacing: DesignTokens.Spacing.lg) {
+            MessageBubble("Can you move the planning sync to Thursday?", role: .user, reaction: .heart)
+            MessageBubble(
+                "Done \u{2014} the planning sync is now Thursday at 10:00, and both attendees have the update.",
+                role: .assistant, reaction: .thumbsUp
+            )
+            MessageBubble("Thanks, that works.", role: .user, delivery: .read(at: "10:24"))
+            MessageBubble("Please share the agenda with the group as well.", role: .user, delivery: .failed, onRetry: {})
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    private static let chatProviders = [
+        ChatModelProvider(id: "provider-a", name: "Provider A", models: [ChatModelOption(id: "model-a1", name: "Model A1")]),
+    ]
+
+    @ViewBuilder private var chatComposerAuto: some View {
+        VStack(spacing: 20) {
+            RemComposerBar(
+                text: .constant(""),
+                attachments: [.cloudBrowser, ComposerAttachment(id: "photo.0", title: "Photo 1", kind: .image)],
+                modelMenu: ChatModelMenu(providers: Self.chatProviders, selection: .automatic, onSelect: { _ in }),
+                onAdd: {}, onRemoveAttachment: { _ in }, onSend: {}
+            )
+            RemComposerBar(
+                text: .constant("Plan the rest of my day"), state: .sending,
+                modelMenu: ChatModelMenu(providers: Self.chatProviders, selection: .model(id: "model-a1"), onSelect: { _ in }),
+                onSend: {}
+            )
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var addToChatSheet: some View {
+        AddToChatSheet(
+            showsCamera: true, browserAvailable: true, thinking: .constant(.medium),
+            onPhotos: {}, onFiles: {}, onDone: {}
+        )
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatHeaders: some View {
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            ChatHeader(activity: "Connected")
+            ChatHeader(activity: "Reading the shared notes", faceMode: .thinking)
+            ChatHeader(activity: "Needs you", status: .needsYou)
+        }
+        .padding(.vertical, DesignTokens.Spacing.lg)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var reactionPicker: some View {
+        MessageReactionPicker(selection: .heart) { _ in }
+            .padding(DesignTokens.Spacing.lg)
+            .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    private func messageActionSheet(_ role: MessageBubble.Role) -> some View {
+        MessageActionSheet(
+            ChatMessageActionsDisplay(message: ChatMessageDisplay(id: "m1", role: role, text: "Here’s a clearer introduction you can review."))
+        ) { _ in }
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // MARK: - Chat cards
+
+    private static let cardDraft = MessageDraft(
+        from: "me@example.com", to: "alex@example.com", subject: "Re: Product Designer - Next Steps",
+        body: "Hi Alex,\n\nThanks for reaching out \u{2014} I\u{2019}ve put time on the calendar. Looking forward to chatting.\n\nBest"
+    )
+    private static let choiceOptions = [PollOption(id: "add", label: "Add Notion"), PollOption(id: "later", label: "Not now")]
+    private static let suggestionOptions = [
+        PollOption(id: "review", label: "Review the draft"),
+        PollOption(id: "calendar", label: "Check my calendar"),
+        PollOption(id: "remind", label: "Remind me later"),
+    ]
+
+    @ViewBuilder private var chatCardDrafts: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            ForEach(MessageDraftCardState.allCases, id: \.self) { state in
+                MessageDraftCard(Self.cardDraft, state: state)
+            }
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatCardPolls: some View {
+        let question = "Add the Notion connector so I can use your shared workspace?"
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            PollCard(question: question, options: Self.choiceOptions)
+            PollCard(question: question, options: Self.choiceOptions, selection: "add")
+            // Three options: the A/B pattern extended to C (no verified C master in Figma).
+            PollCard(question: "What would you like to do next?", options: Self.suggestionOptions, purpose: .suggestion)
+            PollCard(question: "What would you like to do next?", options: Self.suggestionOptions, purpose: .suggestion, selection: "remind")
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var chatCardReceipts: some View {
+        VStack(spacing: DesignTokens.Spacing.sm) {
+            ActionReceipt(.confirmed, label: "Sent")
+            ActionReceipt(.unconfirmed, label: "Unconfirmed")
+        }
+        .frame(width: 306)
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // MARK: - Wave 2 galleries
+
+    @ViewBuilder private var dateNavHeader: some View {
+        DateNavigationHeader(dateText: "Oct 1 2026", onPrevious: {}, onNext: {})
+            .padding(.vertical, 24)
+            .frame(maxWidth: .infinity)
+            .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var messageBubbles: some View {
+        VStack(spacing: DesignTokens.Spacing.lg) {
+            MessageBubble("Can you tidy up my inbox before I start my day?", role: .user)
+            MessageBubble(
+                "Done — I archived 38 newsletters and snoozed 5 low-priority threads.\n\nWant me to draft replies to the two that still need you?",
+                role: .assistant
+            )
+            MessageBubble("Yes, go ahead.", role: .user, meta: "9:41 AM")
+        }
+        .padding(DesignTokens.Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var taskEventRows: some View {
+        VStack(spacing: 0) {
+            TaskEventRow(kind: .task, title: "Reply to Alex about the audition", leading: .time("9:00"), pills: ["3 tasks"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .event(DesignTokens.Color.systemBlue), title: "Team standup", leading: .time("10:30"), pills: ["Work"])
+            Divider().padding(.leading, 60)
+            TaskEventRow(kind: .task, title: "Unfiled inbox task", leading: .schedule, showPills: false)
+        }
+        .background(DesignTokens.Color.backgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xlarge, style: .continuous))
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    @ViewBuilder private var voiceBarStack: some View {
+        VStack(spacing: 12) {
+            ForEach(VoiceBarState.allCases, id: \.self) { state in
+                VoiceBar(state)
+            }
+        }
+        .padding(20)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // The REAL onboarding Check-in template, one state per snapshot.
+    private func checkinScreen(
+        status: OnboardingCheckinTemplate.Status,
+        morningOn: Bool,
+        middayOn: Bool,
+        nightOn: Bool
+    ) -> some View {
+        OnboardingCheckinTemplate(
+            status: status,
+            // Through the real cadence adapter — the Evening row carries the canonical `night` slot id.
+            periods: OnboardingCheckinTemplate.periods(
+                from: OnboardingCheckinTemplate.defaultCadence(
+                    morningOn: morningOn,
+                    middayOn: middayOn,
+                    nightOn: nightOn
+                ),
+                onToggle: { _, _ in }
+            ),
+            onPrimary: {}
+        )
     }
 
     // MARK: - Galleries (mirror each component's #Preview)
@@ -99,6 +707,29 @@ final class RenderSnapshots: XCTestCase {
             .padding(40)
             .frame(maxWidth: .infinity)
             .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // Pill gallery — the three quiet-chip kinds (list badge for tasks, colored dot for events, plain).
+    @ViewBuilder private var pillGallery: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            RemPill("3 tasks", kind: .list)
+            RemPill("Standup", kind: .dot(DesignTokens.Color.systemBlue))
+            RemPill("Personal")
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.backgroundPrimary)
+    }
+
+    // RemSlider gallery — the wrapped platform slider at a few values.
+    @ViewBuilder private var sliderGallery: some View {
+        VStack(spacing: 18) {
+            RemSlider(value: .constant(0.25))
+            RemSlider(value: .constant(0.6))
+            RemSlider(value: .constant(0.9))
+        }
+        .padding(24)
+        .background(DesignTokens.Color.backgroundPrimary)
     }
 
     @ViewBuilder private var iconRow: some View {
@@ -143,6 +774,19 @@ final class RenderSnapshots: XCTestCase {
             ],
             footnote: "By tapping \u{201C}Accept and Continue,\u{201D} you agree to our Terms of Service and Privacy Policy.",
             onPrimary: {}
+        )
+    }
+
+    // Connectors — onboarding treatment: hero lockup + grouped card (toggle / Connect) on a white flip
+    // bg + Continue/Skip. Brand tiles use system-color tokens (token-bound).
+    private func connectorsScreen() -> some View {
+        OnboardingConnectorsTemplate(
+            connectors: [
+                .init(symbol: "envelope.fill", tint: DesignTokens.Color.systemRed, name: "Gmail", status: "Connected", isConnected: true, action: {}),
+                .init(symbol: "calendar", tint: DesignTokens.Color.systemBlue, name: "Google Calendar", status: "Not connected", isConnected: false, action: {}),
+                .init(symbol: "number", tint: DesignTokens.Color.systemPurple, name: "Slack", status: "Not connected", isConnected: false, action: {}),
+            ],
+            onContinue: {}, onSkip: {}
         )
     }
 

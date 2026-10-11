@@ -1,0 +1,67 @@
+{
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "capturedOn": "2026-10-08",
+  "scope": "Saved source evidence only. Fresh Figma inspection paused; Logo values cover the seven Settings-used instances, not an exhaustive variant definition.",
+  "logo": {
+    "nodeId": "1328:440",
+    "property": "Brand",
+    "source": "docs/playground/settings-design/structure-and-assets.json",
+    "sourceSha256": "be6b1778fb42183493eff087ef65ef204eafc72403004dab5de6860b79271411",
+    "instances": [
+      {
+        "nodeId": "1328:379",
+        "brand": "Gmail"
+      },
+      {
+        "nodeId": "1328:394",
+        "brand": "Google Calendar"
+      },
+      {
+        "nodeId": "1328:402",
+        "brand": "Notion"
+      },
+      {
+        "nodeId": "1328:420",
+        "brand": "Slack"
+      },
+      {
+        "nodeId": "1328:429",
+        "brand": "Google Drive"
+      },
+      {
+        "nodeId": "1328:432",
+        "brand": "Linear"
+      },
+      {
+        "nodeId": "1370:2",
+        "brand": "Todoist"
+      }
+    ]
+  },
+  "voiceGlyphs": {
+    "source": "task-11/design-contract/shared-final/VOICE.md:50",
+    "sourceSha256": "8faf9fade0cf746b15de2bed4cb32632cde3554cda94eb1f81ce3d78eed370ca",
+    "sourceExcerpt": "Conversation entry leading icon is speaker (`􀊠`); Voice is waveform (`􀙫`). Both use29×29 **ContainedIcon614:4 Style=Subtle, Size=Small**, primary glyph. Chooser all five leading play/pause icons now also use **614:4**, primary glyph; previous Tinted/blue-play treatment in shared-refresh is superseded. Native SF `play.fill` (`􀊄`), `pause.fill` (`􀊆`) and semantic Material counterparts; no rasterized Figma glyph assets.",
+    "symbols": [
+      {
+        "glyph": "􀊠",
+        "swift": "speaker",
+        "compose": "Icons.AutoMirrored.Filled.VolumeMute"
+      },
+      {
+        "glyph": "􀊄",
+        "swift": "play.fill",
+        "compose": "Icons.Filled.PlayArrow"
+      },
+      {
+        "glyph": "􀊆",
+        "swift": "pause.fill",
+        "compose": "Icons.Filled.Pause"
+      }
+    ]
+  },
+  "pendingRawGlyphs": [
+    "laptopcomputer",
+    "questionmark.circle.fill"
+  ]
+}

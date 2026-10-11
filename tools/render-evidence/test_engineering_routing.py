@@ -28,9 +28,10 @@ class EngineeringRoutingTests(unittest.TestCase):
     def test_render_workflow_uses_head_not_merge_ref_and_checks_actual_checkout(self):
         root=Path(__file__).resolve().parents[2]
         workflow=(root/'.github/workflows/screenshots.yml').read_text()
-        self.assertEqual(workflow.count('uses: actions/checkout@v4'),3)
-        self.assertEqual(workflow.count('ref: ${{ github.event.pull_request.head.sha || github.sha }}'),3)
-        self.assertEqual(workflow.count('persist-credentials: false'),3)
+        # Render iOS/Android, Settings iOS/Android, and the evidence job: every checkout is the exact head.
+        self.assertEqual(workflow.count('uses: actions/checkout@v4'),5)
+        self.assertEqual(workflow.count('ref: ${{ github.event.pull_request.head.sha || github.sha }}'),5)
+        self.assertEqual(workflow.count('persist-credentials: false'),5)
         self.assertIn("if actual_head != os.environ['SHA']:",workflow)
         self.assertIn('"sha": actual_head',workflow)
         publisher=(root/'.github/workflows/publish-builder-delivery.yml').read_text()

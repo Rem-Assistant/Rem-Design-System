@@ -16,6 +16,8 @@ description: >-
 
 # Rem design system (Figma)
 
+Also follow the locally maintained [product-design policy supplement](local-policy/product-design-supplement.md) and its linked Figma workflow. These preserve inherited additions separately from the byte-exact upstream vendored skills. They do not authorize work beyond the current user request.
+
 Use the repo-generic `../design-system-delivery/SKILL.md` for the portable method. This skill is
 the Rem adapter: it supplies Rem's Figma file, node ids, registries, templates, tokens, platform
 sources, and fidelity evidence. Other projects should reuse the generic skill and provide their own

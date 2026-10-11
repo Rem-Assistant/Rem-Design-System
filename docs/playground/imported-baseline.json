@@ -1,0 +1,63 @@
+{
+  "source_commit": "93d8588c8a020f2ed25c1ca69b2144c1c06d5838",
+  "source_worktree": "/Users/samuelalake/Documents/ChatGPT/Swami/rem-design-system-agent-factory",
+  "purpose": "Selected pre-existing local native controls and Android demo scaffolding copied without modifying the source checkout.",
+  "files": [
+    {
+      "path": "Sources/RemDesignSystem/Rows/ListRow.swift",
+      "sha256": "9a5ab1bf626a59f4695bf464acf322594da9ea7fba044c1d16226dbca68e8ddc"
+    },
+    {
+      "path": "Sources/RemDesignSystem/Rows/RemSection.swift",
+      "sha256": "b9fce705765244290b080f6ed1e1e87852a4508c60d0329c863e241a82159327"
+    },
+    {
+      "path": "compose/RemDesignSystem/rows/RemSection.kt",
+      "sha256": "108b823c901ed2b99a5f2395c162c13edc079b3adb218c674aadfdaed582562a"
+    },
+    {
+      "path": "compose/settings.gradle.kts",
+      "sha256": "7eab9a4b21d8f5c493f06a81eaa6b8c48de13e705d6aa03d7d7e68db4cbebbcf"
+    },
+    {
+      "path": "compose/build.gradle.kts",
+      "sha256": "36589a37b7bcb9aa5791581c8f516765928e1ffbd9786f95e7254043cdd3f3db"
+    },
+    {
+      "path": "compose/gradlew",
+      "sha256": "b187b4c52e749f5760afdd6fadc31b2a98ad35fb249bf0dff03b72650f320409"
+    },
+    {
+      "path": "compose/gradlew.bat",
+      "sha256": "1d297e00bd21de3ace22b4d7f2de1f9dfa858883d66bbf7c1ccbecccec8f4f3b"
+    },
+    {
+      "path": "compose/README.md",
+      "sha256": "403dd3d3aa56688df3fd834a85e6e240cb3e90c79167c099c5f7f40cc123e682"
+    },
+    {
+      "path": "compose/demo/build.gradle.kts",
+      "sha256": "ee0db588e63f23e8a9b500c43cf8259a15a1df5739b9a251413acf3820c271ca"
+    },
+    {
+      "path": "compose/demo/src/main/AndroidManifest.xml",
+      "sha256": "c3422788d8cda442f1eac0edb3389fcc7667a6fc206200dce480e080ad0f8201"
+    },
+    {
+      "path": "compose/demo/src/main/java/com/rem/designsystem/demo/MainActivity.kt",
+      "sha256": "037a7e2296554d307a1ae41b216a18be6911d36cfb486fd2fe2caa28a2bc4652"
+    },
+    {
+      "path": "compose/demo/src/main/res/values/styles.xml",
+      "sha256": "9182c4e28be06284d1d228ac6f52cb09e2b6a0586e2d94edb5b6216c23b79444"
+    },
+    {
+      "path": "compose/gradle/wrapper/gradle-wrapper.jar",
+      "sha256": "7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172"
+    },
+    {
+      "path": "compose/gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "aef287d114ce3153c3d535697a61928f5034990d570cbb2e93df549e9671483d"
+    }
+  ]
+}

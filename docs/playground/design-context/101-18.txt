@@ -1,0 +1,112 @@
+function Chevron({ className }: { className?: string }) {
+  return (
+    <div className={className || "content-stretch flex items-start relative"} data-node-id="110:52" data-name="Chevron">
+      <SFSymbol>{`Image(systemName: "chevron.right")`}</SFSymbol>
+    </div>
+  );
+}
+
+type ListRowLabelProps = {
+  className?: string;
+  children?: React.ReactNode | null;
+  showSubtitle?: boolean;
+  showTitleAccessory?: boolean;
+  subtitle?: string;
+  titleLayout?: "Fill";
+};
+
+function ListRowLabel({ className, children = null, showSubtitle = true, showTitleAccessory = false, subtitle = "avery@example.com", titleLayout = "Fill" }: ListRowLabelProps) {
+  return (
+    <div className={className || "content-stretch flex flex-col items-start justify-center relative w-[240px]"} data-node-id="188:2">
+      <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="1933:8542" data-name="HStack/Title and accessory">
+        <p className="[word-break:break-word] flex-[1_0_0] font-['SF_Pro:Regular'] font-normal h-full leading-[22px] min-w-px relative text-[17px] text-[color:var(--rem-color-label-primary,black)] tracking-[-0.43px]" style={{ fontVariationSettings: '"wdth" 100' }}>
+          Account
+        </p>
+        {showTitleAccessory && (
+          <div className="relative shrink-0 size-px" data-node-id="1933:8925" data-name="Title accessory">
+            {children}
+          </div>
+        )}
+      </div>
+      {showSubtitle && (
+        <p className="[word-break:break-word] font-['SF_Pro:Regular'] font-normal leading-[18px] relative shrink-0 text-[13px] text-[color:var(--rem-color-label-secondary,rgba(60,60,67,0.6))] tracking-[-0.08px] w-full" data-node-id="188:4" style={{ fontVariationSettings: '"wdth" 100' }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+type ContainedIconProps = {
+  className?: string;
+  size?: "Small";
+  style?: "Tinted";
+};
+
+function ContainedIcon({ className, size = "Small", style = "Tinted" }: ContainedIconProps) {
+  return (
+    <div className={className || "bg-[var(--rem-color-system-blue,#007aff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] size-[29px]"} data-node-id="110:54">
+      <SFSymbol />
+    </div>
+  );
+}
+
+type ListRowProps = {
+  className?: string;
+  content?: React.ReactNode | null;
+  leadingAccessory?: React.ReactNode | null;
+  showDivider?: boolean;
+  showLeading?: boolean;
+  trailingAccessory?: React.ReactNode | null;
+};
+
+export default function ListRow({ className, content = null, leadingAccessory = null, showDivider = true, showLeading = true, trailingAccessory = null }: ListRowProps) {
+  return (
+    <div className={className || "content-stretch flex gap-[12px] items-center min-h-[60px] px-[16px] py-[12px] relative w-[360px]"} data-node-id="101:18" data-name="ListRow">
+      {showLeading && (leadingAccessory || <ContainedIcon className="bg-[var(--rem-color-system-blue,#007aff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[7px] shrink-0 size-[29px]" />)}
+      <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-node-id="101:13" data-name="content">
+        {content || <ListRowLabel className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full" />}
+      </div>
+      {showDivider && <div className="absolute bg-[var(--rem-color-separator,rgba(60,60,67,0.29))] bottom-[0.5px] h-[0.5px] left-[16px] right-0" data-node-id="101:17" data-name="separator" />}
+      <div className="content-stretch flex items-center relative shrink-0" data-node-id="121:38" data-name="trailing">
+        {trailingAccessory || <Chevron className="content-stretch flex items-start relative shrink-0" />}
+      </div>
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: Body/Regular: Font(family: "SF Pro", style: Regular, size: 17, weight: 400, lineHeight: 22, letterSpacing: -0.4300000071525574), Footnote/Regular: Font(family: "SF Pro", style: Regular, size: 13, weight: 400, lineHeight: 18, letterSpacing: -0.07999999821186066).
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## ListRow
+**Node ID:** 101:18
+
+Canonical row with Leading Accessory, Content and Trailing Accessory swaps. Content defaults to ListRowLabel, now with optional Title accessory slot. Trailing wrapper hugs the accessory’s intrinsic dimensions instead of a fixed chevron width.
+
+## Title layout=Fill
+**Node ID:** 188:2
+
+Canonical ListRowLabel. Title and Subtitle preserved. Optional Title accessory slot owns an inline Pill, icon or other small component; enable Show title accessory. No floating overlay badges.
+
+## ListRowLabel
+**Node ID:** 1966:60442
+
+ListRowLabel: Title layout=Fill preserves existing rows. Title layout=Hug keeps badges immediately beside the title. Title/Subtitle and optional Title accessory slot remain configurable.
+
+## Chevron
+**Node ID:** 110:52
+
+Chevron accessory — trailing disclosure (chevron.right). Default Accessory for ListRow. ↔ SwiftUI: NavigationLink disclosure.
+
+Images and SVGs will be stored as constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These constants will be used in the code as the source for the image, ex: <img src={image} />. Image assets are stored on a remote server for 7 days and can be fetched using the provided URLs until they expire.

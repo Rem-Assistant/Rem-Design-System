@@ -30,7 +30,9 @@ form diverges.
   - `OnboardingSequencer.kt` — the ordered-flow driver (progress + Continue/Skip forward/back, ordered
     step slots; the #12 middle steps plug in as more slots). No deploy/provisioning slot.
   - `OnboardingScaffold.kt` — the shared step chrome (back · hero `ContainedIcon` · title/subtitle ·
-    scrollable content · bottom CTA bar + legal footer), all token-bound.
+    scrollable content · bottom CTA bar + legal footer), all token-bound. Its optional `bottomToast`
+    slot is the shared recoverable-failure pattern: a transient, non-actionable Toast above the action
+    group while the persistent retry remains the primary CTA.
   - `SignInStep.kt` — the **sign-in screen** (`OnboardingSignInScreen`), built to
     `docs/contracts/onboarding-sign-in.md`: its **own centered screen** (one block centered in the
     safe area, left-aligned, ≤560dp — **not** the scaffold's bottom-pinned CTA bar), state-driven by

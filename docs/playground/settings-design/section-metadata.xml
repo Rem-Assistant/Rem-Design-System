@@ -1,0 +1,836 @@
+<section id="1833:5014" name="Agent settings · Screens &amp; working masters" x="5278" y="-332" width="14818" height="10080">
+  <symbol id="1833:5031" name="Screen/Paired Devices · Populated · Working" x="842" y="1388" width="402" height="874" />
+  <text id="1825:32529" name="Paired devices · Review" x="842" y="1338" width="261" height="28" />
+  <text id="1825:32530" name="Description/Paired devices" x="842" y="2276" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1833:5048" name="Screen/Connectors · Working" x="2702" y="1388" width="402" height="874" />
+  <text id="1825:32552" name="Connectors · Review" x="2702" y="1338" width="227" height="28" />
+  <text id="1825:32554" name="Description/Connectors" x="2702" y="2276" width="401.9999694824219" height="29.999998092651367" />
+  <symbol id="1833:5071" name="Screen/Cloud browser · Working" x="4562" y="1388" width="402" height="874" />
+  <text id="1825:32533" name="Cloud browser · Proposed" x="4562" y="1338" width="286" height="28" />
+  <text id="1825:32534" name="Description/Cloud browser" x="4562" y="2276" width="401.9999694824219" height="29.999998092651367" />
+  <symbol id="1833:5080" name="Screen/Automations · Working" x="6422" y="1388" width="402" height="874" />
+  <text id="1825:32537" name="Automations · Review" x="6422" y="1338" width="238" height="28" />
+  <text id="1825:32538" name="Description/Automations" x="6422" y="2276" width="401.9999694824219" height="29.999998092651367" />
+  <symbol id="1833:5096" name="Screen/Memory · Proposed · Working" x="8282" y="1388" width="402" height="874" />
+  <text id="1825:32541" name="Memory · Proposed" x="8282" y="1338" width="216" height="28" />
+  <text id="1825:32542" name="Description/Memory" x="8282" y="2276" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1833:5109" name="Screen/Models · Working" x="10142" y="1388" width="402" height="874" />
+  <instance id="1825:32391" name="Screen/Agent settings · Working" x="7352" y="120" width="402" height="874">
+    <instance id="I1825:32391;1827:50848" name="Status bar - iPhone" x="0" y="0" width="402.0000305175781" height="62.000003814697266" />
+    <instance id="I1825:32391;1827:50849" name="Toolbar - Top - iPhone" x="0" y="62" width="402.0000305175781" height="54.000003814697266" />
+    <frame id="I1825:32391;1827:50850" name="Body" x="0" y="116" width="402" height="724">
+      <instance id="I1825:32391;1827:50851" name="Section/Connectivity" x="16" y="12" width="370.0000305175781" height="310.0000305175781">
+        <instance id="I1825:32391;1827:50851;741:312" name="Header" x="0" y="0" width="370.0000305175781" height="28">
+          <text id="I1825:32391;1827:50851;741:312;161:69" name="Section Header" x="16" y="0" width="338.0000305175781" height="22" />
+          <slot id="I1825:32391;1827:50851;741:312;1849:4859" name="Trailing action" x="110" y="0" width="100" height="100" hidden="true" />
+        </instance>
+        <slot id="I1825:32391;1827:50851;741:314" name="Rows" x="0" y="28" width="370.0000305175781" height="250.00003051757812">
+          <instance id="I1825:32391;1827:50851;1823:23431" name="ListRow/Paired Devices" x="1" y="1" width="368.0000305175781" height="64.00000762939453">
+            <instance id="I1825:32391;1827:50851;1823:23431;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50851;1823:23431;101:13" name="content" x="57" y="12" width="270.0000305175781" height="40">
+              <instance id="I1825:32391;1827:50851;1823:23431;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="40">
+                <frame id="I1825:32391;1827:50851;1823:23431;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50851;1823:23431;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50851;1823:23431;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50851;1823:23431;188:192;188:4" name="avery@example.com" x="0" y="22" width="270.0000305175781" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50851;1823:23431;101:17" name="separator" x="16" y="63" width="352" height="0.5" />
+            <frame id="I1825:32391;1827:50851;1823:23431;121:38" name="trailing" x="339.0000305175781" y="22" width="13" height="20">
+              <instance id="I1825:32391;1827:50851;1823:23431;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+          <instance id="I1825:32391;1827:50851;1823:23432" name="ListRow/Connectors" x="1" y="65.00000762939453" width="368.0000305175781" height="60.000003814697266">
+            <instance id="I1825:32391;1827:50851;1823:23432;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50851;1823:23432;101:13" name="content" x="57" y="19" width="270.0000305175781" height="22">
+              <instance id="I1825:32391;1827:50851;1823:23432;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="22">
+                <frame id="I1825:32391;1827:50851;1823:23432;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50851;1823:23432;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50851;1823:23432;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50851;1823:23432;188:192;188:4" name="avery@example.com" x="0" y="22" width="262" height="18" hidden="true" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50851;1823:23432;101:17" name="separator" x="16" y="59" width="352" height="0.5" />
+            <frame id="I1825:32391;1827:50851;1823:23432;121:38" name="trailing" x="339.0000305175781" y="20" width="13" height="20">
+              <instance id="I1825:32391;1827:50851;1823:23432;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+          <instance id="I1825:32391;1827:50851;1823:23433" name="ListRow/Cloud browser" x="1" y="125.00001525878906" width="368.0000305175781" height="60.000003814697266">
+            <instance id="I1825:32391;1827:50851;1823:23433;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50851;1823:23433;101:13" name="content" x="57" y="19" width="270.0000305175781" height="22">
+              <instance id="I1825:32391;1827:50851;1823:23433;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="22">
+                <frame id="I1825:32391;1827:50851;1823:23433;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50851;1823:23433;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50851;1823:23433;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50851;1823:23433;188:192;188:4" name="avery@example.com" x="0" y="22" width="262" height="18" hidden="true" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50851;1823:23433;101:17" name="separator" x="16" y="59" width="352" height="0.5" />
+            <frame id="I1825:32391;1827:50851;1823:23433;121:38" name="trailing" x="339.0000305175781" y="20" width="13" height="20">
+              <instance id="I1825:32391;1827:50851;1823:23433;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+          <instance id="I1825:32391;1827:50851;1823:23434" name="ListRow/Skills" x="1" y="185" width="368.0000305175781" height="60.000003814697266" hidden="true" />
+          <instance id="I1825:32391;1827:50851;1823:23435" name="ListRow/Daily Check-in" x="1" y="185.00001525878906" width="368.0000305175781" height="64.00000762939453">
+            <instance id="I1825:32391;1827:50851;1823:23435;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50851;1823:23435;101:13" name="content" x="57" y="12" width="270.0000305175781" height="40">
+              <instance id="I1825:32391;1827:50851;1823:23435;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="40">
+                <frame id="I1825:32391;1827:50851;1823:23435;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50851;1823:23435;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50851;1823:23435;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50851;1823:23435;188:192;188:4" name="avery@example.com" x="0" y="22" width="270.0000305175781" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50851;1823:23435;101:17" name="separator" x="16" y="63" width="352" height="0.5" hidden="true" />
+            <frame id="I1825:32391;1827:50851;1823:23435;121:38" name="trailing" x="339.0000305175781" y="22" width="13" height="20">
+              <instance id="I1825:32391;1827:50851;1823:23435;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+        </slot>
+        <instance id="I1825:32391;1827:50851;741:337" name="Footer" x="0" y="278.0000305175781" width="370.0000305175781" height="32" />
+      </instance>
+      <instance id="I1825:32391;1827:50852" name="Section/Memory &amp; Keys" x="15.999984741210938" y="344.0000305175781" width="370.0000305175781" height="214.00001525878906">
+        <instance id="I1825:32391;1827:50852;741:312" name="Header" x="0" y="0" width="370.0000305175781" height="28">
+          <text id="I1825:32391;1827:50852;741:312;161:69" name="Section Header" x="16" y="0" width="338.0000305175781" height="22" />
+          <slot id="I1825:32391;1827:50852;741:312;1849:4859" name="Trailing action" x="110" y="0" width="100" height="100" hidden="true" />
+        </instance>
+        <slot id="I1825:32391;1827:50852;741:314" name="Rows" x="0" y="28" width="370.0000305175781" height="186.00001525878906">
+          <instance id="I1825:32391;1827:50852;1823:23445" name="ListRow/Memory" x="1" y="1" width="368.0000305175781" height="60.000003814697266">
+            <instance id="I1825:32391;1827:50852;1823:23445;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50852;1823:23445;101:13" name="content" x="57" y="19" width="270.0000305175781" height="22">
+              <instance id="I1825:32391;1827:50852;1823:23445;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="22">
+                <frame id="I1825:32391;1827:50852;1823:23445;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50852;1823:23445;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50852;1823:23445;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50852;1823:23445;188:192;188:4" name="avery@example.com" x="0" y="22" width="262" height="18" hidden="true" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50852;1823:23445;101:17" name="separator" x="16" y="59" width="352" height="0.5" />
+            <frame id="I1825:32391;1827:50852;1823:23445;121:38" name="trailing" x="339.0000305175781" y="20" width="13" height="20">
+              <instance id="I1825:32391;1827:50852;1823:23445;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+          <instance id="I1825:32391;1827:50852;1823:23446" name="ListRow/Models" x="1" y="61.000003814697266" width="368.0000305175781" height="64.00000762939453">
+            <instance id="I1825:32391;1827:50852;1823:23446;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50852;1823:23446;101:13" name="content" x="57" y="12" width="270.0000305175781" height="40">
+              <instance id="I1825:32391;1827:50852;1823:23446;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="40">
+                <frame id="I1825:32391;1827:50852;1823:23446;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50852;1823:23446;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50852;1823:23446;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50852;1823:23446;188:192;188:4" name="avery@example.com" x="0" y="22" width="270.0000305175781" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50852;1823:23446;101:17" name="separator" x="16" y="63" width="352" height="0.5" />
+            <frame id="I1825:32391;1827:50852;1823:23446;121:38" name="trailing" x="339.0000305175781" y="22" width="13" height="20">
+              <instance id="I1825:32391;1827:50852;1823:23446;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+          <instance id="I1825:32391;1827:50852;1823:23447" name="ListRow/Wallet" x="1" y="125.00001525878906" width="368.0000305175781" height="60.000003814697266">
+            <instance id="I1825:32391;1827:50852;1823:23447;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50852;1823:23447;101:13" name="content" x="57" y="19" width="270.0000305175781" height="22">
+              <instance id="I1825:32391;1827:50852;1823:23447;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="22">
+                <frame id="I1825:32391;1827:50852;1823:23447;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50852;1823:23447;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50852;1823:23447;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50852;1823:23447;188:192;188:4" name="avery@example.com" x="0" y="22" width="262" height="18" hidden="true" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50852;1823:23447;101:17" name="separator" x="16" y="59" width="352" height="0.5" hidden="true" />
+            <frame id="I1825:32391;1827:50852;1823:23447;121:38" name="trailing" x="339.0000305175781" y="20" width="13" height="20">
+              <instance id="I1825:32391;1827:50852;1823:23447;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+        </slot>
+        <instance id="I1825:32391;1827:50852;741:337" name="Footer" x="0" y="194" width="354" height="32" hidden="true" />
+      </instance>
+      <instance id="I1825:32391;1827:50853" name="Section/Experience" x="15.999984741210938" y="580.0000610351562" width="370.0000305175781" height="94.00000762939453">
+        <instance id="I1825:32391;1827:50853;741:312" name="Header" x="0" y="0" width="370.0000305175781" height="28">
+          <text id="I1825:32391;1827:50853;741:312;161:69" name="Section Header" x="16" y="0" width="338.0000305175781" height="22" />
+          <slot id="I1825:32391;1827:50853;741:312;1849:4859" name="Trailing action" x="110" y="0" width="100" height="100" hidden="true" />
+        </instance>
+        <slot id="I1825:32391;1827:50853;741:314" name="Rows" x="0" y="28" width="370.0000305175781" height="66.00000762939453">
+          <instance id="I1825:32391;1827:50853;1823:23455" name="ListRow/Voice" x="1" y="1" width="368.0000305175781" height="64.00000762939453">
+            <instance id="I1825:32391;1827:50853;1823:23455;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1825:32391;1827:50853;1823:23455;101:13" name="content" x="57" y="12" width="270.0000305175781" height="40">
+              <instance id="I1825:32391;1827:50853;1823:23455;188:192" name="ListRowLabel" x="0" y="0" width="270.0000305175781" height="40">
+                <frame id="I1825:32391;1827:50853;1823:23455;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270.0000305175781" height="22">
+                  <text id="I1825:32391;1827:50853;1823:23455;188:192;188:3" name="Account" x="0" y="0" width="270.0000305175781" height="22" />
+                  <slot id="I1825:32391;1827:50853;1823:23455;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1825:32391;1827:50853;1823:23455;188:192;188:4" name="avery@example.com" x="0" y="22" width="270.0000305175781" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1825:32391;1827:50853;1823:23455;101:17" name="separator" x="16" y="63" width="352" height="0.5" hidden="true" />
+            <frame id="I1825:32391;1827:50853;1823:23455;121:38" name="trailing" x="339.0000305175781" y="22" width="13" height="20">
+              <instance id="I1825:32391;1827:50853;1823:23455;111:80" name="right" x="0" y="0" width="13" height="20" />
+            </frame>
+          </instance>
+        </slot>
+        <instance id="I1825:32391;1827:50853;741:337" name="Footer" x="0" y="194" width="354" height="32" hidden="true" />
+      </instance>
+    </frame>
+    <instance id="I1825:32391;1827:50854" name="NavigationIndicator" x="0" y="840" width="402.0000305175781" height="34.000003814697266" />
+  </instance>
+  <symbol id="1833:51817" name="Screen/Wallet · Working" x="12002" y="1388" width="402" height="874" />
+  <text id="1825:32545" name="Wallet · Proposed" x="12002" y="1338" width="193" height="28" />
+  <text id="1825:32546" name="Description/Wallet" x="12002" y="2276" width="401.9999694824219" height="29.999998092651367" />
+  <text id="1825:32549" name="Voice · Proposed" x="13862" y="1338" width="186" height="28" />
+  <text id="1825:32550" name="Description/Voice" x="13862" y="2276" width="401.9999694824219" height="29.999998092651367" />
+  <connector id="1833:5112" name="Agent settings → Screen/Paired Devices · Populated · Working" x="1043" y="997.5" width="6510" height="387">
+    <vector id="0:6173" name="Shape" x="0" y="4.440892098500626e-16" width="6510" height="387" />
+    <frame id="0:6174" name="Text Background" x="1082.00048828125" y="-82" width="100" height="100" hidden="true">
+      <text id="0:6175" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1833:5116" name="Agent settings → Screen/Connectors · Working" x="2903" y="997.5" width="4650" height="387">
+    <vector id="0:6176" name="Shape" x="0" y="8.881784197001252e-16" width="4650" height="387" />
+    <frame id="0:6177" name="Text Background" x="-777.99951171875" y="-82" width="100" height="100" hidden="true">
+      <text id="0:6178" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1833:5120" name="Agent settings → Screen/Cloud browser · Working" x="4763" y="997.5" width="2790" height="387">
+    <vector id="0:6179" name="Shape" x="0" y="1.3322676295501878e-15" width="2790" height="387" />
+    <frame id="0:6180" name="Text Background" x="-2637.99951171875" y="-82" width="100" height="100" hidden="true">
+      <text id="0:6181" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1833:5124" name="Agent settings → Screen/Automations · Working" x="6623" y="997.5" width="930" height="387">
+    <vector id="0:6182" name="Shape" x="0" y="1.7763568394002505e-15" width="930" height="387" />
+    <frame id="0:6183" name="Text Background" x="-4497.99951171875" y="-82" width="100" height="100" hidden="true">
+      <text id="0:6184" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1833:5128" name="Agent settings → Screen/Memory · Proposed · Working" x="7553" y="997.5" width="930" height="387">
+    <vector id="0:6185" name="Shape" x="0" y="8.881784197001252e-16" width="930" height="387" />
+    <frame id="0:6186" name="Text Background" x="-5427.99951171875" y="-82" width="100" height="100" hidden="true">
+      <text id="0:6187" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1833:5132" name="Agent settings → Screen/Models · Working" x="7553" y="997.5" width="2790" height="387">
+    <vector id="0:6188" name="Shape" x="0" y="8.881784197001252e-16" width="2790" height="387" />
+    <frame id="0:6189" name="Text Background" x="-5427.99951171875" y="-82" width="100" height="100" hidden="true">
+      <text id="0:6190" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1833:51842" name="Agent settings → Screen/Wallet · Working" x="7553" y="997.5" width="4650" height="387">
+    <vector id="0:6191" name="Shape" x="0" y="8.881784197001252e-16" width="4650" height="387" />
+    <frame id="0:6192" name="Text Background" x="-7232" y="0" width="100" height="100" hidden="true">
+      <text id="0:6193" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <symbol id="1833:52316" name="Screen/Paired Devices · Working" x="240" y="2602" width="402" height="874" />
+  <connector id="1833:52345" name="Paired devices · Empty state" x="441" y="2265.5" width="602" height="333">
+    <vector id="0:6197" name="Shape" x="0" y="0" width="602" height="333" />
+    <frame id="0:6198" name="Text Background" x="-120" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6199" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <text id="1825:33821" name="No paired devices · Proposed" x="240" y="2552" width="324" height="28" />
+  <text id="1825:33822" name="Description/No paired devices" x="240" y="3490" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1833:52344" name="Screen/Device detail · Other · Working" x="1444" y="2602" width="402" height="874" />
+  <connector id="1833:52353" name="Paired devices → Screen/Device detail · Other · Working" x="1043" y="2265.5" width="602" height="333">
+    <vector id="0:6200" name="Shape" x="0" y="0" width="602" height="333" />
+    <frame id="0:6201" name="Text Background" x="-722" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6202" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <text id="1825:33855" name="Mac Studio · Review" x="1444" y="2552" width="223" height="28" />
+  <text id="1825:33856" name="Description/Mac Studio" x="1444" y="3490" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1839:52547" name="Screen/Remove device access · Working" x="1444" y="3776" width="402" height="874" />
+  <text id="1825:38144" name="Remove device · Review" x="1444" y="3726" width="267" height="28" />
+  <text id="1825:38145" name="Description/Remove device confirmation" x="1444" y="4664" width="401.9999694824219" height="59.999996185302734" />
+  <connector id="1839:52880" name="Other device → Remove access" x="1645" y="3479.5" width="0" height="293">
+    <vector id="0:6203" name="Shape" x="0" y="0" width="0" height="293" />
+    <frame id="0:6204" name="Text Background" x="-602" y="-1214" width="100" height="100" hidden="true">
+      <text id="0:6205" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <symbol id="1865:6193" name="Screen/Memory summary · Proposed · Working" x="8282" y="2602" width="402" height="874" />
+  <text id="1825:40353" name="Memory summary · Proposed" x="8282" y="2552" width="324" height="28" />
+  <text id="1825:40354" name="Description/Memory summary" x="8282" y="3490" width="401.9999694824219" height="59.999996185302734" />
+  <connector id="1865:6194" name="Memory → Memory summary" x="8483" y="2265.5" width="0" height="333">
+    <vector id="0:6206" name="Shape" x="0" y="0" width="0" height="333" />
+    <frame id="0:6207" name="Text Background" x="-8042" y="0" width="100" height="100" hidden="true">
+      <text id="0:6208" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <symbol id="1868:6148" name="Screen/Cloud browser · Sites · Working" x="3940" y="2642" width="402" height="874" />
+  <text id="1825:39266" name="Sites · Proposed" x="3940" y="2592" width="180" height="28" />
+  <text id="1825:39267" name="Description/Sites" x="3940" y="3530" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1868:6153" name="Screen/Cloud browser · Clear all site data · Working" x="5184" y="2642" width="402" height="874" />
+  <text id="1825:39270" name="Clear all site data · Proposed" x="5184" y="2592" width="316" height="28" />
+  <text id="1825:39271" name="Description/Clear all site data" x="5184" y="3530" width="401.9999694824219" height="59.999996185302734" />
+  <text id="1825:39274" name="Add site · Proposed" x="4562" y="2592" width="216" height="28" />
+  <text id="1825:39275" name="Description/Add site" x="4562" y="3530" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1868:6197" name="Screen/Cloud browser · Site detail · Working" x="3940" y="3916" width="402" height="874" />
+  <text id="1825:39278" name="Site detail · Proposed" x="3940" y="3866" width="235" height="28" />
+  <text id="1825:39279" name="Description/Site detail" x="3940" y="4804" width="401.9999694824219" height="59.999996185302734" />
+  <text id="1825:39286" name="Saved login · Proposed" x="3940" y="5140" width="253" height="28" />
+  <text id="1825:39287" name="Description/Saved login" x="3940" y="6078" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1868:6227" name="Screen/Cloud browser · Cookies and sessions · Working" x="5184" y="5190" width="402" height="874" />
+  <text id="1825:39290" name="Cookies and sessions · Proposed" x="5184" y="5140" width="364" height="28" />
+  <text id="1825:39291" name="Description/Cookies and sessions" x="5184" y="6078" width="401.9999694824219" height="59.999996185302734" />
+  <text id="1825:39282" name="Add login · Proposed" x="4562" y="5140" width="230" height="28" />
+  <text id="1825:39283" name="Description/Add login" x="4562" y="6078" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1868:6250" name="Screen/Cloud browser · Remove login · Working" x="3940" y="9012" width="402" height="874" />
+  <text id="1825:39294" name="Remove login" x="3940" y="8962" width="148" height="28" />
+  <text id="1825:39295" name="Description/Remove login" x="3940" y="9900" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1868:6255" name="Screen/Cloud browser · Clear site data · Working" x="5184" y="3916" width="402" height="874" />
+  <text id="1825:39298" name="Clear site data" x="5184" y="3866" width="160" height="28" />
+  <text id="1825:39299" name="Description/Clear site data" x="5184" y="4804" width="401.9999694824219" height="59.999996185302734" />
+  <symbol id="1875:6714" name="Screen/Cloud browser · Clear site data · From cookies · Working" x="5184" y="6464" width="402" height="874" />
+  <connector id="1875:6892" name="Cloud browser → Sites" x="4141" y="2265.5" width="622" height="373">
+    <vector id="0:6209" name="Shape" x="0" y="0" width="622" height="373" />
+    <frame id="0:6210" name="Text Background" x="622" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6211" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6900" name="Cloud browser → Clear all confirmation" x="4763" y="2265.5" width="622" height="373">
+    <vector id="0:6215" name="Shape" x="0" y="0" width="622" height="373" />
+    <frame id="0:6216" name="Text Background" x="0" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6217" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6904" name="Sites → Site detail" x="4141" y="3519.5" width="0" height="393">
+    <vector id="0:6218" name="Shape" x="0" y="0" width="0" height="393" />
+    <frame id="0:6219" name="Text Background" x="622" y="-2522" width="100" height="100" hidden="true">
+      <text id="0:6220" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6924" name="Site detail → Cookies and sessions" x="4141" y="4793.5" width="1244" height="393">
+    <vector id="0:6233" name="Shape" x="0" y="0" width="1244" height="393" />
+    <frame id="0:6234" name="Text Background" x="622" y="-3796" width="100" height="100" hidden="true">
+      <text id="0:6235" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6928" name="Site detail → Clear site data" x="4345.5" y="4353" width="835" height="0">
+    <vector id="0:6236" name="Shape" x="0" y="0" width="835" height="0" />
+    <frame id="0:6237" name="Text Background" x="417.5" y="-3355.5" width="100" height="100" hidden="true">
+      <text id="0:6238" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6948" name="Cookies → Clear confirmation" x="5385" y="6067.5" width="0" height="393">
+    <vector id="0:6251" name="Shape" x="0" y="0" width="0" height="393" />
+    <frame id="0:6252" name="Text Background" x="-622" y="-5070" width="100" height="100" hidden="true">
+      <text id="0:6253" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <text id="1883:7957" name="Gmail · Connected" x="2702" y="2970" width="402" height="28" />
+  <text id="1883:8255" name="Gmail · Connector menu" x="2300" y="4470" width="402" height="28" />
+  <text id="1883:8559" name="Gmail · Account menu" x="2702" y="5970" width="402" height="28" />
+  <text id="1883:8659" name="Gmail · Permissions" x="3100" y="4470" width="402" height="28" />
+  <text id="1883:8755" name="Account · Permissions" x="2300" y="8970" width="402" height="28" />
+  <text id="1883:9046" name="Gmail · Disconnect account" x="3100" y="8970" width="402" height="28" />
+  <text id="1883:9337" name="Gmail · Disconnect accounts" x="2300" y="7470" width="402" height="28" />
+  <text id="1883:9342" name="Gmail" x="2803" y="2619" width="200" height="19" />
+  <text id="1883:9347" name="Connector · More" x="2602" y="4185" width="200" height="19" />
+  <text id="1883:9352" name="Permissions" x="3002" y="4185" width="200" height="19" />
+  <text id="1883:9357" name="Account · More" x="2803" y="4935" width="200" height="19" />
+  <text id="1883:9362" name="Disconnect accounts" x="2401" y="6435" width="200" height="19" />
+  <text id="1883:9367" name="Settings" x="2602" y="7935" width="200" height="19" />
+  <text id="1883:9372" name="Disconnect account" x="3002" y="7935" width="200" height="19" />
+  <frame id="1898:53941" name="Wallet · Link pre-consent" x="12002" y="2602" width="402" height="874">
+    <instance id="1898:54021" name="Wallet backdrop" x="0" y="0" width="402" height="874">
+      <instance id="I1898:54021;1833:51806" name="Status bar - iPhone" x="0" y="0" width="402.0000305175781" height="62.000003814697266" />
+      <instance id="I1898:54021;1833:51807" name="Toolbar - Top - iPhone" x="0" y="62" width="402.0000305175781" height="54.000003814697266" />
+      <frame id="I1898:54021;1833:51808" name="Body" x="0" y="116" width="402" height="724">
+        <instance id="I1898:54021;1833:51809" name="Lockup/Wallet" x="16" y="10" width="370.0000305175781" height="166.00001525878906">
+          <slot id="I1898:54021;1833:51809;773:24" name="Visual" x="153.00001525878906" y="0" width="64" height="64">
+            <instance id="I1898:54021;1833:51809;1833:51813" name="ContainedIcon/Wallet" x="0" y="0" width="64" height="64" />
+          </slot>
+          <text id="I1898:54021;1833:51809;773:20" name="Privacy by design" x="0" y="76" width="370.0000305175781" height="34" />
+          <text id="I1898:54021;1833:51809;773:21" name="Rem uses your data to answer you and act on the things you ask. You can review or delete it anytime in Settings." x="0" y="122" width="370.0000305175781" height="44" />
+        </instance>
+        <instance id="I1898:54021;1833:51810" name="Section/Payment methods" x="16" y="198.00001525878906" width="370" height="122">
+          <instance id="I1898:54021;1833:51810;741:312" name="Header" x="0" y="0" width="354" height="28" hidden="true" />
+          <slot id="I1898:54021;1833:51810;741:314" name="Rows" x="0" y="0" width="370" height="122">
+            <instance id="I1898:54021;1833:51810;1833:51815" name="ListRow" x="1" y="1" width="368" height="60">
+              <instance id="I1898:54021;1833:51810;1833:51815;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+              <frame id="I1898:54021;1833:51810;1833:51815;101:13" name="content" x="57" y="19" width="270" height="22">
+                <instance id="I1898:54021;1833:51810;1833:51815;188:192" name="ListRowLabel" x="0" y="0" width="270" height="22">
+                  <frame id="I1898:54021;1833:51810;1833:51815;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270" height="22">
+                    <text id="I1898:54021;1833:51810;1833:51815;188:192;188:3" name="Account" x="0" y="0" width="270" height="22" />
+                    <slot id="I1898:54021;1833:51810;1833:51815;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                  </frame>
+                  <text id="I1898:54021;1833:51810;1833:51815;188:192;188:4" name="avery@example.com" x="0" y="22" width="240" height="18" hidden="true" />
+                </instance>
+              </frame>
+              <rounded-rectangle id="I1898:54021;1833:51810;1833:51815;101:17" name="separator" x="16" y="59" width="352" height="0.5" />
+              <frame id="I1898:54021;1833:51810;1833:51815;121:38" name="trailing" x="339" y="20" width="13" height="20">
+                <instance id="I1898:54021;1833:51810;1833:51815;111:80" name="right" x="0" y="0" width="13" height="20" />
+              </frame>
+            </instance>
+            <instance id="I1898:54021;1833:51810;1833:51816" name="ListRow" x="1" y="61" width="368" height="60">
+              <instance id="I1898:54021;1833:51810;1833:51816;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+              <frame id="I1898:54021;1833:51810;1833:51816;101:13" name="content" x="57" y="19" width="270" height="22">
+                <instance id="I1898:54021;1833:51810;1833:51816;188:192" name="ListRowLabel" x="0" y="0" width="270" height="22">
+                  <frame id="I1898:54021;1833:51810;1833:51816;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270" height="22">
+                    <text id="I1898:54021;1833:51810;1833:51816;188:192;188:3" name="Account" x="0" y="0" width="270" height="22" />
+                    <slot id="I1898:54021;1833:51810;1833:51816;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                  </frame>
+                  <text id="I1898:54021;1833:51810;1833:51816;188:192;188:4" name="avery@example.com" x="0" y="22" width="240" height="18" hidden="true" />
+                </instance>
+              </frame>
+              <rounded-rectangle id="I1898:54021;1833:51810;1833:51816;101:17" name="separator" x="16" y="59" width="352" height="0.5" hidden="true" />
+              <frame id="I1898:54021;1833:51810;1833:51816;121:38" name="trailing" x="339" y="20" width="13" height="20">
+                <instance id="I1898:54021;1833:51810;1833:51816;111:80" name="right" x="0" y="0" width="13" height="20" />
+              </frame>
+            </instance>
+          </slot>
+          <instance id="I1898:54021;1833:51810;741:337" name="Footer" x="0" y="194" width="354" height="32" hidden="true" />
+        </instance>
+      </frame>
+      <instance id="I1898:54021;1833:51811" name="NavigationIndicator" x="0" y="840" width="402.0000305175781" height="34.000003814697266" />
+    </instance>
+    <rounded-rectangle id="1898:54020" name="Wallet dimming" x="0" y="0" width="402" height="874" />
+    <instance id="1898:54430" name="Pre-consent inspector · Link" x="0" y="247" width="402" height="623">
+      <instance id="I1898:54430;1898:53943" name="Inspector sheet foundation" x="0" y="0" width="402" height="623" />
+      <frame id="I1898:54430;1898:53960" name="Provider identity" x="26" y="27" width="350" height="154">
+        <frame id="I1898:54430;1898:53961" name="Brand mark" x="0" y="0" width="350" height="60">
+          <rounded-rectangle id="I1898:54430;1898:53962" name="Official provider brand" x="145" y="0" width="60" height="60" />
+        </frame>
+        <text id="I1898:54430;1898:53963" name="Consent title" x="0" y="68" width="350" height="34" />
+        <text id="I1898:54430;1898:53964" name="Connection purpose" x="0" y="110" width="350" height="44" />
+      </frame>
+      <instance id="I1898:54430;1898:53965" name="Benefits and permissions" x="26" y="197" width="350" height="220" />
+      <text id="I1898:54430;1898:53984" name="Provider handoff and exchange" x="26" y="433" width="350" height="54" />
+      <instance id="I1898:54430;1898:53985" name="Consent actions" x="26" y="503" width="350" height="90">
+        <slot id="I1898:54430;1898:53985;773:8" name="Actions" x="0" y="0" width="350" height="90">
+          <instance id="I1898:54430;1898:53985;1898:53996" name="Connect" x="0" y="0" width="350" height="48">
+            <slot id="I1898:54430;1898:53985;1898:53996;1300:1630" name="Leading" x="22" y="14" width="36" height="36" hidden="true" />
+            <text id="I1898:54430;1898:53985;1898:53996;408:16" name="label" x="140" y="13" width="70" height="22" />
+            <slot id="I1898:54430;1898:53985;1898:53996;1300:1631" name="Trailing" x="97" y="14" width="36" height="36" hidden="true" />
+          </instance>
+          <instance id="I1898:54430;1898:53985;1898:54010" name="Cancel" x="0" y="56" width="350" height="34">
+            <slot id="I1898:54430;1898:53985;1898:54010;1300:1624" name="Leading" x="4" y="7" width="36" height="36" hidden="true" />
+            <text id="I1898:54430;1898:53985;1898:54010;377:3" name="Continue" x="147" y="6" width="56" height="22" />
+            <slot id="I1898:54430;1898:53985;1898:54010;1300:1625" name="Trailing" x="77" y="7" width="36" height="36" hidden="true" />
+          </instance>
+        </slot>
+      </instance>
+    </instance>
+  </frame>
+  <frame id="1898:54081" name="Wallet · Shop Pay pre-consent" x="12622" y="2602" width="402" height="874">
+    <instance id="1898:54161" name="Wallet backdrop" x="0" y="0" width="402" height="874">
+      <instance id="I1898:54161;1833:51806" name="Status bar - iPhone" x="0" y="0" width="402.0000305175781" height="62.000003814697266" />
+      <instance id="I1898:54161;1833:51807" name="Toolbar - Top - iPhone" x="0" y="62" width="402.0000305175781" height="54.000003814697266" />
+      <frame id="I1898:54161;1833:51808" name="Body" x="0" y="116" width="402" height="724">
+        <instance id="I1898:54161;1833:51809" name="Lockup/Wallet" x="16" y="10" width="370.0000305175781" height="166.00001525878906">
+          <slot id="I1898:54161;1833:51809;773:24" name="Visual" x="153.00001525878906" y="0" width="64" height="64">
+            <instance id="I1898:54161;1833:51809;1833:51813" name="ContainedIcon/Wallet" x="0" y="0" width="64" height="64" />
+          </slot>
+          <text id="I1898:54161;1833:51809;773:20" name="Privacy by design" x="0" y="76" width="370.0000305175781" height="34" />
+          <text id="I1898:54161;1833:51809;773:21" name="Rem uses your data to answer you and act on the things you ask. You can review or delete it anytime in Settings." x="0" y="122" width="370.0000305175781" height="44" />
+        </instance>
+        <instance id="I1898:54161;1833:51810" name="Section/Payment methods" x="16" y="198.00001525878906" width="370" height="122">
+          <instance id="I1898:54161;1833:51810;741:312" name="Header" x="0" y="0" width="354" height="28" hidden="true" />
+          <slot id="I1898:54161;1833:51810;741:314" name="Rows" x="0" y="0" width="370" height="122">
+            <instance id="I1898:54161;1833:51810;1833:51815" name="ListRow" x="1" y="1" width="368" height="60">
+              <instance id="I1898:54161;1833:51810;1833:51815;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+              <frame id="I1898:54161;1833:51810;1833:51815;101:13" name="content" x="57" y="19" width="270" height="22">
+                <instance id="I1898:54161;1833:51810;1833:51815;188:192" name="ListRowLabel" x="0" y="0" width="270" height="22">
+                  <frame id="I1898:54161;1833:51810;1833:51815;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270" height="22">
+                    <text id="I1898:54161;1833:51810;1833:51815;188:192;188:3" name="Account" x="0" y="0" width="270" height="22" />
+                    <slot id="I1898:54161;1833:51810;1833:51815;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                  </frame>
+                  <text id="I1898:54161;1833:51810;1833:51815;188:192;188:4" name="avery@example.com" x="0" y="22" width="240" height="18" hidden="true" />
+                </instance>
+              </frame>
+              <rounded-rectangle id="I1898:54161;1833:51810;1833:51815;101:17" name="separator" x="16" y="59" width="352" height="0.5" />
+              <frame id="I1898:54161;1833:51810;1833:51815;121:38" name="trailing" x="339" y="20" width="13" height="20">
+                <instance id="I1898:54161;1833:51810;1833:51815;111:80" name="right" x="0" y="0" width="13" height="20" />
+              </frame>
+            </instance>
+            <instance id="I1898:54161;1833:51810;1833:51816" name="ListRow" x="1" y="61" width="368" height="60">
+              <instance id="I1898:54161;1833:51810;1833:51816;111:79" name="leading" x="16" y="15.5" width="29" height="29" />
+              <frame id="I1898:54161;1833:51810;1833:51816;101:13" name="content" x="57" y="19" width="270" height="22">
+                <instance id="I1898:54161;1833:51810;1833:51816;188:192" name="ListRowLabel" x="0" y="0" width="270" height="22">
+                  <frame id="I1898:54161;1833:51810;1833:51816;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="270" height="22">
+                    <text id="I1898:54161;1833:51810;1833:51816;188:192;188:3" name="Account" x="0" y="0" width="270" height="22" />
+                    <slot id="I1898:54161;1833:51810;1833:51816;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                  </frame>
+                  <text id="I1898:54161;1833:51810;1833:51816;188:192;188:4" name="avery@example.com" x="0" y="22" width="240" height="18" hidden="true" />
+                </instance>
+              </frame>
+              <rounded-rectangle id="I1898:54161;1833:51810;1833:51816;101:17" name="separator" x="16" y="59" width="352" height="0.5" hidden="true" />
+              <frame id="I1898:54161;1833:51810;1833:51816;121:38" name="trailing" x="339" y="20" width="13" height="20">
+                <instance id="I1898:54161;1833:51810;1833:51816;111:80" name="right" x="0" y="0" width="13" height="20" />
+              </frame>
+            </instance>
+          </slot>
+          <instance id="I1898:54161;1833:51810;741:337" name="Footer" x="0" y="194" width="354" height="32" hidden="true" />
+        </instance>
+      </frame>
+      <instance id="I1898:54161;1833:51811" name="NavigationIndicator" x="0" y="840" width="402.0000305175781" height="34.000003814697266" />
+    </instance>
+    <rounded-rectangle id="1898:54160" name="Wallet dimming" x="0" y="0" width="402" height="874" />
+    <instance id="1898:54475" name="Pre-consent inspector · Shop Pay" x="0" y="247" width="402" height="623">
+      <instance id="I1898:54475;1898:54083" name="Inspector sheet foundation" x="0" y="0" width="402" height="623" />
+      <frame id="I1898:54475;1898:54100" name="Provider identity" x="26" y="27" width="350" height="154">
+        <frame id="I1898:54475;1898:54101" name="Brand mark" x="0" y="0" width="350" height="60">
+          <rounded-rectangle id="I1898:54475;1898:54102" name="Official provider brand" x="145" y="0" width="60" height="60" />
+        </frame>
+        <text id="I1898:54475;1898:54103" name="Consent title" x="0" y="68" width="350" height="34" />
+        <text id="I1898:54475;1898:54104" name="Connection purpose" x="0" y="110" width="350" height="44" />
+      </frame>
+      <instance id="I1898:54475;1898:54105" name="Benefits and permissions" x="26" y="197" width="350" height="220" />
+      <text id="I1898:54475;1898:54124" name="Provider handoff and exchange" x="26" y="433" width="350" height="54" />
+      <instance id="I1898:54475;1898:54125" name="Consent actions" x="26" y="503" width="350" height="90">
+        <slot id="I1898:54475;1898:54125;773:8" name="Actions" x="0" y="0" width="350" height="90">
+          <instance id="I1898:54475;1898:54125;1898:54136" name="Connect" x="0" y="0" width="350" height="48">
+            <slot id="I1898:54475;1898:54125;1898:54136;1300:1630" name="Leading" x="22" y="14" width="36" height="36" hidden="true" />
+            <text id="I1898:54475;1898:54125;1898:54136;408:16" name="label" x="140" y="13" width="70" height="22" />
+            <slot id="I1898:54475;1898:54125;1898:54136;1300:1631" name="Trailing" x="97" y="14" width="36" height="36" hidden="true" />
+          </instance>
+          <instance id="I1898:54475;1898:54125;1898:54150" name="Cancel" x="0" y="56" width="350" height="34">
+            <slot id="I1898:54475;1898:54125;1898:54150;1300:1624" name="Leading" x="4" y="7" width="36" height="36" hidden="true" />
+            <text id="I1898:54475;1898:54125;1898:54150;377:3" name="Continue" x="147" y="6" width="56" height="22" />
+            <slot id="I1898:54475;1898:54125;1898:54150;1300:1625" name="Trailing" x="77" y="7" width="36" height="36" hidden="true" />
+          </instance>
+        </slot>
+      </instance>
+    </instance>
+  </frame>
+  <connector id="1898:54519" name="Wallet → Link pre-consent" x="12203" y="2265.5" width="0" height="333">
+    <vector id="0:6278" name="Shape" x="0" y="0" width="0" height="333" />
+    <frame id="0:6279" name="Text Background" x="-11160" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6280" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1898:54523" name="Wallet → Shop Pay pre-consent" x="12203" y="2265.5" width="620" height="333">
+    <vector id="0:6281" name="Shape" x="0" y="0" width="620" height="333" />
+    <frame id="0:6282" name="Text Background" x="-11160" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6283" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1883:7685" name="Screen/Gmail" x="2260" y="2860" width="1282" height="7074">
+    <symbol id="1883:7678" name="State=Default" x="442" y="160" width="402" height="874" />
+    <symbol id="1883:7679" name="State=Connector menu" x="40" y="1660" width="402" height="874" />
+    <symbol id="1883:7680" name="State=Account menu" x="442" y="3160" width="402" height="874" />
+    <symbol id="1883:7681" name="State=Connector permissions" x="840" y="1660" width="402" height="874" />
+    <symbol id="1883:7682" name="State=Account permissions" x="40" y="6160" width="402" height="874" />
+    <symbol id="1883:7683" name="State=Disconnect account" x="840" y="6160" width="402" height="874" />
+    <symbol id="1883:7684" name="State=Disconnect accounts" x="40" y="4660" width="402" height="874" />
+  </frame>
+  <connector id="1883:9338" name="Gmail" x="2903" y="2265.5" width="0" height="751">
+    <vector id="0:6257" name="Shape" x="0" y="0" width="0" height="751" />
+    <frame id="0:6258" name="Text Background" x="0" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6259" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1883:9343" name="Connector · More" x="2501" y="3897.5" width="402" height="619">
+    <vector id="0:6260" name="Shape" x="0" y="0" width="402" height="619" />
+    <frame id="0:6261" name="Text Background" x="402" y="-2900" width="100" height="100" hidden="true">
+      <text id="0:6262" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1883:9348" name="Permissions" x="2903" y="3897.5" width="398" height="619">
+    <vector id="0:6263" name="Shape" x="0" y="0" width="398" height="619" />
+    <frame id="0:6264" name="Text Background" x="0" y="-2900" width="100" height="100" hidden="true">
+      <text id="0:6265" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1883:9353" name="Account · More" x="2903" y="3897.5" width="0" height="2119">
+    <vector id="0:6266" name="Shape" x="0" y="0" width="0" height="2119" />
+    <frame id="0:6267" name="Text Background" x="0" y="-2900" width="100" height="100" hidden="true">
+      <text id="0:6268" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1883:9358" name="Disconnect accounts" x="2501" y="5397.5" width="0" height="2119">
+    <vector id="0:6269" name="Shape" x="0" y="0" width="0" height="2119" />
+    <frame id="0:6270" name="Text Background" x="402" y="-4400" width="100" height="100" hidden="true">
+      <text id="0:6271" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1883:9363" name="Settings" x="2501" y="6897.5" width="402" height="2119">
+    <vector id="0:6272" name="Shape" x="0" y="0" width="402" height="2119" />
+    <frame id="0:6273" name="Text Background" x="402" y="-5900" width="100" height="100" hidden="true">
+      <text id="0:6274" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1883:9368" name="Disconnect account" x="2903" y="6897.5" width="398" height="2119">
+    <vector id="0:6275" name="Shape" x="0" y="0" width="398" height="2119" />
+    <frame id="0:6276" name="Text Background" x="0" y="-5900" width="100" height="100" hidden="true">
+      <text id="0:6277" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1904:56535" name="Screen/Voice · Working" x="13862" y="1388" width="836" height="874">
+    <symbol id="1904:56533" name="Menu=Closed" x="0" y="0" width="402" height="874" />
+    <symbol id="1904:56534" name="Menu=Open" x="434" y="0" width="402" height="874" />
+    <connector id="1925:8861" name="Voice → Center action menu" x="405.5" y="437" width="25" height="0">
+      <vector id="0:6284" name="Shape" x="0" y="0" width="25" height="0" />
+      <frame id="0:6285" name="Text Background" x="7147.5" y="560.5" width="100" height="100" hidden="true">
+        <text id="0:6286" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+  </frame>
+  <connector id="1833:51846" name="Agent settings → Screen/Voice · Working" x="7553" y="997.5" width="6510" height="387">
+    <vector id="0:6194" name="Shape" x="0" y="8.881784197001252e-16" width="6510" height="387" />
+    <frame id="0:6195" name="Text Background" x="-7232" y="0" width="100" height="100" hidden="true">
+      <text id="0:6196" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1926:53854" name="Link by Stripe · External browser" x="12002" y="3776" width="402" height="874">
+    <frame id="1926:53855" name="Browser header" x="0" y="0" width="402" height="116">
+      <instance id="1926:53856" name="System status" x="0" y="0" width="402" height="62" />
+      <instance id="1926:53866" name="Provider navigation" x="0" y="62" width="402" height="54" />
+    </frame>
+    <frame id="1926:53899" name="Provider web content" x="0" y="116" width="402" height="674" />
+    <frame id="1926:53900" name="Browser tools" x="0" y="790" width="402" height="84">
+      <instance id="1926:53901" name="Browsing toolbar" x="0" y="0" width="402" height="84" />
+      <instance id="1926:53928" name="Home indicator" x="0" y="50" width="402" height="34" />
+    </frame>
+  </frame>
+  <connector id="1926:54007" name="Link pre-consent → External browser" x="12203" y="3479.5" width="0" height="293">
+    <vector id="0:6290" name="Shape" x="0" y="0" width="0" height="293" />
+    <frame id="0:6291" name="Text Background" x="-11160" y="-2482" width="100" height="100" hidden="true">
+      <text id="0:6292" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1926:53931" name="Shop Pay · External browser" x="12622" y="3776" width="402" height="874">
+    <frame id="1926:53932" name="Browser header" x="0" y="0" width="402" height="116">
+      <instance id="1926:53933" name="System status" x="0" y="0" width="402" height="62" />
+      <instance id="1926:53943" name="Provider navigation" x="0" y="62" width="402" height="54" />
+    </frame>
+    <frame id="1926:53976" name="Provider web content" x="0" y="116" width="402" height="674" />
+    <frame id="1926:53977" name="Browser tools" x="0" y="790" width="402" height="84">
+      <instance id="1926:53978" name="Browsing toolbar" x="0" y="0" width="402" height="84" />
+      <instance id="1926:54005" name="Home indicator" x="0" y="50" width="402" height="34" />
+    </frame>
+  </frame>
+  <connector id="1926:54011" name="Shop Pay pre-consent → External browser" x="12823" y="3479.5" width="0" height="293">
+    <vector id="0:6293" name="Shape" x="0" y="0" width="0" height="293" />
+    <frame id="0:6294" name="Text Background" x="-11780" y="-2482" width="100" height="100" hidden="true">
+      <text id="0:6295" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1825:32555" name="Models" x="7839.400390625" y="1827.800048828125" width="308" height="599">
+    <text id="1825:32556" name="Models · Review" x="8039.400390625" y="1827.800048828125" width="108" height="17" />
+    <text id="1825:32558" name="Description/Models" x="7839.400390625" y="2390.800048828125" width="241.1999969482422" height="36" />
+  </frame>
+  <frame id="1882:42599" name="Canonical screen / Choose a voice" x="14187" y="2742" width="402" height="874.0000610351562">
+    <instance id="1904:55969" name="Status bar - iPhone" x="0" y="0" width="402" height="62" />
+    <instance id="1904:55979" name="TopBar" x="0" y="62" width="402" height="54">
+      <slot id="I1904:55979;1298:2295" name="Leading" x="16" y="5" width="84" height="44">
+        <instance id="I1904:55979;1298:2295;1904:56026" name="_Buttons - Top" x="0" y="0" width="44" height="44" />
+      </slot>
+      <slot id="I1904:55979;1298:2328" name="Trailing" x="315" y="5" width="71" height="44" hidden="true" />
+      <text id="I1904:55979;5827:56434" name="Title" x="141" y="16" width="121" height="22" />
+    </instance>
+    <frame id="1904:56044" name="Content" x="0" y="116" width="402" height="724">
+      <text id="1904:56531" name="Voice chooser introduction" x="16" y="24" width="370" height="40" />
+      <instance id="1904:56045" name="Section" x="16" y="88" width="370" height="322">
+        <instance id="I1904:56045;741:312" name="Header" x="0" y="0" width="354" height="28" hidden="true" />
+        <slot id="I1904:56045;741:314" name="Rows" x="0" y="0" width="370" height="322">
+          <instance id="I1904:56045;741:314;1904:56115" name="ListRow" x="1" y="1" width="368" height="64">
+            <instance id="I1904:56045;741:314;1904:56115;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1904:56045;741:314;1904:56115;101:13" name="content" x="57" y="12" width="255" height="40">
+              <instance id="I1904:56045;741:314;1904:56115;188:192" name="ListRowLabel" x="0" y="0" width="255" height="40">
+                <frame id="I1904:56045;741:314;1904:56115;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="255" height="22">
+                  <text id="I1904:56045;741:314;1904:56115;188:192;188:3" name="Account" x="0" y="0" width="255" height="22" />
+                  <slot id="I1904:56045;741:314;1904:56115;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1904:56045;741:314;1904:56115;188:192;188:4" name="avery@example.com" x="0" y="22" width="255" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1904:56045;741:314;1904:56115;101:17" name="separator" x="16" y="63" width="352" height="0.5" />
+            <frame id="I1904:56045;741:314;1904:56115;121:38" name="trailing" x="324" y="20" width="28" height="24">
+              <instance id="I1904:56045;741:314;1904:56115;111:80" name="right" x="0" y="0" width="28" height="24" />
+            </frame>
+          </instance>
+          <instance id="I1904:56045;741:314;1904:56137" name="ListRow" x="1" y="65" width="368" height="64">
+            <instance id="I1904:56045;741:314;1904:56137;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1904:56045;741:314;1904:56137;101:13" name="content" x="57" y="12" width="255" height="40">
+              <instance id="I1904:56045;741:314;1904:56137;188:192" name="ListRowLabel" x="0" y="0" width="255" height="40">
+                <frame id="I1904:56045;741:314;1904:56137;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="255" height="22">
+                  <text id="I1904:56045;741:314;1904:56137;188:192;188:3" name="Account" x="0" y="0" width="255" height="22" />
+                  <slot id="I1904:56045;741:314;1904:56137;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1904:56045;741:314;1904:56137;188:192;188:4" name="avery@example.com" x="0" y="22" width="255" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1904:56045;741:314;1904:56137;101:17" name="separator" x="16" y="63" width="352" height="0.5" />
+            <frame id="I1904:56045;741:314;1904:56137;121:38" name="trailing" x="324" y="20" width="28" height="24">
+              <instance id="I1904:56045;741:314;1904:56137;111:80" name="right" x="0" y="0" width="28" height="24" />
+            </frame>
+          </instance>
+          <instance id="I1904:56045;741:314;1904:56159" name="ListRow" x="1" y="129" width="368" height="64">
+            <instance id="I1904:56045;741:314;1904:56159;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1904:56045;741:314;1904:56159;101:13" name="content" x="57" y="12" width="255" height="40">
+              <instance id="I1904:56045;741:314;1904:56159;188:192" name="ListRowLabel" x="0" y="0" width="255" height="40">
+                <frame id="I1904:56045;741:314;1904:56159;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="255" height="22">
+                  <text id="I1904:56045;741:314;1904:56159;188:192;188:3" name="Account" x="0" y="0" width="255" height="22" />
+                  <slot id="I1904:56045;741:314;1904:56159;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1904:56045;741:314;1904:56159;188:192;188:4" name="avery@example.com" x="0" y="22" width="255" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1904:56045;741:314;1904:56159;101:17" name="separator" x="16" y="63" width="352" height="0.5" />
+            <frame id="I1904:56045;741:314;1904:56159;121:38" name="trailing" x="324" y="20" width="28" height="24">
+              <instance id="I1904:56045;741:314;1904:56159;111:80" name="right" x="0" y="0" width="28" height="24" />
+            </frame>
+          </instance>
+          <instance id="I1904:56045;741:314;1904:56181" name="ListRow" x="1" y="193" width="368" height="64">
+            <instance id="I1904:56045;741:314;1904:56181;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1904:56045;741:314;1904:56181;101:13" name="content" x="57" y="12" width="255" height="40">
+              <instance id="I1904:56045;741:314;1904:56181;188:192" name="ListRowLabel" x="0" y="0" width="255" height="40">
+                <frame id="I1904:56045;741:314;1904:56181;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="255" height="22">
+                  <text id="I1904:56045;741:314;1904:56181;188:192;188:3" name="Account" x="0" y="0" width="255" height="22" />
+                  <slot id="I1904:56045;741:314;1904:56181;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1904:56045;741:314;1904:56181;188:192;188:4" name="avery@example.com" x="0" y="22" width="255" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1904:56045;741:314;1904:56181;101:17" name="separator" x="16" y="63" width="352" height="0.5" />
+            <frame id="I1904:56045;741:314;1904:56181;121:38" name="trailing" x="324" y="20" width="28" height="24">
+              <instance id="I1904:56045;741:314;1904:56181;111:80" name="right" x="0" y="0" width="28" height="24" />
+            </frame>
+          </instance>
+          <instance id="I1904:56045;741:314;1904:56203" name="ListRow" x="1" y="257" width="368" height="64">
+            <instance id="I1904:56045;741:314;1904:56203;111:79" name="leading" x="16" y="17.5" width="29" height="29" />
+            <frame id="I1904:56045;741:314;1904:56203;101:13" name="content" x="57" y="12" width="255" height="40">
+              <instance id="I1904:56045;741:314;1904:56203;188:192" name="ListRowLabel" x="0" y="0" width="255" height="40">
+                <frame id="I1904:56045;741:314;1904:56203;188:192;1933:8542" name="HStack/Title and accessory" x="0" y="0" width="255" height="22">
+                  <text id="I1904:56045;741:314;1904:56203;188:192;188:3" name="Account" x="0" y="0" width="255" height="22" />
+                  <slot id="I1904:56045;741:314;1904:56203;188:192;1933:8925" name="Title accessory" x="239" y="10.5" width="1" height="1" hidden="true" />
+                </frame>
+                <text id="I1904:56045;741:314;1904:56203;188:192;188:4" name="avery@example.com" x="0" y="22" width="255" height="18" />
+              </instance>
+            </frame>
+            <rounded-rectangle id="I1904:56045;741:314;1904:56203;101:17" name="separator" x="16" y="63" width="352" height="0.5" hidden="true" />
+            <frame id="I1904:56045;741:314;1904:56203;121:38" name="trailing" x="324" y="20" width="28" height="24">
+              <instance id="I1904:56045;741:314;1904:56203;111:80" name="right" x="0" y="0" width="28" height="24" />
+            </frame>
+          </instance>
+        </slot>
+        <instance id="I1904:56045;741:337" name="Footer" x="0" y="194" width="354" height="32" hidden="true" />
+      </instance>
+      <text id="1904:56532" name="Voice chooser footer" x="16" y="434" width="370" height="40" />
+    </frame>
+    <instance id="1904:56294" name="NavigationIndicator" x="0" y="840" width="402" height="34" />
+  </frame>
+  <connector id="1925:8865" name="Voice → Choose a voice" x="14063" y="2265.5" width="325" height="473">
+    <vector id="0:6287" name="Shape" x="0" y="0" width="325" height="473" />
+    <frame id="0:6288" name="Text Background" x="-6510" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6289" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1956:8160" name="Screen/Cloud browser · Add site · Working states" x="4562" y="2642" width="402" height="2148">
+    <symbol id="1868:6176" name="State=Empty draft" x="0" y="0" width="402" height="874" />
+    <symbol id="1875:6712" name="State=Editing website" x="0" y="1274" width="402" height="874" />
+    <connector id="1875:6912" name="Add site → Website focused" x="201" y="877.5" width="0" height="393">
+      <vector id="0:6224" name="Shape" x="0" y="0" width="0" height="393" />
+      <frame id="0:6225" name="Text Background" x="4562" y="120" width="100" height="100" hidden="true">
+        <text id="0:6226" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+  </frame>
+  <connector id="1875:6908" name="Sites → Add site" x="4345.5" y="3079" width="213" height="0">
+    <vector id="0:6221" name="Shape" x="-4.440892098500626e-16" y="0" width="213" height="0" />
+    <frame id="0:6222" name="Text Background" x="417.5" y="-2081.5" width="100" height="100" hidden="true">
+      <text id="0:6223" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6896" name="Cloud browser → Add site" x="4763" y="2265.5" width="0" height="373">
+    <vector id="0:6212" name="Shape" x="0" y="0" width="0" height="373" />
+    <frame id="0:6213" name="Text Background" x="0" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6214" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1956:8161" name="Screen/Cloud browser · Saved login · Working states" x="3940" y="5190" width="402" height="3422">
+    <symbol id="1868:6214" name="State=View" x="0" y="0" width="402" height="874" />
+    <symbol id="1875:6710" name="State=Editing username" x="0" y="1274" width="402" height="874" />
+    <connector id="1875:6932" name="Pencil → Editing username" x="201" y="877.5" width="0" height="393">
+      <vector id="0:6239" name="Shape" x="0" y="0" width="0" height="393" />
+      <frame id="0:6240" name="Text Background" x="4562" y="120" width="100" height="100" hidden="true">
+        <text id="0:6241" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+    <symbol id="1875:6711" name="State=Editing password" x="0" y="2548" width="402" height="874" />
+    <connector id="1875:6952" name="Focus password" x="201" y="2151.5" width="0" height="393">
+      <vector id="0:6254" name="Shape" x="0" y="0" width="0" height="393" />
+      <frame id="0:6255" name="Text Background" x="4562" y="-1154" width="100" height="100" hidden="true">
+        <text id="0:6256" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+    <connector id="1875:6936" name="Pencil → Editing password" x="-48" y="437" width="44.5" height="2548">
+      <vector id="0:6242" name="Shape" x="0" y="0" width="44.5" height="2548" />
+      <frame id="0:6243" name="Text Background" x="4811" y="560.5" width="100" height="100" hidden="true">
+        <text id="0:6244" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+  </frame>
+  <connector id="1875:6940" name="Saved login → Remove login" x="3892" y="5627" width="44.5" height="3822">
+    <vector id="0:6245" name="Shape" x="0" y="0" width="44.5" height="3822" />
+    <frame id="0:6246" name="Text Background" x="871" y="-4629.5" width="100" height="100" hidden="true">
+      <text id="0:6247" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <connector id="1875:6916" name="Site detail → Saved login" x="4141" y="4793.5" width="0" height="393">
+    <vector id="0:6227" name="Shape" x="0" y="0" width="0" height="393" />
+    <frame id="0:6228" name="Text Background" x="622" y="-3796" width="100" height="100" hidden="true">
+      <text id="0:6229" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1956:8162" name="Screen/Cloud browser · Add login · Working states" x="4562" y="5190" width="402" height="3422">
+    <symbol id="1868:6245" name="State=Filled draft" x="0" y="2548" width="402" height="874" />
+    <symbol id="1875:6713" name="State=Editing username" x="0" y="1274" width="402" height="874" />
+    <connector id="1934:9088" name="Keyboard dismissed · Filled login draft" x="201" y="2151.5" width="0" height="393">
+      <vector id="0:6308" name="Shape" x="0" y="0" width="0" height="393" />
+      <frame id="0:6309" name="Text Background" x="842" y="-1154" width="100" height="100" hidden="true">
+        <text id="0:6310" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+    <symbol id="1934:9071" name="State=Empty draft" x="0" y="0" width="402" height="874" />
+    <connector id="1875:6944" name="Focus username" x="201" y="877.5" width="0" height="393">
+      <vector id="0:6248" name="Shape" x="0" y="0" width="0" height="393" />
+      <frame id="0:6249" name="Text Background" x="4562" y="120" width="100" height="100" hidden="true">
+        <text id="0:6250" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+  </frame>
+  <connector id="1875:6920" name="Site detail → Add login" x="4141" y="4793.5" width="622" height="393">
+    <vector id="0:6230" name="Shape" x="0" y="0" width="622" height="393" />
+    <frame id="0:6231" name="Text Background" x="622" y="-3796" width="100" height="100" hidden="true">
+      <text id="0:6232" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+  <frame id="1956:8163" name="Screen/Add provider key · Working states" x="10142" y="2642" width="1024" height="2148">
+    <symbol id="1934:9067" name="State=Empty draft" x="0" y="0" width="402" height="874" />
+    <symbol id="1934:9068" name="State=Provider picker" x="622" y="0" width="402" height="874" />
+    <connector id="1934:9076" name="Provider picker" x="405.5" y="437" width="213" height="0">
+      <vector id="0:6299" name="Shape" x="0" y="0" width="213" height="0" />
+      <frame id="0:6300" name="Text Background" x="637.5" y="560.5" width="100" height="100" hidden="true">
+        <text id="0:6301" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+    <symbol id="1934:9069" name="State=Filled draft" x="622" y="1274" width="402" height="874" />
+    <symbol id="1934:9070" name="State=Editing API key" x="0" y="1274" width="402" height="874" />
+    <connector id="1934:9084" name="Keyboard dismissed · Filled draft" x="405.5" y="1711" width="213" height="0">
+      <vector id="0:6305" name="Shape" x="0" y="0" width="213" height="0" />
+      <frame id="0:6306" name="Text Background" x="637.5" y="-713.5" width="100" height="100" hidden="true">
+        <text id="0:6307" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+    <connector id="1934:9080" name="Focus API key" x="201" y="877.5" width="0" height="393">
+      <vector id="0:6302" name="Shape" x="0" y="0" width="0" height="393" />
+      <frame id="0:6303" name="Text Background" x="842" y="120" width="100" height="100" hidden="true">
+        <text id="0:6304" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+      </frame>
+    </connector>
+  </frame>
+  <connector id="1934:9072" name="Models → Add provider key" x="10343" y="2265.5" width="0" height="373">
+    <vector id="0:6296" name="Shape" x="0" y="0" width="0" height="373" />
+    <frame id="0:6297" name="Text Background" x="-9300" y="-1268" width="100" height="100" hidden="true">
+      <text id="0:6298" name="Text" x="0" y="0" width="0" height="24" hidden="true" />
+    </frame>
+  </connector>
+</section>
+IMPORTANT: After you call this tool, you MUST call get_design_context if trying to implement the design, since this tool only returns metadata. If you do not call get_design_context, the agent will not be able to implement the design.

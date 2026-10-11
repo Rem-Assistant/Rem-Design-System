@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "kind": "constituent-composition",
+  "component": "SuggestionSection",
+  "figmaFileKey": "af4yDqCzp57jds9lkFiIaO",
+  "standaloneMaster": null,
+  "sources": {
+    "swiftui": "Sources/RemDesignSystem/Agenda/SuggestionSection.swift",
+    "compose": "compose/RemDesignSystem/rows/SuggestionSection.kt"
+  },
+  "constituents": [
+    {
+      "component": "SectionHeader",
+      "nodeId": "161:68",
+      "templates": {
+        "swiftui": "code-connect/swiftui/SectionHeader.figma.ts",
+        "compose": "code-connect/compose/SectionHeader.figma.ts"
+      }
+    },
+    {
+      "component": "AgendaSuggestionRow",
+      "nodeId": "2336:19583",
+      "templates": {
+        "swiftui": "code-connect/swiftui/AgendaSuggestionRow.figma.ts",
+        "compose": "code-connect/compose/AgendaSuggestionRow.figma.ts"
+      }
+    },
+    {
+      "component": "Button",
+      "nodeId": "377:8",
+      "variant": {
+        "Style": "Text · Accent"
+      },
+      "variantNodeId": "377:4",
+      "templates": {
+        "swiftui": "Sources/RemDesignSystem/Buttons/RemButton.figma.swift",
+        "compose": "code-connect/compose/RemButton.figma.ts"
+      }
+    }
+  ],
+  "references": [
+    {
+      "nodeId": "2049:10080",
+      "type": "INSTANCE"
+    },
+    {
+      "nodeId": "2336:19714",
+      "type": "FRAME"
+    }
+  ],
+  "behavior": {
+    "header": "Suggestions",
+    "defaultInlineLimit": 3,
+    "overflowAction": "See more",
+    "orderingOwner": "host",
+    "empty": "hidden"
+  },
+  "nativeComposition": "VStack/Column owns bounds and overflow: SectionHeader metrics, then standalone rows 4pt apart (no Section or rows surface), then the Text · Accent Button for See more, per region frame 2336:19714."
+}

@@ -1,0 +1,131 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+> Task :demo:preBuild UP-TO-DATE
+> Task :demo:preDebugBuild UP-TO-DATE
+> Task :demo:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :demo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :RemDesignSystem:verifyMaterialSymbolResources
+> Task :RemDesignSystem:preBuild
+> Task :RemDesignSystem:preDebugBuild
+> Task :RemDesignSystem:writeDebugAarMetadata UP-TO-DATE
+> Task :demo:checkDebugAarMetadata UP-TO-DATE
+> Task :demo:generateDebugResValues UP-TO-DATE
+> Task :RemDesignSystem:generateDebugResValues UP-TO-DATE
+> Task :RemDesignSystem:generateDebugResources UP-TO-DATE
+> Task :RemDesignSystem:packageDebugResources UP-TO-DATE
+> Task :demo:mapDebugSourceSetPaths UP-TO-DATE
+> Task :demo:generateDebugResources UP-TO-DATE
+> Task :demo:mergeDebugResources UP-TO-DATE
+> Task :demo:packageDebugResources UP-TO-DATE
+> Task :demo:parseDebugLocalResources UP-TO-DATE
+> Task :demo:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :demo:extractDeepLinksDebug UP-TO-DATE
+> Task :RemDesignSystem:extractDeepLinksDebug UP-TO-DATE
+> Task :RemDesignSystem:processDebugManifest UP-TO-DATE
+> Task :demo:processDebugMainManifest UP-TO-DATE
+> Task :demo:processDebugManifest UP-TO-DATE
+> Task :demo:processDebugManifestForPackage UP-TO-DATE
+> Task :RemDesignSystem:compileDebugLibraryResources UP-TO-DATE
+> Task :RemDesignSystem:parseDebugLocalResources UP-TO-DATE
+> Task :RemDesignSystem:generateDebugRFile UP-TO-DATE
+> Task :demo:processDebugResources UP-TO-DATE
+> Task :RemDesignSystem:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :RemDesignSystem:gatherDesignSystemSources
+> Task :RemDesignSystem:javaPreCompileDebug UP-TO-DATE
+> Task :demo:javaPreCompileDebug UP-TO-DATE
+> Task :demo:mergeDebugShaders UP-TO-DATE
+> Task :demo:compileDebugShaders NO-SOURCE
+> Task :demo:generateDebugAssets UP-TO-DATE
+> Task :RemDesignSystem:mergeDebugShaders UP-TO-DATE
+> Task :RemDesignSystem:compileDebugShaders NO-SOURCE
+> Task :RemDesignSystem:generateDebugAssets UP-TO-DATE
+> Task :RemDesignSystem:packageDebugAssets UP-TO-DATE
+> Task :demo:mergeDebugAssets UP-TO-DATE
+> Task :demo:compressDebugAssets UP-TO-DATE
+> Task :demo:desugarDebugFileDependencies UP-TO-DATE
+> Task :demo:checkDebugDuplicateClasses UP-TO-DATE
+> Task :demo:mergeDebugStartupProfile UP-TO-DATE
+> Task :demo:mergeExtDexDebug UP-TO-DATE
+> Task :demo:mergeDebugJniLibFolders UP-TO-DATE
+> Task :RemDesignSystem:mergeDebugJniLibFolders UP-TO-DATE
+> Task :RemDesignSystem:mergeDebugNativeLibs NO-SOURCE
+> Task :RemDesignSystem:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :demo:mergeDebugNativeLibs UP-TO-DATE
+> Task :demo:stripDebugDebugSymbols UP-TO-DATE
+> Task :demo:validateSigningDebug UP-TO-DATE
+> Task :demo:writeDebugAppMetadata UP-TO-DATE
+> Task :demo:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :demo:preDebugAndroidTestBuild SKIPPED
+> Task :demo:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :demo:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :demo:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :demo:generateDebugAndroidTestResources UP-TO-DATE
+> Task :demo:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :demo:processDebugAndroidTestManifest UP-TO-DATE
+> Task :demo:processDebugAndroidTestResources UP-TO-DATE
+> Task :demo:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :demo:mergeDebugAndroidTestShaders UP-TO-DATE
+> Task :demo:compileDebugAndroidTestShaders NO-SOURCE
+> Task :demo:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :demo:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :demo:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :demo:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :demo:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :demo:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :demo:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :demo:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :demo:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :demo:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :demo:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :RemDesignSystem:preDebugUnitTestBuild
+> Task :RemDesignSystem:compileDebugKotlin
+> Task :RemDesignSystem:compileDebugJavaWithJavac NO-SOURCE
+> Task :RemDesignSystem:processDebugJavaRes UP-TO-DATE
+> Task :RemDesignSystem:bundleLibRuntimeToDirDebug
+> Task :RemDesignSystem:bundleLibRuntimeToJarDebug
+> Task :RemDesignSystem:bundleLibCompileToJarDebug
+> Task :RemDesignSystem:generateDebugUnitTestStubRFile
+> Task :RemDesignSystem:preparePaparazziDebugResources
+> Task :demo:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :demo:mergeLibDexDebug
+> Task :RemDesignSystem:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :demo:compileDebugKotlin
+> Task :demo:compileDebugJavaWithJavac NO-SOURCE
+> Task :demo:dexBuilderDebug
+> Task :demo:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :demo:processDebugJavaRes UP-TO-DATE
+> Task :demo:mergeDebugJavaResource UP-TO-DATE
+> Task :demo:bundleDebugClassesToCompileJar
+> Task :demo:mergeProjectDexDebug
+> Task :demo:packageDebug
+> Task :demo:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :demo:assembleDebug
+> Task :demo:compileDebugAndroidTestKotlin
+> Task :demo:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :demo:dexBuilderDebugAndroidTest
+> Task :demo:mergeDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :demo:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :demo:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :demo:mergeProjectDexDebugAndroidTest
+> Task :demo:packageDebugAndroidTest
+> Task :demo:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :demo:assembleDebugAndroidTest
+> Task :RemDesignSystem:compileDebugUnitTestKotlin
+> Task :RemDesignSystem:processDebugUnitTestJavaRes
+> Task :RemDesignSystem:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :RemDesignSystem:transformDebugUnitTestClassesWithAsm
+
+> Task :RemDesignSystem:testDebugUnitTest
+See the Paparazzi report at: file:///Volumes/SatechiSSD/CodexBuilds/rem-settings-20261008/android/RemDesignSystem/reports/paparazzi/debug/index.html
+
+[Incubating] Problems report is available at: file:///Volumes/SatechiSSD/CodexBuilds/rem-settings-20261008/android/root/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 41s
+91 actionable tasks: 22 executed, 1 from cache, 68 up-to-date

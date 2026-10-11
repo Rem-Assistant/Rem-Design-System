@@ -247,6 +247,21 @@ docs/design-system/
 **Recommendation:** start (a) now, reuse (c)'s bundle for live previews, graduate to (b) when the
 component docs are written and it's worth polishing as a portfolio piece.
 
+### One documentation source, several platform views
+
+Documentation ships with each component rather than becoming a separate manual layer:
+
+- the component Markdown/front matter holds shared intent, anatomy, variants, usage, accessibility,
+  tokens, and enforceable rules;
+- Swift public APIs carry DocC comments and runnable previews/examples;
+- Compose public APIs carry KDoc and Compose previews;
+- Code Connect maps the canonical Figma properties to both APIs;
+- the later cross-platform site renders the shared component source and links to the platform API
+  views, instead of copying their prose into a fourth source of truth.
+
+A component delivery is complete only when the relevant entries above move together. The static site
+is an index and presentation layer over those sources, not an independent specification.
+
 ---
 
 ## 8. Build plan (phased)

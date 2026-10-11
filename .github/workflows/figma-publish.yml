@@ -1,11 +1,11 @@
 name: figma-publish
 
-# Code Connect: bind the SwiftUI source to the Figma nodes so code shows in Figma Dev Mode.
+# Code Connect: validate both parserless platforms; publishing remains an explicit manual action.
 #
 # DORMANT by design. Per this repo's README, `figma connect publish` requires a Full/Dev seat on an
 # Organization/Enterprise Figma plan; this account is Starter/Pro, so publish is BLOCKED regardless
 # of FIGMA_TOKEN being set. This workflow is therefore MANUAL-ONLY (no push trigger) so it can never
-# auto-fail red on main. `figma connect check` runs as a non-side-effecting validation; the actual
+# auto-fail red on main. Local type checking and parsing require no token or entitlement; the actual
 # publish is gated behind an explicit opt-in input, ready for when the file moves to an Org/Enterprise
 # team.
 
@@ -17,18 +17,26 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 jobs:
   code-connect:
     name: Code Connect (check, opt-in publish)
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Install Figma Code Connect CLI
-        run: npm install -g @figma/code-connect
+      - name: Install the locked local validation tools
+        run: npm ci
+      - name: Validate parserless SwiftUI and Compose templates
+        run: npm run check-code-connect
+      - name: Exercise saved Settings mapping fixtures
+        run: node --test tools/test-settings-code-connect.mjs
       - name: Guard — token present
+        if: ${{ inputs.run_publish }}
         env:
           FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
         run: |
@@ -36,12 +44,10 @@ jobs:
             echo "::error::FIGMA_TOKEN secret is not set on this repo/org."
             exit 1
           fi
-      - name: Validate bindings (figma connect check)
-        env:
-          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
-        run: figma connect check
-      - name: Publish Code Connect (opt-in)
+      - name: Publish both parserless platforms (opt-in)
         if: ${{ inputs.run_publish }}
         env:
           FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_TOKEN }}
-        run: figma connect publish
+        run: |
+          npx --no-install figma connect publish --config figma.swiftui.config.json
+          npx --no-install figma connect publish --config figma.compose.config.json

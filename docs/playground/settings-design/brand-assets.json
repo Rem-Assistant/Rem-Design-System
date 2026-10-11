@@ -1,0 +1,252 @@
+[
+  {
+    "name": "gmail",
+    "path": "assets/gmail.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5036;741:314;1833:5040;111:79;1328:375",
+    "canonicalComponent": "1328:379",
+    "sourceSize": [
+      26,
+      26
+    ],
+    "slotSize": [
+      26,
+      29
+    ],
+    "pixelSize": [
+      104,
+      104
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 5328,
+    "sha256": "96bc2d39cfb3f84d5dd5a39d02b9298c05937911d15bad20921845a140b23639",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "google-calendar",
+    "path": "assets/google-calendar.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5036;741:314;1833:5041;111:79;1328:380",
+    "canonicalComponent": "1328:394",
+    "sourceSize": [
+      26,
+      26
+    ],
+    "slotSize": [
+      26,
+      29
+    ],
+    "pixelSize": [
+      104,
+      104
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 3337,
+    "sha256": "44282cd85e02309a4d60eb7fb3687761e5e670a0a6eb9c889f7b3df5235da834",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "notion",
+    "path": "assets/notion.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5036;741:314;1833:5042;111:79;1328:395",
+    "canonicalComponent": "1328:402",
+    "sourceSize": [
+      26,
+      26
+    ],
+    "slotSize": [
+      26,
+      29
+    ],
+    "pixelSize": [
+      104,
+      104
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 2002,
+    "sha256": "c11b9aea095f2e362367199f732fc80eaff41d25f16b5f6113d61b65c8167e56",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "slack",
+    "path": "assets/slack.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5036;741:314;1833:5043;111:79;1328:403",
+    "canonicalComponent": "1328:420",
+    "sourceSize": [
+      26,
+      26
+    ],
+    "slotSize": [
+      26,
+      29
+    ],
+    "pixelSize": [
+      104,
+      104
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 2977,
+    "sha256": "4039467bb13bd95c35d41c3f083f6e0b710d8efae2fcd9043ad2694aa0ce067e",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "google-drive",
+    "path": "assets/google-drive.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5037;741:314;1833:5045;111:79;1328:421",
+    "canonicalComponent": "1328:429",
+    "sourceSize": [
+      26,
+      26
+    ],
+    "slotSize": [
+      26,
+      29
+    ],
+    "pixelSize": [
+      104,
+      104
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 5821,
+    "sha256": "bff209efa34cec04a6329967101d107a02141618fe34496548629273fb23217f",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "linear",
+    "path": "assets/linear.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5037;741:314;1833:5046;111:79;1328:430",
+    "canonicalComponent": "1328:432",
+    "sourceSize": [
+      26,
+      26
+    ],
+    "slotSize": [
+      26,
+      29
+    ],
+    "pixelSize": [
+      104,
+      104
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 1614,
+    "sha256": "190929dd6697dd6beed2ee35da9099160bfb2e4f75dc377ed380e0d8ac3fb9c8",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "todoist",
+    "path": "assets/todoist.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:5037;741:314;1833:5047;111:79;1370:3",
+    "canonicalComponent": "1370:2",
+    "sourceSize": [
+      20,
+      20
+    ],
+    "slotSize": [
+      29,
+      29
+    ],
+    "pixelSize": [
+      80,
+      80
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 1662,
+    "sha256": "d106017894a085aff5ac1e77690a141385945582066489e649df45ca690d8fea",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "shop-pay",
+    "path": "assets/shop-pay.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1833:51810;741:314;1833:51816;111:79",
+    "canonicalComponent": "110:54",
+    "sourceSize": [
+      29,
+      29
+    ],
+    "slotSize": [
+      29,
+      29
+    ],
+    "pixelSize": [
+      116,
+      116
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 4037,
+    "sha256": "0a05e5c55d583b5371bfa7afdee26af7a3e87d7c52d69ccc89917dbbf3ba4831",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "link-consent",
+    "path": "assets/link-consent.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1898:54430;1898:53962",
+    "canonicalComponent": null,
+    "sourceSize": [
+      60,
+      60
+    ],
+    "slotSize": [
+      60,
+      60
+    ],
+    "pixelSize": [
+      240,
+      240
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 6128,
+    "sha256": "17549259affd49ecb86c4fe45ab7d8f8ec2923d915929dae8abe42b1f7e9e135",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  },
+  {
+    "name": "shop-pay-consent",
+    "path": "assets/shop-pay-consent.png",
+    "fileKey": "af4yDqCzp57jds9lkFiIaO",
+    "sourceNode": "I1898:54475;1898:54102",
+    "canonicalComponent": null,
+    "sourceSize": [
+      60,
+      60
+    ],
+    "slotSize": [
+      60,
+      60
+    ],
+    "pixelSize": [
+      240,
+      240
+    ],
+    "scale": 4,
+    "pngColorType": 6,
+    "bytes": 9197,
+    "sha256": "ecedc3a804cb1d1b3885f9c2d2b6ec6ef52372863506127a240dfc6e2772f660",
+    "method": "read-only node.screenshot(scale:4,contentsOnly:true)",
+    "status": "verified-exact-node-export"
+  }
+]

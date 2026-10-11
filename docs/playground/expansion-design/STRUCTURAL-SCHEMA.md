@@ -1,0 +1,12 @@
+# Structural contract consumer guidance
+
+Entry: `playground-source-contracts.json`, schemaVersion1. Iterate `lanes[]`, then `states[]`; resolve render output using each exact `renderKey`. All state roots and section identities are authenticated read-only observations.
+
+1. Verify fileKey, page, section, root and directParent exact IDs/names/types. Verify each consecutive `pageToRootPathIds` edge rather than merely finding all IDs somewhere in the file.
+2. Verify `requiredRootChildrenInOrder` as exact child IDs. `childOrderAssertions` use explicit exact mode; these protect three inline rows, four overflow rows, and absence of any Suggestions region after AddSchedule in the none state.
+3. Resolve `textScopeNodeId`. For each `requiredVisibleTextInOrder`, require exact node type TEXT and characters, ancestor membership in scope, and effective visibility (every ancestor visible). Compare required IDs as a subsequence in depth-first child order. Reject listed `forbiddenVisibleText` in the effectively visible scoped tree. Do not require screen pixels to expose every lower scrolled label in a single screenshot.
+4. Verify each required instance's identity, `getMainComponentAsync()` identity, main-component parent and consecutive `rootToInstancePathIds` edges. Enforce `requiredProperties` exact type/value. Voice's two controls consumers explicitly require Show conversation entry=false. Overflow instances are named Suggestion/0–3, not AgendaSuggestionRow; check main-component identities, not a substring of instance name.
+5. `canonicalSlotAssertions` are separate page-scoped assertions for the four canonical Screen/Agenda slots. Enforce paddingTop24, paddingBottom0, parent spacing0, immediate preceding AgendaAddSchedule and first child y24. Do not assume these slots are descendants of the selected outcomes frame: outcomes are authored FRAME roots, canonical Screen/Agenda roots are components in another section on the same page.
+6. Reference PNG/JSON/text files are immutable evidence inputs for each state. `SHA256SUMS` and manifest authenticate local content integrity only, not Figma publication, revision identity or runtime fidelity. Native screenshot comparison remains separate.
+
+The `structural/*.tool.json` files preserve successful authenticated tool responses used to derive the assertions. Two diagnostic oversized read responses were not used as evidence. No fixture defaults beyond source examples, runtime behavior proof or live Code Connect evaluation is implied.

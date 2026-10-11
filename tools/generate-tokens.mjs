@@ -226,6 +226,7 @@ function ktColorEntries(light) {
   push("labelPrimary", c.label.primary);
   push("labelSecondary", c.label.secondary);
   push("labelTertiary", c.label.tertiary);
+  push("labelOnColor", c.label.onColor);
   push("separator", c.separator);
   push("fillTertiary", c.fill.tertiary);
   push("buttonBackground", c.buttonBackground);
@@ -245,9 +246,12 @@ function buildKotlin() {
     .map(([k, v]) => `    val ${k}: Dp = ${v}.dp`).join("\n");
   const roles = T.typography.roles;
   const typo = Object.entries(roles).map(([k, r]) => {
-    const mono = r.family === "mono" ? ", fontFamily = FontFamily.Monospace" : "";
+    // iOS resolves `-apple-system` to SF Pro. Android has no SF Pro, so every text role binds to
+    // Inter (the closest system-font match) instead of falling back to Material's Roboto; mono keeps
+    // the platform monospace. This keeps the two platforms visually paired rather than font-divergent.
+    const fam = r.family === "mono" ? ", fontFamily = FontFamily.Monospace" : ", fontFamily = Inter";
     const ls = r.letterSpacing ? `, letterSpacing = ${r.letterSpacing}.sp` : "";
-    return `    val ${k} = TextStyle(fontSize = ${r.size}.sp, fontWeight = ${ktWeight(r.weight)}${mono}${ls})`;
+    return `    val ${k} = TextStyle(fontSize = ${r.size}.sp, fontWeight = ${ktWeight(r.weight)}${fam}${ls})`;
   }).join("\n");
   const aliases = Object.entries(T.typography.roleAliases).filter(([k]) => !k.startsWith("$"))
     .map(([k, v]) => `    val ${k} = ${v}`).join("\n");
@@ -262,11 +266,21 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rem.designsystem.R
+
+/** The Rem type family on Android: Inter, instanced to static Regular (400) and Bold (700) from
+ *  InterVariable and bundled in res/font. iOS uses the system font (SF Pro) through DesignTokens;
+ *  Android substitutes Inter — the closest match — rather than Material's Roboto default. */
+val Inter = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_bold, FontWeight.Bold),
+)
 
 /** Reference + value colors resolved per scheme (Compose has no Apple system palette). */
 data class RemColorScheme(

@@ -11,11 +11,21 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rem.designsystem.R
+
+/** The Rem type family on Android: Inter, instanced to static Regular (400) and Bold (700) from
+ *  InterVariable and bundled in res/font. iOS uses the system font (SF Pro) through DesignTokens;
+ *  Android substitutes Inter — the closest match — rather than Material's Roboto default. */
+val Inter = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_bold, FontWeight.Bold),
+)
 
 /** Reference + value colors resolved per scheme (Compose has no Apple system palette). */
 data class RemColorScheme(
@@ -25,6 +35,7 @@ data class RemColorScheme(
     val labelPrimary: Color,
     val labelSecondary: Color,
     val labelTertiary: Color,
+    val labelOnColor: Color,
     val separator: Color,
     val fillTertiary: Color,
     val buttonBackground: Color,
@@ -47,6 +58,7 @@ val RemLightColors = RemColorScheme(
     labelPrimary = Color(0xFF000000),
     labelSecondary = Color(0x993C3C43),
     labelTertiary = Color(0x4D3C3C43),
+    labelOnColor = Color(0xFFFFFFFF),
     separator = Color(0x4A3C3C43),
     fillTertiary = Color(0x1F767680),
     buttonBackground = Color(0xFF000000),
@@ -69,6 +81,7 @@ val RemDarkColors = RemColorScheme(
     labelPrimary = Color(0xFFFFFFFF),
     labelSecondary = Color(0x99EBEBF5),
     labelTertiary = Color(0x4DEBEBF5),
+    labelOnColor = Color(0xFFFFFFFF),
     separator = Color(0x99545458),
     fillTertiary = Color(0x3D767680),
     buttonBackground = Color(0xFFFFFFFF),
@@ -119,17 +132,17 @@ object RemOpacity {
 }
 
 object RemTypography {
-    val largeTitle = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Normal)
-    val title1 = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Normal)
-    val title1Bold = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold)
-    val title3 = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, letterSpacing = -0.45.sp)
-    val title3Bold = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.45.sp)
-    val body = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Normal)
-    val bodyBold = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold)
-    val subheadline = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Normal)
-    val footnote = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Normal)
-    val caption1 = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal)
-    val caption1Bold = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    val largeTitle = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
+    val title1 = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
+    val title1Bold = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold, fontFamily = Inter)
+    val title3 = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, fontFamily = Inter, letterSpacing = -0.45.sp)
+    val title3Bold = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = Inter, letterSpacing = -0.45.sp)
+    val body = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
+    val bodyBold = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, fontFamily = Inter)
+    val subheadline = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
+    val footnote = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
+    val caption1 = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal, fontFamily = Inter)
+    val caption1Bold = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Inter)
     val chatCode = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Normal, fontFamily = FontFamily.Monospace)
     val title3Tracking = -0.45.sp
     val chatMessage = body
