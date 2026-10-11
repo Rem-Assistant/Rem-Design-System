@@ -4,6 +4,9 @@ import SwiftUI
 /// docked composer, while the person is scrolled away from the newest message. Tapping it scrolls
 /// (animated) to the latest message. The composition owns it; hosts wire nothing. Pure rules so both
 /// platforms agree. Twin of Compose `ChatJumpToLatest`. Contract: `docs/contracts/chat.md`.
+///
+/// Lives in Screens/ as part of the Chat composition (like `ChatEmptyStateView`): it has no Figma master,
+/// so it has no Code Connect mapping. Promote it to Chat/ with a parserless mapping once a node exists.
 public enum ChatJumpToLatest {
     /// Shown only when the transcript's bottom edge is more than this far below the visible area (pt).
     /// A fixed distance (about four short rows) rather than a viewport fraction, so the rule reads the same

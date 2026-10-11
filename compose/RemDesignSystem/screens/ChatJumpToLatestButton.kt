@@ -1,4 +1,4 @@
-package com.rem.designsystem.chat
+package com.rem.designsystem.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
