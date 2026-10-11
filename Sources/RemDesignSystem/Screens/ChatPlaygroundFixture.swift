@@ -34,6 +34,9 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     public enum Conversation: String, CaseIterable, Sendable {
         case populated = "Populated"
         case empty = "Empty"
+        /// Earlier history above the populated conversation: taller than the screen, so scrolling up
+        /// shows the jump-to-latest button.
+        case long = "Long"
     }
 
     /// Illustrative fixture time for simulated host evidence. Not a clock reading.
@@ -70,7 +73,11 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
     // MARK: Construction
 
     public init(_ conversation: Conversation = .populated) {
-        entries = conversation == .empty ? [] : Self.populatedEntries
+        switch conversation {
+        case .populated: entries = Self.populatedEntries
+        case .empty: entries = []
+        case .long: entries = Self.earlierEntries + Self.populatedEntries
+        }
         composer = ChatComposerFixture()
         taskState = .none
     }
@@ -106,6 +113,35 @@ public struct ChatPlaygroundFixture: Equatable, Sendable {
         .message(ChatMessageDisplay(id: "a2", role: .assistant, text: "I can help you prepare that reminder.",
                                     meta: "Automatic · Reply complete", time: fixtureTime)),
     ]
+
+    /// Neutral earlier history for the `long` conversation (ids `h1`…). Older outgoing messages show no
+    /// receipt (`ChatTranscriptRules`), so the latest receipt is still `u2`'s.
+    static let earlierEntries: [ChatTranscriptEntry] = {
+        let turns: [(MessageBubble.Role, String)] = [
+            (.user, "What does my week look like?"),
+            (.assistant, "Three meetings, two deadlines and a free Thursday afternoon."),
+            (.user, "Which deadline comes first?"),
+            (.assistant, "The project brief is due Tuesday at noon; the budget review follows on Friday."),
+            (.user, "Block two hours on Monday for the brief."),
+            (.assistant, "Monday 9 to 11 is free. Shall I hold it as focus time?"),
+            (.user, "Yes, please."),
+            (.assistant, "Held. I also moved the reminder to review the draft to Monday evening."),
+            (.user, "What about the budget review?"),
+            (.assistant, "You have the numbers from last quarter. I can outline the summary on Wednesday."),
+            (.user, "Good. Keep Thursday afternoon open."),
+            (.assistant, "Thursday afternoon stays clear. Nothing else is scheduled then."),
+            (.user, "Remind me to call the venue tomorrow."),
+            (.assistant, "I'll remind you tomorrow morning to call the venue."),
+            (.user, "Thanks. That's all for today."),
+            (.assistant, "You're set for the week. Talk tomorrow."),
+        ]
+        return [.timestamp(id: "h0", text: "Yesterday 4:02 PM")] + turns.enumerated().map { index, turn in
+            .message(ChatMessageDisplay(
+                id: "h\(index + 1)", role: turn.0, text: turn.1,
+                delivery: turn.0 == .user ? .delivered(at: "4:02") : .none, time: "4:02"
+            ))
+        }
+    }()
 
     // MARK: Presentation inputs
 

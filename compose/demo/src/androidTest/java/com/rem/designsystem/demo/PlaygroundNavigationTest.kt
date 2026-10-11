@@ -812,6 +812,36 @@ class PlaygroundNavigationTest {
         compose.waitUntil(3_000) { bubble.getUnclippedBoundsInRoot().left == rest }
     }
 
+    /**
+     * Jump to latest (twin of the iOS journey): hidden at the newest message, shown centred above the
+     * composer once scrolled up, and a tap returns to the newest message and hides it again.
+     */
+    @Test fun chatJumpToLatestAppearsWhenScrolledUpAndReturns() {
+        openChatScreen("Long")
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true)
+        compose.waitUntil(5000) { runCatching { latest.assertIsDisplayed() }.isSuccess }
+        compose.onNodeWithTag("chat.jumpToLatest").assertDoesNotExist()
+
+        // Scroll up with a vertical drag in the leading gutter.
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        val jump = compose.onNodeWithTag("chat.jumpToLatest")
+        jump.assertIsDisplayed().assertContentDescriptionEquals("Scroll to latest message")
+        latest.assertIsNotDisplayed()
+        val button = jump.fetchSemanticsNode().boundsInRoot
+        val field = compose.onNodeWithTag("chat.composerField").fetchSemanticsNode().boundsInRoot
+        check(button.bottom <= field.top) { "Jump to latest (bottom ${button.bottom}) must sit above the composer (top ${field.top})" }
+        val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        check(kotlin.math.abs(button.center.x - root.center.x) <= 1f) { "Jump to latest is centred horizontally" }
+        capture("ChatScreen-jumpToLatest-light")
+
+        jump.performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("chat.jumpToLatest").fetchSemanticsNodes().isEmpty() }
+        latest.assertIsDisplayed()
+    }
+
     @Test fun chatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
         compose.onNodeWithTag("chat.header.overflow").assertIsDisplayed()

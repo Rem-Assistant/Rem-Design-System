@@ -15,6 +15,7 @@ import com.rem.designsystem.screens.ChatReplyContext
 import com.rem.designsystem.screens.ChatScreenAction
 import com.rem.designsystem.screens.ChatTranscriptEntry
 import com.rem.designsystem.screens.ChatTimestampReveal
+import com.rem.designsystem.chat.ChatJumpToLatest
 import com.rem.designsystem.screens.ChatTranscriptRules
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
@@ -192,6 +193,26 @@ class ChatScreenModelTest {
         assertEquals(72f, ChatTimestampReveal.reveal(dx = -100f, columnWidth = 60f, reduceMotion = false), 0.001f)
         assertEquals("Reduce Motion clamps", 60f, ChatTimestampReveal.reveal(dx = -100f, columnWidth = 60f, reduceMotion = true), 0f)
         assertEquals(0f, ChatTimestampReveal.SETTLED, 0f)
+    }
+
+    // Jump to latest (paired with `ChatScreenModelTests.swift`).
+
+    @Test fun jumpToLatestShowsOnlyBeyondTheThreshold() {
+        assertEquals(200f, ChatJumpToLatest.THRESHOLD, 0f)
+        assertFalse("at the bottom", ChatJumpToLatest.isVisible(0f))
+        assertFalse("overscrolled past the bottom", ChatJumpToLatest.isVisible(-40f))
+        assertFalse("near the bottom", ChatJumpToLatest.isVisible(200f))
+        assertTrue(ChatJumpToLatest.isVisible(201f))
+        assertTrue(ChatJumpToLatest.isVisible(2_000f))
+    }
+
+    @Test fun jumpToLatestGeometryAndAccessibilityMatchSwift() {
+        assertEquals("minimum touch target", 44f, ChatJumpToLatest.DIAMETER, 0f)
+        assertEquals(12f, ChatJumpToLatest.BOTTOM_SPACING, 0f)
+        assertEquals(0.8f, ChatJumpToLatest.APPEAR_SCALE, 0f)
+        assertEquals(200, ChatJumpToLatest.APPEAR_MILLIS)
+        assertEquals("Scroll to latest message", ChatJumpToLatest.ACCESSIBILITY_LABEL)
+        assertEquals("chat.jumpToLatest", ChatJumpToLatest.TEST_TAG)
     }
 
     @Test fun timeIsAlwaysAvailableToAssistiveTechnology() {

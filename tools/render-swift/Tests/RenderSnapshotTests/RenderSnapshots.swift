@@ -2,7 +2,8 @@
 import XCTest
 import SwiftUI
 import UIKit
-import RemDesignSystem
+// @testable for the internal jump-to-latest evidence seam (`chatJumpToLatestEvidence`).
+@testable import RemDesignSystem
 
 // File-scope so the ListRow trailing closures don't capture `self` (escaping closures in a class
 // require explicit self otherwise).
@@ -153,6 +154,15 @@ final class RenderSnapshots: XCTestCase {
         }
         render("ChatComposition-taskReply-narrow-light", width: 320, height: 874, dark: false) {
             chatComposition(InboxPlaygroundFixture().route(.open(itemID: "plan-next-step"))!)
+        }
+        // Jump to latest over a scrolled transcript: the Long fixture opened at its oldest message (internal
+        // evidence seam), so the button shows centred above the dock. Pairs with the Compose
+        // `ChatJumpToLatest-light` / `-dark` shots. A longer settle lets the measured distance publish.
+        for dark in [false, true] {
+            render("ChatJumpToLatest-\(dark ? "dark" : "light")", width: 402, height: 874, dark: dark, settle: 0.5) {
+                chatComposition(ChatPlaygroundFixture(.long))
+                    .environment(\.chatJumpToLatestEvidence, true)
+            }
         }
         render("InboxStates-light", width: 402, height: 780, dark: false) {
             InboxScreen(items: InboxPlaygroundFixture().items, onAction: { _ in }) { EmptyView() }
@@ -792,7 +802,7 @@ final class RenderSnapshots: XCTestCase {
 
     // MARK: - iOS hosting-controller snapshot
 
-    private func render(_ name: String, width: CGFloat, height: CGFloat?, dark: Bool,
+    private func render(_ name: String, width: CGFloat, height: CGFloat?, dark: Bool, settle: TimeInterval = 0.15,
                         @ViewBuilder _ content: () -> some View) {
         let root = content()
             .frame(width: width)
@@ -813,7 +823,7 @@ final class RenderSnapshots: XCTestCase {
         host.view.setNeedsLayout()
         host.view.layoutIfNeeded()
         // Give SwiftUI a run-loop tick to commit its first render pass before capturing.
-        RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        RunLoop.current.run(until: Date().addingTimeInterval(settle))
 
         let format = UIGraphicsImageRendererFormat.default()
         format.scale = 2

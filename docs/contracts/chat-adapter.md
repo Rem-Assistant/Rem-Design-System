@@ -80,6 +80,10 @@ no prototype reaction; this routing is explicit.
    target, unread state, clipboard, text selection, report flow, full emoji picker) and dismisses the sheet.
    Identifiers: `message.<id>.actions.reactions.<index>`, `….reactions.more`, `message.<id>.actions.<action>`.
 
+9. **Jump to latest** is presentation the composition owns ([`chat.md`](chat.md) rule 10): a centred
+   down-arrow above the dock while the person is scrolled more than 200pt/dp above the newest message. No
+   input, action or host wiring; it emits no `ChatScreenAction`. Identifier `chat.jumpToLatest`.
+
 ## Rules the adapter applies (truth)
 
 - `.delivered(at:)` only with durable **host acceptance** evidence; `at` is the host-formatted acceptance time.
