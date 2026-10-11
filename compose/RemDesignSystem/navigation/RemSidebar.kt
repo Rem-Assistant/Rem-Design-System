@@ -216,9 +216,12 @@ private fun BottomActions(account: RemSidebarAccount, onAction: (RemSidebarActio
             )
             .padding(start = RemSpacing.lg, end = RemSpacing.md, top = 32.dp, bottom = RemSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        RemAccountPill(account, onClick = { onAction(RemSidebarAction.OpenSettings) })
-        Spacer(Modifier.weight(1f))
+        // New agent keeps its one-line label; a long account name truncates inside the pill instead.
+        Box(Modifier.weight(1f, fill = false).padding(end = RemSpacing.sm)) {
+            RemAccountPill(account, onClick = { onAction(RemSidebarAction.OpenSettings) })
+        }
         Row(
             Modifier
                 .height(56.dp)
@@ -235,7 +238,7 @@ private fun BottomActions(account: RemSidebarAccount, onAction: (RemSidebarActio
             Box(Modifier.width(28.dp), contentAlignment = Alignment.Center) {
                 SymbolGlyph(RemMaterialSymbols.Add, 24, colors.backgroundPrimary)
             }
-            Text(RemSidebarDisplay.NewAgent, style = RemTypography.bodyBold, color = colors.backgroundPrimary)
+            Text(RemSidebarDisplay.NewAgent, style = RemTypography.bodyBold, color = colors.backgroundPrimary, maxLines = 1, softWrap = false)
         }
     }
 }

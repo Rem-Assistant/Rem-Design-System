@@ -1108,4 +1108,13 @@ class EvidenceSnapshots {
 
     @Test
     fun agentProfileMain() = sidebar.agentProfileMain()
+
+    // Playground app shell (docs/playground/route-map.md).
+    private val shell get() = ShellEvidence(paparazzi)
+
+    @Test
+    fun shellChat() = shell.chat()
+
+    @Test
+    fun shellSidebar() = shell.sidebar()
 }

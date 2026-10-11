@@ -62,9 +62,11 @@ fun RemAccountPill(account: RemSidebarAccount, onClick: () -> Unit, modifier: Mo
         ) {
             Text(account.initial, style = RemTypography.subheadline.copy(fontWeight = FontWeight.SemiBold), color = colors.labelPrimary)
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        // Under a tight width the name truncates and the menu chevron stays inside the capsule.
+        Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 account.displayName,
+                modifier = Modifier.weight(1f, fill = false),
                 style = RemTypography.subheadline.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.labelPrimary,
                 maxLines = 1,

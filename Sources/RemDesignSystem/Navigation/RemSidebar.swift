@@ -107,6 +107,8 @@ public struct RemSidebar: View {
                         .frame(width: 28, height: 28)
                     Text(RemSidebarDisplay.newAgent)
                         .font(DesignTokens.Typography.bodyBold)
+                        .lineLimit(1)
+                        .fixedSize()
                 }
                 .foregroundStyle(DesignTokens.Color.backgroundPrimary)
                 .padding(.leading, 20)
@@ -116,6 +118,8 @@ public struct RemSidebar: View {
                 .shadow(color: .black.opacity(0.18), radius: 9, y: 6)
             }
             .buttonStyle(.plain)
+            // New agent keeps its one-line label; a long account name truncates inside the pill instead.
+            .layoutPriority(1)
             .accessibilityIdentifier("sidebar.newAgent")
         }
         .padding(.leading, DesignTokens.Spacing.lg)
