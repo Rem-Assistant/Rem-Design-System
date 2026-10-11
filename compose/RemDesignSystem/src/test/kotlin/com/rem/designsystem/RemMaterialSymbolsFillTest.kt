@@ -47,6 +47,7 @@ class RemMaterialSymbolsFillTest {
         Row(RemMaterialSymbols.AddService, false),
         Row(RemMaterialSymbols.CalendarService, true),
         Row(RemMaterialSymbols.AgentHeart, true),
+        Row(RemMaterialSymbols.Close, false),
     )
 
     private val outline by lazy { TrueTypeFont(loadFontBytes("material_symbols_outlined.ttf")) }

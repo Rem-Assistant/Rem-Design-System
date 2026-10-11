@@ -149,7 +149,7 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
         val requiredCodepoints = listOf(
             0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686,
             // Sidebar + New agent flow.
-            0xEF7A, 0xE0CB, 0xE145, 0xE5D7, 0xE250, 0xEBCC, 0xE87E,
+            0xEF7A, 0xE0CB, 0xE145, 0xE5D7, 0xE250, 0xEBCC, 0xE87E, 0xE5CD,
         )
         val verified = listOf("outline" to outline, "filled" to filled).associate { (label, resource) ->
             check(resource.isFile) { "missing packaged Material Symbols $label resource: $resource" }

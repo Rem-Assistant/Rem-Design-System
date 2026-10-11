@@ -1,5 +1,6 @@
 package com.rem.designsystem
 
+import androidx.compose.ui.unit.dp
 import com.rem.designsystem.agents.AgentAvatarIdentity
 import com.rem.designsystem.agents.AgentColor
 import com.rem.designsystem.agents.AgentGlyph
@@ -7,11 +8,12 @@ import com.rem.designsystem.agents.AgentKind
 import com.rem.designsystem.agents.AgentLook
 import com.rem.designsystem.agents.AgentProfileCopy
 import com.rem.designsystem.agents.AgentProfileDisplay
-import com.rem.designsystem.agents.AgentService
 import com.rem.designsystem.agents.AgentServiceGlyph
 import com.rem.designsystem.agents.AgentServicesCopy
 import com.rem.designsystem.agents.NewAgentDraft
+import com.rem.designsystem.agents.NewAgentSetupAction
 import com.rem.designsystem.agents.NewAgentSetupCopy
+import com.rem.designsystem.agents.NewAgentSetupLayout
 import com.rem.designsystem.icons.RemMaterialSymbols
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,11 +32,20 @@ class AgentDisplayModelTest {
     }
 
     @Test
-    fun swatchesKeepTheFigmaOrderAndDefaultLook() {
+    fun paletteIsElevenColoursInSpectrumOrderWithTheDefaultLook() {
         assertEquals(
-            listOf(AgentColor.Pink, AgentColor.Blue, AgentColor.Green, AgentColor.Purple, AgentColor.Indigo),
+            listOf(
+                AgentColor.Red, AgentColor.Orange, AgentColor.Yellow, AgentColor.Green, AgentColor.Mint,
+                AgentColor.Teal, AgentColor.Cyan, AgentColor.Blue, AgentColor.Indigo, AgentColor.Purple, AgentColor.Pink,
+            ),
             AgentColor.entries.toList(),
         )
+        // Ids match the SwiftUI raw values (used in `newAgent.color.<id>`).
+        assertEquals(
+            listOf("red", "orange", "yellow", "green", "mint", "teal", "cyan", "blue", "indigo", "purple", "pink"),
+            AgentColor.entries.map { it.id },
+        )
+        assertEquals("Blue", AgentColor.Blue.accessibilityName)
         assertEquals(AgentLook(AgentGlyph.Heart, AgentColor.Pink), AgentLook.Default)
         // Registry pairs: heart.fill ↔ favorite (FILL 1), calendar ↔ calendar_month, link ↔ link.
         assertEquals(RemMaterialSymbols.AgentHeart, AgentGlyph.Heart.symbol)
@@ -44,44 +55,62 @@ class AgentDisplayModelTest {
     }
 
     @Test
+    fun swatchesWrapIntoTwoRows() {
+        assertEquals(listOf(6, 5), NewAgentSetupLayout.swatchRows.map { it.size })
+        assertEquals(AgentColor.entries.toList(), NewAgentSetupLayout.swatchRows.flatten())
+        assertTrue("44dp touch target", NewAgentSetupLayout.SwatchTarget >= 44.dp)
+    }
+
+    @Test
     fun setupCopyIsVerbatim() {
         assertEquals("New agent", NewAgentSetupCopy.Title)
         assertEquals("Create agent", NewAgentSetupCopy.Create)
-        assertEquals("Name", NewAgentSetupCopy.NameHeader)
-        assertEquals("What should this agent handle?", NewAgentSetupCopy.HandlesHeader)
+        assertEquals("Close", NewAgentSetupCopy.Close)
+        assertEquals("Name", NewAgentSetupCopy.NameLabel)
+        assertEquals("Agent name", NewAgentSetupCopy.NamePlaceholder)
+        assertEquals("Color", NewAgentSetupCopy.ColorsLabel)
         assertEquals("Connected services", AgentServicesCopy.Header)
         assertEquals("Add a service", AgentServicesCopy.AddService)
     }
 
     @Test
-    fun namingTheLaneIsTheOnlyRequiredStep() {
+    fun draftStartsEmptyOnTheDefaultColour() {
+        val draft = NewAgentDraft()
+        assertEquals("", draft.name)
+        assertEquals(AgentColor.Pink, draft.color)
+        assertEquals(AgentLook.Default.color, draft.color)
+        assertEquals(AgentLook.Default, draft.look)
+    }
+
+    @Test
+    fun createIsDisabledUntilTheAgentHasAName() {
         assertFalse(NewAgentDraft().canCreate)
         assertNull(NewAgentDraft().createAction)
         assertFalse("whitespace is not a name", NewAgentDraft(name = "   \n ").canCreate)
         assertNull(NewAgentDraft(name = "   \n ").createAction)
-        assertTrue("handles and services are optional", NewAgentDraft(name = "Health").canCreate)
+        assertFalse("a colour alone is not enough", NewAgentDraft(color = AgentColor.Teal).canCreate)
+        assertTrue("the colour is optional (it has a default)", NewAgentDraft(name = "Health").canCreate)
         assertNotNull(NewAgentDraft(name = "Health").createAction)
     }
 
     @Test
-    fun createSendsATrimmedDraft() {
-        val draft = NewAgentDraft(
-            name = "  Health ",
-            handles = "  Appointments, prescriptions  ",
-            look = AgentLook(AgentGlyph.Heart, AgentColor.Indigo),
-            services = listOf(AgentService("gcal", "Google Calendar", "Connected", AgentServiceGlyph.Calendar)),
-        )
-        val sent = requireNotNull(draft.createAction).draft
-        assertEquals("Health", sent.name)
-        assertEquals("Appointments, prescriptions", sent.handles)
-        assertEquals(AgentLook(AgentGlyph.Heart, AgentColor.Indigo), sent.look)
-        assertEquals(listOf("gcal"), sent.services.map { it.id })
+    fun createSendsATrimmedName() {
+        assertEquals("Health", requireNotNull(NewAgentDraft(name = "  Health \n").createAction).draft.name)
     }
 
     @Test
-    fun blankHandlesAreOmitted() {
-        assertNull(NewAgentDraft(name = "Money", handles = "  ").trimmedHandles)
-        assertEquals("", requireNotNull(NewAgentDraft(name = "Money", handles = "  ").createAction).draft.handles)
+    fun createCarriesTheSelectedColour() {
+        val draft = NewAgentDraft(name = "Money").copy(color = AgentColor.Indigo)
+        assertEquals("the preview follows the selection", AgentLook(AgentGlyph.Heart, AgentColor.Indigo), draft.look)
+        assertEquals(NewAgentSetupAction.Create(NewAgentDraft(name = "Money", color = AgentColor.Indigo)), draft.createAction)
+        val sent = requireNotNull(draft.createAction).draft
+        assertEquals(AgentColor.Indigo, sent.color)
+        assertEquals(AgentLook(AgentGlyph.Heart, AgentColor.Indigo), sent.look)
+    }
+
+    @Test
+    fun createWithoutPickingKeepsTheDefaultColour() {
+        assertEquals(AgentLook.Default.color, requireNotNull(NewAgentDraft(name = "Travel").createAction).draft.color)
     }
 
     private val health = AgentProfileDisplay(

@@ -33,7 +33,7 @@ codepoints (verified against the repo's `.codepoints` file):
     error e000 (legacy PUA, also f8b6) · shield_lock f686 · shield e9e0
     description e873 · chevron_right e5cc
     search ef7a · chat_bubble e0cb · add e145 · unfold_more e5d7 · link e250
-    calendar_month ebcc · favorite e87e
+    calendar_month ebcc · favorite e87e · close e5cd
 """
 import sys
 import urllib.request
@@ -65,6 +65,8 @@ GLYPHS = {
     "link": 0xE250,
     "calendar_month": 0xEBCC,
     "favorite": 0xE87E,
+    # New agent setup close button (SF `xmark`).
+    "close": 0xE5CD,
 }
 
 # Both outputs carry ALL registry codepoints so an off-fill request still renders the

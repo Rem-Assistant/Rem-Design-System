@@ -13,11 +13,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.Paparazzi
+import com.rem.designsystem.agents.AgentColor
 import com.rem.designsystem.agents.AgentKind
 import com.rem.designsystem.agents.AgentLook
 import com.rem.designsystem.agents.AgentProfileAbout
@@ -68,14 +72,12 @@ internal object SidebarFixtures {
         handles = "Daily Brief, sees all your lanes",
     )
 
-    val filledDraft = NewAgentDraft(name = "Health", handles = "Appointments, prescriptions, insurance claims")
+    /** Named, with a non-default colour selected (default is pink). */
+    val filledDraft = NewAgentDraft(name = "Health", color = AgentColor.Teal)
 }
 
 /**
- * Paparazzi evidence for the sidebar + New agent flow, keyed to pair with `SidebarRenderSnapshots.swift`.
- * Kept separate from `EvidenceSnapshots.kt` so these surfaces don't edit the shared gallery.
- */
-/**
+ * Paparazzi evidence for the sidebar + New agent flow, keyed to pair with `SidebarRenderSnapshots.swift`:
  * Sidebar / New agent / Agent profile renders. Run from [EvidenceSnapshots] so the files carry the
  * `EvidenceSnapshots_` prefix the canonical Builder delivery pairs with the SwiftUI renders.
  */
@@ -120,6 +122,16 @@ internal class SidebarEvidence(private val paparazzi: Paparazzi) {
         }
         shot("NewAgent-filled-dark") {
             RemTheme(darkTheme = true) {
+                NewAgentSetupScreen(SidebarFixtures.filledDraft, onDraftChange = {}, onAction = {}, focusesNameOnAppear = false)
+            }
+        }
+    }
+
+    /** Accessibility text size (font scale 2.0, the Android maximum) — pairs with SwiftUI `.accessibility2`. */
+    fun newAgentLargeText() = shot("NewAgent-largeText-light") {
+        RemTheme {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
                 NewAgentSetupScreen(SidebarFixtures.filledDraft, onDraftChange = {}, onAction = {}, focusesNameOnAppear = false)
             }
         }

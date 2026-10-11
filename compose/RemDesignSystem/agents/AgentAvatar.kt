@@ -45,7 +45,7 @@ import com.rem.designsystem.tokens.RemTypography
 /**
  * **AgentAvatar** — the circular agent identity mark, the Compose twin of `Agents/AgentAvatar.swift`.
  * The Main agent is the Rem face on a `backgroundSecondary` disc (`2718:3396`); a side agent is its
- * chosen glyph in white on its chosen colour (`2714:3587` at 80dp, `2718:3061` at 96dp). Decorative:
+ * chosen glyph in white on its chosen colour (`2718:3061` at 96dp; 120dp as the New agent preview). Decorative:
  * callers pair it with the agent name.
  */
 @Composable
@@ -89,11 +89,17 @@ fun AgentAvatar(identity: AgentAvatarIdentity, modifier: Modifier = Modifier, si
 fun AgentColor.swatch(): Color {
     val colors = RemColors.current
     return when (this) {
-        AgentColor.Pink -> colors.systemPink
-        AgentColor.Blue -> colors.systemBlue
+        AgentColor.Red -> colors.systemRed
+        AgentColor.Orange -> colors.systemOrange
+        AgentColor.Yellow -> colors.systemYellow
         AgentColor.Green -> colors.systemGreen
-        AgentColor.Purple -> colors.systemPurple
+        AgentColor.Mint -> colors.systemMint
+        AgentColor.Teal -> colors.systemTeal
+        AgentColor.Cyan -> colors.systemCyan
+        AgentColor.Blue -> colors.systemBlue
         AgentColor.Indigo -> colors.systemIndigo
+        AgentColor.Purple -> colors.systemPurple
+        AgentColor.Pink -> colors.systemPink
     }
 }
 

@@ -62,7 +62,7 @@ form diverges.
   `AgentProfileHeader` / `AgentProfileAbout`, inputs `AgentModels.kt` / `NewAgentSetupModel.kt` /
   `AgentProfileModel.kt`). Twins of `Sources/RemDesignSystem/Navigation` + `Agents`; contract
   `docs/contracts/sidebar-new-agent.md`. Display models + callbacks only. Tests:
-  `RemSidebarModelTest`, `AgentDisplayModelTest`, Paparazzi `SidebarSnapshots`.
+  `RemSidebarModelTest`, `AgentDisplayModelTest`, Paparazzi `SidebarEvidence` (run from `EvidenceSnapshots`).
 
 ## Status / verify
 Generator output is verified here (Node). **Compose compilation is not** — this repo has no Android

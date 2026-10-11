@@ -6,7 +6,7 @@ import com.rem.designsystem.icons.RemMaterialSymbols
 // Shared agent identity inputs (presentation-only) — the Compose twin of `Agents/AgentModels.swift`.
 //
 // Figma page `Proposed · Navigation & Daily Brief` (`2693:1474`): the sidebar (`2702:2479`), New agent
-// setup (`2714:3538`) and agent profile (`2718:3055` / `2718:3396`) show the same agent identity. The DS
+// setup (`2714:3538`, superseded by the name + colour sheet) and agent profile (`2718:3055` / `2718:3396`) show the same agent identity. The DS
 // never creates, persists or routes agents. Contract: `docs/contracts/sidebar-new-agent.md`.
 
 /** Exactly one **Main agent** (Rem) exists; every user-created agent is a **Side agent**. */
@@ -15,19 +15,29 @@ enum class AgentKind(val label: String) {
     Side("Side agent"),
 }
 
-/** The colour swatches offered by New agent setup, in the Figma order (`2714:3590`). */
+/**
+ * The fixed agent colour palette offered by New agent setup — eleven Apple system colours in spectrum
+ * order, each bound to a `RemColors.system*` token ([swatch]). The chosen colour is the agent's
+ * identity colour (avatar now; its chat theme later). Same cases, order and tokens as the SwiftUI
+ * `AgentColor`.
+ */
 enum class AgentColor(val id: String, val accessibilityName: String) {
-    Pink("pink", "Pink"),
-    Blue("blue", "Blue"),
+    Red("red", "Red"),
+    Orange("orange", "Orange"),
+    Yellow("yellow", "Yellow"),
     Green("green", "Green"),
-    Purple("purple", "Purple"),
+    Mint("mint", "Mint"),
+    Teal("teal", "Teal"),
+    Cyan("cyan", "Cyan"),
+    Blue("blue", "Blue"),
     Indigo("indigo", "Indigo"),
+    Purple("purple", "Purple"),
+    Pink("pink", "Pink"),
 }
 
 /**
- * The glyph on a side agent's avatar. Only the glyph the approved frames show is registered; the icon
- * chooser behind "Tap to change icon" is not designed yet, so the host owns that picker. Each entry is a
- * researched row in `docs/contracts/icon-registry.md` (SF `heart.fill` ↔ `favorite`, FILL 1).
+ * The glyph on a side agent's avatar. New agent setup offers no glyph chooser (name + colour only), so
+ * every new agent starts with the default glyph. Each entry is a researched row in `docs/contracts/icon-registry.md` (SF `heart.fill` ↔ `favorite`, FILL 1).
  */
 enum class AgentGlyph(val symbol: RemMaterialSymbol) {
     Heart(RemMaterialSymbols.AgentHeart),
@@ -39,7 +49,7 @@ data class AgentLook(
     val color: AgentColor = AgentColor.Pink,
 ) {
     companion object {
-        /** The look a new agent starts with (the E frame's default selection). */
+        /** The look a new agent starts with: the default glyph on the default colour (pink). */
         val Default = AgentLook()
     }
 }

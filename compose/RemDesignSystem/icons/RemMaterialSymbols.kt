@@ -187,4 +187,7 @@ object RemMaterialSymbols {
      * `heart.fill`). U+E87E.
      */
     val AgentHeart = RemMaterialSymbol(meaning = "agent icon / heart", glyphName = "favorite", codePoint = 0xE87E, fill = 1f)
+
+    /** `close` — meaning "close sheet", New agent setup's top-leading close button. FILL **0** (pairs with iOS `xmark`). U+E5CD. */
+    val Close = RemMaterialSymbol(meaning = "close sheet", glyphName = "close", codePoint = 0xE5CD, fill = 0f)
 }

@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Shared agent identity inputs (presentation-only)
 //
 // Figma page `Proposed · Navigation & Daily Brief` (`2693:1474`): the sidebar (`2702:2479`), the New
-// agent setup (`2714:3538`) and the agent profile (`2718:3055` / `2718:3396`) all show the same agent
+// agent setup (`2714:3538`, superseded by the name + colour sheet) and the agent profile (`2718:3055` / `2718:3396`) all show the same agent
 // identity. These values are what a host hands the design system; the DS never creates, persists or
 // routes agents. Contract: `docs/contracts/sidebar-new-agent.md`.
 //
@@ -24,18 +24,21 @@ public enum AgentKind: String, CaseIterable, Sendable {
     }
 }
 
-/// The colour swatches offered by New agent setup, in the Figma order (`2714:3590`).
+/// The fixed agent colour palette offered by New agent setup — eleven Apple system colours in
+/// spectrum order, each bound to a `DesignTokens.Color.system*` token (`AgentColor.swatch`). The
+/// chosen colour is the agent's identity colour (avatar now; its chat theme later). Compose twin
+/// `AgentColor` lists the same cases in the same order, bound to the same `RemColors.system*` tokens.
 public enum AgentColor: String, CaseIterable, Identifiable, Sendable {
-    case pink, blue, green, purple, indigo
+    case red, orange, yellow, green, mint, teal, cyan, blue, indigo, purple, pink
 
     public var id: String { rawValue }
 
-    /// VoiceOver name for the swatch.
+    /// VoiceOver name for the swatch, e.g. "Blue".
     public var accessibilityName: String { rawValue.capitalized }
 }
 
-/// The glyph on a side agent's avatar. Only the glyph the approved frames show is registered; the
-/// icon chooser behind "Tap to change icon" is not designed yet, so the host owns that picker.
+/// The glyph on a side agent's avatar. New agent setup offers no glyph chooser (name + colour only),
+/// so every new agent starts with the default glyph.
 /// Each case is a researched SF Symbol ↔ Material Symbol pair in `docs/contracts/icon-registry.md`.
 public enum AgentGlyph: String, CaseIterable, Sendable {
     case heart
@@ -58,7 +61,7 @@ public struct AgentLook: Equatable, Sendable {
         self.color = color
     }
 
-    /// The look a new agent starts with (the E frame's default selection).
+    /// The look a new agent starts with: the default glyph on the default colour (pink).
     public static let `default` = AgentLook()
 }
 

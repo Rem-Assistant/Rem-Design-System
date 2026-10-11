@@ -12,12 +12,20 @@ final class AgentDisplayModelTests: XCTestCase {
         XCTAssertEqual(AgentKind.side.label, "Side agent")
     }
 
-    func testSwatchesKeepTheFigmaOrderAndDefaultLook() {
-        XCTAssertEqual(AgentColor.allCases, [.pink, .blue, .green, .purple, .indigo])
+    func testPaletteIsElevenColoursInSpectrumOrderWithTheDefaultLook() {
+        XCTAssertEqual(AgentColor.allCases, [.red, .orange, .yellow, .green, .mint, .teal, .cyan, .blue, .indigo, .purple, .pink])
+        XCTAssertEqual(AgentColor.blue.accessibilityName, "Blue")
+        XCTAssertEqual(AgentColor.allCases.map(\.id), AgentColor.allCases.map(\.rawValue))
         XCTAssertEqual(AgentLook.default, AgentLook(glyph: .heart, color: .pink))
         XCTAssertEqual(AgentGlyph.heart.systemName, "heart.fill")
         XCTAssertEqual(AgentServiceGlyph.calendar.systemName, "calendar")
         XCTAssertEqual(AgentServiceGlyph.link.systemName, "link")
+    }
+
+    func testSwatchesWrapIntoTwoRows() {
+        XCTAssertEqual(NewAgentSetupLayout.swatchRows.map(\.count), [6, 5])
+        XCTAssertEqual(NewAgentSetupLayout.swatchRows.flatMap { $0 }, AgentColor.allCases)
+        XCTAssertGreaterThanOrEqual(NewAgentSetupLayout.swatchTarget, 44, "44pt touch target")
     }
 
     // MARK: New agent setup
@@ -25,13 +33,23 @@ final class AgentDisplayModelTests: XCTestCase {
     func testSetupCopyIsVerbatim() {
         XCTAssertEqual(NewAgentSetupCopy.title, "New agent")
         XCTAssertEqual(NewAgentSetupCopy.create, "Create agent")
-        XCTAssertEqual(NewAgentSetupCopy.nameHeader, "Name")
-        XCTAssertEqual(NewAgentSetupCopy.handlesHeader, "What should this agent handle?")
+        XCTAssertEqual(NewAgentSetupCopy.close, "Close")
+        XCTAssertEqual(NewAgentSetupCopy.nameLabel, "Name")
+        XCTAssertEqual(NewAgentSetupCopy.namePlaceholder, "Agent name")
+        XCTAssertEqual(NewAgentSetupCopy.colorsLabel, "Color")
         XCTAssertEqual(AgentServicesCopy.header, "Connected services")
         XCTAssertEqual(AgentServicesCopy.addService, "Add a service")
     }
 
-    func testNamingTheLaneIsTheOnlyRequiredStep() {
+    func testDraftStartsEmptyOnTheDefaultColour() {
+        let draft = NewAgentDraft()
+        XCTAssertEqual(draft.name, "")
+        XCTAssertEqual(draft.color, .pink)
+        XCTAssertEqual(draft.color, AgentLook.default.color)
+        XCTAssertEqual(draft.look, AgentLook.default)
+    }
+
+    func testCreateIsDisabledUntilTheAgentHasAName() {
         var draft = NewAgentDraft()
         XCTAssertFalse(draft.canCreate)
         XCTAssertNil(draft.createAction)
@@ -40,33 +58,38 @@ final class AgentDisplayModelTests: XCTestCase {
         XCTAssertFalse(draft.canCreate, "whitespace is not a name")
         XCTAssertNil(draft.createAction)
 
+        draft.color = .teal
+        XCTAssertFalse(draft.canCreate, "a colour alone is not enough")
+
         draft.name = "Health"
-        XCTAssertTrue(draft.canCreate, "handles and services are optional")
+        XCTAssertTrue(draft.canCreate, "the colour is optional (it has a default)")
         XCTAssertNotNil(draft.createAction)
     }
 
-    func testCreateSendsATrimmedDraft() {
-        let draft = NewAgentDraft(
-            name: "  Health ",
-            handles: "  Appointments, prescriptions  ",
-            look: AgentLook(glyph: .heart, color: .indigo),
-            services: [AgentService(id: "gcal", name: "Google Calendar", status: "Connected", glyph: .calendar)]
-        )
-        guard case .create(let sent)? = draft.createAction else {
+    func testCreateSendsATrimmedName() {
+        guard case .create(let sent)? = NewAgentDraft(name: "  Health \n").createAction else {
             return XCTFail("expected a create action")
         }
         XCTAssertEqual(sent.name, "Health")
-        XCTAssertEqual(sent.handles, "Appointments, prescriptions")
-        XCTAssertEqual(sent.look, AgentLook(glyph: .heart, color: .indigo))
-        XCTAssertEqual(sent.services.map(\.id), ["gcal"])
     }
 
-    func testBlankHandlesAreOmitted() {
-        XCTAssertNil(NewAgentDraft(name: "Money", handles: "  ").trimmedHandles)
-        guard case .create(let sent)? = NewAgentDraft(name: "Money", handles: "  ").createAction else {
+    func testCreateCarriesTheSelectedColour() {
+        var draft = NewAgentDraft(name: "Money")
+        draft.color = .indigo
+        XCTAssertEqual(draft.look, AgentLook(glyph: .heart, color: .indigo), "the preview follows the selection")
+        XCTAssertEqual(draft.createAction, .create(NewAgentDraft(name: "Money", color: .indigo)))
+        guard case .create(let sent)? = draft.createAction else {
             return XCTFail("expected a create action")
         }
-        XCTAssertEqual(sent.handles, "")
+        XCTAssertEqual(sent.color, .indigo)
+        XCTAssertEqual(sent.look, AgentLook(glyph: .heart, color: .indigo))
+    }
+
+    func testCreateWithoutPickingKeepsTheDefaultColour() {
+        guard case .create(let sent)? = NewAgentDraft(name: "Travel").createAction else {
+            return XCTFail("expected a create action")
+        }
+        XCTAssertEqual(sent.color, AgentLook.default.color)
     }
 
     // MARK: Agent profile

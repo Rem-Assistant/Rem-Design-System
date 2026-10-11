@@ -2,7 +2,7 @@ import SwiftUI
 
 /// **AgentAvatar** — the circular agent identity mark. The **Main agent** is always the Rem face on a
 /// `backgroundSecondary` disc (`2718:3396`); a **Side agent** is its chosen glyph in white on its
-/// chosen colour (`2714:3587` at 80pt, `2718:3061` at 96pt).
+/// chosen colour (`2718:3061` at 96pt; 120pt as the New agent preview).
 ///
 /// Decorative: callers pair it with the agent name, so it is hidden from accessibility.
 /// Compose twin: `agents/AgentAvatar.kt`.
@@ -43,11 +43,17 @@ public extension AgentColor {
     /// The token each swatch resolves to.
     var swatch: Color {
         switch self {
-        case .pink: return DesignTokens.Color.systemPink
-        case .blue: return DesignTokens.Color.systemBlue
+        case .red: return DesignTokens.Color.systemRed
+        case .orange: return DesignTokens.Color.systemOrange
+        case .yellow: return DesignTokens.Color.systemYellow
         case .green: return DesignTokens.Color.systemGreen
-        case .purple: return DesignTokens.Color.systemPurple
+        case .mint: return DesignTokens.Color.systemMint
+        case .teal: return DesignTokens.Color.systemTeal
+        case .cyan: return DesignTokens.Color.systemCyan
+        case .blue: return DesignTokens.Color.systemBlue
         case .indigo: return DesignTokens.Color.systemIndigo
+        case .purple: return DesignTokens.Color.systemPurple
+        case .pink: return DesignTokens.Color.systemPink
         }
     }
 }

@@ -60,6 +60,9 @@
   --rem-color-system-indigo: #5856D6;
   --rem-color-system-purple: #AF52DE;
   --rem-color-system-pink: #FF2D55;
+  --rem-color-system-mint: #00C7BE;
+  --rem-color-system-teal: #30B0C7;
+  --rem-color-system-cyan: #32ADE6;
   --rem-color-brand-blue: #0C50FF;
   --rem-color-brand-blue-on-fill: #0C50FF;
 }
@@ -85,6 +88,9 @@
   --rem-color-system-indigo: #5E5CE6;
   --rem-color-system-purple: #BF5AF2;
   --rem-color-system-pink: #FF375F;
+  --rem-color-system-mint: #63E6E2;
+  --rem-color-system-teal: #40C8E0;
+  --rem-color-system-cyan: #64D2FF;
   --rem-color-brand-blue: #0C50FF;
   --rem-color-brand-blue-on-fill: #6E9BFF;
   }
@@ -109,6 +115,9 @@
   --rem-color-system-indigo: #5E5CE6;
   --rem-color-system-purple: #BF5AF2;
   --rem-color-system-pink: #FF375F;
+  --rem-color-system-mint: #63E6E2;
+  --rem-color-system-teal: #40C8E0;
+  --rem-color-system-cyan: #64D2FF;
   --rem-color-brand-blue: #0C50FF;
   --rem-color-brand-blue-on-fill: #6E9BFF;
 }

@@ -5,7 +5,7 @@ import UIKit
 import RemDesignSystem
 
 /// Fixtures shared by the sidebar / New agent / profile renders — copy from Figma page `2693:1474`
-/// so the iOS and Compose (`SidebarSnapshots.kt`) evidence shows the same content.
+/// so the iOS and Compose (`SidebarEvidence.kt`) evidence shows the same content.
 enum SidebarFixtures {
     static let sidebar = RemSidebarDisplay(
         mainAgent: .init(id: "rem", name: "Rem", lane: "Daily Brief ready"),
@@ -34,9 +34,8 @@ enum SidebarFixtures {
         handles: "Daily Brief, sees all your lanes"
     )
 
-    static let filledDraft = NewAgentDraft(
-        name: "Health", handles: "Appointments, prescriptions, insurance claims", look: .default
-    )
+    /// Named, with a non-default colour selected (default is pink).
+    static let filledDraft = NewAgentDraft(name: "Health", color: .teal)
 }
 
 // Neutral stand-in for the pushed chat: the real chat chassis lives in ChatScreen (not on main).
@@ -94,20 +93,20 @@ final class SidebarRenderSnapshots: XCTestCase {
                 .padding(24)
                 .background(DesignTokens.Color.backgroundSecondary)
         }
+        // The sheet draws its own header (close + title), so it renders without a NavigationStack.
         render("NewAgent-empty-light", width: 393, height: 852, dark: false) {
-            NavigationStack {
-                NewAgentSetupScreen(draft: .constant(NewAgentDraft()), focusesNameOnAppear: false) { _ in }
-            }
+            NewAgentSetupScreen(draft: .constant(NewAgentDraft()), focusesNameOnAppear: false) { _ in }
         }
         render("NewAgent-filled-light", width: 393, height: 852, dark: false) {
-            NavigationStack {
-                NewAgentSetupScreen(draft: .constant(SidebarFixtures.filledDraft), focusesNameOnAppear: false) { _ in }
-            }
+            NewAgentSetupScreen(draft: .constant(SidebarFixtures.filledDraft), focusesNameOnAppear: false) { _ in }
         }
         render("NewAgent-filled-dark", width: 393, height: 852, dark: true) {
-            NavigationStack {
-                NewAgentSetupScreen(draft: .constant(SidebarFixtures.filledDraft), focusesNameOnAppear: false) { _ in }
-            }
+            NewAgentSetupScreen(draft: .constant(SidebarFixtures.filledDraft), focusesNameOnAppear: false) { _ in }
+        }
+        // Accessibility text size; pairs with the Compose render at font scale 2.0.
+        render("NewAgent-largeText-light", width: 393, height: 852, dark: false) {
+            NewAgentSetupScreen(draft: .constant(SidebarFixtures.filledDraft), focusesNameOnAppear: false) { _ in }
+                .environment(\.dynamicTypeSize, .accessibility2)
         }
         render("AgentProfile-side-about-light", width: 393, height: 852, dark: false) {
             profile(SidebarFixtures.healthProfile)

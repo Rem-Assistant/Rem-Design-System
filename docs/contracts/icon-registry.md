@@ -25,6 +25,7 @@ never by "whatever Material icon looks close." One text layer per platform; no S
 | add a service | `link` | `link` | **0** | connected-services add row (tinted tile) |
 | calendar service | `calendar` | `calendar_month` | **0** | connected calendar row (tinted tile) |
 | agent icon / heart | `heart.fill` | `favorite` | **1** | side-agent avatar glyph |
+| close sheet | `xmark` | `close` | **0** | New agent setup close button (top leading) |
 
 **Brand marks are assets, not registry glyphs** (they have no font twin):
 `RemAppIcon` (raster, both platforms) · Apple mark (SF `apple.logo` / bundled monochrome vector) ·

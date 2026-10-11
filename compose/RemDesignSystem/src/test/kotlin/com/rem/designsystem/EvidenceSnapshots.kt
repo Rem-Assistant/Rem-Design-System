@@ -195,6 +195,9 @@ class EvidenceSnapshots {
     fun newAgentFilled() = sidebar.newAgentFilled()
 
     @Test
+    fun newAgentLargeText() = sidebar.newAgentLargeText()
+
+    @Test
     fun agentProfileSide() = sidebar.agentProfileSide()
 
     @Test
