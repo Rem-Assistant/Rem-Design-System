@@ -1,0 +1,40 @@
+# Temporary diagnostic (never merged): reproduce package.py's unsigned iOS Release archive on the
+# same hosted runner image, and show the failing step that package.py deliberately suppresses.
+# No secrets, no signing, no upload. Read-only permissions.
+name: Diagnostic · Playground Release archive
+on:
+  pull_request:
+    paths: ['.github/workflows/diag-playground-release-archive.yml']
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Toolchain
+        run: xcodebuild -version; xcode-select -p
+      - name: Unsigned Release archive (package.py arguments)
+        run: |
+          set -o pipefail
+          xcodebuild -project tools/playground-ios/RemSettingsPlayground.xcodeproj -scheme RemSettingsPlayground \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Playground.xcarchive" -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION=8 REM_PLAYGROUND_SOURCE_SHA=${{ github.event.pull_request.head.sha }} \
+            archive 2>&1 | tee "$RUNNER_TEMP/archive.log" | grep -E "error:|warning: .*deprecated|\*\* ARCHIVE" || true
+          echo "--- last 60 lines ---"; tail -60 "$RUNNER_TEMP/archive.log"
+      - name: Archived Info.plist against main's ios_metadata()
+        if: always()
+        run: |
+          app=$(ls -d "$RUNNER_TEMP"/Playground.xcarchive/Products/Applications/*.app 2>/dev/null | head -1)
+          test -n "$app" || { echo "No archived app"; exit 1; }
+          plutil -p "$app/Info.plist"
+          git fetch --depth 1 origin main
+          git show origin/main:tools/playground-distribution/gate.py > "$RUNNER_TEMP/gate.py"
+          git show origin/main:tools/playground-distribution/package.py | python3 -c "import sys;s=sys.stdin.read();print(s[s.index('def ios_metadata'):s.index('def android_metadata')])" > "$RUNNER_TEMP/meta.py"
+          cd "$RUNNER_TEMP" && python3 -c "
+          import plistlib,sys; from gate import require
+          exec(open('meta.py').read()); IOS_ID='com.rem.playground.settings'
+          ios_metadata(plistlib.load(open('$app/Info.plist','rb')), '${{ github.event.pull_request.head.sha }}', '8'); print('ios_metadata OK')"
