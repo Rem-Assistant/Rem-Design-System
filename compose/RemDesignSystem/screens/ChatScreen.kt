@@ -10,6 +10,13 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -110,7 +117,10 @@ fun ChatScreen(
  * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
  * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
  * scrolled more than [ChatJumpToLatest.THRESHOLD] above the newest message. Hosts wire nothing for it.
+ * Keyboard dismissal is owned too ([ChatKeyboardDismiss]): a downward swipe on
+ * the composer, or a drag toward older messages in the transcript while the IME is open, hides the IME.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     header: ChatHeaderDisplay,
@@ -160,10 +170,23 @@ fun ChatScreen(
             }
         }
         val jumpScope = rememberCoroutineScope()
+        // Keyboard dismissal from the transcript (twin of iOS `.scrollDismissesKeyboard(.interactively)`): a
+        // user drag toward older messages while the IME is open clears focus and hides it. Consumes nothing.
+        val focusManager = LocalFocusManager.current
+        val keyboard = LocalSoftwareKeyboardController.current
+        val imeVisible = rememberUpdatedState(WindowInsets.isImeVisible)
+        val transcriptDismiss = remember(density, focusManager, keyboard) {
+            ChatTranscriptKeyboardDismissConnection(
+                density = { density.density },
+                imeVisible = { imeVisible.value },
+                onDismiss = { focusManager.clearFocus(); keyboard?.hide() },
+            )
+        }
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .nestedScroll(transcriptDismiss)
                     .verticalScroll(scroll)
                     .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
                     .testTag("chat.content"),

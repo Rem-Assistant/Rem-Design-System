@@ -24,6 +24,10 @@ import SwiftUI
 /// availability, focus — and receives typed `ChatComposerAction`s. Send is available for text *or* a
 /// content attachment; Stop emits `.cancel`, never `.send`. The visual split between Sending (progress)
 /// and Streaming (Stop) in the Figma composer is not drawn yet: both show the red Stop, pending review.
+///
+/// Keyboard (iOS): while the field is focused, a clear downward swipe that starts on the composer ends
+/// editing, and VoiceOver gets a "Dismiss keyboard" action (`ChatKeyboardDismiss`). Hosts wire nothing;
+/// host-driven composers hear it as `.focusChanged(false)`.
 public struct RemComposerBar: View {
     /// Drives the trailing send affordance: idle (grey ↑), active (brandBlue ↑), sending (red ■ abort).
     /// Legacy display state; the `state:onAction:` initializer derives the control from
@@ -213,6 +217,12 @@ public struct RemComposerBar: View {
                     // vertical field's text view did not take focus from a tap or a short press
                     // (playground run 37944337913), while SwiftUI controls on the same page did.
                     .simultaneousGesture(TapGesture().onEnded { if inputEnabled { fieldFocused = true } })
+                    // VoiceOver: the keyboard's own dismiss stays; this adds a named action while focused.
+                    .accessibilityActions {
+                        if fieldFocused {
+                            Button(ChatKeyboardDismiss.accessibilityActionName) { fieldFocused = false }
+                        }
+                    }
                 #endif
                     .disabled(!inputEnabled)
                     .accessibilityHint(disabledReason ?? "")
@@ -260,6 +270,12 @@ public struct RemComposerBar: View {
         }
         .padding(DesignTokens.Spacing.md)
         .background(DesignTokens.Color.backgroundSecondary, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+    #if os(iOS)
+        // Swipe down on the composer (field included) to dismiss the keyboard. Only while the field is
+        // focused; otherwise the gesture is excluded and only the subviews' own gestures run.
+        .contentShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .simultaneousGesture(keyboardDismissSwipe, including: fieldFocused ? .all : .subviews)
+    #endif
         .onAppear { if let composerState { fieldFocused = composerState.isFocused } }
         .onChange(of: composerState?.isFocused) { _, requested in
             if let requested, requested != fieldFocused { fieldFocused = requested }
@@ -269,6 +285,23 @@ public struct RemComposerBar: View {
             onAction(.focusChanged(focused))
         }
     }
+
+#if os(iOS)
+    /// Swipe down to dismiss the keyboard (`ChatKeyboardDismiss`, contract `chat.md` rule 11). Simultaneous,
+    /// so taps, the controls, the model menu and the field's own text gestures keep working. A press held
+    /// still for `holdLimit` wins first and ends the gesture without effect, so press-and-hold selection
+    /// and caret drags never dismiss. Decided on release: upward, sideways or short drags do nothing.
+    private var keyboardDismissSwipe: some Gesture {
+        LongPressGesture(minimumDuration: ChatKeyboardDismiss.holdLimit, maximumDistance: 10)
+            .exclusively(before: DragGesture(minimumDistance: 10))
+            .onEnded { value in
+                guard case .second(let drag) = value,
+                      ChatKeyboardDismiss.isDismissSwipe(dx: drag.translation.width, dy: drag.translation.height)
+                else { return }
+                fieldFocused = false
+            }
+    }
+#endif
 
     /// Display-only legacy renders keep showing Speak unless sending; host-driven renders follow
     /// `ChatComposerState.showsSpeak`.

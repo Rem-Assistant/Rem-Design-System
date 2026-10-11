@@ -118,6 +118,27 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      Compose follows only while within the threshold, where it previously always snapped to the bottom).
      No unread indicator yet (follow-up).
 
+11. **Swipe down to dismiss the keyboard** (`ChatKeyboardDismiss`, Swift and Kotlin share the constants and
+   the rule; Samuel, 2026-10-11). While the composer field is focused, a clear downward swipe that **starts on
+   the composer** (the pill, field included) ends editing: focus becomes false and the keyboard / IME hides.
+   The composer owns it — hosts wire nothing; host-driven composers hear `focusChanged(false)`.
+   - **Rule:** at least **24pt/dp** down (`threshold`) with vertical travel more than **1.5×** horizontal
+     (`verticalDominance`), decided on release. Upward, sideways or short drags do nothing. A drag that only
+     starts moving after the finger was held still for **0.35s** (`holdLimit`) is text selection or a caret
+     drag and never dismisses.
+   - **Never breaks:** taps, cursor placement, selection, Send / Stop / Add / Speak, the model menu, the
+     attachment chips or the reply accessory (the gesture covers the composer pill only). iOS attaches a
+     simultaneous `DragGesture` (behind a `LongPressGesture` that wins on a hold) only while focused;
+     Compose observes on the Final pointer pass, consumes nothing, and abandons the swipe when a child
+     consumed any part of it (a click, a selection drag, an overflowed field's scroll).
+   - **Transcript:** iOS keeps `.scrollDismissesKeyboard(.interactively)`. Compose matches it: a user drag
+     toward older messages of at least the threshold while the IME is open clears focus and hides the IME
+     (a `NestedScrollConnection` that consumes nothing, so scrolling and jump to latest are unchanged;
+     programmatic scrolls never dismiss).
+   - **Accessibility:** VoiceOver and TalkBack keep the keyboard's own dismiss; the focused field also offers
+     a **"Dismiss keyboard"** action (iOS `accessibilityActions`, Compose `CustomAccessibilityAction`). No
+     focus trap: nothing moves or holds accessibility focus.
+
 ## Paired native fixtures
 
 `ChatFixture` in `tools/playground-ios/App/CatalogPages.swift` and in
@@ -133,6 +154,10 @@ Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlayg
 `chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
+
+Swipe down to dismiss the keyboard: journeys `testChatComposerSwipeDownDismissesKeyboard` (XCUITest) /
+`chatComposerSwipeDownDismissesKeyboard` (instrumentation; also covers the transcript drag). No render pair: the
+behaviour is a gesture, covered by the paired rule tests and the journeys, not by screenshots.
 
 ## Chat cards
 

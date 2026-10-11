@@ -18,7 +18,8 @@ import SwiftUI
 /// `ChatScreenAction`; it owns sending, receipts and routing (`docs/contracts/chat-adapter.md`).
 /// The composition also owns **jump to latest** (`ChatJumpToLatest`): a round down-arrow centred above the
 /// dock while the person is scrolled more than `ChatJumpToLatest.threshold` above the newest message.
-/// Hosts wire nothing for it.
+/// Hosts wire nothing for it. The keyboard is dismissed by dragging the transcript down
+/// (`.scrollDismissesKeyboard(.interactively)`) or by a downward swipe on the composer (`ChatKeyboardDismiss`).
 public struct ChatScreen<Transcript: View>: View {
     private let composerText: String
     private let composerPlaceholder: String
