@@ -1,8 +1,8 @@
 name: agent-sim-qa
 
 # Hosted visual diagnostic (dispatch only). A model looks at simulator screenshots of the iOS
-# Playground, chooses one typed input at a time (Read tool only), and a runner-local XCTest bridge
-# executes it. Evidence beside the deterministic XCUITest journeys, never a native receipt, release
+# Playground, chooses one typed input at a time (Read tool only), and a runner-local executor runs it:
+# the XCTest bridge (arm xctest) or idb's HID-level input (arm idb). Evidence beside the deterministic XCUITest journeys, never a native receipt, release
 # gate, approval or waiver. See tools/agent-sim-qa/README.md.
 #
 # No pull_request/push trigger: fork code never runs beside the model token. The app under test is
@@ -33,12 +33,21 @@ on:
           - b9-hub-chat-jump-to-latest
           - b9-shell-sidebar-agent
           - b9-shell-settings-from-account
+      arm:
+        description: Touch injection (xctest = XCTest-synthesized via the UI-test bridge; idb = HID-level idb ui tap/swipe)
+        type: choice
+        default: xctest
+        options:
+          - xctest
+          - idb
 
 permissions:
   contents: read
 
+# One running and one pending run per arm and scenario, so the two arms run side by side. A third
+# dispatch of the same pair would replace the pending one; wait for a run to start before queueing more.
 concurrency:
-  group: agent-sim-qa
+  group: agent-sim-qa-${{ inputs.arm }}-${{ inputs.scenario }}
   cancel-in-progress: false
 
 env:
@@ -48,6 +57,9 @@ env:
   SIM_NAME: iPhone 15
   SIM_RUNTIME_SUFFIX: iOS-17-5
   JOB_MINUTES: 55
+  # idb arm only. Exact versions; the install step fails if Homebrew or pip resolves anything else.
+  IDB_COMPANION_VERSION: 1.1.8
+  FB_IDB_VERSION: 1.1.7
 
 jobs:
   visual-diagnostic:
@@ -156,6 +168,21 @@ jobs:
             --app "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/RemSettingsPlayground.app" \
             --sha "$SOURCE_SHA" --out "$QA_ROOT/out"
 
+      # Third-party code, installed only for the idb arm and before the token exists in any step. It runs
+      # (like the candidate app) as the runner user; the controller gives it the credential-free env.
+      - name: Install pinned idb (idb arm only)
+        if: inputs.arm == 'idb'
+        run: |
+          set -euo pipefail
+          brew tap facebook/fb
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install idb-companion
+          test "$(brew list --versions idb-companion)" = "idb-companion $IDB_COMPANION_VERSION" || {
+            echo "::error::idb-companion is $(brew list --versions idb-companion), expected $IDB_COMPANION_VERSION"; exit 1; }
+          python3 -m venv "$RUNNER_TEMP/idb-venv"
+          "$RUNNER_TEMP/idb-venv/bin/pip" install --disable-pip-version-check "fb-idb==$FB_IDB_VERSION"
+          "$RUNNER_TEMP/idb-venv/bin/idb" --help >/dev/null
+          echo "$RUNNER_TEMP/idb-venv/bin" >> "$GITHUB_PATH"
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
@@ -170,6 +197,7 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           SCENARIO: ${{ inputs.scenario }}
+          ARM: ${{ inputs.arm }}
         run: |
           set -euo pipefail
           now=$(date +%s)
@@ -179,13 +207,16 @@ jobs:
             --src "$GITHUB_WORKSPACE/src" --sha "$SOURCE_SHA" --udid "$SIM_UDID" \
             --derived-data "$RUNNER_TEMP/dd" --out "$QA_ROOT/out" --raw "$QA_ROOT/raw" \
             --mailbox "$QA_ROOT/box" --prompt harness/tools/agent-sim-qa/prompt.md \
-            --deadline "$deadline" --scenario "$SCENARIO" --model "$CLAUDE_MODEL"
+            --deadline "$deadline" --scenario "$SCENARIO" --model "$CLAUDE_MODEL" --arm "$ARM" \
+            --app "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/RemSettingsPlayground.app"
 
       - name: Summarize
         if: always()
+        env:
+          ARM: ${{ inputs.arm }}
         run: |
           {
-            echo "Exact source: \`${SOURCE_SHA:-unknown}\` (dispatch harness \`$GITHUB_SHA\`)."
+            echo "Exact source: \`${SOURCE_SHA:-unknown}\` (dispatch harness \`$GITHUB_SHA\`); arm \`$ARM\`."
             echo
             if [[ -s "$QA_ROOT/out/summary.md" ]]; then cat "$QA_ROOT/out/summary.md"
             else echo "The diagnostic stopped before the model loop; see the step logs and source-verification.json."; fi
@@ -197,7 +228,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: agent-sim-qa-${{ inputs.scenario }}-${{ inputs.source_ref }}-${{ github.run_id }}
+          name: agent-sim-qa-${{ inputs.arm }}-${{ inputs.scenario }}-${{ inputs.source_ref }}-${{ github.run_id }}
           path: ${{ runner.temp }}/agent-sim-qa/out/
           retention-days: 7
           if-no-files-found: warn

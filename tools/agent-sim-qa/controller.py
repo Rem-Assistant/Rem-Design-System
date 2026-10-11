@@ -6,8 +6,11 @@ Subcommands:
   verify-source  assert the source checkout is pristine (or differs only by the injected bridge)
                  and HEAD is the exact SHA
   verify-built   assert the built app's Info.plist embeds that SHA
-  run            drive the loop: XCTest bridge observes -> simctl frame -> model Reads the PNG and
-                 chooses one typed input -> bridge executes it -> a newer frame is captured and Read
+  run            drive the loop: the arm observes -> simctl frame -> model Reads the PNG and
+                 chooses one typed input -> the arm executes it -> a newer frame is captured and Read.
+                 Arm `xctest`: the XCTest mailbox bridge synthesizes input. Arm `idb`: the app is installed
+                 and launched with simctl and input goes through idb's HID-level `ui tap` / `ui swipe`;
+                 the listing comes from `idb ui describe-all`.
 
 The model gets the Read tool only, no shell and no GitHub token. Raw model transcripts stay in
 --raw (never uploaded); --out receives frames, UI listings, receipt.json, a sanitized transcript
@@ -36,6 +39,7 @@ MODEL_CALL_CAP = 180       # seconds per model decision, further bounded by the 
 RESERVE = 150              # seconds kept for teardown, summary and artifact upload
 SECRET_NAME = re.compile(r'TOKEN|SECRET|KEY|PASSWORD|CREDENTIAL|AUTH', re.I)
 DURING_FRAMES = 4         # frames captured while a held gesture is still in flight
+IDB_PORT = 10882          # idb_companion gRPC port on this disposable runner (loopback client)
 
 
 def git(src, *args):
@@ -111,7 +115,9 @@ class Run:
             'scenario': a.scenario,
             'model': a.model,
             'cli_version': os.environ.get('CLAUDE_CODE_VERSION'),
-            'bridge': 'xctest-file-mailbox-v2 (local; no port)',
+            'arm': a.arm,
+            'bridge': ('xctest-file-mailbox-v2 (local; no port)' if a.arm == 'xctest'
+                       else f'idb ui tap/swipe via idb_companion on port {IDB_PORT}'),
             'launch_profile': self.spec['launch'],
             'status': 'starting',
             'job_deadline_epoch': int(self.deadline),
@@ -136,8 +142,13 @@ class Run:
     def bridge_alive(self):
         return self.process is not None and self.process.poll() is None
 
+    def clean_env(self):
+        return {k: v for k, v in os.environ.items() if not SECRET_NAME.search(k)}
+
     def start_bridge(self):
-        env = {k: v for k, v in os.environ.items() if not SECRET_NAME.search(k)}
+        if self.a.arm == 'idb':
+            return self.start_idb()
+        env = self.clean_env()
         env['TEST_RUNNER_AGENT_BRIDGE_DIR'] = str(self.mailbox)
         env['TEST_RUNNER_AGENT_LAUNCH_PROFILE'] = self.spec['launch']
         allowance = max(120, int(self.deadline - time.time() - RESERVE))
@@ -193,8 +204,110 @@ class Run:
             time.sleep(0.2)
         return names
 
+    # -- idb arm -------------------------------------------------------------------------------
+    def tool(self, cmd, timeout):
+        """One short idb/simctl call with the credential-free environment; (exit, stdout)."""
+        try:
+            done = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=self.clean_env())
+            return done.returncode, done.stdout
+        except subprocess.TimeoutExpired:
+            return 'timeout', ''
+        except OSError as error:
+            return f'oserror {error.errno}', ''
+
+    def start_idb(self):
+        """Install and launch the verified build with the profile's arguments, start the companion and
+        write the same ready.json the XCTest bridge writes."""
+        notes = self.receipt.setdefault('idb', {})
+        with open(Path(self.a.app) / 'Info.plist', 'rb') as handle:
+            bundle = plistlib.load(handle)['CFBundleIdentifier']
+        log = open(self.out / 'idb-companion.log', 'w')
+        self.process = subprocess.Popen(['idb_companion', '--udid', self.a.udid, '--grpc-port', str(IDB_PORT)],
+                                        stdout=log, stderr=subprocess.STDOUT, env=self.clean_env(),
+                                        start_new_session=True)
+        for _ in range(30):
+            notes['connect'], _out = self.tool(['idb', 'connect', 'localhost', str(IDB_PORT)], 20)
+            if notes['connect'] == 0 or not self.bridge_alive():
+                break
+            time.sleep(2)
+        notes['install'], _out = self.tool(['xcrun', 'simctl', 'install', self.a.udid, self.a.app], 180)
+        args = simqa.LAUNCH_ARGS[self.spec['launch']]
+        notes['launch'], _out = self.tool(['xcrun', 'simctl', 'launch', '--terminate-running-process',
+                                           self.a.udid, bundle, *args], 60)
+        notes['launch_args'] = args
+        if notes['connect'] != 0 or notes['install'] != 0 or notes['launch'] != 0:
+            return
+        time.sleep(3)  # let the first screen settle; XCUIApplication.launch waits similarly for idle
+        width, height = self.screen
+        code, out = self.tool(['idb', 'ui', 'describe-all', '--udid', self.a.udid], 60)
+        elements = simqa.parse_idb_elements(out) if code == 0 else None
+        for element in elements or ():
+            if element.get('type') == 'Application' and element.get('frame'):
+                width, height = element['frame']['width'], element['frame']['height']
+        (self.mailbox / 'ready.json').write_text(json.dumps({'ok': True, 'width': width, 'height': height}))
+
+    def idb_command(self, kind, fields):
+        """Execute one typed input through idb. Same return shape as the XCTest path."""
+        seq = self.seq
+        self.seq += 1
+        dispatched = time.time()
+        result = {'seq': seq, 'kind': kind, 'ok': False}
+        udid = ['--udid', self.a.udid]
+        window = self.a.stall_window * 2  # the XCTest path's stall window plus its single wait-once-more
+        self.during = []
+        if kind in ('observe', 'tap_id'):
+            code, out = self.tool(['idb', 'ui', 'describe-all', *udid], window)
+            elements = simqa.parse_idb_elements(out) if code == 0 else None
+            if elements is None:
+                result['error'] = f'describe-all failed ({code})'
+            elif kind == 'observe':
+                result.update(ok=True, ui=simqa.idb_listing(elements) or '(empty)')
+            else:
+                found = simqa.idb_center(elements, fields['id'])
+                if found is None:
+                    result['error'] = f"no element {fields['id']}"
+                else:
+                    x, y, result['element_frame'] = found
+                    code, _out = self.tool(['idb', 'ui', 'tap', *udid, str(round(x)), str(round(y))], window)
+                    result.update(ok=code == 0, error=None if code == 0 else f'tap exit {code}')
+        else:
+            if kind == 'tap_point':
+                cmd = ['idb', 'ui', 'tap', *udid, str(round(fields['x'])), str(round(fields['y']))]
+            elif kind == 'long_press':
+                cmd = ['idb', 'ui', 'tap', *udid, '--duration', str(fields.get('duration_s', 1.0)),
+                       str(round(fields['x'])), str(round(fields['y']))]
+            else:  # drag
+                duration = simqa.idb_swipe_duration(fields)
+                result['idb_swipe_s'] = duration
+                cmd = ['idb', 'ui', 'swipe', *udid, '--duration', str(duration), '--delta', '5',
+                       *(str(round(fields[k])) for k in ('x', 'y', 'to_x', 'to_y'))]
+            process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                       env=self.clean_env(), start_new_session=True)
+            if kind == 'drag' and fields.get('hold_s', 0) >= 0.5:
+                while len(self.during) < DURING_FRAMES and process.poll() is None:
+                    path = self.frames / f'during-{seq:03d}-{len(self.during)}.png'
+                    taken = time.time()
+                    if self.screenshot(path, attempts=1) and process.poll() is None:
+                        self.during.append({'png': path.name, 'captured_at': taken})
+                    time.sleep(0.2)
+            try:
+                code = process.wait(timeout=max(1, window - (time.time() - dispatched)))
+                result.update(ok=code == 0, error=None if code == 0 else f'idb exit {code}')
+            except subprocess.TimeoutExpired:
+                kill_group(process)
+                stall = {'seq': seq, 'kind': kind, 'after_s': window, 'acknowledged_by_bridge': True,
+                         'recovered': False}
+                evidence = self.frames / f'stall-{seq:03d}.png'
+                stall['evidence_png'] = evidence.name if self.screenshot(evidence) else None
+                self.receipt['stalls'].append(stall)
+                return seq, dispatched, None, None, True
+        result['ended_at'] = time.time()
+        return seq, dispatched, result['ended_at'], result, False
+
     def command(self, kind, **fields):
         """Send one command; wait one stall window, then at most one more. Never resend input."""
+        if self.a.arm == 'idb':
+            return self.idb_command(kind, fields)
         dispatched = time.time()
         seq = self.send(kind, **fields)
         held = kind == 'drag' and fields.get('hold_s', 0) >= 0.5
@@ -323,7 +436,7 @@ class Run:
         if problems:
             return self.finish('input_rejected', violations=problems)
         self.start_bridge()
-        ready = self.wait_file('ready.json', 600)
+        ready = self.wait_file('ready.json', 600 if self.a.arm == 'xctest' else 1)
         if not ready:
             self.screenshot(self.frames / 'bridge-not-ready.png')
             return self.finish('bridge_not_ready')
@@ -420,7 +533,9 @@ class Run:
                            listing_disagreements=[k for k, c in checks.items() if c['agrees_with_listing'] is False])
 
     def close(self):
-        if self.bridge_alive():
+        if self.a.arm == 'idb' and self.process is not None:
+            kill_group(self.process)
+        elif self.bridge_alive():
             self.send('end')
             try:
                 self.process.wait(timeout=30)
@@ -486,6 +601,9 @@ def write_summary(receipt, calls, path):
 
 
 def cmd_run(a):
+    if a.arm == 'idb' and not a.app:
+        print('::error::--arm idb needs --app')
+        return 2
     run = Run(a)
     try:
         run.loop()
@@ -520,6 +638,8 @@ def main(argv=None):
         p.add_argument(name, required=True)
     p.add_argument('--scenario', required=True, choices=sorted(simqa.SCENARIOS))
     p.add_argument('--model', default='claude-opus-4-8')
+    p.add_argument('--arm', choices=simqa.ARMS, default='xctest')
+    p.add_argument('--app', help='built .app (required for --arm idb)')
     p.add_argument('--max-decisions', type=int, default=None, help='default: the scenario\'s budget')
     p.add_argument('--stall-window', type=float, default=STALL_WINDOW, help=argparse.SUPPRESS)
     p.set_defaults(func=cmd_run)

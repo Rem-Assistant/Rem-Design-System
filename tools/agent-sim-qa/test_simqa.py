@@ -7,6 +7,7 @@ any machine without a simulator or model.
 """
 import json
 import os
+import plistlib
 import subprocess
 import sys
 import tempfile
@@ -235,9 +236,10 @@ class ScenarioTests(unittest.TestCase):
 
     def test_workflow_offers_exactly_the_catalog(self):
         workflow = (HERE.parents[1] / '.github/workflows/agent-sim-qa.yml').read_text()
-        block = workflow.split('scenario:', 1)[1].split('permissions:', 1)[0]
-        offered = {line.strip()[2:] for line in block.splitlines() if line.strip().startswith('- ')}
-        self.assertEqual(offered, set(simqa.SCENARIOS))
+        options = lambda block: {line.strip()[2:] for line in block.splitlines() if line.strip().startswith('- ')}
+        scenarios, arms = workflow.split('      scenario:', 1)[1].split('      arm:', 1)
+        self.assertEqual(options(scenarios), set(simqa.SCENARIOS))
+        self.assertEqual(options(arms.split('permissions:', 1)[0]), set(simqa.ARMS))
         shas = {sha for spec in simqa.SCENARIOS.values() for sha in spec['sources']}
         source_block = workflow.split('source_ref:', 1)[1].split('scenario:', 1)[0]
         self.assertEqual({line.strip()[2:] for line in source_block.splitlines()
@@ -319,6 +321,88 @@ class ScenarioTests(unittest.TestCase):
                          'unclear')
 
 
+class IdbHelperTests(unittest.TestCase):
+    def test_launch_profiles_match_the_bridge(self):
+        swift = (HERE / 'AgentVisualBridge.swift').read_text()
+        for args in simqa.LAUNCH_ARGS.values():
+            self.assertIn(json.dumps(args), swift)
+
+    def test_listing_and_center(self):
+        elements = simqa.parse_idb_elements('noise\n' + json.dumps([
+            {'type': 'Application', 'AXUniqueId': None, 'AXLabel': 'Rem', 'frame': {'x': 0, 'y': 0, 'width': 393, 'height': 852}},
+            {'type': 'Button', 'AXUniqueId': 'chat.header.menu', 'AXLabel': 'Open\nsidebar',
+             'frame': {'x': 10, 'y': 50, 'width': 44, 'height': 44}},
+            {'type': 'Other', 'AXUniqueId': 'bad id;rm', 'AXLabel': 'x', 'frame': {'x': 1, 'y': 2, 'width': 3, 'height': 4},
+             'enabled': False},
+            {'type': 'Other', 'AXUniqueId': 'noframe'}]))
+        listing = simqa.idb_listing(elements)
+        self.assertEqual(listing.splitlines(), [
+            'application id=- label="Rem" frame=0,0,393,852',
+            'button id=chat.header.menu label="Open sidebar" frame=10,50,44,44',
+            'other id=- label="x" frame=1,2,3,4 disabled'])
+        self.assertEqual(simqa.parse_listing(listing)[1][1], 'chat.header.menu')
+        self.assertEqual(simqa.idb_center(elements, 'chat.header.menu')[:2], (32.0, 72.0))
+        self.assertIsNone(simqa.idb_center(elements, 'noframe'))
+        for bad in (None, 'no json', '{"a": 1}', '[1, 2'):
+            self.assertIsNone(simqa.parse_idb_elements(bad))
+
+    def test_swipe_duration(self):
+        drag = {'x': 100, 'y': 100, 'to_x': 100, 'to_y': 400}
+        self.assertEqual(simqa.idb_swipe_duration(drag), 0.5)
+        self.assertEqual(simqa.idb_swipe_duration({**drag, 'speed': 'slow', 'hold_s': 0.3}), 1.3)
+        self.assertEqual(simqa.idb_swipe_duration({**drag, 'speed': 'fast'}), 0.15)
+        self.assertEqual(simqa.idb_swipe_duration({**drag, 'speed': 'slow', 'hold_s': 2, 'to_y': 851}), 4.0)  # capped
+
+
+FAKE_IDB = r'''#!/usr/bin/env python3
+import json, os, sys, time
+from pathlib import Path
+here = Path(__file__).parent
+mode = (here / 'mode').read_text().strip()
+assert not any('TOKEN' in k for k in os.environ), 'credential leaked to idb'
+state_file = here / 'idb-state.json'
+state = json.loads(state_file.read_text()) if state_file.exists() else {'offset': 0, 'actions': False}
+args = sys.argv[1:]
+if args[0] == 'connect':
+    sys.exit(0)
+assert args[2:4] == ['--udid', 'UDID'], args
+launch = json.loads((here / 'launched.json').read_text())
+assert launch == ['--developer', '--settings-light', '--no-motion'], launch
+on_bubble = lambda x, y: 20 <= x <= 220 and 400 + state['offset'] <= y <= 460 + state['offset']
+if args[:2] == ['ui', 'describe-all']:
+    elements = [{'type': 'Application', 'AXLabel': 'Playground', 'frame': {'x': 0, 'y': 0, 'width': 393, 'height': 852}},
+                {'type': 'Other', 'AXUniqueId': 'message.a1.bubble', 'AXLabel': 'Hello',
+                 'frame': {'x': 20, 'y': 400 + state['offset'], 'width': 200, 'height': 60}}]
+    if state['actions']:
+        elements.append({'type': 'Button', 'AXUniqueId': 'message.a1.actions.copy', 'AXLabel': 'Copy',
+                         'frame': {'x': 0, 'y': 600, 'width': 393, 'height': 60}})
+    print(json.dumps(elements))
+elif args[:2] == ['ui', 'tap']:
+    rest = args[4:]
+    duration = float(rest[rest.index('--duration') + 1]) if '--duration' in rest else 0
+    x, y = int(rest[-2]), int(rest[-1])
+    if duration >= 0.5:
+        state['actions'] = on_bubble(x, y)
+elif args[:2] == ['ui', 'swipe']:
+    rest = args[4:]
+    duration = float(rest[rest.index('--duration') + 1])
+    x, y, tx, ty = (int(v) for v in rest[-4:])
+    time.sleep(min(duration, 2))
+    if abs(ty - y) > abs(tx - x) and not (mode.startswith('stuck') and on_bubble(x, y)):
+        state['offset'] += (ty - y) // 10
+else:
+    sys.exit(64)
+state_file.write_text(json.dumps(state))
+'''
+
+FAKE_COMPANION = r'''#!/usr/bin/env python3
+import os, sys, time
+assert not any('TOKEN' in k for k in os.environ), 'credential leaked to idb_companion'
+assert sys.argv[1:] == ['--udid', 'UDID', '--grpc-port', '10882'], sys.argv
+time.sleep(600)
+'''
+
+
 FAKE_XCODEBUILD = r'''#!/usr/bin/env python3
 import json, os, sys, time
 from pathlib import Path
@@ -368,10 +452,17 @@ while True:
 '''
 
 FAKE_XCRUN = r'''#!/usr/bin/env python3
-import sys
+import json, sys
 from pathlib import Path
-assert sys.argv[1:4] == ['simctl', 'io', 'UDID'] and sys.argv[4] == 'screenshot', sys.argv
 mode = (Path(__file__).parent / 'mode').read_text().strip()
+if sys.argv[1:3] == ['simctl', 'install']:
+    assert sys.argv[3] == 'UDID' and sys.argv[4].endswith('.app'), sys.argv
+    sys.exit(1 if mode == 'installfail' else 0)
+if sys.argv[1:4] == ['simctl', 'launch', '--terminate-running-process']:
+    assert sys.argv[4:6] == ['UDID', 'site.userem.playground'], sys.argv
+    (Path(__file__).parent / 'launched.json').write_text(json.dumps(sys.argv[6:]))
+    sys.exit(0)
+assert sys.argv[1:4] == ['simctl', 'io', 'UDID'] and sys.argv[4] == 'screenshot', sys.argv
 count = Path(__file__).parent / 'shots'
 n = int(count.read_text()) if count.exists() else 0
 count.write_text(str(n + 1))
@@ -434,11 +525,13 @@ emit({'type': 'result', 'is_error': False, 'num_turns': 2, 'result': json.dumps(
 
 
 class FakeRunnerTests(unittest.TestCase):
-    def run_controller(self, mode, deadline_s=900, stall_window=1.0, sha=SHA, scenario='catalog-chat-add'):
+    def run_controller(self, mode, deadline_s=900, stall_window=1.0, sha=SHA, scenario='catalog-chat-add',
+                       arm='xctest'):
         temp = Path(tempfile.mkdtemp(prefix='simqa-test-'))
         bin_dir = temp / 'bin'
         bin_dir.mkdir()
-        for name, body in (('xcodebuild', FAKE_XCODEBUILD), ('xcrun', FAKE_XCRUN), ('claude', FAKE_CLAUDE)):
+        for name, body in (('xcodebuild', FAKE_XCODEBUILD), ('xcrun', FAKE_XCRUN), ('claude', FAKE_CLAUDE),
+                           ('idb', FAKE_IDB), ('idb_companion', FAKE_COMPANION)):
             (bin_dir / name).write_text(body)
             (bin_dir / name).chmod(0o755)
         (bin_dir / 'mode').write_text(mode)
@@ -450,7 +543,12 @@ class FakeRunnerTests(unittest.TestCase):
                 '--udid', 'UDID', '--derived-data', str(temp / 'dd'), '--out', str(out), '--raw', str(temp / 'raw'),
                 '--mailbox', str(temp / 'box'), '--prompt', str(HERE / 'prompt.md'),
                 '--deadline', str(time.time() + deadline_s), '--scenario', scenario,
-                '--stall-window', str(stall_window)]
+                '--stall-window', str(stall_window), '--arm', arm]
+        if arm == 'idb':
+            app = temp / 'RemSettingsPlayground.app'
+            app.mkdir()
+            (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'site.userem.playground'}))
+            args += ['--app', str(app)]
         process = subprocess.run(args, env=env, capture_output=True, text=True, timeout=120)
         receipt = json.loads((out / 'receipt.json').read_text())
         return process, receipt, out, temp
@@ -556,6 +654,30 @@ class FakeRunnerTests(unittest.TestCase):
         process, receipt, _, _ = self.run_controller('ok', sha=SHA, scenario=GESTURES)
         self.assertEqual(process.returncode, 1)
         self.assertEqual(receipt['status'], 'input_rejected')
+        self.assertEqual(receipt['model_calls'], 0)
+
+    def test_idb_arm_drives_the_same_gesture_checks(self):
+        process, receipt, out, temp = self.run_controller('ok', sha=B9, scenario=GESTURES, arm='idb')
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr + json.dumps(receipt)[:2000])
+        self.assertEqual((receipt['arm'], receipt['status']), ('idb', 'completed'))
+        self.assertEqual(receipt['idb']['launch_args'], ['--developer', '--settings-light', '--no-motion'])
+        self.assertTrue(receipt['contract_met'])
+        checks = receipt['checks']
+        self.assertEqual(checks['bubble_drag_scrolls']['listing_oracle'], 'yes')
+        self.assertEqual(checks['long_press_opens_actions']['listing_oracle'], 'yes')
+        self.assertTrue(checks['swipe_left_reveals_times']['attempts'][0]['during_frames'])
+        self.assertEqual(receipt['actions'][0]['action'], 'drag')
+        self.assertFalse((temp / 'box' / 'cmd-000.json').exists(), 'the idb arm does not use the XCTest mailbox')
+
+    def test_idb_arm_reports_a_reproduced_failure(self):
+        process, receipt, _, _ = self.run_controller('stuck', sha=B9, scenario=GESTURES, arm='idb')
+        self.assertEqual(process.returncode, 1)
+        self.assertEqual(receipt['checks']['bubble_drag_scrolls']['finding'], 'no')
+
+    def test_idb_install_failure_stops_before_the_model(self):
+        process, receipt, _, _ = self.run_controller('installfail', sha=B9, scenario=GESTURES, arm='idb')
+        self.assertEqual(receipt['status'], 'bridge_not_ready')
+        self.assertEqual(receipt['idb']['install'], 1)
         self.assertEqual(receipt['model_calls'], 0)
 
 

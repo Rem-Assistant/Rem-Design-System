@@ -42,6 +42,23 @@ up to four `during-SEQ-K.png` frames while a drag with `hold_s` ≥ 0.5 is still
 the model. The job succeeds only for `completed` with every counted finding equal to the contract and no
 listing disagreement.
 
+## Arms (touch injection)
+
+Input `arm` chooses who turns the model's typed input into touches; scenarios, prompt, decision schema,
+frames, checks and the trust boundary are identical.
+
+- `xctest` (default): the XCTest bridge below. Its input is XCTest-synthesized, the same mechanism as the
+  scripted journeys, so it inherits any synthesis artifact they have.
+- `idb`: Meta's idb (`idb-companion` 1.1.8 from the `facebook/fb` tap, `fb-idb` 1.1.7 in a venv;
+  installed only for this arm, before the token step, and the job fails if other versions resolve). The
+  controller installs the verified build with `simctl install`, launches it with `simctl launch` and the
+  profile's arguments (`simqa.LAUNCH_ARGS`, kept equal to the bridge's), starts `idb_companion` on port
+  10882 and sends `idb ui tap` (long press: `--duration`) and `idb ui swipe` (HID-level). The listing comes
+  from `idb ui describe-all`, printed in the bridge's format so the oracle is shared. Mapping: idb swipes
+  have a duration, not a velocity or a hold, so `speed` maps to 1.0 / 0.5 / 0.15 s per 300 pt and
+  `hold_s` lengthens the swipe (cap 4 s); `press_s` is not representable and is ignored. The receipt
+  records `idb_swipe_s` per drag and the install/launch/connect exits.
+
 ## Files
 
 | File | Purpose |
@@ -121,6 +138,10 @@ Artifact `agent-sim-qa-<scenario>-<sha>-<run id>` (7 days): `frames/frame-NN.png
   (`model_quota`, `model_auth`) and never retried with other credentials.
 - Residual: the candidate app and its UI tests run on the same runner user as the controller while the
   token is in the controller's environment. That is why the SHA is an allow-listed choice.
+- idb arm: Homebrew and pip code (pinned versions, but the tap itself is fetched at its current head) runs
+  as the same runner user, and `idb_companion` listens on a TCP port on the disposable runner for the
+  run's duration. It and every `idb` call get the credential-free environment; the model cannot reach
+  it (Read tool only).
 
 ## Cost
 

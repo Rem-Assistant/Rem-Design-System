@@ -627,3 +627,69 @@ def evaluate_checks(scenario, actions, listings, findings):
             'attempts': attempts,
         }
     return report
+
+
+# ---- Touch-injection arm: idb (HID-level) instead of XCTest-synthesized events --------------------------
+# Same scenarios, prompt, typed decisions, frames and checks; only the executor differs. Launch arguments
+# must equal the Swift bridge's profiles (test_launch_profiles_match_the_bridge keeps them identical).
+
+ARMS = ('xctest', 'idb')
+LAUNCH_ARGS = {
+    'legacy': ['--settings-light'],
+    'journey': ['--developer', '--settings-light', '--no-motion'],
+}
+# idb swipes have a duration, not a velocity and no press-then-hold. Per 300 pt of travel; the hold is
+# folded into a longer, slower swipe so the finger is still down while during-frames are captured.
+IDB_SWIPE_S = {'slow': 1.0, 'default': 0.5, 'fast': 0.15}
+
+
+def idb_swipe_duration(fields):
+    """Seconds for one `idb ui swipe`, from the typed drag fields (bounded by validate_decision)."""
+    travel = ((fields['to_x'] - fields['x']) ** 2 + (fields['to_y'] - fields['y']) ** 2) ** 0.5
+    base = IDB_SWIPE_S[fields.get('speed', 'default')] * max(travel, 1) / 300
+    return round(min(max(base, 0.05) + fields.get('hold_s', 0), 4.0), 2)
+
+
+def parse_idb_elements(text):
+    """`idb ui describe-all` output (a JSON array of AX elements) as a list, or None."""
+    if not isinstance(text, str) or '[' not in text:
+        return None
+    try:
+        value = json.loads(text[text.index('['):text.rindex(']') + 1])
+    except ValueError:
+        return None
+    return [e for e in value if isinstance(e, dict)] if isinstance(value, list) else None
+
+
+def _idb_frame(element):
+    frame = element.get('frame') if isinstance(element.get('frame'), dict) else {}
+    try:
+        return tuple(float(frame[k]) for k in ('x', 'y', 'width', 'height'))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def idb_listing(elements, limit=300):
+    """The same flat listing format the XCTest bridge prints, so prompts and oracles are shared."""
+    lines = []
+    for element in elements[:limit]:
+        frame = _idb_frame(element)
+        if frame is None:
+            continue
+        ident = element.get('AXUniqueId')
+        ident = ident if isinstance(ident, str) and ID_RE.match(ident) else '-'
+        label = element.get('AXLabel') if isinstance(element.get('AXLabel'), str) else ''
+        kind = element.get('type') if isinstance(element.get('type'), str) and element.get('type') else 'Other'
+        lines.append(f'{kind[0].lower() + kind[1:]} id={ident} label="{label.replace(chr(10), " ")[:80]}" '
+                     f'frame={",".join(str(int(n)) for n in frame)}'
+                     + ('' if element.get('enabled', True) else ' disabled'))
+    return '\n'.join(lines)
+
+
+def idb_center(elements, ident):
+    """(x, y, frame) of the first element with this identifier, or None."""
+    for element in elements or ():
+        frame = _idb_frame(element)
+        if element.get('AXUniqueId') == ident and frame is not None:
+            return frame[0] + frame[2] / 2, frame[1] + frame[3] / 2, list(frame)
+    return None
