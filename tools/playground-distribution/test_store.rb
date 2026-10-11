@@ -21,8 +21,10 @@ def apple_request(method, path, payload = nil)
   raise 'Unexpected extra provider call' if @responses.empty?
   @responses.shift
 end
-def page(access, next_url = nil)
-  {'data' => [{'attributes' => {'hasAccessToAllBuilds' => access}}], 'links' => {'next' => next_url}}
+def page(access, next_url = nil, internal: true)
+  attributes = {'hasAccessToAllBuilds' => access}
+  attributes['isInternalGroup'] = internal unless internal == :absent
+  {'data' => [{'attributes' => attributes}], 'links' => {'next' => next_url}}
 end
 def rejects(message)
   begin
@@ -65,7 +67,14 @@ end
   [[page(false)], {'isInternalGroup' => false}] => 'group_not_internal',
   [[page(false)], {'hasAccessToAllBuilds' => true}] => 'group_target_all_builds',
   [[page(false)], {'hasAccessToAllBuilds' => nil}] => 'group_target_access_flag_unknown',
-  [[page(false, 'https://evil.example/v1/apps/6820738808/betaGroups?cursor=next')], {}] => 'group_pagination_host'
+  [[page(false, 'https://evil.example/v1/apps/6820738808/betaGroups?cursor=next')], {}] => 'group_pagination_host',
+  [[page(nil, internal: false)], {}] => nil,
+  [[page(false, internal: false)], {}] => nil,
+  [[page(true, internal: false)], {}] => 'group_other_all_builds',
+  [[page('yes', internal: false)], {}] => 'group_other_access_flag_unknown',
+  [[page(nil, internal: :absent)], {}] => 'group_other_type_unknown',
+  [[page(false, internal: nil)], {}] => 'group_other_type_unknown',
+  [[page(false, internal: 'false')], {}] => 'group_other_type_unknown'
 }.each do |(pages, target), code|
   got = guard_after(pages, target)
   raise "Expected guard #{code}, got #{got.inspect}" unless got == code
@@ -73,4 +82,8 @@ end
 responses([page(false)])
 $release_guard = nil
 raise 'A passing check must not set a guard' unless apple_group == GROUP && $release_guard.nil?
-puts '6 TestFlight privacy/scope guard scenarios and 8 guard-code cases passed; no store requests made.'
+# An external group's null flag (Apple's documented response) passes, so the run reaches upload scope.
+responses([page(nil, internal: false)])
+$release_guard = nil
+raise 'External group with a null flag must pass' unless apple_group == GROUP && $release_guard.nil?
+puts '6 TestFlight privacy/scope guard scenarios and 15 guard-code cases passed; no store requests made.'
