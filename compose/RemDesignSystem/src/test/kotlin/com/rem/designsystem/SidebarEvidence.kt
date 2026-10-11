@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.agents.AgentKind
 import com.rem.designsystem.agents.AgentLook
@@ -39,8 +38,6 @@ import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
-import org.junit.Rule
-import org.junit.Test
 
 /** Fixtures matching `SidebarRenderSnapshots.swift` so the paired renders show the same content. */
 internal object SidebarFixtures {
@@ -78,24 +75,22 @@ internal object SidebarFixtures {
  * Paparazzi evidence for the sidebar + New agent flow, keyed to pair with `SidebarRenderSnapshots.swift`.
  * Kept separate from `EvidenceSnapshots.kt` so these surfaces don't edit the shared gallery.
  */
-class SidebarSnapshots {
-
-    @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_6)
+/**
+ * Sidebar / New agent / Agent profile renders. Run from [EvidenceSnapshots] so the files carry the
+ * `EvidenceSnapshots_` prefix the canonical Builder delivery pairs with the SwiftUI renders.
+ */
+internal class SidebarEvidence(private val paparazzi: Paparazzi) {
 
     private fun shot(name: String, content: @Composable () -> Unit) =
         paparazzi.snapshot(name = name, composable = content)
 
-    @Test
     fun sidebarOpen() {
         shot("Sidebar-open-light") { RemTheme { container(isOpen = true) } }
         shot("Sidebar-open-dark") { RemTheme(darkTheme = true) { container(isOpen = true) } }
     }
 
-    @Test
     fun sidebarClosed() = shot("Sidebar-closed-light") { RemTheme { container(isOpen = false) } }
 
-    @Test
     fun sidebarEmpty() = shot("Sidebar-empty-light") {
         RemTheme {
             Box(Modifier.width(332.dp)) {
@@ -107,7 +102,6 @@ class SidebarSnapshots {
         }
     }
 
-    @Test
     fun accountPill() = shot("AccountPill-light") {
         RemTheme {
             Box(Modifier.fillMaxSize().background(RemColors.current.backgroundSecondary), contentAlignment = Alignment.Center) {
@@ -116,12 +110,10 @@ class SidebarSnapshots {
         }
     }
 
-    @Test
     fun newAgentEmpty() = shot("NewAgent-empty-light") {
         RemTheme { NewAgentSetupScreen(NewAgentDraft(), onDraftChange = {}, onAction = {}, focusesNameOnAppear = false) }
     }
 
-    @Test
     fun newAgentFilled() {
         shot("NewAgent-filled-light") {
             RemTheme { NewAgentSetupScreen(SidebarFixtures.filledDraft, onDraftChange = {}, onAction = {}, focusesNameOnAppear = false) }
@@ -133,10 +125,8 @@ class SidebarSnapshots {
         }
     }
 
-    @Test
     fun agentProfileSide() = shot("AgentProfile-side-about-light") { RemTheme { profile(SidebarFixtures.healthProfile) } }
 
-    @Test
     fun agentProfileMain() = shot("AgentProfile-main-about-light") { RemTheme { profile(SidebarFixtures.remProfile) } }
 
     @Composable
