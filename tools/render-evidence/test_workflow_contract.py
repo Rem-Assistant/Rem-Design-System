@@ -104,7 +104,7 @@ class ScreenshotsIOSDiagnosticsContractTests(unittest.TestCase):
         journeys = self.index_of(steps, "name: Run the actual playground journeys")
         build_log = self.index_of(steps, "name: settings-ios-build-log")
         package = self.index_of(steps, "name: Package iOS journey diagnostics")
-        bundle = self.index_of(steps, "name: settings-ios-journeys\n")
+        bundle = self.index_of(steps, "name: settings-ios-journeys-")
         extract = self.index_of(steps, "name: Extract actual playground screenshots")
         screenshots = self.index_of(steps, "name: settings-swiftui-screenshots")
         self.assertLess(journeys, build_log)
@@ -127,7 +127,7 @@ class ScreenshotsIOSDiagnosticsContractTests(unittest.TestCase):
         self.assertLess(package.index("tar -czf"), package.index("mv "))
         extract = steps[self.index_of(steps, "name: Extract actual playground screenshots")]
         self.assertIn("HOMEBREW_NO_AUTO_UPDATE: '1'", extract)
-        for name in ("settings-ios-build-log", "settings-ios-journeys\n", "settings-swiftui-screenshots"):
+        for name in ("settings-ios-build-log", "settings-ios-journeys-", "settings-swiftui-screenshots"):
             self.assertIn("if-no-files-found: error", steps[self.index_of(steps, f"name: {name}")])
 
 
