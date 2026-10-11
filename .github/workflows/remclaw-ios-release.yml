@@ -1,0 +1,170 @@
+name: RemClaw iOS release
+run-name: RemClaw iOS · ${{ inputs.remclaw_sha }}
+
+# Builds the PRIVATE Rem-Assistant/RemClaw app at an exact SHA and uploads it to TestFlight.
+# This repository is public, so its Actions logs are world-readable: every tool that sees RemClaw
+# source or provider output writes only to files under $RUNNER_TEMP/remclaw-private, which are never
+# printed or uploaded. See tools/remclaw-release/README.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      remclaw_sha:
+        description: Exact 40-character RemClaw commit, already on an allowed RemClaw release branch
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Releases serialize. Never cancel an in-flight store upload.
+concurrency:
+  group: remclaw-ios-release
+  cancel-in-progress: false
+
+env:
+  REMCLAW_SHA: ${{ inputs.remclaw_sha }}
+  FASTLANE_SKIP_UPDATE_CHECK: '1'
+  FASTLANE_HIDE_CHANGELOG: '1'
+  FASTLANE_OPT_OUT_USAGE: '1'
+  FASTLANE_SKIP_ACTION_SUMMARY: '1'
+
+jobs:
+  admission:
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # No secrets. The read-only token inspects this repository's environment protection.
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Run trusted release control tests
+        run: |
+          python3 -m unittest discover -s control/tools/remclaw-release -p 'test_*.py'
+          python3 -m unittest discover -s control/tools/playground-distribution -p 'test_*.py'
+      - name: Verify run identity, SHA format and pre-existing environment protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 control/tools/remclaw-release/release.py admit --sha "$REMCLAW_SHA" \
+            --out "$RUNNER_TEMP/remclaw-admission.json"
+          python3 control/tools/remclaw-release/release.py summary "$RUNNER_TEMP/remclaw-admission.json"
+
+  release:
+    needs: admission
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    environment: remclaw-ios-release
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    env:
+      BUNDLE_FROZEN: 'true'
+    steps:
+      - name: Initialize ephemeral runner paths
+        run: |
+          umask 077
+          {
+            echo "REMCLAW_PRIVATE=$RUNNER_TEMP/remclaw-private"
+            echo "REMCLAW_SOURCE=$RUNNER_TEMP/remclaw-source"
+            echo "REMCLAW_OUTPUT=$RUNNER_TEMP/remclaw-package"
+            echo "REMCLAW_EPHEMERAL=$RUNNER_TEMP/remclaw-ephemeral"
+            echo "REMCLAW_ADMISSION=$RUNNER_TEMP/remclaw-admission.json"
+            echo "REMCLAW_BUILD_NUMBER_FILE=$RUNNER_TEMP/remclaw-private/build_number"
+            echo "BUNDLE_PATH=$RUNNER_TEMP/remclaw-gems"
+            echo "BUNDLE_GEMFILE=$GITHUB_WORKSPACE/control/tools/playground-distribution/Gemfile"
+          } >> "$GITHUB_ENV"
+          mkdir -m 700 "$RUNNER_TEMP/remclaw-private" "$RUNNER_TEMP/remclaw-ephemeral"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Recheck admission after environment approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 control/tools/remclaw-release/release.py admit --sha "$REMCLAW_SHA" --out "$REMCLAW_ADMISSION"
+      # Not actions/checkout: it logs the checked-out commit's author and message and every fetched ref,
+      # which would publish private RemClaw metadata. This fetch logs nothing but a fixed result line.
+      - name: Fetch exact RemClaw commit with the read-only deploy key and verify ancestry
+        env:
+          REMCLAW_DEPLOY_KEY: ${{ secrets.REMCLAW_DEPLOY_KEY }}
+        run: python3 control/tools/remclaw-release/release.py fetch --sha "$REMCLAW_SHA" --dest "$REMCLAW_SOURCE"
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1
+        with:
+          ruby-version: '3.3.12'
+          bundler: '2.6.9'
+      - name: Select Xcode for the iOS 26 SDK
+        run: python3 control/tools/remclaw-release/release.py xcode
+      - name: Check runner storage before dependencies
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform ios --stage dependencies
+      - name: Install frozen checksummed dependencies (no credentials present)
+        working-directory: control/tools/playground-distribution
+        run: |
+          if ! { bundle install --jobs 4 --retry 2 && bundle check; } > "$REMCLAW_PRIVATE/bundle.log" 2>&1; then
+            python3 ../remclaw-release/classify_failure.py --record "$REMCLAW_PRIVATE/failure_class" "$REMCLAW_PRIVATE/bundle.log"
+            exit 1
+          fi
+          git diff --quiet -- Gemfile.lock
+      - name: Reserve next TestFlight build number (read-only store query)
+        working-directory: control/tools/remclaw-release
+        env:
+          REMCLAW_ASC_KEY_ID: ${{ secrets.REMCLAW_ASC_KEY_ID }}
+          REMCLAW_ASC_ISSUER_ID: ${{ secrets.REMCLAW_ASC_ISSUER_ID }}
+          REMCLAW_ASC_KEY_BASE64: ${{ secrets.REMCLAW_ASC_KEY_BASE64 }}
+        run: |
+          if ! bundle exec fastlane reserve_build_number > "$REMCLAW_PRIVATE/reserve.log" 2>&1; then
+            python3 classify_failure.py --record "$REMCLAW_PRIVATE/failure_class" "$REMCLAW_PRIVATE/reserve.log"
+            exit 1
+          fi
+          python3 release.py build-number "$REMCLAW_BUILD_NUMBER_FILE"
+      - name: Check runner storage before build
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform ios --stage build
+      - name: Build unsigned archive at the exact SHA (no signing or store credentials)
+        run: |
+          python3 control/tools/remclaw-release/release.py build --source "$REMCLAW_SOURCE" \
+            --out "$REMCLAW_OUTPUT" --sha "$REMCLAW_SHA" --build "$REMCLAW_BUILD_NUMBER"
+      - name: Check runner storage before sign
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform ios --stage sign
+      - name: Sign com.remapp.rem with environment-scoped distribution assets
+        env:
+          REMCLAW_IOS_CERTIFICATE_BASE64: ${{ secrets.REMCLAW_IOS_CERTIFICATE_BASE64 }}
+          REMCLAW_IOS_CERTIFICATE_PASSWORD: ${{ secrets.REMCLAW_IOS_CERTIFICATE_PASSWORD }}
+          REMCLAW_IOS_PROFILE_BASE64: ${{ secrets.REMCLAW_IOS_PROFILE_BASE64 }}
+          REMCLAW_IOS_WIDGET_PROFILE_BASE64: ${{ secrets.REMCLAW_IOS_WIDGET_PROFILE_BASE64 }}
+          REMCLAW_IOS_CERTIFICATE_SHA1: ${{ vars.REMCLAW_IOS_CERTIFICATE_SHA1 }}
+        run: |
+          python3 control/tools/remclaw-release/release.py sign \
+            --out "$REMCLAW_OUTPUT" --sha "$REMCLAW_SHA" --build "$REMCLAW_BUILD_NUMBER"
+      - name: Check runner storage before upload
+        run: python3 control/tools/playground-distribution/storage.py check --path "$RUNNER_TEMP" --platform ios --stage upload
+      - name: Upload directly to TestFlight
+        working-directory: control/tools/remclaw-release
+        env:
+          REMCLAW_ASC_KEY_ID: ${{ secrets.REMCLAW_ASC_KEY_ID }}
+          REMCLAW_ASC_ISSUER_ID: ${{ secrets.REMCLAW_ASC_ISSUER_ID }}
+          REMCLAW_ASC_KEY_BASE64: ${{ secrets.REMCLAW_ASC_KEY_BASE64 }}
+        run: |
+          umask 077
+          if ! bundle exec fastlane upload > "$REMCLAW_PRIVATE/upload.log" 2>&1; then
+            python3 classify_failure.py --record "$REMCLAW_PRIVATE/failure_class" "$REMCLAW_PRIVATE/upload.log"
+            echo 'Upload failed or is unresolved. Inspect App Store Connect before rerunning; do not blindly re-upload.'
+            exit 1
+          fi
+      - name: Publish only allowlisted release metadata
+        if: always()
+        run: |
+          python3 control/tools/remclaw-release/release.py summary --failure "$REMCLAW_PRIVATE/failure_class" \
+            "$REMCLAW_ADMISSION" "$REMCLAW_PRIVATE/checkout.json" "$REMCLAW_OUTPUT/distribution.json"
+      - name: Remove RemClaw source, package, keychain, profiles and private logs
+        if: always()
+        run: python3 control/tools/remclaw-release/release.py cleanup "$RUNNER_TEMP"

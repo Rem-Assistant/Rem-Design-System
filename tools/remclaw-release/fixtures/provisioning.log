@@ -1,0 +1,4 @@
+Exporting RemClaw for PRIVATE_TEAM_MARKER
+error: exportArchive: Provisioning profile "RemClaw AppStore PROFILE_NAME_MARKER" doesn't include the com.apple.developer.applesignin entitlement.
+error: exportArchive: "RemClawWidget.appex" requires a provisioning profile with the App Groups feature.
+** EXPORT FAILED **

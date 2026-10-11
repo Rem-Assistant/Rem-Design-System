@@ -1,0 +1,3 @@
+[12:00:01]: Creating authorization token for App Store Connect API KEY_ID_MARKER
+[12:00:02]: Apple API failed (HTTP 401); no response body printed
+[12:00:02]: NOT_AUTHORIZED Authentication credentials are missing or invalid. ISSUER_MARKER
