@@ -64,10 +64,21 @@ def apple_group
     pages += 1
     require_release(pages <= 100, 'TestFlight group pagination exceeded', 'group_pagination_exceeded')
     page = apple_request(:get, path)
-    flags = page['data'].map { |g| g['attributes']['hasAccessToAllBuilds'] }
-    all_code = if flags.any? { |f| f == true } then 'group_other_all_builds'
-               elsif !flags.all? { |f| f == false } then 'group_other_access_flag_unknown'
-               end
+    # Access to all builds exists only for internal groups: App Store Connect ignores the flag for
+    # external groups and returns it as null (fastlane/fastlane#21478). Decide by Apple's explicit
+    # isInternalGroup, never by coercing a missing flag: an internal group must say false, an
+    # external one must not say true, and a group whose type is not an explicit boolean fails closed.
+    all_code = nil
+    page['data'].each do |g|
+      internal = g['attributes']['isInternalGroup']
+      access = g['attributes']['hasAccessToAllBuilds']
+      code = if internal != true && internal != false then 'group_other_type_unknown'
+             elsif access == true then 'group_other_all_builds'
+             elsif internal == true && access != false then 'group_other_access_flag_unknown'
+             elsif internal == false && !access.nil? && access != false then 'group_other_access_flag_unknown'
+             end
+      all_code ||= code
+    end
     require_release(all_code.nil?,
       'App has automatic or unknown group access; authorize account configuration before uploading',
       all_code || 'unclassified')
