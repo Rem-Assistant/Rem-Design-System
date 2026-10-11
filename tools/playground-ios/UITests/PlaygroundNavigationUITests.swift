@@ -36,29 +36,18 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // A control can be hittable yet sit in the bottom home-indicator strip, where synthesized taps
         // are intermittently swallowed (run 38094402869: the composer's Add at y 808-852 of 852 never
         // opened its sheet). Scroll it clear of that strip as well.
-        // Scroll with a slow drag in the page's leading gutter, as revealAboveKeyboard does: a fast
-        // full-window swipe from mid-screen starts on a long-pressable bubble and, right after a menu
-        // or dialog closes, can scroll nothing (run 38112625726: two swipes left the Chat page at
-        // offset 0 and Add in the strip). A docked control that scrolling cannot move stops after two
-        // unproductive drags in a row, so one dropped drag does not end the reveal.
-        let window = app.windows.firstMatch.frame
-        let bottomGestureEdge = window.maxY - 34
-        let origin = app.coordinate(withNormalizedOffset: .zero)
-        let from = origin.withOffset(CGVector(dx: window.minX + 8, dy: window.minY + window.height * 0.75))
-        let to = origin.withOffset(CGVector(dx: window.minX + 8, dy: window.minY + window.height * 0.35))
+        // Scroll with full-window swipes from mid-screen, as a person would: on the Chat page they start
+        // on long-pressable bubbles, so a gesture composition that swallows that scroll fails here (run
+        // 38112625726 saw it right after the model menu closed). A docked control that scrolling cannot
+        // move stops after one unproductive swipe.
+        let bottomGestureEdge = app.windows.firstMatch.frame.maxY - 34
         var lastMaxY: CGFloat?
-        var unproductive = 0
         for _ in 0..<8 {
             let hittable = element.isHittable
             if hittable && element.frame.maxY <= bottomGestureEdge { break }
-            if hittable, let lastMaxY, abs(lastMaxY - element.frame.maxY) < 1 {
-                unproductive += 1
-                if unproductive >= 2 { break }
-            } else {
-                unproductive = 0
-            }
+            if hittable, let lastMaxY, abs(lastMaxY - element.frame.maxY) < 1 { break }
             lastMaxY = hittable ? element.frame.maxY : nil
-            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+            app.swipeUp()
         }
         XCTAssertTrue(element.isHittable, "Expected reachable control: \(element.identifier)")
     }
@@ -440,6 +429,24 @@ final class PlaygroundNavigationUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
+    /// A vertical drag that starts on a long-pressable bubble scrolls the page and opens nothing. Drags
+    /// up first; if the page is already at its end, drags back down. Either must move the bubble.
+    private func assertDragOnBubbleScrolls(_ candidates: [XCUIElement], _ context: String) {
+        guard let bubble = candidates.first(where: { $0.exists && $0.isHittable }) else {
+            XCTFail("\(context): no long-pressable bubble on screen to start the drag on")
+            return
+        }
+        let before = bubble.frame.minY
+        for dy: CGFloat in [-220, 220] {
+            let start = bubble.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: dy)))
+            if abs(bubble.frame.minY - before) > 20 { break }
+        }
+        XCTAssertGreaterThan(abs(bubble.frame.minY - before), 20,
+                             "\(context): a vertical drag that starts on a bubble scrolls the page")
+        XCTAssertFalse(app.buttons["chat.reactions.0"].exists, "\(context): the drag opens no reaction row")
+    }
+
     /// Chat slice journey, all local fixture state: header activity, long-press reaction (outgoing
     /// upper-left), failed delivery and Try again, the Auto model menu, the Cloud browser chip and the
     /// Thinking level. No message, reaction, model choice or attachment leaves the page.
@@ -494,6 +501,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         // The next tap must not land while the menu's dismissal layer is still up.
         waitUntilGone(app.buttons["Automatic"], "Choosing Automatic closes the model menu")
         XCTAssertTrue(menu.label.contains("Auto"), "Automatic returns the trigger to Auto")
+        assertDragOnBubbleScrolls([failedBubble, outgoing], "Right after the model menu closes")
 
         openAddToChat()
         XCTAssertTrue(app.buttons["catalog.addToChat.files"].exists)

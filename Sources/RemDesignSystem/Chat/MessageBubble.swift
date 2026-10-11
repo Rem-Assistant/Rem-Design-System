@@ -357,7 +357,7 @@ struct MessageBubbleRowLayout: Layout {
     }
 }
 
-/// Attaches the long-press (and its accessibility equivalent) only when the host supplies one.
+/// Adds the message time as the bubble's accessibility value, so it is spoken without the gesture.
 private struct AccessibilityTimeValue: ViewModifier {
     let time: String?
 
@@ -370,14 +370,26 @@ private struct AccessibilityTimeValue: ViewModifier {
     }
 }
 
+/// Attaches the long-press (and its accessibility equivalent) only when the host supplies one.
 private struct LongPressAction: ViewModifier {
     let label: String
     let action: (() -> Void)?
+    /// UIKit's long-press defaults (0.5 s, 10 pt), the values `onLongPressGesture` used.
+    static let minimumDuration: Double = 0.5
+    static let maximumDistance: CGFloat = 10
 
     func body(content: Content) -> some View {
         if let action {
             content
-                .onLongPressGesture(perform: action)
+                // An explicit long press with a drag threshold, attached simultaneously, instead of
+                // `onLongPressGesture`: it never claims the touch from the enclosing ScrollView, and once
+                // the finger travels `maximumDistance` it fails, so a vertical scroll that starts on a
+                // bubble always scrolls and never also opens the reaction / action sheet. Holding still
+                // for `minimumDuration` fires the action without waiting for lift, as before.
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: Self.minimumDuration, maximumDistance: Self.maximumDistance)
+                        .onEnded { _ in action() }
+                )
                 .accessibilityAction(named: Text(label), action)
         } else {
             content
