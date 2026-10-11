@@ -41,6 +41,9 @@ end
 # fixed code through an allowlist of patterns, in process; the message itself is never written, logged
 # or printed. Apple's ITMS-<5 digits> codes win (they already cover a used or lower build number).
 UPLOAD_GUARD_PATTERNS = [
+  # The Xcode 26 workaround flag itself refused by altool (only when the flag is named).
+  ['upload_altool_flag_rejected',
+   /(unrecogni[sz]ed|unknown|invalid|unsupported|illegal|unexpected)\W{1,5}(option|argument|flag|parameter)s?\b.{0,80}--use-old-altool|--use-old-altool.{0,80}\b(unrecogni[sz]ed|unknown|not (recogni[sz]ed|supported|valid)|invalid|unsupported|illegal|no longer supported|removed)/i],
   ['upload_transporter_missing',
    /(transporter|altool).{0,80}(not found|could not be found|cannot be found|not executable|no such file|missing)|(could ?n[o']t|unable to|cannot) (find|locate|execute|run) .{0,40}(transporter|altool)/i],
   ['upload_app_not_found',
@@ -53,11 +56,15 @@ UPLOAD_GUARD_PATTERNS = [
    /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i],
   # Xcode 26 altool: Cocoa "file couldn't be opened because it isn't in the correct format" (259).
   ['upload_altool_format_259',
-   /isn['\u2019]?t in the correct format|is not in the correct format|\bCode=259\b|\b(error|failed|failure)\b.{0,80}\(259\)/i]
+   /isn['\u2019]?t in the correct format|is not in the correct format|\bCode=259\b|\b(error|failed|failure)\b.{0,80}\(259\)/i],
+  # fastlane's own altool reader failed on non-ASCII output under a non-UTF-8 locale (Ruby ArgumentError);
+  # fastlane then reports exit -1 and altool's text never reaches the exception.
+  ['upload_output_encoding_error', /invalid byte sequence in [A-Za-z0-9_-]{1,40}/]
 ].freeze
 # Precedence, first match wins:
 #   1. upload_itms_<digits>            Apple ITMS-NNNNN validation codes (up to three)
-#   2. UPLOAD_GUARD_PATTERNS            semantic patterns above, ending with upload_altool_format_259
+#   2. UPLOAD_GUARD_PATTERNS            semantic patterns above, from upload_altool_flag_rejected to
+#                                       upload_altool_format_259 and upload_output_encoding_error
 #   3. upload_apple_code_m<digits>      first Apple negative numeric code, e.g. "(-19209)"
 #   4. upload_altool_exit_<N>           fastlane's "The call to the altool completed with a non-zero exit
 #                                       status: N"; a leading minus is written m (-1 -> m1), 1-6 characters
@@ -67,12 +74,14 @@ UPLOAD_GUARD_PATTERNS = [
 # Codes 4-7 append an altool error-line count bucket when the message carries any (_errlines_1,
 # _errlines_2to5, _errlines_6plus): counts only, never text. In fastlane 2.240.1 pilot raises
 # "Error uploading ipa file: \n <displayable_errors>", one "[Application Loader Error Output]: ..." entry
-# per altool ERROR: line plus fastlane's own exit-status lines, which are not counted.
+# per altool ERROR: line plus fastlane's own exit-status and PTY lines, which are not counted. Only text
+# altool printed on an ERROR: line reaches the exception; other altool output stays in the private log.
+# The exception's cause chain (three levels) is classified too, so a wrapper keeps the tool's category.
 UPLOAD_APPLE_CODE = /\(-(\d{1,6})\)/
 UPLOAD_ALTOOL_EXIT = /The call to the altool completed with a non-zero exit status:\s*(-?\d+)/i
 UPLOAD_ERROR_ENTRY = /\A\s*\[Application Loader Error Output\]:[ \t]*(\S.*)?\z/i
 UPLOAD_ERROR_LINE = /\A\s*(\[altool\]\s*)?(\*\*\*\s*)?ERROR:\s+\S/i
-UPLOAD_FASTLANE_STATUS = /\AThe call to the altool completed with a non-zero exit status|\A-1 indicates altool exited abnormally/i
+UPLOAD_FASTLANE_STATUS = /\AThe call to the altool completed with a non-zero exit status|\A-1 indicates altool exited abnormally|\AProcess crashed\s*\z|\ACould not determine the exit status of the command\s*\z/i
 UPLOAD_GUARD_FALLBACKS = [
   ['upload_asc_transfer_failed', %r{could ?n[o']t download/upload from App Store Connect}i],
   ['upload_ipa_error_unclassified', /error uploading ipa file/i]
@@ -90,8 +99,15 @@ def upload_errlines_bucket(count)
   count == 1 ? '_errlines_1' : count <= 5 ? '_errlines_2to5' : '_errlines_6plus'
 end
 
-def upload_guard(message)
-  text = message.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
+def upload_guard(error)
+  messages = []
+  current = error
+  3.times do
+    break if current.nil?
+    messages << (current.is_a?(Exception) ? current.message : current).to_s
+    current = current.is_a?(Exception) ? current.cause : nil
+  end
+  text = messages.join("\n").dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
   itms = text.scan(/ITMS-(\d{5})/).flatten.uniq.first(3)
   return 'upload_itms_' + itms.join('_') unless itms.empty?
   UPLOAD_GUARD_PATTERNS.each { |code, pattern| return code if text.match?(pattern) }
@@ -146,6 +162,18 @@ end
 # variable only in AltoolTransporterExecutor#build_upload_command, so set it for the upload call alone and
 # restore the previous value afterwards. No --verbose: provider output still goes only to the private log.
 UPLOAD_ALTOOL_PARAMETERS = '--use-old-altool'
+
+# fastlane reads altool's output with Ruby's default external encoding, fixed from the locale at
+# startup. Under a non-UTF-8 locale altool's curly quotes raise "invalid byte sequence" inside fastlane,
+# which then reports exit -1 and drops altool's text. The workflow exports a UTF-8 locale; this scope
+# makes the upload independent of it and restores the previous encoding afterwards.
+def with_upload_utf8
+  previous = Encoding.default_external
+  Encoding.default_external = Encoding::UTF_8
+  yield
+ensure
+  Encoding.default_external = previous
+end
 
 def with_upload_altool_parameters
   name = 'DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS'
@@ -240,6 +268,11 @@ lane :distribute do
   begin
     require_release(ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REF'] == 'refs/heads/main', 'Hosted main dispatch required',
       'not_hosted_main')
+    # fastlane always writes report.xml at the end, including each failed action's message (provider text).
+    # Keep it in the ephemeral directory that cleanup deletes, never in the checkout.
+    ephemeral = ENV['PLAYGROUND_EPHEMERAL'].to_s
+    require_release(!ephemeral.empty? && File.directory?(ephemeral), 'Ephemeral directory required', 'ephemeral_missing')
+    ENV['FL_REPORT_PATH'] = ephemeral
     admission = JSON.parse(File.read(ENV.fetch('PLAYGROUND_ADMISSION')))
     packaging = JSON.parse(File.read(File.join(out, 'packaging.json')))
     platform = ENV.fetch('PLAYGROUND_PLATFORM')
@@ -277,15 +310,17 @@ lane :distribute do
       # No external distribution, beta review submission, tester changes, public links or production release.
       begin
         with_upload_altool_parameters do
-          upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
-            ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
-            wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
-            expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+          with_upload_utf8 do
+            upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
+              ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
+              wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
+              expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+          end
         end
       rescue StandardError => e
         # pilot fails through UI.user_error! (a StandardError). Interrupts and exits pass straight through to
         # the lane rescue, with no classification or lookup. Fixed code only; the message is dropped here.
-        $release_guard = upload_guard(e.message)
+        $release_guard = upload_guard(e)
         $release_upload_build_record = upload_build_record(number)
         raise
       end

@@ -43,6 +43,8 @@ env:
   FASTLANE_HIDE_CHANGELOG: '1'
   FASTLANE_OPT_OUT_USAGE: '1'
   FASTLANE_SKIP_ACTION_SUMMARY: '1'
+  # fastlane otherwise sends an unexpected exception's message (provider text) to GitHub's issue search.
+  FASTLANE_HIDE_GITHUB_ISSUES: '1'
 
 jobs:
   admission:
@@ -184,8 +186,16 @@ jobs:
         working-directory: control/tools/playground-distribution
         run: |
           umask 077
+          # fastlane stages IPA copies and its upload package in the temporary directory; keep them in a
+          # task-owned directory that cleanup removes. fastlane needs a UTF-8 locale to read altool output.
+          mkdir -m 700 "$RUNNER_TEMP/playground-store-tmp"
+          export TMPDIR="$RUNNER_TEMP/playground-store-tmp" TMP="$RUNNER_TEMP/playground-store-tmp" TEMP="$RUNNER_TEMP/playground-store-tmp"
+          export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
           # Provider output can contain account details; never print it or publish it as an artifact.
-          if ! bundle exec fastlane distribute > "$RUNNER_TEMP/playground-store-private.log" 2>&1; then
+          # Success needs both fastlane's exit status and a completed record: under `bundle exec` an Errno::EPIPE
+          # escaping fastlane exits 0 (Bundler's Thor rescues it).
+          if ! bundle exec fastlane distribute > "$RUNNER_TEMP/playground-store-private.log" 2>&1 ||
+             ! python3 summary.py completed "$PLAYGROUND_OUTPUT/distribution.json"; then
             echo 'Store step failed or is unresolved. Inspect provider state before rerunning; do not blindly re-upload.'
             exit 1
           fi

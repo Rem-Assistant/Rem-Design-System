@@ -13,6 +13,8 @@ FAILURE_PHASES = ('inputs', 'apple_key', 'group_check', 'build_numbers', 'upload
                   'processing_check', 'assign', 'play_auth', 'play_precheck', 'play_readback')
 # After a TestFlight upload failure only: did Apple create a build record for this number (one read-only GET).
 UPLOAD_BUILD_RECORDS = ('present', 'absent', 'unknown')
+# The only states a successful store step may end in.
+COMPLETED_STATES = ('assigned_existing_internal_group', 'published_existing_internal_track')
 
 
 def failure_line(record):
@@ -70,7 +72,8 @@ def main():
     mode, path = sys.argv[1], Path(sys.argv[2])
     if mode == 'cleanup':
         require(path.resolve() == Path(os.environ['RUNNER_TEMP']).resolve(), 'Only clean runner temporary output')
-        for name in ('playground-package', 'playground-ephemeral', 'playground-store-private.log', 'admission.json'):
+        for name in ('playground-package', 'playground-ephemeral', 'playground-store-private.log', 'admission.json',
+                     'playground-store-tmp'):
             target = path / name
             if target.is_symlink():
                 target.unlink()
@@ -78,6 +81,14 @@ def main():
                 shutil.rmtree(target)
             elif target.exists():
                 target.unlink()
+    elif mode == 'completed':
+        # Exit status only, nothing printed: a final store state with no failure record.
+        try:
+            record = public_record(json.loads(path.read_text()))
+            done = 'failure' not in record and record.get('distribution') in COMPLETED_STATES
+        except (OSError, ValueError, TypeError, KeyError):
+            done = False
+        sys.exit(0 if done else 1)
     else:
         text = 'No verified distribution result. Check failed stage; an upload may require store reconciliation.'
         if path.exists():

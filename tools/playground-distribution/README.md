@@ -266,13 +266,19 @@ Read that line before reconciling provider state or asking for an account change
 A failed TestFlight upload (`upload_to_testflight`) is classified in process, before the
 private log is deleted, by an allowlist of patterns in the Fastfile. The exception message is
 matched and dropped, never written, logged or printed; the exception is re-raised unchanged.
-Codes, in precedence order (first match wins):
+The message and up to two causes are classified together, so a generic wrapper (a `RuntimeError`
+or `Errno`) keeps the tool's category. Only altool text printed on an `ERROR:` line reaches pilot's
+exception; other altool output stays in the private log. Codes, in precedence order (first match
+wins):
 
 1. `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up to three, in order,
    joined by `_`; these already cover a used or lower build number);
-2. `upload_transporter_missing`, `upload_app_not_found`, `upload_build_number_used`,
-   `upload_auth_failed`, `upload_processing_timeout`, then `upload_altool_format_259` for Xcode 26
-   altool's "isn't in the correct format" (Cocoa error 259);
+2. `upload_altool_flag_rejected` when altool refuses `--use-old-altool` by name;
+   `upload_transporter_missing`, `upload_app_not_found`, `upload_build_number_used`,
+   `upload_auth_failed`, `upload_processing_timeout`; `upload_altool_format_259` for Xcode 26
+   altool's "isn't in the correct format" (Cocoa error 259); `upload_output_encoding_error` when
+   fastlane's own altool reader fails on non-ASCII output under a non-UTF-8 locale ("invalid byte
+   sequence"; fastlane then reports exit -1 and altool's text never reaches the exception);
 3. `upload_apple_code_m<digits>` for the first Apple negative numeric code such as `(-19209)`;
 4. `upload_altool_exit_<N>` from fastlane's "The call to the altool completed with a non-zero exit
    status: N", with a leading minus written `m` (`upload_altool_exit_m1`) and N at most six
@@ -284,7 +290,7 @@ Codes, in precedence order (first match wins):
 Codes 4–7 end with a count bucket when the message carries altool error lines: `_errlines_1`,
 `_errlines_2to5` or `_errlines_6plus`. Only the count is kept, never the text. fastlane 2.240.1
 raises one `[Application Loader Error Output]:` entry per altool `ERROR:` line. Its own exit-status
-lines are not counted; a raw `ERROR:` line counts as one.
+and PTY lines (`Process crashed`) are not counted; a raw `ERROR:` line counts as one.
 
 After an upload failure the Fastfile polls a read-only
 `GET /v1/builds?filter[app]=…&filter[version]=<build number>` up to six times about 30 seconds
@@ -295,6 +301,21 @@ replaces the upload's guard code or HTTP status. Xcode 26's altool can report a 
 upload Apple accepted ([fastlane#30130](https://github.com/fastlane/fastlane/issues/30130)), so
 `present` adds `next step: reconcile the existing build, never re-upload`: the number is used.
 `absent` after six lookups is still not proof that Apple will never create the record.
+
+The store step contains fastlane's side effects:
+
+- It creates `$RUNNER_TEMP/playground-store-tmp` (mode 700) and points `TMPDIR`, `TMP` and `TEMP`
+  at it, because fastlane stages two copies of the signed IPA and an `.itmsp` package there.
+  `summary.py cleanup` removes that directory with the other task-owned runner paths.
+- It exports a UTF-8 locale, and the Fastfile reads the upload as UTF-8 regardless. Under a
+  non-UTF-8 locale, fastlane's altool reader fails on altool's curly quotes and hides altool's
+  error (`upload_output_encoding_error`).
+- The lane writes fastlane's `report.xml`, which holds each failed action's message, into
+  `$PLAYGROUND_EPHEMERAL` instead of the checkout.
+- `FASTLANE_HIDE_GITHUB_ISSUES=1` stops fastlane from sending an unexpected exception's message
+  to GitHub's issue search.
+- The step succeeds only when fastlane exits 0 **and** `summary.py completed` finds a final state
+  with no failure record. Under `bundle exec`, an `Errno::EPIPE` that escapes fastlane exits 0.
 
 Xcode 26 altool workaround: the upload call alone runs with
 `DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS=--use-old-altool`, fastlane's documented opt-out
@@ -315,7 +336,20 @@ ruby tools/playground-distribution/test_store.rb
 ruby tools/playground-distribution/test_workflows.rb
 # On the pinned Ruby runtime, with the committed frozen bundle installed:
 (cd tools/playground-distribution && BUNDLE_FROZEN=true bundle exec ruby test_dependencies.rb)
+(cd tools/playground-distribution && BUNDLE_FROZEN=true bundle exec ruby test_upload_pathway.rb)
 ```
+
+`test_upload_pathway.rb` (with the frozen bundle) runs the real locked fastlane 2.240.1 on 15
+sanitized synthetic fixtures. A stub `xcrun altool` on `PATH` prints each fixture and exits. The
+test then runs the workflow's own store-step script, which calls `bundle exec fastlane distribute`
+(pilot, `AltoolTransporterExecutor`, `UI.user_error!`) and the Fastfile rescues, and then runs
+`summary.py result` and `summary.py cleanup`, as in the workflow. `upload_pathway_harness.rb`
+replaces only macOS/Xcode detection, the Fastfile's Apple API helpers, pilot's post-upload
+processing wait and all TCP connections (blocked). Every fixture carries secret sentinels: a key ID,
+an issuer, an email, JWT-shaped text, key paths and key material. The test asserts that none of them
+reaches `distribution.json`, the public line or step output, the step summary or any file left after
+cleanup. It also checks that the private log and fastlane's `report.xml`, which did contain them,
+are deleted, and that no IPA copy, `.itmsp` package or key survives outside the cleaned paths.
 
 Tests exercise input injection, foreign/stale runs, missing/duplicate jobs, incomplete
 or filtered receipts, digest/path tampering, weak environments, wrong/expired signing

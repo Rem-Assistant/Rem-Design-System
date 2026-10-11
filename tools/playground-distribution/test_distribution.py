@@ -278,7 +278,8 @@ class PackagingTests(unittest.TestCase):
                                  'upload_auth_failed', 'upload_processing_timeout', 'upload_user_error_unclassified',
                                  'upload_altool_format_259', 'upload_asc_transfer_failed',
                                  'upload_ipa_error_unclassified', 'upload_itms_', 'upload_apple_code_m',
-                                 'upload_altool_exit_'})
+                                 'upload_altool_exit_', 'upload_altool_flag_rejected',
+                                 'upload_output_encoding_error'})
         self.assertEqual(set(re.findall(r"'(_errlines_[a-z0-9]+)'", classifier)),
                          {'_errlines_1', '_errlines_2to5', '_errlines_6plus'})
         codes = (codes - {'upload_itms_', 'upload_apple_code_m', 'upload_altool_exit_'}) | {
@@ -395,6 +396,61 @@ class StorageTests(unittest.TestCase):
             storage.require_budget(out, 'android', 'sign')
             with patch.dict(storage.OUTPUT_BUDGET, {'android': {'sign': 999}}), self.assertRaisesRegex(ValueError, 'budget'):
                 storage.require_budget(out, 'android', 'sign')
+
+    def test_completed_requires_a_final_state_without_failure(self):
+        # The store step also needs this: under `bundle exec` an Errno::EPIPE escaping fastlane exits 0.
+        base = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
+                    physical_device='unverified', visual_review_url=URL)
+        failure = {'phase': 'upload', 'guard': 'upload_apple_code_m19209', 'http_status': None,
+                   'upload_build_record': 'absent'}
+        cases = [(dict(base, distribution='assigned_existing_internal_group'), 0),
+                 (dict(base, distribution='published_existing_internal_track'), 0),
+                 (dict(base, distribution='upload_started', failure=failure), 1),
+                 (dict(base, distribution='assigned_existing_internal_group', failure=failure), 1),
+                 (dict(base, distribution='upload_started'), 1),
+                 (dict(base, distribution='processed'), 1),
+                 (dict(base, distribution='assigned_existing_internal_group', visual_review_url='x'), 1),
+                 (None, 1), ('not json', 1)]
+        with tempfile.TemporaryDirectory() as tmp:
+            for record, status in cases:
+                state = Path(tmp) / 'distribution.json'
+                if state.exists():
+                    state.unlink()
+                if isinstance(record, dict):
+                    state.write_text(json.dumps(record))
+                elif record is not None:
+                    state.write_text(record)
+                out = io.StringIO()
+                with self.subTest(record=record), patch.object(sys, 'argv', ['summary.py', 'completed', str(state)]), \
+                        patch('sys.stdout', out), self.assertRaises(SystemExit) as done:
+                    summary.main()
+                self.assertEqual(done.exception.code, status)
+                self.assertEqual(out.getvalue(), '')
+
+    def test_summary_cleanup_removes_only_task_owned_runner_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runner_temp, outside = Path(tmp) / 'runner-temp', Path(tmp) / 'outside'
+            owned = ('playground-package', 'playground-ephemeral', 'playground-store-tmp')
+            for name in owned:
+                (runner_temp / name / 'nested').mkdir(parents=True)
+                (runner_temp / name / 'nested' / 'Playground.ipa').write_text('ipa')
+            (runner_temp / 'playground-store-tmp' / 'd1' / 'x.itmsp').mkdir(parents=True)
+            (runner_temp / 'playground-store-tmp' / 'd1' / 'x.itmsp' / 'metadata.xml').write_text('xml')
+            (runner_temp / 'playground-store-private.log').write_text('private')
+            (runner_temp / 'admission.json').write_text('{}')
+            (runner_temp / 'other-step').mkdir()
+            (runner_temp / 'other-step' / 'keep').write_text('keep')
+            outside.mkdir()
+            (outside / 'keep').write_text('keep')
+            with patch.dict(os.environ, {'RUNNER_TEMP': str(runner_temp)}), \
+                    patch.object(sys, 'argv', ['summary.py', 'cleanup', str(runner_temp)]):
+                summary.main()
+            self.assertEqual(sorted(p.name for p in runner_temp.iterdir()), ['other-step'])
+            self.assertTrue((outside / 'keep').exists())
+            with patch.dict(os.environ, {'RUNNER_TEMP': str(runner_temp)}), \
+                    patch.object(sys, 'argv', ['summary.py', 'cleanup', str(outside)]), self.assertRaises(ValueError):
+                summary.main()
+            self.assertTrue((outside / 'keep').exists())
 
     def test_cleanup_is_bounded_to_its_base(self):
         with tempfile.TemporaryDirectory() as tmp:

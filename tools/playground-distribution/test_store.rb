@@ -185,7 +185,21 @@ exit_cases = {
   # Empty entries, fastlane's own status lines and mid-line mentions are not altool error lines.
   pilot_message(['', ' ']) => 'upload_altool_exit_1',
   'Error uploading ipa file: saw ERROR: inline' => 'upload_ipa_error_unclassified',
-  'exit status: 1 but not the altool line' => 'upload_user_error_unclassified'
+  'exit status: 1 but not the altool line' => 'upload_user_error_unclassified',
+  # fastlane's own PTY lines are not altool error lines.
+  pilot_message(['Process crashed'], -1) => 'upload_altool_exit_m1',
+  pilot_message(['Process crashed', 'freed pointer was not the last allocation'], -1) => 'upload_altool_exit_m1_errlines_1',
+  # The workaround flag refused by altool, only when the flag is named.
+  pilot_message(["[altool.600] Unknown option '--use-old-altool'. " + SECRET], 64) => 'upload_altool_flag_rejected',
+  "altool: unrecognized option `--use-old-altool'" => 'upload_altool_flag_rejected',
+  'Invalid argument: --use-old-altool' => 'upload_altool_flag_rejected',
+  '--use-old-altool is not supported by this version of altool' => 'upload_altool_flag_rejected',
+  '--use-old-altool is deprecated' => 'upload_user_error_unclassified',
+  'Unknown option --verbose' => 'upload_user_error_unclassified',
+  pilot_message([], 64) => 'upload_altool_exit_64',
+  # fastlane's altool reader failed on non-ASCII output under a non-UTF-8 locale.
+  pilot_message(['invalid byte sequence in US-ASCII'], -1) => 'upload_output_encoding_error',
+  'invalid byte sequence in UTF-8' => 'upload_output_encoding_error'
 }
 upload_cases.merge!(exit_cases)
 upload_cases.each do |message, code|
@@ -196,6 +210,7 @@ end
 raise 'Three ITMS codes must fit the 64-char guard' unless upload_guard('ITMS-11111 ITMS-22222 ITMS-33333 ITMS-44444').length <= 64
 # Every code is a fixed word, a fixed word plus digits, or one of three fixed count buckets.
 UPLOAD_CODE_GRAMMAR = /\Aupload_(itms_\d{5}(_\d{5}){0,2}|apple_code_m\d{1,6}|altool_format_259|transporter_missing|
+  altool_flag_rejected|output_encoding_error|
   app_not_found|build_number_used|auth_failed|processing_timeout|((altool_exit_m?\d{1,6}|asc_transfer_failed|
   ipa_error_unclassified|user_error_unclassified)(_errlines_(1|2to5|6plus))?))\z/x
 upload_cases.each_key do |message|
@@ -211,6 +226,54 @@ upload_cases.each_key do |message|
     raise "Upload guard leaked message text #{leak}: #{code}" if code.include?(leak.downcase)
   end
 end
+
+# A wrapper keeps the tool's category: the cause chain (three levels) is classified, never kept.
+def chain(*messages)
+  messages.reverse.reduce(nil) do |cause, message|
+    begin
+      cause ? (begin; raise cause; rescue StandardError; raise message; end) : raise(message)
+    rescue StandardError => e
+      e
+    end
+  end
+end
+{
+  chain('Upload step failed', pilot_message(["isn't in the correct format (259) " + SECRET])) => 'upload_altool_format_259',
+  chain('Upload step failed', pilot_message(['Unable to process (-19209)'])) => 'upload_apple_code_m19209',
+  chain('outer', 'middle', 'ITMS-90062: deepest') => 'upload_itms_90062',
+  chain('outer', 'middle', 'inner', 'ITMS-90062: too deep') => 'upload_user_error_unclassified',
+  chain('Upload step failed') => 'upload_user_error_unclassified',
+  chain('Upload step failed ' + SECRET, 'unknown inner ' + SECRET) => 'upload_user_error_unclassified'
+}.each do |error, code|
+  got = upload_guard(error)
+  raise "Expected cause-chain guard #{code}, got #{got.inspect}" unless got == code
+  raise "Cause-chain guard outside the grammar: #{got}" unless got.match?(UPLOAD_CODE_GRAMMAR)
+end
+errno = begin
+  begin
+    raise pilot_message(['(-19209) ' + SECRET])
+  rescue RuntimeError
+    raise Errno::EPIPE, 'upload stream'
+  end
+rescue Errno::EPIPE => e
+  e
+end
+raise 'Errno wrapper must keep the inner Apple code' unless upload_guard(errno) == 'upload_apple_code_m19209'
+raise 'A string has no cause chain' unless upload_guard(pilot_message([], 3)) == 'upload_altool_exit_3'
+
+# The upload reads altool output as UTF-8 whatever the locale, and the previous encoding comes back.
+previous_encoding = Encoding.default_external
+Encoding.default_external = Encoding::US_ASCII
+seen = nil
+with_upload_utf8 { seen = Encoding.default_external }
+raise "Upload did not read UTF-8: #{seen}" unless seen == Encoding::UTF_8
+raise 'Encoding not restored' unless Encoding.default_external == Encoding::US_ASCII
+begin
+  with_upload_utf8 { raise 'Upload failed' }
+rescue RuntimeError
+end
+raise 'Encoding not restored after a failed upload' unless Encoding.default_external == Encoding::US_ASCII
+Encoding.default_external = previous_encoding
 
 # The Xcode 26 altool workaround is set only around the upload call and restored afterwards.
 ALTOOL_ENV = 'DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS'
@@ -299,7 +362,22 @@ Dir.mktmpdir do |dir|
     'native_run_id' => 1, 'native_run_attempt' => 1))
   ENV.update('GITHUB_ACTIONS' => 'true', 'GITHUB_REF' => 'refs/heads/main', 'PLAYGROUND_OUTPUT' => dir,
     'PLAYGROUND_ADMISSION' => File.join(dir, 'admission.json'), 'PLAYGROUND_PLATFORM' => 'ios',
-    'PLAYGROUND_BUILD_NUMBER' => number, 'PLAYGROUND_SOURCE_SHA' => sha)
+    'PLAYGROUND_BUILD_NUMBER' => number, 'PLAYGROUND_SOURCE_SHA' => sha,
+    'PLAYGROUND_EPHEMERAL' => File.join(dir, 'ephemeral'))
+  Dir.mkdir(File.join(dir, 'ephemeral'))
+  # fastlane's report.xml (it carries action error messages) must go to the ephemeral directory.
+  ENV.delete('FL_REPORT_PATH')
+  ENV['PLAYGROUND_EPHEMERAL'] = File.join(dir, 'missing')
+  $release_guard = nil
+  begin
+    @lanes[:distribute].call
+    raise 'Missing ephemeral directory was accepted'
+  rescue RuntimeError => e
+    raise "Wrong ephemeral rejection: #{e.message}" unless e.message == 'Ephemeral directory required'
+  end
+  raise 'Missing ephemeral directory needs its own guard' unless $release_guard == 'ephemeral_missing'
+  raise 'Report path set without an ephemeral directory' if ENV.key?('FL_REPORT_PATH')
+  ENV['PLAYGROUND_EPHEMERAL'] = File.join(dir, 'ephemeral')
   [['ITMS-90062: ' + SECRET, 'upload_itms_90062', {'data' => [{'attributes' => {'version' => '8'}}]}, 'present', 1],
    [SECRET, 'upload_user_error_unclassified', {'data' => []}, 'absent', 6],
    ['Authentication credentials are missing or invalid. ' + SECRET, 'upload_auth_failed', nil, 'unknown', 6],
@@ -336,6 +414,7 @@ Dir.mktmpdir do |dir|
     failure = JSON.parse(text)['failure']
     expected = {'phase' => 'upload', 'guard' => code, 'http_status' => nil, 'upload_build_record' => record}
     raise "Wrong failure record #{failure.inspect}" unless failure == expected
+    raise 'fastlane report.xml not routed to the ephemeral directory' unless ENV['FL_REPORT_PATH'] == File.join(dir, 'ephemeral')
     raise "Build record lookups must follow the upload: #{calls.inspect}" unless calls.length == 1 + gets &&
       calls[1..].all? { |path| path == BUILD_PATH }
     raise "Wrong waits #{@waits.inspect}" unless @waits == [30] * (gets - 1)
@@ -372,5 +451,6 @@ Dir.mktmpdir do |dir|
   raise 'Altool workaround leaked past an interrupted upload' if ENV.key?(ALTOOL_ENV)
 end
 puts "6 TestFlight privacy/scope guard scenarios, 15 guard-code cases, #{upload_cases.length} upload-guard cases, " \
-  "4 altool-scope checks, #{build_record_cases.length + 1} build-record polling cases, 6 upload-failure lane runs " \
-  'and 1 interrupt lane run passed; no store requests made.'
+  "8 cause-chain cases, 3 UTF-8-scope checks, 4 altool-scope checks, " \
+  "#{build_record_cases.length + 1} build-record polling cases, 6 upload-failure lane runs, " \
+  '1 interrupt lane run and 1 ephemeral-directory guard passed; no store requests made.'
