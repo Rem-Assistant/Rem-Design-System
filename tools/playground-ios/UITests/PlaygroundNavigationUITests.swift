@@ -831,6 +831,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
 
     func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
+        assertLatestClearsComposer("message.a2.bubble")
         XCTAssertTrue(app.buttons["chat.header.overflow"].exists, "The header owns overflow")
         XCTAssertEqual(app.navigationBars.count, 0, "No second navigation-title row above the header")
         XCTAssertEqual(element("chat.header.identity").exists, true)
@@ -1077,11 +1078,26 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(identity.label.hasPrefix(agent), "Expected \(agent)'s conversation, got \(identity.label)")
     }
 
+    /// chat.md rule 12: once layout settles, the latest message sits wholly above the composer dock (its
+    /// accessibility frame ends above the composer field's). Polls up to 3s for the inset to settle.
+    private func assertLatestClearsComposer(_ identifier: String) {
+        let latest = element(identifier)
+        let field = app.textViews["chat.composerField"]
+        XCTAssertTrue(latest.waitForExistence(timeout: 3) && field.waitForExistence(timeout: 3))
+        let deadline = Date().addingTimeInterval(3)
+        while latest.frame.maxY > field.frame.minY && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        XCTAssertLessThanOrEqual(latest.frame.maxY, field.frame.minY,
+                                 "Latest message (\(latest.frame)) must clear the composer (\(field.frame)) at rest")
+    }
+
     /// Root: Chat full screen with the sidebar behind the header button; choose an agent; the chat card
     /// closes the sidebar and keeps the selection.
     func testShellSidebarSelectsAnAgentAndClosesIt() {
         returnToShell()
         assertChatShows("Rem")
+        assertLatestClearsComposer("message.a2.bubble")
         XCTAssertFalse(app.buttons["chat.header.back"].exists, "The root conversation has no Back")
         XCTAssertFalse(app.buttons["chat.header.overflow"].exists, "Fixture host controls live under Developer")
         XCTAssertEqual(app.buttons["chat.header.menu"].label, "Open sidebar")

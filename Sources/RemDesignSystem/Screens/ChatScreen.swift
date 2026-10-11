@@ -256,10 +256,10 @@ public struct ChatScreen<Transcript: View>: View {
         }
         // Edge backdrops: one space for the header, the dock (outside the inset content) and the viewport.
         .coordinateSpace(.named(ChatScrollIDs.screen))
-        .onPreferenceChange(ChatHeaderBottomKey.self) { headerBottom = $0 }
-        .onPreferenceChange(ChatViewportTopKey.self) { viewportTop = $0 }
-        .onPreferenceChange(ChatDockTopKey.self) { dockTop = $0 }
-        .onPreferenceChange(ChatViewportBottomKey.self) { viewportBottom = $0 }
+        .onPreferenceChange(ChatHeaderBottomKey.self) { headerBottom = $0 ?? 0 }
+        .onPreferenceChange(ChatViewportTopKey.self) { viewportTop = $0 ?? 0 }
+        .onPreferenceChange(ChatDockTopKey.self) { dockTop = $0 ?? 0 }
+        .onPreferenceChange(ChatViewportBottomKey.self) { viewportBottom = $0 ?? 0 }
         .background(DesignTokens.Color.backgroundPrimary.ignoresSafeArea())
     #if os(iOS)
         // The shared header owns back / overflow: no second navigation-title row.
@@ -300,30 +300,36 @@ private enum ChatScrollIDs {
     static let backdropEvidenceOffset: CGFloat = 96
 }
 
+// The four edge measurements below are optional with a nil default, and `reduce` keeps the last *reported*
+// value. Siblings that never set a key still take part in the reduction with the default value, so a
+// plain `value = nextValue()` let the header and backdrop views (later in the same ZStack) reset the
+// viewport edges to 0. The dock inset then measured as 0 and the latest message sat under the composer
+// at rest (Shell-chat / ChatComposition-default renders, chat.md rule 12).
+
 /// The header's bottom edge in the composition's coordinate space (header backdrop).
 private struct ChatHeaderBottomKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static let defaultValue: CGFloat? = nil
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
 }
 
 /// The transcript viewport's top edge in the composition's coordinate space: above zero by the status bar,
 /// since the transcript extends under it (edge backdrops).
 private struct ChatViewportTopKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static let defaultValue: CGFloat? = nil
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
 }
 
 /// The transcript viewport's bottom edge in the composition's coordinate space: the screen bottom, or the top
 /// of the keyboard (edge backdrops).
 private struct ChatViewportBottomKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static let defaultValue: CGFloat? = nil
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
 }
 
 /// The composer dock's top edge in the composition's coordinate space (edge backdrops).
 private struct ChatDockTopKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static let defaultValue: CGFloat? = nil
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
 }
 
 /// The transcript content's bottom edge in the scroll view's coordinate space (jump to latest).

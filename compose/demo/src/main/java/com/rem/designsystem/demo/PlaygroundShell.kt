@@ -63,8 +63,8 @@ import com.rem.designsystem.tokens.RemTypography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Playground() {
-    // The shell stays composed under Settings and Developer, so returning finds the same agent,
-    // conversation (sent messages included) and scroll position.
+    // The shell stays composed under Settings and New agent, so returning finds the same agent,
+    // conversation (sent messages included) and scroll position; Developer keeps the selected agent.
     var shell by remember { mutableStateOf(PlaygroundShellFixture()) }
     var developerOpen by rememberSaveable { mutableStateOf(false) }
     // Developer-owned fixtures the shell reads; changed only in the Developer hub.
@@ -74,8 +74,11 @@ fun Playground() {
     val covered = developerOpen || settingsOpen
 
     Box(Modifier.fillMaxSize()) {
-        // Covered layers leave the semantics tree (no duplicate chat nodes for TalkBack or tests).
-        Box(Modifier.fillMaxSize().then(if (covered) Modifier.clearAndSetSemantics {} else Modifier)) {
+        // Under Settings the shell stays composed (same agent, conversation and scroll position on return) and
+        // leaves the merged semantics tree. The Developer hub hosts its own Chat with the same test tags, and
+        // clearAndSetSemantics does not remove nodes from the unmerged tree, so the shell is not composed under
+        // Developer: returning keeps the selected agent (state above) and opens its conversation afresh.
+        if (!developerOpen) Box(Modifier.fillMaxSize().then(if (covered) Modifier.clearAndSetSemantics {} else Modifier)) {
             RemSidebarContainer(
                 isOpen = shell.isSidebarOpen,
                 onOpenChange = { open -> shell = if (open) shell.openSidebar() else shell.closeSidebar() },

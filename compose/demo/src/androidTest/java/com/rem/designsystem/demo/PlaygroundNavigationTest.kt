@@ -858,6 +858,11 @@ class PlaygroundNavigationTest {
 
     @Test fun chatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
+        // chat.md rule 12: at rest the latest message sits wholly above the composer dock.
+        compose.waitForIdle()
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val field = compose.onNodeWithTag("chat.composerField").fetchSemanticsNode().boundsInRoot
+        assertTrue("Latest bubble (bottom ${latest.bottom}) clears the composer (top ${field.top})", latest.bottom <= field.top)
         compose.onNodeWithTag("chat.header.overflow").assertIsDisplayed()
         compose.onNodeWithTag("back").assertDoesNotExist() // no Playground app bar above the header
         compose.onAllNodesWithTag("chat.header.identity").assertCountEquals(1)
@@ -1146,6 +1151,11 @@ class PlaygroundNavigationTest {
     @Test fun shellSidebarSelectsAnAgentAndBackCloses() {
         returnToShell()
         assertChatShows("Rem")
+        // chat.md rule 12: at rest the latest message sits wholly above the composer dock.
+        compose.waitForIdle()
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val field = compose.onNodeWithTag("chat.composerField").fetchSemanticsNode().boundsInRoot
+        assertTrue("Latest bubble (bottom ${latest.bottom}) clears the composer (top ${field.top})", latest.bottom <= field.top)
         compose.onNodeWithTag("chat.header.back").assertDoesNotExist()
         compose.onNodeWithTag("chat.header.overflow").assertDoesNotExist()
         compose.onNodeWithTag("chat.header.menu").assert(hasContentDescription("Open sidebar"))
@@ -1224,8 +1234,13 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("settings.developer").assertDoesNotExist()
         compose.onNodeWithTag("agentDestination.PairedDevices").performScrollTo().performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithTag("agentDestination.PairedDevices").fetchSemanticsNodes().isEmpty() }
+        waitForTag("pairedDevices")
         systemBack()
-        waitForTag("agentDestination.PairedDevices")
+        runCatching { waitForTag("agentDestination.PairedDevices") }.onFailure {
+            compose.onRoot().printToLog("SHELL-pairedDevicesBack-merged")
+            compose.onRoot(useUnmergedTree = true).printToLog("SHELL-pairedDevicesBack-unmerged")
+            throw it
+        }
         compose.onNodeWithTag("back").performClick()
         waitForTag("shell.settings")
         compose.onNodeWithTag("settingsDestination.About").performScrollTo().performClick()

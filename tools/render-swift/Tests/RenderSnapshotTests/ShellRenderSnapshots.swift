@@ -61,15 +61,23 @@ final class ShellRenderSnapshots: XCTestCase {
         window.rootViewController = host
         window.makeKeyAndVisible()
         host.view.frame = CGRect(origin: .zero, size: size)
-        host.view.setNeedsLayout()
-        host.view.layoutIfNeeded()
-        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
-
         let format = UIGraphicsImageRendererFormat.default()
         format.scale = 2
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { ctx in
-            host.view.layer.render(in: ctx.cgContext)
+        let capture = {
+            host.view.setNeedsLayout()
+            host.view.layoutIfNeeded()
+            return renderer.image { ctx in host.view.layer.render(in: ctx.cgContext) }
+        }
+        // Settle on layout, not a fixed sleep: the composition measures its header and dock through
+        // preferences and lays out again, so capture until two consecutive frames match (bounded).
+        var image = capture()
+        for _ in 0..<20 {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+            let next = capture()
+            let settled = next.pngData() == image.pngData()
+            image = next
+            if settled { break }
         }
 
         let attachment = XCTAttachment(image: image)
