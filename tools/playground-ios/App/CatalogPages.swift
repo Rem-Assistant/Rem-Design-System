@@ -341,6 +341,8 @@ struct CatalogChat: View {
                 .accessibilityIdentifier("catalog.voiceState")
                 VoiceBar(voice)
             }
+            // DIAGNOSTICS ONLY (not evidence): bisect the Add to Chat sheet failure.
+            if !DiagnosticsBisect.omitCards {
             CatalogGroup(title: "Card \u{00B7} message draft") {
                 // Presentation only: Send/Discard report intent; nothing is sent from the catalog.
                 ForEach(MessageDraftCardState.allCases, id: \.self) { state in
@@ -384,8 +386,9 @@ struct CatalogChat: View {
                 }
             }
             CatalogConnectorCardGroup()
-            CatalogLoginCardGroup()
+            if !DiagnosticsBisect.omitLogin { CatalogLoginCardGroup() }
             CatalogPermissionCardGroup()
+            }
             // Last on the page so the established groups above keep their geometry. The trailing slot
             // holds one action: the in-app call entry replaces More (WS1e).
             CatalogGroup(title: "Header trailing action") {
@@ -871,4 +874,10 @@ struct PlaygroundInboxScreen: View {
         }
         .navigationBarTitleDisplayMode(.inline)
     }
+}
+
+/// DIAGNOSTICS ONLY (not evidence): launch arguments that drop page content to bisect a failure.
+enum DiagnosticsBisect {
+    static let omitLogin = ProcessInfo.processInfo.arguments.contains("--diag-omit-login")
+    static let omitCards = ProcessInfo.processInfo.arguments.contains("--diag-omit-cards")
 }

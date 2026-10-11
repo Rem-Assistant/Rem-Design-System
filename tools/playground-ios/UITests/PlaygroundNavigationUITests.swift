@@ -158,7 +158,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         [diag] \(Date().timeIntervalSince1970) \(step): exists=\(element.exists) hittable=\(element.isHittable) \
         frame=\(element.frame) label='\(element.label)' windows=\(app.windows.count) [\(windows)] \
         sheets=\(app.sheets.count) menus=\(app.menus.count) collectionViews=\(app.collectionViews.count)
-        \(tree.prefix(2500))
+        \(tree.prefix(400))
         [/diag]
         """)
     }
@@ -420,7 +420,25 @@ final class PlaygroundNavigationUITests: XCTestCase {
     /// Chat slice journey, all local fixture state: header activity, long-press reaction (outgoing
     /// upper-left), failed delivery and Try again, the Auto model menu, the Cloud browser chip and the
     /// Thinking level. No message, reaction, model choice or attachment leaves the page.
-    func testCatalogChatReactionsDeliveryModelMenuAndAttachments() {
+    func testCatalogChatReactionsDeliveryModelMenuAndAttachments() { runCatalogChatJourney() }
+
+    /// DIAGNOSTICS ONLY: the same journey without the login card group (it hosts its own sheet).
+    func testDiagJourneyWithoutLoginCard() {
+        app.terminate()
+        app.launchArguments = ["--settings-light", "--diag-omit-login"]
+        app.launch()
+        runCatalogChatJourney()
+    }
+
+    /// DIAGNOSTICS ONLY: the same journey without every card group added since c23521b.
+    func testDiagJourneyWithoutNewCards() {
+        app.terminate()
+        app.launchArguments = ["--settings-light", "--diag-omit-cards"]
+        app.launch()
+        runCatalogChatJourney()
+    }
+
+    private func runCatalogChatJourney() {
         openCatalogPage("openChat", title: "Chat")
 
         let identity = element("chat.header.identity")
