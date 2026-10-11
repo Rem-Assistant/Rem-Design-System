@@ -1,0 +1,113 @@
+name: RemClaw protected staging acceptance
+run-name: "RemClaw acceptance · ${{ inputs.remclaw_sha }} · ${{ inputs.mode }} · calls=${{ inputs.provider_calls }}"
+
+# INACTIVE PROPOSAL until separately reviewed/merged and owner-configured.
+# Public repository: never upload private source, apps, screenshots, logs or xcresult.
+on:
+  workflow_dispatch:
+    inputs:
+      remclaw_sha:
+        description: Exact reviewed candidate (controller refuses every other SHA)
+        required: true
+        type: string
+        default: '1277d8132678bfa1a279b6da71f3e491c1cce35d'
+      mode:
+        description: Build only by default; chat-inbox requires separate live approval
+        required: true
+        type: choice
+        options: [build-only, chat-inbox]
+        default: build-only
+      provider_calls:
+        description: '0 for build-only; 3 for separately approved chat-inbox (not a dollar cap)'
+        required: true
+        type: choice
+        options: ['0', '3']
+        default: '0'
+      runtime_attestation:
+        description: Nonsecret operator Railway metadata JSON; required only for chat-inbox
+        required: false
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: remclaw-staging-acceptance
+  cancel-in-progress: false
+env:
+  REMCLAW_SHA: ${{ inputs.remclaw_sha }}
+  ACCEPTANCE_MODE: ${{ inputs.mode }}
+  APPROVED_PROVIDER_CALLS: ${{ inputs.provider_calls }}
+  PYTHONDONTWRITEBYTECODE: '1'
+jobs:
+  admission:
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Test public acceptance controls
+        run: python3 -B -m unittest discover -s control/tools/remclaw-acceptance -p 'test_*.py'
+      # This job has NO environment: refuse absent/unprotected environments before a job
+      # could cause implicit creation. Read only; no API mutations or approval bypass.
+      - name: Require pre-existing owner protection and exact candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_ATTESTATION: ${{ inputs.runtime_attestation }}
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py admit
+  acceptance:
+    needs: admission
+    if: github.repository == 'Rem-Assistant/Rem-Design-System' && github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 45
+    environment: remclaw-staging-acceptance
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Recheck gate after approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_ATTESTATION: ${{ inputs.runtime_attestation }}
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py admit
+      - name: Quiet exact private checkout
+        env:
+          REMCLAW_DEPLOY_KEY: ${{ secrets.REMCLAW_DEPLOY_KEY }}
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py fetch
+      - name: Build unsigned acceptance app
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py build
+      - name: Run separately approved staging acceptance
+        if: inputs.mode == 'chat-inbox'
+        env:
+          RUNTIME_ATTESTATION: ${{ inputs.runtime_attestation }}
+          TEST_RUNNER_REM_ACCEPTANCE_TEST_ACCOUNT_ID: ${{ secrets.REM_ACCEPTANCE_TEST_ACCOUNT_ID }}
+          TEST_RUNNER_REM_ACCEPTANCE_TEST_LOGIN_SECRET: ${{ secrets.REM_ACCEPTANCE_TEST_LOGIN_SECRET }}
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py test
+      - name: Revoke app-held session and verify old bearer refused
+        if: always() && inputs.mode == 'chat-inbox'
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py cleanup-session
+      - name: Remove run-owned simulator and private files
+        id: erase
+        if: always()
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py cleanup-files
+      - name: Fixed public result only
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          RESULT_STATE: ${{ steps.erase.outputs.state }}
+        run: python3 -I -B control/tools/remclaw-acceptance/acceptance.py summary

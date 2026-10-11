@@ -1,0 +1,36 @@
+name: RemClaw acceptance controller checks
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/remclaw-*acceptance*.yml'
+      - 'tools/remclaw-acceptance/**'
+permissions:
+  contents: read
+concurrency:
+  group: remclaw-acceptance-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Pure and mocked controller regressions
+        run: python3 -B -m unittest discover -s tools/remclaw-acceptance -p 'test_*.py' -v
+  xcresult-fixture:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Validate actual Xcode receipt with public passing and skipped XCTest fixtures
+        run: python3 -I -B tools/remclaw-acceptance/xcresult_smoke.py
