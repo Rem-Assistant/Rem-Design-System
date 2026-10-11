@@ -123,7 +123,7 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      over the status bar and header, fading to **0** over **20pt** that ends **12pt** below the header's
      bottom edge (the transcript's own top padding, `Spacing.md`). Not a solid `backgroundPrimary` fill. The
      header's controls and identity pill keep their own materials.
-   - **Compose backdrop:** a scrim only — a vertical gradient of `backgroundPrimary` at **0.95** alpha over
+   - **Compose backdrop:** a scrim only — a vertical gradient of `backgroundPrimary` at **0.85** alpha over
      the status bar and header to **0** over the same 20dp / 12dp fade. Compose has no backdrop blur
      (`Modifier.blur` / `RenderEffect` blur a node's own content, not what is behind it), so no blur is
      drawn on any API level.

@@ -240,20 +240,20 @@ class ChatScreenModelTest {
     @Test fun headerBackdropScrimFadesToClearJustBelowTheHeader() {
         assertEquals(20f, ChatHeaderBackdrop.FADE_HEIGHT, 0f)
         assertEquals("fade overhang == transcript top padding", ChatHeaderBackdrop.TRANSCRIPT_TOP_PADDING, ChatHeaderBackdrop.FADE_OVERHANG, 0f)
-        assertEquals(0.95f, ChatHeaderBackdrop.SCRIM_TOP_ALPHA, 0f)
+        assertEquals(0.85f, ChatHeaderBackdrop.SCRIM_TOP_ALPHA, 0f)
         assertEquals(0f, ChatHeaderBackdrop.SCRIM_BOTTOM_ALPHA, 0f)
         assertEquals(0.5f, ChatHeaderBackdrop.HAIRLINE, 0f)
         val chrome = 128f
         assertEquals(140f, ChatHeaderBackdrop.backdropHeight(chrome), 0f)
         val stops = ChatHeaderBackdrop.scrimStops(chrome)
         assertEquals(3, stops.size)
-        assertEquals(0f to 0.95f, stops[0])
+        assertEquals(0f to 0.85f, stops[0])
         // The fade starts 8dp (the header's bottom gap) above the header's bottom edge.
         assertEquals((chrome - 8f) / 140f, stops[1].first, 1e-6f)
-        assertEquals(0.95f, stops[1].second, 0f)
+        assertEquals(0.85f, stops[1].second, 0f)
         assertEquals(1f to 0f, stops[2])
         // With no measured chrome yet, the whole (overhang-high) scrim is fade.
-        assertEquals(listOf(0f to 0.95f, 0f to 0.95f, 1f to 0f), ChatHeaderBackdrop.scrimStops(-12f))
+        assertEquals(listOf(0f to 0.85f, 0f to 0.85f, 1f to 0f), ChatHeaderBackdrop.scrimStops(-12f))
     }
 
     @Test fun timeIsAlwaysAvailableToAssistiveTechnology() {

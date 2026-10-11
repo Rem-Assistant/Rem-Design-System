@@ -107,7 +107,7 @@ fun ChatScreen(
  * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
  * scrolled more than [ChatJumpToLatest.THRESHOLD] above the newest message. Hosts wire nothing for it.
  * The transcript scrolls **under** the header ([ChatHeaderBackdrop]): the header sits on a gradient scrim,
- * nearly opaque over the status bar and header and clear just below it, and the transcript's top content
+ * mostly opaque (0.85) over the status bar and header and clear just below it, and the transcript's top content
  * padding equals the header's height so the first message is never hidden. Hosts wire nothing.
  */
 @Composable

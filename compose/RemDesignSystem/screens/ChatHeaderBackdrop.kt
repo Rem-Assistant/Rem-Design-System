@@ -43,7 +43,7 @@ internal object ChatHeaderBackdrop {
     /** The transcript content's own top padding inside the scroll (`RemSpacing.md`). */
     const val TRANSCRIPT_TOP_PADDING = 12f
     /** Scrim alpha of `backgroundPrimary` over the status bar and header (start of the fade), and at its end. */
-    const val SCRIM_TOP_ALPHA = 0.95f
+    const val SCRIM_TOP_ALPHA = 0.85f
     const val SCRIM_BOTTOM_ALPHA = 0f
     /** High-contrast fallback: hairline under the solid `backgroundPrimary` chrome. */
     const val HAIRLINE = 0.5f
