@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-    <key>RemPlaygroundSourceSHA</key><string>$(REM_PLAYGROUND_SOURCE_SHA)</string>
-    <!-- Store metadata approved by Samuel (2026-10-11) for private Playground TestFlight distribution;
-         tools/playground-distribution/package.py checks each key in the archived app. -->
+    <!-- Complete, committed Info.plist (GENERATE_INFOPLIST_FILE = NO for the app target): a generated
+         plist always sets CFBundleName from PRODUCT_NAME. Keys mirror what Xcode generated before,
+         plus the store metadata approved by Samuel (2026-10-11) for private Playground TestFlight
+         distribution; tools/playground-distribution/package.py checks them in the archived app. -->
+    <key>CFBundleDevelopmentRegion</key><string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleDisplayName</key><string>Rem Playground</string>
+    <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>Rem Playground</string>
+    <key>CFBundlePackageType</key><string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
     <key>ITSAppUsesNonExemptEncryption</key><false/>
+    <key>LSRequiresIPhoneOS</key><true/>
+    <key>RemPlaygroundSourceSHA</key><string>$(REM_PLAYGROUND_SOURCE_SHA)</string>
+    <key>UILaunchScreen</key><dict/>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
