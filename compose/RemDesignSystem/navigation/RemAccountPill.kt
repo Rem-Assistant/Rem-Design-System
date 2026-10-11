@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -46,12 +46,14 @@ fun RemAccountPill(account: RemSidebarAccount, onClick: () -> Unit, modifier: Mo
             .clip(CircleShape)
             .background(colors.backgroundPrimary.copy(alpha = 0.85f))
             .clickable(onClick = onClick)
+            // The tag lives inside the cleared semantics: a testTag modifier after clearAndSetSemantics
+            // would be cleared with the children and never reach the tree.
             .clearAndSetSemantics {
                 role = Role.Button
                 contentDescription = "${account.displayName}, ${RemSidebarDisplay.AccountHint}"
                 onClick(label = RemSidebarDisplay.AccountHint) { onClick(); true }
+                testTag = "sidebar.account"
             }
-            .testTag("sidebar.account")
             .padding(start = RemSpacing.xs, end = RemSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
