@@ -47,4 +47,30 @@ rejects('pagination host/path')
 responses([page(false)])
 @responses[0]['data']['attributes']['publicLinkEnabled'] = true
 rejects('private, manual')
-puts '6 TestFlight privacy/scope guard scenarios passed; no store requests made.'
+# Each rejection names the deciding condition in a fixed guard code (published by summary.py).
+def guard_after(pages, target = {})
+  responses(pages)
+  @responses[0]['data']['attributes'].merge!(target)
+  $release_guard = nil
+  begin
+    apple_group
+  rescue RuntimeError
+  end
+  $release_guard
+end
+{
+  [[page(true)], {}] => 'group_other_all_builds',
+  [[page(nil)], {}] => 'group_other_access_flag_unknown',
+  [[page(false)], {'publicLinkEnabled' => true}] => 'group_public_link',
+  [[page(false)], {'isInternalGroup' => false}] => 'group_not_internal',
+  [[page(false)], {'hasAccessToAllBuilds' => true}] => 'group_target_all_builds',
+  [[page(false)], {'hasAccessToAllBuilds' => nil}] => 'group_target_access_flag_unknown',
+  [[page(false, 'https://evil.example/v1/apps/6820738808/betaGroups?cursor=next')], {}] => 'group_pagination_host'
+}.each do |(pages, target), code|
+  got = guard_after(pages, target)
+  raise "Expected guard #{code}, got #{got.inspect}" unless got == code
+end
+responses([page(false)])
+$release_guard = nil
+raise 'A passing check must not set a guard' unless apple_group == GROUP && $release_guard.nil?
+puts '6 TestFlight privacy/scope guard scenarios and 8 guard-code cases passed; no store requests made.'
