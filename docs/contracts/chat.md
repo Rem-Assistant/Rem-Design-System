@@ -215,7 +215,10 @@ Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlayg
 `testChatJumpToLatestAppearsWhenScrolledUpAndReturns` (XCUITest) /
 `chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). While a reply is in flight (Stop shown, the
 shell's simulated reply held): `testShellScrollsWhileAReplyIsInFlight` / `shellScrollsWhileAReplyIsInFlight` —
-the transcript still scrolls, jump to latest appears and the message just sent leaves view. Render pair: `ChatJumpToLatest-light`,
+the transcript still scrolls, jump to latest appears and the message just sent leaves view. Their drags start in
+the leading gutter clear of every row (iOS `clearGutterStart`); a vertical drag that starts on a transcript bubble
+must scroll as well and is its own journey, `testChatTranscriptDragThatStartsOnABubbleScrolls` (iOS; no Android
+twin yet). Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
 

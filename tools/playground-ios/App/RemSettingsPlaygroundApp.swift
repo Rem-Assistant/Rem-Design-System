@@ -123,15 +123,19 @@ struct PlaygroundShell: View {
                 developerOpen = true
             }
         }) { presented in
+            // Set explicitly on each sheet, as on the Developer cover and the app root, so `--no-motion` reaches
+            // every presented surface without relying on environment inheritance into presentations.
             switch presented {
             case .newAgent:
                 NewAgentSetupScreen(draft: $shell.draft) { shell.handle($0) }
                     .presentationDetents([.large])
+                    .environment(\.remRepeatingMotionDisabled, PlaygroundLaunch.motionOff)
             case .settings:
                 ShellSettings(fixture: settingsFixture, onDone: { shell.dismissPresentation() }) {
                     developerRequested = true
                     shell.dismissPresentation()
                 }
+                .environment(\.remRepeatingMotionDisabled, PlaygroundLaunch.motionOff)
             }
         }
     }

@@ -82,12 +82,27 @@ accessibility tree.
   composer behind it, so no field can take focus or raise the keyboard while the sidebar is open.
   SwiftUI: `.allowsHitTesting(!isOpen)` + `.accessibilityHidden(isOpen)` on the content; Compose:
   `clearAndSetSemantics {}` on the content wrapper, with the "Close sidebar" overlay outside it.
-- **Closed:** the off-screen sidebar's whole subtree is hidden (SwiftUI `.accessibilityHidden(!isOpen)`;
-  Compose `clearAndSetSemantics {}` on the sidebar wrapper, not `invisibleToUser`, which leaves the
-  children in the tree).
+- **Closed:** the off-screen sidebar's controls are not in the accessibility tree.
+  - SwiftUI: the closed sidebar is **not rendered**. `.accessibilityHidden(!isOpen)` alone left
+    `sidebar`, `sidebar.search`, `sidebar.account`, `sidebar.newAgent` and the agent rows in the
+    XCUITest tree behind the chat card (runs 38177680171, 38176095096), so `RemSidebarContainer`
+    inserts the sidebar synchronously when `isOpen` becomes true (before the slide starts) and removes
+    it when the close slide is logically complete (`withAnimation(_:completionCriteria:_:completion:)`).
+    Under Reduce Motion the push does not slide: the sidebar appears and is removed at once. A reopen
+    before a close completes keeps it rendered (only the latest close's completion, and only while
+    `isOpen` is still false, removes it). During the close slide it is still drawn but already
+    `.accessibilityHidden(true)` and takes no input.
+  - Closing discards the sidebar's own view state: its agent list's scroll position starts at the top
+    on the next open. Search has no surface (non-goal), so there is no search text to keep; agents,
+    selection and the New agent draft are host-owned and unaffected.
+  - Compose: `clearAndSetSemantics {}` on the sidebar wrapper, not `invisibleToUser`, which leaves the
+    children in the tree; the sidebar stays composed.
 - **Proof:** Android `PlaygroundNavigationTest.shellSidebarSelectsAnAgentAndBackCloses` asserts, on the
   merged tree, that `chat.composerField` / `chat.header.identity` / `chat.content` are absent while
   `sidebar.close` exists, and that `sidebar.account` / `sidebar.agent.main` are absent while closed.
+  iOS `PlaygroundNavigationUITests.testShellSidebarSelectsAnAgentAndClosesIt` asserts that
+  `sidebar.account` / `sidebar.newAgent` are absent before the first open, present while open, and gone
+  (waited for) after choosing an agent and after tapping the chat card (`sidebar.close`).
 
 **New agent setup** — a sheet that draws its own header (no navigation bar; host presents it
 directly), `backgroundPrimary`, 16 inset. Metrics live in `NewAgentSetupLayout` on both platforms.

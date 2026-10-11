@@ -842,6 +842,27 @@ final class PlaygroundNavigationUITests: XCTestCase {
         wait(for: [back], timeout: 3)
     }
 
+    /// A vertical drag that starts on a transcript bubble scrolls the transcript and opens nothing: the
+    /// `ChatTranscriptList` twin of the catalog's `assertDragOnBubbleScrolls` (b7a985c, a standalone bubble).
+    /// Here the rows also carry the swipe-left time peek (`ChatTimestampReveal`) and sit in the full Chat
+    /// composition. Run 38179871589's in-flight journey pressed 4pt beside an incoming bubble and four slow
+    /// drags moved nothing; this isolates that start from the in-flight state (no send, no keyboard).
+    func testChatTranscriptDragThatStartsOnABubbleScrolls() {
+        openChatScreen("Long")
+        XCTAssertTrue(element("message.a2.bubble").waitForExistence(timeout: 3))
+        let bubble = element("message.a1.bubble")
+        XCTAssertTrue(bubble.exists && bubble.isHittable, "An incoming bubble is on screen to start the drag on")
+        let jump = app.buttons["chat.jumpToLatest"]
+        XCTAssertFalse(jump.exists, "Opens at the latest message")
+        let before = bubble.frame.minY
+        let start = bubble.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 300)),
+                    withVelocity: .slow, thenHoldForDuration: 0.3)
+        XCTAssertGreaterThan(bubble.frame.minY - before, 20, "A vertical drag that starts on a bubble scrolls the transcript")
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Scrolled up: jump to latest shows")
+        XCTAssertFalse(app.buttons["message.a1.actions.report"].exists, "The drag opens no message actions")
+    }
+
     func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
         assertLatestClearsComposer("message.a2.bubble")
@@ -1084,6 +1105,13 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 10), .completed, message)
     }
 
+    /// sidebar-new-agent.md, push container accessibility: on iOS the closed sidebar is not rendered, so its
+    /// controls are absent from the tree (not merely hidden behind the chat card). Waits out the close slide.
+    private func assertClosedSidebarNotInTree(_ context: String) {
+        waitGone(element("sidebar.account"), "\(context): the closed sidebar's account pill is not in the tree")
+        waitGone(element("sidebar.newAgent"), "\(context): the closed sidebar's New agent is not in the tree")
+    }
+
     private func chooseSidebarRow(_ identifier: String) {
         let row = element(identifier)
         XCTAssertTrue(row.waitForExistence(timeout: 3), "Missing \(identifier)")
@@ -1121,6 +1149,7 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["chat.header.overflow"].exists, "Fixture host controls live under Developer")
         XCTAssertEqual(app.buttons["chat.header.menu"].label, "Open sidebar")
         capture("Shell-chat-light")
+        assertClosedSidebarNotInTree("Before the sidebar first opens")
 
         openSidebar()
         XCTAssertTrue(element("sidebar.section.side").exists)
@@ -1128,12 +1157,16 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertTrue(element("sidebar.account").exists)
         capture("Shell-sidebar-light")
         chooseSidebarRow("sidebar.agent.health")
+        assertClosedSidebarNotInTree("After choosing an agent closes the sidebar")
         assertChatShows("Health")
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Start a conversation with Health")).firstMatch.exists)
 
         openSidebar()
+        XCTAssertTrue(element("sidebar.newAgent").exists, "The reopened sidebar is rendered again")
+        XCTAssertTrue(element("sidebar.account").exists, "The reopened sidebar is rendered again")
         element("sidebar.close").tap()
         waitGone(element("sidebar.close"), "The chat card closes the sidebar")
+        assertClosedSidebarNotInTree("After the chat card closes the sidebar")
         assertChatShows("Health")
         openSidebar()
         chooseSidebarRow("sidebar.agent.main")
@@ -1328,15 +1361,41 @@ final class PlaygroundNavigationUITests: XCTestCase {
     }
 
     /// Up to four slow drags toward older messages in the transcript's leading gutter (a mid-screen drag can
-    /// start on a bubble), stopping once `jump` (jump to latest) shows.
+    /// start on a bubble), stopping once `jump` (jump to latest) shows. Each drag starts at `clearGutterStart`,
+    /// so the press is clear of the rows as well as mid-screen; a drag that starts on a bubble is its own
+    /// journey (`testChatTranscriptDragThatStartsOnABubbleScrolls`).
     private func dragTranscriptUp(until jump: XCUIElement) {
         let content = element("chat.content")
         XCTAssertTrue(content.exists)
         for _ in 0..<4 where !jump.exists {
-            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
-            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
+            let dy = clearGutterStart(in: content)
+            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: dy))
+            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: dy + 0.6))
             from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
+    }
+
+    /// The first normalized height from 0.25 to 0.35 at which the leading-gutter press point (x 0.03, about 12pt
+    /// on a 393pt screen) is at least `margin` from every transcript text: bubbles, meta lines and timestamps.
+    /// Incoming bubbles start at x 16, so a fixed 0.25 can land 4pt beside one: run 38179871589 pressed at
+    /// (11.8, 213) beside `message.h16.bubble` (16, 206.7, 215 x 66), and four drags moved nothing. Falls back
+    /// to 0.25 when no height in the range is clear or the snapshot fails.
+    private func clearGutterStart(in content: XCUIElement) -> CGFloat {
+        guard let snapshot = try? content.snapshot() else { return 0.25 }
+        var texts: [CGRect] = []
+        func collect(_ node: XCUIElementSnapshot) {
+            if node.elementType == .staticText { texts.append(node.frame) }
+            for child in node.children { collect(child) }
+        }
+        collect(snapshot)
+        let frame = snapshot.frame
+        let margin: CGFloat = 12
+        for step in 0...10 {
+            let dy = 0.25 + CGFloat(step) * 0.01
+            let point = CGPoint(x: frame.minX + frame.width * 0.03, y: frame.minY + frame.height * dy)
+            if !texts.contains(where: { $0.insetBy(dx: -margin, dy: -margin).contains(point) }) { return dy }
+        }
+        return 0.25
     }
 
     /// The shell's simulated reply has landed (accepted after 0.6s, complete 1.5s later) and the turn has ended.
