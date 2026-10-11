@@ -122,6 +122,11 @@ class ScreenshotsIOSDiagnosticsContractTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 3", steps[self.index_of(steps, "name: Package iOS journey diagnostics")])
         self.assertIn("timeout-minutes: 5", steps[self.index_of(steps, "name: Extract actual playground screenshots")])
         self.assertNotIn("continue-on-error", block)
+        package = steps[self.index_of(steps, "name: Package iOS journey diagnostics")]
+        self.assertIn("settings-ios-journeys.tar.gz.partial", package)
+        self.assertLess(package.index("tar -czf"), package.index("mv "))
+        extract = steps[self.index_of(steps, "name: Extract actual playground screenshots")]
+        self.assertIn("HOMEBREW_NO_AUTO_UPDATE: '1'", extract)
         for name in ("settings-ios-build-log", "settings-ios-journeys\n", "settings-swiftui-screenshots"):
             self.assertIn("if-no-files-found: error", steps[self.index_of(steps, f"name: {name}")])
 

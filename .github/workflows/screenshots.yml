@@ -151,7 +151,10 @@ jobs:
         timeout-minutes: 3
         run: |
           if [ -d "$RUNNER_TEMP/SettingsPlayground.xcresult" ]; then
-            tar -czf "$RUNNER_TEMP/settings-ios-journeys.tar.gz" -C "$RUNNER_TEMP" SettingsPlayground.xcresult
+            # Written under a temporary name: a packaging step stopped at its limit leaves no archive (and the
+            # upload reports it missing) rather than a truncated one.
+            tar -czf "$RUNNER_TEMP/settings-ios-journeys.tar.gz.partial" -C "$RUNNER_TEMP" SettingsPlayground.xcresult
+            mv "$RUNNER_TEMP/settings-ios-journeys.tar.gz.partial" "$RUNNER_TEMP/settings-ios-journeys.tar.gz"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -162,6 +165,10 @@ jobs:
       - name: Extract actual playground screenshots
         if: always()
         timeout-minutes: 5
+        env:
+          # Job 114570250708 spent 14+ minutes here, largely in Homebrew's auto-update; skip it and cleanup.
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
         run: |
           set -euo pipefail
           brew install xcparse || brew install chargepoint/xcparse/xcparse
