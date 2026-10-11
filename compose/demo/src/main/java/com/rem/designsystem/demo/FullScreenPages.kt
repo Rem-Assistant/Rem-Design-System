@@ -16,6 +16,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,8 +56,16 @@ import com.rem.designsystem.tokens.RemTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaygroundChatScreen(initial: ChatPlaygroundFixture, onExit: () -> Unit, onOpenSidebar: () -> Unit = {}) {
-    var fixture by remember { mutableStateOf(initial) }
+fun PlaygroundChatScreen(
+    initial: ChatPlaygroundFixture,
+    onExit: () -> Unit,
+    onOpenSidebar: () -> Unit = {},
+    // The app shell hoists the conversation so it outlives this screen (the shell is not composed under the
+    // Developer hub); other hosts keep it here.
+    fixtureState: MutableState<ChatPlaygroundFixture>? = null,
+) {
+    val state = fixtureState ?: remember { mutableStateOf(initial) }
+    var fixture by state
     var model by remember { mutableStateOf<ChatModelSelection>(ChatModelSelection.Automatic) }
     var thinking by remember { mutableStateOf(ThinkingLevel.Medium) }
     var showHostControls by remember { mutableStateOf(false) }

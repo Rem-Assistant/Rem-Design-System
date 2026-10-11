@@ -1360,5 +1360,62 @@ class PlaygroundNavigationTest {
             else shell("settings put secure show_ime_with_hard_keyboard $previous")
         }
     }
+
+    /** Message bubbles whose bounds intersect the transcript viewport, by test tag. */
+    private fun visibleBubbles(): Set<String> {
+        val viewport = compose.onNodeWithTag("chat.content").fetchSemanticsNode().boundsInRoot
+        return compose.onAllNodes(hasTestTagStartingWith("message."), useUnmergedTree = true).fetchSemanticsNodes()
+            .filter { node ->
+                val tag = node.config.getOrNull(SemanticsProperties.TestTag) ?: ""
+                tag.endsWith(".bubble") && node.boundsInRoot.overlaps(viewport) && node.boundsInRoot.bottom <= viewport.bottom &&
+                    node.boundsInRoot.top >= viewport.top
+            }
+            .mapNotNull { it.config.getOrNull(SemanticsProperties.TestTag) }
+            .toSet()
+    }
+
+    private fun openDeveloperFromShell() {
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("settings.developer")
+        compose.onNodeWithTag("settings.developer").performClick()
+        waitForTag("openComponents")
+    }
+
+    /**
+     * Developer round trip keeps the work: a sent message, a draft and the scroll position survive Settings →
+     * Developer → Close when no fixture changes; choosing a different Chat fixture in Developer starts afresh.
+     */
+    @Test fun shellDeveloperRoundTripKeepsConversationDraftAndScroll() {
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        sendFromChat("Round trip message")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        compose.waitForIdle()
+        val before = visibleBubbles()
+        assertTrue("Scrolled away from the latest message: $before", "message.sent.1.bubble" !in before && before.isNotEmpty())
+
+        openDeveloperFromShell()
+        returnToShell()
+        compose.waitForIdle()
+        compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("chat.composerField").assertTextContains("Keep this draft")
+        compose.onNodeWithTag("chat.jumpToLatest").assertExists()
+        val after = visibleBubbles()
+        assertTrue("The same messages are visible after the round trip: before $before, after $after", after == before)
+
+        // An explicit fixture change in Developer starts that conversation afresh.
+        openDeveloperFromShell()
+        compose.onNodeWithTag("chatFixture.Populated").performScrollTo().performClick()
+        returnToShell()
+        compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerField")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
+    }
 }
 

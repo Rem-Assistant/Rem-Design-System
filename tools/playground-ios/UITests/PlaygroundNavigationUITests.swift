@@ -1294,5 +1294,60 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(app.keyboards.count, 0)
         XCTAssertEqual(field.value as? String, "Keep this draft", "The draft is kept")
     }
+
+    /// Message bubbles wholly inside the transcript viewport, by identifier.
+    private func visibleBubbles() -> Set<String> {
+        let viewport = element("chat.content").frame
+        let bubbles = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'message.' AND identifier ENDSWITH '.bubble'"))
+            .allElementsBoundByIndex
+        return Set(bubbles.filter { $0.frame.minY >= viewport.minY && $0.frame.maxY <= viewport.maxY }.map(\.identifier))
+    }
+
+    private func openDeveloperFromShell() {
+        openSidebar()
+        element("sidebar.account").tap()
+        let developer = app.buttons["settings.developer"]
+        XCTAssertTrue(developer.waitForExistence(timeout: 5))
+        developer.tap()
+        XCTAssertTrue(app.buttons["openComponents"].waitForExistence(timeout: 10), "Developer opens the hub")
+    }
+
+    /// Developer round trip keeps the work: a sent message, a draft and the scroll position survive
+    /// Settings → Developer → Close when no fixture changes; choosing a different Chat fixture starts afresh.
+    func testShellDeveloperRoundTripKeepsConversationDraftAndScroll() {
+        chooseRootFixture("chatFixturePicker", "Long")
+        returnToShell()
+        sendFromChat("Round trip message")
+        XCTAssertTrue(element("message.sent.1.bubble").waitForExistence(timeout: 5))
+        let field = app.textViews["chat.composerField"]
+        focus(field)
+        field.typeText("Keep this draft")
+        let jump = app.buttons["chat.jumpToLatest"]
+        let content = element("chat.content")
+        for _ in 0..<4 where !jump.exists {
+            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
+            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Scrolled up")
+        let before = visibleBubbles()
+        XCTAssertFalse(before.isEmpty)
+        XCTAssertFalse(before.contains("message.sent.1.bubble"), "Scrolled away from the latest message")
+
+        openDeveloperFromShell()
+        returnToShell()
+        XCTAssertTrue(element("message.sent.1.bubble").exists, "The sent message is kept")
+        XCTAssertEqual(field.value as? String, "Keep this draft", "The draft is kept")
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Still scrolled up")
+        XCTAssertEqual(visibleBubbles(), before, "The same messages are visible after the round trip")
+
+        // An explicit fixture change in Developer starts that conversation afresh.
+        openDeveloperFromShell()
+        chooseRootFixture("chatFixturePicker", "Populated")
+        returnToShell()
+        XCTAssertFalse(element("message.sent.1.bubble").exists, "A new fixture starts afresh")
+        XCTAssertNotEqual(field.value as? String, "Keep this draft")
+    }
 }
 

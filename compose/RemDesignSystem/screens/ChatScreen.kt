@@ -24,6 +24,8 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -265,10 +267,21 @@ fun ChatScreen(
         // Keep the newest content in view (Swift: defaultScrollAnchor(.bottom)) while the person is at or
         // near the latest message. Scrolled further up, their position is kept and jump to latest stays.
         if (emptyState == null && !jumpEvidence) {
-            val followedMax = remember { intArrayOf(0) }
+            // `anchored` is saveable with the scroll state: a transcript restored by the host (configuration
+            // change, or a SaveableStateProvider while the screen was away) keeps the person's position instead
+            // of being re-pinned to the latest message on its first measure.
+            var anchored by rememberSaveable { mutableStateOf(false) }
+            val followedMax = remember { intArrayOf(-1) }
             LaunchedEffect(scroll.maxValue) {
-                val nearLatest = !ChatJumpToLatest.isVisible((followedMax[0] - scroll.value) / density.density)
+                if (scroll.maxValue == Int.MAX_VALUE) return@LaunchedEffect // not measured yet
+                val previousMax = when {
+                    followedMax[0] >= 0 -> followedMax[0]
+                    anchored -> scroll.maxValue
+                    else -> 0
+                }
+                val nearLatest = !anchored || !ChatJumpToLatest.isVisible((previousMax - scroll.value) / density.density)
                 if (nearLatest) scroll.scrollTo(scroll.maxValue)
+                anchored = true
                 followedMax[0] = scroll.maxValue
             }
         }

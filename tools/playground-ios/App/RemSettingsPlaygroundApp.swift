@@ -64,9 +64,9 @@ private enum PlaygroundRoute: Hashable {
 /// New agent, and the account pill, which opens Settings. Every state transition goes through the DS
 /// `PlaygroundShellFixture`; this view draws the native chrome only. Fixtures only: no backend, auth,
 /// voice, telephony or provider. The Developer hub (catalog, fixture pickers, every screen) is reached
-/// from Settings' **Developer** button and replaces the shell until closed; the selected agent is kept.
-/// Under Settings and New agent the shell stays alive, so returning finds the same agent, conversation
-/// and scroll position. Twin of the Compose `Playground()`.
+/// from Settings' **Developer** button as a full-screen cover. Under Settings, New agent and Developer
+/// the shell stays alive, so returning finds the same agent, conversation, draft and scroll position.
+/// Twin of the Compose `Playground()`.
 struct PlaygroundShell: View {
     @State private var shell = PlaygroundShellFixture()
     /// `--developer` opens straight into the Developer hub (the established journeys start there).
@@ -76,35 +76,24 @@ struct PlaygroundShell: View {
     // Developer-owned fixtures the shell reads; changed only in the Developer hub.
     @State private var settingsFixture = LoadFixture.success
     @State private var chatConversation = ChatPlaygroundFixture.Conversation.populated
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     var body: some View {
-        ZStack {
-            // Not composed under the Developer hub: the hub hosts its own Chat with the same accessibility
-            // identifiers, and accessibilityHidden does not take a covered UIKit text view out of UI
-            // automation (run 38169016275 found two composer fields). Closing Developer keeps the selected
-            // agent (`shell` state) and opens its conversation afresh.
-            if !developerOpen {
-            RemSidebarContainer(isOpen: $shell.isSidebarOpen) {
-                RemSidebar(shell.sidebar) { shell.handle($0) }
-            } content: {
-                NavigationStack {
-                    PlaygroundChatScreen(fixture: rootConversation, onOpenSidebar: { shell.openSidebar() })
-                }
-                // A different agent (or a fixture chosen in Developer) is a different conversation.
-                .id("\(shell.conversationKey)|\(chatConversation.rawValue)")
+        RemSidebarContainer(isOpen: $shell.isSidebarOpen) {
+            RemSidebar(shell.sidebar) { shell.handle($0) }
+        } content: {
+            NavigationStack {
+                PlaygroundChatScreen(fixture: rootConversation, onOpenSidebar: { shell.openSidebar() })
             }
-            }
-
-            if developerOpen {
-                PlaygroundHome(fixture: $settingsFixture, chatConversation: $chatConversation) {
-                    developerOpen = false
-                }
-                .transition(reduceMotion ? .opacity : .move(edge: .bottom))
-                .zIndex(1)
+            // A different agent (or a fixture chosen in Developer) is a different conversation.
+            .id("\(shell.conversationKey)|\(chatConversation.rawValue)")
+        }
+        // The Developer hub is a full-screen cover: UIKit takes the shell's views out of the window (and so out
+        // of UI automation; the hub hosts its own Chat with the same identifiers) while SwiftUI keeps the
+        // shell's state, so closing Developer finds the same agent, conversation, draft and scroll position.
+        .fullScreenCover(isPresented: $developerOpen) {
+            PlaygroundHome(fixture: $settingsFixture, chatConversation: $chatConversation) {
+                developerOpen = false
             }
         }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: developerOpen)
         // Leaving the conversation (sidebar, Settings, Developer) ends editing, so the keyboard never covers
         // the next surface; the draft is fixture state and stays. New agent focuses its own name field.
         .onChange(of: shell.isSidebarOpen) { _, open in if open { endEditing() } }

@@ -27,7 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -66,13 +68,18 @@ import com.rem.designsystem.tokens.RemTypography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Playground() {
-    // The shell stays composed under Settings and New agent, so returning finds the same agent,
-    // conversation (sent messages included) and scroll position; Developer keeps the selected agent.
+    // Returning from Settings, New agent or Developer finds the same agent, conversation (sent messages and
+    // draft included) and scroll position.
     var shell by remember { mutableStateOf(PlaygroundShellFixture()) }
     var developerOpen by rememberSaveable { mutableStateOf(false) }
     // Developer-owned fixtures the shell reads; changed only in the Developer hub.
     var settingsFixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
     var chatConversation by rememberSaveable { mutableStateOf(ChatPlaygroundFixture.Conversation.Populated) }
+    // Hoisted per conversation so the shell can leave the composition under the Developer hub without losing
+    // work: the fixture (messages, draft) lives here, and the saveable state holder keeps the transcript's
+    // scroll position. A fixture chosen in Developer is a new key, so that conversation starts afresh.
+    val conversations = remember { mutableMapOf<String, MutableState<ChatPlaygroundFixture>>() }
+    val saveable = rememberSaveableStateHolder()
     val settingsOpen = shell.presented == PlaygroundShellPresentation.Settings && !developerOpen
     val covered = developerOpen || settingsOpen
     // Leaving the conversation (sidebar, Settings, Developer) ends editing: the composer loses focus and the
@@ -89,10 +96,10 @@ fun Playground() {
     }
 
     Box(Modifier.fillMaxSize()) {
-        // Under Settings the shell stays composed (same agent, conversation and scroll position on return) and
-        // leaves the merged semantics tree. The Developer hub hosts its own Chat with the same test tags, and
-        // clearAndSetSemantics does not remove nodes from the unmerged tree, so the shell is not composed under
-        // Developer: returning keeps the selected agent (state above) and opens its conversation afresh.
+        // Under Settings the shell stays composed and leaves the merged semantics tree. The Developer hub hosts
+        // its own Chat with the same test tags, and clearAndSetSemantics does not remove nodes from the unmerged
+        // tree, so the shell is not composed under Developer; its selection, conversation, draft and scroll
+        // position are hoisted above, so closing Developer finds them unchanged.
         if (!developerOpen) Box(Modifier.fillMaxSize().then(if (covered) Modifier.clearAndSetSemantics {} else Modifier)) {
             RemSidebarContainer(
                 isOpen = shell.isSidebarOpen,
@@ -106,11 +113,15 @@ fun Playground() {
                 },
             ) {
                 // A new agent (or a different fixture chosen in Developer) is a different conversation.
-                key(shell.conversationKey, chatConversation) {
+                val conversationKey = "${shell.conversationKey}|${chatConversation.name}"
+                key(conversationKey) {
                     val agent = shell.selectedAgent
                     val initial = if (shell.selection == RemSidebarSelection.Main) ChatPlaygroundFixture.root(chatConversation)
                     else ChatPlaygroundFixture.root(ChatPlaygroundFixture.Conversation.Empty, agentName = agent.name)
-                    PlaygroundChatScreen(initial, onExit = {}, onOpenSidebar = { shell = shell.openSidebar() })
+                    val state = conversations.getOrPut(conversationKey) { mutableStateOf(initial) }
+                    saveable.SaveableStateProvider(conversationKey) {
+                        PlaygroundChatScreen(initial, onExit = {}, onOpenSidebar = { shell = shell.openSidebar() }, fixtureState = state)
+                    }
                 }
             }
         }
