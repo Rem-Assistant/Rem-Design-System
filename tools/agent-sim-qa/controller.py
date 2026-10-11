@@ -196,12 +196,26 @@ class Run:
         return seq, dispatched, (time.time() if result is not None else None), result, stalled
 
     def screenshot(self, path):
+        # The file decides, not simctl's status: it can write a complete frame and then exit
+        # non-zero or hang past the timeout. A frame kept that way is noted in the receipt.
+        outcome = 'ok'
         try:
             subprocess.run(['xcrun', 'simctl', 'io', self.a.udid, 'screenshot', str(path)],
                            check=True, capture_output=True, timeout=30)
-            return path.exists() and path.read_bytes()[:8] == b'\x89PNG\r\n\x1a\n'
+        except subprocess.TimeoutExpired:
+            outcome = 'timeout'
+        except subprocess.CalledProcessError as error:
+            outcome = f'exit {error.returncode}'
         except (subprocess.SubprocessError, OSError):
-            return False
+            outcome = 'error'
+        try:
+            ok = path.exists() and simqa.complete_png(path.read_bytes())
+        except OSError:
+            ok = False
+        if outcome != 'ok':
+            self.receipt.setdefault('screenshot_notes', []).append(
+                {'png': path.name, 'simctl': outcome, 'kept': ok})
+        return ok
 
     # -- model ---------------------------------------------------------------------------------
     def ask(self, frame, png, ui, finish_only, budget_left):

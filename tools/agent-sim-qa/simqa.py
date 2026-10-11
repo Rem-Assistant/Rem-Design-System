@@ -283,6 +283,19 @@ def redact(text, limit=600):
     return text[:limit]
 
 
+PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
+PNG_IEND = b'\x00\x00\x00\x00IEND\xaeB`\x82'
+
+
+def complete_png(data):
+    """A whole PNG file: the signature, at least one chunk, and the final IEND chunk.
+
+    `simctl io screenshot` can write a complete frame and then exit non-zero or not exit at all
+    (runs 38118674016, 38118681715), so the file, not the process status, decides."""
+    return len(data) > len(PNG_SIGNATURE) + len(PNG_IEND) and data.startswith(PNG_SIGNATURE) \
+        and data.endswith(PNG_IEND)
+
+
 def classify_failure(exit_code, timed_out, summary):
     """A category only; never the provider's text."""
     if timed_out:
