@@ -41,7 +41,8 @@ def read_result(use_id, image=True, error=False):
 
 
 def result(text, is_error=False):
-    return {'type': 'result', 'subtype': 'success', 'is_error': is_error, 'result': text, 'num_turns': 2}
+    return {'type': 'result', 'subtype': 'success', 'is_error': is_error, 'result': text, 'num_turns': 2,
+            'total_cost_usd': 0.0125, 'usage': {'input_tokens': 10, 'cache_read_input_tokens': 5000, 'output_tokens': 90}}
 
 
 class TranscriptTests(unittest.TestCase):
@@ -52,6 +53,7 @@ class TranscriptTests(unittest.TestCase):
         self.assertTrue(s['expected_read_ok'])
         self.assertEqual(s['successful_png_reads'], 1)
         self.assertEqual(s['model'], 'claude-opus-4-8')
+        self.assertEqual((s['cost_usd'], s['input_tokens'], s['output_tokens']), (0.0125, 5010, 90))
         self.assertEqual(s['tool_uses'], [{'name': 'Read', 'target': 'frame-01.png', 'ok': True, 'answered': True}])
 
     def test_issued_but_failed_read_does_not_count(self):
@@ -520,7 +522,8 @@ elif frame == 1:
 else:
     d = {'action': 'finish', 'outcome': 'sheet_opened'}
 d.update(frame=frame, observation='fake observation sk-ant-oat01-SECRETSECRET')
-emit({'type': 'result', 'is_error': False, 'num_turns': 2, 'result': json.dumps(d)})
+emit({'type': 'result', 'is_error': False, 'num_turns': 2, 'result': json.dumps(d), 'total_cost_usd': 0.01,
+      'usage': {'input_tokens': 100, 'output_tokens': 20}})
 '''
 
 
@@ -558,6 +561,7 @@ class FakeRunnerTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         self.assertEqual(receipt['status'], 'sheet_opened')
         self.assertEqual(receipt['successful_png_reads'], 3)
+        self.assertEqual((receipt['model_cost_usd'], receipt['model_tokens']['input_tokens']), (0.03, 300))
         self.assertTrue(receipt['ui_listing_confirms_sheet'])
         self.assertEqual(receipt['violations'], [])
         self.assertEqual([a['id'] for a in receipt['chosen_add_taps']], ['catalog.composerAdd'])

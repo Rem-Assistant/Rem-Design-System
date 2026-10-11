@@ -217,7 +217,8 @@ def parse_transcript(lines, expected_png=None):
     uses = {}
     order = []
     results = {}
-    final = {'result': None, 'is_error': None, 'num_turns': None, 'model': None, 'subtype': None}
+    final = {'result': None, 'is_error': None, 'num_turns': None, 'model': None, 'subtype': None,
+             'cost_usd': None, 'input_tokens': None, 'output_tokens': None}
     for raw in lines:
         raw = raw.strip()
         if not raw:
@@ -256,6 +257,14 @@ def parse_transcript(lines, expected_png=None):
             final['is_error'] = event.get('is_error') is True
             final['num_turns'] = event.get('num_turns')
             final['subtype'] = event.get('subtype') if isinstance(event.get('subtype'), str) else None
+            cost = event.get('total_cost_usd')
+            final['cost_usd'] = cost if isinstance(cost, (int, float)) and not isinstance(cost, bool) else None
+            usage = event.get('usage') if isinstance(event.get('usage'), dict) else {}
+            counts = [usage.get(k) for k in ('input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens')]
+            if any(isinstance(n, int) for n in counts):
+                final['input_tokens'] = sum(n for n in counts if isinstance(n, int))
+            if isinstance(usage.get('output_tokens'), int):
+                final['output_tokens'] = usage['output_tokens']
     tool_uses = []
     for use_id in order:
         use = uses[use_id]
@@ -276,6 +285,9 @@ def parse_transcript(lines, expected_png=None):
         'num_turns': final['num_turns'] if isinstance(final['num_turns'], int) else None,
         'model': final['model'],
         'subtype': final['subtype'],
+        'cost_usd': final['cost_usd'],
+        'input_tokens': final['input_tokens'],
+        'output_tokens': final['output_tokens'],
     }
 
 

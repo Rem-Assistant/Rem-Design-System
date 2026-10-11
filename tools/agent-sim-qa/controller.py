@@ -135,6 +135,10 @@ class Run:
         self.receipt['ledger'] = self.ledger
         self.receipt['successful_png_reads'] = sum(c.get('successful_png_reads', 0) for c in self.calls)
         self.receipt['model_calls'] = len(self.calls)
+        # As reported by the CLI's result event (API-equivalent; the subscription token is not billed per call).
+        self.receipt['model_cost_usd'] = round(sum(c.get('cost_usd') or 0 for c in self.calls), 4)
+        self.receipt['model_tokens'] = {k: sum(c.get(k) or 0 for c in self.calls) for k in ('input_tokens', 'output_tokens')}
+        self.receipt['model_seconds'] = round(sum(c.get('duration_s') or 0 for c in self.calls), 1)
         (self.out / 'receipt.json').write_text(json.dumps(self.receipt, indent=2) + '\n')
         (self.out / 'transcript-summary.json').write_text(json.dumps(self.calls, indent=2) + '\n')
 
@@ -402,7 +406,8 @@ class Run:
             'duration_s': round(time.time() - started, 1), 'exit': process.returncode, 'timed_out': timed_out,
             'cli_model': summary['model'], 'num_turns': summary['num_turns'], 'is_error': summary['is_error'],
             'tool_uses': summary['tool_uses'], 'successful_png_reads': summary['successful_png_reads'],
-            'frame_read_ok': summary['expected_read_ok'],
+            'frame_read_ok': summary['expected_read_ok'], 'cost_usd': summary['cost_usd'],
+            'input_tokens': summary['input_tokens'], 'output_tokens': summary['output_tokens'],
         })
         category = simqa.classify_failure(process.returncode, timed_out, summary)
         if category:
@@ -574,7 +579,10 @@ def write_summary(receipt, calls, path):
         f"- Pristine before build: {v.get('pristine_before_build', {}).get('ok')}; "
         f"only bridge injected: {v.get('after_injection', {}).get('ok')}",
         f"- Model: {receipt['model']} via CLI {receipt.get('cli_version')}; calls: {len(calls)}; "
-        f"successful PNG reads: {receipt.get('successful_png_reads')}",
+        f"successful PNG reads: {receipt.get('successful_png_reads')}; model seconds: "
+        f"{receipt.get('model_seconds')}; CLI-reported cost (USD): {receipt.get('model_cost_usd')}",
+        f"- Arm: {receipt.get('arm')}; wall seconds: "
+        f"{round(receipt['finished_at'] - receipt['started_at']) if receipt.get('finished_at') else None}",
         f"- Stalls: {len(receipt.get('stalls', []))}; violations: {receipt.get('violations') or 'none'}",
         '', '| Frame | Action | Purpose | Target | Bridge | Seconds |', '|---|---|---|---|---|---|',
     ]
