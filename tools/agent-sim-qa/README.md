@@ -106,3 +106,13 @@ frame before each input is the previous input's after-frame), any `stall-NNN.png
 About 15 to 30 `macos-14` minutes per run (build is most of it; macOS minutes bill at 10x Linux on
 private repositories), plus up to 14 short Read-only model calls charged to the existing subscription
 token's usage limits. No new paid service.
+
+## PR compile-only check
+
+`agent-sim-qa-compile.yml` runs on updates to the `claude/agent-sim-qa` PR branch. It compiles
+the exact PR-head bridge against the fixed approved Build 7 baseline (`c23521b`) in a disposable
+checkout, using Xcode 15.4 on macOS 14 and unsigned iOS Simulator `build-for-testing`. The existing
+source and built-SHA checks and Python tests run too. No simulator boots, model calls, signing,
+store uploads or secrets are involved. The result proves compilation only; mailbox/environment
+propagation and screenshot/action proof still require the separately approved diagnostic. This
+check does not register, dispatch or change the diagnostic workflow or its source allowlist.
