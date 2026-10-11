@@ -48,7 +48,7 @@ UPLOAD_GUARD_PATTERNS = [
   ['upload_build_number_used',
    /(bundle ?version|build number|build version|CFBundleVersion).{0,120}(already (been )?used|already exists|already been uploaded|must be (higher|greater)|has to be (higher|greater))/i],
   ['upload_auth_failed',
-   /authentication credentials are missing or invalid|\b401\b|unauthori[sz]ed|authentication (failed|failure|error)|not authenticated|invalid (credentials|api key)/i],
+   /authentication credentials are missing or invalid|\b(http|status(\s*code)?|statuscode|response(\s*code)?|responded with|error code)\b[\s:=#]*401\b|\b401\s+unauthori[sz]ed|unauthori[sz]ed|authentication (failed|failure|error)|not authenticated|invalid (credentials|api key)/i],
   ['upload_processing_timeout',
    /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i]
 ].freeze
