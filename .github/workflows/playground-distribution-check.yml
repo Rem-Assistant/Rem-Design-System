@@ -47,5 +47,6 @@ jobs:
           python3 -m unittest discover -p 'test_*.py' -v
           bundle exec ruby test_store.rb
           bundle exec ruby test_dependencies.rb
+          bundle exec ruby test_upload_pathway.rb
           bundle exec ruby test_workflows.rb
           bundle exec fastlane lanes

@@ -4,6 +4,7 @@ require 'digest'
 require 'net/http'
 require 'uri'
 require 'stringio'
+require 'open3'
 
 skip_docs
 
@@ -24,13 +25,14 @@ def require_release(ok, message, code = 'unclassified')
   UI.user_error!(message)
 end
 
-def apple_request(method, path, payload = nil)
+def apple_request(method, path, payload = nil, timeouts: {})
   uri = URI('https://api.appstoreconnect.apple.com' + path)
   request = { get: Net::HTTP::Get, post: Net::HTTP::Post }.fetch(method).new(uri)
   request['Authorization'] = "Bearer #{Spaceship::ConnectAPI.token.text}"
   request['Content-Type'] = 'application/json'
   request.body = JSON.generate(payload) if payload
-  response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) { |http| http.request(request) }
+  response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: timeouts.fetch(:open, 60),
+    read_timeout: timeouts.fetch(:read, 120)) { |http| http.request(request) }
   $release_http = response.code.to_i unless response.code.to_i.between?(200, 299)
   require_release(response.code.to_i.between?(200, 299), "Apple API failed (HTTP #{response.code}); no response body printed",
     'apple_api_http')
@@ -39,8 +41,13 @@ end
 
 # TestFlight upload failures: fastlane/pilot raises UI.user_error! with provider text. Map that text to a
 # fixed code through an allowlist of patterns, in process; the message itself is never written, logged
-# or printed. Apple's ITMS-<5 digits> codes win (they already cover a used or lower build number).
+# or printed. Apple's ITMS-<5 digits> codes win (they already cover a used or lower build number), except
+# the SDK/Xcode requirement (ITMS-90725 and its wording), which has its own code first.
+UPLOAD_SDK_TOO_OLD = /ITMS-90725|SDK version issue|built with (the )?i(Pad)?OS (1\d|\d)(\.\d+)* SDK|(must|should) be built with (Xcode \d+|the i(Pad)?OS \d+(\.\d+)* SDK)|built with an (older|unsupported) (version of )?(Xcode|SDK)|requires? (Xcode \d+|the i(Pad)?OS \d+(\.\d+)* SDK) or later/i
+UPLOAD_FLAG_REJECTED = /(unrecogni[sz]ed|unknown|invalid|unsupported|illegal|unexpected)\W{1,5}(option|argument|flag|parameter)s?\b.{0,80}--use-old-altool|--use-old-altool.{0,80}\b(unrecogni[sz]ed|unknown|not (recogni[sz]ed|supported|valid)|invalid|unsupported|illegal|no longer supported|removed)/i
 UPLOAD_GUARD_PATTERNS = [
+  # The Xcode 26 workaround flag itself refused by altool (only when the flag is named).
+  ['upload_altool_flag_rejected', UPLOAD_FLAG_REJECTED],
   ['upload_transporter_missing',
    /(transporter|altool).{0,80}(not found|could not be found|cannot be found|not executable|no such file|missing)|(could ?n[o']t|unable to|cannot) (find|locate|execute|run) .{0,40}(transporter|altool)/i],
   ['upload_app_not_found',
@@ -50,33 +57,272 @@ UPLOAD_GUARD_PATTERNS = [
   ['upload_auth_failed',
    /authentication credentials are missing or invalid|\b(http|status(\s*code)?|statuscode|response(\s*code)?|responded with|error code)\b[\s:=#]*401\b|\b401\s+unauthori[sz]ed|unauthori[sz]ed|authentication (failed|failure|error)|not authenticated|invalid (credentials|api key)/i],
   ['upload_processing_timeout',
-   /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i]
+   /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i],
+  # Xcode 26 altool: Cocoa "file couldn't be opened because it isn't in the correct format" (259).
+  ['upload_altool_format_259',
+   /isn['\u2019]?t in the correct format|is not in the correct format|\bCode=259\b|\b(error|failed|failure)\b.{0,80}\(259\)/i],
+  # fastlane's own altool reader failed on non-ASCII output under a non-UTF-8 locale (Ruby ArgumentError);
+  # fastlane then reports exit -1 and altool's text never reaches the exception.
+  ['upload_output_encoding_error', /invalid byte sequence in [A-Za-z0-9_-]{1,40}/]
+].freeze
+# Precedence, first match wins:
+#   0. upload_sdk_too_old              ITMS-90725 or "built with an older SDK/Xcode" wording in the message
+#                                       (altool ERROR: lines); when only altool's plain output has it
+#                                       (UploadOutputSignals, advisory WARNING/NOTICE/INFO lines skipped),
+#                                       it ranks after 2, before the Apple code
+#   1. upload_itms_<digits>            Apple ITMS-NNNNN validation codes (up to three)
+#   2. UPLOAD_GUARD_PATTERNS            semantic patterns above, from upload_altool_flag_rejected (also when
+#                                       only altool's plain output names it) to upload_altool_format_259 and
+#                                       upload_output_encoding_error
+#   3. upload_apple_code_m<digits>      first Apple negative numeric code, e.g. "(-19209)"
+#   4. upload_altool_exit_<N>           fastlane's "The call to the altool completed with a non-zero exit
+#                                       status: N"; a leading minus is written m (-1 -> m1), 1-6 characters
+#   5. upload_asc_transfer_failed       "Could not download/upload from App Store Connect"
+#   6. upload_ipa_error_unclassified    pilot's "Error uploading ipa file" with nothing more specific
+#   7. upload_user_error_unclassified
+# Codes 4-7 append an altool error-line count bucket when the message carries any (_errlines_1,
+# _errlines_2to5, _errlines_6plus): counts only, never text. In fastlane 2.240.1 pilot raises
+# "Error uploading ipa file: \n <displayable_errors>", one "[Application Loader Error Output]: ..." entry
+# per altool ERROR: line plus fastlane's own exit-status and PTY lines, which are not counted. Only text
+# altool printed on an ERROR: line reaches the exception; the rest stays in the private log, and only the
+# two signals below (SDK too old, workaround flag rejected) are taken from it, as symbols.
+# The exception's cause chain (three levels) is classified too, so a wrapper keeps the tool's category.
+UPLOAD_APPLE_CODE = /\(-(\d{1,6})\)/
+UPLOAD_ALTOOL_EXIT = /The call to the altool completed with a non-zero exit status:\s*(-?\d+)/i
+UPLOAD_ERROR_ENTRY = /\A\s*\[Application Loader Error Output\]:[ \t]*(\S.*)?\z/i
+UPLOAD_ERROR_LINE = /\A\s*(\[altool\]\s*)?(\*\*\*\s*)?ERROR:\s+\S/i
+UPLOAD_FASTLANE_STATUS = /\AThe call to the altool completed with a non-zero exit status|\A-1 indicates altool exited abnormally|\AProcess crashed\s*\z|\ACould not determine the exit status of the command\s*\z/i
+UPLOAD_GUARD_FALLBACKS = [
+  ['upload_asc_transfer_failed', %r{could ?n[o']t download/upload from App Store Connect}i],
+  ['upload_ipa_error_unclassified', /error uploading ipa file/i]
 ].freeze
 
-def upload_guard(message)
-  text = message.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
+def upload_error_lines(text)
+  text.each_line.count do |line|
+    entry = line.chomp.match(UPLOAD_ERROR_ENTRY)
+    entry ? !entry[1].nil? && !entry[1].match?(UPLOAD_FASTLANE_STATUS) : line.match?(UPLOAD_ERROR_LINE)
+  end
+end
+
+def upload_errlines_bucket(count)
+  return '' if count < 1
+  count == 1 ? '_errlines_1' : count <= 5 ? '_errlines_2to5' : '_errlines_6plus'
+end
+
+# Observes altool's output lines inside fastlane (AltoolTransporterExecutor#parse_line, where fastlane reads
+# every line) while an upload runs, and keeps only fixed symbols; the lines are never stored.
+module UploadOutputSignals
+  PATTERNS = { sdk_too_old: UPLOAD_SDK_TOO_OLD, flag_rejected: UPLOAD_FLAG_REJECTED }.freeze
+  # Advisory lines (e.g. a future-SDK WARNING: ITMS-90725) are not why an upload failed; skip them after the
+  # optional timestamp and [altool] prefix.
+  ADVISORY = /\A\s*(\[altool\]:?\s*)?(\d{4}-\d{2}-\d{2}[ T][\d:.]+\s+)?(\*\*\*\s*)?(WARNING|WARN|NOTICE|INFO)\b/i
+  @seen = nil
+
+  def self.start
+    @seen = []
+  end
+
+  def self.stop
+    seen, @seen = @seen || [], nil
+    seen
+  end
+
+  def self.observe(line)
+    return unless @seen
+    text = line.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')
+    return if text.match?(ADVISORY)
+    PATTERNS.each { |name, pattern| @seen |= [name] if text.match?(pattern) }
+  rescue StandardError
+    nil
+  end
+end
+
+if defined?(FastlaneCore)
+  begin
+    require 'fastlane_core/itunes_transporter'
+  rescue LoadError
+    nil
+  end
+end
+if defined?(FastlaneCore::AltoolTransporterExecutor) &&
+   !FastlaneCore::AltoolTransporterExecutor.ancestors.any? { |m| m.respond_to?(:upload_output_signals?) }
+  signals = UploadOutputSignals
+  observer = Module.new do
+    def self.upload_output_signals?
+      true
+    end
+    define_method(:parse_line) do |line, hide_output|
+      signals.observe(line)
+      super(line, hide_output)
+    end
+    private :parse_line
+  end
+  FastlaneCore::AltoolTransporterExecutor.prepend(observer)
+end
+
+def upload_guard(error, signals = [])
+  messages = []
+  current = error
+  3.times do
+    break if current.nil?
+    messages << (current.is_a?(Exception) ? current.message : current).to_s
+    current = current.is_a?(Exception) ? current.cause : nil
+  end
+  text = messages.join("\n").dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
+  return 'upload_sdk_too_old' if text.match?(UPLOAD_SDK_TOO_OLD)
   itms = text.scan(/ITMS-(\d{5})/).flatten.uniq.first(3)
   return 'upload_itms_' + itms.join('_') unless itms.empty?
+  return 'upload_altool_flag_rejected' if signals.include?(:flag_rejected)
   UPLOAD_GUARD_PATTERNS.each { |code, pattern| return code if text.match?(pattern) }
-  'upload_user_error_unclassified'
+  # Seen only in altool's plain output: below ITMS codes and the message's own patterns.
+  return 'upload_sdk_too_old' if signals.include?(:sdk_too_old)
+  apple = text[UPLOAD_APPLE_CODE, 1]
+  return 'upload_apple_code_m' + apple if apple
+  bucket = upload_errlines_bucket(upload_error_lines(text))
+  exit_status = text[UPLOAD_ALTOOL_EXIT, 1].to_s.sub(/\A-/, 'm')
+  return 'upload_altool_exit_' + exit_status + bucket if exit_status.match?(/\Am?\d+\z/) && exit_status.length <= 6
+  UPLOAD_GUARD_FALLBACKS.each { |code, pattern| return code + bucket if text.match?(pattern) }
+  'upload_user_error_unclassified' + bucket
 rescue StandardError
   'upload_user_error_unclassified'
 end
 
-# One read-only lookup after an upload failure: did Apple create a build record for this number?
-# Its own rescue; never replaces the upload's guard code or HTTP status, and never prints a response.
+# Read-only lookups after an upload failure: did Apple create a build record for this number?
+# altool can report a failure for an upload Apple accepted (fastlane/fastlane#30130), and a record can
+# appear a little later, so poll up to UPLOAD_RECORD_ATTEMPTS GETs about UPLOAD_RECORD_INTERVAL seconds
+# apart and stop at the first 'present'. The last observation wins otherwise. Its own rescue per
+# attempt; never replaces the upload's guard code or HTTP status, and never prints a response. Each GET
+# has short timeouts and no attempt or wait starts that could end past UPLOAD_RECORD_DEADLINE, so the
+# whole lookup takes at most three minutes even on a black-holed network.
+UPLOAD_RECORD_ATTEMPTS = 6
+UPLOAD_RECORD_INTERVAL = 30
+UPLOAD_RECORD_TIMEOUTS = { open: 10, read: 20 }.freeze
+UPLOAD_RECORD_DEADLINE = 180
+
+def upload_record_wait(seconds)
+  sleep(seconds)
+end
+
+def upload_record_clock
+  Process.clock_gettime(Process::CLOCK_MONOTONIC)
+end
+
 def upload_build_record(number)
   guard, http = $release_guard, $release_http
+  record = 'unknown'
+  started = upload_record_clock
+  longest = UPLOAD_RECORD_TIMEOUTS.values.sum
   begin
-    apple_key # Refresh the short-lived token locally (no request); an upload can outlast it.
-    data = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}")['data']
-    return 'unknown' unless data.is_a?(Array)
-    data.empty? ? 'absent' : 'present'
-  rescue StandardError
-    'unknown'
+    UPLOAD_RECORD_ATTEMPTS.times do |attempt|
+      if attempt > 0
+        break if upload_record_clock - started + UPLOAD_RECORD_INTERVAL + longest > UPLOAD_RECORD_DEADLINE
+        upload_record_wait(UPLOAD_RECORD_INTERVAL)
+      end
+      record = begin
+        apple_key # Refresh the short-lived token locally (no request); an upload can outlast it.
+        data = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}",
+          timeouts: UPLOAD_RECORD_TIMEOUTS)['data']
+        data.is_a?(Array) ? (data.empty? ? 'absent' : 'present') : 'unknown'
+      rescue StandardError
+        'unknown'
+      ensure
+        $release_guard, $release_http = guard, http
+      end
+      break if record == 'present'
+    end
+    record
   ensure
     $release_guard, $release_http = guard, http
   end
+end
+
+# Xcode 26's new altool fails or misreports uploads from fastlane (fastlane/fastlane#29698, #29739,
+# #29743, #29860, #30130); fastlane's documented opt-out is the old altool. fastlane 2.240.1 reads this
+# variable only in AltoolTransporterExecutor#build_upload_command, so set it for the upload call alone and
+# restore the previous value afterwards. No --verbose: provider output still goes only to the private log.
+# The flag is passed only when the selected altool's own help lists it (altool_old_flag_support).
+UPLOAD_ALTOOL_PARAMETERS = '--use-old-altool'
+ALTOOL_PROBE_TIMEOUT = 60
+
+# Credential-free: `xcrun altool --help` of the selected Xcode. 'supported' when it lists the flag,
+# 'unsupported' when it is altool's help without it, otherwise 'unknown'. Output is read, never kept.
+def altool_old_flag_support
+  text = nil
+  clean = ENV.keys.grep(/\APLAYGROUND_/).to_h { |name| [name, nil] } # no credentials in the probe
+  Open3.popen2e(clean, 'xcrun', 'altool', '--help', pgroup: true) do |stdin, output, waiter|
+    stdin.close
+    reader = Thread.new do
+      output.read.to_s
+    rescue IOError
+      ''
+    end
+    reader.report_on_exception = false
+    unless waiter.join(ALTOOL_PROBE_TIMEOUT)
+      Process.kill('KILL', -waiter.pid) # the whole probe process group
+      waiter.join
+      return 'unknown'
+    end
+    text = reader.value
+  end
+  text = text.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')
+  return 'supported' if text.include?(UPLOAD_ALTOOL_PARAMETERS)
+  text.match?(/--upload-app|--upload-package|--validate-app/) ? 'unsupported' : 'unknown'
+rescue StandardError
+  'unknown'
+end
+
+# fastlane reads altool's output with Ruby's default external encoding, fixed from the locale at
+# startup. Under a non-UTF-8 locale altool's curly quotes raise "invalid byte sequence" inside fastlane,
+# which then reports exit -1 and drops altool's text. The workflow exports a UTF-8 locale; this scope
+# makes the upload independent of it and restores the previous encoding afterwards.
+def with_upload_utf8
+  previous = Encoding.default_external
+  Encoding.default_external = Encoding::UTF_8
+  yield
+ensure
+  Encoding.default_external = previous
+end
+
+def with_upload_altool_parameters(enabled = true)
+  name = 'DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS'
+  had, previous = ENV.key?(name), ENV[name]
+  enabled ? ENV[name] = UPLOAD_ALTOOL_PARAMETERS : ENV.delete(name)
+  yield
+ensure
+  had ? ENV[name] = previous : ENV.delete(name)
+end
+
+# The signed IPA must come from the Xcode selected for this job (package.py xcode) and meet App Store
+# Connect's Xcode 26 / iOS 26 SDK requirement, checked before any provider call. Fixed shapes only.
+TOOLCHAIN_SHAPES = { 'xcode' => /\A\d{2}\.\d{1,2}(\.\d{1,2})?\z/, 'xcode_build' => /\A\d{2}[A-Z]\d{1,5}[a-z]?\z/,
+                     'sdk' => /\Aiphoneos\d{2}\.\d{1,2}(\.\d{1,2})?\z/ }.freeze
+SDK_MIN_MAJOR = 26
+
+def ipa_info_plist(binary)
+  FastlaneCore::IpaFileAnalyser.fetch_info_plist_file(binary) || {}
+rescue StandardError
+  {} # unreadable IPA: no build metadata, refused below
+end
+
+def ios_toolchain(packaging)
+  xcode = packaging['xcode']
+  require_release(xcode.is_a?(Hash) && TOOLCHAIN_SHAPES.all? { |k, shape| xcode[k].to_s.match?(shape) } &&
+    xcode['developer_dir'].to_s.match?(%r{\A/Applications/Xcode_\d{2}\.\d{1,2}(\.\d{1,2})?\.app/Contents/Developer\z}),
+    'Packaging toolchain record missing', 'package_toolchain_unknown')
+  toolchain = xcode.slice(*TOOLCHAIN_SHAPES.keys)
+  require_release(ENV['DEVELOPER_DIR'] == xcode['developer_dir'], 'Upload Xcode differs from the build Xcode', 'xcode_mismatch')
+  toolchain
+end
+
+def ios_toolchain_check(toolchain, binary)
+  info = ipa_info_plist(binary)
+  dt_xcode, dt_platform = info['DTXcode'].to_s, info['DTPlatformVersion'].to_s
+  require_release(dt_xcode.match?(/\A\d{4}\z/) && dt_platform.match?(/\A\d{1,2}\.\d{1,2}(\.\d{1,2})?\z/),
+    'IPA lacks Xcode/SDK build metadata', 'package_toolchain_unknown')
+  require_release(dt_xcode.to_i >= SDK_MIN_MAJOR * 100 && dt_platform.split('.').first.to_i >= SDK_MIN_MAJOR,
+    'IPA built with an Xcode/SDK older than 26; App Store Connect rejects it', 'package_sdk_too_old')
+  require_release(info['DTXcodeBuild'] == toolchain['xcode_build'] && info['DTSDKName'] == toolchain['sdk'],
+    'IPA was not built by the recorded Xcode', 'package_toolchain_mismatch')
 end
 
 def apple_key
@@ -163,6 +409,11 @@ lane :distribute do
   begin
     require_release(ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REF'] == 'refs/heads/main', 'Hosted main dispatch required',
       'not_hosted_main')
+    # fastlane always writes report.xml at the end, including each failed action's message (provider text).
+    # Keep it in the ephemeral directory that cleanup deletes, never in the checkout.
+    ephemeral = ENV['PLAYGROUND_EPHEMERAL'].to_s
+    require_release(!ephemeral.empty? && File.directory?(ephemeral), 'Ephemeral directory required', 'ephemeral_missing')
+    ENV['FL_REPORT_PATH'] = ephemeral
     admission = JSON.parse(File.read(ENV.fetch('PLAYGROUND_ADMISSION')))
     packaging = JSON.parse(File.read(File.join(out, 'packaging.json')))
     platform = ENV.fetch('PLAYGROUND_PLATFORM')
@@ -178,6 +429,11 @@ lane :distribute do
       'distribution' => 'not_started', 'physical_device' => 'unverified')
     File.write(state_path, JSON.pretty_generate(receipt))
     if platform == 'ios'
+      release_phase('toolchain')
+      toolchain = ios_toolchain(packaging)
+      receipt['toolchain'] = toolchain # recorded even when the IPA is refused, so the public line names it
+      File.write(state_path, JSON.pretty_generate(receipt))
+      ios_toolchain_check(toolchain, binary)
       release_phase('apple_key')
       key = apple_key
       release_phase('group_check')
@@ -194,21 +450,29 @@ lane :distribute do
         path = next_url&.delete_prefix('https://api.appstoreconnect.apple.com')
       end
       require_release(seen.all? { |n| n.match?(/\A\d+\z/) && n.to_i < number.to_i }, 'Choose an unused, increasing Apple build number', 'build_number_used')
+      receipt['altool_old_flag'] = altool_old_flag_support
       receipt['distribution'] = 'upload_started'
       File.write(state_path, JSON.pretty_generate(receipt))
       release_phase('upload')
       # No external distribution, beta review submission, tester changes, public links or production release.
       begin
-        upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
-          ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
-          wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
-          expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+        UploadOutputSignals.start
+        with_upload_altool_parameters(receipt['altool_old_flag'] == 'supported') do
+          with_upload_utf8 do
+            upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
+              ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
+              wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
+              expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+          end
+        end
       rescue StandardError => e
         # pilot fails through UI.user_error! (a StandardError). Interrupts and exits pass straight through to
         # the lane rescue, with no classification or lookup. Fixed code only; the message is dropped here.
-        $release_guard = upload_guard(e.message)
+        $release_guard = upload_guard(e, UploadOutputSignals.stop)
         $release_upload_build_record = upload_build_record(number)
         raise
+      ensure
+        UploadOutputSignals.stop
       end
       release_phase('group_recheck')
       apple_key # Refresh the short-lived API token after processing.
