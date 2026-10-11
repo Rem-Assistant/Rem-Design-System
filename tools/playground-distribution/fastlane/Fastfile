@@ -39,6 +39,17 @@ def apple_request(method, path, payload = nil, timeouts: {})
   response.body.to_s.empty? ? {} : JSON.parse(response.body)
 end
 
+# The assignment POST's HTTP status, without failing the lane: the caller decides by reading membership back.
+def apple_assign_status(build_id, group_id)
+  uri = URI("https://api.appstoreconnect.apple.com/v1/builds/#{build_id}/relationships/betaGroups")
+  request = Net::HTTP::Post.new(uri)
+  request['Authorization'] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+  request['Content-Type'] = 'application/json'
+  request.body = JSON.generate({data: [{type: 'betaGroups', id: group_id}]})
+  response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 60, read_timeout: 120) { |http| http.request(request) }
+  response.code.to_i
+end
+
 # TestFlight upload failures: fastlane/pilot raises UI.user_error! with provider text. Map that text to a
 # fixed code through an allowlist of patterns, in process; the message itself is never written, logged
 # or printed. Apple's ITMS-<5 digits> codes win (they already cover a used or lower build number), except
@@ -484,9 +495,18 @@ lane :distribute do
       receipt.merge!('distribution' => 'processed', 'store_build_id' => build_id)
       File.write(state_path, JSON.pretty_generate(receipt))
       release_phase('assign')
-      apple_request(:post, "/v1/builds/#{build_id}/relationships/betaGroups", {data: [{type: 'betaGroups', id: group_id}]})
-      groups = apple_request(:get, "/v1/builds/#{build_id}/relationships/betaGroups")['data']
-      require_release(groups.any? { |g| g['id'] == group_id }, 'TestFlight assignment readback missing', 'assignment_readback_missing')
+      # Builds 8 and 9 reached the group although the assignment POST returned 403. Membership is the outcome
+      # that matters, so read it first, assign only if missing, and let the readback decide after a refusal.
+      in_group = lambda do
+        apple_request(:get, "/v1/builds/#{build_id}/relationships/betaGroups")['data'].any? { |g| g['id'] == group_id }
+      end
+      unless in_group.call
+        status = apple_assign_status(build_id, group_id)
+        $release_http = status unless status.between?(200, 299)
+        require_release(status.between?(200, 299) || [403, 409].include?(status),
+          "Apple API failed (HTTP #{status}); no response body printed", 'apple_api_http')
+        require_release(in_group.call, 'TestFlight assignment readback missing', 'assignment_readback_missing')
+      end
       receipt['distribution'] = 'assigned_existing_internal_group'
     elsif platform == 'android'
       release_phase('play_auth')
