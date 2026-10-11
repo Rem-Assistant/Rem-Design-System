@@ -203,8 +203,9 @@ lane :distribute do
           ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
           wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
           expire_previous_builds: false, app_version: '0.1.0', build_number: number)
-      rescue Exception => e
-        # Fixed code only; the message is classified here and dropped. Re-raise unchanged.
+      rescue StandardError => e
+        # pilot fails through UI.user_error! (a StandardError). Interrupts and exits pass straight through to
+        # the lane rescue, with no classification or lookup. Fixed code only; the message is dropped here.
         $release_guard = upload_guard(e.message)
         $release_upload_build_record = upload_build_record(number)
         raise

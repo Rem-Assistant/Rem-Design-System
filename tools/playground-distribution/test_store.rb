@@ -200,6 +200,27 @@ Dir.mktmpdir do |dir|
       raise "Provider text printed: #{leak}" if out.string.include?(leak)
     end
   end
+  # An interrupt is not an upload failure: no classification and no build-record lookup.
+  calls = []
+  define_method(:upload_to_testflight) { |**_| raise Interrupt }
+  define_method(:apple_request) do |method, path, payload = nil|
+    raise 'Unexpected mutation' unless method == :get && payload.nil?
+    calls << path
+    {'data' => [{'attributes' => {'version' => '7'}}], 'links' => {}}
+  end
+  $release_phase, $release_guard, $release_http, $release_upload_build_record = 'inputs', nil, nil, nil
+  out = StringIO.new
+  stdout, stderr, $stdout, $stderr = $stdout, $stderr, out, out
+  begin
+    @lanes[:distribute].call
+    raise 'Interrupt was swallowed'
+  rescue Interrupt
+  ensure
+    $stdout, $stderr = stdout, stderr
+  end
+  failure = JSON.parse(File.read(File.join(dir, 'distribution.json')))['failure']
+  raise "Interrupt was classified: #{failure.inspect}" unless failure == {'phase' => 'upload', 'guard' => 'exception_interrupt', 'http_status' => nil}
+  raise 'Interrupt triggered a build-record lookup' unless calls.length == 1
 end
 puts "6 TestFlight privacy/scope guard scenarios, 15 guard-code cases, #{upload_cases.length} upload-guard cases, " \
-  '6 build-record cases and 3 upload-failure lane runs passed; no store requests made.'
+  '6 build-record cases, 3 upload-failure lane runs and 1 interrupt lane run passed; no store requests made.'
