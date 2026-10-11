@@ -772,8 +772,21 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(bubble.value as? String, "Received at 10:21", "The time is spoken without the gesture")
         let rest = bubble.frame.minX
         bubble.swipeLeft()
-        let settled = expectation(for: NSPredicate { _, _ in abs(bubble.frame.minX - rest) < 1 }, evaluatedWith: nil)
-        wait(for: [settled], timeout: 3)
+        // Same check: back within 1pt of rest, within 3s. Each poll reads a fresh snapshot, which throws
+        // (and is retried) when a lookup needs retries; the earlier block predicate read `bubble.frame`
+        // directly and failed on a slow runner (run 38118821889: the rows were back at x 16 in the
+        // failure dump, but the lookup never completed inside the window).
+        let deadline = Date().addingTimeInterval(3)
+        var settledX: CGFloat?
+        repeat {
+            // A reading that completes after the deadline does not count: the 3s window is unchanged.
+            if let x = try? bubble.snapshot().frame.minX, Date() <= deadline, abs(x - rest) < 1 {
+                settledX = x
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        } while Date() < deadline
+        XCTAssertNotNil(settledX, "Rows return to their resting position (minX \(rest)) after the swipe")
     }
 
     func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
