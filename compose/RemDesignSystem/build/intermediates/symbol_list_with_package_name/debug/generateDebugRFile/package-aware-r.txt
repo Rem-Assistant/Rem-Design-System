@@ -1,4 +1,0 @@
-com.rem.designsystem
-drawable rem_app_icon
-font material_symbols_filled
-font material_symbols_outlined

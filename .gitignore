@@ -8,3 +8,7 @@ _skills-src/
 # Local Python verification caches
 __pycache__/
 *.pyc
+
+# Gradle outputs (compose/)
+compose/.gradle/
+compose/**/build/
