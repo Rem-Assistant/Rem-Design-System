@@ -200,6 +200,27 @@ These stay explicit boundaries. No component here persists, transmits or enforce
    - **Accessibility:** the backdrops are decoration (hidden, not interactive; touches reach the transcript or
      the chrome above them); the header is still read first.
 
+13. **Transcript gestures — scrolling always wins.** A vertical drag that starts anywhere in
+   `ChatTranscriptList` — on a bubble, beside one (within touch slop), on a timestamp row or in the gutter —
+   is the scroll view's own scroll.
+   - **Time peek** (`ChatTimestampReveal`, chat-adapter `time`): only a predominantly horizontal **leftward**
+     drag (horizontal more than **1.5×** vertical, at least 10pt before rows move) starts it; rows snap back on
+     end, cancel or failure; Reduce Motion clamps the travel at the column width and snaps back without
+     animation.
+   - **Long press:** a 0.5s hold that moves under 10pt asks for message actions (rule 2); travel past 10pt
+     fails it. Neither gesture ever claims the touch from the scroll.
+   - **iOS:** the peek is a `UIPanGestureRecognizer` added to the transcript's hosting `UIScrollView`
+     (`ChatTimestampRevealPan`, found by a non-interactive probe). It begins only for leftward-horizontal
+     motion (velocity, else translation), recognizes simultaneously, and cancels or delays no touches. It is
+     never a SwiftUI `DragGesture` on the rows: on iOS 17 that kept the scroll view's pan from starting for
+     touches on or near a row (run 38181697796: a slow 300pt drag from the centre of `message.a1.bubble`
+     moved it 0pt; earlier runs, 4pt beside an incoming bubble). A `ChatTranscriptList` outside any scroll
+     view has no peek; the times stay spoken through the bubble. macOS keeps the simultaneous `DragGesture`.
+   - **Compose:** unchanged; its pointer input already passes vertical scrolls.
+   - Journeys: the bubble-drag pair under Jump to latest below, and `testChatSwipeLeftPeeksTimesAndSnapsBack` /
+     `chatSwipeLeftPeeksTimesAndSnapsBack`; long press: `testChatScreenLongPressMessageActions` /
+     `chatScreenLongPressMessageActions`.
+
 ## Paired native fixtures
 
 `ChatFixture` in `tools/playground-ios/App/CatalogPages.swift` and in
@@ -216,9 +237,11 @@ Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlayg
 `chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). While a reply is in flight (Stop shown, the
 shell's simulated reply held): `testShellScrollsWhileAReplyIsInFlight` / `shellScrollsWhileAReplyIsInFlight` —
 the transcript still scrolls, jump to latest appears and the message just sent leaves view. Their drags start in
-the leading gutter clear of every row (iOS `clearGutterStart`); a vertical drag that starts on a transcript bubble
-must scroll as well and is its own journey, `testChatTranscriptDragThatStartsOnABubbleScrolls` (iOS; no Android
-twin yet). Render pair: `ChatJumpToLatest-light`,
+the leading gutter clear of every row (iOS `clearGutterStart`); a vertical drag that starts on a transcript bubble,
+or beside one, must scroll as well (rule 13) and is its own journey: `testChatTranscriptDragThatStartsOnABubbleScrolls`
+/ `chatTranscriptDragThatStartsOnABubbleScrolls` (centre of incoming `a1`) and
+`testChatTranscriptDragBesideABubbleScrolls` / `chatTranscriptDragBesideABubbleScrolls` (4pt/dp outside its
+leading edge). Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
 
