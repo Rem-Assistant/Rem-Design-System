@@ -1,0 +1,4 @@
+> Task :app:checkReleaseAarMetadata FAILED
+FAILURE: Build failed with an exception.
+Could not resolve all files for configuration ':app:releaseRuntimeClasspath'.
+   > Could not GET 'https://dl.google.com/dl/android/maven2/MARKER_PRIVATE_ARTIFACT.pom'.

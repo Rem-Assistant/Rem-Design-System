@@ -1,0 +1,19 @@
+// Inspection-only tasks for the RemClaw Android release. Adds no build logic, signing or overrides:
+// versionCode, sourceSha, remApiBaseUrl and googleServerClientId reach RemClaw's own Gradle
+// properties. bundletool is resolved as a detached, pinned configuration through the repositories
+// RemClaw already declares (google()), so the inspection does not depend on AGP's classpath layout.
+gradle.projectsEvaluated {
+    def root = gradle.rootProject
+    def bundletool = root.configurations.detachedConfiguration(
+        root.dependencies.create('com.android.tools.build:bundletool:1.16.0'))
+    root.tasks.register('verifyRemClawBundle', JavaExec) {
+        classpath = bundletool
+        mainClass = 'com.android.tools.build.bundletool.BundleToolMain'
+        args 'validate', '--bundle=' + System.getenv('REM_VERIFY_AAB')
+    }
+    root.tasks.register('inspectRemClawBundle', JavaExec) {
+        classpath = bundletool
+        mainClass = 'com.android.tools.build.bundletool.BundleToolMain'
+        args 'dump', 'manifest', '--bundle=' + System.getenv('REM_VERIFY_AAB'), '--module=base'
+    }
+}

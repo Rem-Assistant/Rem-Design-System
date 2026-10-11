@@ -40,6 +40,8 @@ jobs:
           python3 -m unittest discover -s tools/playground-distribution -p 'test_*.py'
           ruby tools/remclaw-release/test_workflow.rb
           ruby tools/remclaw-release/test_fastfile.rb
+          ruby tools/remclaw-release/test_android_workflow.rb
+          ruby tools/remclaw-release/test_android_fastfile.rb
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8
         with:
           ruby-version: '3.3.12'
@@ -52,3 +54,6 @@ jobs:
           git diff --exit-code -- ../playground-distribution/Gemfile.lock
           bundle exec ruby ../playground-distribution/test_dependencies.rb
           bundle exec fastlane lanes
+      - name: Load the RemClaw Android lane on the locked Fastlane bundle (no store access)
+        working-directory: tools/remclaw-release/android
+        run: bundle exec fastlane lanes
