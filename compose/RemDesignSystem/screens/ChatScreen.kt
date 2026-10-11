@@ -232,7 +232,12 @@ fun ChatTranscriptList(
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
     val columnPx = with(LocalDensity.current) { TimeColumnWidth.toPx() }
-    val reveal = remember { Animatable(ChatTimestampReveal.SETTLED) }
+    val revealEvidence = LocalChatTimestampRevealEvidence.current
+    val reveal = remember { Animatable(ChatTimestampReveal.SETTLED + revealEvidence.coerceIn(0f, 1f) * columnPx) }
+    // RTL mirrors the peek: a rightward drag moves the rows right and the times come in from the left
+    // edge. Drags are converted to layout-relative travel (negative = toward the start edge), so
+    // ChatTimestampReveal stays direction-free.
+    val direction = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     val scope = rememberCoroutineScope()
     var dragX by remember { mutableFloatStateOf(0f) }
     val settle: () -> Unit = {
@@ -244,20 +249,21 @@ fun ChatTranscriptList(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .pointerInput(reduceMotion, columnPx) {
+            .pointerInput(reduceMotion, columnPx, direction) {
                 // Horizontal-axis detector: vertical drags stay with the enclosing scroll.
                 detectHorizontalDragGestures(
                     onDragStart = { dragX = 0f },
                     onDragEnd = settle,
                     onDragCancel = settle,
                 ) { change, amount ->
-                    dragX += amount
+                    dragX += amount * direction
                     if (reveal.value > 0f || dragX <= -ChatTimestampReveal.MIN_TRAVEL) {
                         change.consume()
                         scope.launch { reveal.snapTo(ChatTimestampReveal.reveal(dragX, columnPx, reduceMotion)) }
                     }
                 }
             }
+            // `offset {}` is layout-direction aware: rows move toward the start edge in LTR and RTL alike.
             .offset { IntOffset(-reveal.value.roundToInt(), 0) },
         verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
     ) {
@@ -298,7 +304,8 @@ fun ChatTranscriptList(
                             row.place(0, 0)
                             if (timeText != null) {
                                 val centre = row[MessageBubbleCenterLine].takeIf { it != AlignmentLine.Unspecified } ?: (row.height / 2)
-                                timeText.place(row.width, centre - timeText.height / 2)
+                                // Relative placement: past the trailing edge in LTR, past the left edge in RTL.
+                                timeText.placeRelative(row.width, centre - timeText.height / 2)
                             }
                         }
                     }
@@ -307,6 +314,12 @@ fun ChatTranscriptList(
         }
     }
 }
+
+/**
+ * Evidence seam (internal, never set by hosts): start the timestamp peek at this fraction (0–1) of the
+ * time column, so a single-frame render can show revealed times. Not part of the public API.
+ */
+internal val LocalChatTimestampRevealEvidence = staticCompositionLocalOf { 0f }
 
 @Composable
 private fun ChatScreenLayout(

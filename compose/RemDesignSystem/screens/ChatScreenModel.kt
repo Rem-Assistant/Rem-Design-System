@@ -366,7 +366,10 @@ object ChatTimestampReveal {
     /** Resistance applied to travel beyond the column width (no overshoot with Reduce Motion). */
     const val RUBBER_BAND = 0.3f
 
-    /** Whether a drag of ([dx], [dy]) is a leftward reveal rather than a scroll or a rightward swipe. */
+    /**
+     * Whether a drag of ([dx], [dy]) is a reveal rather than a scroll or a swipe the other way. [dx] is
+     * layout-relative: negative is toward the start edge (leftward in LTR, rightward in RTL).
+     */
     fun isRevealDrag(dx: Float, dy: Float): Boolean =
         dx <= -MIN_TRAVEL && kotlin.math.abs(dx) > kotlin.math.abs(dy) * HORIZONTAL_RATIO
 

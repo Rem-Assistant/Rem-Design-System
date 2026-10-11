@@ -1,6 +1,9 @@
 package com.rem.designsystem
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.rem.designsystem.screens.AgentActivityScreen
@@ -11,6 +14,7 @@ import com.rem.designsystem.screens.ChatTranscriptList
 import com.rem.designsystem.screens.InboxAction
 import com.rem.designsystem.screens.InboxPlaygroundFixture
 import com.rem.designsystem.screens.InboxScreen
+import com.rem.designsystem.screens.LocalChatTimestampRevealEvidence
 import com.rem.designsystem.tokens.RemTheme
 import org.junit.Rule
 import org.junit.Test
@@ -51,6 +55,20 @@ class ChatCompositionSnapshots {
     @Test fun chatCompositionTaskReply() = shot("ChatComposition-taskReply-light") {
         Composition(InboxPlaygroundFixture().route(InboxAction.Open("plan-next-step"))!!)
     }
+
+    /**
+     * Swipe timestamps held fully revealed (evidence seam), LTR and RTL. RTL mirrors: rows move right and
+     * the times come in from the left edge. No SwiftUI twin yet: iOS RTL is unverified.
+     */
+    @Composable
+    private fun Revealed(direction: LayoutDirection) = CompositionLocalProvider(
+        LocalLayoutDirection provides direction,
+        LocalChatTimestampRevealEvidence provides 1f,
+    ) { Composition(ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated)) }
+
+    @Test fun chatTimestampsRevealed() = shot("ChatTimestamps-revealed-light") { Revealed(LayoutDirection.Ltr) }
+
+    @Test fun chatTimestampsRevealedRtl() = shot("ChatTimestamps-revealed-rtl-light") { Revealed(LayoutDirection.Rtl) }
 
     @Test fun inboxStates() = shot("InboxStates-light") {
         RemTheme { InboxScreen(items = InboxPlaygroundFixture().items, onAction = {}) {} }
