@@ -161,3 +161,129 @@ python3 tools/playground-distribution/lint_workflows.py   # checksum-pinned Acti
 `remclaw-release-check.yml` runs these on `ubuntu-24.04` and `macos-15` for pull requests,
 plus a frozen install of the locked Fastlane bundle and `fastlane lanes` against the RemClaw
 Fastfile. It has a read-only token, no environment and no secrets.
+
+---
+
+# RemClaw Android release (draft, sibling of the iOS release above)
+
+`.github/workflows/remclaw-android-release.yml` builds the **private** RemClaw Android app
+(`com.remapp.rem`, sources under `android/` in RemClaw) at one exact commit on a fresh
+`ubuntu-24.04` runner and uploads it to the **Google Play internal track only**.
+`android_release.py` reuses `release.py`'s deploy-key fetch, ancestry check, run identity,
+private-log runner, classifier and public-output boundary unchanged. It also reuses the
+Playground gate (`gate.validate_environment`), storage guard (`storage.py --platform android`)
+and locked Fastlane bundle. The Play lane, `android/fastlane/Fastfile`, mirrors the Android
+branch of the Playground Fastfile.
+
+**Nothing runs yet.** As with iOS, nothing works until the environment, the deploy key in that
+environment and the names below exist. This change creates none of them and dispatches nothing.
+
+## Contract
+
+Dispatch from **`main`** only:
+
+| Input | Required value |
+| --- | --- |
+| `remclaw_sha` | Full lowercase 40-character RemClaw commit, already in the history of an allowed release branch (`ALLOWED_RELEASE_BRANCHES`, shared with iOS) |
+| `version_code` | Play `versionCode`: a positive integer up to 2100000000 that is **above every version code** on any track and every bundle uploaded for `com.remapp.rem` |
+| `track` | `internal`, the only option. The control script and the lane both refuse any other track |
+
+The production backend URL is **not** an input. It is the reviewed constant
+`PRODUCTION_API_BASE_URL` in `android_release.py`, which is deliberately empty. Until a reviewed
+change sets it to the real `https` backend, every build is refused with
+`PRODUCTION_API_BASE_URL is not committed` (class `POLICY`). Staging, `.invalid`, `.test`,
+`localhost` and non-https values are refused.
+
+### Jobs
+
+1. **`admission`** (`ubuntu-24.04`, no secrets, no variables, no environment): runs the guard
+   tests, then `android_release.py admit`. That checks run identity, SHA, version code, the
+   track (`internal`) and the **pre-existing** protection of `remclaw-android-release`.
+2. **`release`** (`ubuntu-24.04`, `environment: remclaw-android-release`):
+   1. Re-verifies the environment protection.
+   2. Fetches RemClaw with `REMCLAW_DEPLOY_KEY` using the iOS `release.py fetch` mechanism (see
+      above). It then fetches the **public** Rem Design System anonymously over https at the
+      exact commit in RemClaw's `android/design-system.lock`, and verifies `HEAD`. The
+      checkout plays the role of `android/scripts/fetch-design-system.sh`.
+   3. Sets up Temurin 17 and Ruby. There is no Gradle action and no cache. `GRADLE_USER_HOME`
+      is under `$RUNNER_TEMP/remclaw-ephemeral`.
+   4. Runs the storage guard before dependencies, build, sign and upload.
+   5. Builds an **unsigned** `:app:bundleRelease` with the reviewed Gradle wrapper
+      (`gradle-8.14.4-bin.zip`). It passes exactly `-PremApiBaseUrl` (the constant),
+      `-PgoogleServerClientId` (the environment variable), `-PsourceSha` and `-PversionCode`.
+      RemClaw's own `validateReleaseConfig` refuses staging, a blank client ID or a missing
+      SHA. The step then:
+      - validates the AAB with a pinned bundletool;
+      - checks the base manifest: package `com.remapp.rem`, `versionCode` equal to the input,
+        a numeric `versionName`, not `debuggable`, not `testOnly`;
+      - checks the base dex for the `BuildConfig` stamps: the source SHA, the production URL
+        and the client ID;
+      - confirms that tracked source is unchanged.
+   6. Signs with the upload key:
+      - the keystore is written `0600` under the private directory and deleted in a `finally`;
+      - passwords reach `keytool`/`jarsigner` only via `-storepass:env`;
+      - the certificate's SHA-256 must equal `REMCLAW_ANDROID_UPLOAD_CERT_SHA256`;
+      - after signing, `jarsigner -verify` must pass, there must be exactly one signer block
+        containing that certificate, and every entry must be covered by the manifest.
+   7. `fastlane internal_upload` takes the following steps:
+      - re-checks the package/admission records and the bundle's SHA-256;
+      - requires the internal track to **already exist** with no pending release;
+      - requires `version_code` to be above every existing code;
+      - uploads with `upload_to_play_store`, using `track: internal` and `release_status: completed`
+        (no metadata, images, changelogs or other tracks);
+      - reads back that the internal track holds a completed release with that version code.
+   8. Always writes the allowlisted summary and always cleans up.
+
+Public summary allowlist: `remclaw_sha`, `release_branch`, approval model/reviewer,
+`version_code`, `track`, `distribution` (`not_started`, `upload_started`,
+`published_internal`, `unresolved`) and `failure_class`. Everything else is dropped.
+`distribution` set to `upload_started` or `unresolved` is **not** proof of failure: inspect the
+Play internal track for that version code before any retry.
+
+## Names-only setup checklist (do not populate until this PR is reviewed and merged)
+
+Nothing below exists yet. These are the exact names the workflow consumes.
+
+- [ ] Play Console app `com.remapp.rem` exists, and its **internal testing** track exists
+      (the lane refuses to create either).
+- [ ] An upload key for `com.remapp.rem` (Play App Signing upload certificate, PKCS12).
+- [ ] A Google Play service account limited to `com.remapp.rem`, with only the release
+      permissions needed for testing tracks. No other apps, and no account-level admin.
+- [ ] Environment **`remclaw-android-release`** in this repository with:
+      - required reviewers: exactly one, **`samuelalake`** (the owner-approval model, or the
+        independent model as for iOS);
+      - **Allow administrators to bypass: off**;
+      - deployment branches: selected branches, exactly one policy, `main`.
+- [ ] Environment secrets in `remclaw-android-release`:
+
+| Kind | Name | Purpose |
+| --- | --- | --- |
+| secret | `REMCLAW_DEPLOY_KEY` | Private half of a **read-only** RemClaw deploy key. The same name and mechanism as iOS. Environment secrets are per environment, so it must be set here too (the iOS key, or a separate read-only key for independent revocation) |
+| secret | `REMCLAW_ANDROID_UPLOAD_KEYSTORE_BASE64` | Base64 of the PKCS12 upload keystore for `com.remapp.rem` (the upload key, never the app-signing key) |
+| secret | `REMCLAW_ANDROID_UPLOAD_KEYSTORE_PASSWORD` | Keystore password. For PKCS12 the key password is the same |
+| secret | `REMCLAW_PLAY_SERVICE_ACCOUNT_JSON` | Raw JSON key (`"type": "service_account"`) of the least-privilege Play service account above |
+| variable | `REMCLAW_ANDROID_UPLOAD_KEY_ALIAS` | Alias of the upload key inside the keystore |
+| variable | `REMCLAW_ANDROID_UPLOAD_CERT_SHA256` | SHA-256 of the upload certificate (DER, 64 hex, colons allowed). Signing is refused on mismatch |
+| variable | `REMCLAW_ANDROID_GOOGLE_SERVER_CLIENT_ID` | Google OAuth **web** client ID (`<digits>-<id>.apps.googleusercontent.com`) that the backend verifies. Public, not a secret. A blank value fails closed |
+
+- [ ] A reviewed change setting `PRODUCTION_API_BASE_URL` in `android_release.py`.
+
+## Unverified until an authorized pilot
+
+- Whether `com.remapp.rem` and its internal track exist in Play Console. The inspected
+  account showed only the Playground app.
+- Whether Play accepts `release_status: completed` for the app. A Play app still in
+  **draft** state accepts only draft releases, and the run fails as `UPLOAD` until the app
+  leaves draft.
+- Resolving bundletool `1.16.0` through RemClaw's declared repositories (from the init script).
+- Whether RemClaw's Android head is releasable. A SHA must first be on an allowed release branch.
+- Storage thresholds, which were sized for the Playground Android app.
+
+## Validation (Android additions)
+
+```sh
+python3 -m unittest discover -s tools/remclaw-release -p 'test_*.py' -v   # includes test_android_release.py
+ruby tools/remclaw-release/test_android_workflow.rb
+ruby tools/remclaw-release/test_android_fastfile.rb
+python3 tools/playground-distribution/lint_workflows.py                     # now includes remclaw-android-release.yml
+```

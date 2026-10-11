@@ -32,6 +32,10 @@ CATEGORIES = (
         r'Could not find gem',
         r'Gem::\w*(Error|Exception)',
         r'failed to (clone|fetch) ',
+        # Android (Gradle) dependency resolution
+        r'Could not resolve (all |com\.|org\.|androidx\.|io\.|net\.)',
+        r"Could not (GET|HEAD|download) '?https?://",
+        r'Plugin \[id: .*\] was not found',
     )),
     ('PROVISIONING', (
         r'error:.*provisioning profile',
@@ -49,6 +53,9 @@ CATEGORIES = (
         r'(code ?sign|codesign)\S*:? .*(fail|error|invalid)',
         r'error:.*(code ?sign|signing identity|certificate)',
         r'SecKeychain\w+',
+        # Android upload-key signing
+        r'jarsigner(:| error)',
+        r'keytool error',
     )),
     ('COMPILE', (
         r'\*\* (ARCHIVE|BUILD) FAILED \*\*',
@@ -57,6 +64,11 @@ CATEGORIES = (
         r'[Ll]inker command failed',
         r'^ld: ',
         r'Undefined symbols? for architecture',
+        # Android (Kotlin/Gradle) build
+        r'^e: (file://)?\S+\.kts?:',
+        r'Compilation error\. See log',
+        r'FAILURE: Build failed with an exception',
+        r'Release build refused:',
     )),
     ('AUTH', (
         r'NOT_AUTHORIZED',
@@ -65,6 +77,11 @@ CATEGORIES = (
         r'FORBIDDEN_ERROR',
         r'invalid (API key|token|issuer)',
         r'Apple API failed \(HTTP (401|403)\)',
+        # Google Play
+        r'Google::Apis::AuthorizationError',
+        r'The caller does not have permission',
+        r'invalid_grant|unauthorized_client',
+        r'Play credential is not a service-account key',
     )),
     ('UPLOAD', (
         r'ITMS-\d+',
@@ -76,6 +93,12 @@ CATEGORIES = (
         r'[Uu]pload.*failed',
         r'processing (timed out|failed)',
         r'Apple API failed \(HTTP 5\d\d\)',
+        # Google Play
+        r'Google Api Error',
+        r'Google::Apis::(ClientError|ServerError)',
+        r'[Vv]ersion code \d+ has already been used',
+        r'Only releases with status draft may be created on draft app',
+        r'Play internal release readback missing',
     )),
 )
 # POLICY marks a trusted-control rejection (input, ancestry, environment, metadata) rather than a tool log.

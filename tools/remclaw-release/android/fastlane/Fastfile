@@ -1,0 +1,113 @@
+# RemClaw Android Play lane. Invoked only from remclaw-android-release.yml after admission, protected
+# environment approval, exact-SHA verification and verified upload-key signing. Runs on the locked
+# bundle in tools/playground-distribution (BUNDLE_GEMFILE). All output is redirected to a private log
+# by the workflow; messages here never include response bodies, credential material or RemClaw source.
+# Mirrors the Playground Android branch of tools/playground-distribution/fastlane/Fastfile.
+require 'json'
+require 'digest'
+require 'stringio'
+
+skip_docs
+
+REMCLAW_PACKAGE = 'com.remapp.rem'
+REMCLAW_TRACK = 'internal' # The only track this lane can touch.
+MAX_VERSION_CODE = 2_100_000_000
+
+def require_release(ok, message)
+  UI.user_error!(message) unless ok
+end
+
+def hosted_main!
+  require_release(ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REF'] == 'refs/heads/main', 'Hosted main dispatch required')
+end
+
+def play_json
+  json = ENV.fetch('REMCLAW_PLAY_SERVICE_ACCOUNT_JSON', '')
+  require_release(!json.strip.empty?, 'Missing protected-environment secret: REMCLAW_PLAY_SERVICE_ACCOUNT_JSON')
+  parsed = begin
+    JSON.parse(json)
+  rescue JSON::ParserError
+    nil
+  end
+  require_release(parsed.is_a?(Hash) && parsed['type'] == 'service_account', 'Play credential is not a service-account key')
+  json
+end
+
+def google_client
+  require 'google/apis/androidpublisher_v3'
+  require 'googleauth'
+  client = Google::Apis::AndroidpublisherV3::AndroidPublisherService.new
+  client.authorization = Google::Auth::ServiceAccountCredentials.make_creds(
+    json_key_io: StringIO.new(play_json), scope: 'https://www.googleapis.com/auth/androidpublisher')
+  client.authorization.fetch_access_token!
+  client
+end
+
+# Read-only view of the app's tracks and uploaded bundles inside a throwaway edit.
+def play_tracks(client)
+  edit = client.insert_edit(REMCLAW_PACKAGE, Google::Apis::AndroidpublisherV3::AppEdit.new)
+  begin
+    tracks = client.list_edit_tracks(REMCLAW_PACKAGE, edit.id).tracks || []
+    bundles = client.list_edit_bundles(REMCLAW_PACKAGE, edit.id).bundles || []
+    yield tracks, bundles
+  ensure
+    client.delete_edit(REMCLAW_PACKAGE, edit.id)
+  end
+end
+
+# Same rule as Playground: the internal track must exist with no pending release, and the new version
+# code must be above every version code on any track and every uploaded bundle.
+def check_version_code(tracks, bundles, number)
+  current = tracks.find { |t| t.track == REMCLAW_TRACK }
+  require_release(current, 'The Play internal track for com.remapp.rem does not exist')
+  require_release((current.releases || []).all? { |r| r.status == 'completed' }, 'Existing internal track has pending work; do not overwrite it')
+  codes = tracks.flat_map { |t| (t.releases || []).flat_map { |r| r.version_codes || [] } } + bundles.map(&:version_code)
+  require_release(codes.all? { |n| n.to_s.match?(/\A\d+\z/) }, 'Existing non-integer Play version codes')
+  require_release(codes.all? { |n| n.to_i < number.to_i }, 'Choose an unused, increasing Play version code')
+end
+
+def internal_has(tracks, number)
+  current = tracks.find { |t| t.track == REMCLAW_TRACK }
+  current && (current.releases || []).any? { |r| r.status == 'completed' && (r.version_codes || []).map(&:to_s).include?(number) }
+end
+
+def write_state(path, state)
+  File.write(path, JSON.pretty_generate(state))
+end
+
+lane :internal_upload do
+  hosted_main!
+  out = ENV.fetch('REMCLAW_OUTPUT')
+  sha = ENV.fetch('REMCLAW_SHA')
+  number = ENV.fetch('REMCLAW_VERSION_CODE')
+  track = ENV.fetch('REMCLAW_TRACK')
+  require_release(track == REMCLAW_TRACK, 'Only the Play internal track is allowed')
+  require_release(number.match?(/\A[1-9]\d{0,9}\z/) && number.to_i <= MAX_VERSION_CODE, 'Invalid version code')
+  admission = JSON.parse(File.read(ENV.fetch('REMCLAW_ADMISSION')))
+  packaging = JSON.parse(File.read(File.join(out, 'packaging.json')))
+  require_release(packaging['signing'] == 'verified' && packaging['remclaw_sha'] == sha && admission['remclaw_sha'] == sha &&
+    packaging['version_code'] == number && admission['version_code'] == number && admission['track'] == REMCLAW_TRACK,
+    'Package/admission mismatch')
+  binary = File.join(out, 'RemClaw.aab')
+  require_release(Digest::SHA256.file(binary).hexdigest == packaging['binary_sha256'], 'Signed bundle changed')
+  state_path = File.join(out, 'distribution.json')
+  state = admission.merge('remclaw_sha' => sha, 'version_code' => number, 'track' => REMCLAW_TRACK,
+    'release_branch' => packaging['release_branch'], 'distribution' => 'not_started')
+  write_state(state_path, state)
+  client = google_client
+  play_tracks(client) { |tracks, bundles| check_version_code(tracks, bundles, number) }
+  state['distribution'] = 'upload_started'
+  write_state(state_path, state)
+  # Internal track only: no metadata, listing, images, changelogs, other tracks or rollout changes.
+  upload_to_play_store(package_name: REMCLAW_PACKAGE, json_key_data: play_json,
+    aab: binary, track: REMCLAW_TRACK, release_status: 'completed', version_name: "#{number} (#{sha[0, 12]})",
+    skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true,
+    skip_upload_images: true, skip_upload_screenshots: true, rescue_changes_not_sent_for_review: false)
+  state['distribution'] = 'unresolved'
+  write_state(state_path, state)
+  play_tracks(client) do |tracks, _|
+    require_release(internal_has(tracks, number), 'Play internal release readback missing; reconcile before retrying')
+  end
+  state['distribution'] = 'published_internal'
+  write_state(state_path, state)
+end
