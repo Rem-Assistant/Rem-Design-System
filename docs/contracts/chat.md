@@ -97,8 +97,11 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      area (`threshold`), hidden at or below it (including overscroll). A fixed distance (about four short
      rows) rather than a third of the viewport, so the rule reads the same with the keyboard open or closed.
      Never shown in the empty state.
-   - **Look:** 44 circle, solid `backgroundTertiary` fill (white light / `#2C2C2E` dark — no translucent
-     material), 0.5 hairline `separator`, soft shadow; `arrow.down` / `ArrowDownward` in `labelPrimary`
+   - **Look:** 44 glass circle (Samuel, 2026-10-11): iOS / macOS 26 system Liquid Glass
+     (`.glassEffect(.regular.interactive())`), earlier `.regularMaterial`; Compose blurs the transcript behind it
+     inside the composition on API 32+ (Haze, `backgroundTertiary` tint at 0.6 — `ChatJumpToLatest.GLASS_TINT_ALPHA`)
+     and is solid `backgroundTertiary` below API 32, with high contrast, or outside the composition (catalog).
+     0.5 hairline `separator`, soft shadow; `arrow.down` / `ArrowDownward` in `labelPrimary`
      (17pt semibold SF Symbol; 20dp Material icon). 12 (`Spacing.md`) above the top of the dock chrome.
      It overlays the transcript area only, so it never covers the composer, the reply accessory or the
      keyboard-docked composer. Large text: fixed icon-only chrome; iOS offers the Large Content Viewer.
@@ -110,6 +113,36 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      the bottom the transcript still follows new content (iOS `defaultScrollAnchor(.bottom)`, unchanged;
      Compose follows only while within the threshold, where it previously always snapped to the bottom).
      No unread indicator yet (follow-up).
+
+12. **Edge backdrops — the transcript scrolls under the header and the composer dock** (`ChatEdgeBackdrop`,
+   internal, Swift and Kotlin share the constants; reference: iOS bars and the Claude iOS app; numbered after
+   #121's rule 11). The full composition draws the transcript under the status bar and the header, and under the
+   composer dock, the home indicator / navigation bar and (Compose) the IME, so messages scroll behind both
+   instead of clipping at solid bands. The composition owns it — hosts wire nothing.
+   - **Geometry:** the transcript's top content inset equals the **chrome height** (status bar + header,
+     including the header's 8 bottom gap) and its bottom inset equals the **dock height** (voice bar, reply
+     accessory and composer with their 8 padding, plus the home indicator / navigation bar, or measured above
+     the keyboard on iOS and including the IME on Compose). At rest the first and the latest message sit wholly
+     clear of the chrome and the fades. `defaultScrollAnchor(.bottom)`, short-conversation bottom alignment,
+     `scrollDismissesKeyboard(.interactively)` and the keyboard / IME docking are unchanged.
+   - **Jump to latest** (rule 10) keeps its 12 gap above the dock's top edge (bottom padding = dock height +
+     12), and its distance counts the bottom inset, so it is 0 — hidden — at rest at the latest message.
+   - **iOS backdrops:** progressive blurs — `.regularMaterial` masked by vertical gradients. Header: opacity
+     **1** over the status bar and header, fading to **0** over **20pt** that ends **12pt** below the header.
+     Dock: **0** from **12pt** above the dock's top edge, reaching **1** 8pt below it (about 20pt above the
+     composer pill), opaque to the screen edge. The dock itself no longer paints `backgroundPrimary`. Header
+     controls, the identity pill and the composer pill keep their own materials / fills.
+   - **Compose backdrops:** backdrop blurs of the transcript on **API 32+** through
+     [Haze](https://github.com/chrisbanes/haze) 1.1.1 (Apache-2.0; `RenderEffect` on a `GraphicsLayer` copy of the
+     transcript): blur radius 20dp, `backgroundPrimary` tint at 0.7, under the same masks as iOS. Below API 32
+     Haze draws the masks as `backgroundPrimary` scrims at **0.85** alpha at the screen edge to **0**. (Haze turns
+     blur on from API 32: API 31's `RenderEffect` path is unreliable.)
+   - **Reduce Transparency (iOS):** each edge is solid `backgroundPrimary` with a 0.5 `separator` hairline on
+     its inner edge (under the header, on top of the dock), no fade. **Android** has no reduce-transparency
+     setting; the same fallback follows the system contrast level above standard (Android 14+
+     `UiModeManager.contrast`); below Android 14 the scrims always show.
+   - **Accessibility:** the backdrops are decoration (hidden, not interactive; touches reach the transcript or
+     the chrome above them); the header is still read first.
 
 ## Paired native fixtures
 
@@ -126,6 +159,12 @@ Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlayg
 `chatJumpToLatestAppearsWhenScrolledUpAndReturns` (instrumentation). Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
+
+Edge backdrops: render pair `ChatEdgeBackdrop-light`, `ChatEdgeBackdrop-dark` — the Long conversation opened
+96pt/dp below its oldest message through internal evidence seams (`chatEdgeBackdropEvidence` /
+`LocalChatEdgeBackdropEvidence`, with the jump-to-latest seam), so messages sit under the header and under the
+composer dock. Geometry rules: `testEdgeBackdrop…` (`ChatScreenModelTests.swift`) / `edgeBackdrop…`
+(`ChatScreenModelTest.kt`).
 
 ## Full-screen composition and app boundary
 

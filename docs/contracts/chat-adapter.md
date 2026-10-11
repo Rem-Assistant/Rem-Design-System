@@ -84,6 +84,12 @@ no prototype reaction; this routing is explicit.
    down-arrow above the dock while the person is scrolled more than 200pt/dp above the newest message. No
    input, action or host wiring; it emits no `ChatScreenAction`. Identifier `chat.jumpToLatest`.
 
+11. **Edge backdrops** are presentation the composition owns ([`chat.md`](chat.md) rule 12; numbered after
+   #121's rule 10): the transcript scrolls under the header and the composer dock, whose backdrops are progressive
+   blurs (iOS material; Compose Haze blur on API 32+, scrim below) instead of solid fills, and the transcript's top and bottom insets
+   equal their heights. No input, action or host wiring; hosts still add no navigation bar or app bar above the
+   composition, and supply the window and keyboard / IME insets as before.
+
 ## Rules the adapter applies (truth)
 
 - `.delivered(at:)` only with durable **host acceptance** evidence; `at` is the host-formatted acceptance time.

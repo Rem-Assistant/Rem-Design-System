@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import com.rem.designsystem.screens.ChatPlaygroundFixture
 import com.rem.designsystem.screens.ChatTranscriptList
 import com.rem.designsystem.screens.LocalChatJumpToLatestEvidence
+import com.rem.designsystem.screens.LocalChatEdgeBackdropEvidence
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -583,6 +584,30 @@ class EvidenceSnapshots {
 
     @Test
     fun chatJumpToLatestDark() = shot("ChatJumpToLatest-dark") { JumpToLatestShot(dark = true) }
+
+    /**
+     * Edge backdrops over a scrolled transcript: the Long fixture opened 96dp below its oldest message
+     * (internal evidence seams), so messages sit under the header scrim and under the composer dock. Pairs
+     * with the SwiftUI `ChatEdgeBackdrop-light` / `-dark` renders.
+     */
+    @Composable
+    private fun EdgeBackdropShot(dark: Boolean) = RemTheme(darkTheme = dark) {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Long)
+        CompositionLocalProvider(
+            LocalChatJumpToLatestEvidence provides true,
+            LocalChatEdgeBackdropEvidence provides true,
+        ) {
+            ChatScreen(header = fixture.header, composer = fixture.composer.state, onAction = {}) {
+                ChatTranscriptList(fixture.entries, onAction = {})
+            }
+        }
+    }
+
+    @Test
+    fun chatEdgeBackdrop() = shot("ChatEdgeBackdrop-light") { EdgeBackdropShot(dark = false) }
+
+    @Test
+    fun chatEdgeBackdropDark() = shot("ChatEdgeBackdrop-dark") { EdgeBackdropShot(dark = true) }
 
     @Test
     fun messageReactionPicker() = shot("MessageReactionPicker-light") {

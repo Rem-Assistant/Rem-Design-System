@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemDarkColors
 import com.rem.designsystem.tokens.RemTheme
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeChild
 
 /**
  * Jump to latest — twin of SwiftUI `ChatJumpToLatest`: the round down-arrow control the full Chat
@@ -48,6 +51,11 @@ object ChatJumpToLatest {
     /** Appear / disappear: short fade plus scale from this factor. No animation at animator scale 0. */
     const val APPEAR_SCALE = 0.8f
     const val APPEAR_MILLIS = 200
+    /**
+     * Glass (API 32+, inside the Chat composition): `backgroundTertiary` tint over the blurred transcript, high
+     * enough that the `labelPrimary` arrow stays legible over bubbles in light and dark. Blur radius as the edges.
+     */
+    const val GLASS_TINT_ALPHA = 0.6f
     const val ACCESSIBILITY_LABEL = "Scroll to latest message"
     const val TEST_TAG = "chat.jumpToLatest"
 
@@ -59,17 +67,34 @@ object ChatJumpToLatest {
 }
 
 /**
- * The jump-to-latest control: a solid 44dp circle (`backgroundTertiary`, hairline `separator`, soft
- * shadow) with `ArrowDownward` in `labelPrimary` (registry pair `arrow.down` ↔ `ArrowDownward`).
+ * The jump-to-latest control: a 44dp glass circle (hairline `separator`, soft shadow) with `ArrowDownward` in
+ * `labelPrimary` (registry pair `arrow.down` ↔ `ArrowDownward`). Inside the Chat composition on API 32+ the
+ * circle blurs the transcript behind it (Haze, tinted `backgroundTertiary` at [ChatJumpToLatest.GLASS_TINT_ALPHA]);
+ * elsewhere — below API 32, outside the composition (catalog), or with high contrast — it is solid
+ * `backgroundTertiary`.
  */
 @Composable
 fun ChatJumpToLatestButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = RemColors.current
+    val haze = LocalChatEdgeHaze.current
     Box(
         modifier = modifier
             .size(ChatJumpToLatest.DIAMETER.dp)
             .shadow(4.dp, CircleShape, clip = false)
-            .background(colors.backgroundTertiary, CircleShape)
+            .then(
+                if (haze == null) Modifier.background(colors.backgroundTertiary, CircleShape)
+                else Modifier.clip(CircleShape).hazeChild(
+                    haze,
+                    HazeStyle(
+                        backgroundColor = colors.backgroundPrimary,
+                        tint = HazeTint(colors.backgroundTertiary.copy(alpha = ChatJumpToLatest.GLASS_TINT_ALPHA)),
+                        blurRadius = ChatEdgeBackdrop.BLUR_RADIUS.dp,
+                        noiseFactor = 0f,
+                        // Below API 32: the solid control.
+                        fallbackTint = HazeTint(colors.backgroundTertiary),
+                    ),
+                ),
+            )
             .border(0.5.dp, colors.separator, CircleShape)
             .clip(CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
