@@ -235,6 +235,10 @@ public struct ChatTranscriptList: View {
     private let hostContent: (String) -> AnyView
     /// Swipe-to-reveal timestamps (WS1d): one shared offset moves every row together.
     @State private var reveal: CGFloat = ChatTimestampReveal.settled
+    /// True only while the reveal drag is live. SwiftUI resets a `@GestureState` when the gesture ends
+    /// *or is cancelled* (the ScrollView takes over, the app backgrounds, a system gesture fires), and
+    /// `onEnded` runs only for the first, so the snap-back keys off this reset instead.
+    @GestureState private var isRevealDragging = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Width of the right-side timestamp column (fits "10:24 AM" at footnote size). Provisional: to be
     /// validated against long localized times and large text sizes; not a specified value.
@@ -276,6 +280,12 @@ public struct ChatTranscriptList: View {
         // Rows move together; the header, composer and keyboard live outside the transcript and stay put.
         .offset(x: -reveal)
         .simultaneousGesture(revealGesture)
+        .onChange(of: isRevealDragging) { _, dragging in
+            guard !dragging, reveal != ChatTimestampReveal.settled else { return }
+            withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
+                reveal = ChatTimestampReveal.settled
+            }
+        }
     }
 
     /// Right-side time for one message, just past the row's trailing edge so it is off-screen at rest and
@@ -294,18 +304,15 @@ public struct ChatTranscriptList: View {
         }
     }
 
-    /// Leftward horizontal drags only; vertical scrolling keeps working. Rows snap back on release.
+    /// Leftward horizontal drags only; vertical scrolling keeps working. Rows snap back when the drag
+    /// ends or is cancelled (see `isRevealDragging`).
     private var revealGesture: some Gesture {
         DragGesture(minimumDistance: ChatTimestampReveal.minTravel)
+            .updating($isRevealDragging) { _, dragging, _ in dragging = true }
             .onChanged { value in
                 let dx = value.translation.width, dy = value.translation.height
                 guard reveal > 0 || ChatTimestampReveal.isRevealDrag(dx: dx, dy: dy) else { return }
                 reveal = ChatTimestampReveal.reveal(dx: dx, columnWidth: Self.timeColumnWidth, reduceMotion: reduceMotion)
-            }
-            .onEnded { _ in
-                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
-                    reveal = ChatTimestampReveal.settled
-                }
             }
     }
 
