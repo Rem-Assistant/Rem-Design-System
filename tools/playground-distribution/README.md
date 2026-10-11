@@ -266,16 +266,35 @@ Read that line before reconciling provider state or asking for an account change
 A failed TestFlight upload (`upload_to_testflight`) is classified in process, before the
 private log is deleted, by an allowlist of patterns in the Fastfile. The exception message is
 matched and dropped, never written, logged or printed; the exception is re-raised unchanged.
-Codes: `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up to three, in
-order, joined by `_`; these take precedence and already cover a used or lower build number),
+Codes, in precedence order: `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up
+to three, in order, joined by `_`; these already cover a used or lower build number);
 `upload_transporter_missing`, `upload_app_not_found`, `upload_build_number_used`,
-`upload_auth_failed`, `upload_processing_timeout`, and otherwise
-`upload_user_error_unclassified`. After an upload failure the Fastfile makes one read-only
-`GET /v1/builds?filter[app]=…&filter[version]=<build number>` in its own rescue and records
-`upload_build_record` (`present`, `absent` or `unknown`), so the public line ends with, for
-example, `build record absent`. That lookup never replaces the upload's guard code or HTTP
-status. `present` means Apple has a record for this number: reconcile it before any rerun
-and never re-upload the same number.
+`upload_auth_failed`, `upload_processing_timeout`; `upload_altool_format_259` for Xcode 26
+altool's "isn't in the correct format" (Cocoa error 259); `upload_apple_code_m<digits>` for the
+first Apple negative numeric code such as `(-19209)`; `upload_asc_transfer_failed` for fastlane's
+"Could not download/upload from App Store Connect"; `upload_ipa_error_unclassified` for pilot's
+"Error uploading ipa file" with nothing more specific; and otherwise
+`upload_user_error_unclassified`.
+
+After an upload failure the Fastfile polls a read-only
+`GET /v1/builds?filter[app]=…&filter[version]=<build number>` up to six times about 30 seconds
+apart, stopping at the first record, each attempt in its own rescue, and records
+`upload_build_record` (`present`, `absent` or `unknown`; the last observation unless a record
+appeared), so the public line ends with, for example, `build record absent`. The lookup never
+replaces the upload's guard code or HTTP status. Xcode 26's altool can report a failure for an
+upload Apple accepted ([fastlane#30130](https://github.com/fastlane/fastlane/issues/30130)), so
+`present` adds `next step: reconcile the existing build, never re-upload`: the number is used.
+`absent` after six lookups is still not proof that Apple will never create the record.
+
+Xcode 26 altool workaround: the upload call alone runs with
+`DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS=--use-old-altool`, fastlane's documented opt-out
+from the new altool ([#29698](https://github.com/fastlane/fastlane/issues/29698),
+[#29739](https://github.com/fastlane/fastlane/issues/29739),
+[#29743](https://github.com/fastlane/fastlane/issues/29743),
+[#29860](https://github.com/fastlane/fastlane/issues/29860)). fastlane 2.240.1 reads it only in
+`AltoolTransporterExecutor#build_upload_command`; the Fastfile restores the previous value after
+the call. It adds no `--verbose`, and provider output still goes only to the private log. Remove
+it once a hosted upload has succeeded without it on the runner's Xcode.
 
 ## Validation
 

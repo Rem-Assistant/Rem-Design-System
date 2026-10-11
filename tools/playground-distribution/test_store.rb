@@ -122,7 +122,29 @@ upload_cases = {
   '' => 'upload_user_error_unclassified',
   nil => 'upload_user_error_unclassified',
   "\xFF\xFEbinary".b => 'upload_user_error_unclassified',
-  'ITMS-1234 short code is not Apple\'s 5-digit form' => 'upload_user_error_unclassified'
+  'ITMS-1234 short code is not Apple\'s 5-digit form' => 'upload_user_error_unclassified',
+  # Xcode 26 altool and fastlane 2.240.1 wrappers (pilot BuildManager#upload, AltoolTransporterExecutor).
+  "Error uploading ipa file: \n [Application Loader Error Output]: The file \u201CPlayground.ipa\u201D couldn\u2019t be " \
+    "opened because it isn\u2019t in the correct format. (259)" => 'upload_altool_format_259',
+  "The file couldn't be opened because it isn't in the correct format. " + SECRET => 'upload_altool_format_259',
+  'Error Domain=NSCocoaErrorDomain Code=259 "x"' => 'upload_altool_format_259',
+  'ERROR: Failed to upload package (259)' => 'upload_altool_format_259',
+  'Build (259) was rejected' => 'upload_user_error_unclassified',
+  'Upload failed with error code 2590' => 'upload_user_error_unclassified',
+  "Error uploading ipa file: \n [Application Loader Error Output]: Validation failed (409) Unable to " \
+    "process (-19209) " + SECRET => 'upload_apple_code_m19209',
+  'Failed (-19241) then (-19232)' => 'upload_apple_code_m19241',
+  'ITMS-90062: invalid (-19209)' => 'upload_itms_90062',
+  'The bundle version must be higher than the previously uploaded version (-19232)' => 'upload_build_number_used',
+  'Range (-) and minus 19209 are not codes' => 'upload_user_error_unclassified',
+  'Could not download/upload from App Store Connect! ' + SECRET => 'upload_asc_transfer_failed',
+  "Couldn't download/upload from App Store Connect" => 'upload_asc_transfer_failed',
+  'Error uploading ipa file: Could not download/upload from App Store Connect!' => 'upload_asc_transfer_failed',
+  "Error uploading ipa file: \n [Application Loader Error Output]: The call to the altool completed with a " \
+    'non-zero exit status: 1. This indicates a failure.' => 'upload_ipa_error_unclassified',
+  "Error uploading ipa file: \n -1 indicates altool exited abnormally; try retrying " + SECRET =>
+    'upload_ipa_error_unclassified',
+  'Error uploading pkg file: x' => 'upload_user_error_unclassified'
 }
 upload_cases.each do |message, code|
   got = upload_guard(message)
@@ -130,35 +152,89 @@ upload_cases.each do |message, code|
   raise "Upload guard not allowlist-shaped: #{got}" unless got.match?(/\A[a-z0-9_]{1,64}\z/)
 end
 raise 'Three ITMS codes must fit the 64-char guard' unless upload_guard('ITMS-11111 ITMS-22222 ITMS-33333 ITMS-44444').length <= 64
+raise 'Apple code must fit the 64-char guard' unless upload_guard('(-999999)') == 'upload_apple_code_m999999'
+# Codes are fixed or digit-only: no message text survives classification.
+upload_cases.each_key do |message|
+  next unless message.is_a?(String) && message.include?(SECRET)
+  code = upload_guard(message)
+  ['Provider', 'secret', 'example', 'token', 'abc', '9zz'].each do |leak|
+    raise "Upload guard leaked message text #{leak}: #{code}" if code.include?(leak.downcase)
+  end
+end
 
-# Build record lookup: one read-only GET, its own rescue, never replaces the upload's guard or HTTP status.
+# The Xcode 26 altool workaround is set only around the upload call and restored afterwards.
+ALTOOL_ENV = 'DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS'
+raise 'Wrong altool workaround' unless UPLOAD_ALTOOL_PARAMETERS == '--use-old-altool'
+ENV.delete(ALTOOL_ENV)
+seen = nil
+with_upload_altool_parameters { seen = ENV[ALTOOL_ENV] }
+raise "Workaround not set during upload: #{seen.inspect}" unless seen == '--use-old-altool'
+raise 'Workaround leaked past upload' if ENV.key?(ALTOOL_ENV)
+begin
+  with_upload_altool_parameters { raise 'Upload failed' }
+rescue RuntimeError
+end
+raise 'Workaround leaked past a failed upload' if ENV.key?(ALTOOL_ENV)
+ENV[ALTOOL_ENV] = '--previous'
+with_upload_altool_parameters { seen = ENV[ALTOOL_ENV] }
+raise 'Workaround must replace, not append' unless seen == '--use-old-altool'
+raise 'Previous value not restored' unless ENV[ALTOOL_ENV] == '--previous'
+ENV.delete(ALTOOL_ENV)
+
+# Build record lookup: up to 6 read-only GETs ~30s apart, stopping at 'present'; the last observation
+# otherwise wins. Its own rescue; never replaces the upload's guard or HTTP status. Sleeps are stubbed.
 def apple_key; end
-def record_after(response)
-  @responses = [response]
-  $release_guard, $release_http = 'upload_auth_failed', nil
-  got = upload_build_record('8')
-  raise 'Build record lookup replaced the upload guard' unless $release_guard == 'upload_auth_failed' && $release_http.nil?
-  raise 'Build record lookup made extra requests' unless @responses.empty?
-  got
+@waits = []
+def upload_record_wait(seconds)
+  @waits << seconds
 end
-{
-  {'data' => [{'id' => 'b', 'attributes' => {'version' => '8'}}]} => 'present',
-  {'data' => []} => 'absent',
-  {'data' => nil} => 'unknown',
-  {} => 'unknown'
-}.each do |response, value|
-  got = record_after(response)
-  raise "Expected build record #{value}, got #{got.inspect}" unless got == value
-end
+BUILD_PATH = '/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=8'
 def apple_request(method, path, payload = nil)
   raise 'Unexpected mutation' unless method == :get && payload.nil?
-  raise "Unexpected path #{path}" unless path == '/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=8'
-  $release_http = 500
-  require_release(false, 'Apple API failed', 'apple_api_http')
+  raise "Unexpected path #{path}" unless path == BUILD_PATH
+  raise 'Unexpected extra provider call' if @responses.empty?
+  response = @responses.shift
+  if response == :http_error
+    $release_http = 500
+    require_release(false, 'Apple API failed', 'apple_api_http')
+  end
+  response
 end
+present = {'data' => [{'id' => 'b', 'attributes' => {'version' => '8'}}]}
+absent = {'data' => []}
+build_record_cases = [
+  [[present], 'present', 1],
+  [[absent] * 6, 'absent', 6],
+  [[absent, absent, present], 'present', 3],
+  [[absent] * 5 + [present], 'present', 6],
+  [[{'data' => nil}] * 6, 'unknown', 6],
+  [[{}] * 6, 'unknown', 6],
+  [[absent] * 5 + [{}], 'unknown', 6],
+  [[:http_error] * 6, 'unknown', 6],
+  [[:http_error, :http_error, present], 'present', 3],
+  [[:http_error] * 5 + [absent], 'absent', 6],
+  [[absent] * 7, 'absent', 6]
+]
+build_record_cases.each do |responses, value, gets|
+  @responses, @waits = responses.dup, []
+  $release_guard, $release_http = 'upload_auth_failed', nil
+  got = upload_build_record('8')
+  raise "Expected build record #{value}, got #{got.inspect}" unless got == value
+  raise 'Build record lookup replaced the upload guard' unless $release_guard == 'upload_auth_failed' && $release_http.nil?
+  raise "Expected #{gets} GETs, made #{responses.length - @responses.length}" unless responses.length - @responses.length == gets
+  raise "Expected #{gets - 1} waits of 30s, got #{@waits.inspect}" unless @waits == [30] * (gets - 1)
+end
+# An interrupt during a wait is not swallowed, and still restores the upload's guard and status.
+@responses = [absent] * 6
 $release_guard, $release_http = 'upload_auth_failed', nil
-raise 'Failed lookup must be unknown' unless upload_build_record('8') == 'unknown'
-raise 'Failed lookup leaked its guard/status' unless $release_guard == 'upload_auth_failed' && $release_http.nil?
+define_method(:upload_record_wait) { |_| $release_http = 503; raise Interrupt }
+begin
+  upload_build_record('8')
+  raise 'Interrupt was swallowed by the build record lookup'
+rescue Interrupt
+end
+raise 'Interrupted lookup leaked its status' unless $release_guard == 'upload_auth_failed' && $release_http.nil?
+define_method(:upload_record_wait) { |seconds| @waits << seconds }
 
 # Whole lane, iOS upload failure: distribution.json carries only fixed codes, nothing is printed.
 require 'tmpdir'
@@ -174,12 +250,18 @@ Dir.mktmpdir do |dir|
   ENV.update('GITHUB_ACTIONS' => 'true', 'GITHUB_REF' => 'refs/heads/main', 'PLAYGROUND_OUTPUT' => dir,
     'PLAYGROUND_ADMISSION' => File.join(dir, 'admission.json'), 'PLAYGROUND_PLATFORM' => 'ios',
     'PLAYGROUND_BUILD_NUMBER' => number, 'PLAYGROUND_SOURCE_SHA' => sha)
-  [['ITMS-90062: ' + SECRET, 'upload_itms_90062', {'data' => [{'attributes' => {'version' => '8'}}]}, 'present'],
-   [SECRET, 'upload_user_error_unclassified', {'data' => []}, 'absent'],
-   ['Authentication credentials are missing or invalid. ' + SECRET, 'upload_auth_failed', nil, 'unknown']].each do |message, code, lookup, record|
+  [['ITMS-90062: ' + SECRET, 'upload_itms_90062', {'data' => [{'attributes' => {'version' => '8'}}]}, 'present', 1],
+   [SECRET, 'upload_user_error_unclassified', {'data' => []}, 'absent', 6],
+   ['Authentication credentials are missing or invalid. ' + SECRET, 'upload_auth_failed', nil, 'unknown', 6],
+   ["Error uploading ipa file: \n [Application Loader Error Output]: isn't in the correct format (259) " + SECRET,
+    'upload_altool_format_259', {'data' => []}, 'absent', 6],
+   ['Could not download/upload from App Store Connect! ' + SECRET, 'upload_asc_transfer_failed',
+    {'data' => [{'attributes' => {'version' => '8'}}]}, 'present', 1]].each do |message, code, lookup, record, gets|
     calls = []
+    @waits = []
+    altool = :unset
     define_method(:apple_group) { GROUP }
-    define_method(:upload_to_testflight) { |**_| raise message }
+    define_method(:upload_to_testflight) { |**_| altool = ENV[ALTOOL_ENV]; raise message }
     define_method(:apple_request) do |method, path, payload = nil|
       raise 'Unexpected mutation' unless method == :get && payload.nil?
       calls << path
@@ -202,9 +284,13 @@ Dir.mktmpdir do |dir|
     failure = JSON.parse(text)['failure']
     expected = {'phase' => 'upload', 'guard' => code, 'http_status' => nil, 'upload_build_record' => record}
     raise "Wrong failure record #{failure.inspect}" unless failure == expected
-    raise 'Build record lookup must be the second and last request' unless calls.length == 2 &&
-      calls[1] == '/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=8'
-    ['Provider said', 'secret@example.com', 'token=abc', '9ZZ', 'missing or invalid'].each do |leak|
+    raise "Build record lookups must follow the upload: #{calls.inspect}" unless calls.length == 1 + gets &&
+      calls[1..].all? { |path| path == BUILD_PATH }
+    raise "Wrong waits #{@waits.inspect}" unless @waits == [30] * (gets - 1)
+    raise "Upload ran without the altool workaround: #{altool.inspect}" unless altool == '--use-old-altool'
+    raise 'Altool workaround leaked past the upload' if ENV.key?(ALTOOL_ENV)
+    ['Provider said', 'secret@example.com', 'token=abc', '9ZZ', 'missing or invalid', 'correct format',
+     '(259)', 'download/upload', 'Error uploading', 'Application Loader'].each do |leak|
       raise "Provider text leaked into distribution.json: #{leak}" if text.include?(leak)
       raise "Provider text printed: #{leak}" if out.string.include?(leak)
     end
@@ -230,6 +316,8 @@ Dir.mktmpdir do |dir|
   failure = JSON.parse(File.read(File.join(dir, 'distribution.json')))['failure']
   raise "Interrupt was classified: #{failure.inspect}" unless failure == {'phase' => 'upload', 'guard' => 'exception_interrupt', 'http_status' => nil}
   raise 'Interrupt triggered a build-record lookup' unless calls.length == 1
+  raise 'Altool workaround leaked past an interrupted upload' if ENV.key?(ALTOOL_ENV)
 end
 puts "6 TestFlight privacy/scope guard scenarios, 15 guard-code cases, #{upload_cases.length} upload-guard cases, " \
-  '6 build-record cases, 3 upload-failure lane runs and 1 interrupt lane run passed; no store requests made.'
+  "4 altool-scope checks, #{build_record_cases.length + 1} build-record polling cases, 5 upload-failure lane runs " \
+  'and 1 interrupt lane run passed; no store requests made.'

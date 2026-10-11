@@ -23,6 +23,9 @@ def failure_line(record):
         line += f"; stopped in phase {f['phase']} at guard {f['guard']}; HTTP status {f['http_status'] or 'none'}"
         if 'upload_build_record' in f:
             line += f"; build record {f['upload_build_record']}"
+            if f['upload_build_record'] == 'present':
+                # altool can report a failure for an upload Apple accepted; the number is now used.
+                line += '; next step: reconcile the existing build, never re-upload'
     return line
 
 

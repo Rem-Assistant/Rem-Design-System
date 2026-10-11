@@ -50,7 +50,18 @@ UPLOAD_GUARD_PATTERNS = [
   ['upload_auth_failed',
    /authentication credentials are missing or invalid|\b(http|status(\s*code)?|statuscode|response(\s*code)?|responded with|error code)\b[\s:=#]*401\b|\b401\s+unauthori[sz]ed|unauthori[sz]ed|authentication (failed|failure|error)|not authenticated|invalid (credentials|api key)/i],
   ['upload_processing_timeout',
-   /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i]
+   /(timed? ?out|timeout).{0,80}process|process.{0,80}(timed? ?out|timeout)/i],
+  # Xcode 26 altool: Cocoa "file couldn't be opened because it isn't in the correct format" (259).
+  ['upload_altool_format_259',
+   /isn['\u2019]?t in the correct format|is not in the correct format|\bCode=259\b|\b(error|failed|failure)\b.{0,80}\(259\)/i]
+].freeze
+# After the semantic patterns: Apple's negative numeric codes, e.g. "(-19209)", then fastlane's
+# generic wrappers. In fastlane 2.240.1 pilot raises "Error uploading ipa file: ..." and the altool
+# executor logs "Could not download/upload from App Store Connect!"; both are matched here.
+UPLOAD_APPLE_CODE = /\(-(\d{1,6})\)/
+UPLOAD_GUARD_FALLBACKS = [
+  ['upload_asc_transfer_failed', %r{could ?n[o']t download/upload from App Store Connect}i],
+  ['upload_ipa_error_unclassified', /error uploading ipa file/i]
 ].freeze
 
 def upload_guard(message)
@@ -58,25 +69,62 @@ def upload_guard(message)
   itms = text.scan(/ITMS-(\d{5})/).flatten.uniq.first(3)
   return 'upload_itms_' + itms.join('_') unless itms.empty?
   UPLOAD_GUARD_PATTERNS.each { |code, pattern| return code if text.match?(pattern) }
+  apple = text[UPLOAD_APPLE_CODE, 1]
+  return 'upload_apple_code_m' + apple if apple
+  UPLOAD_GUARD_FALLBACKS.each { |code, pattern| return code if text.match?(pattern) }
   'upload_user_error_unclassified'
 rescue StandardError
   'upload_user_error_unclassified'
 end
 
-# One read-only lookup after an upload failure: did Apple create a build record for this number?
-# Its own rescue; never replaces the upload's guard code or HTTP status, and never prints a response.
+# Read-only lookups after an upload failure: did Apple create a build record for this number?
+# altool can report a failure for an upload Apple accepted (fastlane/fastlane#30130), and a record can
+# appear a little later, so poll up to UPLOAD_RECORD_ATTEMPTS GETs about UPLOAD_RECORD_INTERVAL seconds
+# apart and stop at the first 'present'. The last observation wins otherwise. Its own rescue per
+# attempt; never replaces the upload's guard code or HTTP status, and never prints a response.
+UPLOAD_RECORD_ATTEMPTS = 6
+UPLOAD_RECORD_INTERVAL = 30
+
+def upload_record_wait(seconds)
+  sleep(seconds)
+end
+
 def upload_build_record(number)
   guard, http = $release_guard, $release_http
+  record = 'unknown'
   begin
-    apple_key # Refresh the short-lived token locally (no request); an upload can outlast it.
-    data = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}")['data']
-    return 'unknown' unless data.is_a?(Array)
-    data.empty? ? 'absent' : 'present'
-  rescue StandardError
-    'unknown'
+    UPLOAD_RECORD_ATTEMPTS.times do |attempt|
+      upload_record_wait(UPLOAD_RECORD_INTERVAL) if attempt > 0
+      record = begin
+        apple_key # Refresh the short-lived token locally (no request); an upload can outlast it.
+        data = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}")['data']
+        data.is_a?(Array) ? (data.empty? ? 'absent' : 'present') : 'unknown'
+      rescue StandardError
+        'unknown'
+      ensure
+        $release_guard, $release_http = guard, http
+      end
+      break if record == 'present'
+    end
+    record
   ensure
     $release_guard, $release_http = guard, http
   end
+end
+
+# Xcode 26's new altool fails or misreports uploads from fastlane (fastlane/fastlane#29698, #29739,
+# #29743, #29860, #30130); fastlane's documented opt-out is the old altool. fastlane 2.240.1 reads this
+# variable only in AltoolTransporterExecutor#build_upload_command, so set it for the upload call alone and
+# restore the previous value afterwards. No --verbose: provider output still goes only to the private log.
+UPLOAD_ALTOOL_PARAMETERS = '--use-old-altool'
+
+def with_upload_altool_parameters
+  name = 'DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS'
+  had, previous = ENV.key?(name), ENV[name]
+  ENV[name] = UPLOAD_ALTOOL_PARAMETERS
+  yield
+ensure
+  had ? ENV[name] = previous : ENV.delete(name)
 end
 
 def apple_key
@@ -199,10 +247,12 @@ lane :distribute do
       release_phase('upload')
       # No external distribution, beta review submission, tester changes, public links or production release.
       begin
-        upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
-          ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
-          wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
-          expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+        with_upload_altool_parameters do
+          upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
+            ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
+            wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
+            expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+        end
       rescue StandardError => e
         # pilot fails through UI.user_error! (a StandardError). Interrupts and exits pass straight through to
         # the lane rescue, with no classification or lookup. Fixed code only; the message is dropped here.

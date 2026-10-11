@@ -273,19 +273,22 @@ class PackagingTests(unittest.TestCase):
                     distribution='upload_started', physical_device='unverified', visual_review_url=URL)
         fastfile = (Path(__file__).parent / 'fastlane' / 'Fastfile').read_text()
         classifier = fastfile[fastfile.index('UPLOAD_GUARD_PATTERNS = ['):fastfile.index('def upload_build_record')]
-        codes = set(re.findall(r"'(upload_[a-z_]+)'", classifier))
+        codes = set(re.findall(r"'(upload_[a-z0-9_]+)'", classifier))
         self.assertEqual(codes, {'upload_transporter_missing', 'upload_app_not_found', 'upload_build_number_used',
                                  'upload_auth_failed', 'upload_processing_timeout', 'upload_user_error_unclassified',
-                                 'upload_itms_'})
-        codes = (codes - {'upload_itms_'}) | {'upload_itms_90062', 'upload_itms_90186_90062_04238'}
+                                 'upload_altool_format_259', 'upload_asc_transfer_failed',
+                                 'upload_ipa_error_unclassified', 'upload_itms_', 'upload_apple_code_m'})
+        codes = (codes - {'upload_itms_', 'upload_apple_code_m'}) | {
+            'upload_itms_90062', 'upload_itms_90186_90062_04238', 'upload_apple_code_m19209'}
         for code in sorted(codes):
             for value in summary.UPLOAD_BUILD_RECORDS:
                 with self.subTest(code=code, record=value):
                     failure = {'phase': 'upload', 'guard': code, 'http_status': None, 'upload_build_record': value}
                     record = summary.public_record(dict(data, failure=failure))
                     self.assertEqual(record['failure'], failure)
+                    note = '; next step: reconcile the existing build, never re-upload' if value == 'present' else ''
                     self.assertEqual(summary.failure_line(record), 'Distribution state: upload_started; stopped in '
-                                     f'phase upload at guard {code}; HTTP status none; build record {value}')
+                                     f'phase upload at guard {code}; HTTP status none; build record {value}{note}')
         self.assertEqual(summary.UPLOAD_BUILD_RECORDS, ('present', 'absent', 'unknown'))
         base = {'phase': 'upload', 'guard': 'upload_auth_failed', 'http_status': None}
         self.assertNotIn('build record', summary.failure_line(summary.public_record(dict(data, failure=base))))
@@ -297,6 +300,22 @@ class PackagingTests(unittest.TestCase):
                     dict(base, upload_build_record='absent', message=secret)):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 summary.public_record(dict(data, failure=bad))
+
+    def test_present_build_record_after_failure_says_reconcile_never_reupload(self):
+        # altool can report a failure for an upload Apple accepted (fastlane/fastlane#30130).
+        data = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
+                    distribution='upload_started', physical_device='unverified', visual_review_url=URL)
+        for value in summary.UPLOAD_BUILD_RECORDS:
+            failure = {'phase': 'upload', 'guard': 'upload_asc_transfer_failed', 'http_status': None,
+                       'upload_build_record': value}
+            line = summary.failure_line(summary.public_record(dict(data, failure=failure)))
+            with self.subTest(record=value):
+                if value == 'present':
+                    self.assertTrue(line.endswith('; build record present; next step: reconcile the existing '
+                                                  'build, never re-upload'))
+                else:
+                    self.assertNotIn('reconcile', line)
+                    self.assertTrue(line.endswith(f'; build record {value}'))
 
     def test_upload_failure_summary_never_carries_provider_text(self):
         secret = 'ITMS-90062: team 9ZZ secret@example.com'
