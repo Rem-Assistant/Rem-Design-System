@@ -189,10 +189,29 @@ Dispatch from **`main`** only:
 | `track` | `internal`, the only option. The control script and the lane both refuse any other track |
 
 The production backend URL is **not** an input. It is the reviewed constant
-`PRODUCTION_API_BASE_URL` in `android_release.py`, which is deliberately empty. Until a reviewed
-change sets it to the real `https` backend, every build is refused with
-`PRODUCTION_API_BASE_URL is not committed` (class `POLICY`). Staging, `.invalid`, `.test`,
-`localhost` and non-https values are refused.
+`PRODUCTION_API_BASE_URL` in `android_release.py`: `https://backend-production-7d876.up.railway.app`,
+the same backend as the shipping RemClaw iOS Release build (`RemClaw/.env.Release.xcconfig`
+`API_BASE_URL`). It is scheme and host only: RemClaw's Android `ApiClient` trims a trailing `/` and
+appends absolute `/api/v1/...` paths, so the constant must not contain `/api/v1`. A blank value is
+still refused with `PRODUCTION_API_BASE_URL is not committed` (class `POLICY`), and staging,
+`.invalid`, `.test`, `localhost` and non-https values are refused.
+
+The Play **release status** is not an input either. It is the reviewed constant
+`PLAY_RELEASE_STATUS` (`draft` or `completed`) in `android_release.py`, recorded in the admission
+record and validated again by the lane. Play accepts only `draft` releases while an app is still a
+draft app, and the Android Publisher API does not report that app state, so the constant is
+`draft` for the **first upload**:
+
+- the bundle lands on the internal track as a **draft release** (`distribution: draft_internal`). It
+  is not available to testers until a human reviews it and rolls it out in Play Console
+  (Testing > Internal testing);
+- until that happens, a later run is refused because the internal track has pending work. The lane
+  never stacks on, replaces or promotes a draft;
+- after the first rollout takes the app out of draft, a reviewed change sets
+  `PLAY_RELEASE_STATUS = 'completed'`;
+- if `completed` is set while the app is still a draft, Play's refusal is replaced by a fixed
+  instruction (class `UPLOAD`). The lane never retries with another status, and the track is always
+  `internal`.
 
 ### Jobs
 
@@ -229,20 +248,21 @@ change sets it to the real `https` backend, every build is refused with
       - re-checks the package/admission records and the bundle's SHA-256;
       - requires the internal track to **already exist** with no pending release;
       - requires `version_code` to be above every existing code;
-      - uploads with `upload_to_play_store`, using `track: internal` and `release_status: completed`
-        (no metadata, images, changelogs or other tracks);
-      - reads back that the internal track holds a completed release with that version code.
+      - uploads with `upload_to_play_store`, using `track: internal` and the admitted
+        `release_status` (`draft` for the first upload, otherwise `completed`; no metadata, images,
+        changelogs or other tracks);
+      - reads back that the internal track holds a release with **that status** and version code.
    8. Always writes the allowlisted summary and always cleans up.
 
 Public summary allowlist: `remclaw_sha`, `release_branch`, approval model/reviewer,
-`version_code`, `track`, `distribution` (`not_started`, `upload_started`,
-`published_internal`, `unresolved`) and `failure_class`. Everything else is dropped.
+`version_code`, `track`, `release_status`, `distribution` (`not_started`, `upload_started`,
+`draft_internal`, `published_internal`, `unresolved`) and `failure_class`. Everything else is dropped.
 `distribution` set to `upload_started` or `unresolved` is **not** proof of failure: inspect the
 Play internal track for that version code before any retry.
 
-## Names-only setup checklist (do not populate until this PR is reviewed and merged)
+## Names-only setup checklist
 
-Nothing below exists yet. These are the exact names the workflow consumes.
+These are the exact names the workflow consumes. Which of them exist is tracked in the PR's "Setup state", not here; presence is not proof that a run works.
 
 - [ ] Play Console app `com.remapp.rem` exists, and its **internal testing** track exists
       (the lane refuses to create either).
@@ -266,15 +286,16 @@ Nothing below exists yet. These are the exact names the workflow consumes.
 | variable | `REMCLAW_ANDROID_UPLOAD_CERT_SHA256` | SHA-256 of the upload certificate (DER, 64 hex, colons allowed). Signing is refused on mismatch |
 | variable | `REMCLAW_ANDROID_GOOGLE_SERVER_CLIENT_ID` | Google OAuth **web** client ID (`<digits>-<id>.apps.googleusercontent.com`) that the backend verifies. Public, not a secret. A blank value fails closed |
 
-- [ ] A reviewed change setting `PRODUCTION_API_BASE_URL` in `android_release.py`.
+- [x] A reviewed change setting `PRODUCTION_API_BASE_URL` in `android_release.py` (this branch; review it).
+- [ ] After the first draft internal release is rolled out by a human in Play Console, a reviewed
+      change setting `PLAY_RELEASE_STATUS = 'completed'`.
 
 ## Unverified until an authorized pilot
 
 - Whether `com.remapp.rem` and its internal track exist in Play Console. The inspected
   account showed only the Playground app.
-- Whether Play accepts `release_status: completed` for the app. A Play app still in
-  **draft** state accepts only draft releases, and the run fails as `UPLOAD` until the app
-  leaves draft.
+- Whether the first `draft` upload is accepted end to end, and whether a human rollout of that
+  draft takes the app out of draft so that `completed` can be used afterwards.
 - Resolving bundletool `1.16.0` through RemClaw's declared repositories (from the init script).
 - Whether RemClaw's Android head is releasable. A SHA must first be on an allowed release branch.
 - Storage thresholds, which were sized for the Playground Android app.

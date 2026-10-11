@@ -28,10 +28,24 @@ PACKAGE = 'com.remapp.rem'
 TRACK = 'internal'  # The only Play track this workflow may ever touch.
 PLATFORM = 'android'  # storage.py budget row
 
-# Reviewed production backend for the Play build. Deliberately empty: a release refuses to build until
-# a reviewed change commits the real https URL here. It is not a workflow input so that a dispatcher
-# cannot point a store build at another backend.
-PRODUCTION_API_BASE_URL = ''
+# Reviewed production backend for the Play build. It is not a workflow input so that a dispatcher
+# cannot point a store build at another backend; changing it is a reviewed change here.
+# Same backend as the shipping RemClaw iOS Release build: RemClaw/.env.Release.xcconfig sets
+# API_BASE_URL = https:/$()/backend-production-7d876.up.railway.app (the $() splits `//` for xcconfig).
+# Form: scheme + host only, no path and no trailing slash. RemClaw's Android ApiClient trims a trailing
+# `/` and appends absolute paths such as `/api/v1/auth/login`, so `/api/v1` must not be included here.
+# validate_api_base_url still fails closed on a blank, staging, non-https or test-domain value.
+PRODUCTION_API_BASE_URL = 'https://backend-production-7d876.up.railway.app'
+
+# Play release status for the internal-track upload. A reviewed constant, never a workflow input.
+# Google Play accepts only `draft` releases while an app is still a draft app (never published on any
+# track), and the Android Publisher API exposes no field that reports that app state. So the very first
+# upload of com.remapp.rem goes up as a `draft` internal release: a human must review and roll it out in
+# Play Console (Testing > Internal testing). After that first rollout takes the app out of draft, a
+# reviewed change sets this to `completed`. Only the release status changes; the track is always
+# `internal`. The lane refuses to stack a new upload on an unpromoted draft (pending work).
+PLAY_RELEASE_STATUSES = ('draft', 'completed')
+PLAY_RELEASE_STATUS = 'draft'
 
 # RemClaw's committed Gradle wrapper distribution. A different wrapper is a reviewed change here.
 EXPECTED_GRADLE_DISTRIBUTION = 'gradle-8.14.4-bin.zip'
@@ -40,7 +54,7 @@ AAB_PATH = 'app/build/outputs/bundle/release/app-release.aab'
 DESIGN_SYSTEM_URL = 'https://github.com/Rem-Assistant/Rem-Design-System.git'
 MAX_VERSION_CODE = 2_100_000_000  # Google Play's upper bound for versionCode.
 CLIENT_ID = re.compile(r'[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com')
-DISTRIBUTION_STATES = ('not_started', 'upload_started', 'published_internal', 'unresolved')
+DISTRIBUTION_STATES = ('not_started', 'upload_started', 'draft_internal', 'published_internal', 'unresolved')
 ANDROID_NS = '{http://schemas.android.com/apk/res/android}'
 
 
@@ -54,6 +68,11 @@ def validate_version_code(value):
 
 def validate_track(value):
     require(value == TRACK, 'Only the Play internal track is allowed')
+    return value
+
+
+def validate_release_status(value):
+    require(value in PLAY_RELEASE_STATUSES, 'Play release status must be draft or completed')
     return value
 
 
@@ -101,14 +120,15 @@ def check_environment(environ):
         raise ReleaseError(f'{ENVIRONMENT} environment protection could not be read')
 
 
-def admit(sha, version_code, track, out, environ=os.environ, check=check_environment):
+def admit(sha, version_code, track, out, environ=os.environ, check=check_environment, release_status=None):
     release.run_identity(environ)
     release.validate_sha(sha)
     validate_version_code(version_code)
     validate_track(track)
+    status = validate_release_status(PLAY_RELEASE_STATUS if release_status is None else release_status)
     approval = check(environ)
-    record = {'remclaw_sha': sha, 'version_code': version_code, 'track': track, 'approval': approval,
-              'distribution': 'not_started'}
+    record = {'remclaw_sha': sha, 'version_code': version_code, 'track': track, 'release_status': status,
+              'approval': approval, 'distribution': 'not_started'}
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(record, indent=2) + '\n')
     return record
@@ -341,6 +361,8 @@ def public_record(data, failure=None):
         record['version_code'] = validate_version_code(str(data['version_code']))
     if data.get('track') is not None:
         record['track'] = validate_track(data['track'])
+    if data.get('release_status') is not None:
+        record['release_status'] = validate_release_status(data['release_status'])
     state = data.get('distribution', 'not_started')
     require(state in DISTRIBUTION_STATES, 'Unknown distribution state')
     record['distribution'] = state

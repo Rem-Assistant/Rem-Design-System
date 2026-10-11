@@ -12,6 +12,10 @@ skip_docs
 REMCLAW_PACKAGE = 'com.remapp.rem'
 REMCLAW_TRACK = 'internal' # The only track this lane can touch.
 MAX_VERSION_CODE = 2_100_000_000
+# Release statuses the lane may upload with. The status comes from the reviewed PLAY_RELEASE_STATUS
+# constant in android_release.py via the admission record, never from a dispatcher input. `draft` is the
+# first-upload path while com.remapp.rem is still a Play draft app: a human promotes it in Play Console.
+REMCLAW_RELEASE_STATUSES = %w[draft completed].freeze
 
 def require_release(ok, message)
   UI.user_error!(message) unless ok
@@ -66,9 +70,26 @@ def check_version_code(tracks, bundles, number)
   require_release(codes.all? { |n| n.to_i < number.to_i }, 'Choose an unused, increasing Play version code')
 end
 
-def internal_has(tracks, number)
+def release_status_for(admission)
+  status = admission['release_status']
+  require_release(REMCLAW_RELEASE_STATUSES.include?(status), 'Admission lacks a reviewed Play release status')
+  status
+end
+
+# Readback: the internal track holds a release with exactly the uploaded status and version code.
+def internal_has(tracks, number, status = 'completed')
   current = tracks.find { |t| t.track == REMCLAW_TRACK }
-  current && (current.releases || []).any? { |r| r.status == 'completed' && (r.version_codes || []).map(&:to_s).include?(number) }
+  current && (current.releases || []).any? { |r| r.status == status && (r.version_codes || []).map(&:to_s).include?(number) }
+end
+
+# Play's refusal of a non-draft release on an app that has never been published. Matched only to replace
+# the provider message with a fixed instruction; the lane never retries with another status or track.
+def draft_app_rejection?(message)
+  message.to_s.match?(/draft app/i)
+end
+
+def final_distribution(status)
+  status == 'draft' ? 'draft_internal' : 'published_internal'
 end
 
 def write_state(path, state)
@@ -88,6 +109,7 @@ lane :internal_upload do
   require_release(packaging['signing'] == 'verified' && packaging['remclaw_sha'] == sha && admission['remclaw_sha'] == sha &&
     packaging['version_code'] == number && admission['version_code'] == number && admission['track'] == REMCLAW_TRACK,
     'Package/admission mismatch')
+  status = release_status_for(admission)
   binary = File.join(out, 'RemClaw.aab')
   require_release(Digest::SHA256.file(binary).hexdigest == packaging['binary_sha256'], 'Signed bundle changed')
   state_path = File.join(out, 'distribution.json')
@@ -99,15 +121,22 @@ lane :internal_upload do
   state['distribution'] = 'upload_started'
   write_state(state_path, state)
   # Internal track only: no metadata, listing, images, changelogs, other tracks or rollout changes.
-  upload_to_play_store(package_name: REMCLAW_PACKAGE, json_key_data: play_json,
-    aab: binary, track: REMCLAW_TRACK, release_status: 'completed', version_name: "#{number} (#{sha[0, 12]})",
-    skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true,
-    skip_upload_images: true, skip_upload_screenshots: true, rescue_changes_not_sent_for_review: false)
+  # A `draft` release is not live for testers until a human rolls it out in Play Console.
+  begin
+    upload_to_play_store(package_name: REMCLAW_PACKAGE, json_key_data: play_json,
+      aab: binary, track: REMCLAW_TRACK, release_status: status, version_name: "#{number} (#{sha[0, 12]})",
+      skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true,
+      skip_upload_images: true, skip_upload_screenshots: true, rescue_changes_not_sent_for_review: false)
+  rescue StandardError => e
+    raise unless status == 'completed' && draft_app_rejection?(e.message)
+    UI.user_error!('Play accepts only draft releases while com.remapp.rem is a draft app. Reconcile the internal ' \
+      'track, then make a reviewed change setting PLAY_RELEASE_STATUS to draft; the lane never retries on its own')
+  end
   state['distribution'] = 'unresolved'
   write_state(state_path, state)
   play_tracks(client) do |tracks, _|
-    require_release(internal_has(tracks, number), 'Play internal release readback missing; reconcile before retrying')
+    require_release(internal_has(tracks, number, status), 'Play internal release readback missing; reconcile before retrying')
   end
-  state['distribution'] = 'published_internal'
+  state['distribution'] = final_distribution(status)
   write_state(state_path, state)
 end

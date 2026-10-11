@@ -65,6 +65,26 @@ class InputTests(unittest.TestCase):
             with patch.dict(os.environ, IDENTITY), self.assertRaises(release.ReleaseError):
                 ar.build(Path('/nonexistent'), Path('/nonexistent/out'), SHA, '42')
 
+    def test_production_url_is_the_ios_release_backend_host_only(self):
+        # Same backend as RemClaw/.env.Release.xcconfig; scheme + host only, since RemClaw's Android
+        # ApiClient appends absolute `/api/v1/...` paths to it.
+        self.assertEqual(ar.PRODUCTION_API_BASE_URL, 'https://backend-production-7d876.up.railway.app')
+        self.assertEqual(ar.validate_api_base_url(ar.PRODUCTION_API_BASE_URL), ar.PRODUCTION_API_BASE_URL)
+        self.assertNotIn('/api', ar.PRODUCTION_API_BASE_URL)
+        self.assertFalse(ar.PRODUCTION_API_BASE_URL.endswith('/'))
+        for bad in ['https://backend-staging-b87e.up.railway.app', '', 'http://backend-production-7d876.up.railway.app']:
+            with self.subTest(bad=bad), self.assertRaises(release.ReleaseError):
+                ar.validate_api_base_url(bad)
+
+    def test_release_status_is_reviewed_draft_or_completed(self):
+        self.assertEqual(ar.PLAY_RELEASE_STATUSES, ('draft', 'completed'))
+        self.assertIn(ar.PLAY_RELEASE_STATUS, ar.PLAY_RELEASE_STATUSES)
+        for good in ['draft', 'completed']:
+            self.assertEqual(ar.validate_release_status(good), good)
+        for bad in ['', None, 'inProgress', 'halted', 'Draft', 'completed ', ['draft']]:
+            with self.subTest(bad=bad), self.assertRaises(release.ReleaseError):
+                ar.validate_release_status(bad)
+
     def test_production_url_shape(self):
         for good in ['https://api.rem.com', 'https://rem-backend.up.railway.app', 'https://api.rem.com/v1']:
             self.assertEqual(ar.validate_api_base_url(good), good)
@@ -114,6 +134,20 @@ class AdmissionTests(unittest.TestCase):
             self.assertEqual(json.loads(out.read_text()), record)
             self.assertEqual(record['track'], 'internal')
             self.assertEqual(record['distribution'], 'not_started')
+            self.assertEqual(record['release_status'], ar.PLAY_RELEASE_STATUS)
+
+    def test_admission_records_first_upload_draft_and_later_completed(self):
+        check = lambda e: {'model': 'owner-approval', 'reviewer': 'samuelalake'}
+        with tempfile.TemporaryDirectory() as tmp:
+            for status in ('draft', 'completed'):
+                with self.subTest(status=status):
+                    out = Path(tmp) / f'{status}.json'
+                    record = ar.admit(SHA, '42', 'internal', out, IDENTITY, check=check, release_status=status)
+                    self.assertEqual(record['release_status'], status)
+                    self.assertEqual(record['track'], 'internal')  # the status never changes the track
+            with self.assertRaises(release.ReleaseError):
+                ar.admit(SHA, '42', 'internal', Path(tmp) / 'bad.json', IDENTITY, check=check, release_status='inProgress')
+            self.assertFalse((Path(tmp) / 'bad.json').exists())
 
     def test_bad_inputs_rejected_before_reading_github(self):
         calls = []
@@ -334,8 +368,15 @@ class SummaryTests(unittest.TestCase):
                                   'version_code': '42', 'track': 'internal', 'distribution': 'published_internal',
                                   'failure_class': 'UPLOAD'})
 
+    def test_draft_release_summary(self):
+        record = ar.public_record({'remclaw_sha': SHA, 'version_code': '1', 'track': 'internal', 'release_branch': 'main',
+                                   'approval': self.approval, 'release_status': 'draft', 'distribution': 'draft_internal'})
+        self.assertEqual(record['release_status'], 'draft')
+        self.assertEqual(record['distribution'], 'draft_internal')
+
     def test_injected_values_rejected(self):
         for change in [dict(track='production'), dict(distribution='MARKER'), dict(version_code='0'),
+                       dict(release_status='MARKER'), dict(release_status='inProgress'),
                        dict(release_branch='claude/android-app'), dict(remclaw_sha='MARKER'),
                        dict(approval={'model': 'owner-approval', 'reviewer': 'MARKER'})]:
             data = dict({'remclaw_sha': SHA, 'version_code': '42', 'track': 'internal'}, **change)
