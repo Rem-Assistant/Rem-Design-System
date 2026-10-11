@@ -20,8 +20,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -32,8 +32,12 @@ import com.rem.designsystem.tokens.RemColors
  * Closed, the chat fills the screen (`2702:2351`); open, the chat slides right as a rounded, shadowed
  * card leaving [RemSidebarLayout.VisibleContentPeek] visible, and tapping that card closes the sidebar
  * (`2702:2479`). [isOpen] is host-owned; [onOpenChange] reports the tap-to-close.
+ *
+ * Accessibility (twin of iOS `.accessibilityHidden`): only the visible surface is in the semantics tree.
+ * Open, the covered chat is cleared (its header, transcript and composer cannot be reached or activated by
+ * TalkBack or UI automation) and only the card's "Close sidebar" button represents it; closed, the
+ * off-screen sidebar's whole subtree is cleared. Contract: `docs/contracts/sidebar-new-agent.md`.
  */
-@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun RemSidebarContainer(
     isOpen: Boolean,
@@ -54,7 +58,7 @@ fun RemSidebarContainer(
             Modifier
                 .width(sidebarWidth)
                 .fillMaxHeight()
-                .then(if (isOpen) Modifier else Modifier.semantics { invisibleToUser() }),
+                .then(if (isOpen) Modifier else Modifier.clearAndSetSemantics {}),
         ) { sidebar() }
 
         Box(
@@ -66,7 +70,8 @@ fun RemSidebarContainer(
                 .clip(shape)
                 .background(colors.backgroundPrimary),
         ) {
-            content()
+            // The same wrapper open and closed, so toggling only swaps its semantics and content keeps its state.
+            Box(Modifier.fillMaxSize().then(if (isOpen) Modifier.clearAndSetSemantics {} else Modifier)) { content() }
             if (isOpen) {
                 Box(
                     Modifier

@@ -1161,10 +1161,19 @@ class PlaygroundNavigationTest {
         compose.onNodeWithTag("chat.header.menu").assert(hasContentDescription("Open sidebar"))
         capture("Shell-chat-light")
 
+        // Closed, the off-screen sidebar is out of the merged (TalkBack) tree.
+        compose.onNodeWithTag("sidebar.account").assertDoesNotExist()
+        compose.onNodeWithTag("sidebar.agent.main").assertDoesNotExist()
         openSidebar()
         compose.onNodeWithTag("sidebar.section.side").assertIsDisplayed()
         compose.onNodeWithTag("sidebar.newAgent").assertIsDisplayed()
         compose.onNodeWithTag("sidebar.account").assertIsDisplayed()
+        // Open, the covered chat is out of the merged (TalkBack) tree; only "Close sidebar" represents it, so
+        // TalkBack cannot reach or activate the composer behind the overlay (sidebar-new-agent.md).
+        compose.onNodeWithTag("sidebar.close").assert(hasContentDescription("Close sidebar"))
+        compose.onNodeWithTag("chat.composerField").assertDoesNotExist()
+        compose.onNodeWithTag("chat.header.identity").assertDoesNotExist()
+        compose.onNodeWithTag("chat.content").assertDoesNotExist()
         capture("Shell-sidebar-light")
         compose.onNodeWithTag("sidebar.agent.health").performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }

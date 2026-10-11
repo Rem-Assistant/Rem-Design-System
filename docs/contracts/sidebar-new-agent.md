@@ -74,6 +74,21 @@ Display models (no networking, no persistence): `RemSidebarModel` / `AgentModels
 **Push container:** open = chat offset by `RemSidebarLayout.sidebarWidth` (container − 70, max 332),
 44pt continuous corners + 12% shadow; tapping the visible chat closes.
 
+**Push container accessibility (both platforms):** only the surface a sighted person can use is in the
+accessibility tree.
+- **Open:** the covered chat (header, transcript, composer) is hidden from VoiceOver, TalkBack and UI
+  automation and takes no input; the visible card is a single **"Close sidebar"** button
+  (`sidebar.close`, role button) that closes it. A screen-reader user cannot reach or activate the
+  composer behind it, so no field can take focus or raise the keyboard while the sidebar is open.
+  SwiftUI: `.allowsHitTesting(!isOpen)` + `.accessibilityHidden(isOpen)` on the content; Compose:
+  `clearAndSetSemantics {}` on the content wrapper, with the "Close sidebar" overlay outside it.
+- **Closed:** the off-screen sidebar's whole subtree is hidden (SwiftUI `.accessibilityHidden(!isOpen)`;
+  Compose `clearAndSetSemantics {}` on the sidebar wrapper, not `invisibleToUser`, which leaves the
+  children in the tree).
+- **Proof:** Android `PlaygroundNavigationTest.shellSidebarSelectsAnAgentAndBackCloses` asserts, on the
+  merged tree, that `chat.composerField` / `chat.header.identity` / `chat.content` are absent while
+  `sidebar.close` exists, and that `sidebar.account` / `sidebar.agent.main` are absent while closed.
+
 **New agent setup** — a sheet that draws its own header (no navigation bar; host presents it
 directly), `backgroundPrimary`, 16 inset. Metrics live in `NewAgentSetupLayout` on both platforms.
 
