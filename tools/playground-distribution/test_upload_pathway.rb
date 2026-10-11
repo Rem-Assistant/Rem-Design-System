@@ -121,7 +121,15 @@ FIXTURES = {
     1, nil, 'absent', 'stopped in phase upload at guard upload_sdk_too_old; HTTP status none; build record absent'],
   'p_sdk_too_old_plain' => ['SDK requirement only in plain altool output (no ERROR: line)',
     "Validation failed. This app was built with the iOS 18.5 SDK #{SECRET_TEXT}\nUPLOAD FAILED\n", 1, nil, 'absent',
-    'stopped in phase upload at guard upload_sdk_too_old; HTTP status none; build record absent']
+    'stopped in phase upload at guard upload_sdk_too_old; HTTP status none; build record absent'],
+  'q_future_sdk_warning_with_itms' => ['future-SDK WARNING (ITMS-90725) does not mask the real ITMS error',
+    altool_log('WARNING: ITMS-90725: SDK version issue. This app was built with the iOS 26.2 SDK. Starting April 2027, ' \
+      'all iOS apps must be built with the iOS 27 SDK or later, included in Xcode 27 or later.',
+      "ERROR: [ContentDelivery.Uploader.600] ITMS-90062: This bundle is invalid. #{SECRET_TEXT}"), 1, nil, 'absent',
+    'stopped in phase upload at guard upload_itms_90062; HTTP status none; build record absent'],
+  'r_future_sdk_warning_with_exit' => ['future-SDK WARNING with a plain non-zero exit stays the exit code',
+    altool_log('WARNING: Starting April 2027, apps must be built with Xcode 27 or later.', "INFO: #{SECRET_TEXT}"),
+    3, nil, 'absent', 'stopped in phase upload at guard upload_altool_exit_3; HTTP status none; build record absent']
 }.freeze
 # What each fixture's Xcode puts in the IPA and in packaging.json (package.py xcode / build).
 XCODES = {

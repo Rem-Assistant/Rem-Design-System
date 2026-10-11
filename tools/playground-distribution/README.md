@@ -287,8 +287,10 @@ keeps only two symbols: the SDK requirement and a rejected `--use-old-altool`. C
 order (first match wins):
 
 0. `upload_sdk_too_old` for App Store Connect's Xcode 26 / iOS 26 SDK requirement (`ITMS-90725`,
-   "SDK version issue", "built with the iOS 18.x SDK", …), in the message or anywhere in altool's
-   output;
+   "SDK version issue", "built with the iOS 18.x SDK", …) in the message (altool `ERROR:` lines).
+   When only altool's plain output carries it, it ranks after 2 and before 3. Advisory
+   `WARNING`/`WARN`/`NOTICE`/`INFO` lines are ignored, so a future-SDK warning never masks the
+   real error;
 1. `upload_itms_<digits>` for Apple's `ITMS-NNNNN` validation codes (up to three, in order,
    joined by `_`; these already cover a used or lower build number);
 2. `upload_altool_flag_rejected` when altool refuses `--use-old-altool` by name, on an `ERROR:` line
@@ -370,7 +372,7 @@ ruby tools/playground-distribution/test_workflows.rb
 (cd tools/playground-distribution && BUNDLE_FROZEN=true bundle exec ruby test_upload_pathway.rb)
 ```
 
-`test_upload_pathway.rb` (with the frozen bundle) runs the real locked fastlane 2.240.1 on 20
+`test_upload_pathway.rb` (with the frozen bundle) runs the real locked fastlane 2.240.1 on 22
 sanitized synthetic fixtures. A stub `xcrun altool` on `PATH` prints each fixture and exits. The
 test then runs the workflow's own store-step script, which calls `bundle exec fastlane distribute`
 (pilot, `AltoolTransporterExecutor`, `UI.user_error!`) and the Fastfile rescues, and then runs

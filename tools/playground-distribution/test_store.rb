@@ -316,7 +316,11 @@ ENV.delete(ALTOOL_ENV)
 {
   [pilot_message([], 64), [:flag_rejected]] => 'upload_altool_flag_rejected',
   [pilot_message([], 1), [:sdk_too_old]] => 'upload_sdk_too_old',
-  [pilot_message(['ITMS-90062: x']), [:sdk_too_old, :flag_rejected]] => 'upload_sdk_too_old',
+  [pilot_message(['ITMS-90062: x']), [:sdk_too_old, :flag_rejected]] => 'upload_itms_90062',
+  [pilot_message(['ITMS-90062: x']), [:sdk_too_old]] => 'upload_itms_90062',
+  [pilot_message(["isn't in the correct format (259)"]), [:sdk_too_old]] => 'upload_altool_format_259',
+  [pilot_message(['Unable to process (-19209)']), [:sdk_too_old]] => 'upload_sdk_too_old',
+  [pilot_message(['ITMS-90725: SDK version issue']), []] => 'upload_sdk_too_old',
   [pilot_message(['ITMS-90062: x']), [:flag_rejected]] => 'upload_itms_90062',
   [pilot_message([], 64), []] => 'upload_altool_exit_64'
 }.each do |(message, signals), code|
@@ -327,7 +331,13 @@ UploadOutputSignals.observe("altool: unrecognized option '--use-old-altool' " + 
 raise 'Signals recorded while no upload runs' unless UploadOutputSignals.stop.empty?
 UploadOutputSignals.start
 ["altool: unrecognized option '--use-old-altool' " + SECRET, 'Usage: altool --upload-app',
- 'This app was built with the iOS 18.5 SDK. ' + SECRET, "\xFF\xFE".b].each { |line| UploadOutputSignals.observe(line) }
+ 'This app was built with the iOS 18.5 SDK. ' + SECRET, "\xFF\xFE".b,
+ # Advisory levels never raise a signal, with or without the timestamp and [altool] prefix.
+ '2026-10-11 15:16:00.123 WARNING: ITMS-90725: SDK version issue. Starting April 2027, all iOS apps must be built ' \
+   'with the iOS 27 SDK or later, included in Xcode 27 or later.',
+ '[altool] WARN: Starting April 2027, apps must be built with Xcode 27 or later.',
+ 'NOTICE: built with an older version of Xcode', 'INFO: unknown option --use-old-altool',
+ '*** WARNING: This app was built with the iOS 18.5 SDK'].each { |line| UploadOutputSignals.observe(line) }
 kept = UploadOutputSignals.instance_variable_get(:@seen)
 raise "Signals must be symbols only: #{kept.inspect}" unless kept == [:flag_rejected, :sdk_too_old]
 raise 'Signals not returned' unless UploadOutputSignals.stop == [:flag_rejected, :sdk_too_old]
@@ -353,13 +363,23 @@ Dir.mktmpdir do |bin|
     got = probe.call(script)
     raise "Probe expected #{expected}, got #{got} for #{script}" unless got == expected
   end
+  # The probe runs without PLAYGROUND_* variables (no credentials).
+  ENV['PLAYGROUND_ASC_KEY_BASE64'] = 'c2VjcmV0'
+  got = probe.call("env | grep -q '^PLAYGROUND_' && exit 9\necho 'Usage: altool --upload-app --use-old-altool'")
+  raise "Probe saw PLAYGROUND_* variables: #{got}" unless got == 'supported'
+  ENV.delete('PLAYGROUND_ASC_KEY_BASE64')
   verbose, $VERBOSE = $VERBOSE, nil
   limit = ALTOOL_PROBE_TIMEOUT
   Object.const_set(:ALTOOL_PROBE_TIMEOUT, 1)
   started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-  got = probe.call('sleep 30')
+  pidfile = File.join(bin, 'grandchild.pid')
+  got = probe.call("sleep 30 &\necho $! > #{pidfile}\nwait")
   raise "A hung probe must be unknown within its timeout: #{got}" unless got == 'unknown' &&
     Process.clock_gettime(Process::CLOCK_MONOTONIC) - started < 10
+  # The whole process group is killed: the grandchild is gone (or a reaped-later zombie), not still sleeping.
+  grandchild = File.read(pidfile).strip
+  state = `ps -o stat= -p #{grandchild}`.strip
+  raise "Probe grandchild survived the timeout: #{state}" unless state.empty? || state.start_with?('Z')
   Object.const_set(:ALTOOL_PROBE_TIMEOUT, limit)
   $VERBOSE = verbose
   ENV['PATH'] = path

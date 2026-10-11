@@ -66,8 +66,10 @@ UPLOAD_GUARD_PATTERNS = [
   ['upload_output_encoding_error', /invalid byte sequence in [A-Za-z0-9_-]{1,40}/]
 ].freeze
 # Precedence, first match wins:
-#   0. upload_sdk_too_old              ITMS-90725 or "built with an older SDK/Xcode" wording, in the message or
-#                                       anywhere in altool's output (UploadOutputSignals)
+#   0. upload_sdk_too_old              ITMS-90725 or "built with an older SDK/Xcode" wording in the message
+#                                       (altool ERROR: lines); when only altool's plain output has it
+#                                       (UploadOutputSignals, advisory WARNING/NOTICE/INFO lines skipped),
+#                                       it ranks after 2, before the Apple code
 #   1. upload_itms_<digits>            Apple ITMS-NNNNN validation codes (up to three)
 #   2. UPLOAD_GUARD_PATTERNS            semantic patterns above, from upload_altool_flag_rejected (also when
 #                                       only altool's plain output names it) to upload_altool_format_259 and
@@ -111,6 +113,9 @@ end
 # every line) while an upload runs, and keeps only fixed symbols; the lines are never stored.
 module UploadOutputSignals
   PATTERNS = { sdk_too_old: UPLOAD_SDK_TOO_OLD, flag_rejected: UPLOAD_FLAG_REJECTED }.freeze
+  # Advisory lines (e.g. a future-SDK WARNING: ITMS-90725) are not why an upload failed; skip them after the
+  # optional timestamp and [altool] prefix.
+  ADVISORY = /\A\s*(\[altool\]:?\s*)?(\d{4}-\d{2}-\d{2}[ T][\d:.]+\s+)?(\*\*\*\s*)?(WARNING|WARN|NOTICE|INFO)\b/i
   @seen = nil
 
   def self.start
@@ -125,6 +130,7 @@ module UploadOutputSignals
   def self.observe(line)
     return unless @seen
     text = line.to_s.dup.force_encoding(Encoding::UTF_8).scrub('')
+    return if text.match?(ADVISORY)
     PATTERNS.each { |name, pattern| @seen |= [name] if text.match?(pattern) }
   rescue StandardError
     nil
@@ -163,11 +169,13 @@ def upload_guard(error, signals = [])
     current = current.is_a?(Exception) ? current.cause : nil
   end
   text = messages.join("\n").dup.force_encoding(Encoding::UTF_8).scrub('')[0, 20_000]
-  return 'upload_sdk_too_old' if signals.include?(:sdk_too_old) || text.match?(UPLOAD_SDK_TOO_OLD)
+  return 'upload_sdk_too_old' if text.match?(UPLOAD_SDK_TOO_OLD)
   itms = text.scan(/ITMS-(\d{5})/).flatten.uniq.first(3)
   return 'upload_itms_' + itms.join('_') unless itms.empty?
   return 'upload_altool_flag_rejected' if signals.include?(:flag_rejected)
   UPLOAD_GUARD_PATTERNS.each { |code, pattern| return code if text.match?(pattern) }
+  # Seen only in altool's plain output: below ITMS codes and the message's own patterns.
+  return 'upload_sdk_too_old' if signals.include?(:sdk_too_old)
   apple = text[UPLOAD_APPLE_CODE, 1]
   return 'upload_apple_code_m' + apple if apple
   bucket = upload_errlines_bucket(upload_error_lines(text))
@@ -240,7 +248,8 @@ ALTOOL_PROBE_TIMEOUT = 60
 # 'unsupported' when it is altool's help without it, otherwise 'unknown'. Output is read, never kept.
 def altool_old_flag_support
   text = nil
-  Open3.popen2e('xcrun', 'altool', '--help', pgroup: true) do |stdin, output, waiter|
+  clean = ENV.keys.grep(/\APLAYGROUND_/).to_h { |name| [name, nil] } # no credentials in the probe
+  Open3.popen2e(clean, 'xcrun', 'altool', '--help', pgroup: true) do |stdin, output, waiter|
     stdin.close
     reader = Thread.new do
       output.read.to_s
