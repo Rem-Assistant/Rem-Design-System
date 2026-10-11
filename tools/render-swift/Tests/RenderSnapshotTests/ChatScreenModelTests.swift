@@ -178,6 +178,91 @@ final class ChatScreenModelTests: XCTestCase {
         XCTAssertNil(ChatTimestampReveal.accessibilityTime(ChatMessageDisplay(id: "x", role: .user, text: "Hi")))
     }
 
+    // MARK: Edge backdrops (paired with `ChatScreenModelTest.kt`)
+
+    func testEdgeBackdropContentInsetsEqualTheChromeAndDockHeights() {
+        for h: CGFloat in [0, 128, 152, 177.5, 260] {
+            XCTAssertEqual(ChatEdgeBackdrop.contentTopInset(chromeHeight: h), h, "top inset == chrome \(h)")
+            XCTAssertEqual(ChatEdgeBackdrop.contentBottomInset(dockHeight: h), h, "bottom inset == dock \(h)")
+        }
+        XCTAssertEqual(ChatEdgeBackdrop.contentTopInset(chromeHeight: -4), 0, "never negative")
+        XCTAssertEqual(ChatEdgeBackdrop.contentBottomInset(dockHeight: -4), 0, "never negative")
+        // Measured edges: status bar 59 above the safe area (viewport top -59), header bottom at 128.
+        XCTAssertEqual(ChatEdgeBackdrop.chromeHeight(headerBottom: 128, viewportTop: -59), 187)
+        // Dock top at 744 of an 874 screen: dock + home indicator = 130; keyboard up: viewport ends at 538.
+        XCTAssertEqual(ChatEdgeBackdrop.dockHeight(viewportBottom: 874, dockTop: 744), 130)
+        XCTAssertEqual(ChatEdgeBackdrop.dockHeight(viewportBottom: 538, dockTop: 442), 96)
+        // A short conversation fills exactly the area between the header and the dock.
+        XCTAssertEqual(ChatEdgeBackdrop.transcriptMinHeight(viewportHeight: 874, topInset: 187, bottomInset: 130) + 187 + 130, 874)
+        XCTAssertEqual(ChatEdgeBackdrop.transcriptMinHeight(viewportHeight: 200, topInset: 187, bottomInset: 130), 0)
+    }
+
+    func testEdgeBackdropFirstMessageIsFullyVisibleAtTheTop() {
+        for chrome: CGFloat in [96, 128, 152, 260] {
+            let top = ChatEdgeBackdrop.firstMessageTop(chromeHeight: chrome)
+            XCTAssertTrue(ChatEdgeBackdrop.isBelowHeader(rowTop: top, chromeHeight: chrome), "below the header at \(chrome)")
+            XCTAssertTrue(ChatEdgeBackdrop.isClearOfBackdrop(rowTop: top, chromeHeight: chrome), "clear of the fade at \(chrome)")
+        }
+        let chrome: CGFloat = 128
+        XCTAssertFalse(ChatEdgeBackdrop.isClearOfBackdrop(rowTop: ChatEdgeBackdrop.firstMessageTop(chromeHeight: chrome) - 1,
+                                                          chromeHeight: chrome))
+        XCTAssertFalse(ChatEdgeBackdrop.isBelowHeader(rowTop: chrome - 1, chromeHeight: chrome))
+    }
+
+    func testEdgeBackdropLatestMessageIsFullyVisibleAboveTheDock() {
+        let viewport: CGFloat = 874
+        // Dock heights: composer alone; with reply accessory; keyboard-docked (viewport ends at the keyboard).
+        for dock: CGFloat in [96, 160, 130] {
+            let bottom = ChatEdgeBackdrop.latestMessageBottom(viewportHeight: viewport, dockHeight: dock)
+            XCTAssertLessThanOrEqual(bottom, viewport - dock, "above the dock at \(dock)")
+            XCTAssertTrue(ChatEdgeBackdrop.isClearOfDockBackdrop(rowBottom: bottom, viewportHeight: viewport, dockHeight: dock))
+            XCTAssertFalse(ChatEdgeBackdrop.isClearOfDockBackdrop(rowBottom: bottom + 1, viewportHeight: viewport, dockHeight: dock),
+                           "1pt lower passes under the fade")
+        }
+    }
+
+    func testEdgeBackdropJumpToLatestHidesAtTheLatestMessageAndClearsTheDock() {
+        // At rest at the latest message the content's bottom edge (dock inset included) is the viewport's.
+        let viewport: CGFloat = 874
+        XCTAssertEqual(ChatEdgeBackdrop.distanceFromLatest(contentBottom: viewport, viewportHeight: viewport), 0)
+        XCTAssertFalse(ChatJumpToLatest.isVisible(distanceFromBottom:
+            ChatEdgeBackdrop.distanceFromLatest(contentBottom: viewport, viewportHeight: viewport)))
+        XCTAssertFalse(ChatJumpToLatest.isVisible(distanceFromBottom:
+            ChatEdgeBackdrop.distanceFromLatest(contentBottom: viewport + 200, viewportHeight: viewport)))
+        XCTAssertTrue(ChatJumpToLatest.isVisible(distanceFromBottom:
+            ChatEdgeBackdrop.distanceFromLatest(contentBottom: viewport + 201, viewportHeight: viewport)))
+        // The button keeps its 12pt gap above the dock's top edge.
+        XCTAssertEqual(ChatEdgeBackdrop.jumpButtonBottomPadding(dockHeight: 96), 108)
+        XCTAssertEqual(ChatEdgeBackdrop.jumpButtonBottomPadding(dockHeight: 0), ChatJumpToLatest.bottomSpacing)
+    }
+
+    func testEdgeBackdropMasksFadeToClearJustPastTheChrome() {
+        XCTAssertEqual(ChatEdgeBackdrop.fadeHeight, 20)
+        XCTAssertEqual(ChatEdgeBackdrop.fadeOverhang, ChatEdgeBackdrop.transcriptPadding, "fade overhang == transcript padding")
+        XCTAssertEqual(ChatEdgeBackdrop.transcriptPadding, 12)
+        XCTAssertEqual(ChatEdgeBackdrop.edgeOpacity, 1)
+        XCTAssertEqual(ChatEdgeBackdrop.clearOpacity, 0)
+        XCTAssertEqual(ChatEdgeBackdrop.hairline, 0.5)
+        // Header: opaque to 8pt (the header's bottom gap) above its bottom edge, clear 12pt below it.
+        let chrome: CGFloat = 128
+        XCTAssertEqual(ChatEdgeBackdrop.backdropHeight(chromeHeight: chrome), 140)
+        let top = ChatEdgeBackdrop.maskStops(chromeHeight: chrome)
+        XCTAssertEqual(top.map { $0.opacity }, [1, 1, 0])
+        XCTAssertEqual(top[0].location, 0)
+        XCTAssertEqual(top[1].location, (chrome - 8) / 140, accuracy: 1e-6)
+        XCTAssertEqual(top[2].location, 1)
+        XCTAssertEqual(ChatEdgeBackdrop.maskStops(chromeHeight: -12).map { $0.location }, [0, 0, 1])
+        // Dock: clear 12pt above its top edge, opaque from 8pt (the dock's top padding) below it to the edge.
+        let dock: CGFloat = 96
+        XCTAssertEqual(ChatEdgeBackdrop.dockBackdropHeight(dockHeight: dock), 108)
+        let bottom = ChatEdgeBackdrop.dockMaskStops(dockHeight: dock)
+        XCTAssertEqual(bottom.map { $0.opacity }, [0, 1, 1])
+        XCTAssertEqual(bottom[0].location, 0)
+        XCTAssertEqual(bottom[1].location, 20 / 108, accuracy: 1e-6)
+        XCTAssertEqual(bottom[2].location, 1)
+        XCTAssertEqual(ChatEdgeBackdrop.dockMaskStops(dockHeight: 0).map { $0.location }, [0, 1, 1])
+    }
+
     // MARK: Jump to latest (paired with `ChatScreenModelTest.kt`)
 
     func testJumpToLatestShowsOnlyBeyondTheThreshold() {
@@ -197,57 +282,6 @@ final class ChatScreenModelTests: XCTestCase {
         XCTAssertEqual(ChatJumpToLatest.appearDuration, 0.2)
         XCTAssertEqual(ChatJumpToLatest.accessibilityLabel, "Scroll to latest message")
         XCTAssertEqual(ChatJumpToLatest.accessibilityIdentifier, "chat.jumpToLatest")
-    }
-
-    // MARK: Header backdrop (paired with `ChatScreenModelTest.kt`)
-
-    func testHeaderBackdropContentInsetEqualsTheChromeHeight() {
-        for chrome: CGFloat in [0, 128, 152, 177.5, 260] {
-            XCTAssertEqual(ChatHeaderBackdrop.contentTopInset(chromeHeight: chrome), chrome, "inset == chrome \(chrome)")
-        }
-        XCTAssertEqual(ChatHeaderBackdrop.contentTopInset(chromeHeight: -4), 0, "never negative")
-        // Measured edges: status bar 59 above the safe area (viewport top -59), header bottom at 128.
-        XCTAssertEqual(ChatHeaderBackdrop.chromeHeight(headerBottom: 128, viewportTop: -59), 187)
-        XCTAssertEqual(ChatHeaderBackdrop.chromeHeight(headerBottom: 128, viewportTop: 0), 128)
-        // A short conversation fills exactly the area below the header: inset + min height == viewport.
-        XCTAssertEqual(ChatHeaderBackdrop.transcriptMinHeight(viewportHeight: 700, topInset: 187) + 187, 700)
-        XCTAssertEqual(ChatHeaderBackdrop.transcriptMinHeight(viewportHeight: 100, topInset: 187), 0)
-    }
-
-    func testHeaderBackdropFirstMessageIsFullyVisibleAtTheTop() {
-        for chrome: CGFloat in [96, 128, 152, 260] {
-            let top = ChatHeaderBackdrop.firstMessageTop(chromeHeight: chrome)
-            XCTAssertTrue(ChatHeaderBackdrop.isBelowHeader(rowTop: top, chromeHeight: chrome), "below the header at \(chrome)")
-            XCTAssertTrue(ChatHeaderBackdrop.isClearOfBackdrop(rowTop: top, chromeHeight: chrome), "clear of the fade at \(chrome)")
-        }
-        // Scrolled up by even 1pt from that resting place, the row starts to pass under the fade.
-        let chrome: CGFloat = 128
-        XCTAssertFalse(ChatHeaderBackdrop.isClearOfBackdrop(rowTop: ChatHeaderBackdrop.firstMessageTop(chromeHeight: chrome) - 1,
-                                                            chromeHeight: chrome))
-        XCTAssertFalse(ChatHeaderBackdrop.isBelowHeader(rowTop: chrome - 1, chromeHeight: chrome))
-    }
-
-    func testHeaderBackdropMaskFadesToClearJustBelowTheHeader() {
-        XCTAssertEqual(ChatHeaderBackdrop.fadeHeight, 20)
-        XCTAssertEqual(ChatHeaderBackdrop.fadeOverhang, ChatHeaderBackdrop.transcriptTopPadding,
-                       "fade overhang == transcript top padding")
-        XCTAssertEqual(ChatHeaderBackdrop.transcriptTopPadding, 12)
-        XCTAssertEqual(ChatHeaderBackdrop.topOpacity, 1)
-        XCTAssertEqual(ChatHeaderBackdrop.bottomOpacity, 0)
-        XCTAssertEqual(ChatHeaderBackdrop.hairline, 0.5)
-        let chrome: CGFloat = 128
-        XCTAssertEqual(ChatHeaderBackdrop.backdropHeight(chromeHeight: chrome), 140)
-        let stops = ChatHeaderBackdrop.maskStops(chromeHeight: chrome)
-        XCTAssertEqual(stops.count, 3)
-        XCTAssertEqual(stops[0].location, 0)
-        XCTAssertEqual(stops[0].opacity, 1)
-        // The fade starts 8pt (the header's bottom gap) above the header's bottom edge.
-        XCTAssertEqual(stops[1].location, (chrome - 8) / 140, accuracy: 1e-6)
-        XCTAssertEqual(stops[1].opacity, 1)
-        XCTAssertEqual(stops[2].location, 1)
-        XCTAssertEqual(stops[2].opacity, 0)
-        // With no measured chrome yet, the whole (overhang-high) backdrop is fade.
-        XCTAssertEqual(ChatHeaderBackdrop.maskStops(chromeHeight: -12).map { $0.location }, [0, 0, 1])
     }
 
     // MARK: Long-press message actions (`2603:19498`)

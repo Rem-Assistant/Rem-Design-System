@@ -2,7 +2,7 @@
 import XCTest
 import SwiftUI
 import UIKit
-// @testable for the internal evidence seams (`chatJumpToLatestEvidence`, `chatHeaderBackdropEvidence`).
+// @testable for the internal evidence seams (`chatJumpToLatestEvidence`, `chatEdgeBackdropEvidence`).
 @testable import RemDesignSystem
 
 // File-scope so the ListRow trailing closures don't capture `self` (escaping closures in a class
@@ -164,14 +164,14 @@ final class RenderSnapshots: XCTestCase {
                     .environment(\.chatJumpToLatestEvidence, true)
             }
         }
-        // Header backdrop over a scrolled transcript: the Long fixture opened at its oldest message, then
-        // scrolled 96pt (internal evidence seams), so messages sit under the progressive blur. Pairs with the
-        // Compose `ChatHeaderBackdrop-light` / `-dark` shots. The settle covers the post-appear scroll.
+        // Edge backdrops over a scrolled transcript: the Long fixture opened at its oldest message, then scrolled
+        // 96pt (internal evidence seams), so messages sit under the header blur and under the composer dock.
+        // Pairs with the Compose `ChatEdgeBackdrop-light` / `-dark` shots. The settle covers the post-appear scroll.
         for dark in [false, true] {
-            render("ChatHeaderBackdrop-\(dark ? "dark" : "light")", width: 402, height: 874, dark: dark, settle: 0.6) {
+            render("ChatEdgeBackdrop-\(dark ? "dark" : "light")", width: 402, height: 874, dark: dark, settle: 0.6) {
                 chatComposition(ChatPlaygroundFixture(.long))
                     .environment(\.chatJumpToLatestEvidence, true)
-                    .environment(\.chatHeaderBackdropEvidence, true)
+                    .environment(\.chatEdgeBackdropEvidence, true)
             }
         }
         render("InboxStates-light", width: 402, height: 780, dark: false) {

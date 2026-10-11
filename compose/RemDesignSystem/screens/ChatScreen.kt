@@ -101,14 +101,14 @@ fun ChatScreen(
  * Figma shell `2054:21958` / board `2681:21977`: the shared header (`2054:19725`, which owns back and
  * overflow — hosts add no app bar), the Screen state slot (scrolling transcript, or the empty state
  * `2054:22089` with no second face), and bottom chrome docking the one canonical composer (`2071:11555`)
- * above the IME or navigation bar with the optional task-reply accessory (`2682:22298`). Insets come
+ * above the IME or navigation bar with the optional task-reply accessory (`2682:22298`). The transcript
+ * scrolls under the header and the dock, each on a gradient scrim (0.85 at the screen edge, clear just past the
+ * chrome), with top and bottom content padding equal to their measured heights so the first and latest
+ * messages are never hidden ([ChatEdgeBackdrop]; hosts wire nothing). Insets come
  * from the host window (`imePadding` / `navigationBarsPadding` / `statusBarsPadding`); the 320dp board
  * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
  * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
  * scrolled more than [ChatJumpToLatest.THRESHOLD] above the newest message. Hosts wire nothing for it.
- * The transcript scrolls **under** the header ([ChatHeaderBackdrop]): the header sits on a gradient scrim,
- * mostly opaque (0.85) over the status bar and header and clear just below it, and the transcript's top content
- * padding equals the header's height so the first message is never hidden. Hosts wire nothing.
  */
 @Composable
 fun ChatScreen(
@@ -129,10 +129,10 @@ fun ChatScreen(
             .background(colors.backgroundPrimary),
     ) {
         val density = LocalDensity.current
-        // Header-backdrop evidence opens the transcript scrolled a fixed distance from its oldest message.
-        val backdropEvidence = LocalChatHeaderBackdropEvidence.current
+        // Edge-backdrop evidence opens the transcript scrolled a fixed distance from its oldest message.
+        val backdropEvidence = LocalChatEdgeBackdropEvidence.current
         val scroll = rememberScrollState(
-            if (backdropEvidence) with(density) { ChatHeaderBackdrop.EVIDENCE_SCROLL.dp.roundToPx() } else 0,
+            if (backdropEvidence) with(density) { ChatEdgeBackdrop.EVIDENCE_SCROLL.dp.roundToPx() } else 0,
         )
         val context = LocalContext.current
         val reduceMotion = remember(context) {
@@ -146,13 +146,15 @@ fun ChatScreen(
         val showsJump by remember(emptyState == null) {
             derivedStateOf {
                 emptyState == null && if (scroll.maxValue == Int.MAX_VALUE) jumpEvidence
-                else ChatJumpToLatest.isVisible((scroll.maxValue - scroll.value) / density.density)
+                else ChatJumpToLatest.isVisible(
+                    ChatEdgeBackdrop.distanceFromLatest(scroll.maxValue.toFloat(), scroll.value.toFloat()) / density.density,
+                )
             }
         }
         val jumpScope = rememberCoroutineScope()
-        // Header backdrop: the transcript fills the area (under the status bar too) and the header floats over
-        // it on its scrim; `headerInset` is the measured status bar + header height.
-        ChatHeaderOverlayLayout(
+        // Edge backdrops: the transcript fills the window (under the status bar, the dock and the navigation bar
+        // or IME) and the header and dock float over it on their scrims; `insets` are their measured heights.
+        ChatEdgeOverlayLayout(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             header = {
                 ChatHeader(
@@ -168,12 +170,38 @@ fun ChatScreen(
                     modifier = Modifier.padding(bottom = RemSpacing.sm),
                 )
             },
-        ) { headerInset ->
+            dock = {
+                // No fill of its own: the dock scrim is drawn behind it by `ChatEdgeOverlayLayout`.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .imePadding()
+                        .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
+                ) {
+                    if (voiceBar != null) VoiceBar(state = voiceBar)
+                    if (replyContext != null) {
+                        ChatReplyContextAccessory(
+                            context = replyContext,
+                            accessibilityPrefix = "chat.replyContext",
+                            onDismiss = { onAction(ChatScreenAction.DismissReplyContext(replyContext.targetId)) },
+                        )
+                    }
+                    RemComposerBar(
+                        state = composer,
+                        onAction = { onAction(ChatScreenAction.Composer(it)) },
+                        accessibilityPrefix = "chat",
+                        modelMenu = modelMenu,
+                    )
+                }
+            },
+        ) { insets ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scroll)
-                    .padding(top = headerInset)
+                    .padding(top = insets.top, bottom = insets.bottom)
                     .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.md)
                     .testTag("chat.content"),
                 verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
@@ -184,11 +212,12 @@ fun ChatScreen(
                     transcript()
                 }
             }
-            // Over the transcript area only, so it never covers the docked composer or the IME. Qualified so
-            // the outer Column's scope does not pick the ColumnScope overload.
+            // Over the transcript, lifted by the dock inset so it never covers the docked composer or the IME.
+            // Qualified so the outer Column's scope does not pick the ColumnScope overload.
             androidx.compose.animation.AnimatedVisibility(
                 visible = showsJump,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = ChatJumpToLatest.BOTTOM_SPACING.dp),
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .padding(bottom = ChatEdgeBackdrop.jumpButtonBottomPadding(insets.bottom.value).dp),
                 enter = if (!jumpMotion) EnterTransition.None
                 else fadeIn(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleIn(tween(ChatJumpToLatest.APPEAR_MILLIS), initialScale = ChatJumpToLatest.APPEAR_SCALE),
                 exit = if (!jumpMotion) ExitTransition.None
@@ -211,30 +240,6 @@ fun ChatScreen(
                 followedMax[0] = scroll.maxValue
             }
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.backgroundPrimary)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = RemSpacing.lg, vertical = RemSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
-        ) {
-            if (voiceBar != null) VoiceBar(state = voiceBar)
-            if (replyContext != null) {
-                ChatReplyContextAccessory(
-                    context = replyContext,
-                    accessibilityPrefix = "chat.replyContext",
-                    onDismiss = { onAction(ChatScreenAction.DismissReplyContext(replyContext.targetId)) },
-                )
-            }
-            RemComposerBar(
-                state = composer,
-                onAction = { onAction(ChatScreenAction.Composer(it)) },
-                accessibilityPrefix = "chat",
-                modelMenu = modelMenu,
-            )
-        }
     }
 }
 
@@ -248,12 +253,12 @@ fun ChatScreen(
 internal val LocalChatJumpToLatestEvidence = staticCompositionLocalOf { false }
 
 /**
- * Evidence seam (internal, never set by hosts): open the transcript [ChatHeaderBackdrop.EVIDENCE_SCROLL] dp
+ * Evidence seam (internal, never set by hosts): open the transcript [ChatEdgeBackdrop.EVIDENCE_SCROLL] dp
  * below its oldest message (combine with [LocalChatJumpToLatestEvidence] so it is not then snapped to the
- * latest), so a still render shows messages passing under the header scrim. Twin of SwiftUI
- * `chatHeaderBackdropEvidence`. Not part of the public API.
+ * latest), so a still render shows messages passing under the header and dock scrims. Twin of SwiftUI
+ * `chatEdgeBackdropEvidence`. Not part of the public API.
  */
-internal val LocalChatHeaderBackdropEvidence = staticCompositionLocalOf { false }
+internal val LocalChatEdgeBackdropEvidence = staticCompositionLocalOf { false }
 
 /** The empty conversation (`2054:22089`): title, message and starters as full-width capsules. No face. */
 @Composable
