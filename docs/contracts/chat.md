@@ -69,9 +69,11 @@ These stay explicit boundaries. No component here persists, transmits or enforce
 4. **Delivered / Read:** "Delivered · {at}" / "Read · {at}" in footnote semibold `labelSecondary`,
    right-aligned, gap 4. `at` is host-formatted; Read keeps the same delivered time.
 5. **Composer Auto:** a secondary-pill trigger (`fillTertiary` capsule, 8/4 padding, `chevron.up.chevron.down`
-   + caption label). It reads **"Auto"** while **Automatic** is selected, otherwise the model name. An id
-   the catalog does not contain is shown as-is. While sending, the trigger is disabled at 45% and
-   Speak is hidden.
+   + caption label). It reads **"Auto"** while **Automatic** is selected. For a model it reads, in order:
+   the model's name from the host's catalog; otherwise the host's own label (`ChatComposerState.modelLabel`,
+   or `fallbackLabel` passed to `ChatModelMenu`) unless it is blank or the automatic label; otherwise the
+   raw id (`ChatModelMenu.triggerLabel` / `chatModelTriggerLabel`). While sending, the trigger is disabled
+   at 45% and Speak is hidden.
 6. **Model menu:** Automatic (checkmark when selected) → one submenu per provider with models
    (checkmark on selection) → divider → Manage Models (only when the host supplies it). Providers
    with no models are omitted. Android has no nested native menu, so a provider swaps the menu to its
