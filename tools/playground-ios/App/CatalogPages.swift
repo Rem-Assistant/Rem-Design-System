@@ -140,8 +140,10 @@ struct CatalogAgenda: View {
                                      onNext: { dayOffset += 1 })
                     .frame(maxWidth: .infinity)
             }
+            // The row specimen stands alone (dashed outline, 4pt apart), as in region frame 2336:19714:
+            // no catalog card around it.
             CatalogGroup(title: "Suggestion rows") {
-                VStack(spacing: 0) {
+                VStack(spacing: DesignTokens.Spacing.xs) {
                     ForEach(Self.suggestions, id: \.id) { item in
                         if let outcome = resolved[item.id] {
                             ListRow(item.title, subtitle: outcome, leading: { EmptyView() }, trailing: { EmptyView() })
@@ -156,7 +158,6 @@ struct CatalogAgenda: View {
                         }
                     }
                 }
-                .catalogCard()
                 if !resolved.isEmpty {
                     Button("Restore") { resolved = [:] }
                         .remButton(.textAccent)
