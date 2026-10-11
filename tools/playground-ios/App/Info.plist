@@ -2,4 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
     <key>RemPlaygroundSourceSHA</key><string>$(REM_PLAYGROUND_SOURCE_SHA)</string>
+    <!-- Store metadata approved by Samuel (2026-10-11) for private Playground TestFlight distribution;
+         tools/playground-distribution/package.py checks each key in the archived app. -->
+    <key>CFBundleName</key><string>Rem Playground</string>
+    <key>ITSAppUsesNonExemptEncryption</key><false/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
 </dict></plist>

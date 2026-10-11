@@ -14,6 +14,7 @@
 		5228D7AC572A8FEB3E9BD4B4 /* RemDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 44A62E0D33E33B07B168C01F /* RemDesignSystem */; };
 		D06FF9C87E268AFBC193EC30 /* RemSettingsPlaygroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C770BDA2A97C0B942D777A /* RemSettingsPlaygroundApp.swift */; };
 		C0FFEE0000000000000000A1 /* CatalogPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000000000000000A2 /* CatalogPages.swift */; };
+		C0FFEE0000000000000000B1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000000000000000B2 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,6 +31,7 @@
 		40760E7632A87BCB8FF7BF6F /* RemSettingsPlayground.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RemSettingsPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		49C770BDA2A97C0B942D777A /* RemSettingsPlaygroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemSettingsPlaygroundApp.swift; sourceTree = "<group>"; };
 		C0FFEE0000000000000000A2 /* CatalogPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogPages.swift; sourceTree = "<group>"; };
+		C0FFEE0000000000000000B2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5B5AEF38F4F650A0340D4670 /* SettingsPlaygroundUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPlaygroundUITests.swift; sourceTree = "<group>"; };
 		0F1E2D3C4B5A69788796A5B4 /* OnboardingVoicePlaygroundUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingVoicePlaygroundUITests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F600112233AA02 /* AgendaSuggestionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaSuggestionsUITests.swift; sourceTree = "<group>"; };
@@ -55,6 +57,7 @@
 			children = (
 				49C770BDA2A97C0B942D777A /* RemSettingsPlaygroundApp.swift */,
 				C0FFEE0000000000000000A2 /* CatalogPages.swift */,
+				C0FFEE0000000000000000B2 /* Assets.xcassets */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -124,6 +127,7 @@
 			buildPhases = (
 				9DB0FED1AD1558DEB3C78301 /* Sources */,
 				0C433B25D83F940B940E2D18 /* Frameworks */,
+				C0FFEE0000000000000000B3 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -172,6 +176,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C0FFEE0000000000000000B3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0FFEE0000000000000000B1 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		9DB0FED1AD1558DEB3C78301 /* Sources */ = {
