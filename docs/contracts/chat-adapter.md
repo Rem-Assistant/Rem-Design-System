@@ -159,7 +159,10 @@ Report, `+`) only show a fixture note naming what the app does; nothing is copie
   asserts the merged bubble node on Android; the iOS bubble carries `accessibilityValue`). RTL mirrors the
   peek (`ChatTimestamps-revealed-light` / `-rtl-light`, Compose only).
 - A vertical drag that starts on a long-pressable bubble scrolls and opens nothing (iOS journey
-  `testCatalogChatReactionsDeliveryModelMenuAndAttachments`, right after the model menu closes).
+  `testCatalogChatReactionsDeliveryModelMenuAndAttachments`, right after the model menu closes). In the
+  transcript a vertical drag that starts on or beside a bubble scrolls too ([`chat.md`](chat.md) rule 13;
+  journeys `testChatTranscriptDragThatStartsOnABubbleScrolls` / `testChatTranscriptDragBesideABubbleScrolls`
+  and their Android twins).
 
 ## Not claimed
 

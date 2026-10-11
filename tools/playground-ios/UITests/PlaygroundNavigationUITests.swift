@@ -863,6 +863,27 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["message.a1.actions.report"].exists, "The drag opens no message actions")
     }
 
+    /// The near-bubble strip: a vertical drag that starts 4pt outside an incoming bubble's leading edge (in the
+    /// gutter, but within touch slop of the row) scrolls the transcript. Runs 38176095096 / 38179871589 pressed
+    /// at (11.8, 213), 4.2pt left of `message.h16.bubble`, and nothing scrolled while the swipe-left time peek
+    /// was a SwiftUI `DragGesture` on the rows; it is now a UIKit pan on the scroll view (`ChatTimestampRevealPan`).
+    func testChatTranscriptDragBesideABubbleScrolls() {
+        openChatScreen("Long")
+        XCTAssertTrue(element("message.a2.bubble").waitForExistence(timeout: 3))
+        let bubble = element("message.a1.bubble")
+        XCTAssertTrue(bubble.exists && bubble.isHittable, "An incoming bubble is on screen to start the drag beside")
+        let jump = app.buttons["chat.jumpToLatest"]
+        XCTAssertFalse(jump.exists, "Opens at the latest message")
+        let before = bubble.frame.minY
+        let start = bubble.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: -4, dy: 0))
+        XCTAssertGreaterThan(start.screenPoint.x, 0, "The start point is on screen, in the leading gutter")
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 300)),
+                    withVelocity: .slow, thenHoldForDuration: 0.3)
+        XCTAssertGreaterThan(bubble.frame.minY - before, 20, "A vertical drag that starts beside a bubble scrolls the transcript")
+        XCTAssertTrue(jump.waitForExistence(timeout: 3), "Scrolled up: jump to latest shows")
+        XCTAssertFalse(app.buttons["message.a1.actions.report"].exists, "The drag opens no message actions")
+    }
+
     func testChatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
         assertLatestClearsComposer("message.a2.bubble")

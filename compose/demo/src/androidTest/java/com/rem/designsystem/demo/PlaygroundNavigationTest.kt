@@ -856,6 +856,44 @@ class PlaygroundNavigationTest {
         latest.assertIsDisplayed()
     }
 
+    /**
+     * Twin of iOS `testChatTranscriptDragThatStartsOnABubbleScrolls`: a slow vertical drag that starts on the
+     * centre of an incoming transcript bubble (Long conversation) scrolls the transcript and opens nothing.
+     */
+    @Test fun chatTranscriptDragThatStartsOnABubbleScrolls() {
+        assertTranscriptDragScrolls(besideLeadingEdge = false)
+    }
+
+    /**
+     * Twin of iOS `testChatTranscriptDragBesideABubbleScrolls`: the same drag, started 4dp outside the incoming
+     * bubble's leading edge (the near-bubble strip of the leading gutter), scrolls too.
+     */
+    @Test fun chatTranscriptDragBesideABubbleScrolls() {
+        assertTranscriptDragScrolls(besideLeadingEdge = true)
+    }
+
+    private fun assertTranscriptDragScrolls(besideLeadingEdge: Boolean) {
+        openChatScreen("Long")
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true)
+        compose.waitUntil(5000) { runCatching { latest.assertIsDisplayed() }.isSuccess }
+        compose.onNodeWithTag("chat.jumpToLatest").assertDoesNotExist()
+        val bubble = compose.onNodeWithTag("message.a1.bubble", useUnmergedTree = true)
+        bubble.assertIsDisplayed()
+        val bounds = bubble.fetchSemanticsNode().boundsInRoot
+        val rootHeight = compose.onRoot().fetchSemanticsNode().boundsInRoot.height
+        val px = with(compose.density) { 1.dp.toPx() }
+        val start = if (besideLeadingEdge) Offset(bounds.left - 4 * px, bounds.center.y) else bounds.center
+        check(start.x > 0f) { "The start point (${start.x}) is on screen" }
+        val end = Offset(start.x, minOf(start.y + 300 * px, rootHeight - 2 * px))
+        compose.onRoot().performTouchInput { swipe(start, end, durationMillis = 800) }
+        compose.waitForIdle()
+        val moved = bubble.fetchSemanticsNode().boundsInRoot.top - bounds.top
+        assertTrue("A vertical drag that starts ${if (besideLeadingEdge) "beside" else "on"} a bubble scrolls (moved $moved px)",
+            moved > 20 * px)
+        waitForTag("chat.jumpToLatest")
+        compose.onNodeWithTag("message.a1.actions.report").assertDoesNotExist()
+    }
+
     @Test fun chatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
         openChatScreen()
         // chat.md rule 12: at rest the latest message sits wholly above the composer dock.

@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 /// **ChatScreen** — the conversation surface: a scrolling transcript of `MessageBubble`s, an optional
 /// `VoiceBar` above the input when voice is live, and a `RemComposerBar` pinned at the bottom. Composed
@@ -428,10 +431,11 @@ public struct ChatTranscriptList: View {
     private let hostContent: (String) -> AnyView
     /// Swipe-to-reveal timestamps (WS1d): one shared offset moves every row together.
     @State private var reveal: CGFloat = ChatTimestampReveal.settled
+    #if !os(iOS)
     /// True only while the reveal drag is live. SwiftUI resets a `@GestureState` when the gesture ends
-    /// *or is cancelled* (the ScrollView takes over, the app backgrounds, a system gesture fires), and
-    /// `onEnded` runs only for the first, so the snap-back keys off this reset instead.
+    /// *or is cancelled*, and `onEnded` runs only for the first, so the snap-back keys off this reset.
     @GestureState private var isRevealDragging = false
+    #endif
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Width of the right-side timestamp column (fits "10:24 AM" at footnote size). Provisional: to be
     /// validated against long localized times and large text sizes; not a specified value.
@@ -472,12 +476,39 @@ public struct ChatTranscriptList: View {
         }
         // Rows move together; the header, composer and keyboard live outside the transcript and stay put.
         .offset(x: -reveal)
+        #if os(iOS)
+        // The peek is a UIKit pan on the enclosing scroll view, not a SwiftUI `DragGesture` on the rows:
+        // on iOS 17 a `DragGesture` attached to ScrollView content, even simultaneously, kept the scroll
+        // view's pan from starting for touches that began on (or within touch slop of) a row, so a vertical
+        // drag from a bubble scrolled nothing (run 38181697796). See `ChatTimestampRevealPan`.
+        .background(
+            ChatTimestampRevealPan(
+                onChanged: { dx, dy in self.revealChanged(dx: dx, dy: dy) },
+                onEnded: { self.settleReveal() }
+            )
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        )
+        #else
         .simultaneousGesture(revealGesture)
         .onChange(of: isRevealDragging) { _, dragging in
-            guard !dragging, reveal != ChatTimestampReveal.settled else { return }
-            withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
-                reveal = ChatTimestampReveal.settled
-            }
+            guard !dragging else { return }
+            settleReveal()
+        }
+        #endif
+    }
+
+    /// Applies one reveal drag translation: leftward horizontal drags only, once claimed it follows dx.
+    private func revealChanged(dx: CGFloat, dy: CGFloat) {
+        guard reveal > 0 || ChatTimestampReveal.isRevealDrag(dx: dx, dy: dy) else { return }
+        reveal = ChatTimestampReveal.reveal(dx: dx, columnWidth: Self.timeColumnWidth, reduceMotion: reduceMotion)
+    }
+
+    /// Rows always return when the drag ends, is cancelled or fails: the reveal is a peek.
+    private func settleReveal() {
+        guard reveal != ChatTimestampReveal.settled else { return }
+        withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.85)) {
+            reveal = ChatTimestampReveal.settled
         }
     }
 
@@ -497,17 +528,17 @@ public struct ChatTranscriptList: View {
         }
     }
 
+    #if !os(iOS)
     /// Leftward horizontal drags only; vertical scrolling keeps working. Rows snap back when the drag
-    /// ends or is cancelled (see `isRevealDragging`).
+    /// ends or is cancelled (see `isRevealDragging`). iOS uses `ChatTimestampRevealPan` instead.
     private var revealGesture: some Gesture {
         DragGesture(minimumDistance: ChatTimestampReveal.minTravel)
             .updating($isRevealDragging) { _, dragging, _ in dragging = true }
             .onChanged { value in
-                let dx = value.translation.width, dy = value.translation.height
-                guard reveal > 0 || ChatTimestampReveal.isRevealDrag(dx: dx, dy: dy) else { return }
-                reveal = ChatTimestampReveal.reveal(dx: dx, columnWidth: Self.timeColumnWidth, reduceMotion: reduceMotion)
+                revealChanged(dx: value.translation.width, dy: value.translation.height)
             }
     }
+    #endif
 
     private func displayed(_ message: ChatMessageDisplay, latest: String?) -> ChatMessageDisplay {
         var shown = message
@@ -515,6 +546,132 @@ public struct ChatTranscriptList: View {
         return shown
     }
 }
+
+#if os(iOS)
+/// The swipe-left time peek's recognizer (WS1d, iOS). A zero-size, non-interactive probe finds the
+/// `UIScrollView` that hosts the transcript and adds one `UIPanGestureRecognizer` to it, so the rows carry
+/// no SwiftUI gesture and every vertical drag — on a bubble, beside it, on a timestamp or in the gutter —
+/// is the scroll view's own pan.
+/// - **Begins** only when the drag is predominantly horizontal and leftward (`ChatTimestampReveal`
+///   `horizontalRatio`, judged on velocity, else translation); any other drag fails it at once and the
+///   scroll view never waits on it.
+/// - **Recognizes simultaneously** with the scroll view's pan and SwiftUI's own recognizers, cancels and
+///   delays no touches, so long presses, buttons and scrolling are untouched (a long press already fails
+///   once the finger travels 10pt).
+/// - Reports translation while live, and `onEnded` on end, cancel or failure, so rows always snap back.
+/// - No enclosing scroll view (a bare `ChatTranscriptList` outside one): no peek; times stay accessible
+///   through the bubble.
+struct ChatTimestampRevealPan: UIViewRepresentable {
+    let onChanged: (CGFloat, CGFloat) -> Void
+    let onEnded: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> Probe {
+        let probe = Probe()
+        probe.isUserInteractionEnabled = false
+        probe.isAccessibilityElement = false
+        probe.backgroundColor = .clear
+        probe.coordinator = context.coordinator
+        return probe
+    }
+
+    func updateUIView(_ uiView: Probe, context: Context) {
+        context.coordinator.parent = self
+    }
+
+    static func dismantleUIView(_ uiView: Probe, coordinator: Coordinator) {
+        coordinator.attach(to: nil)
+    }
+
+    /// Re-resolves the host scroll view whenever it is inserted into, or removed from, a hierarchy.
+    final class Probe: UIView {
+        weak var coordinator: Coordinator?
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            coordinator?.attach(to: window == nil ? nil : enclosingScrollView())
+        }
+
+        override func didMoveToSuperview() {
+            super.didMoveToSuperview()
+            coordinator?.attach(to: window == nil ? nil : enclosingScrollView())
+        }
+
+        private func enclosingScrollView() -> UIScrollView? {
+            var view = superview
+            while let current = view {
+                if let scrollView = current as? UIScrollView { return scrollView }
+                view = current.superview
+            }
+            return nil
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var parent: ChatTimestampRevealPan
+        private weak var host: UIScrollView?
+        private var pan: UIPanGestureRecognizer?
+
+        init(_ parent: ChatTimestampRevealPan) {
+            self.parent = parent
+        }
+
+        func attach(to scrollView: UIScrollView?) {
+            guard scrollView !== host || (scrollView != nil && pan == nil) else { return }
+            if let pan {
+                let live = pan.state == .began || pan.state == .changed
+                pan.view?.removeGestureRecognizer(pan)
+                self.pan = nil
+                if live { parent.onEnded() }
+            }
+            host = scrollView
+            guard let scrollView else { return }
+            let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handle(_:)))
+            recognizer.delegate = self
+            recognizer.cancelsTouchesInView = false
+            recognizer.delaysTouchesBegan = false
+            recognizer.delaysTouchesEnded = false
+            recognizer.maximumNumberOfTouches = 1
+            scrollView.addGestureRecognizer(recognizer)
+            pan = recognizer
+        }
+
+        @objc private func handle(_ recognizer: UIPanGestureRecognizer) {
+            switch recognizer.state {
+            case .began, .changed:
+                let t = recognizer.translation(in: Self.fixedSpace(of: recognizer))
+                parent.onChanged(t.x, t.y)
+            case .ended, .cancelled, .failed:
+                parent.onEnded()
+            default:
+                break
+            }
+        }
+
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let space = Self.fixedSpace(of: pan)
+            var motion = pan.velocity(in: space)
+            if motion == .zero { motion = pan.translation(in: space) }
+            return motion.x < 0 && abs(motion.x) > abs(motion.y) * ChatTimestampReveal.horizontalRatio
+        }
+
+        /// The scroll view's superview: unlike the scroll view's own bounds it does not move while the
+        /// transcript scrolls, so the translation is the finger's travel on screen.
+        private static func fixedSpace(of recognizer: UIGestureRecognizer) -> UIView? {
+            recognizer.view?.superview ?? recognizer.view
+        }
+
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+        ) -> Bool {
+            true
+        }
+    }
+}
+#endif
 
 #Preview {
     ChatScreen(composerText: "", composerState: .idle) {
