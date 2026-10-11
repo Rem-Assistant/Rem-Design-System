@@ -8,6 +8,47 @@ The earlier hosted run37779992053 at `8c5ed28` passed iOS25/25 and Android26/26,
 
 Approved entry amendments rename Rem to Agent settings, give Help & Support a question-mark icon, remove extra row minimums, and omit the redundant Agent settings subtitle. Native iOS List/Section structure and Subtle utility icons remain intact. Large-text screenshot findings drove adaptive Connector/Voice rows, true Wallet sheet scaling, and a scaled consent-icon slot. See the ledger for the evidence and remaining limits.
 
+## Onboarding New → Voice playground — October 8, 2026 (issue #84)
+
+Code-only fixture slice on `agent-factory/playground-issue-84` (base `codex/playground-expansion`,
+delivery scope `onboarding-voice`). The onboarding shell (SwiftUI `OnboardingVoiceTemplate` +
+`OnboardingVoicePlaygroundScreen`, Compose `OnboardingVoiceScreen`) reuses the **shared Settings
+cores** `VoiceControlsContent` (`2217:1571`, `Show conversation entry = false`) and
+`VoiceChooserContent` (`2217:1901`); the duplicate control tree was removed. Onboarding owns only the
+centered lockup (`773:22`) and the safe-area Continue/Skip action area (`773:28`). Settings behavior,
+tests, and capture names are unchanged.
+
+**Source-state coverage (nine authored states, section `2213:9346`).** All nine are implemented as
+behaviors of the two composed screens and were **visually compared against the Figma source PNGs** in
+`docs/playground/expansion-design/source-evidence.tar.gz` (archive SHA-256 verified; 99 enclosed file
+hashes verified):
+
+| # | Source state | Node | Implemented as | Source PNG compared |
+|---|---|---|---|---|
+| 1 | Default (Aria, 50/75/50) | `2219:22520` | shell default | yes |
+| 2 | Previewing (Aria · Playing) | `2219:22800` | `voice.previewSelected` play/pause | yes |
+| 3 | Selected (Sol) | `2219:23081` | chooser→Back reflects Sol | yes |
+| 4 | Speed 75% | `2219:23361` | native slider + a11y value | yes |
+| 5 | Consistency 50% | `2219:23641` | native slider + a11y value | yes (same slider row family) |
+| 6 | Likeness 75% | `2219:23921` | native slider + a11y value | yes (same slider row family) |
+| 7 | Chooser default (Aria checked) | `2221:83686` | chooser default | yes |
+| 8 | Chooser preview (Aria pause, check kept) | `2221:83798` | independent preview/selection | yes |
+| 9 | Chooser selected (Sol checked) | `2221:84017` | chooser selection | yes |
+
+Values are represented through the authored native slider state and its accessibility value (percent),
+not new numeric labels. Preview is the shared fixture's local no-audio play/pause boundary — no audio,
+TTS, microphone, account, service, or persistence. Back/Continue/Skip resolve to host callbacks with
+no invented downstream product screen (no route into Check-in).
+
+**Verification status.** Paired native runtime captures are produced by the hosted
+`screenshots.yml` journeys — iOS `OnboardingVoicePlaygroundUITests` (registered in the Xcode project)
+and Compose `OnboardingVoicePlaygroundTest` — emitting the ten `OnboardingVoice-*` keys in
+`tools/render-evidence/contracts.json` on both platforms. **These journeys have not been run in this
+task**, and no simulator/emulator was available on the build runner (SwiftUI/Android SDK absent).
+Current-head fidelity therefore remains **outstanding** until that authenticated paired delivery
+exists and is visually reviewed; source-PNG comparison and build-green alone do not establish runtime
+fidelity.
+
 ---
 
 This is the record for the **Mac-verify fidelity** step: every Figma component in the

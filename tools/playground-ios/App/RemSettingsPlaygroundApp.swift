@@ -16,7 +16,7 @@ struct RemSettingsPlaygroundApp: App {
 
 enum LoadFixture: String, CaseIterable { case success = "Success", slow = "Slow", error = "Error" }
 
-private enum PlaygroundRoute: Hashable { case settings, controls }
+private enum PlaygroundRoute: Hashable { case settings, controls, onboardingVoice }
 
 struct PlaygroundHome: View {
     @State private var path = NavigationPath()
@@ -33,11 +33,16 @@ struct PlaygroundHome: View {
                     NavigationLink("Open Settings", value: PlaygroundRoute.settings).accessibilityIdentifier("openSettings")
                     NavigationLink("Shared controls", value: PlaygroundRoute.controls)
                 }
+                Section("Onboarding playground") {
+                    Text("Onboarding New · Voice. Reuses the shared Voice controls and chooser with the conversation-entry section hidden. Preview is local and plays no audio; Continue and Skip are host callbacks with no downstream screen.").font(.footnote)
+                    NavigationLink("Open Onboarding Voice", value: PlaygroundRoute.onboardingVoice).accessibilityIdentifier("openOnboardingVoice")
+                }
             }.navigationTitle("Rem Playground")
                 .navigationDestination(for: PlaygroundRoute.self) { route in
                     switch route {
                     case .settings: SettingsPreview(fixture: fixture)
                     case .controls: ControlsPreview()
+                    case .onboardingVoice: OnboardingVoiceHost()
                     }
                 }
                 .navigationDestination(for: SettingsEntryDestination.self) { _ in
@@ -113,6 +118,35 @@ struct AgentPreview: View {
                     status = fixture == .error && attempt == 0 ? "error" : "ready"
                 } catch { /* Navigation cancels this view-owned task. */ }
             }
+    }
+}
+
+/// Hosts the onboarding Voice shell and makes Continue / Skip observable without inventing a
+/// downstream product screen. The shell's outer Back (the pushed route's nav back button) returns
+/// here to the gallery; Continue and Skip each record a distinct host-callback outcome.
+struct OnboardingVoiceHost: View {
+    @State private var outcome: String?
+    var body: some View {
+        Group {
+            if let outcome {
+                VStack(spacing: 16) {
+                    Text("Host callback: \(outcome)")
+                        .font(.headline)
+                        .accessibilityIdentifier("onboardingVoice.outcome")
+                    Text("The onboarding masters wire no next screen; this is the bounded playground boundary.")
+                        .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    Button("Restart") { self.outcome = nil }.accessibilityIdentifier("onboardingVoice.restart")
+                }
+                .padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(DesignTokens.Color.backgroundPrimary)
+                .navigationTitle("Onboarding Voice").navigationBarTitleDisplayMode(.inline)
+            } else {
+                OnboardingVoicePlaygroundScreen(
+                    onContinue: { outcome = "continue" },
+                    onSkip: { outcome = "skip" }
+                )
+            }
+        }
     }
 }
 

@@ -1,5 +1,54 @@
 # Verification record
 
+## Onboarding New → Voice playground — October 8, 2026 (issue #84)
+
+Isolated UI slice on `agent-factory/playground-issue-84` (base `codex/playground-expansion`, scope
+`onboarding-voice`). Implemented the approved Voice onboarding shell and chooser on SwiftUI and
+Compose by **reusing the shared Settings cores** `VoiceControlsContent` (`2217:1571`, `Show
+conversation entry = false`) and `VoiceChooserContent` (`2217:1901`); the older duplicate
+`OnboardingVoiceTemplate` / `VoiceScreen.kt` control trees were replaced, and Settings behavior and
+captures are untouched. Onboarding adds only the centered lockup (`773:22`) and the safe-area
+Continue/Skip action area (`773:28`), a discoverable route in both playground hosts, and the native
+tests. The source archive (`source-evidence.tar.gz`) SHA-256 and its 99 enclosed hashes were verified
+on this runner; all nine authored Voice states (`2213:9346`) were visually compared against their
+source PNGs (see FIDELITY.md).
+
+Native journeys cover: default → chooser → preview → select Sol → Back reflecting Sol; independent
+preview/selection; three persistent slider changes preserved across chooser navigation; preview
+stop; distinct Back / Continue / Skip host callbacks; and scroll + large-text reachability of the
+pinned actions. The ten `OnboardingVoice-*` keys in `tools/render-evidence/contracts.json` are
+emitted on both platforms by `OnboardingVoicePlaygroundUITests` (registered in the Xcode project) and
+`OnboardingVoicePlaygroundTest`. No audio/TTS/microphone, account, service, persistence, or
+downstream product screen is implied; this does not complete or close #10/#12.
+
+**No build, simulator, or emulator ran in this task** (SwiftUI and the Android SDK are absent on the
+build runner). Current-head fidelity is outstanding until the authenticated paired `screenshots.yml`
+delivery exists and is visually reviewed. The render-evidence Python validator suite passes locally
+(28 tests). Draft only; no merge, promotion, or Figma writes.
+
+### Revision — October 8, 2026 · native iOS accessibility repair
+
+The prior head `2170c21` failed three of the six new iOS journeys — `testContinueCallback`,
+`testSkipCallback`, and `testLargeTextReachability` — so the captures `OnboardingVoice-continue-light`,
+`OnboardingVoice-skip-light`, and `OnboardingVoice-large-text-bottom` were not produced, and neither
+Continue nor Skip was exercised. Diagnosed cause (from the xcresult hierarchy): the shell's root
+`VStack` carried `.accessibilityIdentifier("onboardingVoice")`, which propagated onto the sibling
+`actionArea` buttons, overriding their declared `onboardingVoice.continue` / `onboardingVoice.skip`
+identifiers so `app.buttons[…]` could not resolve them. Android's tests, both library render jobs,
+and the 25 existing Settings iOS journeys were unaffected.
+
+Repair: the screen identifier and `PlaygroundMockData.hint` now sit on the scrolling `List` — the same
+boundary `SettingsVoiceScreen` and the onboarding chooser already use — so they bind to the List's
+accessibility container and no longer reach the pinned action buttons. The buttons keep their distinct
+identifiers; chooser navigation, independent preview/selection, slider state, the shared Voice fixture
+semantics, and Settings behavior are unchanged. No new shared API was introduced.
+
+This is a source-only repair; **no iOS build or simulator ran on this Linux runner**. The three
+previously-missing captures and the repaired callback/large-text assertions must be confirmed by the
+authenticated native `screenshots.yml` run on the repaired head, and fresh read-only Figma evidence
+via the existing manual `design-drift.yml` route (pr=87) on `codex/playground-expansion` remains
+required. Until both land, this revision is not full fidelity.
+
 ## Review stack preparation — October 8, 2026
 
 The review snapshot preserves the complete Settings tree at `972256263286031fd46525f12490bcf580f05c65` plus Samuel's approved removal of the Agent settings "Connected" subtitle on iOS and Android and this ledger entry. No other styling changes are included. The historical passing runs and captures below predate that copy/layout change and do not establish current-head visual fidelity. No local build or simulator was run for this change.

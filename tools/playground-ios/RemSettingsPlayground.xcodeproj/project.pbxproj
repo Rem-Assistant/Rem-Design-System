@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		497DAE14E18D92D3DA4F19CD /* SettingsPlaygroundUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5AEF38F4F650A0340D4670 /* SettingsPlaygroundUITests.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* OnboardingVoicePlaygroundUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1E2D3C4B5A69788796A5B4 /* OnboardingVoicePlaygroundUITests.swift */; };
 		5228D7AC572A8FEB3E9BD4B4 /* RemDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 44A62E0D33E33B07B168C01F /* RemDesignSystem */; };
 		D06FF9C87E268AFBC193EC30 /* RemSettingsPlaygroundApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C770BDA2A97C0B942D777A /* RemSettingsPlaygroundApp.swift */; };
 /* End PBXBuildFile section */
@@ -26,6 +27,7 @@
 		40760E7632A87BCB8FF7BF6F /* RemSettingsPlayground.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RemSettingsPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		49C770BDA2A97C0B942D777A /* RemSettingsPlaygroundApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemSettingsPlaygroundApp.swift; sourceTree = "<group>"; };
 		5B5AEF38F4F650A0340D4670 /* SettingsPlaygroundUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPlaygroundUITests.swift; sourceTree = "<group>"; };
+		0F1E2D3C4B5A69788796A5B4 /* OnboardingVoicePlaygroundUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingVoicePlaygroundUITests.swift; sourceTree = "<group>"; };
 		6925114E5AA11B487704E503 /* RemSettingsPlaygroundUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RemSettingsPlaygroundUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8C74640B8ECC85AB9109D0E /* rem-settings-playground */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "rem-settings-playground"; path = ../..; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -71,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				5B5AEF38F4F650A0340D4670 /* SettingsPlaygroundUITests.swift */,
+				0F1E2D3C4B5A69788796A5B4 /* OnboardingVoicePlaygroundUITests.swift */,
 			);
 			path = UITests;
 			sourceTree = "<group>";
@@ -175,6 +178,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				497DAE14E18D92D3DA4F19CD /* SettingsPlaygroundUITests.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* OnboardingVoicePlaygroundUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
