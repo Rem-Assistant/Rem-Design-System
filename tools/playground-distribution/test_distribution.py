@@ -250,6 +250,23 @@ class PackagingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             summary.public_record(dict(data, approvals={'ios': {'model': 'owner-approval', 'reviewer': 'davidolaniran'}}))
 
+    def test_failure_metadata_is_allowlisted(self):
+        data = dict(source_sha=SHA, native_run_id=123, native_run_attempt=1, build_number='8',
+                    distribution='not_started', physical_device='unverified', visual_review_url=URL)
+        failure = {'phase': 'group_check', 'guard': 'group_other_access_flag_unknown', 'http_status': None}
+        record = summary.public_record(dict(data, failure=failure))
+        self.assertEqual(record['failure'], failure)
+        self.assertEqual(summary.failure_line(record), 'Distribution state: not_started; stopped in phase '
+                         'group_check at guard group_other_access_flag_unknown; HTTP status none')
+        self.assertEqual(summary.failure_line(summary.public_record(data)), 'Distribution state: not_started')
+        http = dict(failure, phase='apple_key', guard='apple_api_http', http_status=401)
+        self.assertIn('HTTP status 401', summary.failure_line(summary.public_record(dict(data, failure=http))))
+        for bad in (dict(failure, phase='somewhere'), dict(failure, guard='Apple said: forbidden'),
+                    dict(failure, guard='x' * 65), dict(failure, http_status=99), dict(failure, http_status='401'),
+                    dict(failure, detail='provider body'), {'phase': 'upload', 'guard': 'x'}):
+            with self.assertRaises(ValueError):
+                summary.public_record(dict(data, failure=bad))
+
 
 class StorageTests(unittest.TestCase):
     def usage(self, free):

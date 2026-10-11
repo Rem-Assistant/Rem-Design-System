@@ -7,8 +7,20 @@ require 'stringio'
 
 skip_docs
 
-def require_release(ok, message)
-  UI.user_error!(message) unless ok
+# Safe failure evidence: the phase and a fixed guard code (never provider text) are written to
+# distribution.json and published by summary.py; the provider log itself stays private.
+$release_phase = 'inputs'
+$release_guard = nil
+$release_http = nil
+
+def release_phase(name)
+  $release_phase = name
+end
+
+def require_release(ok, message, code = 'unclassified')
+  return if ok
+  $release_guard = code
+  UI.user_error!(message)
 end
 
 def apple_request(method, path, payload = nil)
@@ -18,7 +30,9 @@ def apple_request(method, path, payload = nil)
   request['Content-Type'] = 'application/json'
   request.body = JSON.generate(payload) if payload
   response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) { |http| http.request(request) }
-  require_release(response.code.to_i.between?(200, 299), "Apple API failed (HTTP #{response.code}); no response body printed")
+  $release_http = response.code.to_i unless response.code.to_i.between?(200, 299)
+  require_release(response.code.to_i.between?(200, 299), "Apple API failed (HTTP #{response.code}); no response body printed",
+    'apple_api_http')
   response.body.to_s.empty? ? {} : JSON.parse(response.body)
 end
 
@@ -30,25 +44,36 @@ end
 
 def apple_group
   id = ENV.fetch('PLAYGROUND_TESTFLIGHT_GROUP_ID')
-  require_release(id.match?(/\A[a-fA-F0-9-]{36}\z/), 'Invalid existing internal group ID')
+  require_release(id.match?(/\A[a-fA-F0-9-]{36}\z/), 'Invalid existing internal group ID', 'group_id_invalid')
   group = apple_request(:get, "/v1/betaGroups/#{id}")['data']['attributes']
   app = apple_request(:get, "/v1/betaGroups/#{id}/app")['data']['id']
-  require_release(app == '6820738808' && group['isInternalGroup'] == true &&
-    group['publicLinkEnabled'] != true && group['hasAccessToAllBuilds'] == false,
-    'Existing private, manual internal TestFlight group required')
+  # One message (unchanged), one code per failing condition, so a failure says which flag decided it.
+  target_code = if app != '6820738808' then 'group_wrong_app'
+                elsif group['isInternalGroup'] != true then 'group_not_internal'
+                elsif group['publicLinkEnabled'] == true then 'group_public_link'
+                elsif group['hasAccessToAllBuilds'] == true then 'group_target_all_builds'
+                elsif group['hasAccessToAllBuilds'] != false then 'group_target_access_flag_unknown'
+                end
+  require_release(target_code.nil?, 'Existing private, manual internal TestFlight group required',
+    target_code || 'unclassified')
   # Upload itself can auto-distribute to other groups, even with skip_submission.
   # Inspect the entire app; never silently change group configuration.
   path = '/v1/apps/6820738808/betaGroups?limit=200'
   pages = 0
   while path
     pages += 1
-    require_release(pages <= 100, 'TestFlight group pagination exceeded')
+    require_release(pages <= 100, 'TestFlight group pagination exceeded', 'group_pagination_exceeded')
     page = apple_request(:get, path)
-    require_release(page['data'].all? { |g| g['attributes']['hasAccessToAllBuilds'] == false },
-      'App has automatic or unknown group access; authorize account configuration before uploading')
+    flags = page['data'].map { |g| g['attributes']['hasAccessToAllBuilds'] }
+    all_code = if flags.any? { |f| f == true } then 'group_other_all_builds'
+               elsif !flags.all? { |f| f == false } then 'group_other_access_flag_unknown'
+               end
+    require_release(all_code.nil?,
+      'App has automatic or unknown group access; authorize account configuration before uploading',
+      all_code || 'unclassified')
     next_url = page.dig('links', 'next')
     require_release(!next_url || next_url.start_with?('https://api.appstoreconnect.apple.com/v1/apps/6820738808/betaGroups?'),
-      'Unexpected group pagination host/path')
+      'Unexpected group pagination host/path', 'group_pagination_host')
     path = next_url&.delete_prefix('https://api.appstoreconnect.apple.com')
   end
   id
@@ -78,77 +103,99 @@ def play_tracks(client)
 end
 
 lane :distribute do
-  require_release(ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REF'] == 'refs/heads/main', 'Hosted main dispatch required')
   out = ENV.fetch('PLAYGROUND_OUTPUT')
-  admission = JSON.parse(File.read(ENV.fetch('PLAYGROUND_ADMISSION')))
-  packaging = JSON.parse(File.read(File.join(out, 'packaging.json')))
-  platform = ENV.fetch('PLAYGROUND_PLATFORM')
-  number = ENV.fetch('PLAYGROUND_BUILD_NUMBER')
-  sha = ENV.fetch('PLAYGROUND_SOURCE_SHA')
-  require_release(%w[ios android].include?(platform) && packaging['platform'] == platform &&
-    packaging['signing'] == 'verified' && packaging['source_sha'] == sha &&
-    admission['source_sha'] == sha && packaging['build_number'] == number && admission['build_number'] == number,
-    'Package/admission mismatch')
-  binary = File.join(out, platform == 'ios' ? 'Playground.ipa' : 'Playground.aab')
-  require_release(Digest::SHA256.file(binary).hexdigest == packaging['binary_sha256'], 'Signed binary changed')
   state_path = File.join(out, 'distribution.json')
-  receipt = admission.merge('platform' => platform, 'binary_sha256' => packaging['binary_sha256'],
-    'distribution' => 'not_started', 'physical_device' => 'unverified')
-  File.write(state_path, JSON.pretty_generate(receipt))
-  if platform == 'ios'
-    key = apple_key
-    group_id = apple_group
-    # Check every page, not just the most recently uploaded build.
-    path = '/v1/builds?filter%5Bapp%5D=6820738808&limit=200'
-    seen = []
-    while path
-      page = apple_request(:get, path)
-      seen.concat(page['data'].map { |b| b['attributes']['version'] })
-      next_url = page.dig('links', 'next')
-      require_release(!next_url || next_url.start_with?('https://api.appstoreconnect.apple.com/v1/builds?'), 'Unexpected Apple pagination host')
-      path = next_url&.delete_prefix('https://api.appstoreconnect.apple.com')
-    end
-    require_release(seen.all? { |n| n.match?(/\A\d+\z/) && n.to_i < number.to_i }, 'Choose an unused, increasing Apple build number')
-    receipt['distribution'] = 'upload_started'
+  receipt = nil
+  begin
+    require_release(ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REF'] == 'refs/heads/main', 'Hosted main dispatch required',
+      'not_hosted_main')
+    admission = JSON.parse(File.read(ENV.fetch('PLAYGROUND_ADMISSION')))
+    packaging = JSON.parse(File.read(File.join(out, 'packaging.json')))
+    platform = ENV.fetch('PLAYGROUND_PLATFORM')
+    number = ENV.fetch('PLAYGROUND_BUILD_NUMBER')
+    sha = ENV.fetch('PLAYGROUND_SOURCE_SHA')
+    require_release(%w[ios android].include?(platform) && packaging['platform'] == platform &&
+      packaging['signing'] == 'verified' && packaging['source_sha'] == sha &&
+      admission['source_sha'] == sha && packaging['build_number'] == number && admission['build_number'] == number,
+      'Package/admission mismatch', 'package_admission_mismatch')
+    binary = File.join(out, platform == 'ios' ? 'Playground.ipa' : 'Playground.aab')
+    require_release(Digest::SHA256.file(binary).hexdigest == packaging['binary_sha256'], 'Signed binary changed', 'binary_changed')
+    receipt = admission.merge('platform' => platform, 'binary_sha256' => packaging['binary_sha256'],
+      'distribution' => 'not_started', 'physical_device' => 'unverified')
     File.write(state_path, JSON.pretty_generate(receipt))
-    # No external distribution, beta review submission, tester changes, public links or production release.
-    upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
-      ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
-      wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
-      expire_previous_builds: false, app_version: '0.1.0', build_number: number)
-    apple_key # Refresh the short-lived API token after processing.
-    apple_group # Recheck privacy/manual distribution before assignment.
-    builds = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}")['data']
-    require_release(builds.length == 1 && builds[0]['attributes']['processingState'] == 'VALID', 'Build not yet valid; assignment not performed')
-    build_id = builds[0]['id']
-    receipt.merge!('distribution' => 'processed', 'store_build_id' => build_id)
-    File.write(state_path, JSON.pretty_generate(receipt))
-    apple_request(:post, "/v1/builds/#{build_id}/relationships/betaGroups", {data: [{type: 'betaGroups', id: group_id}]})
-    groups = apple_request(:get, "/v1/builds/#{build_id}/relationships/betaGroups")['data']
-    require_release(groups.any? { |g| g['id'] == group_id }, 'TestFlight assignment readback missing')
-    receipt['distribution'] = 'assigned_existing_internal_group'
-  elsif platform == 'android'
-    client = google_client
-    play_tracks(client) do |tracks, bundles|
-      current = tracks.find { |t| t.track == 'internal' }
-      require_release(current && (current.releases || []).all? { |r| r.status == 'completed' }, 'Existing internal track has pending work; do not overwrite it')
-      codes = tracks.flat_map { |t| (t.releases || []).flat_map { |r| r.version_codes || [] } } + bundles.map(&:version_code)
-      require_release(codes.all? { |n| n.to_i < number.to_i }, 'Choose an unused, increasing Play version code')
+    if platform == 'ios'
+      release_phase('apple_key')
+      key = apple_key
+      release_phase('group_check')
+      group_id = apple_group
+      release_phase('build_numbers')
+      # Check every page, not just the most recently uploaded build.
+      path = '/v1/builds?filter%5Bapp%5D=6820738808&limit=200'
+      seen = []
+      while path
+        page = apple_request(:get, path)
+        seen.concat(page['data'].map { |b| b['attributes']['version'] })
+        next_url = page.dig('links', 'next')
+        require_release(!next_url || next_url.start_with?('https://api.appstoreconnect.apple.com/v1/builds?'), 'Unexpected Apple pagination host', 'builds_pagination_host')
+        path = next_url&.delete_prefix('https://api.appstoreconnect.apple.com')
+      end
+      require_release(seen.all? { |n| n.match?(/\A\d+\z/) && n.to_i < number.to_i }, 'Choose an unused, increasing Apple build number', 'build_number_used')
+      receipt['distribution'] = 'upload_started'
+      File.write(state_path, JSON.pretty_generate(receipt))
+      release_phase('upload')
+      # No external distribution, beta review submission, tester changes, public links or production release.
+      upload_to_testflight(api_key: key, apple_id: '6820738808', app_identifier: 'com.rem.playground.settings',
+        ipa: binary, skip_submission: true, skip_waiting_for_build_processing: false,
+        wait_processing_timeout_duration: 1200, distribute_external: false, notify_external_testers: false,
+        expire_previous_builds: false, app_version: '0.1.0', build_number: number)
+      release_phase('group_recheck')
+      apple_key # Refresh the short-lived API token after processing.
+      apple_group # Recheck privacy/manual distribution before assignment.
+      release_phase('processing_check')
+      builds = apple_request(:get, "/v1/builds?filter%5Bapp%5D=6820738808&filter%5Bversion%5D=#{number}")['data']
+      require_release(builds.length == 1 && builds[0]['attributes']['processingState'] == 'VALID', 'Build not yet valid; assignment not performed', 'build_not_valid')
+      build_id = builds[0]['id']
+      receipt.merge!('distribution' => 'processed', 'store_build_id' => build_id)
+      File.write(state_path, JSON.pretty_generate(receipt))
+      release_phase('assign')
+      apple_request(:post, "/v1/builds/#{build_id}/relationships/betaGroups", {data: [{type: 'betaGroups', id: group_id}]})
+      groups = apple_request(:get, "/v1/builds/#{build_id}/relationships/betaGroups")['data']
+      require_release(groups.any? { |g| g['id'] == group_id }, 'TestFlight assignment readback missing', 'assignment_readback_missing')
+      receipt['distribution'] = 'assigned_existing_internal_group'
+    elsif platform == 'android'
+      release_phase('play_auth')
+      client = google_client
+      release_phase('play_precheck')
+      play_tracks(client) do |tracks, bundles|
+        current = tracks.find { |t| t.track == 'internal' }
+        require_release(current && (current.releases || []).all? { |r| r.status == 'completed' }, 'Existing internal track has pending work; do not overwrite it', 'play_track_pending')
+        codes = tracks.flat_map { |t| (t.releases || []).flat_map { |r| r.version_codes || [] } } + bundles.map(&:version_code)
+        require_release(codes.all? { |n| n.to_i < number.to_i }, 'Choose an unused, increasing Play version code', 'play_version_code_used')
+      end
+      receipt['distribution'] = 'upload_started'
+      File.write(state_path, JSON.pretty_generate(receipt))
+      release_phase('upload')
+      upload_to_play_store(package_name: 'com.rem.designsystem.demo', json_key_data: ENV.fetch('PLAYGROUND_GOOGLE_PLAY_JSON'),
+        aab: binary, track: 'internal', release_status: 'completed', version_name: "Playground #{number} #{sha[0,12]}",
+        skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true,
+        skip_upload_images: true, skip_upload_screenshots: true, rescue_changes_not_sent_for_review: false)
+      release_phase('play_readback')
+      play_tracks(client) do |tracks, _|
+        current = tracks.find { |t| t.track == 'internal' }
+        require_release(current && (current.releases || []).any? { |r| r.status == 'completed' && (r.version_codes || []).map(&:to_s).include?(number) },
+          'Play internal release readback missing', 'play_readback_missing')
+      end
+      receipt['distribution'] = 'published_existing_internal_track'
+    else
+      require_release(false, 'Unknown platform', 'unknown_platform')
     end
-    receipt['distribution'] = 'upload_started'
     File.write(state_path, JSON.pretty_generate(receipt))
-    upload_to_play_store(package_name: 'com.rem.designsystem.demo', json_key_data: ENV.fetch('PLAYGROUND_GOOGLE_PLAY_JSON'),
-      aab: binary, track: 'internal', release_status: 'completed', version_name: "Playground #{number} #{sha[0,12]}",
-      skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true,
-      skip_upload_images: true, skip_upload_screenshots: true, rescue_changes_not_sent_for_review: false)
-    play_tracks(client) do |tracks, _|
-      current = tracks.find { |t| t.track == 'internal' }
-      require_release(current && (current.releases || []).any? { |r| r.status == 'completed' && (r.version_codes || []).map(&:to_s).include?(number) },
-        'Play internal release readback missing')
-    end
-    receipt['distribution'] = 'published_existing_internal_track'
-  else
-    UI.user_error!('Unknown platform')
+  rescue Exception => e
+    # Record where it stopped: phase, fixed guard code (or the exception class only) and an HTTP status.
+    # Never the exception message, provider body or credential material.
+    guard = $release_guard || ('exception_' + e.class.name.to_s.gsub(/[^A-Za-z0-9]+/, '_').downcase)[0, 64]
+    failed = (receipt || {}).merge('failure' => {'phase' => $release_phase, 'guard' => guard, 'http_status' => $release_http})
+    File.write(state_path, JSON.pretty_generate(failed)) if receipt
+    raise
   end
-  File.write(state_path, JSON.pretty_generate(receipt))
 end

@@ -256,6 +256,12 @@ Provider logs are suppressed from public Actions output and not retained as arti
 Only validated source/run/build identifiers, binary digest, review URL and bounded
 distribution/device states are placed in the public job summary. Keep review links
 free of personal tester data. The source code and these nonsensitive IDs are public.
+When the store step fails, the job summary and one public log line also say where it
+stopped: a fixed phase (`apple_key`, `group_check`, `build_numbers`, `upload`, …), a fixed
+guard code from the Fastfile (for example `group_other_access_flag_unknown`,
+`build_number_used`, `apple_api_http`, or `exception_<class>` for an unexpected error) and
+the HTTP status of a failed Apple call. Never the provider's message, body or credentials.
+Read that line before reconciling provider state or asking for an account change.
 
 ## Validation
 

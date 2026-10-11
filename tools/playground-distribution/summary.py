@@ -8,6 +8,20 @@ import sys
 from gate import arguments, visual_review, require, REVIEWERS
 
 
+# Where fastlane distribute stopped (Fastfile release_phase); fixed values only.
+FAILURE_PHASES = ('inputs', 'apple_key', 'group_check', 'build_numbers', 'upload', 'group_recheck',
+                  'processing_check', 'assign', 'play_auth', 'play_precheck', 'play_readback')
+
+
+def failure_line(record):
+    """One allowlisted line for the public job log: state, and where and why the store step stopped."""
+    f = record.get('failure')
+    line = f"Distribution state: {record.get('distribution')}"
+    if f:
+        line += f"; stopped in phase {f['phase']} at guard {f['guard']}; HTTP status {f['http_status'] or 'none'}"
+    return line
+
+
 def public_record(data):
     arguments(data.get('source_sha'), data.get('native_run_id'), data.get('build_number'))
     require(isinstance(data.get('native_run_attempt'), int) and data['native_run_attempt'] > 0, 'Invalid attempt')
@@ -29,8 +43,16 @@ def public_record(data):
                     approval['reviewer'] in REVIEWERS.values(), 'Unknown approval model or reviewer')
             require(approval['model'] != 'owner-approval' or approval['reviewer'] == 'samuelalake',
                     'Invalid owner approval identity')
+    if 'failure' in data:
+        import re
+        f = data['failure']
+        require(isinstance(f, dict) and set(f) == {'phase', 'guard', 'http_status'}, 'Invalid failure metadata')
+        require(f['phase'] in FAILURE_PHASES, 'Unknown failure phase')
+        require(isinstance(f['guard'], str) and re.fullmatch('[a-z0-9_]{1,64}', f['guard']), 'Invalid failure guard')
+        require(f['http_status'] is None or (isinstance(f['http_status'], int) and 100 <= f['http_status'] <= 599),
+                'Invalid failure HTTP status')
     allowed = ('source_sha', 'native_run_id', 'native_run_attempt', 'build_number', 'platform',
-               'binary_sha256', 'distribution', 'physical_device', 'visual_review_url', 'approvals')
+               'binary_sha256', 'distribution', 'physical_device', 'visual_review_url', 'approvals', 'failure')
     return {k: data[k] for k in allowed if k in data}
 
 
@@ -50,7 +72,10 @@ def main():
         text = 'No verified distribution result. Check failed stage; an upload may require store reconciliation.'
         if path.exists():
             try:
-                text = '```json\n' + json.dumps(public_record(json.loads(path.read_text())), indent=2) + '\n```'
+                record = public_record(json.loads(path.read_text()))
+                text = '```json\n' + json.dumps(record, indent=2) + '\n```'
+                if mode == 'result':
+                    print(failure_line(record))
             except (ValueError, TypeError, KeyError):
                 text = 'Invalid distribution metadata suppressed. Reconcile provider state before retrying.'
         if mode == 'admission':
