@@ -194,6 +194,14 @@ class BudgetAndRedactionTests(unittest.TestCase):
         self.assertEqual(simqa.classify_failure(0, True, {}), 'model_timeout')
         self.assertIsNone(simqa.classify_failure(0, False, {'result': '{}', 'is_error': False}))
 
+    def test_complete_png(self):
+        whole = simqa.PNG_SIGNATURE + b'0' * 32 + simqa.PNG_IEND
+        self.assertTrue(simqa.complete_png(whole))
+        self.assertFalse(simqa.complete_png(whole[:-1]))
+        self.assertFalse(simqa.complete_png(simqa.PNG_SIGNATURE + b'0' * 32))
+        self.assertFalse(simqa.complete_png(b'GIF89a' + whole[6:]))
+        self.assertFalse(simqa.complete_png(simqa.PNG_SIGNATURE + simqa.PNG_IEND))
+
     def test_ui_confirms(self):
         self.assertTrue(simqa.ui_confirms_sheet('button id=catalog.addToChat.photos label="Photos" frame=1,2,3,4'))
         self.assertFalse(simqa.ui_confirms_sheet('button id=catalog.composerAdd label="Add" frame=1,2,3,4'))
@@ -233,8 +241,13 @@ while True:
 
 FAKE_XCRUN = r'''#!/usr/bin/env python3
 import sys
+from pathlib import Path
 assert sys.argv[1:4] == ['simctl', 'io', 'UDID'] and sys.argv[4] == 'screenshot', sys.argv
-open(sys.argv[5], 'wb').write(b'\x89PNG\r\n\x1a\n' + b'0' * 32)
+mode = (Path(__file__).parent / 'mode').read_text().strip()
+whole = b'\x89PNG\r\n\x1a\n' + b'0' * 32 + b'\x00\x00\x00\x00IEND\xaeB`\x82'
+open(sys.argv[5], 'wb').write(whole[:20] if mode == 'shottruncated' else whole)
+if mode in ('shotexit', 'shottruncated'):
+    sys.exit(1)
 '''
 
 FAKE_CLAUDE = r'''#!/usr/bin/env python3
@@ -306,6 +319,18 @@ class FakeRunnerTests(unittest.TestCase):
         self.assertNotIn('fake-oauth', uploaded)
         self.assertNotIn('"data"', uploaded)
         self.assertFalse(list(out.rglob('*.jsonl')), 'raw transcripts must stay out of the upload folder')
+
+    def test_complete_frame_kept_when_simctl_exits_non_zero(self):
+        process, receipt, out, _ = self.run_controller('shotexit')
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        self.assertEqual(receipt['status'], 'sheet_opened')
+        self.assertTrue(receipt['screenshot_notes'])
+        self.assertTrue(all(n['simctl'] == 'exit 1' and n['kept'] for n in receipt['screenshot_notes']))
+
+    def test_truncated_frame_still_fails(self):
+        process, receipt, out, _ = self.run_controller('shottruncated')
+        self.assertEqual(receipt['status'], 'screenshot_failed')
+        self.assertEqual(receipt['screenshot_notes'][0], {'png': 'frame-00.png', 'simctl': 'exit 1', 'kept': False})
 
     def test_failed_read_blocks_decision(self):
         process, receipt, out, _ = self.run_controller('readfail')
