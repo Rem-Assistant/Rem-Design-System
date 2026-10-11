@@ -182,7 +182,8 @@ public struct ChatScreen<Transcript: View>: View {
                     .defaultScrollAnchor(c.emptyState == nil && !jumpEvidence ? .bottom : .top)
                     .scrollDismissesKeyboard(.interactively)
                     .accessibilityIdentifier("chat.content")
-                    .onPreferenceChange(ChatContentBottomKey.self) { maxY in
+                    .onPreferenceChange(ChatContentBottomKey.self) { reported in
+                        guard let maxY = reported else { return }
                         distanceFromBottom = ChatEdgeBackdrop.distanceFromLatest(
                             contentBottom: maxY, viewportHeight: viewport.size.height
                         )
@@ -332,10 +333,13 @@ private struct ChatDockTopKey: PreferenceKey {
     static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
 }
 
-/// The transcript content's bottom edge in the scroll view's coordinate space (jump to latest).
+/// The transcript content's bottom edge in the scroll view's coordinate space (jump to latest). Optional and
+/// keeping the last reported value, like the edge keys above: the content's later overlays (the latest-message
+/// anchor) never set it, and a plain `value = nextValue()` let them reset it to 0, so the distance from the
+/// latest message never passed the threshold and jump to latest never appeared.
 private struct ChatContentBottomKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    static let defaultValue: CGFloat? = nil
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
 }
 
 /// Evidence seam (internal, never set by hosts): open the transcript at its oldest message instead of the
