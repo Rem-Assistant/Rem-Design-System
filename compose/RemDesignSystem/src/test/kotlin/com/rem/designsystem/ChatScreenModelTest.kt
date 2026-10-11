@@ -15,8 +15,8 @@ import com.rem.designsystem.screens.ChatReplyContext
 import com.rem.designsystem.screens.ChatScreenAction
 import com.rem.designsystem.screens.ChatTranscriptEntry
 import com.rem.designsystem.screens.ChatTimestampReveal
-import com.rem.designsystem.chat.ChatKeyboardDismiss
-import com.rem.designsystem.chat.ChatTranscriptKeyboardDismissConnection
+import com.rem.designsystem.screens.ChatKeyboardDismiss
+import com.rem.designsystem.screens.ChatTranscriptKeyboardDismissConnection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import com.rem.designsystem.screens.ChatJumpToLatest

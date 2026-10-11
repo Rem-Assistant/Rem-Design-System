@@ -6,6 +6,9 @@ import CoreGraphics
 /// keeps its own interactive dismissal (`.scrollDismissesKeyboard(.interactively)`). The composer owns it;
 /// hosts wire nothing. Pure rules so both platforms agree. Twin of Compose `ChatKeyboardDismiss`.
 /// Contract: `docs/contracts/chat.md` rule 11.
+///
+/// Lives in Screens/ beside `ChatJumpToLatest`: a rules/constants type of the Chat composition, not a visual
+/// component, so it has no Figma master and no Code Connect mapping.
 public enum ChatKeyboardDismiss {
     /// Minimum downward travel (pt) for a swipe on the composer to dismiss the keyboard.
     public static let threshold: CGFloat = 24

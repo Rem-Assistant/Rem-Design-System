@@ -50,6 +50,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rem.designsystem.screens.ChatComposerAction
 import com.rem.designsystem.screens.ChatComposerState
+import com.rem.designsystem.screens.ChatKeyboardDismiss
+import com.rem.designsystem.screens.chatKeyboardDismissSwipe
 import com.rem.designsystem.screens.ComposerAvailability
 import com.rem.designsystem.screens.ComposerPhase
 import com.rem.designsystem.screens.ComposerSendDisplay
@@ -77,7 +79,7 @@ import com.rem.designsystem.tokens.RemTypography
  * are removable chips owned by the host — a Cloud browser chip is a capability for the next message.
  *
  * Keyboard: while the field is focused, a clear downward swipe that starts on the composer clears focus
- * and hides the IME, and TalkBack gets a "Dismiss keyboard" custom action ([ChatKeyboardDismiss]). Hosts
+ * and hides the IME, and TalkBack gets a "Dismiss keyboard" custom action (`screens/ChatKeyboardDismiss`). Hosts
  * wire nothing; host-driven composers hear it as `FocusChanged(false)`.
  */
 enum class ComposerSendState { Idle, Active, Sending }

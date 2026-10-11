@@ -10,7 +10,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.rem.designsystem.chat.ChatTranscriptKeyboardDismissConnection
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.isImeVisible
@@ -115,7 +114,7 @@ fun ChatScreen(
  * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
  * **jump to latest** ([ChatJumpToLatest]): a round down-arrow centred above the dock while the person is
  * scrolled more than [ChatJumpToLatest.THRESHOLD] above the newest message. Hosts wire nothing for it.
- * Keyboard dismissal is owned too ([com.rem.designsystem.chat.ChatKeyboardDismiss]): a downward swipe on
+ * Keyboard dismissal is owned too ([ChatKeyboardDismiss]): a downward swipe on
  * the composer, or a drag toward older messages in the transcript while the IME is open, hides the IME.
  */
 @OptIn(ExperimentalLayoutApi::class)

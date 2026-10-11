@@ -1,4 +1,4 @@
-package com.rem.designsystem.chat
+package com.rem.designsystem.screens
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -17,6 +17,9 @@ import kotlin.math.abs
  * press-and-hold drag (text selection) does nothing. The full composition also dismisses the IME when the
  * person drags the transcript toward older messages (iOS `.scrollDismissesKeyboard(.interactively)`).
  * The design system owns both; hosts wire nothing. Contract: `docs/contracts/chat.md` rule 11.
+ *
+ * Lives in screens/ beside [ChatJumpToLatest]: a rules/constants type of the Chat composition, not a visual
+ * component, so it has no Figma master and no Code Connect mapping.
  */
 object ChatKeyboardDismiss {
     /** Minimum downward travel (dp) for a swipe on the composer, or a transcript drag, to dismiss the IME. */
