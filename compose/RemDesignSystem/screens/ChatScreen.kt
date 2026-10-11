@@ -102,8 +102,8 @@ fun ChatScreen(
  * overflow — hosts add no app bar), the Screen state slot (scrolling transcript, or the empty state
  * `2054:22089` with no second face), and bottom chrome docking the one canonical composer (`2071:11555`)
  * above the IME or navigation bar with the optional task-reply accessory (`2682:22298`). The transcript
- * scrolls under the header and the dock, each on a gradient scrim (0.85 at the screen edge, clear just past the
- * chrome), with top and bottom content padding equal to their measured heights so the first and latest
+ * scrolls under the header and the dock, each on a masked backdrop blur (API 32+; a 0.85 scrim below), clear just past the
+ * chrome, with top and bottom content padding equal to their measured heights so the first and latest
  * messages are never hidden ([ChatEdgeBackdrop]; hosts wire nothing). Insets come
  * from the host window (`imePadding` / `navigationBarsPadding` / `statusBarsPadding`); the 320dp board
  * is a width stress fixture only. [transcript] is the rich-content slot. The composition also owns
@@ -153,7 +153,7 @@ fun ChatScreen(
         }
         val jumpScope = rememberCoroutineScope()
         // Edge backdrops: the transcript fills the window (under the status bar, the dock and the navigation bar
-        // or IME) and the header and dock float over it on their scrims; `insets` are their measured heights.
+        // or IME) and the header and dock float over it on their backdrops; `insets` are their measured heights.
         ChatEdgeOverlayLayout(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             header = {
@@ -171,7 +171,7 @@ fun ChatScreen(
                 )
             },
             dock = {
-                // No fill of its own: the dock scrim is drawn behind it by `ChatEdgeOverlayLayout`.
+                // No fill of its own: the dock backdrop is drawn behind it by `ChatEdgeOverlayLayout`.
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -196,6 +196,25 @@ fun ChatScreen(
                     )
                 }
             },
+            overlay = { insets ->
+                // Over the transcript (and its blur source), lifted by the dock inset so it never covers the docked
+                // composer or the IME. Qualified so the outer Column's scope does not pick the ColumnScope overload.
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showsJump,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                        .padding(bottom = ChatEdgeBackdrop.jumpButtonBottomPadding(insets.bottom.value).dp),
+                    enter = if (!jumpMotion) EnterTransition.None
+                    else fadeIn(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleIn(tween(ChatJumpToLatest.APPEAR_MILLIS), initialScale = ChatJumpToLatest.APPEAR_SCALE),
+                    exit = if (!jumpMotion) ExitTransition.None
+                    else fadeOut(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleOut(tween(ChatJumpToLatest.APPEAR_MILLIS), targetScale = ChatJumpToLatest.APPEAR_SCALE),
+                ) {
+                    ChatJumpToLatestButton(onClick = {
+                        jumpScope.launch {
+                            if (jumpMotion) scroll.animateScrollTo(scroll.maxValue) else scroll.scrollTo(scroll.maxValue)
+                        }
+                    })
+                }
+            },
         ) { insets ->
             Column(
                 modifier = Modifier
@@ -211,23 +230,6 @@ fun ChatScreen(
                 } else {
                     transcript()
                 }
-            }
-            // Over the transcript, lifted by the dock inset so it never covers the docked composer or the IME.
-            // Qualified so the outer Column's scope does not pick the ColumnScope overload.
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showsJump,
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .padding(bottom = ChatEdgeBackdrop.jumpButtonBottomPadding(insets.bottom.value).dp),
-                enter = if (!jumpMotion) EnterTransition.None
-                else fadeIn(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleIn(tween(ChatJumpToLatest.APPEAR_MILLIS), initialScale = ChatJumpToLatest.APPEAR_SCALE),
-                exit = if (!jumpMotion) ExitTransition.None
-                else fadeOut(tween(ChatJumpToLatest.APPEAR_MILLIS)) + scaleOut(tween(ChatJumpToLatest.APPEAR_MILLIS), targetScale = ChatJumpToLatest.APPEAR_SCALE),
-            ) {
-                ChatJumpToLatestButton(onClick = {
-                    jumpScope.launch {
-                        if (jumpMotion) scroll.animateScrollTo(scroll.maxValue) else scroll.scrollTo(scroll.maxValue)
-                    }
-                })
             }
         }
         // Keep the newest content in view (Swift: defaultScrollAnchor(.bottom)) while the person is at or
@@ -255,7 +257,7 @@ internal val LocalChatJumpToLatestEvidence = staticCompositionLocalOf { false }
 /**
  * Evidence seam (internal, never set by hosts): open the transcript [ChatEdgeBackdrop.EVIDENCE_SCROLL] dp
  * below its oldest message (combine with [LocalChatJumpToLatestEvidence] so it is not then snapped to the
- * latest), so a still render shows messages passing under the header and dock scrims. Twin of SwiftUI
+ * latest), so a still render shows messages passing under the header and dock backdrops. Twin of SwiftUI
  * `chatEdgeBackdropEvidence`. Not part of the public API.
  */
 internal val LocalChatEdgeBackdropEvidence = staticCompositionLocalOf { false }

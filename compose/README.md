@@ -26,3 +26,13 @@ adb -s YOUR_TEST_DEVICE pull /sdcard/Android/data/com.rem.designsystem.demo/file
 ```
 
 `./gradlew :RemDesignSystem:testDebugUnitTest` runs the existing library checks. The Settings instrumentation suite is separate from those snapshots. See `../docs/contracts/settings-playground.md` for the source frames and acceptance criteria.
+
+## Third-party dependencies
+
+| Dependency | Version | Licence | Used by |
+|---|---|---|---|
+| [Haze](https://github.com/chrisbanes/haze) (`dev.chrisbanes.haze:haze`) | 1.1.1 (pinned) | Apache-2.0 | `screens/ChatEdgeBackdrop.kt` (Chat header and composer-dock backdrop blur) and `screens/ChatJumpToLatestButton.kt` (glass jump to latest). Blur on API 32+, gradient scrim / solid fallback below. |
+
+Everything else is AndroidX / Jetpack Compose (Apache-2.0). Haze 1.1.1 is built against this toolchain (Kotlin
+2.0.21, Compose 1.7, minSdk 21 ≤ 24, compileSdk 34); it lifts Compose foundation/ui from 1.7.3 to 1.7.5. Haze 1.3+
+needs Kotlin 2.1 and 1.4+ needs core-ktx 1.15 (compileSdk 35), so moving past 1.1.x waits on a toolchain bump.

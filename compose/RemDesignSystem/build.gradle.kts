@@ -194,6 +194,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    // Backdrop blur for the Chat edge backdrops and jump to latest (ChatEdgeBackdrop): Haze, Apache-2.0,
+    // https://github.com/chrisbanes/haze. Pinned to 1.1.1: built against Kotlin 2.0.21 and Compose 1.7 (it
+    // resolves foundation/ui 1.7.3 -> 1.7.5); 1.3+ needs Kotlin 2.1 and 1.4+ core-ktx 1.15 (compileSdk 35).
+    // Blur on API 32+ (RenderEffect via GraphicsLayer), scrim fallback below. See compose/README.md.
+    implementation("dev.chrisbanes.haze:haze:1.1.1")
 
     testImplementation("junit:junit:4.13.2")
 }

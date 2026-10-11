@@ -86,7 +86,7 @@ no prototype reaction; this routing is explicit.
 
 11. **Edge backdrops** are presentation the composition owns ([`chat.md`](chat.md) rule 12; numbered after
    #121's rule 10): the transcript scrolls under the header and the composer dock, whose backdrops are progressive
-   blurs (iOS) or gradient scrims (Compose) instead of solid fills, and the transcript's top and bottom insets
+   blurs (iOS material; Compose Haze blur on API 32+, scrim below) instead of solid fills, and the transcript's top and bottom insets
    equal their heights. No input, action or host wiring; hosts still add no navigation bar or app bar above the
    composition, and supply the window and keyboard / IME insets as before.
 

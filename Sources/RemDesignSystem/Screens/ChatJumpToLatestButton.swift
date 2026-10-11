@@ -31,8 +31,10 @@ public enum ChatJumpToLatest {
     }
 }
 
-/// The jump-to-latest control: a solid 44pt circle (`backgroundTertiary`, hairline `separator`, soft
-/// shadow) with `arrow.down` in `labelPrimary`. Used by `ChatScreen`; public for the catalog.
+/// The jump-to-latest control: a 44pt glass circle (hairline `separator`, soft shadow) with `arrow.down` in
+/// `labelPrimary`. On iOS / macOS 26 the circle is the system Liquid Glass (`.glassEffect(.regular.interactive())`);
+/// earlier it is `.regularMaterial`. Both adapt to Reduce Transparency and Increase Contrast. Used by
+/// `ChatScreen`; public for the catalog.
 public struct ChatJumpToLatestButton: View {
     private let action: () -> Void
 
@@ -46,7 +48,7 @@ public struct ChatJumpToLatestButton: View {
                 .font(.system(size: ChatJumpToLatest.glyphSize, weight: .semibold))
                 .foregroundStyle(DesignTokens.Color.labelPrimary)
                 .frame(width: ChatJumpToLatest.diameter, height: ChatJumpToLatest.diameter)
-                .background(DesignTokens.Color.backgroundTertiary, in: Circle())
+                .modifier(ChatJumpToLatestGlass())
                 .overlay(Circle().strokeBorder(DesignTokens.Color.separator, lineWidth: 0.5))
                 .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 2)
                 .contentShape(Circle())
@@ -56,6 +58,22 @@ public struct ChatJumpToLatestButton: View {
         .accessibilityIdentifier(ChatJumpToLatest.accessibilityIdentifier)
     #if os(iOS)
         .accessibilityShowsLargeContentViewer()
+    #endif
+    }
+}
+
+/// The jump-to-latest circle's surface: system glass where the SDK and OS have it, otherwise `.regularMaterial`.
+/// The SDK check keeps the package building with pre-26 Xcode (CI runs macOS 14 runners).
+private struct ChatJumpToLatestGlass: ViewModifier {
+    func body(content: Content) -> some View {
+    #if compiler(>=6.2)
+        if #available(iOS 26.0, macOS 26.0, *) {
+            content.glassEffect(.regular.interactive(), in: Circle())
+        } else {
+            content.background(.regularMaterial, in: Circle())
+        }
+    #else
+        content.background(.regularMaterial, in: Circle())
     #endif
     }
 }

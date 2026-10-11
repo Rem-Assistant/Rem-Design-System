@@ -269,6 +269,19 @@ class ChatScreenModelTest {
         assertEquals(listOf(0f to 0f, 1f to 0.85f, 1f to 0.85f), ChatEdgeBackdrop.dockScrimStops(0f))
     }
 
+    @Test fun edgeBackdropBlurMasksMatchTheScrimsAndTheGlassStaysLegible() {
+        assertEquals(20f, ChatEdgeBackdrop.BLUR_RADIUS, 0f)
+        assertEquals(0.7f, ChatEdgeBackdrop.BLUR_TINT_ALPHA, 0f)
+        assertEquals(0.6f, ChatJumpToLatest.GLASS_TINT_ALPHA, 0f)
+        for (h in listOf(0f, 96f, 128f, 187f)) {
+            // The blur mask runs 1 -> 0 exactly where the API < 32 scrim runs 0.85 -> 0.
+            assertEquals(ChatEdgeBackdrop.maskStops(h).map { it.first }, ChatEdgeBackdrop.scrimStops(h).map { it.first })
+            assertEquals(listOf(1f, 1f, 0f), ChatEdgeBackdrop.maskStops(h).map { it.second })
+            assertEquals(ChatEdgeBackdrop.dockMaskStops(h).map { it.first }, ChatEdgeBackdrop.dockScrimStops(h).map { it.first })
+            assertEquals(listOf(0f, 1f, 1f), ChatEdgeBackdrop.dockMaskStops(h).map { it.second })
+        }
+    }
+
     // Jump to latest (paired with `ChatScreenModelTests.swift`).
 
     @Test fun jumpToLatestShowsOnlyBeyondTheThreshold() {
