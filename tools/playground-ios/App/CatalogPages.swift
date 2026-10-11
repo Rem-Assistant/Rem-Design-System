@@ -140,10 +140,8 @@ struct CatalogAgenda: View {
                                      onNext: { dayOffset += 1 })
                     .frame(maxWidth: .infinity)
             }
-            // The row specimen stands alone (dashed outline, 4pt apart), as in region frame 2336:19714:
-            // no catalog card around it.
             CatalogGroup(title: "Suggestion rows") {
-                VStack(spacing: DesignTokens.Spacing.xs) {
+                VStack(spacing: 0) {
                     ForEach(Self.suggestions, id: \.id) { item in
                         if let outcome = resolved[item.id] {
                             ListRow(item.title, subtitle: outcome, leading: { EmptyView() }, trailing: { EmptyView() })
@@ -158,6 +156,7 @@ struct CatalogAgenda: View {
                         }
                     }
                 }
+                .catalogCard()
                 if !resolved.isEmpty {
                     Button("Restore") { resolved = [:] }
                         .remButton(.textAccent)
@@ -250,25 +249,15 @@ struct CatalogChat: View {
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var showFiles = false
     @State private var feedback: String?
-    @State private var headerCall = false
 
     var body: some View {
         CatalogPage(title: "Chat") {
             CatalogGroup(title: "Header") {
-                // The trailing slot holds one action: the in-app call entry replaces More (WS1e).
                 ChatHeader(
                     activity: ChatFixture.activities[activity].text,
                     status: ChatFixture.activities[activity].status,
-                    accessibilityPrefix: "chat.header",
-                    onOverflow: {},
-                    onCall: headerCall ? {} : nil
+                    accessibilityPrefix: "chat.header"
                 )
-                Picker("Trailing action", selection: $headerCall) {
-                    Text("More").tag(false)
-                    Text("Call").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .accessibilityIdentifier("chat.headerTrailing")
                 Picker("Agent activity", selection: $activity) {
                     ForEach(ChatFixture.activities.indices, id: \.self) { index in
                         Text(ChatFixture.activities[index].text).tag(index)
