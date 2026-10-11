@@ -372,9 +372,13 @@ import sys
 from pathlib import Path
 assert sys.argv[1:4] == ['simctl', 'io', 'UDID'] and sys.argv[4] == 'screenshot', sys.argv
 mode = (Path(__file__).parent / 'mode').read_text().strip()
+count = Path(__file__).parent / 'shots'
+n = int(count.read_text()) if count.exists() else 0
+count.write_text(str(n + 1))
 whole = b'\x89PNG\r\n\x1a\n' + b'0' * 32 + b'\x00\x00\x00\x00IEND\xaeB`\x82'
-open(sys.argv[5], 'wb').write(whole[:20] if mode == 'shottruncated' else whole)
-if mode in ('shotexit', 'shottruncated'):
+flaky = mode == 'shotflaky' and n == 2  # the third capture fails once, then the retry succeeds
+open(sys.argv[5], 'wb').write(whole[:20] if mode == 'shottruncated' or flaky else whole)
+if mode in ('shotexit', 'shottruncated') or flaky:
     sys.exit(1)
 '''
 
@@ -477,7 +481,15 @@ class FakeRunnerTests(unittest.TestCase):
     def test_truncated_frame_still_fails(self):
         process, receipt, out, _ = self.run_controller('shottruncated')
         self.assertEqual(receipt['status'], 'screenshot_failed')
-        self.assertEqual(receipt['screenshot_notes'][0], {'png': 'frame-00.png', 'simctl': 'exit 1', 'kept': False})
+        self.assertEqual(receipt['screenshot_notes'], [
+            {'png': 'frame-00.png', 'attempt': 1, 'simctl': 'exit 1', 'kept': False},
+            {'png': 'frame-00.png', 'attempt': 2, 'simctl': 'exit 1', 'kept': False}])
+
+    def test_one_incomplete_frame_is_retried(self):
+        process, receipt, out, _ = self.run_controller('shotflaky')
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        self.assertEqual(receipt['status'], 'sheet_opened')
+        self.assertEqual([(n['attempt'], n['kept']) for n in receipt['screenshot_notes']], [(1, False), (2, True)])
 
     def test_failed_read_blocks_decision(self):
         process, receipt, out, _ = self.run_controller('readfail')

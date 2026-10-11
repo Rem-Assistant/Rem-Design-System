@@ -188,7 +188,7 @@ class Run:
         while len(names) < DURING_FRAMES and not result.exists():
             path = self.frames / f'during-{seq:03d}-{len(names)}.png'
             taken = time.time()
-            if self.screenshot(path) and not result.exists():
+            if self.screenshot(path, attempts=1) and not result.exists():
                 names.append({'png': path.name, 'captured_at': taken})
             time.sleep(0.2)
         return names
@@ -213,27 +213,32 @@ class Run:
             stall['recovered'] = not stalled
         return seq, dispatched, (time.time() if result is not None else None), result, stalled
 
-    def screenshot(self, path):
+    def screenshot(self, path, attempts=2):
         # The file decides, not simctl's status: it can write a complete frame and then exit
-        # non-zero or hang past the timeout. A frame kept that way is noted in the receipt.
-        outcome = 'ok'
-        try:
-            subprocess.run(['xcrun', 'simctl', 'io', self.a.udid, 'screenshot', str(path)],
-                           check=True, capture_output=True, timeout=30)
-        except subprocess.TimeoutExpired:
-            outcome = 'timeout'
-        except subprocess.CalledProcessError as error:
-            outcome = f'exit {error.returncode}'
-        except (subprocess.SubprocessError, OSError):
-            outcome = 'error'
-        try:
-            ok = path.exists() and simqa.complete_png(path.read_bytes())
-        except OSError:
-            ok = False
-        if outcome != 'ok':
-            self.receipt.setdefault('screenshot_notes', []).append(
-                {'png': path.name, 'simctl': outcome, 'kept': ok})
-        return ok
+        # non-zero or hang past the timeout (runs 38120080344 / 38120087490 ended on one 30 s hang).
+        # An incomplete capture is retried once into the same path; every attempt is noted.
+        for attempt in range(attempts):
+            outcome = 'ok'
+            try:
+                path.unlink(missing_ok=True)
+                subprocess.run(['xcrun', 'simctl', 'io', self.a.udid, 'screenshot', str(path)],
+                               check=True, capture_output=True, timeout=30)
+            except subprocess.TimeoutExpired:
+                outcome = 'timeout'
+            except subprocess.CalledProcessError as error:
+                outcome = f'exit {error.returncode}'
+            except (subprocess.SubprocessError, OSError):
+                outcome = 'error'
+            try:
+                ok = path.exists() and simqa.complete_png(path.read_bytes())
+            except OSError:
+                ok = False
+            if outcome != 'ok' or attempt:
+                self.receipt.setdefault('screenshot_notes', []).append(
+                    {'png': path.name, 'attempt': attempt + 1, 'simctl': outcome, 'kept': ok})
+            if ok:
+                return True
+        return False
 
     # -- model ---------------------------------------------------------------------------------
     def ask(self, frame, png, ui, finish_only, budget_left):
