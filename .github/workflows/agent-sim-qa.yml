@@ -1,89 +1,97 @@
 name: agent-sim-qa
 
-# Proof of concept: a Claude Code agent drives the iOS Playground in a simulator like a person
-# (screenshots, taps, typing) and writes a visual QA report. Evidence alongside the deterministic
-# XCUITest journeys, never a release gate. See tools/agent-sim-qa/README.md.
+# Hosted visual diagnostic (dispatch only). A model looks at simulator screenshots of the iOS
+# Playground, chooses one typed input at a time (Read tool only), and a runner-local XCTest bridge
+# executes it. Evidence beside the deterministic XCUITest journeys, never a native receipt, release
+# gate, approval or waiver. See tools/agent-sim-qa/README.md.
 #
-# Dispatch only: no pull_request trigger, so code from an untrusted fork never runs next to the
-# Claude token. The agent receives no GitHub token and only simulator-control tools.
+# No pull_request/push trigger: fork code never runs beside the model token. The app under test is
+# limited to the exact SHAs listed below; adding one is a reviewed change to this file.
 
 on:
   workflow_dispatch:
     inputs:
       source_ref:
-        description: Branch or SHA whose Playground to test (must contain tools/playground-ios; default is the dispatch ref)
-        type: string
-        default: ''
+        description: Exact Playground commit to build (c23521b = Build 7 baseline, 6fa6366 = Build 8 candidate)
+        type: choice
+        default: c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+        options:
+          - c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+          - 6fa6366928c41331615bf1eb1810b871df8f9378
       scenario:
-        description: What the agent should do and verify, in plain words
-        type: string
-        default: "Open the Catalog, go to the Chat page, open the model menu, choose Automatic, then tap the composer's Add button and confirm the Add to Chat sheet appears with Photos and Files. Then dismiss it."
+        description: Catalog -> Chat -> composer Add, optionally after choosing Automatic in the model menu
+        type: choice
+        default: catalog-chat-add
+        options:
+          - catalog-chat-add
+          - catalog-chat-model-menu-add
 
 permissions:
   contents: read
 
 concurrency:
-  group: agent-sim-qa-${{ github.ref }}
+  group: agent-sim-qa
   cancel-in-progress: false
 
 env:
-  # Pinned tool versions (each released at least two weeks before this workflow was written).
-  CLAUDE_CODE_VERSION: 2.1.283
-  AXE_VERSION: 1.8.0
-  AXE_SHA256: 87eb09cd49dfc74fa8f7f5a46a03dfe2f14518b01d819f6a4094eab0d344ea7f
-  BUNDLE_ID: com.rem.playground.settings
+  # Same CLI pin and model as the Agent Factory roles (samuelalake/agent-factory@bdc3fda).
+  CLAUDE_CODE_VERSION: 2.1.236
+  CLAUDE_MODEL: claude-opus-4-8
   SIM_NAME: iPhone 15
   SIM_RUNTIME_SUFFIX: iOS-17-5
+  JOB_MINUTES: 55
 
 jobs:
-  agent-qa:
-    name: Agent drives the iOS Playground
+  visual-diagnostic:
+    name: Model-driven Add check (diagnostic only)
+    if: github.repository == 'Rem-Assistant/Rem-Design-System'
     runs-on: macos-14
     timeout-minutes: 60
     steps:
-      # The harness (prompt) always comes from the dispatch ref; the app under test from source_ref.
-      - name: Check out the QA harness
-        uses: actions/checkout@v4
+      # One deadline for the whole job; every later budget (build, bridge, each model call) derives
+      # from it so the run ends cleanly, with its partial record, before the job timeout.
+      - name: Fix the job deadline and validate inputs
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_ref must be a full SHA"; exit 1; }
+          deadline=$(( $(date +%s) + JOB_MINUTES * 60 ))
+          {
+            echo "JOB_DEADLINE=$deadline"
+            echo "SOURCE_SHA=$SOURCE_REF"
+            echo "QA_ROOT=$RUNNER_TEMP/agent-sim-qa"
+          } >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/agent-sim-qa/out" "$RUNNER_TEMP/agent-sim-qa/raw" "$RUNNER_TEMP/agent-sim-qa/box"
+
+      # The harness always comes from the dispatch ref; the app under test from the exact SHA.
+      - name: Check out the diagnostic harness
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: harness
           persist-credentials: false
       - name: Check out the source under test
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ inputs.source_ref || github.sha }}
+          ref: ${{ inputs.source_ref }}
           path: src
           persist-credentials: false
-      - name: Record the exact source revision
-        run: |
-          set -euo pipefail
-          sha=$(git -C src rev-parse HEAD)
-          echo "SOURCE_SHA=$sha" >> "$GITHUB_ENV"
-          test -d src/tools/playground-ios/RemSettingsPlayground.xcodeproj || {
-            echo "::error::$sha has no tools/playground-ios; pass a source_ref that contains the iOS Playground."; exit 1; }
 
-      # Same project, scheme, SDK and destination as tools/playground-ios/run-hosted-journeys.sh.
-      # GITHUB_ENV/GITHUB_PATH are withheld so build scripts cannot alter later steps' environment.
-      - name: Build the iOS Playground for the simulator
-        timeout-minutes: 30
+      - name: Self-test the harness checks
+        run: python3 -m unittest discover -s harness/tools/agent-sim-qa -p 'test_*.py'
+
+      # Review fix 3 (part 1): pristine checkout at exactly the requested SHA, before anything else.
+      - name: Verify pristine source at the exact SHA
         run: |
           set -euo pipefail
-          cd src
-          env -u GITHUB_ENV -u GITHUB_PATH xcodebuild build \
-            -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
-            -scheme RemSettingsPlayground \
-            -sdk iphonesimulator \
-            -destination "platform=iOS Simulator,name=$SIM_NAME,OS=17.5" \
-            -derivedDataPath "$RUNNER_TEMP/dd" \
-            REM_PLAYGROUND_SOURCE_SHA="$SOURCE_SHA" \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -40
-          app="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/RemSettingsPlayground.app"
-          test -d "$app"
-          echo "APP_PATH=$app" >> "$GITHUB_ENV"
+          python3 harness/tools/agent-sim-qa/controller.py verify-source \
+            --src src --sha "$SOURCE_SHA" --out "$QA_ROOT/out"
+          test -d src/tools/playground-ios/RemSettingsPlayground.xcodeproj
+
+      - name: Select and boot the simulator
+        run: |
+          set -euo pipefail
           xcodebuild -version
-
-      - name: Boot the simulator, install and launch
-        run: |
-          set -euo pipefail
           udid=$(xcrun simctl list devices available -j | python3 -c '
           import json, os, sys
           for runtime, devices in json.load(sys.stdin)["devices"].items():
@@ -92,109 +100,95 @@ jobs:
                       if device["name"] == os.environ["SIM_NAME"]:
                           print(device["udid"]); sys.exit()
           ')
-          test -n "$udid"
+          [[ -n "$udid" ]] || { echo "::error::No $SIM_NAME ($SIM_RUNTIME_SUFFIX) simulator on this runner"; exit 1; }
           echo "SIM_UDID=$udid" >> "$GITHUB_ENV"
           xcrun simctl boot "$udid" 2>/dev/null || true
           xcrun simctl bootstatus "$udid" -b >/dev/null
-          # Same keyboard tip suppression as run-hosted-journeys.sh.
+          # Same keyboard tip suppression as tools/playground-ios/run-hosted-journeys.sh.
           xcrun simctl spawn "$udid" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true || true
           xcrun simctl spawn "$udid" defaults write com.apple.keyboard.preferences KeyboardContinuousPathEnabled -bool false || true
-          xcrun simctl install "$udid" "$APP_PATH"
-          xcrun simctl launch "$udid" "$BUNDLE_ID" --settings-light
-          sleep 5
 
-      - name: Install AXe (pinned, checksum-verified)
+      # Only the disposable UI-test target receives the bridge; app sources stay byte-identical.
+      - name: Add the local input bridge to the UI-test target
         run: |
           set -euo pipefail
-          dir="$RUNNER_TEMP/axe"
-          mkdir -p "$dir"
-          curl -fsSL -o "$RUNNER_TEMP/axe.tgz" \
-            "https://github.com/cameroncooke/AXe/releases/download/v$AXE_VERSION/AXe-macOS-homebrew-v$AXE_VERSION.tar.gz"
-          echo "$AXE_SHA256  $RUNNER_TEMP/axe.tgz" | shasum -a 256 -c -
-          tar -xzf "$RUNNER_TEMP/axe.tgz" -C "$dir"
-          # Ad-hoc sign as the Homebrew formula's post_install does.
-          for framework in "$dir"/Frameworks/*.framework; do
-            codesign --force --sign - --timestamp=none "$framework"
-          done
-          codesign --force --sign - --timestamp=none "$dir/axe"
-          echo "$dir" >> "$GITHUB_PATH"
-          "$dir/axe" --version
-          # Preflight: the agent is useless if AXe cannot read this simulator.
-          "$dir/axe" describe-ui --udid "$SIM_UDID" | head -c 2000
+          cat harness/tools/agent-sim-qa/AgentVisualBridge.swift \
+            >> src/tools/playground-ios/UITests/PlaygroundNavigationUITests.swift
+          python3 harness/tools/agent-sim-qa/controller.py verify-source \
+            --src src --sha "$SOURCE_SHA" --out "$QA_ROOT/out" --injected
 
-      - uses: actions/setup-node@v4
+      # Same project, scheme, SDK, simulator and SHA stamp as run-hosted-journeys.sh. Unsigned.
+      # No secret is in this step's environment; GITHUB_ENV/GITHUB_PATH/GITHUB_OUTPUT are withheld.
+      - name: Build the Playground and bridge for testing
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          cd src
+          env -u GITHUB_ENV -u GITHUB_PATH -u GITHUB_OUTPUT -u GITHUB_STEP_SUMMARY xcodebuild build-for-testing \
+            -project tools/playground-ios/RemSettingsPlayground.xcodeproj \
+            -scheme RemSettingsPlayground \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=$SIM_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            REM_PLAYGROUND_SOURCE_SHA="$SOURCE_SHA" \
+            CODE_SIGNING_ALLOWED=NO > "$QA_ROOT/out/build.log" 2>&1 || {
+              tail -60 "$QA_ROOT/out/build.log"; exit 1; }
+          tail -5 "$QA_ROOT/out/build.log"
+
+      # Review fix 3 (part 2): the built app embeds exactly the checked-out SHA.
+      - name: Verify the built app's source SHA
+        run: |
+          set -euo pipefail
+          python3 harness/tools/agent-sim-qa/controller.py verify-built \
+            --app "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/RemSettingsPlayground.app" \
+            --sha "$SOURCE_SHA" --out "$QA_ROOT/out"
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.20.0
+          node-version: '22'
+      - name: Install the pinned Claude Code CLI
+        run: npm install -g "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION"
 
-      # The agent runs outside both checkouts (no CLAUDE.md, no project settings or MCP config),
-      # with only simulator-control tools, no GitHub token and no general shell.
-      - name: Run the QA agent
+      # Review fixes 1, 2 and 4 are enforced inside controller.py (see README). The token is
+      # referenced only here; the controller passes it only to the Read-only model process and
+      # strips credential-named variables from the XCTest/xcodebuild process.
+      - name: Run the visual diagnostic
         timeout-minutes: 30
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           SCENARIO: ${{ inputs.scenario }}
         run: |
           set -euo pipefail
-          work="$RUNNER_TEMP/agent-qa"
-          mkdir -p "$work/qa-artifacts"
-          echo "QA_WORK=$work" >> "$GITHUB_ENV"
-          python3 - "$GITHUB_WORKSPACE/harness/tools/agent-sim-qa/prompt.md" "$work/prompt.md" <<'PY'
-          import os, sys
-          text = open(sys.argv[1]).read()
-          for key, value in {"UDID": os.environ["SIM_UDID"], "BUNDLE_ID": os.environ["BUNDLE_ID"],
-                             "SCENARIO": os.environ["SCENARIO"]}.items():
-              text = text.replace("{{" + key + "}}", value)
-          open(sys.argv[2], "w").write(text)
-          PY
-          cd "$work"
-          xcrun simctl io booted screenshot qa-artifacts/00-harness-start.png
-          status=0
-          env -u GITHUB_TOKEN npx -y "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION" \
-            -p "$(cat prompt.md)" \
-            --tools "Bash,Read,Write" \
-            --allowedTools "Bash(axe:*)" "Bash(xcrun simctl io:*)" "Read" "Write" \
-            --permission-mode dontAsk \
-            --strict-mcp-config \
-            --max-turns 40 \
-            --output-format stream-json --verbose \
-            > transcript.jsonl 2> agent-stderr.log || status=$?
-          echo "Agent exited with status $status"
-          tail -n 20 agent-stderr.log || true
+          now=$(date +%s)
+          step_end=$(( now + 28 * 60 ))
+          deadline=$(( JOB_DEADLINE < step_end ? JOB_DEADLINE : step_end ))
+          env -u GITHUB_TOKEN python3 harness/tools/agent-sim-qa/controller.py run \
+            --src "$GITHUB_WORKSPACE/src" --sha "$SOURCE_SHA" --udid "$SIM_UDID" \
+            --derived-data "$RUNNER_TEMP/dd" --out "$QA_ROOT/out" --raw "$QA_ROOT/raw" \
+            --mailbox "$QA_ROOT/box" --prompt harness/tools/agent-sim-qa/prompt.md \
+            --deadline "$deadline" --scenario "$SCENARIO" --model "$CLAUDE_MODEL"
 
-      - name: Judge the report
+      - name: Summarize
         if: always()
         run: |
-          set -euo pipefail
-          work="${QA_WORK:-$RUNNER_TEMP/agent-qa}"
-          report="$work/qa-report.md"
           {
-            echo "## Agent simulator QA"
+            echo "Exact source: \`${SOURCE_SHA:-unknown}\` (dispatch harness \`$GITHUB_SHA\`)."
             echo
-            echo "Source: \`${SOURCE_SHA:-unknown}\`"
-            echo
+            if [[ -s "$QA_ROOT/out/summary.md" ]]; then cat "$QA_ROOT/out/summary.md"
+            else echo "The diagnostic stopped before the model loop; see the step logs and source-verification.json."; fi
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ ! -s "$report" ]; then
-            echo "The agent did not produce qa-report.md." >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::The agent did not produce qa-report.md"
-            exit 1
-          fi
-          cat "$report" >> "$GITHUB_STEP_SUMMARY"
-          cat "$report"
-          if grep -qw FAIL "$report"; then
-            echo "::error::The agent report contains FAIL"
-            exit 1
-          fi
-          grep -q '^OVERALL: PASS' "$report" || { echo "::error::The report has no OVERALL: PASS line"; exit 1; }
 
-      - name: Upload QA evidence
+      # Frames (before/after every input), UI listings, receipt, sanitized transcript summary, source
+      # verification and logs. The raw model transcripts in $QA_ROOT/raw are never uploaded.
+      - name: Retain diagnostic evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: agent-sim-qa-${{ github.run_id }}
-          path: |
-            ${{ runner.temp }}/agent-qa/qa-report.md
-            ${{ runner.temp }}/agent-qa/qa-artifacts/
-            ${{ runner.temp }}/agent-qa/transcript.jsonl
-            ${{ runner.temp }}/agent-qa/agent-stderr.log
-            ${{ runner.temp }}/build.log
+          name: agent-sim-qa-${{ inputs.source_ref }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/agent-sim-qa/out/
+          retention-days: 7
           if-no-files-found: warn
+
+      - name: Delete raw model transcripts
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/agent-sim-qa/raw"
