@@ -33,20 +33,48 @@ public struct TaskEventRow: View {
         case none
     }
 
+    /// How the leading column is drawn. `.compact` is the design-system default and is unchanged.
+    /// `.app` reproduces the shipped Rem app's time column (RemClaw `Rem/Sources/Components/
+    /// TaskEventRowView.swift`) for products that want parity with it:
+    /// - **Width** 64pt: `TimeIndicatorWidthCalculator` (L6–14), applied at L67–70.
+    /// - **Alignment**: the column is leading-aligned (L69) and the row centres vertically (L66, `alignment:
+    ///   .center`); the column-to-content gap is `Spacing.sm` (L66). The `schedule` / `clock` glyphs centre
+    ///   in the column (L110–118).
+    /// - **Format and type**: a `.time` label is drawn as the app's stacked clock — the two-digit 12-hour
+    ///   hour in `.title2`, then minutes over AM/PM in `.caption`, 2pt apart (`timeDisplay`, L125–137;
+    ///   `formatHour` / `formatMinutes` / `formatAMPM`, L358–372) — in the primary label colour (the app
+    ///   sets no foreground, L128–134). The label is parsed by `TaskEventClockFace`; a label it cannot read
+    ///   (e.g. "Oct 14") falls back to the compact footnote.
+    /// - **Glyphs**: `clock` at `.title3` (L110–113); `calendar.badge.plus` at 22pt semibold (L115–118).
+    public enum LeadingStyle: Equatable, Sendable {
+        case compact
+        case app
+    }
+
     private let kind: Kind
     private let title: String
     private let leading: Leading
     private let pills: [String]
     private let showPills: Bool
     private let pending: Bool
+    private let completed: Bool
+    private let leadingStyle: LeadingStyle
 
+    /// - Parameters:
+    ///   - completed: draws the task status as completed (a filled check circle) instead of the ring —
+    ///     the shipped app's `checkmark.circle.fill` (RemClaw `TaskStatusIndicator.swift` L24, L64–65).
+    ///     Takes precedence over `pending`; ignored for events. Default `false` (unchanged).
+    ///   - leadingStyle: `.compact` (default, unchanged) or `.app` for parity with the shipped app's
+    ///     time column; see `LeadingStyle`.
     public init(
         kind: Kind,
         title: String,
         leading: Leading = .none,
         pills: [String] = [],
         showPills: Bool = true,
-        pending: Bool = false
+        pending: Bool = false,
+        completed: Bool = false,
+        leadingStyle: LeadingStyle = .compact
     ) {
         self.kind = kind
         self.title = title
@@ -54,20 +82,28 @@ public struct TaskEventRow: View {
         self.pills = pills
         self.showPills = showPills
         self.pending = pending
+        self.completed = completed
+        self.leadingStyle = leadingStyle
     }
 
-    // Leading column width so titles align across timed rows; matches Figma's ~64pt leading region.
+    // Compact leading column width so titles align across timed rows (the DS default).
     private let leadingColumnWidth: CGFloat = 52
     private let statusRingSize: CGFloat = 24
     private let eventBarWidth: CGFloat = 4
 
     public var body: some View {
-        HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
+        HStack(
+            alignment: leadingStyle == .app ? .center : .top,
+            spacing: leadingStyle == .app ? DesignTokens.Spacing.sm : DesignTokens.Spacing.md
+        ) {
             if case .none = leading {
                 EmptyView()
             } else {
                 leadingView
-                    .frame(width: leadingColumnWidth, alignment: .leading)
+                    .frame(
+                        width: leadingStyle == .app ? TaskEventClockFace.appColumnWidth : leadingColumnWidth,
+                        alignment: .leading
+                    )
             }
             content
             Spacer(minLength: 0)
@@ -81,13 +117,27 @@ public struct TaskEventRow: View {
     private var leadingView: some View {
         switch leading {
         case .time(let label):
-            Text(label)
-                .font(DesignTokens.Typography.footnote)
-                .foregroundStyle(DesignTokens.Color.labelSecondary)
+            if leadingStyle == .app, let face = TaskEventClockFace(label: label) {
+                appClock(face)
+            } else {
+                Text(label)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Color.labelSecondary)
+            }
         case .schedule:
-            leadingGlyph("calendar.badge.plus")
+            if leadingStyle == .app {
+                // RemClaw TaskEventRowView.swift L115–118: 22pt semibold, centred in the column.
+                appGlyph("calendar.badge.plus", font: .system(size: 22, weight: .semibold))
+            } else {
+                leadingGlyph("calendar.badge.plus")
+            }
         case .clock:
-            leadingGlyph("clock")
+            if leadingStyle == .app {
+                // RemClaw TaskEventRowView.swift L110–113: `.title3`, centred in the column.
+                appGlyph("clock", font: DesignTokens.Typography.title3)
+            } else {
+                leadingGlyph("clock")
+            }
         case .none:
             EmptyView()
         }
@@ -97,6 +147,30 @@ public struct TaskEventRow: View {
         Image(systemName: systemName)
             .font(.system(size: 18, weight: .regular))
             .foregroundStyle(DesignTokens.Color.labelSecondary)
+    }
+
+    private func appGlyph(_ systemName: String, font: Font) -> some View {
+        Image(systemName: systemName)
+            .font(font)
+            .foregroundStyle(DesignTokens.Color.labelSecondary)
+            .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    /// The shipped app's stacked clock (RemClaw `TaskEventRowView.swift` `timeDisplay`, L125–137): the
+    /// hour in `.title2`, minutes over AM/PM in `.caption`, 2pt apart, primary label colour.
+    private func appClock(_ face: TaskEventClockFace) -> some View {
+        HStack(spacing: 2) {
+            Text(face.hour)
+                .font(DesignTokens.Typography.title2Bold.weight(.regular))
+            VStack(spacing: 0) {
+                Text(face.minutes)
+                Text(face.meridiem)
+            }
+            .font(DesignTokens.Typography.caption1)
+        }
+        .foregroundStyle(DesignTokens.Color.labelPrimary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(face.spoken)
     }
 
     @ViewBuilder
@@ -135,8 +209,24 @@ public struct TaskEventRow: View {
     }
 
     // The status ring. A **pending** row (a just-accepted suggestion that has not yet "committed")
-    // draws a dashed ring — matching the authored Agenda Suggestions `Add` outcome.
+    // draws a dashed ring — matching the authored Agenda Suggestions `Add` outcome. A **completed** task
+    // draws the shipped app's filled check circle instead (RemClaw `TaskStatusIndicator.swift` L64–65:
+    // `checkmark.circle.fill`, primary label colour per L73–75).
+    @ViewBuilder
     private var statusRing: some View {
+        if completed {
+            Image(systemName: "checkmark.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(DesignTokens.Color.labelPrimary)
+                .frame(width: statusRingSize, height: statusRingSize)
+                .accessibilityLabel("Completed")
+        } else {
+            ring
+        }
+    }
+
+    private var ring: some View {
         Circle()
             .strokeBorder(
                 DesignTokens.Color.labelSecondary,
@@ -166,6 +256,56 @@ public struct TaskEventRow: View {
     }
 }
 
+/// The shipped Rem app's stacked time face for a `TaskEventRow` `.time` label, used by
+/// `TaskEventRow.LeadingStyle.app`. Mirrors RemClaw `Rem/Sources/Components/TaskEventRowView.swift`:
+/// `formatHour` (L358–362, two-digit 12-hour, 0 → 12), `formatMinutes` (L364–367) and `formatAMPM`
+/// (L369–372). Reads `H:mm` / `HH:mm` (24-hour, e.g. "14:00") and `h:mm AM` / `h:mm PM` (any case, optional
+/// space, e.g. "8:00 AM"); anything else (e.g. "Oct 14") is `nil` and the row keeps the compact label.
+/// Compose twin: `TaskEventClockFace` in `rows/TaskEventRow.kt`; both are unit-tested with the same cases.
+public struct TaskEventClockFace: Equatable, Sendable {
+    /// RemClaw `TaskEventRowView.swift` `TimeIndicatorWidthCalculator` (L6–14): the fixed 64pt column.
+    public static let appColumnWidth: CGFloat = 64
+
+    public let hour: String
+    public let minutes: String
+    public let meridiem: String
+
+    public init?(label: String) {
+        let trimmed = label.trimmingCharacters(in: .whitespaces)
+        let parts = trimmed.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+        guard parts.count == 2, (1...2).contains(parts[0].count), parts[0].allSatisfy({ $0.isASCII && $0.isNumber }),
+              let rawHour = Int(parts[0]) else { return nil }
+        let rest = parts[1]
+        let minuteText = rest.prefix(2)
+        guard minuteText.count == 2, minuteText.allSatisfy({ $0.isASCII && $0.isNumber }),
+              let minute = Int(minuteText), minute < 60 else { return nil }
+        let suffix = rest.dropFirst(2).trimmingCharacters(in: .whitespaces).uppercased()
+        let hour24: Int
+        switch suffix {
+        case "":
+            guard rawHour < 24 else { return nil }
+            hour24 = rawHour
+        case "AM", "PM":
+            guard (1...12).contains(rawHour) else { return nil }
+            hour24 = (rawHour % 12) + (suffix == "PM" ? 12 : 0)
+        default:
+            return nil
+        }
+        self.init(hour24: hour24, minute: minute)
+    }
+
+    /// From a 24-hour clock time (`hour24` 0–23, `minute` 0–59).
+    public init(hour24: Int, minute: Int) {
+        let display = hour24 == 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24)
+        hour = String(format: "%02d", display)
+        minutes = String(format: "%02d", minute)
+        meridiem = hour24 < 12 ? "AM" : "PM"
+    }
+
+    /// VoiceOver reads the time once, naturally ("9:00 AM"), not as three fragments.
+    public var spoken: String { "\(Int(hour) ?? 0):\(minutes) \(meridiem)" }
+}
+
 #if DEBUG
 #Preview("TaskEventRow") {
     VStack(spacing: 0) {
@@ -192,6 +332,16 @@ public struct TaskEventRow: View {
             leading: .schedule,
             pills: ["Work"],
             showPills: false
+        )
+        Divider().padding(.leading, DesignTokens.Spacing.md)
+        // App parity: the shipped app's 64pt stacked time column and a completed task.
+        TaskEventRow(
+            kind: .task,
+            title: "Send the venue deposit",
+            leading: .time("9:00"),
+            pills: ["Follow-ups"],
+            completed: true,
+            leadingStyle: .app
         )
     }
     .background(DesignTokens.Color.backgroundSecondary)
