@@ -180,7 +180,7 @@ jobs:
             "https://github.com/facebook/idb/releases/download/v$IDB_COMPANION_VERSION/idb-companion.universal.tar.gz"
           echo "3b72cc6a9a5b1a22a188205a84090d3a294347a846180efd755cf1a3c848e3e7  $archive" | shasum -a 256 -c -
           tar -xzf "$archive" -C "$RUNNER_TEMP"
-          "$RUNNER_TEMP/idb-companion.universal/bin/idb_companion" --help >/dev/null
+          "$RUNNER_TEMP/idb-companion.universal/bin/idb_companion" --version
           echo "$RUNNER_TEMP/idb-companion.universal/bin" >> "$GITHUB_PATH"
           python3 -m venv "$RUNNER_TEMP/idb-venv"
           "$RUNNER_TEMP/idb-venv/bin/pip" install --disable-pip-version-check "fb-idb==$FB_IDB_VERSION"
