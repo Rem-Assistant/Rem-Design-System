@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Literal label: tools/playground-distribution/package.py reads it from the bundle manifest, where a
+         @string reference would not resolve. -->
     <application
         android:allowBackup="false"
-        android:label="Rem Design System"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Rem Playground"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RemDesignSystemDemo">
         <meta-data android:name="RemPlaygroundSourceSHA" android:value="${playgroundSourceSha}" />
