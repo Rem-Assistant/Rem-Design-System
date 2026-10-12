@@ -124,6 +124,25 @@ public enum AgendaScheduleFilter: String, CaseIterable, Hashable, Sendable {
         case .overdue: return "No overdue tasks"
         }
     }
+
+    /// The empty state's short supporting message, beneath `emptyText` in the sheet's
+    /// `RemContentUnavailableView`.
+    public var emptyMessage: String {
+        switch self {
+        case .all: return "Every task already has a day and time."
+        case .inbox: return "Tasks you capture without a date land here."
+        case .overdue: return "You’re all caught up."
+        }
+    }
+
+    /// The empty state's SF Symbol (Compose maps each to the closest Material glyph).
+    public var emptySymbol: String {
+        switch self {
+        case .all: return "checklist"
+        case .inbox: return "tray"
+        case .overdue: return "checkmark.circle"
+        }
+    }
 }
 
 /// An existing, unscheduled backlog item. Only tasks are schedule candidates; events are excluded.

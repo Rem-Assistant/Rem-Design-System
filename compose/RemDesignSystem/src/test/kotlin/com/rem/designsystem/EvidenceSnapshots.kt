@@ -1117,4 +1117,22 @@ class EvidenceSnapshots {
 
     @Test
     fun shellSidebar() = shell.sidebar()
+
+    // May adoption parity: TaskEventRow app time column, Schedule empty states, RemSegmentedPicker, avatar slot.
+    private val parity get() = AdoptionParityEvidence(paparazzi)
+
+    @Test
+    fun taskEventRowApp() = parity.taskEventRowApp()
+
+    @Test
+    fun remSegmentedPicker() = parity.segmentedPicker()
+
+    @Test
+    fun agendaScheduleEmpty() = parity.agendaScheduleEmpty()
+
+    @Test
+    fun agendaSheetsIos() = parity.agendaSheetsIos()
+
+    @Test
+    fun customAvatar() = parity.customAvatar()
 }

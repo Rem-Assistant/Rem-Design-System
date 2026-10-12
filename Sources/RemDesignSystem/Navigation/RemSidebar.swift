@@ -7,13 +7,21 @@ import SwiftUI
 ///
 /// Figma: sidebar column `2702:2514` + bottom actions `2702:2682` in **A2 · Sidebar open
 /// (Claude-style)** (`2702:2479`); account pill `2709:2648`. Host it in `RemSidebarContainer` for the
-/// push-open behaviour. Display + callbacks only. Compose sibling: `navigation/RemSidebar.kt`.
+/// push-open behaviour. Display + callbacks only. `mainAgentAvatar` replaces the Rem face on the
+/// Main agent row with a product's own mascot (`RemAvatarSlot`, called with `.idle` and the 24pt face
+/// size); `nil` keeps the Rem face. Compose sibling: `navigation/RemSidebar.kt`.
 public struct RemSidebar: View {
     private let display: RemSidebarDisplay
+    private let mainAgentAvatar: RemAvatarSlot?
     private let onAction: (RemSidebarAction) -> Void
 
-    public init(_ display: RemSidebarDisplay, onAction: @escaping (RemSidebarAction) -> Void) {
+    public init(
+        _ display: RemSidebarDisplay,
+        mainAgentAvatar: RemAvatarSlot? = nil,
+        onAction: @escaping (RemSidebarAction) -> Void
+    ) {
         self.display = display
+        self.mainAgentAvatar = mainAgentAvatar
         self.onAction = onAction
     }
 
@@ -27,6 +35,7 @@ public struct RemSidebar: View {
                             agent: display.mainAgent,
                             isMain: true,
                             isSelected: display.isMainSelected,
+                            avatar: mainAgentAvatar,
                             action: { onAction(.selectMain) }
                         )
                         .accessibilityIdentifier("sidebar.agent.main")
@@ -149,6 +158,7 @@ struct SidebarAgentRow: View {
     let agent: RemSidebarAgent
     let isMain: Bool
     let isSelected: Bool
+    var avatar: RemAvatarSlot? = nil
     let action: () -> Void
 
     var body: some View {
@@ -193,7 +203,7 @@ struct SidebarAgentRow: View {
 
     @ViewBuilder private var leading: some View {
         if isMain {
-            RemFaceMark(mode: .idle, tint: DesignTokens.Color.brandBlue, size: 24)
+            RemAvatar(slot: avatar, mode: .idle, size: 24)
                 .accessibilityHidden(true)
         } else {
             Image(systemName: "bubble.left")

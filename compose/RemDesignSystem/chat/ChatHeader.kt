@@ -34,7 +34,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.rem.designsystem.brand.RemFaceMark
+import com.rem.designsystem.brand.RemAvatar
+import com.rem.designsystem.brand.RemAvatarSlot
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemSpacing
@@ -53,6 +54,9 @@ enum class ChatHeaderStatus { Connected, NeedsYou }
  * are omitted (catalog use). A root conversation passes [onMenu] instead of [onBack]: the one leading
  * control becomes the sidebar button (`Menu`, "Open sidebar"; Figma A2 · Chat, sidebar closed `2702:2351`). Activity text is host data for the agent's lifecycle, not transport.
  *
+ * [avatar] replaces the Rem face with a product's own mascot ([RemAvatarSlot]); it receives the face mode
+ * and the 48dp face size and is drawn inside the same 64dp well. Default `null`: the Rem face.
+ *
  * Figma: **Rem/Chat v2/Header** (`2054:19725`). Compose has no material blur, so the glass pill uses
  * `backgroundPrimary` with the Figma shadow.
  */
@@ -69,9 +73,10 @@ fun ChatHeader(
     onOverflow: (() -> Unit)? = null,
     onCall: (() -> Unit)? = null,
     onMenu: (() -> Unit)? = null,
+    avatar: RemAvatarSlot? = null,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
-        HeaderIdentity(name, activity, status, faceMode, accessibilityPrefix, onTap)
+        HeaderIdentity(name, activity, status, faceMode, accessibilityPrefix, onTap, avatar)
         if (onBack != null || onMenu != null || onOverflow != null || onCall != null) {
             Row(
                 modifier = Modifier
@@ -128,6 +133,7 @@ private fun HeaderIdentity(
     faceMode: RemFaceMarkMode,
     accessibilityPrefix: String,
     onTap: (() -> Unit)?,
+    avatar: RemAvatarSlot?,
 ) {
     val colors = RemColors.current
     Column(
@@ -142,7 +148,7 @@ private fun HeaderIdentity(
                 .clearAndSetSemantics {},
             contentAlignment = Alignment.Center,
         ) {
-            RemFaceMark(mode = faceMode, tint = colors.brandBlue, size = 48.dp)
+            RemAvatar(avatar, faceMode, 48.dp)
         }
         Column(
             modifier = Modifier

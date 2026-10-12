@@ -95,10 +95,15 @@ data class AgendaTime(val hour: Int, val minute: Int) {
 }
 
 /** Schedule Tasks filters (`ScheduleFilters` `2301:11644`). Changing a filter never clears selection. */
-enum class AgendaScheduleFilter(val title: String, val emptyText: String) {
-    All("All", "No tasks to schedule"),
-    Inbox("Inbox", "No tasks in Inbox"),
-    Overdue("Overdue", "No overdue tasks"),
+enum class AgendaScheduleFilter(
+    val title: String,
+    val emptyText: String,
+    /** The empty state's short supporting message, beneath [emptyText]. */
+    val emptyMessage: String,
+) {
+    All("All", "No tasks to schedule", "Every task already has a day and time."),
+    Inbox("Inbox", "No tasks in Inbox", "Tasks you capture without a date land here."),
+    Overdue("Overdue", "No overdue tasks", "You’re all caught up."),
 }
 
 /** An existing, unscheduled backlog item. Only tasks are schedule candidates; events are excluded. */

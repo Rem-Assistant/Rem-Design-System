@@ -63,6 +63,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.brand.RemAvatarSlot
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.chat.ChatHeader
 import com.rem.designsystem.chat.ChatReplyContextAccessory
@@ -135,6 +136,8 @@ fun ChatScreen(
     emptyState: ChatEmptyState? = null,
     voiceBar: VoiceBarState? = null,
     modelMenu: (@Composable (enabled: Boolean) -> Unit)? = null,
+    // Replaces the header's Rem face with a product's own mascot; `null` keeps the Rem face.
+    avatar: RemAvatarSlot? = null,
     transcript: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = RemColors.current
@@ -195,6 +198,7 @@ fun ChatScreen(
                     onOverflow = if (header.showsOverflow) ({ onAction(ChatScreenAction.Overflow) }) else null,
                     onCall = if (header.showsCall) ({ onAction(ChatScreenAction.Call) }) else null,
                     onMenu = if (header.showsSidebar) ({ onAction(ChatScreenAction.OpenSidebar) }) else null,
+                    avatar = avatar,
                     modifier = Modifier.padding(bottom = RemSpacing.sm),
                 )
             },
