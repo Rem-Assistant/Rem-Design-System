@@ -15,7 +15,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "manifest.json");
 
 const ORDER = [
-  "Text", "Surface", "Card", "Pill", "ListRow", "ContainedIcon", "Button",
+  "Text", "Surface", "Card", "Pill", "ListRow", "ContainedIcon", "Button", "GlassIconButton",
   "MessageBubble", "ComposerBar", "ContextualMessage", "ThinkingBlock", "TypingDots", "Toast", "ToolResultCard",
   "TaskEventRow", "SuggestedTaskRow", "ProposalCard", "DateNavigationHeader",
   "CalendarEventsCard", "RemindersCard",

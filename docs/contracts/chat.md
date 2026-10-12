@@ -131,6 +131,8 @@ These stay explicit boundaries. No component here persists, transmits or enforce
      (`.glassEffect(.regular.interactive())`), earlier `.regularMaterial`; Compose blurs the transcript behind it
      inside the composition on API 32+ (Haze, `backgroundTertiary` tint at 0.6 — `ChatJumpToLatest.GLASS_TINT_ALPHA`)
      and is solid `backgroundTertiary` below API 32, with high contrast, or outside the composition (catalog).
+     On Android it is a `RemGlassIconButton` (`components/GlassIconButton.md`) over the transcript's `remGlassSource`;
+     the tint is the `opacity.glassTint` token (0.6).
      0.5 hairline `separator`, soft shadow; `arrow.down` / `ArrowDownward` in `labelPrimary`
      (17pt semibold SF Symbol; 20dp Material icon). 12 (`Spacing.md`) above the top of the dock chrome.
      It overlays the transcript area only, so it never covers the composer, the reply accessory or the

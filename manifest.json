@@ -3,7 +3,7 @@
   "$version": "0.1.0",
   "tokens": "tokens/tokens.json",
   "tokenVersion": "0.1.0-seed",
-  "count": 26,
+  "count": 27,
   "components": {
     "Text": {
       "group": "general",
@@ -409,6 +409,63 @@
           "do": "Pick the variant that matches the action's job (primary / settingsCTA / recovery / connect).",
           "dont": "Invent a new visual treatment or override the button's classes for a one-off look.",
           "enforced_by": "no-restricted-syntax: Button variant must be 'primary' | 'settingsCTA' | 'recovery' | 'connect'"
+        }
+      ]
+    },
+    "GlassIconButton": {
+      "group": "general",
+      "mirrors": "RemGlassIconButton (SwiftUI `Buttons/RemGlassIconButton.swift`) / RemGlassIconButton (Compose `buttons/RemGlassIconButton.kt`)",
+      "status": "draft",
+      "extends": "Button",
+      "props": {
+        "icon": {
+          "type": "content",
+          "desc": "Glyph: SF Symbol name or Image (iOS); ImageVector, Painter or RemMaterialSymbol (Android)"
+        },
+        "contentDescription": {
+          "type": "text",
+          "desc": "Required spoken label naming the action"
+        },
+        "size": {
+          "type": "number",
+          "default": 44,
+          "desc": "Circle diameter; the touch target is never below 44"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "desc": "Disabled: labelTertiary glyph, not clickable (iOS: .disabled)"
+        },
+        "glassState": {
+          "type": "object",
+          "default": null,
+          "desc": "Android only: RemGlassState from rememberRemGlassState(); null draws the solid fallback"
+        }
+      },
+      "rules": [
+        {
+          "id": "glass-over-content-only",
+          "do": "Use a glass icon button for icon-only chrome that floats over content (a top bar's menu or back-to-chat control, jump to latest).",
+          "dont": "Use it for an action inside content or a form; use Button there, or ListRow for a tappable row.",
+          "enforced_by": "prose-only"
+        },
+        {
+          "id": "glass-label-required",
+          "do": "Give every glass icon button an accessibility label that names the action (\"Menu\", \"Back to chat\").",
+          "dont": "Leave the label empty or describe the glyph (\"Three lines\").",
+          "enforced_by": "API: contentDescription / accessibilityLabel is a required parameter"
+        },
+        {
+          "id": "glass-source-sibling",
+          "do": "On Android, mark the content behind the controls with remGlassSource(state) and pass the same state to each button drawn over it.",
+          "dont": "Put the button inside the glass source, or fake glass with a translucent fill or an alpha on the whole button.",
+          "enforced_by": "prose-only"
+        },
+        {
+          "id": "glass-touch-target",
+          "do": "Keep the default 44 size for chrome; a smaller circle still gets the 44 touch target.",
+          "dont": "Shrink the hit area below 44 with an outer size or clip.",
+          "enforced_by": "RemGlassIconButtonTest.touchTargetIsAtLeast44AtEverySize"
         }
       ]
     },

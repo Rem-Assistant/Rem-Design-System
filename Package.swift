@@ -22,6 +22,7 @@ let package = Package(
             // The `figma connect` CLI reads them directly; `figma connect check` validates drift.
             exclude: [
                 "Buttons/RemButton.figma.swift",
+                "Buttons/RemGlassIconButton.figma.swift",
                 "Primitives/ContainedIcon.figma.swift",
                 "Brand/RemFaceMark.figma.swift",
             ],

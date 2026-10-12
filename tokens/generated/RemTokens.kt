@@ -141,6 +141,7 @@ object RemRadius {
 
 object RemOpacity {
     const val deemphasized: Float = 0.55f
+    const val glassTint: Float = 0.6f
 }
 
 object RemTypography {

@@ -74,6 +74,9 @@ const swiftTextStyle = (r) => {
   return f;
 };
 
+// Every opacity token, in source order (`$`-prefixed keys are metadata).
+const opacityEntries = () => Object.entries(T.opacity).filter(([k]) => !k.startsWith("$")).map(([k, t]) => [k, t.value]);
+
 function buildSwift() {
   const c = T.color;
   const colorLines = [];
@@ -105,6 +108,7 @@ function buildSwift() {
   const aliases = Object.entries(T.typography.roleAliases).filter(([k]) => !k.startsWith("$"))
     .map(([k, v]) => `        public static let ${k} = ${v}`).join("\n");
   const tracking = `        public static let title3Tracking: CGFloat = ${roles.title3.letterSpacing}`;
+  const opacity = opacityEntries().map(([k, v]) => `        public static let ${k}: Double = ${v}`).join("\n");
 
   return `${HEADER_SWIFT}import SwiftUI
 #if canImport(UIKit)
@@ -133,7 +137,7 @@ ${aliases}
     }
 
     public enum Opacity {
-        public static let deemphasized: Double = ${T.opacity.deemphasized.value}
+${opacity}
     }
 }
 `;
@@ -179,7 +183,7 @@ ${type}
   --rem-letter-spacing-title3: ${roles.title3.letterSpacing}px;
 ${spacing}
 ${radius}
-  --rem-opacity-deemphasized: ${T.opacity.deemphasized.value};
+${opacityEntries().map(([k, v]) => `  --rem-opacity-${kebab(k)}: ${v};`).join("\n")}
 ${cssColorVars(true)}
 }
 
@@ -317,7 +321,7 @@ ${radius}
 }
 
 object RemOpacity {
-    const val deemphasized: Float = ${T.opacity.deemphasized.value}f
+${opacityEntries().map(([k, v]) => `    const val ${k}: Float = ${v}f`).join("\n")}
 }
 
 object RemTypography {
