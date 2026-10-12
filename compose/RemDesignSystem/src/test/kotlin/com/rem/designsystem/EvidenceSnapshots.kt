@@ -1135,4 +1135,13 @@ class EvidenceSnapshots {
 
     @Test
     fun customAvatar() = parity.customAvatar()
+
+    // RemGlassIconButton: glass over a source (May-style top bar) and the solid / disabled / size / glyph states.
+    private val glassButton get() = GlassIconButtonEvidence(paparazzi)
+
+    @Test
+    fun remGlassIconButtonGlass() = glassButton.glass()
+
+    @Test
+    fun remGlassIconButtonStates() = glassButton.states()
 }

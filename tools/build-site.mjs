@@ -14,7 +14,7 @@ const OUT = join(ROOT, "site");
 mkdirSync(OUT, { recursive: true });
 
 const GROUPS = {
-  Primitives: ["Text", "Surface", "Card", "Pill", "ListRow", "ContainedIcon", "Button"],
+  Primitives: ["Text", "Surface", "Card", "Pill", "ListRow", "ContainedIcon", "Button", "GlassIconButton"],
   "Chat & conversation": ["MessageBubble", "ComposerBar", "ContextualMessage", "ThinkingBlock", "TypingDots", "Toast", "ToolResultCard"],
   "Tasks & agenda": ["TaskEventRow", "SuggestedTaskRow", "ProposalCard", "DateNavigationHeader"],
   "Tool-result cards": ["CalendarEventsCard", "RemindersCard"],
@@ -181,7 +181,7 @@ function tokensPage() {
 <h2>Spacing</h2>${spacing}<h2>Radius</h2>${radius}
 <h2>Typography</h2><p>Roles map to Apple <code>Font.TextStyle</code> (Dynamic Type); sizes equal Apple's defaults.</p>${type}
 <h2>Color</h2>${colors}
-<h2>Opacity</h2>${table(["Token", "Value"], [row(["opacity.deemphasized", T.opacity.deemphasized.value])])}`;
+<h2>Opacity</h2>${table(["Token", "Value"], [...Object.entries(T.opacity).filter(([k]) => !k.startsWith("$")).map(([k, t]) => row([`opacity.${k}`, t.value]))])}`;
   simplePage(inner, "tokens.html", "Design tokens", true);
 }
 

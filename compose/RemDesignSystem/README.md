@@ -11,6 +11,26 @@ form diverges.
   `RemSpacing`/`RemRadius` (`Dp`), `RemTypography` (`TextStyle`), `RemOpacity`. Reference tokens
   resolve to the light/dark hex approximation and switch on `isSystemInDarkTheme()` (Compose has no
   Apple system palette) — exactly the CSS target's behavior. **Do not edit; run the generator.**
+  - **Inter by default.** `RemTheme` also sets `LocalTextStyle` to `RemTypography.body` and installs
+    `RemMaterialTypography` (Material 3's own type scale with the family swapped to Inter, `typography.material3`
+    in `tokens.json`) through an inner `MaterialTheme` that keeps the surrounding color scheme, shapes, indication
+    and text-selection colors. So a bare `Text`, `TextField`, `DropdownMenuItem`, `SegmentedButton`, `TopAppBar` /
+    `Scaffold` titles, `AlertDialog` and `ModalBottomSheet` content render in Inter instead of falling back to
+    Roboto. Material widgets keep Material's sizes and weights (a menu item is 14sp Medium); only the face changes. A consumer's own `MaterialTheme` *inside* `RemTheme`
+    still wins; outside it, its typography is replaced by Rem's (pass `RemMaterialTypography` to keep them aligned).
+    Proven by `RemThemeTypographyTest`.
+  - **Weights.** Inter is bundled as four static faces from InterVariable 4.001 (Inter 4.1 release):
+    **Regular (400)**, **Medium (500)**, **SemiBold (600)** and **Bold (700)** (`res/font/inter_*.ttf`), made by
+    `tools/inter/instance.py` (fontTools `instancer`, `opsz` 14, `wght` W; rerunning it reproduces the existing
+    Regular and Bold table for table). SIL Open Font License 1.1: `tools/inter/OFL.txt`, and each file keeps the
+    font's own copyright and licence records. Compose picks the nearest bundled face (CSS font matching) with no
+    synthetic bold: 100–300 render Regular, 800–900 render Bold. Static faces rather than the variable font with
+    `FontVariation.Settings`: variation settings need API 26 (minSdk is 24, so API 24–25 would draw every weight as
+    Regular) and layoutlib does not reliably apply them (the reason `tools/material-symbols/subset.py` bakes static
+    files); the cost is size, ~1.37 MB for four statics against ~0.88 MB for the variable font.
+  - **Ramp.** `tokens.json` defines only 400 and 700 roles (iOS draws them as SF Pro regular / bold), so no token
+    role moved to 600. Components that ask for `FontWeight.SemiBold` / `Medium` directly (where iOS uses
+    `.semibold` / `.medium`) now get the real face instead of Bold / Regular.
 - **`compose/RemDesignSystem/primitives/ContainedIcon*.kt`** — the worked exemplar, in the same
   **3-file Fluent shape** as the Swift reference (`ContainedIcon.swift` / `…TokenSet.swift` /
   `….figma.swift`):

@@ -1,8 +1,5 @@
 package com.rem.designsystem.screens
 
-import android.app.UiModeManager
-import android.content.Context
-import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +8,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -20,15 +16,17 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.rem.designsystem.primitives.RemGlassState
+import com.rem.designsystem.primitives.remGlassSource
+import com.rem.designsystem.primitives.rememberRemGlassSolidFallback
+import com.rem.designsystem.primitives.rememberRemGlassState
 import com.rem.designsystem.tokens.RemColors
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 
 /**
@@ -39,8 +37,10 @@ import dev.chrisbanes.haze.hazeChild
  * by a vertical gradient: full at the screen edge (status bar + header; dock + navigation bar / IME), clear just
  * past the chrome's inner edge. Below API 32 Haze draws the same mask as a `backgroundPrimary` scrim at
  * [SCRIM_EDGE_ALPHA]. With the system's high-contrast setting (Android 14+ contrast level above standard) each
- * edge is solid `backgroundPrimary` with a hairline on its inner edge; Android has no reduce-transparency
- * setting. The composition owns it; hosts wire nothing. Internal (no Code Connect mapping). Contract:
+ * edge is solid `backgroundPrimary` with a hairline on its inner edge (`rememberRemGlassSolidFallback`, shared with
+ * the glass controls); Android has no reduce-transparency setting. The transcript is a public `remGlassSource`, so
+ * the edges and [ChatJumpToLatestButton] use the same backdrop machinery as `RemGlassIconButton`. The composition
+ * owns it; hosts wire nothing. Internal (no Code Connect mapping). Contract:
  * `docs/contracts/chat.md` (Edge backdrops rule).
  *
  * "Chrome height" is the distance from the top of the transcript viewport (the window top) to the header's
@@ -138,22 +138,11 @@ internal object ChatEdgeBackdrop {
 @Immutable
 internal data class ChatEdgeInsets(val top: Dp, val bottom: Dp)
 
-/** High contrast on (Android 14+ contrast level above standard). False where unavailable (layoutlib, < 34). */
-@Composable
-internal fun rememberChatEdgeSolidBackdrop(): Boolean {
-    val context = LocalContext.current
-    return remember(context) {
-        Build.VERSION.SDK_INT >= 34 && runCatching {
-            (context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager)?.contrast?.let { it > 0f } ?: false
-        }.getOrDefault(false)
-    }
-}
-
 /**
- * The transcript's Haze source, for glass controls drawn over it ([ChatJumpToLatestButton]); null outside the
+ * The transcript's glass source, for glass controls drawn over it ([ChatJumpToLatestButton]); null outside the
  * composition or when the solid (high-contrast) fallback is on.
  */
-internal val LocalChatEdgeHaze = staticCompositionLocalOf<HazeState?> { null }
+internal val LocalChatEdgeHaze = staticCompositionLocalOf<RemGlassState?> { null }
 
 /**
  * Lays [header] (padded below the status bar) and [dock] (at the bottom; the dock applies its own navigation-bar
@@ -170,8 +159,9 @@ internal fun ChatEdgeOverlayLayout(
     overlay: @Composable BoxScope.(insets: ChatEdgeInsets) -> Unit,
     content: @Composable BoxScope.(insets: ChatEdgeInsets) -> Unit,
 ) {
-    val solid = rememberChatEdgeSolidBackdrop()
-    val haze = remember { HazeState() }
+    val solid = rememberRemGlassSolidFallback()
+    val glass = rememberRemGlassState()
+    val haze = glass.haze
     SubcomposeLayout(modifier) { constraints ->
         val loose = constraints.copy(minHeight = 0)
         val width = constraints.maxWidth
@@ -200,10 +190,10 @@ internal fun ChatEdgeOverlayLayout(
             ChatEdgeBackdropLayer(top = false, extent = dockHeight, solid = solid, haze = haze)
         }.map { it.measure(Constraints.fixed(width, dockBackdropPx)) }
         val bodyPlaceables = subcompose("body") {
-            Box(Modifier.fillMaxSize().haze(haze)) { content(insets) }
+            Box(Modifier.fillMaxSize().remGlassSource(glass)) { content(insets) }
         }.map { it.measure(constraints) }
         val overlayPlaceables = subcompose("overlay") {
-            CompositionLocalProvider(LocalChatEdgeHaze provides if (solid) null else haze) {
+            CompositionLocalProvider(LocalChatEdgeHaze provides if (solid) null else glass) {
                 Box(Modifier.fillMaxSize()) { overlay(insets) }
             }
         }.map { it.measure(constraints) }

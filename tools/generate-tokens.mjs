@@ -74,6 +74,9 @@ const swiftTextStyle = (r) => {
   return f;
 };
 
+// Every opacity token, in source order (`$`-prefixed keys are metadata).
+const opacityEntries = () => Object.entries(T.opacity).filter(([k]) => !k.startsWith("$")).map(([k, t]) => [k, t.value]);
+
 function buildSwift() {
   const c = T.color;
   const colorLines = [];
@@ -105,6 +108,7 @@ function buildSwift() {
   const aliases = Object.entries(T.typography.roleAliases).filter(([k]) => !k.startsWith("$"))
     .map(([k, v]) => `        public static let ${k} = ${v}`).join("\n");
   const tracking = `        public static let title3Tracking: CGFloat = ${roles.title3.letterSpacing}`;
+  const opacity = opacityEntries().map(([k, v]) => `        public static let ${k}: Double = ${v}`).join("\n");
 
   return `${HEADER_SWIFT}import SwiftUI
 #if canImport(UIKit)
@@ -133,7 +137,7 @@ ${aliases}
     }
 
     public enum Opacity {
-        public static let deemphasized: Double = ${T.opacity.deemphasized.value}
+${opacity}
     }
 }
 `;
@@ -179,7 +183,7 @@ ${type}
   --rem-letter-spacing-title3: ${roles.title3.letterSpacing}px;
 ${spacing}
 ${radius}
-  --rem-opacity-deemphasized: ${T.opacity.deemphasized.value};
+${opacityEntries().map(([k, v]) => `  --rem-opacity-${kebab(k)}: ${v};`).join("\n")}
 ${cssColorVars(true)}
 }
 
@@ -255,10 +259,17 @@ function buildKotlin() {
   }).join("\n");
   const aliases = Object.entries(T.typography.roleAliases).filter(([k]) => !k.startsWith("$"))
     .map(([k, v]) => `    val ${k} = ${v}`).join("\n");
+  const m3 = T.typography.material3;
+  if (m3.fontFamily !== "Inter") throw new Error("typography.material3.fontFamily: only Inter is bundled");
+  const material = m3.slots.map((slot) => `    ${slot} = MaterialDefaults.${slot}.copy(fontFamily = Inter),`).join("\n");
   return `${HEADER_KT}@file:Suppress("MagicNumber", "unused")
 
 package com.rem.designsystem.tokens
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -274,11 +285,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rem.designsystem.R
 
-/** The Rem type family on Android: Inter, instanced to static Regular (400) and Bold (700) from
- *  InterVariable and bundled in res/font. iOS uses the system font (SF Pro) through DesignTokens;
- *  Android substitutes Inter — the closest match — rather than Material's Roboto default. */
+/** The Rem type family on Android: Inter, instanced to static Regular (400), Medium (500), SemiBold (600) and
+ *  Bold (700) from InterVariable 4.001 (tools/inter/instance.py, SIL OFL 1.1) and bundled in res/font. iOS uses the
+ *  system font (SF Pro) through DesignTokens; Android substitutes Inter — the closest match — rather than
+ *  Material's Roboto default. Other weights take the nearest face (100–300 Regular, 800–900 Bold), no synthetic bold. */
 val Inter = FontFamily(
     Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
     Font(R.font.inter_bold, FontWeight.Bold),
 )
 
@@ -297,11 +311,42 @@ ${scheme(false)}
 
 val LocalRemColors = staticCompositionLocalOf { RemLightColors }
 
-/** Wrap the app (or a preview) so component TokenSets can read RemColors.current. */
+/**
+ * Wrap the app (or a preview) so component TokenSets can read RemColors.current, and so text that names no Rem
+ * style is still Inter: [LocalTextStyle] is [RemTypography.body] (a bare \`Text\`, \`TextField\`), and Material 3
+ * widgets read [RemMaterialTypography] (DropdownMenuItem, TopAppBar and Scaffold titles, AlertDialog,
+ * ModalBottomSheet content). Only typography changes: the surrounding Material color scheme and shapes are kept,
+ * and the indication and text-selection colors in effect outside RemTheme are restored inside it.
+ */
 @Composable
 fun RemTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalRemColors provides (if (darkTheme) RemDarkColors else RemLightColors), content = content)
+    val indication = LocalIndication.current
+    val selectionColors = LocalTextSelectionColors.current
+    CompositionLocalProvider(LocalRemColors provides (if (darkTheme) RemDarkColors else RemLightColors)) {
+        MaterialTheme(colorScheme = MaterialTheme.colorScheme, shapes = MaterialTheme.shapes, typography = RemMaterialTypography) {
+            CompositionLocalProvider(
+                LocalIndication provides indication,
+                LocalTextSelectionColors provides selectionColors,
+                LocalTextStyle provides RemTypography.body,
+                content = content,
+            )
+        }
+    }
 }
+
+/** Material 3's default type scale, the metrics [RemMaterialTypography] keeps. */
+private val MaterialDefaults = Typography()
+
+/**
+ * Material 3 [Typography] in Inter (\`typography.material3\` in tokens.json): every slot keeps Material's own size,
+ * line height, weight and tracking and only swaps the family, so Material widgets change face, not size. [RemTheme]
+ * installs it; pass it to your own \`MaterialTheme(typography = RemMaterialTypography)\` if you theme Material outside
+ * RemTheme. Inter is bundled as Regular (400), Medium (500), SemiBold (600) and Bold (700); 100 to 300 render
+ * Regular and 800 to 900 render Bold (nearest-weight matching; no synthetic bold).
+ */
+val RemMaterialTypography: Typography = Typography(
+${material}
+)
 
 object RemColors {
     val current: RemColorScheme
@@ -317,7 +362,7 @@ ${radius}
 }
 
 object RemOpacity {
-    const val deemphasized: Float = ${T.opacity.deemphasized.value}f
+${opacityEntries().map(([k, v]) => `    const val ${k}: Float = ${v}f`).join("\n")}
 }
 
 object RemTypography {

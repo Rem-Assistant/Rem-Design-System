@@ -124,5 +124,6 @@ public enum DesignTokens {
 
     public enum Opacity {
         public static let deemphasized: Double = 0.55
+        public static let glassTint: Double = 0.6
     }
 }

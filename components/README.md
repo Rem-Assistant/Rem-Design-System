@@ -13,6 +13,7 @@ and the machine adherence rule (see [`../SPEC.md`](../SPEC.md) §4).
 - [ListRow](ListRow.md) — the settings/list row
 - [ContainedIcon](ContainedIcon.md) — glyph in a rounded colored container
 - [Button](Button.md) — the tappable action
+- [GlassIconButton](GlassIconButton.md) — round icon-only chrome button in glass (iOS 26 system glass; Android blur via Haze)
 
 ## Chat & conversation
 - [MessageBubble](MessageBubble.md) — one chat turn (user bubble / assistant prose)

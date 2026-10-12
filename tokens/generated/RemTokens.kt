@@ -4,6 +4,10 @@
 
 package com.rem.designsystem.tokens
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -19,11 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rem.designsystem.R
 
-/** The Rem type family on Android: Inter, instanced to static Regular (400) and Bold (700) from
- *  InterVariable and bundled in res/font. iOS uses the system font (SF Pro) through DesignTokens;
- *  Android substitutes Inter — the closest match — rather than Material's Roboto default. */
+/** The Rem type family on Android: Inter, instanced to static Regular (400), Medium (500), SemiBold (600) and
+ *  Bold (700) from InterVariable 4.001 (tools/inter/instance.py, SIL OFL 1.1) and bundled in res/font. iOS uses the
+ *  system font (SF Pro) through DesignTokens; Android substitutes Inter — the closest match — rather than
+ *  Material's Roboto default. Other weights take the nearest face (100–300 Regular, 800–900 Bold), no synthetic bold. */
 val Inter = FontFamily(
     Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
     Font(R.font.inter_bold, FontWeight.Bold),
 )
 
@@ -111,11 +118,56 @@ val RemDarkColors = RemColorScheme(
 
 val LocalRemColors = staticCompositionLocalOf { RemLightColors }
 
-/** Wrap the app (or a preview) so component TokenSets can read RemColors.current. */
+/**
+ * Wrap the app (or a preview) so component TokenSets can read RemColors.current, and so text that names no Rem
+ * style is still Inter: [LocalTextStyle] is [RemTypography.body] (a bare `Text`, `TextField`), and Material 3
+ * widgets read [RemMaterialTypography] (DropdownMenuItem, TopAppBar and Scaffold titles, AlertDialog,
+ * ModalBottomSheet content). Only typography changes: the surrounding Material color scheme and shapes are kept,
+ * and the indication and text-selection colors in effect outside RemTheme are restored inside it.
+ */
 @Composable
 fun RemTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalRemColors provides (if (darkTheme) RemDarkColors else RemLightColors), content = content)
+    val indication = LocalIndication.current
+    val selectionColors = LocalTextSelectionColors.current
+    CompositionLocalProvider(LocalRemColors provides (if (darkTheme) RemDarkColors else RemLightColors)) {
+        MaterialTheme(colorScheme = MaterialTheme.colorScheme, shapes = MaterialTheme.shapes, typography = RemMaterialTypography) {
+            CompositionLocalProvider(
+                LocalIndication provides indication,
+                LocalTextSelectionColors provides selectionColors,
+                LocalTextStyle provides RemTypography.body,
+                content = content,
+            )
+        }
+    }
 }
+
+/** Material 3's default type scale, the metrics [RemMaterialTypography] keeps. */
+private val MaterialDefaults = Typography()
+
+/**
+ * Material 3 [Typography] in Inter (`typography.material3` in tokens.json): every slot keeps Material's own size,
+ * line height, weight and tracking and only swaps the family, so Material widgets change face, not size. [RemTheme]
+ * installs it; pass it to your own `MaterialTheme(typography = RemMaterialTypography)` if you theme Material outside
+ * RemTheme. Inter is bundled as Regular (400), Medium (500), SemiBold (600) and Bold (700); 100 to 300 render
+ * Regular and 800 to 900 render Bold (nearest-weight matching; no synthetic bold).
+ */
+val RemMaterialTypography: Typography = Typography(
+    displayLarge = MaterialDefaults.displayLarge.copy(fontFamily = Inter),
+    displayMedium = MaterialDefaults.displayMedium.copy(fontFamily = Inter),
+    displaySmall = MaterialDefaults.displaySmall.copy(fontFamily = Inter),
+    headlineLarge = MaterialDefaults.headlineLarge.copy(fontFamily = Inter),
+    headlineMedium = MaterialDefaults.headlineMedium.copy(fontFamily = Inter),
+    headlineSmall = MaterialDefaults.headlineSmall.copy(fontFamily = Inter),
+    titleLarge = MaterialDefaults.titleLarge.copy(fontFamily = Inter),
+    titleMedium = MaterialDefaults.titleMedium.copy(fontFamily = Inter),
+    titleSmall = MaterialDefaults.titleSmall.copy(fontFamily = Inter),
+    bodyLarge = MaterialDefaults.bodyLarge.copy(fontFamily = Inter),
+    bodyMedium = MaterialDefaults.bodyMedium.copy(fontFamily = Inter),
+    bodySmall = MaterialDefaults.bodySmall.copy(fontFamily = Inter),
+    labelLarge = MaterialDefaults.labelLarge.copy(fontFamily = Inter),
+    labelMedium = MaterialDefaults.labelMedium.copy(fontFamily = Inter),
+    labelSmall = MaterialDefaults.labelSmall.copy(fontFamily = Inter),
+)
 
 object RemColors {
     val current: RemColorScheme
@@ -141,6 +193,7 @@ object RemRadius {
 
 object RemOpacity {
     const val deemphasized: Float = 0.55f
+    const val glassTint: Float = 0.6f
 }
 
 object RemTypography {

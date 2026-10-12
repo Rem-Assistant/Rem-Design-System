@@ -1,33 +1,22 @@
 package com.rem.designsystem.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.rem.designsystem.tokens.RemColors
+import com.rem.designsystem.buttons.RemGlassIconButton
+import com.rem.designsystem.buttons.RemGlassIconButtonDefaults
+import com.rem.designsystem.primitives.RemGlass
+import com.rem.designsystem.primitives.RemGlassState
 import com.rem.designsystem.tokens.RemDarkColors
 import com.rem.designsystem.tokens.RemTheme
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeChild
 import kotlin.math.roundToInt
 
 /**
@@ -45,7 +34,7 @@ object ChatJumpToLatest {
     const val THRESHOLD = 200f
     /** Circle diameter (dp): the 44 minimum touch target. */
     const val DIAMETER = 44f
-    /** Down-arrow glyph size (dp). */
+    /** Down-arrow glyph size (dp): [RemGlassIconButtonDefaults.iconSize] of [DIAMETER]. */
     const val GLYPH_SIZE = 20f
     /** Gap (dp) between the button and the top of the docked composer chrome (`RemSpacing.md`). */
     const val BOTTOM_SPACING = 12f
@@ -55,8 +44,9 @@ object ChatJumpToLatest {
     /**
      * Glass (API 32+, inside the Chat composition): `backgroundTertiary` tint over the blurred transcript, high
      * enough that the `labelPrimary` arrow stays legible over bubbles in light and dark. Blur radius as the edges.
+     * The shared glass tint (token `opacity.glassTint`, [RemGlass.TINT_ALPHA]).
      */
-    const val GLASS_TINT_ALPHA = 0.6f
+    const val GLASS_TINT_ALPHA = RemGlass.TINT_ALPHA
     const val ACCESSIBILITY_LABEL = "Scroll to latest message"
     const val TEST_TAG = "chat.jumpToLatest"
 
@@ -79,48 +69,22 @@ object ChatJumpToLatest {
 }
 
 /**
- * The jump-to-latest control: a 44dp glass circle (hairline `separator`, soft shadow) with `ArrowDownward` in
- * `labelPrimary` (registry pair `arrow.down` ↔ `ArrowDownward`). Inside the Chat composition on API 32+ the
- * circle blurs the transcript behind it (Haze, tinted `backgroundTertiary` at [ChatJumpToLatest.GLASS_TINT_ALPHA]);
- * elsewhere — below API 32, outside the composition (catalog), or with high contrast — it is solid
- * `backgroundTertiary`.
+ * The jump-to-latest control: a 44dp [RemGlassIconButton] with `ArrowDownward` in `labelPrimary` (registry pair
+ * `arrow.down` ↔ `ArrowDownward`). Inside the Chat composition on API 32+ the circle blurs the transcript behind it
+ * (the composition's [RemGlassState] via [LocalChatEdgeHaze], tinted `backgroundTertiary` at
+ * [ChatJumpToLatest.GLASS_TINT_ALPHA]); elsewhere — below API 32, outside the composition (catalog), or with high
+ * contrast — it is solid `backgroundTertiary`. Hairline `separator`, soft shadow: the shared glass surface.
  */
 @Composable
 fun ChatJumpToLatestButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = RemColors.current
-    val haze = LocalChatEdgeHaze.current
-    Box(
-        modifier = modifier
-            .size(ChatJumpToLatest.DIAMETER.dp)
-            .shadow(4.dp, CircleShape, clip = false)
-            .then(
-                if (haze == null) Modifier.background(colors.backgroundTertiary, CircleShape)
-                else Modifier.clip(CircleShape).hazeChild(
-                    haze,
-                    HazeStyle(
-                        backgroundColor = colors.backgroundPrimary,
-                        tint = HazeTint(colors.backgroundTertiary.copy(alpha = ChatJumpToLatest.GLASS_TINT_ALPHA)),
-                        blurRadius = ChatEdgeBackdrop.BLUR_RADIUS.dp,
-                        noiseFactor = 0f,
-                        // Below API 32: the solid control.
-                        fallbackTint = HazeTint(colors.backgroundTertiary),
-                    ),
-                ),
-            )
-            .border(0.5.dp, colors.separator, CircleShape)
-            .clip(CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = ChatJumpToLatest.ACCESSIBILITY_LABEL }
-            .testTag(ChatJumpToLatest.TEST_TAG),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = Icons.Filled.ArrowDownward,
-            contentDescription = null,
-            tint = colors.labelPrimary,
-            modifier = Modifier.size(ChatJumpToLatest.GLYPH_SIZE.dp),
-        )
-    }
+    RemGlassIconButton(
+        icon = Icons.Filled.ArrowDownward,
+        contentDescription = ChatJumpToLatest.ACCESSIBILITY_LABEL,
+        onClick = onClick,
+        modifier = modifier.testTag(ChatJumpToLatest.TEST_TAG),
+        size = ChatJumpToLatest.DIAMETER.dp,
+        glassState = LocalChatEdgeHaze.current,
+    )
 }
 
 @Preview(showBackground = true)
