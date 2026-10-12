@@ -10,20 +10,54 @@ This is **diagnostic evidence, never a native receipt, release gate, approval or
 deterministic journeys (`tools/playground-ios/run-hosted-journeys.sh` and the native/release
 workflows) are unchanged and remain the record.
 
-## Scenario
+## Scenarios
 
-Playground root → Component catalog → Chat page → (optionally: model menu → Automatic) → composer
-Add (`catalog.composerAdd`) → is the Add to Chat sheet (`catalog.addToChat.photos` / `.files`) on
-screen? The model reports each chosen tap (identifier or point coordinates), and the receipt records
-what the bridge reported, the after-frame, and whether the final UI listing contains the sheet
-identifiers (an independent check on the model's reading of the PNG).
+The scenario catalog is `simqa.SCENARIOS`; each entry names the exact SHAs it may run on, a launch
+profile, a decision budget, the brief the model reads, and (for check scenarios) the questions it must
+answer. `controller.py check-inputs` refuses a scenario/SHA pair the catalog does not list, before the
+build. Inputs are choices, not free text; adding a SHA or scenario is a reviewed edit to the workflow
+and the catalog (`test_workflow_offers_exactly_the_catalog` keeps them identical).
 
-Inputs are choices, not free text:
+| Scenario | Sources | What the model does |
+|---|---|---|
+| `catalog-chat-add`, `catalog-chat-model-menu-add` | Build 7 `c23521b`, Build 8 `6fa6366` | Catalog → Chat → (model menu → Automatic) → composer Add; outcome `sheet_opened` / `sheet_not_opened` / `blocked`, cross-checked against `catalog.addToChat.*` in the listing. |
+| `b9-shell-chat-gestures` | Build 9 `73ac818` | Long conversation in the shell's full-screen Chat: vertical drags that start on a bubble and in the side margin (one at the journeys' slow-with-hold timing, one at default speed), a held left swipe (time peek), a long press. |
+| `b9-hub-chat-gestures` | Build 9 | The same questions on the Developer hub's pushed Chat screen, the route the bubble-drag journeys use. |
+| `b9-hub-chat-jump-to-latest` | Build 9 | Scroll up, jump to latest appears; tap it, it returns (twin of `testChatJumpToLatestAppearsWhenScrolledUpAndReturns`). |
+| `b9-shell-sidebar-agent` | Build 9 | Sidebar opens; choosing Health closes it (twin of `testShellSidebarSelectsAnAgentAndClosesIt`). |
+| `b9-shell-settings-from-account` | Build 9 | Money agent; account pill opens Settings; Done returns to Money (twin of `testShellSettingsFromAccountReturnsToTheSelectedChat`). |
 
-- `source_ref`: `c23521b43fd6b0dd62e5c8207a45611ac86e4d4f` (Build 7 baseline, Add works; run first) or
-  `6fa6366928c41331615bf1eb1810b871df8f9378` (Build 8 candidate, Add fails in XCUITest). Adding a SHA
-  is a reviewed edit to the workflow.
-- `scenario`: `catalog-chat-add` or `catalog-chat-model-menu-add`.
+Build 9 scenarios launch with the journeys' `JourneyLaunch` set (`--developer --settings-light
+--no-motion`, profile `journey`), so they start on the Developer hub like the scripted journeys.
+
+**Check scenarios.** The model tags each attempt with `check` and finishes with `findings`
+(`yes`/`no`/`mixed`/`unclear`) for every question; the contract's expected answer is never shown to it.
+The harness binds each finding to evidence: an answer other than `unclear` needs a tagged attempt that
+started where the question says (on a listed `message.*.bubble` frame, or outside every bubble), and
+`no` needs two such attempts (a second route) before it counts. Independently, it computes a listing
+oracle per attempt from the accessibility listings before and after (median vertical shift of shared
+bubbles, ≥ 20 pt counts as scrolled; presence/absence of identifiers; a header label) and records
+agreement. The time peek has no oracle (times are hidden from accessibility), so the controller keeps
+up to four `during-SEQ-K.png` frames while a drag with `hold_s` ≥ 0.5 is still held and offers them to
+the model. The job succeeds only for `completed` with every counted finding equal to the contract and no
+listing disagreement.
+
+## Arms (touch injection)
+
+Input `arm` chooses who turns the model's typed input into touches; scenarios, prompt, decision schema,
+frames, checks and the trust boundary are identical.
+
+- `xctest` (default): the XCTest bridge below. Its input is XCTest-synthesized, the same mechanism as the
+  scripted journeys, so it inherits any synthesis artifact they have.
+- `idb`: Meta's idb (`idb-companion` 1.1.8 from Meta's sha256-pinned release archive, `fb-idb` 1.1.7 in a venv;
+  installed only for this arm, before the token step, and the job fails if other versions resolve). The
+  controller installs the verified build with `simctl install`, launches it with `simctl launch` and the
+  profile's arguments (`simqa.LAUNCH_ARGS`, kept equal to the bridge's), starts `idb_companion` on port
+  10882 and sends `idb ui tap` (long press: `--duration`) and `idb ui swipe` (HID-level). The listing comes
+  from `idb ui describe-all`, printed in the bridge's format so the oracle is shared. Mapping: idb swipes
+  have a duration, not a velocity or a hold, so `speed` maps to 1.0 / 0.5 / 0.15 s per 300 pt and
+  `hold_s` lengthens the swipe (cap 4 s); `press_s` is not representable and is ignored. The receipt
+  records `idb_swipe_s` per drag and the install/launch/connect exits.
 
 ## Files
 
@@ -65,7 +99,10 @@ bridge instead uses XCTest, which ships with the same Xcode and simulator (iPhon
 the native journeys. Like #109's loopback idea, but with no network at all: the controller writes
 `cmd-NNN.json` into a runner-local directory passed as `TEST_RUNNER_AGENT_BRIDGE_DIR`; the bridge
 writes `ack-NNN.json` when it starts a command and `res-NNN.json` when done. Commands are typed
-(`observe`, `tap_id`, `tap_point`, `drag`, `end`); there is no port, tunnel or shell. Screenshots are
+(`observe`, `tap_id`, `tap_point`, `drag`, `long_press`, `end`); there is no port, tunnel or shell.
+`drag` takes optional bounded timing (`speed` slow/default/fast, `press_s` 0.05–1, `hold_s` 0–2); without
+them it is v1's drag exactly. `long_press` takes `duration_s` 0.5–2 (default 1). The launch profile
+arrives as `TEST_RUNNER_AGENT_LAUNCH_PROFILE` and selects one of two fixed argument lists in Swift. Screenshots are
 taken by `xcrun simctl io <udid> screenshot`, outside XCTest, so a stalled input still produces an
 after-frame.
 
@@ -76,11 +113,12 @@ then `input_stalled` with the observed outcome.
 
 ## Outputs
 
-Artifact `agent-sim-qa-<sha>-<run id>` (7 days): `frames/frame-NN.png` and `frame-NN.ui.txt` (the
-frame before each input is the previous input's after-frame), any `stall-NNN.png`, `receipt.json`,
+Artifact `agent-sim-qa-<scenario>-<sha>-<run id>` (7 days): `frames/frame-NN.png` and `frame-NN.ui.txt`
+(the frame before each input is the previous input's after-frame), any `during-SEQ-K.png` and
+`stall-NNN.png`, `receipt.json` (with `checks` for check scenarios),
 `transcript-summary.json`, `source-verification.json`, `summary.md`, `build.log`,
-`xcodebuild-test.log`. The job summary shows `summary.md`. The job succeeds only for
-`sheet_opened` with no acknowledgment violation and no contradicting UI listing.
+`xcodebuild-test.log`. The job summary shows `summary.md`. A catalog run succeeds only for
+`sheet_opened` with no acknowledgment violation and no contradicting UI listing; a check run as above.
 
 ## Security and privacy
 
@@ -100,18 +138,22 @@ frame before each input is the previous input's after-frame), any `stall-NNN.png
   (`model_quota`, `model_auth`) and never retried with other credentials.
 - Residual: the candidate app and its UI tests run on the same runner user as the controller while the
   token is in the controller's environment. That is why the SHA is an allow-listed choice.
+- idb arm: the pinned idb-companion archive (sha256-checked) and pip code (pinned versions) run
+  as the same runner user, and `idb_companion` listens on a TCP port on the disposable runner for the
+  run's duration. It and every `idb` call get the credential-free environment; the model cannot reach
+  it (Read tool only).
 
 ## Cost
 
 About 15 to 30 `macos-14` minutes per run (build is most of it; macOS minutes bill at 10x Linux on
-private repositories), plus up to 14 short Read-only model calls charged to the existing subscription
+private repositories), plus up to 14 (16 for the account-settings scenario, 22 for the gesture scenarios) short Read-only model calls charged to the existing subscription
 token's usage limits. No new paid service.
 
 ## PR compile-only check
 
-`agent-sim-qa-compile.yml` runs on updates to the `claude/agent-sim-qa` PR branch. It compiles
-the exact PR-head bridge against the fixed approved Build 7 baseline (`c23521b`) in a disposable
-checkout, using Xcode 15.4 on macOS 14 and unsigned iOS Simulator `build-for-testing`. The existing
+`agent-sim-qa-compile.yml` runs on updates to the `claude/agent-sim-qa` and
+`claude/agent-tester-pilot` PR branches. It compiles the exact PR-head bridge against each fixed
+approved source (Build 7 `c23521b`, Build 9 `73ac818`) in a disposable checkout, using Xcode 15.4 on macOS 14 and unsigned iOS Simulator `build-for-testing`. The existing
 source and built-SHA checks and Python tests run too. No simulator boots, model calls, signing,
 store uploads or secrets are involved. The result proves compilation only; mailbox/environment
 propagation and screenshot/action proof still require the separately approved diagnostic. This

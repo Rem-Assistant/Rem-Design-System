@@ -16,13 +16,21 @@ jobs:
   compile:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'claude/agent-sim-qa'
+      (github.event.pull_request.head.ref == 'claude/agent-sim-qa' ||
+       github.event.pull_request.head.ref == 'claude/agent-tester-pilot')
     runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        # Fixed approved sources only: Build 7 baseline and the Build 9 release candidate.
+        source_sha:
+          - c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+          - 73ac81894508035730e901476f03d5b909ef758e
     timeout-minutes: 30
     env:
       DEVELOPER_DIR: /Applications/Xcode_15.4.app/Contents/Developer
       HARNESS_SHA: ${{ github.event.pull_request.head.sha }}
-      SOURCE_SHA: c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+      SOURCE_SHA: ${{ matrix.source_sha }}
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Check out exact bridge revision
@@ -31,10 +39,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: harness
           persist-credentials: false
-      - name: Check out fixed approved Playground baseline
+      - name: Check out fixed approved Playground source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: c23521b43fd6b0dd62e5c8207a45611ac86e4d4f
+          ref: ${{ matrix.source_sha }}
           path: src
           persist-credentials: false
       - name: Verify source, test harness and inject bridge
@@ -72,7 +80,7 @@ jobs:
         run: |
           {
             echo "Harness: $HARNESS_SHA"
-            echo "Playground baseline: $SOURCE_SHA"
+            echo "Playground source: $SOURCE_SHA"
             echo "Result: $RESULT"
             echo "Compile only; no boot, model, mailbox execution, signing or store upload."
           } >> "$GITHUB_STEP_SUMMARY"
