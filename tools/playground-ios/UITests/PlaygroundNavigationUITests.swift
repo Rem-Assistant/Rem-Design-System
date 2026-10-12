@@ -1590,4 +1590,21 @@ final class PlaygroundNavigationUITests: XCTestCase {
     func testProbeH_LongerHoldBeforeDrag() {  // a 0.3s press first: does the long press claim the touch?
         probeDragOnBubble("H press0.3+fast") { c, _ in c.press(forDuration: 0.3, thenDragTo: down(c), withVelocity: .fast, thenHoldForDuration: 0) }
     }
+
+    // Controls: the same drag started off the bubble, so a 0 here means nothing scrolls at all.
+    func testProbeP_BesideBubbleSlow() {
+        probeDragOnBubble("P beside slow (control)") { _, bubble in
+            let c = bubble.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: -4, dy: 0))
+            c.press(forDuration: 0.05, thenDragTo: down(c), withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+    }
+    func testProbeQ_EmptyRightGutterFast() {
+        probeDragOnBubble("Q right gutter fast (control)") { _, _ in
+            let c = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.45))
+            c.press(forDuration: 0.05, thenDragTo: down(c), withVelocity: .fast, thenHoldForDuration: 0)
+        }
+    }
+    func testProbeR_ScrollViewSwipeDown() {
+        probeDragOnBubble("R scrollView.swipeDown (control)") { _, _ in app.scrollViews.firstMatch.swipeDown() }
+    }
 }
