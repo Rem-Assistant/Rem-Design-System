@@ -161,8 +161,8 @@ Report, `+`) only show a fixture note naming what the app does; nothing is copie
 - A vertical drag that starts on a long-pressable bubble scrolls and opens nothing (iOS journey
   `testCatalogChatReactionsDeliveryModelMenuAndAttachments`, right after the model menu closes). In the
   transcript a vertical drag that starts on or beside a bubble scrolls too ([`chat.md`](chat.md) rule 13;
-  journeys `testChatTranscriptDragThatStartsOnABubbleScrolls` / `testChatTranscriptDragBesideABubbleScrolls`
-  and their Android twins).
+  Android journeys `chatTranscriptDragThatStartsOnABubbleScrolls` / `chatTranscriptDragBesideABubbleScrolls`;
+  on iOS a device check, since the Simulator does not scroll for a synthesized drag that starts on a bubble).
 
 ## Not claimed
 

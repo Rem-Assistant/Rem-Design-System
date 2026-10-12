@@ -238,10 +238,10 @@ Jump to latest: the root Chat fixture picker's **Long** conversation (`ChatPlayg
 shell's simulated reply held): `testShellScrollsWhileAReplyIsInFlight` / `shellScrollsWhileAReplyIsInFlight` —
 the transcript still scrolls, jump to latest appears and the message just sent leaves view. Their drags start in
 the leading gutter clear of every row (iOS `clearGutterStart`); a vertical drag that starts on a transcript bubble,
-or beside one, must scroll as well (rule 13) and is its own journey: `testChatTranscriptDragThatStartsOnABubbleScrolls`
-/ `chatTranscriptDragThatStartsOnABubbleScrolls` (centre of incoming `a1`) and
-`testChatTranscriptDragBesideABubbleScrolls` / `chatTranscriptDragBesideABubbleScrolls` (4pt/dp outside its
-leading edge). Render pair: `ChatJumpToLatest-light`,
+or beside one, must scroll as well (rule 13). Android journeys: `chatTranscriptDragThatStartsOnABubbleScrolls`
+(centre of incoming `a1`) and `chatTranscriptDragBesideABubbleScrolls` (4dp outside its leading edge). On iOS this
+is a **device check**: the Simulator does not scroll this transcript for a synthesized drag that starts on a bubble
+(a gutter drag does; run 38199510600, with a scroll-disabled negative control), while a device does. Render pair: `ChatJumpToLatest-light`,
 `ChatJumpToLatest-dark` (opened at the oldest message through an internal evidence seam, so a still render
 shows the scrolled-up state).
 
