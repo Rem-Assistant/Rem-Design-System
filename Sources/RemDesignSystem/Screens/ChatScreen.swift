@@ -225,10 +225,7 @@ public struct ChatScreen<Transcript: View>: View {
             }
             .ignoresSafeArea(.container, edges: [.top, .bottom])
 
-            ChatEdgeBackdropView(edge: .top, height: headerInset)
-                .ignoresSafeArea(.container, edges: .top)
-            ChatEdgeBackdropView(edge: .bottom, height: dockInset)
-                .ignoresSafeArea(.container, edges: .bottom)
+            // PROBE: blur backdrops removed (never merged)
 
             ChatHeader(
                 name: c.header.name,
