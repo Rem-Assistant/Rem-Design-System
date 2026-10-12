@@ -1542,4 +1542,70 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(app.buttons["chat.composerSend"].label, "Stop", "The reply is still in flight")
         XCTAssertFalse(element("message.reply.2.bubble").exists, "--hold-replies holds the reply")
     }
+
+    // MARK: Probe 3 (experiment branch only; never merged). Outcome = what a person sees: the jump button
+    // appears and the latest message leaves view. A: start on a bubble, long drags. B: left gutter, one 300pt
+    // drag. C: left gutter, long drags, scrolling disabled (must FAIL: proves the check detects no scroll).
+
+    private func probe3Outcome(_ name: String) {
+        let jump = app.buttons["chat.jumpToLatest"]
+        let shown = jump.waitForExistence(timeout: 3)
+        let latestGone = !element("message.a2.bubble").isHittable
+        let actions = app.buttons["message.a1.actions.report"].exists || app.buttons["message.a2.actions.report"].exists
+        print("PROBE3 \(name) jump=\(shown) latestGone=\(latestGone) actions=\(actions)")
+        XCTAssertTrue(shown, "\(name): jump to latest shows")
+        XCTAssertTrue(latestGone, "\(name): the latest message has left view")
+        XCTAssertFalse(actions, "\(name): no message actions opened")
+    }
+
+    private func probe3Open() {
+        openChatScreen("Long")
+        XCTAssertTrue(element("message.a2.bubble").waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["chat.jumpToLatest"].exists, "Opens at the latest message")
+    }
+
+    /// The hittable bubble whose centre is highest on screen but below the header (y > 20% of the window).
+    private func upperBubble() -> XCUIElement? {
+        let window = app.windows.firstMatch.frame
+        let bubbles = app.descendants(matching: .any).matching(NSPredicate(format: "identifier ENDSWITH '.bubble'")).allElementsBoundByIndex
+        return bubbles.filter { $0.isHittable && $0.frame.midY > window.height * 0.2 && $0.frame.midY < window.height * 0.5 }
+            .min { $0.frame.midY < $1.frame.midY }
+    }
+
+    func testProbe3A_OnBubbleLongDrags() {
+        probe3Open()
+        let jump = app.buttons["chat.jumpToLatest"]
+        let window = app.windows.firstMatch
+        for i in 0..<4 where !jump.exists {
+            guard let bubble = upperBubble() else { print("PROBE3 A no bubble in the upper half on drag \(i)"); break }
+            print("PROBE3 A drag \(i) starts on \(bubble.identifier) at \(bubble.frame.midY)")
+            let from = bubble.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            let to = window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        probe3Outcome("A on-bubble long x4")
+    }
+
+    func testProbe3B_GutterOne300() {
+        probe3Open()
+        let content = element("chat.content")
+        let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
+        from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: 300)), withVelocity: .slow, thenHoldForDuration: 0.3)
+        probe3Outcome("B gutter single 300")
+    }
+
+    func testProbe3C_GutterLongScrollDisabled() {
+        app.terminate()
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--probe-no-scroll"])
+        app.launch()
+        probe3Open()
+        let content = element("chat.content")
+        let jump = app.buttons["chat.jumpToLatest"]
+        for _ in 0..<4 where !jump.exists {
+            let from = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.25))
+            let to = content.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.85))
+            from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        probe3Outcome("C gutter long x4, scrolling DISABLED (should fail)")
+    }
 }

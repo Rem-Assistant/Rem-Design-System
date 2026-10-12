@@ -182,6 +182,7 @@ public struct ChatScreen<Transcript: View>: View {
                         }
                     }
                     .coordinateSpace(.named(ChatScrollIDs.space))
+                    .scrollDisabled(ProcessInfo.processInfo.arguments.contains("--probe-no-scroll"))  // PROBE only
                     .defaultScrollAnchor(c.emptyState == nil && !jumpEvidence ? .bottom : .top)
                     .scrollDismissesKeyboard(.interactively)
                     .accessibilityIdentifier("chat.content")
