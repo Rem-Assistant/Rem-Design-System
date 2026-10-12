@@ -1542,4 +1542,52 @@ final class PlaygroundNavigationUITests: XCTestCase {
         XCTAssertEqual(app.buttons["chat.composerSend"].label, "Stop", "The reply is still in flight")
         XCTAssertFalse(element("message.reply.2.bubble").exists, "--hold-replies holds the reply")
     }
+
+    // MARK: Gesture probe (experiment branch only; never merged)
+    // Same start and assertions as testChatTranscriptDragThatStartsOnABubbleScrolls; only how the drag is
+    // synthesized changes. Each variant prints one PROBE line so one run compares them all.
+
+    private func probeDragOnBubble(_ name: String, _ drag: (XCUICoordinate, XCUIElement) -> Void) {
+        openChatScreen("Long")
+        XCTAssertTrue(element("message.a2.bubble").waitForExistence(timeout: 3))
+        let bubble = element("message.a1.bubble")
+        XCTAssertTrue(bubble.exists && bubble.isHittable, "An incoming bubble is on screen to start the drag on")
+        let before = bubble.frame.minY
+        drag(bubble.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)), bubble)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        let moved = bubble.exists ? bubble.frame.minY - before : .infinity
+        let jump = app.buttons["chat.jumpToLatest"].waitForExistence(timeout: 3)
+        let actions = app.buttons["message.a1.actions.report"].exists
+        print("PROBE \(name) moved=\(moved) jump=\(jump) actions=\(actions)")
+        XCTAssertGreaterThan(moved, 20, "\(name): the drag scrolls the transcript")
+        XCTAssertTrue(jump, "\(name): jump to latest shows")
+        XCTAssertFalse(actions, "\(name): the drag opens no message actions")
+    }
+
+    private func down(_ c: XCUICoordinate, _ dy: CGFloat = 300) -> XCUICoordinate { c.withOffset(CGVector(dx: 0, dy: dy)) }
+
+    func testProbeA_SlowThenHold() {  // the failing journey's drag, as a control
+        probeDragOnBubble("A slow+hold") { c, _ in c.press(forDuration: 0.05, thenDragTo: down(c), withVelocity: .slow, thenHoldForDuration: 0.3) }
+    }
+    func testProbeB_SlowNoHold() {
+        probeDragOnBubble("B slow") { c, _ in c.press(forDuration: 0.05, thenDragTo: down(c), withVelocity: .slow, thenHoldForDuration: 0) }
+    }
+    func testProbeC_DefaultVelocity() {
+        probeDragOnBubble("C default") { c, _ in c.press(forDuration: 0.05, thenDragTo: down(c)) }
+    }
+    func testProbeD_Fast() {
+        probeDragOnBubble("D fast") { c, _ in c.press(forDuration: 0.05, thenDragTo: down(c), withVelocity: .fast, thenHoldForDuration: 0) }
+    }
+    func testProbeE_Flick1500() {
+        probeDragOnBubble("E 1500pt/s") { c, _ in c.press(forDuration: 0.01, thenDragTo: down(c), withVelocity: XCUIGestureVelocity(1500), thenHoldForDuration: 0) }
+    }
+    func testProbeF_ElementSwipeDown() {
+        probeDragOnBubble("F bubble.swipeDown") { _, bubble in bubble.swipeDown() }
+    }
+    func testProbeG_ElementSwipeDownFast() {
+        probeDragOnBubble("G bubble.swipeDown fast") { _, bubble in bubble.swipeDown(velocity: .fast) }
+    }
+    func testProbeH_LongerHoldBeforeDrag() {  // a 0.3s press first: does the long press claim the touch?
+        probeDragOnBubble("H press0.3+fast") { c, _ in c.press(forDuration: 0.3, thenDragTo: down(c), withVelocity: .fast, thenHoldForDuration: 0) }
+    }
 }
