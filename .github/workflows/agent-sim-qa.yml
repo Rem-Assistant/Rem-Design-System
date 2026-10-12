@@ -182,7 +182,9 @@ jobs:
           tar -xzf "$archive" -C "$RUNNER_TEMP"
           "$RUNNER_TEMP/idb-companion.universal/bin/idb_companion" --version
           echo "$RUNNER_TEMP/idb-companion.universal/bin" >> "$GITHUB_PATH"
-          python3 -m venv "$RUNNER_TEMP/idb-venv"
+          # fb-idb 1.1.7 calls asyncio.get_event_loop() at startup, which Python 3.14 (the runner's default
+          # python3) rejects; use the system Python that ships with the Xcode command line tools.
+          /usr/bin/python3 -m venv "$RUNNER_TEMP/idb-venv"
           "$RUNNER_TEMP/idb-venv/bin/pip" install --disable-pip-version-check "fb-idb==$FB_IDB_VERSION"
           "$RUNNER_TEMP/idb-venv/bin/idb" --help >/dev/null
           echo "$RUNNER_TEMP/idb-venv/bin" >> "$GITHUB_PATH"
