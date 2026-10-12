@@ -27,6 +27,11 @@ NATIVE_EXCEPTIONS = {
         'approved_on': '2026-10-11',
         'reason': 'Build 9 internal TestFlight: owner shipped without waiting for a full native run',
     },
+    ('73ac81894508035730e901476f03d5b909ef758e', 'android', '9'): {
+        'approved_by': 'samuelalake',
+        'approved_on': '2026-10-12',
+        'reason': 'Build 9 Play internal testing: owner shipped without waiting for a full native run',
+    },
 }
 
 
