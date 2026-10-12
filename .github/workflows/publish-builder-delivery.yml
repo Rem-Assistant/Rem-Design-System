@@ -75,6 +75,18 @@ jobs:
           done
           count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?name=builder-evidence" --jq .total_count)
           test "$count" -le 1
+          # An automatic run whose head is no longer an open PR head (merged, closed or pushed past) has
+          # nowhere to publish: skip instead of failing. Manual replays still fail closed in publish.
+          if [ "$GITHUB_EVENT_NAME" = workflow_run ] && [ "$count" = "1" ]; then
+            head=$(jq -r .head_sha <<<"$meta")
+            [[ "$head" =~ ^[0-9a-f]{40}$ ]] || exit 1
+            open=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${head}/pulls" \
+              --jq "[.[] | select(.state == \"open\" and .head.sha == \"${head}\")] | length")
+            if [ "$open" = "0" ]; then
+              echo "::notice::no open pull request has this head any more; nothing to publish"
+              count=0
+            fi
+          fi
           if [ "$count" = "1" ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
 
   publish:

@@ -4,9 +4,9 @@ This change targets the default controller branch. It does not merge, run Builde
 write Figma, publish an app distribution, or change the separate private Playground
 distribution workflow. Existing local checkouts and PR71/85 branches are untouched.
 
-The trusted default controller selects `codex/playground-expansion` through the
-existing `builder.base_branch`; a manual `base_ref` may explicitly select `main`
-or that Playground branch. Further branches need a reviewed allowlist change.
+The trusted default controller selects `main` through `builder.base_branch`
+(it selected `codex/playground-expansion` for the Oct 9 smoke task; that branch is
+now stale). A manual `base_ref` may explicitly select `main` or that Playground branch. Further branches need a reviewed allowlist change.
 New routed task heads use `agent-factory/playground-issue-<issue>` and stay draft.
 Operator selection requires `samuelalake` plus current repository write authority.
 Controller code/configuration and source SHA are separate; issue/PR receipts bind

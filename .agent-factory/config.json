@@ -51,7 +51,7 @@
     "cli_version": "0.55.1",
     "timeout_seconds": 1800,
     "branch_prefix": "agent-factory/playground-issue-",
-    "base_branch": "codex/playground-expansion",
+    "base_branch": "main",
     "runner": "ubuntu-latest",
     "fallback_provider": null,
     "fallback_model": null,
