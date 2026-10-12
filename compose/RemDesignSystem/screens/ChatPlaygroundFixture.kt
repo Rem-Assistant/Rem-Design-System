@@ -1,0 +1,385 @@
+package com.rem.designsystem.screens
+
+import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.chat.MessageRole
+
+// Full-screen Chat / task reply / Inbox fixture (presentation-only) — Compose twin of
+// `Screens/ChatPlaygroundFixture.swift`. Feeds the canonical compositions exactly as an app adapter
+// would, so the Playground and the app render the same components. It is NOT an app adapter and claims
+// no runtime truth: a message sent here carries no receipt; Delivered / Read / Not delivered appear only
+// through the explicitly named simulateHost… controls, at the illustrative [FixtureTime]; a root conversation
+// (the Playground shell, which has no overflow) has its host apply the same acceptance and reply completion
+// after fixed delays (autoReplyStep / advanceAutoReply). Immutable: every operation returns the next fixture.
+
+/**
+ * What the page must do in response to a handled action (presentation, not effects). [PresentActivity]
+ * opens the Agent activity screen (header identity), built from [ChatPlaygroundFixture.activity].
+ */
+sealed interface ChatPlaygroundEffect {
+    data object Exit : ChatPlaygroundEffect
+    data object PresentHostControls : ChatPlaygroundEffect
+    data object PresentAddToChat : ChatPlaygroundEffect
+    data object PresentActivity : ChatPlaygroundEffect
+    /** Present [MessageActionSheet] for a long-pressed message. Any action from the sheet dismisses it. */
+    data class PresentMessageActions(val display: ChatMessageActionsDisplay) : ChatPlaygroundEffect
+    /** Open the sidebar (header sidebar button on a root conversation). */
+    data object OpenSidebar : ChatPlaygroundEffect
+}
+
+/**
+ * One step of a root conversation's simulated reply (Playground shell, route-map "Simulated reply") — twin
+ * of Swift `ChatAutoReplyStep`. The shell has no fixture-host controls, so its host advances the active
+ * turn itself: the host accepts the message, then the reply completes. A step names the turn it belongs to
+ * ([outgoingId]), so it applies only while that turn is current: Stop, a finished turn or a different
+ * conversation make it stale.
+ */
+data class ChatAutoReplyStep(val kind: Kind, val outgoingId: String) {
+    enum class Kind {
+        /** The host accepts the active message (Delivered); the reply streams. */
+        Acceptance,
+        /** The reply completes (a fixture reply is appended); the turn ends. */
+        Completion,
+    }
+
+    /** How long the host waits before applying this step, measured from the previous one (send, then acceptance). */
+    val delayMillis: Long
+        get() = when (kind) {
+            Kind.Acceptance -> ChatPlaygroundFixture.AutoAcceptanceDelayMillis
+            Kind.Completion -> ChatPlaygroundFixture.AutoCompletionDelayMillis
+        }
+}
+
+data class ChatPlaygroundFixture(
+    val entries: List<ChatTranscriptEntry> = PopulatedEntries,
+    val composer: ChatComposerFixture = ChatComposerFixture(),
+    val replyContext: ChatReplyContext? = null,
+    /** The Inbox item this conversation replies to; null for ordinary Chat. */
+    val taskId: String? = null,
+    val taskState: InboxItemState = InboxItemState.None,
+    val note: String? = null,
+    /**
+     * The outgoing message the current turn belongs to (just sent or retried). Simulated host evidence
+     * applies to this message — never to "whichever is latest" — so a retried older message is the one
+     * accepted or failed. Null when no turn is in flight.
+     */
+    val activeOutgoingId: String? = null,
+    /** Set while the active turn is a retry, so cancelling it restores Not delivered + Try again. */
+    private val retryingId: String? = null,
+    private val nextId: Int = 0,
+    /** The agent this conversation belongs to (header name and empty-state copy). */
+    val agentName: String = "Rem",
+    /** A root conversation in the Playground shell: the header's leading control opens the sidebar. */
+    val isRootConversation: Boolean = false,
+) {
+    /** [Long] puts earlier history above the populated conversation, so scrolling up shows jump to latest. */
+    enum class Conversation(val label: String) { Populated("Populated"), Empty("Empty"), Long("Long") }
+
+    val header: ChatHeaderDisplay
+        get() = when {
+            composer.state.phase.isInFlight -> ChatHeaderDisplay(activity = "Working on your request", isWorking = true)
+            taskId == null -> ChatHeaderDisplay(activity = "Connected")
+            else -> taskState.header()
+        }.let { display ->
+            // No call entry: it would replace overflow, the Playground's route to its host controls. A root
+            // conversation (the shell) swaps Back for the sidebar button and has no overflow: the
+            // fixture-host controls live under the Playground's Developer entry.
+            if (isRootConversation) display.copy(name = agentName, showsBack = false, showsSidebar = true, showsOverflow = false)
+            else display.copy(name = agentName)
+        }
+
+    /**
+     * The Agent activity screen for this conversation: the header's current state (never a timeline
+     * event) plus the fixture history.
+     */
+    val activity: AgentActivityFixture
+        get() = AgentActivityFixture.of(header)
+
+    val emptyState: ChatEmptyState?
+        get() = if (entries.isEmpty()) ChatEmptyState(message = agentEmptyMessage(agentName), starters = Starters) else null
+
+    /** Handle one composition action the way a host would; returns the next fixture and what to present. */
+    fun handle(action: ChatScreenAction): Pair<ChatPlaygroundFixture, ChatPlaygroundEffect?> = when (action) {
+        ChatScreenAction.Back -> this to ChatPlaygroundEffect.Exit
+        ChatScreenAction.OpenSidebar -> this to ChatPlaygroundEffect.OpenSidebar
+        ChatScreenAction.Overflow -> this to ChatPlaygroundEffect.PresentHostControls
+        ChatScreenAction.ActivityDetails -> this to ChatPlaygroundEffect.PresentActivity
+        ChatScreenAction.Call -> copy(note = CallNote) to null
+        is ChatScreenAction.Starter -> {
+            val starter = Starters.firstOrNull { it.id == action.id }
+            (if (starter == null) this else copy(composer = composer.apply(ChatComposerAction.DraftChanged(starter.title))).send()) to null
+        }
+        is ChatScreenAction.DismissReplyContext ->
+            (if (replyContext?.targetId == action.targetId) copy(replyContext = null) else this) to null
+        is ChatScreenAction.Composer -> when (action.action) {
+            ChatComposerAction.Add -> this to ChatPlaygroundEffect.PresentAddToChat
+            ChatComposerAction.Send -> send() to null
+            ChatComposerAction.Cancel -> {
+                val next = composer.apply(ChatComposerAction.Cancel)
+                (if (next.state.phase.isInFlight) copy(composer = next) else copy(composer = next).endTurn(cancelled = true)) to null
+            }
+            else -> copy(composer = composer.apply(action.action)) to null
+        }
+        is ChatScreenAction.Transcript -> when (val transcript = action.action) {
+            is ChatTranscriptAction.RequestActions ->
+                this to message(transcript.messageId)?.let { ChatPlaygroundEffect.PresentMessageActions(ChatMessageActionsDisplay(it)) }
+            else -> handle(transcript) to null
+        }
+    }
+
+    private fun handle(action: ChatTranscriptAction): ChatPlaygroundFixture = when (action) {
+        is ChatTranscriptAction.Retry -> {
+            val m = message(action.messageId)
+            // One turn at a time: a retry never switches the active turn mid-flight.
+            if (composer.state.phase.isInFlight || m == null || m.delivery != MessageDelivery.Failed || !m.canRetry) this
+            else replace(m.copy(delivery = MessageDelivery.None, canRetry = false)).copy(
+                composer = composer.select(ChatComposerFixture.Scenario.Sending),
+                note = RetryNote,
+                activeOutgoingId = m.id,
+                retryingId = m.id,
+            )
+        }
+        is ChatTranscriptAction.RequestActions -> this // Presented by handle(ChatScreenAction).
+        is ChatTranscriptAction.React -> message(action.messageId)?.let { replace(it.copy(reaction = action.reaction)) } ?: this
+        is ChatTranscriptAction.RequestMoreReactions -> copy(note = MoreReactionsNote)
+        is ChatTranscriptAction.MessageAction -> message(action.messageId)?.let { m ->
+            when (action.action) {
+                // The reply accessory above the same composer now targets this message.
+                ChatMessageAction.Reply -> copy(
+                    replyContext = ChatReplyContext(m.id, if (m.role == MessageRole.Assistant) ReplyTitle else OwnReplyTitle, m.text),
+                    note = null,
+                )
+                ChatMessageAction.MarkUnread -> copy(note = MarkUnreadNote)
+                ChatMessageAction.Copy -> copy(note = CopyNote)
+                ChatMessageAction.SelectText -> copy(note = SelectTextNote)
+                ChatMessageAction.Report -> copy(note = ReportNote)
+            }
+        } ?: this
+    }
+
+    /** Send: append the outgoing message with no receipt and enter Sending. */
+    private fun send(): ChatPlaygroundFixture {
+        if (!composer.state.canSend) return this
+        val next = composer.apply(ChatComposerAction.Send)
+        val text = next.sent.lastOrNull() ?: return this
+        val id = nextId + 1
+        return copy(
+            entries = entries + ChatTranscriptEntry.Message(ChatMessageDisplay("sent.$id", MessageRole.User, text)),
+            composer = next.select(ChatComposerFixture.Scenario.Sending),
+            note = null,
+            activeOutgoingId = "sent.$id",
+            nextId = id,
+        )
+    }
+
+    // Fixture host (stand-ins for evidence an app would receive).
+
+    /**
+     * The host accepted the active turn's message: Delivered with the fixture time; reply streams. Where
+     * the receipt shows is still decided by [ChatTranscriptRules] (latest outgoing only).
+     */
+    fun simulateHostAcceptance(): ChatPlaygroundFixture {
+        if (composer.state.phase != ComposerPhase.Sending) return this
+        val m = activeOutgoing() ?: return this
+        if (m.delivery != MessageDelivery.None) return this
+        return replace(m.copy(delivery = MessageDelivery.Delivered(FixtureTime)))
+            .copy(composer = composer.select(ChatComposerFixture.Scenario.Streaming), retryingId = null)
+    }
+
+    /** The recipient explicitly acknowledged the latest outgoing message: Read keeps the delivered time. */
+    fun simulateReadAcknowledgement(): ChatPlaygroundFixture {
+        val m = latestOutgoing() ?: return this
+        val delivered = m.delivery as? MessageDelivery.Delivered ?: return this
+        return replace(m.copy(delivery = MessageDelivery.Read(delivered.at)))
+    }
+
+    /** The host reported the active turn's message as not delivered (retryable); the turn ends. */
+    fun simulateDeliveryFailure(): ChatPlaygroundFixture {
+        if (composer.state.phase != ComposerPhase.Sending) return this
+        val m = activeOutgoing() ?: return this
+        if (m.delivery != MessageDelivery.None) return this
+        return replace(m.copy(delivery = MessageDelivery.Failed, canRetry = true))
+            .endTurn(cancelled = false).copy(composer = composer.select(ChatComposerFixture.Scenario.Ready))
+    }
+
+    /** The reply finished: append a fixture assistant message and return to Ready. */
+    fun simulateReplyComplete(): ChatPlaygroundFixture {
+        if (composer.state.phase != ComposerPhase.Streaming) return this
+        val id = nextId + 1
+        return copy(
+            entries = entries + ChatTranscriptEntry.Message(
+                ChatMessageDisplay("reply.$id", MessageRole.Assistant, "Here is a fixture reply.", meta = "Automatic · Reply complete"),
+            ),
+            composer = composer.select(ChatComposerFixture.Scenario.Ready),
+            activeOutgoingId = null,
+            retryingId = null,
+            nextId = id,
+        )
+    }
+
+    // Simulated reply (root conversations).
+
+    /**
+     * The next step of the active turn's simulated reply, or null. Only a root conversation (the Playground
+     * shell, which has no fixture-host controls) simulates its reply; every other conversation waits for the
+     * explicit simulateHost… controls. Sending (no receipt yet) → Acceptance; streaming → Completion; no turn
+     * in flight (never sent, Stop, reply complete) → null.
+     */
+    val autoReplyStep: ChatAutoReplyStep?
+        get() {
+            if (!isRootConversation) return null
+            val id = activeOutgoingId ?: return null
+            val m = message(id) ?: return null
+            return when {
+                composer.state.phase == ComposerPhase.Sending && m.delivery == MessageDelivery.None ->
+                    ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, id)
+                composer.state.phase == ComposerPhase.Streaming -> ChatAutoReplyStep(ChatAutoReplyStep.Kind.Completion, id)
+                else -> null
+            }
+        }
+
+    /** Applies [step] if it is still the current step (same turn, same phase); a stale step returns this unchanged. */
+    fun advanceAutoReply(step: ChatAutoReplyStep): ChatPlaygroundFixture {
+        if (autoReplyStep != step) return this
+        return when (step.kind) {
+            ChatAutoReplyStep.Kind.Acceptance -> simulateHostAcceptance()
+            ChatAutoReplyStep.Kind.Completion -> simulateReplyComplete()
+        }
+    }
+
+    fun message(id: String): ChatMessageDisplay? =
+        (entries.firstOrNull { it.id == id } as? ChatTranscriptEntry.Message)?.message
+
+    private fun latestOutgoing(): ChatMessageDisplay? = ChatTranscriptRules.latestOutgoingId(entries)?.let(::message)
+
+    private fun activeOutgoing(): ChatMessageDisplay? = activeOutgoingId?.let(::message)
+
+    /** Ends the active turn. A cancelled, not-yet-accepted retry returns to Not delivered + Try again. */
+    private fun endTurn(cancelled: Boolean): ChatPlaygroundFixture {
+        val retried = retryingId?.let(::message)
+        val restored = if (cancelled && retried != null && retried.delivery == MessageDelivery.None) {
+            replace(retried.copy(delivery = MessageDelivery.Failed, canRetry = true))
+        } else this
+        return restored.copy(activeOutgoingId = null, retryingId = null)
+    }
+
+    private fun replace(message: ChatMessageDisplay) = copy(
+        entries = entries.map { if (it.id == message.id) ChatTranscriptEntry.Message(message) else it },
+    )
+
+    companion object {
+        /** Illustrative fixture time for simulated host evidence. Not a clock reading. */
+        const val FixtureTime = "10:24"
+        /** Simulated reply on a root conversation ([autoReplyStep]): send → acceptance. */
+        const val AutoAcceptanceDelayMillis = 600L
+        /** Simulated reply on a root conversation ([autoReplyStep]): acceptance → reply complete. */
+        const val AutoCompletionDelayMillis = 1500L
+        const val ReplyTitle = "Replying to Rem"
+        /** Reply context title when the person replies to their own message. */
+        const val OwnReplyTitle = "Replying to yourself"
+        const val CallNote = "The app starts an in-app voice session with Rem."
+        const val MoreReactionsNote = "The app presents its full emoji picker."
+        const val MarkUnreadNote = "The app marks the conversation unread from this message."
+        const val CopyNote = "The app copies the message text."
+        const val SelectTextNote = "The app presents the message text for selection."
+        const val ReportNote = "The app opens its report flow for this message."
+        const val RetryNote = "Retry resubmitted; no receipt until the host accepts it."
+        const val EmptyMessage = "Start a conversation with Rem. Plan your day, explore an idea or get a task moving."
+        val Starters = listOf(ChatStarter("plan-day", "Help me plan my day"))
+
+        /** Default populated conversation (`2054:21981`) with a consistent sample timeline. */
+        val PopulatedEntries: List<ChatTranscriptEntry> = listOf(
+            ChatTranscriptEntry.Timestamp("t1", "Today 10:20 AM"),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("u1", MessageRole.User, "Help me plan the rest of my day.", delivery = MessageDelivery.Delivered("10:20"), time = "10:20")),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("a1", MessageRole.Assistant, "Start with your highest-priority task, then leave time for your next commitment.", time = "10:21")),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("u2", MessageRole.User, "Turn this into a reminder for tomorrow.", delivery = MessageDelivery.Delivered(FixtureTime), time = FixtureTime)),
+            ChatTranscriptEntry.Message(ChatMessageDisplay("a2", MessageRole.Assistant, "I can help you prepare that reminder.", meta = "Automatic · Reply complete", time = FixtureTime)),
+        )
+
+        /**
+         * Neutral earlier history for the [Conversation.Long] conversation (ids `h1`…). Older outgoing
+         * messages show no receipt ([ChatTranscriptRules]), so the latest receipt is still `u2`'s.
+         */
+        val EarlierEntries: List<ChatTranscriptEntry> = listOf<ChatTranscriptEntry>(ChatTranscriptEntry.Timestamp("h0", "Yesterday 4:02 PM")) +
+            listOf(
+                MessageRole.User to "What does my week look like?",
+                MessageRole.Assistant to "Three meetings, two deadlines and a free Thursday afternoon.",
+                MessageRole.User to "Which deadline comes first?",
+                MessageRole.Assistant to "The project brief is due Tuesday at noon; the budget review follows on Friday.",
+                MessageRole.User to "Block two hours on Monday for the brief.",
+                MessageRole.Assistant to "Monday 9 to 11 is free. Shall I hold it as focus time?",
+                MessageRole.User to "Yes, please.",
+                MessageRole.Assistant to "Held. I also moved the reminder to review the draft to Monday evening.",
+                MessageRole.User to "What about the budget review?",
+                MessageRole.Assistant to "You have the numbers from last quarter. I can outline the summary on Wednesday.",
+                MessageRole.User to "Good. Keep Thursday afternoon open.",
+                MessageRole.Assistant to "Thursday afternoon stays clear. Nothing else is scheduled then.",
+                MessageRole.User to "Remind me to call the venue tomorrow.",
+                MessageRole.Assistant to "I'll remind you tomorrow morning to call the venue.",
+                MessageRole.User to "Thanks. That's all for today.",
+                MessageRole.Assistant to "You're set for the week. Talk tomorrow.",
+            ).mapIndexed { index, (role, text) ->
+                ChatTranscriptEntry.Message(
+                    ChatMessageDisplay(
+                        "h${index + 1}", role, text,
+                        delivery = if (role == MessageRole.User) MessageDelivery.Delivered("4:02") else MessageDelivery.None,
+                        time = "4:02",
+                    ),
+                )
+            }
+
+        /** The empty-state message naming the conversation's agent ("Rem" gives [EmptyMessage]). */
+        fun agentEmptyMessage(agentName: String): String =
+            if (agentName == "Rem") EmptyMessage else EmptyMessage.replace("with Rem.", "with $agentName.")
+
+        /**
+         * An agent's root conversation in the Playground shell (Figma A2 · Chat, sidebar closed `2702:2351`):
+         * the header names the agent and its leading control opens the sidebar instead of Back.
+         */
+        fun root(conversation: Conversation = Conversation.Populated, agentName: String = "Rem") =
+            conversation(conversation).copy(agentName = agentName, isRootConversation = true)
+
+        fun conversation(conversation: Conversation) = ChatPlaygroundFixture(
+            entries = when (conversation) {
+                Conversation.Populated -> PopulatedEntries
+                Conversation.Empty -> emptyList()
+                Conversation.Long -> EarlierEntries + PopulatedEntries
+            },
+        )
+
+        /** Task chat for an Inbox item: the same composition plus the reply accessory and the item's state. */
+        fun taskReply(item: InboxItemDisplay) = ChatPlaygroundFixture(
+            entries = listOf(
+                ChatTranscriptEntry.Message(ChatMessageDisplay("task.u1", MessageRole.User, "Could you make the next step clearer?", delivery = MessageDelivery.Delivered(FixtureTime))),
+                ChatTranscriptEntry.Message(ChatMessageDisplay("task.a1", MessageRole.Assistant, "I'll outline a clear next step for this task.")),
+            ),
+            composer = ChatComposerFixture(state = ChatComposerState(placeholder = "Write your reply…")),
+            replyContext = ChatReplyContext(item.id, ReplyTitle, item.title),
+            taskId = item.id,
+            taskState = item.state,
+        )
+    }
+}
+
+/** The Playground Inbox: host-reported item states and routing into task chat. */
+data class InboxPlaygroundFixture(val items: List<InboxItemDisplay> = SeedItems) {
+    enum class Content(val label: String) { Items("Items"), Empty("Empty") }
+
+    /** The task chat an Inbox action opens, or null for an unknown id. */
+    fun route(action: InboxAction): ChatPlaygroundFixture? = when (action) {
+        is InboxAction.Open -> items.firstOrNull { it.id == action.itemId }?.let { ChatPlaygroundFixture.taskReply(it) }
+    }
+
+    companion object {
+        const val EmptyMessage = "Nothing in your Inbox."
+        val SeedItems = listOf(
+            InboxItemDisplay("plan-next-step", "Plan the next step"),
+            InboxItemDisplay("investor-update", "Draft the investor update", InboxItemState.Executing),
+            InboxItemDisplay("venue-booking", "Approve the venue booking", InboxItemState.NeedsApproval),
+            InboxItemDisplay("offsite-travel", "Book travel for the offsite", InboxItemState.Blocked),
+            InboxItemDisplay("calendar-holds", "Sync calendar holds", InboxItemState.Unknown),
+            InboxItemDisplay("weekly-summary", "Send the weekly summary", InboxItemState.Completed),
+        )
+
+        fun content(content: Content) = InboxPlaygroundFixture(if (content == Content.Empty) emptyList() else SeedItems)
+    }
+}

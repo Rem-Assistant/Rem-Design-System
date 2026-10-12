@@ -1,0 +1,1551 @@
+package com.rem.designsystem.demo
+
+import android.graphics.Bitmap
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.toPixelMap
+import android.os.Build
+import android.view.inspector.WindowInspector
+import android.content.ContentValues
+import android.provider.MediaStore
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso
+import android.view.View
+import android.widget.TimePicker
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import org.hamcrest.Matcher
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.dp
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+/**
+ * Root structure, the component catalog's loading demo, and the onboarding flow's step routing
+ * (Android). All state is local fixture state — no account, service, audio, or persistence.
+ */
+class PlaygroundNavigationTest {
+    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+
+    /** Build 9: these journeys start in the Developer hub, reached through the app shell. */
+    @Before fun openDeveloperHub() = compose.openDeveloperHub()
+
+    private fun capture(name: String) {
+        compose.waitForIdle()
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.waitForIdle(500, 5000)
+        if (Build.VERSION.SDK_INT >= 29) {
+            val committed = CountDownLatch(1)
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val root = WindowInspector.getGlobalWindowViews().lastOrNull { it.isShown && it.hasWindowFocus() }
+                    ?: compose.activity.window.decorView
+                root.viewTreeObserver.registerFrameCommitCallback {
+                    root.postOnAnimation { committed.countDown() }
+                }
+                root.invalidate()
+            }
+            check(committed.await(5, TimeUnit.SECONDS)) { "No rendered frame committed before screenshot $name" }
+        }
+        val resolver = compose.activity.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RemSettingsPlayground")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = checkNotNull(resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+        checkNotNull(resolver.openOutputStream(uri)).use {
+            check(automation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it))
+        }
+        resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
+    }
+
+    private fun waitForTag(tag: String) {
+        compose.waitUntil(5000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    private fun systemBack() {
+        Espresso.pressBack()
+        compose.waitForIdle()
+    }
+
+    private fun openOnboardingStep(tag: String) {
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag(tag).performClick()
+    }
+
+    @Test fun rootOffersComponentsAndScreensOnly() {
+        listOf("openComponents", "openSettings", "openAgendaSuggestions", "openOnboarding").forEach {
+            compose.onNodeWithTag(it).assertExists()
+        }
+        compose.onNodeWithText("Shared controls").assertDoesNotExist()
+        compose.onAllNodes(hasText("prototype", substring = true, ignoreCase = true)).assertCountEquals(0)
+        compose.onNodeWithTag("playground.build").assertExists()
+        capture("Playground-root-light")
+    }
+
+    @Test fun catalogLoadingShowsSkeletonThenContentAndActionProgress() {
+        compose.onNodeWithTag("openComponents").performClick()
+        compose.onNodeWithTag("openControls").assertExists()
+        capture("Playground-components-light")
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag("openLoading").performClick()
+        compose.mainClock.advanceTimeBy(100)
+        compose.onNodeWithTag("loading.skeleton").assertExists().assertContentDescriptionEquals("Loading content")
+        compose.mainClock.autoAdvance = true
+        capture("Loading-skeleton-light")
+        compose.waitUntil(8000) { compose.onAllNodesWithText("Memory").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("loading.skeleton").assertDoesNotExist()
+        capture("Loading-content-light")
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag("loading.refresh").performClick()
+        compose.mainClock.advanceTimeBy(100)
+        compose.onNodeWithText("Refreshing").assertExists()
+        compose.onNodeWithText("Memory").assertExists()
+        compose.mainClock.autoAdvance = true
+        capture("Loading-action-progress-light")
+        compose.waitUntil(6000) { compose.onAllNodesWithText("Refresh").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    private fun openCatalogPage(tag: String) {
+        compose.onNodeWithTag("openComponents").performClick()
+        compose.onNodeWithTag(tag).performScrollTo().performClick()
+    }
+
+    private fun slug(text: String) = text.lowercase().map { if (it.isLetterOrDigit()) it else '-' }
+        .joinToString("").split('-').filter { it.isNotEmpty() }.joinToString("-")
+
+    /** One overview capture: [name] names the file, [anchor] is content inside the component (never its
+     *  group heading). Scrolling moves only as far as needed, so an anchor reached by scrolling down
+     *  lands at the bottom edge with its component above it, and one reached by scrolling back up
+     *  lands at the top edge with its component below it. [last] picks the final match when the
+     *  page repeats the text (the trace's "Working" footer follows the "Working" status pill). */
+    private data class Shot(val name: String, val anchor: SemanticsMatcher, val last: Boolean = false)
+
+    /** Unobscured overview captures: each page's top, then each component scrolled into view by its
+     *  own content, before any interaction (so no keyboard or post-action scroll position). The
+     *  execution trace is taller than the viewport, so it is captured at its bottom, then its top. */
+    @Test fun catalogSectionCaptures() {
+        compose.onNodeWithTag("openComponents").performClick()
+        val pages = listOf(
+            Triple("openControls", "controls", listOf(
+                Shot("Buttons", hasText("Disabled")),
+                Shot("Slider", hasText("50%")),
+                Shot("Pills", hasText("Personal")),
+            )),
+            Triple("openRows", "rows", listOf(
+                Shot("Section", hasText("Applies to this device.")),
+                Shot("Connector row", hasText("Gmail")),
+                Shot("Task and event rows", hasText("Unfiled inbox task")),
+            )),
+            Triple("openCatalogAgenda", "agenda", listOf(
+                Shot("Suggestion rows", hasText("Reply to the venue")),
+                Shot("Suggestion section", hasText("See more")),
+            )),
+            Triple("openChat", "chat", listOf(
+                Shot("Composer", hasTestTag("catalog.modelMenu")),
+                Shot("Voice bar", hasText("Listening\u2026")),
+            )),
+            Triple("openAgentCatalog", "agent", listOf(
+                Shot("Running task banner", hasText("Needs you \u00b7 Password rejected")),
+                Shot("Browser card", hasText("Rem's browser session")),
+                Shot("Execution trace bottom", hasText("Working"), last = true),
+                Shot("Execution trace top", hasText("IN PROGRESS")),
+                Shot("Daily brief card", hasText("Read latest brief")),
+            )),
+            Triple("openBrand", "brand", listOf(
+                Shot("Provider marks", hasTestTag("catalog.providerMarks")),
+                Shot("Empty state", hasText("Add New")),
+            )),
+        )
+        pages.forEach { (tag, page, shots) ->
+            compose.onNodeWithTag(tag).performScrollTo().performClick()
+            compose.waitForIdle()
+            capture("Catalog-$page-top-light")
+            shots.forEach { shot ->
+                val anchor = if (shot.last) compose.onAllNodes(shot.anchor).onLast() else compose.onNode(shot.anchor)
+                anchor.performScrollTo().assertIsDisplayed()
+                capture("Catalog-$page-${slug(shot.name)}-light")
+            }
+            compose.onNodeWithTag("back").performClick()
+            compose.onNodeWithTag(tag).assertExists()
+        }
+    }
+
+    @Test fun catalogListsEveryPage() {
+        compose.onNodeWithTag("openComponents").performClick()
+        listOf("openControls", "openRows", "openCatalogAgenda", "openChat", "openAgentCatalog", "openBrand", "openLoading").forEach {
+            compose.onNodeWithTag(it).assertExists()
+        }
+    }
+
+    @Test fun catalogControlsButtonsSliderAndPills() {
+        openCatalogPage("openControls")
+        compose.onNodeWithText("Rect \u00b7 Blue").performScrollTo().performClick()
+        compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped Rect \u00b7 Blue")
+        compose.onNodeWithText("Disabled").assertIsNotEnabled()
+        compose.onNodeWithText("50%").performScrollTo().assertExists()
+        // Drive the slider through its accessibility action (deterministic, unlike a touch swipe).
+        compose.onNodeWithTag("controls.slider").performScrollTo()
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(1f) }
+        compose.onNodeWithText("100%").assertExists()
+        compose.onNodeWithText("50%").assertDoesNotExist()
+        compose.onNodeWithText("Personal").performScrollTo().assertExists()
+        capture("Catalog-controls-light")
+    }
+
+    /** Real touch-down/up verifies visible press feedback and the most recent action receipt. */
+    @Test fun controlsPressFeedbackAndLatestStatus() {
+        openCatalogPage("openControls")
+        val variants = listOf("Rect · Black", "Rect · Blue", "Rect · Secondary", "Rect · Destructive",
+            "Text · Accent", "Text · Destructive", "Pill · Secondary")
+        variants.forEachIndexed { index, title ->
+            val button = compose.onNodeWithText(title).performScrollTo()
+            val resting = button.captureToImage().toPixelMap()
+            button.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(200)
+            val pressed = button.captureToImage().toPixelMap()
+            org.junit.Assert.assertTrue("$title must visibly react while held",
+                (0 until resting.width).any { x -> (0 until resting.height).any { y -> resting[x, y] != pressed[x, y] } })
+            if (index == 1) capture("Build6-controls-blue-held")
+            button.performTouchInput { up() }
+            compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped $title")
+        }
+        compose.onNodeWithText("Disabled").performScrollTo().performTouchInput { click() }
+        compose.onNodeWithTag("controls.lastButton").assertTextEquals("Tapped Pill · Secondary")
+        capture("Build6-controls-latest-status")
+    }
+
+    @Test fun settingsAndTermsRowsShowNativePressFeedback() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val resolver = instrumentation.targetContext.contentResolver
+        val key = android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+        val original = android.provider.Settings.Global.getString(resolver, key)
+        fun setting(value: String?) {
+            val command = if (value == null) "settings delete global animator_duration_scale"
+                else "settings put global animator_duration_scale $value"
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+            org.junit.Assert.assertEquals(value?.toFloat(), android.provider.Settings.Global.getString(resolver, key)?.toFloat())
+        }
+        fun holdAndCompare(node: SemanticsNodeInteraction, name: String) {
+            val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+            val bounds = node.fetchSemanticsNode().boundsInWindow
+            capture("$name-resting")
+            val resting = automation.takeScreenshot()
+            node.performTouchInput { down(center) }
+            compose.mainClock.advanceTimeBy(200)
+            // Native ripple uses RenderThread time and must be measured in the device framebuffer.
+            android.os.SystemClock.sleep(250)
+            capture(name)
+            val pressed = automation.takeScreenshot()
+            org.junit.Assert.assertTrue("$name must visibly react while held",
+                (bounds.left.toInt() until bounds.right.toInt()).any { x ->
+                    (bounds.top.toInt() until bounds.bottom.toInt()).any { y -> resting.getPixel(x, y) != pressed.getPixel(x, y) } })
+            node.performTouchInput { up() }
+        }
+        try {
+        // CI disables system animations. Native ripple needs normal animator scale for this check.
+        setting("1")
+        compose.onNodeWithTag("openSettings").performClick()
+        holdAndCompare(compose.onNodeWithTag("openAgent"), "Build6-agent-row-held")
+        compose.onNodeWithText("Agent settings").assertExists()
+        compose.onNodeWithTag("back").performClick()
+        compose.onNodeWithTag("back").performClick()
+        openOnboardingStep("openOnboardingConsent")
+        holdAndCompare(compose.onNodeWithText("Terms of Service"), "Build6-terms-row-held")
+        compose.onNodeWithText("Done").assertExists()
+        } finally { setting(original) }
+    }
+
+    @Test fun catalogRowsListAndConnectorStates() {
+        openCatalogPage("openRows")
+        compose.onNodeWithTag("catalog.listRow").performClick()
+        compose.onNodeWithText("Opened").assertExists()
+        compose.onNodeWithText("Connect").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Connected").fetchSemanticsNodes().size >= 2 }
+        capture("Catalog-rows-light")
+    }
+
+    @Test fun catalogAgendaDateAndSuggestions() {
+        openCatalogPage("openCatalogAgenda")
+        compose.onNodeWithText("Oct 1 2026").assertExists()
+        compose.onNodeWithContentDescription("Next day").performClick()
+        compose.onNodeWithText("Oct 2 2026").assertExists()
+        compose.onNodeWithTag("catalog.suggestion.accept.add").performClick()
+        compose.onNodeWithText("Added").assertExists()
+        capture("Catalog-agenda-light")
+        compose.onNodeWithTag("catalog.suggestion.restore").performClick()
+        compose.onNodeWithTag("catalog.suggestion.accept.add").assertExists()
+        // SuggestionSection bounds inline rows at three; See more reveals the fourth.
+        compose.onNodeWithText("Book the venue for the offsite").assertDoesNotExist()
+        compose.onNodeWithText("See more").performScrollTo().performClick()
+        compose.onNodeWithText("Book the venue for the offsite").performScrollTo().assertExists()
+    }
+
+    @Test fun catalogChatComposerSendsMessage() {
+        openCatalogPage("openChat")
+        compose.onNodeWithTag("catalog.composerField").performScrollTo().performTextInput("Plan my afternoon")
+        compose.onNodeWithTag("catalog.composerSend").performClick()
+        compose.onNodeWithText("Plan my afternoon").assertExists()
+        capture("Catalog-chat-light")
+    }
+
+    /**
+     * Chat slice journey, all local fixture state: header activity, long-press reaction (outgoing
+     * upper-left), failed delivery and Try again, the Auto model menu, the Cloud browser chip and the
+     * Thinking level. No Android camera tile exists. Nothing leaves the page.
+     */
+    @Test fun catalogChatReactionsDeliveryModelMenuAndAttachments() {
+        openCatalogPage("openChat")
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Rem, Connected"))
+        compose.onNodeWithTag("chat.headerActivity.1").performScrollTo().performClick()
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Rem, Reading the shared notes"))
+
+        compose.onNodeWithTag("chat.outgoing.reaction").assertDoesNotExist()
+        compose.onNodeWithTag("chat.outgoing.bubble").performScrollTo().performTouchInput { longClick() }
+        compose.onAllNodes(hasTestTagStartingWith("chat.reactions.")).assertCountEquals(6)
+        compose.onNodeWithTag("chat.reactions.2").performClick()
+        val bubble = compose.onNodeWithTag("chat.outgoing.bubble").getBoundsInRoot()
+        val badge = compose.onNodeWithTag("chat.outgoing.reaction").assertExists().getBoundsInRoot()
+        // Outgoing reaction sits at the upper-left, overlapping toward the conversation centre.
+        check(badge.left < bubble.left && badge.top < bubble.top) { "Outgoing reaction must anchor upper-left" }
+
+        compose.onNodeWithTag("chat.failed.receipt").performScrollTo().assertTextEquals("Not delivered")
+        val failedBubble = compose.onNodeWithTag("chat.failed.bubble").getBoundsInRoot()
+        val failure = compose.onNodeWithTag("chat.failed.failure").getBoundsInRoot()
+        check(failure.left >= failedBubble.right) { "Failure control must sit entirely outside the bubble" }
+        compose.onNodeWithTag("chat.failed.failure").performClick()
+        compose.onNodeWithTag("chat.failed.retry").performClick()
+        compose.onNodeWithTag("chat.failed.receipt").assertTextEquals("Delivered \u00b7 10:24")
+
+        compose.onNodeWithTag("catalog.modelMenu").performScrollTo().assert(hasText("Auto")).performClick()
+        compose.onNodeWithTag("catalog.manageModels").assertExists()
+        compose.onNodeWithTag("catalog.modelProvider.provider-a").performClick()
+        compose.onNodeWithTag("catalog.model.model-a2").performClick()
+        compose.onNodeWithTag("catalog.modelMenu").assert(hasText("Model A2"))
+        compose.onNodeWithTag("catalog.modelMenu").performClick()
+        compose.onNodeWithTag("catalog.modelAutomatic").performClick()
+        compose.onNodeWithTag("catalog.modelMenu").assert(hasText("Auto"))
+
+        compose.onNodeWithTag("catalog.composerAdd").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.addToChat.photos").assertExists()
+        compose.onNodeWithTag("catalog.addToChat.files").assertExists()
+        compose.onNodeWithTag("catalog.addToChat.camera").assertDoesNotExist()
+        compose.onNodeWithTag("catalog.addToChat.cloudBrowser").performClick()
+        compose.onNodeWithTag("catalog.attachment.cloud-browser").assertExists()
+        compose.onNodeWithTag("catalog.removeAttachment.cloud-browser").performClick()
+        compose.onNodeWithTag("catalog.attachment.cloud-browser").assertDoesNotExist()
+
+        compose.onNodeWithTag("catalog.composerAdd").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.addToChat.thinking").assert(hasText("Medium")).performClick()
+        compose.onNodeWithTag("catalog.addToChat.thinking.high").performClick()
+        compose.onNodeWithTag("catalog.addToChat.thinking").assert(hasText("High"))
+        compose.onNodeWithTag("catalog.addToChat.done").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("catalog.addToChat.thinking").assertDoesNotExist()
+        capture("Catalog-chat-journey-light")
+    }
+
+    private fun hasTestTagStartingWith(prefix: String) =
+        SemanticsMatcher("TestTag starts with $prefix") { node ->
+            node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
+        }
+
+    @Test fun catalogAgentSurfaces() {
+        openCatalogPage("openAgentCatalog")
+        compose.onAllNodesWithText("Working")[0].assertExists()
+        compose.onNodeWithTag("catalog.browserState.Ended").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.browserState.Ended").assertIsSelected()
+        compose.onNodeWithText("Your morning brief").performScrollTo().assertExists()
+        capture("Catalog-agent-light")
+    }
+
+    @Test fun catalogBrandAndEmptyState() {
+        openCatalogPage("openBrand")
+        compose.onNodeWithTag("catalog.faceThinking").performClick()
+        compose.onNodeWithText("Add New").performScrollTo().performClick()
+        compose.onNodeWithTag("catalog.emptyReset").assertExists()
+        capture("Catalog-brand-light")
+        compose.onNodeWithTag("catalog.emptyReset").performClick()
+        compose.onNodeWithText("Add New").assertExists()
+        compose.onNodeWithContentDescription("Google").performScrollTo().assertExists()
+    }
+
+    /** Continue from Sign in walks every established step, in order, to the completion state. */
+    @Test fun continueAdvancesThroughEveryStepToCompletion() {
+        openOnboardingStep("openOnboardingSignIn")
+        capture("Onboarding-signIn-light")
+        compose.onNodeWithText("Continue with Apple").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Accept and Continue").fetchSemanticsNodes().isNotEmpty() }
+        capture("Onboarding-consent-light")
+        compose.onNodeWithText("Accept and Continue").performClick()
+        compose.onNodeWithText("Connectors").assertExists()
+        capture("Onboarding-connectors-light")
+        compose.onNodeWithText("Continue").performClick()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-light")
+        compose.onNodeWithText("Continue").performClick()
+        waitForTag("onboardingVoice")
+        compose.onNodeWithTag("onboardingVoice.continue").performClick()
+        compose.onNodeWithTag("onboarding.complete")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "continue"))
+        capture("Onboarding-complete-light")
+        compose.onNodeWithTag("onboarding.done").performClick()
+        compose.onNodeWithTag("openOnboardingSignIn").assertExists()
+    }
+
+    /** Every optional onboarding step can be skipped without submitting its fixture. */
+    @Test fun skipAdvancesFromConnectorsToCompletion() {
+        openOnboardingStep("openOnboardingConnectors")
+        compose.onNodeWithText("Skip").performClick()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        compose.onNodeWithText("Skip").assertIsEnabled().performClick()
+        waitForTag("onboardingVoice")
+        compose.onNodeWithTag("onboardingVoice.skip").performClick()
+        compose.onNodeWithTag("onboarding.complete")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "skip"))
+    }
+
+    @Test fun connectorsVisibleBackReturnsWithoutRelaunch() {
+        openOnboardingStep("openOnboardingConnectors")
+        capture("Build6-connectors-back-and-provider-marks")
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("openOnboardingConnectors").assertIsDisplayed()
+    }
+
+    @Test fun checkInSkipWorksWithAllCadencesOff() {
+        openOnboardingStep("openOnboardingCheckIn")
+        compose.onNode(isToggleable() and hasContentDescription("Morning")).performClick()
+        compose.onNodeWithText("Continue").assertIsNotEnabled()
+        capture("Build6-checkin-all-off-skip")
+        compose.onNodeWithText("Skip").assertIsEnabled().performClick()
+        waitForTag("onboardingVoice")
+        capture("Build6-checkin-skip-landed-voice")
+    }
+
+    /** CI disables animations globally. This one test enables them temporarily, checks pixels,
+     * then checks Remove animations and restores the original setting even on failure. */
+    @Test fun thinkingOutlineChangesOverTime() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val resolver = instrumentation.targetContext.contentResolver
+        val dark = if (compose.activity.intent.hasExtra("settingsDark"))
+            compose.activity.intent.getBooleanExtra("settingsDark", false)
+        else (compose.activity.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val key = android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+        val original = android.provider.Settings.Global.getString(resolver, key)
+        fun setting(value: String?) {
+            val command = if (value == null) "settings delete global animator_duration_scale"
+                else "settings put global animator_duration_scale $value"
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command)).use { it.readBytes() }
+            val actual = android.provider.Settings.Global.getString(resolver, key)
+            org.junit.Assert.assertEquals("Animator setting must take effect", value?.toFloat(), actual?.toFloat())
+        }
+        fun changed(before: androidx.compose.ui.graphics.PixelMap, after: androidx.compose.ui.graphics.PixelMap) =
+            (0 until before.width).any { x -> (0 until before.height).any { y -> before[x, y] != after[x, y] } }
+        try {
+            setting("1")
+            openCatalogPage("openBrand")
+            compose.onNodeWithTag("catalog.faceThinking").assertIsDisplayed()
+            compose.mainClock.autoAdvance = false
+            compose.onNodeWithTag("catalog.faceThinking").performClick()
+            compose.mainClock.advanceTimeBy(160)
+            val before = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            compose.mainClock.advanceTimeBy(500)
+            val after = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            org.junit.Assert.assertTrue("Thinking must change visible pixels over time", changed(before, after))
+            setting("0")
+            instrumentation.waitForIdleSync()
+            compose.mainClock.advanceTimeBy(32)
+            val reducedBefore = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            compose.mainClock.advanceTimeBy(500)
+            val reducedAfter = compose.onNodeWithTag("catalog.faceMark").captureToImage().toPixelMap()
+            org.junit.Assert.assertFalse("Remove animations must keep the outline still", changed(reducedBefore, reducedAfter))
+            // The inspection path draws the complete canonical outline. Compare real pixels against
+            // it as well: stillness alone would wrongly accept a blank or partly frozen outline.
+            compose.runOnIdle {
+                compose.activity.setContent {
+                    com.rem.designsystem.tokens.RemTheme(darkTheme = dark) {
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            androidx.compose.ui.platform.LocalInspectionMode provides true) {
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.background(com.rem.designsystem.tokens.RemColors.current.backgroundPrimary)) {
+                                com.rem.designsystem.brand.RemFaceMark(
+                                    mode = com.rem.designsystem.brand.RemFaceMarkMode.Thinking,
+                                    tint = com.rem.designsystem.tokens.RemColors.current.brandBlue,
+                                    modifier = Modifier.testTag("thinking.reference"))
+                            }
+                        }
+                    }
+                }
+            }
+            compose.mainClock.advanceTimeBy(32)
+            val complete = compose.onNodeWithTag("thinking.reference").captureToImage().toPixelMap()
+            org.junit.Assert.assertEquals(complete.width, reducedAfter.width)
+            org.junit.Assert.assertEquals(complete.height, reducedAfter.height)
+            org.junit.Assert.assertFalse("Remove animations must show the complete resting outline", changed(complete, reducedAfter))
+        } finally {
+            setting(original)
+            compose.mainClock.autoAdvance = true
+        }
+    }
+
+    /** System Back walks the pushed steps in reverse. */
+    @Test fun backReturnsToPreviousStep() {
+        openOnboardingStep("openOnboardingCheckIn")
+        compose.onNodeWithText("Continue").performClick()
+        waitForTag("onboardingVoice")
+        systemBack()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        systemBack()
+        compose.onNodeWithTag("openOnboardingCheckIn").assertExists()
+    }
+
+    /** Check-in: a switch adds a time, the platform time picker changes one, and Continue saves first. */
+    @Test fun checkInSwitchTimePickerAndSave() {
+        openOnboardingStep("openOnboardingCheckIn")
+        compose.onNodeWithText("12:30 PM").assertDoesNotExist()
+        compose.onNode(isToggleable() and hasContentDescription("Midday")).performClick()
+        compose.onNodeWithText("12:30 PM").assertExists()
+        compose.onNodeWithText("8:00 AM").performClick()
+        onView(isAssignableFrom(TimePicker::class.java)).inRoot(isDialog()).perform(setTime(9, 0))
+        capture("Onboarding-checkin-picker-light")
+        onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
+        compose.onNodeWithText("9:00 AM").assertExists()
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-edited-light")
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText("Continue").performClick()
+        compose.mainClock.advanceTimeBy(100)
+        compose.onNodeWithText("Saving\u2026").assertExists()
+        compose.mainClock.autoAdvance = true
+        waitForTag("onboardingVoice")
+    }
+
+    /** Check-in with the "Fails once" fixture: the first save fails with Try again, and retrying recovers. */
+    @Test fun checkInSaveFailureRecovers() {
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag("checkInSave.Fails once").performClick()
+        compose.onNodeWithTag("openOnboardingCheckIn").performClick()
+        compose.onNodeWithText("Continue").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Try again").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("We couldn't save your check-in times. Check your connection and try again.", substring = true).assertExists()
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-failure-light")
+        compose.onNodeWithText("Try again").performClick()
+        waitForTag("onboardingVoice")
+    }
+
+    /** Check-in at large text: every title stays on one line and every time stays fully on screen. */
+    @Test fun checkInRowsFitAtLargeText() {
+        compose.activityRule.scenario.onActivity { it.intent.putExtra("settingsLargeText", true) }
+        compose.activityRule.scenario.recreate()
+        compose.onNodeWithTag("openOnboarding").performScrollTo().performClick()
+        compose.onNodeWithTag("openOnboardingCheckIn").performScrollTo().performClick()
+        compose.onNodeWithText("When should Rem check in?").assertExists()
+        assertCheckInRowsFit()
+        compose.onNodeWithText("8:00 AM").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText("Morning") and !isToggleable()).assertIsDisplayed()
+        assertCheckInRowsFit()
+        capture("Onboarding-checkin-large-text")
+        compose.onNode(isToggleable() and hasContentDescription("Midday")).performScrollTo().performClick()
+        compose.onNodeWithText("12:30 PM").assertExists()
+        assertCheckInRowsFit()
+        compose.onNodeWithText("12:30 PM").performScrollTo()
+        capture("Onboarding-checkin-large-text-edited")
+        listOf("Morning", "Midday", "Evening").forEach { title ->
+            compose.onNode(isToggleable() and hasContentDescription(title)).performScrollTo().assertIsDisplayed()
+        }
+        listOf("8:00 AM", "12:30 PM").forEach { time ->
+            compose.onNodeWithText(time).performScrollTo().assertIsDisplayed().assertHasClickAction()
+        }
+    }
+
+    /**
+     * The Check-in row regression: each period title lays out on exactly one line (a single word like
+     * "Morning" must never break across lines), and each visible time value is fully inside the window.
+     */
+    private fun assertCheckInRowsFit() {
+        compose.waitForIdle()
+        listOf("Morning", "Midday", "Evening").forEach { title ->
+            val node = compose.onNode(hasText(title) and !isToggleable()).fetchSemanticsNode()
+            val layouts = mutableListOf<TextLayoutResult>()
+            checkNotNull(node.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
+            val textLayout = layouts.single()
+            check(!textLayout.hasVisualOverflow) {
+                "Check-in title \"$title\" is clipped or truncated; " +
+                    "bounds=${node.boundsInRoot}; ${describeTextLayout(textLayout)}"
+            }
+            val lines = textLayout.lineCount
+            check(lines == 1) {
+                "Check-in title \"$title\" laid out on $lines lines; " +
+                    "bounds=${node.boundsInRoot}; ${describeTextLayout(textLayout)}"
+            }
+        }
+        // Hidden fit probes must never expose extra controls to accessibility or tests.
+        compose.onAllNodes(isToggleable()).assertCountEquals(3)
+        val window = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        val timeValue = SemanticsMatcher("Check-in time value") {
+            it.config.getOrNull(SemanticsActions.OnClick)?.label?.startsWith("Edit ") == true
+        }
+        val times = compose.onAllNodes(timeValue).fetchSemanticsNodes()
+        check(times.isNotEmpty()) { "No Check-in time value is shown" }
+        times.forEach { time ->
+            val layouts = mutableListOf<TextLayoutResult>()
+            checkNotNull(time.config[SemanticsActions.GetTextLayoutResult].action)(layouts)
+            check(layouts.single().lineCount == 1 && !layouts.single().hasVisualOverflow) {
+                "Check-in time value is clipped or truncated; bounds=${time.boundsInRoot}; " +
+                    describeTextLayout(layouts.single())
+            }
+            check(time.boundsInRoot.left >= window.left && time.boundsInRoot.right <= window.right) {
+                "Check-in time ${time.config.getOrNull(SemanticsProperties.Text)} is clipped horizontally: ${time.boundsInRoot}"
+            }
+        }
+    }
+
+    /** Distinguishes glyph clipping from a mismatch between rendered and semantic paragraph sizes. */
+    private fun describeTextLayout(layout: TextLayoutResult): String =
+        "text=${layout.layoutInput.text.text}, size=${layout.size}, " +
+            "paragraph=${layout.multiParagraph.width}x${layout.multiParagraph.height}, " +
+            "constraints=${layout.layoutInput.constraints}, lines=${layout.lineCount}, " +
+            "overflowWidth=${layout.didOverflowWidth}, overflowHeight=${layout.didOverflowHeight}, " +
+            "lineBounds=" + (0 until layout.lineCount).joinToString { line ->
+                "${layout.getLineLeft(line)}..${layout.getLineRight(line)}; " +
+                    "top=${layout.getLineTop(line)}, bottom=${layout.getLineBottom(line)}, " +
+                    "ellipsized=${layout.isLineEllipsized(line)}"
+            }
+
+    /** Sets a framework TimePicker directly — the dialog's own dial has no stable touch targets. */
+    private fun setTime(hour: Int, minute: Int) = object : ViewAction {
+        override fun getConstraints(): Matcher<View> = isAssignableFrom(TimePicker::class.java)
+        override fun getDescription() = "set time to $hour:$minute"
+        override fun perform(uiController: UiController, view: View) {
+            (view as TimePicker).apply { this.hour = hour; this.minute = minute }
+            uiController.loopMainThreadUntilIdle()
+        }
+    }
+
+    @Test fun consentLegalRowsOpenDocuments() {
+        openOnboardingStep("openOnboardingConsent")
+        compose.onNodeWithText("Terms of Service").performClick()
+        // The document is a modal dialog; Done exists only there.
+        compose.onNodeWithText("Done").assertExists()
+        compose.onAllNodesWithText("How Rem accounts, subscriptions, and approved actions work.", useUnmergedTree = true).assertCountEquals(2)
+        capture("Onboarding-consent-terms-light")
+        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithText("Done").assertDoesNotExist()
+        compose.onAllNodesWithText("How Rem accounts, subscriptions, and approved actions work.", useUnmergedTree = true).assertCountEquals(1)
+        compose.onNodeWithText("Accept and Continue").assertExists()
+    }
+
+    @Test fun connectorRowTogglesLocalState() {
+        openOnboardingStep("openOnboardingConnectors")
+        // Gmail starts connected; Google Calendar and Slack offer Connect.
+        compose.onAllNodesWithText("Connected").assertCountEquals(1)
+        compose.onAllNodesWithText("Connect").assertCountEquals(2)
+        // The Back bar can put Slack below the fold on shorter devices. Drive the visible control.
+        compose.onAllNodesWithText("Connect")[1].performScrollTo().assertIsDisplayed().performClick()
+        compose.onAllNodesWithText("Connected").assertCountEquals(2)
+        compose.onAllNodesWithText("Connect").assertCountEquals(1)
+    }
+
+    // Agenda entry routing: Add New → creation (2390:28498) and Schedule → Schedule Tasks (2295:13691).
+    // The DS `AgendaEntryFixture` applies results in memory. Twin of the iOS entry journeys in
+    // `AgendaSuggestionsUITests.swift`.
+
+    private fun openAgenda() {
+        compose.onNodeWithTag("openAgendaSuggestions").performScrollTo().performClick()
+        waitForTag("agenda.addNew")
+    }
+
+    private fun openCreation() {
+        compose.onNodeWithTag("agenda.addNew").performScrollTo().performClick()
+        waitForTag("agendaCreate.save")
+    }
+
+    private fun openSchedule() {
+        compose.onNodeWithTag("agenda.schedule").performScrollTo().performClick()
+        waitForTag("agendaSchedule.filter.All")
+    }
+
+    private fun scheduleBadge() = compose.onNodeWithTag("agenda.scheduleCount", useUnmergedTree = true)
+
+    @Test fun agendaAddNewSavesTaskAndEventAndCancelChangesNothing() {
+        openAgenda()
+        openCreation()
+        compose.onNodeWithTag("agendaCreate.save").assertIsNotEnabled()
+        compose.onNodeWithTag("agendaCreate.title").performTextInput("Prepare rehearsal notes")
+        compose.onNodeWithTag("agendaCreate.chooser").performClick()
+        waitForTag("agendaCreate.option.Work")
+        compose.onNodeWithTag("agendaCreate.option.FollowUps").assertExists()
+        compose.onNodeWithTag("agendaCreate.option.Work").performClick()
+        compose.onNodeWithTag("agendaCreate.save").assertIsEnabled()
+        capture("AgendaEntry-new-task-light")
+        compose.onNodeWithTag("agendaCreate.save").performClick()
+        waitForTag("agenda.row.created-task-1")
+        compose.onNodeWithText("5:00 PM").assertExists()
+        compose.onAllNodesWithText("Work", useUnmergedTree = true).onFirst().assertExists()
+        compose.onNodeWithText("Reply to the venue").assertExists()
+
+        openCreation()
+        compose.onNodeWithTag("agendaCreate.mode.Event").performClick()
+        compose.onNodeWithTag("agendaCreate.title").performTextInput("Evening rehearsal")
+        capture("AgendaEntry-new-event-light")
+        compose.onNodeWithTag("agendaCreate.save").performClick()
+        waitForTag("agenda.row.created-event-2")
+        compose.onNodeWithText("6:00 PM").assertExists()
+
+        openCreation()
+        compose.onNodeWithTag("agendaCreate.title").performTextInput("Discarded draft")
+        compose.onNodeWithTag("agendaCreate.cancel").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agendaCreate.save").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("Discarded draft").assertDoesNotExist()
+        capture("AgendaEntry-created-light")
+    }
+
+    @Test fun agendaScheduleAddToTodayThenPlanWithRetainedSelection() {
+        openAgenda()
+        scheduleBadge().assertTextEquals("3")
+        openSchedule()
+        compose.onNodeWithTag("agendaSchedule.task.draft").assertExists()
+        compose.onNodeWithTag("agendaSchedule.task.specs").assertExists()
+        compose.onNodeWithTag("agendaSchedule.task.dentist").assertExists()
+        compose.onNodeWithTag("agendaSchedule.task.walkthrough").assertDoesNotExist() // events are never listed
+        compose.onNodeWithTag("agendaSchedule.addTo").assertIsNotEnabled()
+
+        // Add to Today → Pick a Time (default 9:00) → Done.
+        compose.onNodeWithTag("agendaSchedule.task.draft").performClick()
+        compose.onNodeWithTag("agendaSchedule.task.draft").assertIsSelected()
+        capture("AgendaEntry-schedule-selected-light")
+        compose.onNodeWithTag("agendaSchedule.addTo").performClick()
+        waitForTag("agendaSchedule.done")
+        compose.onNodeWithText("Today, August 13").assertExists()
+        compose.onNodeWithTag("agendaSchedule.timePicker").assertExists()
+        capture("AgendaEntry-pick-time-light")
+        compose.onNodeWithTag("agendaSchedule.done").performClick()
+        waitForTag("agenda.row.scheduled-draft")
+        compose.onNodeWithText("9:00 AM").assertExists()
+        scheduleBadge().assertTextEquals("2")
+
+        // Plan: selection survives filter changes, then Pick a Date → Next → Pick a Time → Done.
+        openSchedule()
+        compose.onNodeWithTag("agendaSchedule.task.draft").assertDoesNotExist() // scheduled tasks leave the list
+        compose.onNodeWithTag("agendaSchedule.task.dentist").performClick()
+        compose.onNodeWithTag("agendaSchedule.filter.Overdue").performClick()
+        compose.onNodeWithTag("agendaSchedule.task.dentist").assertDoesNotExist()
+        compose.onNodeWithTag("agendaSchedule.task.specs").performClick()
+        compose.onNodeWithTag("agendaSchedule.filter.Inbox").performClick()
+        compose.onNodeWithTag("agendaSchedule.empty").assertTextEquals("No tasks in Inbox")
+        compose.onNodeWithTag("agendaSchedule.plan").assertIsEnabled().performClick()
+        waitForTag("agendaSchedule.next")
+        compose.onNodeWithTag("agendaSchedule.datePicker").assertExists()
+        capture("AgendaEntry-pick-date-light")
+        compose.onNodeWithTag("agendaSchedule.next").performClick()
+        waitForTag("agendaSchedule.done")
+        compose.onNodeWithTag("agendaSchedule.dateRow").performClick()
+        waitForTag("agendaSchedule.datePicker")
+        compose.onNodeWithTag("agendaSchedule.done").performClick()
+        waitForTag("agenda.row.scheduled-dentist")
+        compose.onNodeWithTag("agenda.row.scheduled-specs").assertExists() // scheduled together
+        scheduleBadge().assertDoesNotExist() // the last tasks are scheduled; the badge leaves
+        capture("AgendaEntry-scheduled-light")
+    }
+
+    @Test fun agendaScheduleCloseChangesNothing() {
+        openAgenda()
+        openSchedule()
+        compose.onNodeWithTag("agendaSchedule.task.draft").performClick()
+        compose.onNodeWithTag("agendaSchedule.close").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agendaSchedule.sheet").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("agenda.row.scheduled-draft").assertDoesNotExist()
+        scheduleBadge().assertTextEquals("3")
+    }
+
+    // Full-screen Chat, task reply and Inbox (Playground 7 candidate). Canonical compositions driven by
+    // the DS `ChatPlaygroundFixture` / `InboxPlaygroundFixture`; receipts appear only through the
+    // explicit fixture-host controls behind the header overflow. Twin of the iOS journeys.
+
+    private fun openChatScreen(conversation: String = "Populated") {
+        compose.onNodeWithTag("chatFixture.$conversation").performScrollTo().performClick()
+        compose.onNodeWithTag("openChatScreen").performScrollTo().performClick()
+        waitForTag("chat.header.back")
+    }
+
+    private fun sendFromChat(text: String) {
+        compose.onNodeWithTag("chat.composerField").performTextInput(text)
+        compose.onNodeWithTag("chat.composerSend").performClick()
+    }
+
+    private fun hostControl(tag: String) {
+        compose.onNodeWithTag("chat.header.overflow").performClick()
+        waitForTag(tag)
+        compose.onNodeWithTag(tag).performClick()
+        compose.waitForIdle()
+    }
+
+    /** WS1d: a left swipe is a temporary peek; after release every row returns to its resting position. */
+    @Test fun chatSwipeLeftPeeksTimesAndSnapsBack() {
+        openChatScreen()
+        // TalkBack: the merged bubble node speaks its text, then the time, without the gesture; the visual
+        // time column carries no text or description of its own.
+        compose.onNodeWithTag("message.a1.bubble")
+            .assertTextContains("Start with your highest-priority task", substring = true)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Received at 10:21"))
+        compose.onNodeWithTag("message.u1.bubble")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "Sent at 10:20"))
+        compose.onNodeWithTag("message.a1.time", useUnmergedTree = true)
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Text))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.ContentDescription))
+        val bubble = compose.onNodeWithTag("message.a1.bubble", useUnmergedTree = true)
+        val rest = bubble.getUnclippedBoundsInRoot().left
+        bubble.performTouchInput { down(center); moveBy(Offset(-40f, 0f)); moveBy(Offset(-120f, 0f)) }
+        compose.waitForIdle()
+        assertTrue("Rows move left while held", bubble.getUnclippedBoundsInRoot().left < rest)
+        bubble.performTouchInput { up() }
+        compose.waitUntil(3_000) { bubble.getUnclippedBoundsInRoot().left == rest }
+    }
+
+    /**
+     * Jump to latest (twin of the iOS journey): hidden at the newest message, shown centred above the
+     * composer once scrolled up, and a tap returns to the newest message and hides it again.
+     */
+    @Test fun chatJumpToLatestAppearsWhenScrolledUpAndReturns() {
+        openChatScreen("Long")
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true)
+        compose.waitUntil(5000) { runCatching { latest.assertIsDisplayed() }.isSuccess }
+        compose.onNodeWithTag("chat.jumpToLatest").assertDoesNotExist()
+
+        // Scroll up with a vertical drag in the leading gutter.
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        val jump = compose.onNodeWithTag("chat.jumpToLatest")
+        jump.assertIsDisplayed().assertContentDescriptionEquals("Scroll to latest message")
+        latest.assertIsNotDisplayed()
+        val button = jump.fetchSemanticsNode().boundsInRoot
+        val field = compose.onNodeWithTag("chat.composerField").fetchSemanticsNode().boundsInRoot
+        check(button.bottom <= field.top) { "Jump to latest (bottom ${button.bottom}) must sit above the composer (top ${field.top})" }
+        val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        check(kotlin.math.abs(button.center.x - root.center.x) <= 1f) { "Jump to latest is centred horizontally" }
+        capture("ChatScreen-jumpToLatest-light")
+
+        jump.performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("chat.jumpToLatest").fetchSemanticsNodes().isEmpty() }
+        latest.assertIsDisplayed()
+    }
+
+    /**
+     * Twin of iOS `testChatTranscriptDragThatStartsOnABubbleScrolls`: a slow vertical drag that starts on the
+     * centre of an incoming transcript bubble (Long conversation) scrolls the transcript and opens nothing.
+     */
+    @Test fun chatTranscriptDragThatStartsOnABubbleScrolls() {
+        assertTranscriptDragScrolls(besideLeadingEdge = false)
+    }
+
+    /**
+     * Twin of iOS `testChatTranscriptDragBesideABubbleScrolls`: the same drag, started 4dp outside the incoming
+     * bubble's leading edge (the near-bubble strip of the leading gutter), scrolls too.
+     */
+    @Test fun chatTranscriptDragBesideABubbleScrolls() {
+        assertTranscriptDragScrolls(besideLeadingEdge = true)
+    }
+
+    private fun assertTranscriptDragScrolls(besideLeadingEdge: Boolean) {
+        openChatScreen("Long")
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true)
+        compose.waitUntil(5000) { runCatching { latest.assertIsDisplayed() }.isSuccess }
+        compose.onNodeWithTag("chat.jumpToLatest").assertDoesNotExist()
+        val bubble = compose.onNodeWithTag("message.a1.bubble", useUnmergedTree = true)
+        bubble.assertIsDisplayed()
+        val bounds = bubble.fetchSemanticsNode().boundsInRoot
+        val rootHeight = compose.onRoot().fetchSemanticsNode().boundsInRoot.height
+        val px = with(compose.density) { 1.dp.toPx() }
+        val start = if (besideLeadingEdge) Offset(bounds.left - 4 * px, bounds.center.y) else bounds.center
+        check(start.x > 0f) { "The start point (${start.x}) is on screen" }
+        val end = Offset(start.x, minOf(start.y + 300 * px, rootHeight - 2 * px))
+        compose.onRoot().performTouchInput { swipe(start, end, durationMillis = 800) }
+        compose.waitForIdle()
+        val moved = bubble.fetchSemanticsNode().boundsInRoot.top - bounds.top
+        assertTrue("A vertical drag that starts ${if (besideLeadingEdge) "beside" else "on"} a bubble scrolls (moved $moved px)",
+            moved > 20 * px)
+        waitForTag("chat.jumpToLatest")
+        compose.onNodeWithTag("message.a1.actions.report").assertDoesNotExist()
+    }
+
+    @Test fun chatScreenDefaultHasOneHeaderAndLatestReceiptOnly() {
+        openChatScreen()
+        // chat.md rule 12: at rest the latest message sits wholly above the composer dock.
+        compose.waitForIdle()
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val field = compose.onNodeWithTag("chat.composerField").fetchSemanticsNode().boundsInRoot
+        assertTrue("Latest bubble (bottom ${latest.bottom}) clears the composer (top ${field.top})", latest.bottom <= field.top)
+        compose.onNodeWithTag("chat.header.overflow").assertIsDisplayed()
+        compose.onNodeWithTag("back").assertDoesNotExist() // no Playground app bar above the header
+        compose.onAllNodesWithTag("chat.header.identity").assertCountEquals(1)
+        compose.onNodeWithTag("message.u2.receipt", useUnmergedTree = true).assertTextContains("Delivered", substring = true)
+        compose.onNodeWithTag("message.u1.receipt", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerSend").assertIsNotEnabled()
+        capture("ChatScreen-default-light")
+    }
+
+    @Test fun chatScreenEmptyShowsStartersWithoutASecondFace() {
+        openChatScreen("Empty")
+        compose.onNodeWithTag("chat.starter.plan-day").assertIsDisplayed()
+        capture("ChatScreen-empty-light")
+        compose.onNodeWithTag("chat.starter.plan-day").performClick()
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    private fun shell(command: String): String =
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command).let { fd ->
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(fd).bufferedReader().use { it.readText().trim() }
+        }
+
+    /** The soft IME's top edge in window coordinates while it is visible, else null (API 30+ insets). */
+    private fun imeTopInWindow(): Int? {
+        var top: Int? = null
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val decor = compose.activity.window.decorView
+            val insets = decor.rootWindowInsets ?: return@runOnMainSync
+            val ime = android.view.WindowInsets.Type.ime()
+            if (insets.isVisible(ime)) top = decor.height - insets.getInsets(ime).bottom
+        }
+        return top
+    }
+
+    @Test fun chatScreenKeyboardOpenKeepsHeaderAndComposer() {
+        if (Build.VERSION.SDK_INT < 30) error("The soft-IME visibility check needs API 30+ window insets")
+        // A hardware-keyboard emulator would otherwise hide the soft IME and let this journey pass without
+        // a keyboard on screen. Require the soft IME for this test only, then restore the device setting.
+        val previous = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        try {
+            openChatScreen()
+            compose.onNodeWithTag("chat.composerField").performClick()
+            compose.onNodeWithTag("chat.composerField").assertIsFocused()
+            // Wait for the IME and for the layout that docks the composer above it (IME animation).
+            compose.waitUntil(5000) {
+                val top = imeTopInWindow() ?: return@waitUntil false
+                compose.onNodeWithTag("chat.composerSend").fetchSemanticsNode().boundsInWindow.bottom <= top + 1
+            }
+            compose.waitForIdle()
+            val imeTop = checkNotNull(imeTopInWindow()) { "The soft IME is not visible" }
+            val send = compose.onNodeWithTag("chat.composerSend").fetchSemanticsNode().boundsInWindow
+            check(send.bottom <= imeTop + 1) { "Composer send (bottom ${send.bottom}) must dock above the IME (top $imeTop)" }
+            compose.onNodeWithTag("chat.header.back").assertIsDisplayed()
+            compose.onNodeWithTag("chat.composerSend").assertIsDisplayed()
+            capture("ChatScreen-keyboard-light") // taken with the soft IME on screen
+        } finally {
+            if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
+            else shell("settings put secure show_ime_with_hard_keyboard $previous")
+        }
+    }
+
+    /** Waits for the soft IME to be shown ([shown] true) or hidden. */
+    private fun waitForIme(shown: Boolean, message: String) {
+        compose.waitUntil(5000) { (imeTopInWindow() != null) == shown }
+        compose.waitForIdle()
+        check((imeTopInWindow() != null) == shown) { message }
+    }
+
+    /**
+     * Swipe down to dismiss the keyboard (`ChatKeyboardDismiss`, chat.md rule 11; twin of the iOS journey):
+     * a clear downward swipe that starts on the composer field hides the IME; after focusing again, an
+     * upward swipe leaves it up; and a drag toward older messages in the transcript hides it too.
+     */
+    @Test fun chatComposerSwipeDownDismissesKeyboard() {
+        if (Build.VERSION.SDK_INT < 30) error("The soft-IME visibility check needs API 30+ window insets")
+        val previous = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        try {
+            openChatScreen()
+            val field = compose.onNodeWithTag("chat.composerField")
+            field.performClick()
+            field.assertIsFocused()
+            waitForIme(shown = true, message = "The soft IME is shown after focusing the composer")
+
+            // A quick downward swipe (no hold) that starts on the field.
+            field.performTouchInput { swipe(center, center + Offset(0f, 80.dp.toPx()), durationMillis = 150) }
+            waitForIme(shown = false, message = "A downward swipe on the composer hides the IME")
+            field.assertIsNotFocused()
+
+            field.performClick()
+            field.assertIsFocused()
+            waitForIme(shown = true, message = "The soft IME is shown again")
+            field.performTouchInput { swipe(center, center - Offset(0f, 80.dp.toPx()), durationMillis = 150) }
+            compose.waitForIdle()
+            Thread.sleep(1000)
+            check(imeTopInWindow() != null) { "An upward swipe leaves the IME up" }
+            field.assertIsFocused()
+
+            // Parity with iOS `.scrollDismissesKeyboard`: drag the transcript toward older messages.
+            compose.onNodeWithTag("chat.content").performTouchInput {
+                swipe(Offset(width * 0.03f, height * 0.2f), Offset(width * 0.03f, height * 0.8f), durationMillis = 300)
+            }
+            waitForIme(shown = false, message = "A transcript drag toward older messages hides the IME")
+            field.assertIsNotFocused()
+        } finally {
+            if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
+            else shell("settings put secure show_ime_with_hard_keyboard $previous")
+        }
+    }
+
+    @Test fun chatScreenSendStopAcceptAndRead() {
+        openChatScreen()
+        sendFromChat("Plan my afternoon")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        compose.onNodeWithTag("chat.composerSend").performClick()
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertDoesNotExist()
+
+        sendFromChat("Again")
+        hostControl("chat.host.accept")
+        compose.onNodeWithTag("message.sent.2.receipt", useUnmergedTree = true).assertTextContains("Delivered · 10:24", substring = true)
+        hostControl("chat.host.read")
+        compose.onNodeWithTag("message.sent.2.receipt", useUnmergedTree = true).assertTextContains("Read · 10:24", substring = true)
+        hostControl("chat.host.reply")
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+        capture("ChatScreen-receipts-light")
+    }
+
+    @Test fun chatScreenFailureRetry() {
+        openChatScreen()
+        sendFromChat("Share the agenda")
+        hostControl("chat.host.fail")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertTextContains("Not delivered", substring = true)
+        capture("ChatScreen-failed-light")
+        compose.onNodeWithTag("message.sent.1.failure").performClick()
+        compose.onNodeWithText("Try again").performClick()
+        waitForTag("chat.fixtureNote")
+        compose.onNodeWithTag("message.sent.1.failure").assertDoesNotExist()
+        // The retried message's own turn completes: acceptance lands on it and the reply ends the turn.
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        hostControl("chat.host.accept")
+        compose.onNodeWithTag("message.sent.1.receipt", useUnmergedTree = true).assertTextContains("Delivered · 10:24", substring = true)
+        hostControl("chat.host.reply")
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+    }
+
+    /** Long-press sheet `2603:19498`: Report only on assistant messages; Reply targets the reply accessory. */
+    @Test fun chatScreenLongPressMessageActions() {
+        openChatScreen()
+        compose.onNodeWithTag("message.a2.bubble").performScrollTo().performTouchInput { longClick() }
+        waitForTag("message.a2.actions.report")
+        compose.onAllNodes(hasTestTagStartingWith("message.a2.actions.reactions.")).assertCountEquals(12)
+        capture("ChatScreen-messageActions-light")
+        compose.onNodeWithTag("message.a2.actions.reply").performClick()
+        waitForTag("chat.replyContext.label")
+
+        compose.onNodeWithTag("message.u2.bubble").performScrollTo().performTouchInput { longClick() }
+        waitForTag("message.u2.actions.copy")
+        compose.onNodeWithTag("message.u2.actions.report").assertDoesNotExist()
+        compose.onNodeWithTag("message.u2.actions.markUnread").assertDoesNotExist()
+        compose.onNodeWithTag("message.u2.actions.reactions.10").performClick()
+        compose.onNodeWithTag("message.u2.reaction").assertExists()
+    }
+
+    /**
+     * Photos and Files launch the real system pickers, which instrumented tests cannot drive; this
+     * asserts the canonical options exist and no sample chip is injected. Picked-content mapping and
+     * attachment-only send are covered by `ChatComposerFixtureTest`.
+     */
+    @Test fun chatScreenAddToChatOffersSystemPickers() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.composerAdd").performClick()
+        waitForTag("chat.addToChat.photos")
+        compose.onNodeWithTag("chat.addToChat.files").assertExists()
+        compose.onNodeWithTag("chat.addToChat.camera").assertDoesNotExist()
+        compose.onNodeWithTag("chat.attachment.photo.0").assertDoesNotExist()
+        compose.onNodeWithTag("chat.addToChat.cloudBrowser").performClick()
+        waitForTag("chat.attachment.cloud-browser")
+        compose.onNodeWithTag("chat.removeAttachment.cloud-browser").performClick()
+        compose.onNodeWithTag("chat.attachment.cloud-browser").assertDoesNotExist()
+    }
+
+    @Test fun chatScreenBackExits() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.header.back").performClick()
+        waitForTag("openChatScreen")
+        openChatScreen()
+        systemBack()
+        waitForTag("openChatScreen")
+    }
+
+    /**
+     * Header identity → Agent activity (`2002:76914`): title, the Activity / Approvals segmented buttons,
+     * the same current state as the Chat header, the timeline, the labeled Approvals data gap, and Back
+     * (app bar and system) to the unchanged conversation.
+     */
+    @Test fun chatHeaderOpensAgentActivityAndBackReturnsToChat() {
+        openChatScreen()
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Connected", substring = true)).performClick()
+
+        waitForTag("agentActivity.title")
+        compose.onNodeWithTag("agentActivity.title").assertTextEquals("Agent activity")
+        compose.onNodeWithTag("agentActivity.tabs").assertIsDisplayed()
+        compose.onNodeWithTag("agentActivity.tab.Activity").assertIsSelected()
+        compose.onNodeWithTag("agentActivity.tab.Approvals").assertIsNotSelected()
+        compose.onNodeWithTag("agentActivity.identity").assert(hasContentDescription("Connected", substring = true))
+        compose.onNodeWithTag("agentActivity.event.reminder").assertExists().assert(hasClickAction().not())
+        compose.onNodeWithTag("chat.header.identity").assertDoesNotExist()
+        capture("AgentActivity-light")
+
+        compose.onNodeWithTag("agentActivity.tab.Approvals").performClick()
+        waitForTag("agentActivity.approvals.gap")
+        compose.onNodeWithTag("agentActivity.tab.Approvals").assertIsSelected()
+        compose.onNodeWithTag("agentActivity.event.reminder").assertDoesNotExist()
+        compose.onNodeWithTag("agentActivity.identity").assert(hasContentDescription("Connected", substring = true))
+        capture("AgentActivity-approvals-light")
+
+        compose.onNodeWithTag("agentActivity.back").performClick()
+        waitForTag("chat.header.identity")
+        compose.onNodeWithTag("message.u2.receipt", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("chat.fixtureNote").assertDoesNotExist()
+
+        compose.onNodeWithTag("chat.header.identity").performClick()
+        waitForTag("agentActivity.title")
+        compose.onNodeWithTag("agentActivity.tab.Activity").assertIsSelected()
+        systemBack()
+        waitForTag("chat.header.identity")
+        compose.onNodeWithTag("openChatScreen").assertDoesNotExist()
+    }
+
+    @Test fun inboxStatesRouteIntoTaskReplyAndDismissAccessory() {
+        compose.onNodeWithTag("inboxFixture.Items").performScrollTo().performClick()
+        compose.onNodeWithTag("openInbox").performScrollTo().performClick()
+        waitForTag("inbox.item.venue-booking")
+        compose.onNodeWithTag("inbox.item.venue-booking.status", useUnmergedTree = true).assertTextContains("Needs approval", substring = true)
+        compose.onNodeWithTag("inbox.item.calendar-holds.status", useUnmergedTree = true).assertTextContains("Status unknown", substring = true)
+        compose.onNodeWithTag("inbox.item.plan-next-step.status", useUnmergedTree = true).assertDoesNotExist()
+        capture("Inbox-states-light")
+
+        compose.onNodeWithTag("inbox.item.venue-booking").performClick()
+        waitForTag("chat.replyContext.label")
+        // The label Column merges its two Text children; only the merged node carries the text.
+        compose.onNodeWithTag("chat.replyContext.label").assertTextContains("Approve the venue booking", substring = true)
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Needs approval", substring = true))
+        compose.onNodeWithTag("chat.composerField").assertExists()
+        capture("ChatScreen-taskReply-light")
+        compose.onNodeWithTag("chat.replyContext.dismiss").performClick()
+        compose.onNodeWithTag("chat.replyContext.label", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerField").assertExists()
+        compose.onNodeWithTag("chat.header.back").performClick()
+        waitForTag("inbox.item.venue-booking")
+    }
+
+    @Test fun inboxEmpty() {
+        compose.onNodeWithTag("inboxFixture.Empty").performScrollTo().performClick()
+        compose.onNodeWithTag("openInbox").performScrollTo().performClick()
+        waitForTag("inbox.empty")
+    }
+
+    // App shell (Build 9; `docs/playground/route-map.md`). The class @Before opens the Developer hub through
+    // the shell's ordinary route; these journeys close it again and drive the shell itself. Twin of the
+    // iOS `testShell…` journeys.
+
+    /** Developer → close: back on the shell's full-screen conversation (the root). */
+    private fun returnToShell() {
+        compose.onNodeWithTag("developer.close").performClick()
+        waitForTag("chat.header.menu")
+    }
+
+    private fun openSidebar() {
+        compose.onNodeWithTag("chat.header.menu").performClick()
+        waitForTag("sidebar.close")
+        compose.onNodeWithTag("sidebar.agent.main").assertIsDisplayed()
+    }
+
+    private fun assertChatShows(agent: String) {
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("$agent,", substring = true))
+        compose.onNodeWithTag("sidebar.close").assertDoesNotExist()
+    }
+
+    /** Root: Chat full screen with the sidebar behind the header button; choose an agent; Back closes it. */
+    @Test fun shellSidebarSelectsAnAgentAndBackCloses() {
+        returnToShell()
+        assertChatShows("Rem")
+        // chat.md rule 12: at rest the latest message sits wholly above the composer dock.
+        compose.waitForIdle()
+        val latest = compose.onNodeWithTag("message.a2.bubble", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val field = compose.onNodeWithTag("chat.composerField").fetchSemanticsNode().boundsInRoot
+        assertTrue("Latest bubble (bottom ${latest.bottom}) clears the composer (top ${field.top})", latest.bottom <= field.top)
+        compose.onNodeWithTag("chat.header.back").assertDoesNotExist()
+        compose.onNodeWithTag("chat.header.overflow").assertDoesNotExist()
+        compose.onNodeWithTag("chat.header.menu").assert(hasContentDescription("Open sidebar"))
+        capture("Shell-chat-light")
+
+        // Closed, the off-screen sidebar is out of the merged (TalkBack) tree.
+        compose.onNodeWithTag("sidebar.account").assertDoesNotExist()
+        compose.onNodeWithTag("sidebar.agent.main").assertDoesNotExist()
+        openSidebar()
+        compose.onNodeWithTag("sidebar.section.side").assertIsDisplayed()
+        compose.onNodeWithTag("sidebar.newAgent").assertIsDisplayed()
+        compose.onNodeWithTag("sidebar.account").assertIsDisplayed()
+        // Open, the covered chat is out of the merged (TalkBack) tree; only "Close sidebar" represents it, so
+        // TalkBack cannot reach or activate the composer behind the overlay (sidebar-new-agent.md).
+        compose.onNodeWithTag("sidebar.close").assert(hasContentDescription("Close sidebar"))
+        compose.onNodeWithTag("chat.composerField").assertDoesNotExist()
+        compose.onNodeWithTag("chat.header.identity").assertDoesNotExist()
+        compose.onNodeWithTag("chat.content").assertDoesNotExist()
+        capture("Shell-sidebar-light")
+        compose.onNodeWithTag("sidebar.agent.health").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        compose.onNodeWithText("Start a conversation with Health", substring = true).assertExists()
+
+        // System Back closes an open sidebar and keeps the selection; tapping the chat card closes it too.
+        openSidebar()
+        systemBack()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.close").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.main").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+    }
+
+    /** New agent: the sheet cancels without change, and Create adds the agent and opens its chat. */
+    @Test fun shellNewAgentCancelsAndCreates() {
+        returnToShell()
+        openSidebar()
+        compose.onNodeWithTag("sidebar.newAgent").performClick()
+        waitForTag("newAgent.name")
+        compose.onNodeWithTag("sidebar.close").assertDoesNotExist()
+        compose.onNodeWithTag("newAgent.create").assertIsNotEnabled()
+        capture("Shell-newAgent-light")
+        compose.onNodeWithTag("newAgent.cancel").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("newAgent.name").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.new.1").assertDoesNotExist()
+
+        compose.onNodeWithTag("sidebar.newAgent").performClick()
+        waitForTag("newAgent.name")
+        compose.onNodeWithTag("newAgent.name").performTextInput("Garden")
+        compose.onNodeWithTag("newAgent.color.green").performClick()
+        compose.onNodeWithTag("newAgent.create").assertIsEnabled().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("newAgent.name").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Garden")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.new.1").assertIsDisplayed().assertIsSelected()
+    }
+
+    /**
+     * Settings from the account pill, into a destination and back (top bar and system Back) to the same
+     * agent and conversation; the Developer action is the one route to the developer tools.
+     */
+    @Test fun shellSettingsFromAccountReturnsToTheSelectedChat() {
+        returnToShell()
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.money").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").assert(hasContentDescription("Avery Diaz", substring = true)).performClick()
+        waitForTag("shell.settings")
+        compose.onNodeWithTag("settings.developer").assertIsDisplayed()
+        compose.onNodeWithTag("chat.header.identity").assertDoesNotExist()
+        capture("Shell-settings-light")
+
+        compose.onNodeWithTag("openAgent").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agentDestination.PairedDevices").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("settings.developer").assertDoesNotExist()
+        compose.onNodeWithTag("agentDestination.PairedDevices").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("agentDestination.PairedDevices").fetchSemanticsNodes().isEmpty() }
+        waitForTag("pairedDevices")
+        systemBack()
+        runCatching { waitForTag("agentDestination.PairedDevices") }.onFailure {
+            compose.onRoot().printToLog("SHELL-pairedDevicesBack-merged")
+            compose.onRoot(useUnmergedTree = true).printToLog("SHELL-pairedDevicesBack-unmerged")
+            throw it
+        }
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("shell.settings")
+        compose.onNodeWithTag("settingsDestination.About").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("shell.settings").fetchSemanticsNodes().isEmpty() }
+        systemBack()
+        waitForTag("shell.settings")
+        systemBack()
+        waitForTag("chat.header.identity")
+        assertChatShows("Money")
+        compose.onNodeWithTag("chat.composerField").assertTextContains("Keep this draft")
+
+        // The top bar's Back also returns to the chat.
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("shell.settings")
+        compose.onNodeWithTag("back").performClick()
+        waitForTag("chat.header.identity")
+        assertChatShows("Money")
+    }
+
+    /** Chat in the shell: Add to Chat and message actions are sheets that dismiss; Activity is pushed and pops. */
+    @Test fun shellChatSheetsDismissAndActivityPops() {
+        returnToShell()
+        compose.onNodeWithTag("chat.composerAdd").performClick()
+        waitForTag("chat.addToChat.photos")
+        systemBack()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("chat.addToChat.photos").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+
+        compose.onNodeWithTag("message.a2.bubble").performScrollTo().performTouchInput { longClick() }
+        waitForTag("message.a2.actions.copy")
+        systemBack()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("message.a2.actions.copy").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+
+        compose.onNodeWithTag("chat.header.identity").performClick()
+        waitForTag("agentActivity.title")
+        compose.onNodeWithTag("chat.header.menu").assertDoesNotExist()
+        systemBack()
+        waitForTag("chat.header.menu")
+        assertChatShows("Rem")
+    }
+
+    /** The scroll position survives Settings: scrolled up in the Long conversation, jump to latest stays. */
+    @Test fun shellKeepsScrollPositionAcrossSettings() {
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        waitForTag("message.a2.bubble")
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        val top = compose.onNodeWithTag("message.h8.bubble", useUnmergedTree = true).getUnclippedBoundsInRoot().top
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("shell.settings")
+        systemBack()
+        waitForTag("chat.header.identity")
+        compose.onNodeWithTag("chat.jumpToLatest").assertIsDisplayed()
+        assertTrue(
+            "The conversation keeps its scroll position",
+            compose.onNodeWithTag("message.h8.bubble", useUnmergedTree = true).getUnclippedBoundsInRoot().top == top,
+        )
+    }
+
+    /**
+     * Developer stays separate: no catalog or fixture control in the shell's chat, sidebar or Settings;
+     * Developer opens from Settings only, and its close control or system Back returns to the chat.
+     */
+    @Test fun shellDeveloperEntryStaysSeparate() {
+        compose.onNodeWithTag("playground.build").assertExists()
+        capture("Developer-hub-light")
+        systemBack()
+        waitForTag("chat.header.menu")
+        listOf("openComponents", "openSettings", "chatFixture.Populated", "playground.build").forEach {
+            compose.onNodeWithTag(it).assertDoesNotExist()
+        }
+        openSidebar()
+        listOf("openComponents", "chatFixture.Populated", "settings.developer").forEach {
+            compose.onNodeWithTag(it).assertDoesNotExist()
+        }
+        compose.onNodeWithTag("sidebar.agent.travel").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("settings.developer")
+        compose.onNodeWithTag("settings.developer").assertTextEquals("Developer").performClick()
+        waitForTag("openComponents")
+        compose.onNodeWithTag("developer.close").assert(hasContentDescription("Close developer"))
+        returnToShell()
+        assertChatShows("Travel planning: Lisbon in May")
+    }
+
+    /** Leaving the chat ends editing: Settings opens with the IME hidden, and the draft is still there on return. */
+    @Test fun shellRouteChangeHidesKeyboardAndKeepsDraft() {
+        if (Build.VERSION.SDK_INT < 30) error("The soft-IME visibility check needs API 30+ window insets")
+        val previous = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        try {
+            returnToShell()
+            val field = compose.onNodeWithTag("chat.composerField")
+            field.performClick()
+            field.assertIsFocused()
+            waitForIme(shown = true, message = "The soft IME is shown after focusing the composer")
+            field.performTextInput("Keep this draft")
+            openSidebar()
+            waitForIme(shown = false, message = "Opening the sidebar hides the IME")
+            compose.onNodeWithTag("sidebar.account").performClick()
+            waitForTag("shell.settings")
+            waitForIme(shown = false, message = "Settings opens with the IME hidden")
+            capture("Shell-settings-noIme-light")
+            systemBack()
+            waitForTag("chat.header.identity")
+            compose.onNodeWithTag("chat.composerField").assertIsNotFocused().assertTextContains("Keep this draft")
+        } finally {
+            if (previous == "null" || previous.isEmpty()) shell("settings delete secure show_ime_with_hard_keyboard")
+            else shell("settings put secure show_ime_with_hard_keyboard $previous")
+        }
+    }
+
+    /** Message bubbles whose bounds intersect the transcript viewport, by test tag. */
+    private fun visibleBubbles(): Set<String> {
+        val viewport = compose.onNodeWithTag("chat.content").fetchSemanticsNode().boundsInRoot
+        return compose.onAllNodes(hasTestTagStartingWith("message."), useUnmergedTree = true).fetchSemanticsNodes()
+            .filter { node ->
+                val tag = node.config.getOrNull(SemanticsProperties.TestTag) ?: ""
+                tag.endsWith(".bubble") && node.boundsInRoot.overlaps(viewport) && node.boundsInRoot.bottom <= viewport.bottom &&
+                    node.boundsInRoot.top >= viewport.top
+            }
+            .mapNotNull { it.config.getOrNull(SemanticsProperties.TestTag) }
+            .toSet()
+    }
+
+    /** The shell's simulated reply has landed (accepted after 0.6s, complete 1.5s later) and the turn has ended. */
+    private fun waitForShellReply(tag: String) {
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Send", substring = true))
+    }
+
+    private fun openDeveloperFromShell() {
+        openSidebar()
+        compose.onNodeWithTag("sidebar.account").performClick()
+        waitForTag("settings.developer")
+        compose.onNodeWithTag("settings.developer").performClick()
+        waitForTag("openComponents")
+    }
+
+    /**
+     * Developer round trip keeps the work: a sent message, a draft and the scroll position survive Settings →
+     * Developer → Close when no fixture changes; choosing a different Chat fixture in Developer starts afresh,
+     * and so does choosing the earlier one again (A → B → A) or switching agents and back.
+     */
+    @Test fun shellDeveloperRoundTripKeepsConversationDraftAndScroll() {
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        sendFromChat("Round trip message")
+        waitForTag("message.sent.1.bubble")
+        // The shell simulates the reply (route-map "Simulated reply"); let it land first, so the transcript is
+        // settled before scrolling and the round trip compares the same content.
+        waitForShellReply("message.reply.2.bubble")
+        compose.onNodeWithTag("chat.composerField").performTextInput("Keep this draft")
+        // Scroll up with the keyboard down. With the IME up, the swipe is a drag toward older messages, which
+        // dismisses it (#121); the viewport then grows by the IME height and the remaining distance can fall
+        // within the near-latest threshold, so the transcript re-pins and jump to latest never appears.
+        Espresso.closeSoftKeyboard()
+        compose.waitForIdle()
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        compose.waitForIdle()
+        val before = visibleBubbles()
+        assertTrue("Scrolled away from the latest message: $before",
+            "message.sent.1.bubble" !in before && "message.reply.2.bubble" !in before && before.isNotEmpty())
+
+        openDeveloperFromShell()
+        returnToShell()
+        compose.waitForIdle()
+        compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("message.reply.2.bubble", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("chat.composerField").assertTextContains("Keep this draft")
+        compose.onNodeWithTag("chat.jumpToLatest").assertExists()
+        val after = visibleBubbles()
+        assertTrue("The same messages are visible after the round trip: before $before, after $after", after == before)
+
+        // An explicit fixture change in Developer starts that conversation afresh.
+        openDeveloperFromShell()
+        compose.onNodeWithTag("chatFixture.Populated").performScrollTo().performClick()
+        returnToShell()
+        assertFreshConversation()
+
+        // A → B → A is fresh too (route-map Retention): work on Populated, Developer → Long → Close, then
+        // Developer → Populated → Close. Only the live conversation key is kept.
+        sendFromChat("Populated message")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerField").performTextInput("Populated draft")
+        openDeveloperFromShell()
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        assertFreshConversation()
+        openDeveloperFromShell()
+        compose.onNodeWithTag("chatFixture.Populated").performScrollTo().performClick()
+        returnToShell()
+        assertFreshConversation()
+
+        // Switching agents replaces the conversation as well (iOS `.id`): Rem → Health → Rem starts Rem afresh.
+        sendFromChat("Rem message")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerField").performTextInput("Rem draft")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.health").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Health")
+        openSidebar()
+        compose.onNodeWithTag("sidebar.agent.main").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("sidebar.close").fetchSemanticsNodes().isEmpty() }
+        assertChatShows("Rem")
+        assertFreshConversation()
+    }
+
+    /**
+     * Regression: scrolling while a reply is in flight (twin of iOS `testShellScrollsWhileAReplyIsInFlight`; iOS run
+     * 38176095096 saw four drags fail to move the transcript while Stop showed). The Playground is re-rendered with
+     * the shell's simulated reply held (`holdsReplies`, the `holdReplies` intent extra's input); the drag must move
+     * the transcript: jump to latest appears and the message just sent leaves view, while Stop is still shown.
+     */
+    @Test fun shellScrollsWhileAReplyIsInFlight() {
+        compose.runOnIdle { compose.activity.run { setContent { PlaygroundContent(holdsReplies = true) } } }
+        compose.openDeveloperHub()
+        compose.onNodeWithTag("chatFixture.Long").performScrollTo().performClick()
+        returnToShell()
+        sendFromChat("Scroll while you reply")
+        waitForTag("message.sent.1.bubble")
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        compose.onNodeWithTag("chat.header.identity").assert(hasContentDescription("Working on your request", substring = true))
+
+        // Scroll with the IME down, as in the round trip.
+        Espresso.closeSoftKeyboard()
+        compose.waitForIdle()
+        compose.onNodeWithTag("chat.jumpToLatest").assertDoesNotExist()
+        assertTrue("The message just sent is in view: ${visibleBubbles()}", "message.sent.1.bubble" in visibleBubbles())
+        compose.onRoot().performTouchInput {
+            swipe(Offset(width * 0.03f, height * 0.3f), Offset(width * 0.03f, height * 0.75f), durationMillis = 500)
+        }
+        waitForTag("chat.jumpToLatest")
+        compose.onNodeWithTag("chat.jumpToLatest").assertIsDisplayed()
+        compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertIsNotDisplayed()
+        assertTrue("The message just sent has left view: ${visibleBubbles()}", "message.sent.1.bubble" !in visibleBubbles())
+        compose.onNodeWithTag("chat.composerSend").assert(hasContentDescription("Stop", substring = true))
+        compose.onNodeWithTag("message.reply.2.bubble", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    /** The on-screen conversation is a fresh fixture: no message sent in this run and an empty draft. */
+    private fun assertFreshConversation() {
+        compose.waitForIdle()
+        compose.onNodeWithTag("message.sent.1.bubble", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("chat.composerField")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
+    }
+}
+

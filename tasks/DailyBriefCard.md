@@ -1,5 +1,10 @@
 # Task: DailyBriefCard — the brief entry point (stateful)
 
+> Current mapping status (2026-10-09): canonical set `2190:12237` exists. Local SwiftUI/Compose
+> templates map Headline/Summary and Playback Ready/Reading. Finished/Retry remain an API gap;
+> this historical task is not evidence that those states shipped. See
+> `docs/contracts/playground-mappings.md` for the separate proposal.
+
 ## Outcome
 - **User outcome:** From the Agenda, the person can open, listen to, stop, and re-open their daily
   brief — the entry point communicates its own state instead of looking static.
@@ -16,7 +21,7 @@
   flips Read → Read again).
 - **Design-system authority:** `Card`/`Surface` (container), `Button` (actions), `ContainedIcon`,
   `Pill` (count capsules), tokens; `component-track` page format.
-- **Task artifact:** none yet — this task creates the Figma master. The founder flagged "Wednesday
+- **Task artifact:** canonical set `2190:12237` now exists; do not create a replacement master. The founder flagged "Wednesday
   Evening" header renders **too large** in the current hand-built Agenda; the correct header size is
   whatever `DailyBriefCard` uses in code, not the oversized Figma value.
 - **Conflicts resolved:** header uses the code's font role (reduce from the oversized Figma). The

@@ -32,6 +32,11 @@ If no path is given it downloads the upstream variable font. The upstream
 codepoints (verified against the repo's `.codepoints` file):
     error e000 (legacy PUA, also f8b6) · shield_lock f686 · shield e9e0
     description e873 · chevron_right e5cc
+    info e88e · credit_card e8a1 · pan_tool e925 · ios_share e6b8 · devices e326
+    language ea07 · notifications_active e7f7 · psychology ea4a · memory e322
+    wallet f8ff · graphic_eq e1b8
+    search ef7a · chat_bubble e0cb · add e145 · unfold_more e5d7 · link e250
+    calendar_month ebcc · favorite e87e · close e5cd
 """
 import sys
 import urllib.request
@@ -55,6 +60,27 @@ GLYPHS = {
     "shield": 0xE9E0,
     "description": 0xE873,
     "chevron_right": 0xE5CC,
+    "info": 0xE88E,
+    "credit_card": 0xE8A1,
+    "pan_tool": 0xE925,
+    "ios_share": 0xE6B8,
+    "devices": 0xE326,
+    "link": 0xE250,
+    "language": 0xEA07,
+    "notifications_active": 0xE7F7,
+    "psychology": 0xEA4A,
+    "memory": 0xE322,
+    "wallet": 0xF8FF,
+    "graphic_eq": 0xE1B8,
+    # Sidebar + New agent flow (docs/contracts/sidebar-new-agent.md); link (0xE250) is shared with Settings.
+    "search": 0xEF7A,
+    "chat_bubble": 0xE0CB,
+    "add": 0xE145,
+    "unfold_more": 0xE5D7,
+    "calendar_month": 0xEBCC,
+    "favorite": 0xE87E,
+    # New agent setup close button (SF `xmark`).
+    "close": 0xE5CD,
 }
 
 # Both outputs carry ALL registry codepoints so an off-fill request still renders the

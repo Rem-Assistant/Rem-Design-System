@@ -12,9 +12,9 @@ import com.rem.designsystem.tokens.RemRadius
  * Public top-level enum (not nested in the internal token set) so it can appear in `ContainedIcon`'s
  * public API — the Kotlin twin of Swift `ContainedIconSize`.
  */
-enum class ContainedIconSize { Small, Large }
+enum class ContainedIconSize { Settings, Small, Large }
 
-/** Fill axis — 1:1 with the Figma **Fill** property: `Tinted` (solid + on-color glyph) / `Subtle`. */
+/** Fill axis — 1:1 with the Figma **Style** property: `Tinted` (solid + on-color glyph) / `Subtle`. */
 sealed interface ContainedIconFill {
     data class Tint(val color: Color) : ContainedIconFill
     data object Subtle : ContainedIconFill
@@ -41,11 +41,11 @@ internal data class ContainedIconTokens(
 @Composable
 internal fun containedIconTokens(fill: ContainedIconFill, size: ContainedIconSize): ContainedIconTokens {
     val colors = RemColors.current
-    val dimension: Dp = if (size == ContainedIconSize.Large) 64.dp else 38.dp
+    val dimension: Dp = when (size) { ContainedIconSize.Settings -> 29.dp; ContainedIconSize.Large -> 64.dp; else -> 38.dp }
     // 18dp is the 64dp hero squircle radius the founder approved — intentionally OFF the
     // 8/12/16/24 scale, flagged for token reconciliation, centralized here (mirrors the Swift note).
-    val cornerRadius: Dp = if (size == ContainedIconSize.Large) 18.dp else RemRadius.small
-    val glyphSize: Dp = dimension * 0.46f
+    val cornerRadius: Dp = when (size) { ContainedIconSize.Settings -> 7.dp; ContainedIconSize.Large -> 18.dp; else -> RemRadius.small }
+    val glyphSize: Dp = if (size == ContainedIconSize.Settings) 17.dp else dimension * 0.46f
     return when (fill) {
         is ContainedIconFill.Tint -> ContainedIconTokens(
             dimension = dimension,
@@ -60,8 +60,8 @@ internal fun containedIconTokens(fill: ContainedIconFill, size: ContainedIconSiz
             dimension = dimension,
             cornerRadius = cornerRadius,
             glyphSize = glyphSize,
-            background = colors.fillTertiary,
-            foreground = colors.labelSecondary,
+            background = colors.backgroundSecondary,
+            foreground = colors.labelPrimary,
         )
     }
 }

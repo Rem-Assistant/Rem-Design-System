@@ -9,17 +9,29 @@ plugins {
     id("app.cash.paparazzi")
 }
 
-// The reference layout keeps component sources flat (onboarding/, primitives/) plus the generated
-// token file at ../../tokens/generated/RemTokens.kt. Gather them into one compilable tree, dropping
-// the Code Connect bindings (*.figma.kt import a Figma package that is intentionally NOT a build
-// dependency — exactly as the SwiftUI target excludes *.figma.swift in ../../Package.swift).
+// The reference layout keeps component sources in per-family folders (onboarding/, primitives/, rows/,
+// brand/, icons/, agenda/, chat/) plus the generated token file at ../../tokens/generated/RemTokens.kt.
+// Gather them into one compilable tree, dropping the Code Connect bindings (*.figma.kt import a Figma
+// package that is intentionally NOT a build dependency — exactly as the SwiftUI target excludes
+// *.figma.swift in ../../Package.swift).
+// NOTE: unlike SwiftUI/SPM (which auto-discovers new folders under Sources/), this gather list is
+// explicit — when you add a NEW component folder, add a `from("<folder>")` line below or its files
+// won't compile (they'll surface as "Unresolved reference '<folder>'" in EvidenceSnapshots).
 val gatherSources = tasks.register<Copy>("gatherDesignSystemSources") {
     into(layout.buildDirectory.dir("designSystemSrc"))
     from("onboarding")
     from("primitives")
+    from("buttons")
     from("rows")
+    from("feedback")
     from("brand")
     from("icons")
+    from("agenda")
+    from("chat")
+    from("screens")
+    from("agentsurfaces")
+    from("navigation")
+    from("agents")
     from(file("../../tokens/generated")) { include("RemTokens.kt") }
     exclude("**/*.figma.kt")
 }
@@ -144,7 +156,13 @@ val verifyMaterialSymbolResources = tasks.register("verifyMaterialSymbolResource
             return 0
         }
 
-        val requiredCodepoints = listOf(0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686)
+        val requiredCodepoints = listOf(
+            0xE000, 0xE5CC, 0xE873, 0xE9E0, 0xF686,
+            // Settings New.
+            0xE88E, 0xE8A1, 0xE925, 0xE6B8, 0xE326, 0xE250, 0xEA07, 0xE7F7, 0xEA4A, 0xE322, 0xF8FF, 0xE1B8,
+            // Sidebar + New agent flow.
+            0xEF7A, 0xE0CB, 0xE145, 0xE5D7, 0xEBCC, 0xE87E, 0xE5CD,
+        )
         val verified = listOf("outline" to outline, "filled" to filled).associate { (label, resource) ->
             check(resource.isFile) { "missing packaged Material Symbols $label resource: $resource" }
             val bytes = resource.readBytes()
@@ -174,11 +192,21 @@ tasks.withType<KotlinCompile>().configureEach {
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
     implementation(composeBom)
+    // activity-compose supplies BackHandler, used by nested-stack destinations (e.g. Paired devices
+    // list ↔ detail) to own their own system-back behaviour rather than exiting to the host.
+    implementation("androidx.activity:activity-compose:1.9.2")
+    // Retain Cloud browser fixture state in memory through Activity recreation; never save credentials.
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    // Backdrop blur for the Chat edge backdrops and jump to latest (ChatEdgeBackdrop): Haze, Apache-2.0,
+    // https://github.com/chrisbanes/haze. Pinned to 1.1.1: built against Kotlin 2.0.21 and Compose 1.7 (it
+    // resolves foundation/ui 1.7.3 -> 1.7.5); 1.3+ needs Kotlin 2.1 and 1.4+ core-ktx 1.15 (compileSdk 35).
+    // Blur on API 32+ (RenderEffect via GraphicsLayer), scrim fallback below. See compose/README.md.
+    implementation("dev.chrisbanes.haze:haze:1.1.1")
 
     testImplementation("junit:junit:4.13.2")
 }

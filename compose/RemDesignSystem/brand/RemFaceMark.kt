@@ -1,5 +1,23 @@
 package com.rem.designsystem.brand
 
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -30,8 +48,8 @@ import com.rem.designsystem.tokens.RemTheme
  * mirrors that file so the two marks are the same shape. Per the SPEC cross-platform contract the
  * *form* is native (a Compose [Canvas] path, not a SwiftUI `Shape`); the *intent + geometry* are shared.
  *
- * The mark is presentational and static (Paparazzi renders a single frame); [mode] selects which
- * resting composition is drawn:
+ * Thinking draws the outline on a 1.6-second loop. Inspection previews and Android
+ * Remove animations show its complete resting outline. Idle is currently static:
  *  - [RemFaceMarkMode.Idle] — the happy resting face: outline + eyes + smile.
  *  - [RemFaceMarkMode.Thinking] — the heavier self-drawing outline only (features hidden), matching
  *    the app's "Rem is thinking" signature at its resting (fully drawn) frame.
@@ -50,6 +68,14 @@ fun RemFaceMark(
     // Default ink = labelPrimary (resolved here so the default doesn't need a @Composable expression).
     val ink = tint ?: RemColors.current.labelPrimary
     val thinking = mode == RemFaceMarkMode.Thinking
+    val reduceMotion = faceMarkReduceMotion()
+    val progress = if (thinking && !reduceMotion && !LocalInspectionMode.current) {
+        val transition = rememberInfiniteTransition(label = "Rem thinking")
+        val drawProgress by transition.animateFloat(0f, 1f,
+            animationSpec = infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Restart),
+            label = "Outline draw")
+        drawProgress
+    } else 1f
 
     Canvas(modifier = modifier.size(size)) {
         val w = this.size.width
@@ -61,8 +87,13 @@ fun RemFaceMark(
         val outlineWidth = if (thinking) edge * 0.075f else penWeight
 
         // Outline (the scalloped blob). `.thinking` uses the heavier stroke, features hidden.
+        val outline = remFacePath(w, h)
+        val visibleOutline = if (progress < 1f) {
+            val measure = PathMeasure().apply { setPath(outline, false) }
+            Path().also { measure.getSegment(0f, measure.length * progress, it) }
+        } else outline
         drawPath(
-            path = remFacePath(w, h),
+            path = visibleOutline,
             color = ink,
             style = Stroke(width = outlineWidth, cap = StrokeCap.Round, join = StrokeJoin.Round),
         )
@@ -158,4 +189,21 @@ private fun RemFaceMarkPreview() {
     RemTheme {
         RemFaceMark(mode = RemFaceMarkMode.Idle, tint = RemColors.current.brandBlue, size = 96.dp)
     }
+}
+
+/** Observe the existing system preference; never modify it. */
+@Composable
+private fun faceMarkReduceMotion(): Boolean {
+    val resolver = LocalContext.current.contentResolver
+    fun disabled() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    var reduced by remember(resolver) { mutableStateOf(disabled()) }
+    DisposableEffect(resolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { reduced = disabled() }
+        }
+        resolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, observer)
+        reduced = disabled()
+        onDispose { resolver.unregisterContentObserver(observer) }
+    }
+    return reduced
 }

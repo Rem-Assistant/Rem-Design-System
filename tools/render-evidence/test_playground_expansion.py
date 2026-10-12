@@ -21,6 +21,35 @@ HEAD = 'agent-factory/playground-issue-83'
 
 
 class PlaygroundEvidenceTests(unittest.TestCase):
+    def test_workflow_scope_gate_runs_before_secret_steps_and_rejects_wrong_candidates(self):
+        repo = Path(__file__).resolve().parents[2]
+        workflow = (repo / '.github/workflows/design-drift.yml').read_text()
+        start = workflow.index('      - name: Select explicit delivery scope')
+        end = workflow.index('      - name: Fetch and validate', start)
+        code = textwrap.dedent(workflow[start:end].split("python3 - <<'PY'\n", 1)[1].rsplit('          PY', 1)[0])
+        self.assertLess(end, workflow.index('      - name: Export Figma evidence'))
+        event = {'pull_request': {'state':'open', 'draft':True,
+            'base': {'ref':BASE, 'repo':{'full_name':'Rem-Assistant/Rem-Design-System'}},
+            'head': {'ref':HEAD, 'repo':{'full_name':'Rem-Assistant/Rem-Design-System'}},
+            'labels':[{'name':'delivery-scope:agenda-suggestions'}]}}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'event.json'; output = Path(directory) / 'output'
+            env = dict(os.environ, GITHUB_EVENT_NAME='pull_request_target', GITHUB_EVENT_PATH=str(path),
+                GITHUB_REPOSITORY='Rem-Assistant/Rem-Design-System', GITHUB_OUTPUT=str(output))
+            def run(value):
+                path.write_text(json.dumps(value))
+                return subprocess.run([sys.executable, '-c', code], cwd=repo, env=env, capture_output=True).returncode
+            self.assertEqual(run(event), 0)
+            for change in ('base', 'prefix', 'ready', 'fork', 'missing-label', 'two-labels'):
+                broken = json.loads(json.dumps(event)); pr = broken['pull_request']
+                if change == 'base': pr['base']['ref'] = 'main'
+                if change == 'prefix': pr['head']['ref'] += '-bad'
+                if change == 'ready': pr['draft'] = False
+                if change == 'fork': pr['head']['repo']['full_name'] = 'Other/Fork'
+                if change == 'missing-label': pr['labels'] = []
+                if change == 'two-labels': pr['labels'].append({'name':'delivery-scope:onboarding-voice'})
+                with self.subTest(change=change): self.assertNotEqual(run(broken), 0)
+
     def test_publisher_scope_gate_rejects_wrong_candidates_before_credentials(self):
         repo = Path(__file__).resolve().parents[2]
         workflow = (repo / '.github/workflows/publish-builder-delivery.yml').read_text()

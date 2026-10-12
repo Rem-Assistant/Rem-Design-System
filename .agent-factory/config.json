@@ -12,7 +12,19 @@
       "docs/contracts/onboarding-sign-in.md",
       "docs/contracts/onboarding-consent.md",
       "SHAPE-OF-A-TASK.md",
-      "docs/figma-delivery.md"
+      "docs/figma-delivery.md",
+      "docs/contracts/settings-playground.md",
+      "docs/contracts/settings-foundation.md",
+      ".claude/skills/rem-design-system/local-policy/product-design-supplement.md",
+      ".claude/skills/rem-design-system/local-policy/references/figma-product-workflow.md",
+      "docs/contracts/playground-expansion.md",
+      "docs/contracts/component-architecture.md",
+      "docs/contracts/chat.md",
+      "docs/contracts/chat-adapter.md",
+      "docs/contracts/chat-cards.md",
+      "docs/contracts/task-detail.md",
+      "docs/contracts/wallet.md",
+      "docs/contracts/toast.md"
     ],
     "skill_dirs": [
       ".claude/skills"
@@ -87,7 +99,8 @@
     "visual_evidence_paths": [
       "Sources/**",
       "compose/**",
-      "tokens/generated/**"
+      "tokens/generated/**",
+      "tools/playground-ios/**"
     ],
     "require_builder_delivery": true,
     "delivery_wait_seconds": 1800

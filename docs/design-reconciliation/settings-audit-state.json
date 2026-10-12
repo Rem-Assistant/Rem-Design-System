@@ -1,0 +1,370 @@
+{
+  "phase": "reconciled-canonical-settings",
+  "date": "2026-10-04",
+  "fileKey": "af4yDqCzp57jds9lkFiIaO",
+  "page": "356:5",
+  "section": "1220:2426",
+  "flow": "1220:2427",
+  "sourceCommit": "274a04ccb69928218d0458d3805238cab1e6eaaa",
+  "screenCount": 32,
+  "canonicalConnectors": 51,
+  "statusCounts": {
+    "Aligned": 8,
+    "Proposed": 19,
+    "Review": 5
+  },
+  "canonicalChanges": {
+    "Mobile Placeholder": "769:169",
+    "TemplateStatus": "1401:7228",
+    "Flow Connector up variant": "1553:12395",
+    "AppNavigationMenu": "1307:23840",
+    "ListRow": "101:18",
+    "Switch accessory": "1319:24108",
+    "overlay/scrim": "VariableID:1555:35681",
+    "Flow connector geometry": "Down 1376:380, Up 1553:12395, Join 1574:12698, and Spine 1574:12700 paths normalized inside component bounds",
+    "Flow Connector join variant": "1574:12698",
+    "Flow Connector spine variant": "1574:12700"
+  },
+  "sourceContract": "tools/design-sync/settings-screen-contract.json",
+  "finalSnapshot": "docs/design-reconciliation/settings-final-snapshot.json",
+  "validation": {
+    "snapshotErrors": [],
+    "screens": 32,
+    "connectors": 51,
+    "regressionCases": 27,
+    "flowContract": "passed (existing static contract)",
+    "pageContract": "passed (existing static contract)",
+    "flowTests": "passed",
+    "pageTests": "passed",
+    "unwrappedScreens": 0,
+    "placeholderCollisions": 0,
+    "sectionOverlaps": 0,
+    "inventoryContainsNewMasters": true,
+    "canonicalContract": "trimmed from 52 to 32 states",
+    "deprecatedArchive": "created",
+    "targetedRenderedStates": [
+      "Memory",
+      "Memory summary",
+      "Voice",
+      "Models",
+      "Paired devices",
+      "iPhone 16 Pro",
+      "Mac Studio",
+      "Automations",
+      "UI taxonomy"
+    ]
+  },
+  "visualReview": {
+    "latestRenderPassed": true,
+    "observedAndRepaired": [
+      "Memory summary missing visible back control",
+      "Paired devices missing rendered status and top chrome",
+      "Mac Studio duplicated destructive explanation",
+      "UI taxonomy cards outside Section render bounds"
+    ],
+    "completionGate": "Render after every meaningful visual change; repeat after corrections until the latest pixels pass hierarchy, spacing, alignment, typography, canonical component state, clipping, and action priority."
+  },
+  "productionChanges": [
+    {
+      "feature": "Paired devices",
+      "owner": "Settings and authentication",
+      "trigger": "Confirm the active authenticated-device branch",
+      "expectedChange": "Implement the reviewed list and peer-device detail without OpenClaw pairing states",
+      "closure": "Runtime evidence for populated, empty, current-device, peer-device, and removal outcomes"
+    },
+    {
+      "feature": "Memory",
+      "owner": "Product and memory runtime",
+      "trigger": "Approve the hybrid generated-summary direction",
+      "expectedChange": "Add memory controls, generated summary, and conversational correction",
+      "closure": "Runtime evidence that controls affect retrieval and generation and that corrections update memory"
+    },
+    {
+      "feature": "Models and API keys",
+      "owner": "Models and secure storage",
+      "trigger": "Verify the latest Models route against SharedBYOKSettingsView",
+      "expectedChange": "Expose provider-key management from Models with honest inactive state",
+      "closure": "Runtime evidence for save, activation eligibility, replacement, and removal"
+    },
+    {
+      "feature": "Cloud browser site/login/session model",
+      "owner": "Gateway/browser team",
+      "trigger": "Approve per-site policy and credential model",
+      "expectedChange": "Implement site CRUD, secure credential storage, per-site and global cookie cleanup, and confirmations",
+      "closure": "Runtime evidence of permission, save, remove, clear and return outcomes"
+    },
+    {
+      "feature": "Voice center-action preference",
+      "owner": "App shell/Voice",
+      "trigger": "Approve preference behavior",
+      "expectedChange": "Persist Voice session vs Chat preference and route center action",
+      "closure": "Runtime recording showing both selections and navigation"
+    }
+  ],
+  "designSystemChanges": [
+    "Lifecycle tags: Aligned, Proposed, Review, Deprecated",
+    "Secondary-surface/primary-glyph ContainedIcon style",
+    "Accessory/MenuValue for value plus menu indicator",
+    "FlowRouteLabel for visible branch-spine exits",
+    "UI contract taxonomy for Component, Pattern, Template, Screen, and Flow",
+    "Canonical component-first and rendered-review workflow rules"
+  ],
+  "prototypeTopology": {
+    "canonicalStates": 32,
+    "archivedLegacyStates": 20,
+    "pairedVerticalStates": [
+      "1498:6367",
+      "1317:4507"
+    ],
+    "externalBoundaries": [
+      "provider authorization",
+      "Wallet provider handoffs"
+    ],
+    "limitation": "Figma composition and targeted final renders were verified. Running-app behavior is not verified by this design audit.",
+    "agentSettingsBranchSpine": {
+      "spine": "1574:12700",
+      "join": "1574:12698",
+      "routes": [
+        "Paired devices",
+        "Connectors",
+        "Cloud browser",
+        "Automations",
+        "Memory",
+        "Models",
+        "Wallet",
+        "Voice"
+      ]
+    }
+  },
+  "instructionUpdate": {
+    "file": ".claude/skills/product-design-delivery/SKILL.md; .claude/skills/design-system-delivery/SKILL.md; .claude/skills/rem-design-system/SKILL.md",
+    "evidence": "Repeated custom rows, unlabeled branches, hierarchy drift, and visual-only failures showed that reuse, taxonomy, parent workflow ownership, and render verification need durable rules.",
+    "exactWording": "Build every product screen from canonical components, variants, slots, and established patterns first. Before drawing any custom layer, inspect Section, ListRow, Lockup, ButtonGroup, ContainedIcon, and relevant templates or their local equivalents; extend their slots or variants when the need is reusable. A one-off component or hand-drawn product layer is a last resort and must document why canonical components cannot express the requirement."
+  },
+  "states": [
+    [
+      "130:44",
+      "Settings",
+      "Aligned",
+      "SharedSettingsView.swift; SettingsView.swift",
+      "Entry to Agent settings. Other global settings remain in their owning documentation flows."
+    ],
+    [
+      "1224:5287",
+      "Agent settings",
+      "Proposed",
+      "SharedGatewayDetailView.swift; SharedRemGatewayHomeView.swift",
+      "Proposed simplified settings organized around Capabilities, Intelligence, Automations, and Experience."
+    ],
+    [
+      "1498:6367",
+      "Paired devices",
+      "Review",
+      "SharedGatewayDeviceConnectionsView.swift; SharedLinkedDevicesView.swift",
+      "Authenticated-device list with connected status. Verify the active product branch before implementation."
+    ],
+    [
+      "1317:4507",
+      "No paired devices",
+      "Proposed",
+      "SharedGatewayDeviceConnectionsView.swift",
+      "Gateway-independent empty state using automatic account discovery and Refresh devices."
+    ],
+    [
+      "1498:6478",
+      "iPhone 16 Pro",
+      "Review",
+      "SharedLinkedDevicesView.swift",
+      "Current device detail with connection and permission sections; no primary-device or reset-pairing concept."
+    ],
+    [
+      "1498:6551",
+      "Mac Studio",
+      "Review",
+      "SharedLinkedDevicesView.swift",
+      "Peer device detail with connection, permissions, and destructive Remove device action."
+    ],
+    [
+      "133:192",
+      "Connectors",
+      "Aligned",
+      "SharedComposioConnectionsView.swift",
+      "Connected provider opens Manage. Available provider hands off to external authorization and reconciles on return."
+    ],
+    [
+      "1250:5166",
+      "Manage connector",
+      "Aligned",
+      "SharedComposioConnectionsView.swift",
+      "ComposioConnectionSheet over Connectors. Done dismisses; Disconnect opens confirmation."
+    ],
+    [
+      "1273:5600",
+      "Revoke connector access",
+      "Aligned",
+      "SharedComposioConnectionsView.swift",
+      "Native confirmation over Manage. Cancel returns; confirmation revokes access and refreshes Connectors."
+    ],
+    [
+      "1347:5360",
+      "Configure connector",
+      "Proposed",
+      "SharedComposioConnectionsView.swift",
+      "Proposed Configure connection action and external handoff; not currently implemented."
+    ],
+    [
+      "1317:4660",
+      "Cloud browser",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed site-centered model replacing global policy and cookie cleanup. Default permission is a local menu."
+    ],
+    [
+      "1457:253",
+      "Site detail",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed per-site access, credentials and session management. Permission is local; saved login and cookies open their detail states."
+    ],
+    [
+      "1457:740",
+      "Add login",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed secure credential editor. Save returns to Site detail; Back cancels. Secure storage and authorization require implementation."
+    ],
+    [
+      "1464:977",
+      "Sites",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed complete sites list. Site opens Site detail; Add opens Add site."
+    ],
+    [
+      "1457:511",
+      "Add site",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed site editor with optional credentials. Add saves and returns; Back cancels."
+    ],
+    [
+      "1317:5109",
+      "Automations",
+      "Aligned",
+      "SharedAutomationsSettingsView.swift",
+      "Daily Brief is the current built-in automation; opens settings and run history."
+    ],
+    [
+      "1382:8421",
+      "Daily Brief",
+      "Aligned",
+      "SharedAutomationsSettingsView.swift",
+      "Settings tab. Time and enabled state update locally; Run History changes the body. Unconnected inputs open Connectors."
+    ],
+    [
+      "1589:98",
+      "Memory",
+      "Proposed",
+      "Not in current codebase",
+      "Hybrid memory controls and generated summary based on current product direction and competitive audit."
+    ],
+    [
+      "1590:266",
+      "Memory summary",
+      "Proposed",
+      "Not in current codebase",
+      "Generated freeform memory summary with conversational correction through the canonical composer."
+    ],
+    [
+      "1317:5505",
+      "Models",
+      "Review",
+      "SharedModelsSettingsView.swift; SharedBYOKSettingsView.swift",
+      "Current model policy plus proposed direct API-key entry. Verify the latest branch route and provider activation behavior."
+    ],
+    [
+      "1085:1248",
+      "Wallet",
+      "Proposed",
+      "SharedGatewayDetailView.swift",
+      "Proposed Wallet entry and payment-provider handoffs. No owning production Wallet view or verified provider return exists."
+    ],
+    [
+      "1220:2",
+      "Voice",
+      "Proposed",
+      "SharedVoiceSettingsView.swift",
+      "Center-button preference uses a canonical menu-value accessory; Voice remains a navigation row into the chooser."
+    ],
+    [
+      "1501:7097",
+      "Center action menu",
+      "Proposed",
+      "SharedVoiceSettingsView.swift",
+      "Proposed local menu invoked by Center button starts; selecting Chat updates the preference."
+    ],
+    [
+      "1501:7029",
+      "Choose a voice",
+      "Aligned",
+      "SharedVoiceSettingsView.swift",
+      "Preview is local and does not select a voice. Selection updates Voice; Back returns from the chooser."
+    ],
+    [
+      "1503:7731",
+      "Center action set to Chat",
+      "Proposed",
+      "SharedVoiceSettingsView.swift",
+      "Proposed selected preference state. Voice selection and tuning remain independent."
+    ],
+    [
+      "1550:9696",
+      "Daily Brief",
+      "Aligned",
+      "SharedAutomationsSettingsView.swift",
+      "Run History tab, empty state. Settings returns to configuration. A run timestamp does not prove output or notification delivery."
+    ],
+    [
+      "1550:10046",
+      "Saved login",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed credential detail reached from Site detail. Save returns; Remove login requires confirmation. Production has no credential storage UI."
+    ],
+    [
+      "1550:10215",
+      "Cookies & sessions",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed per-site session detail reached from Site detail. Clear site data opens confirmation and preserves saved credentials."
+    ],
+    [
+      "1551:32169",
+      "Remove device confirmation",
+      "Review",
+      "SharedLinkedDevicesView.swift",
+      "Confirmation for revoking a peer device access."
+    ],
+    [
+      "1551:32539",
+      "Cloud browser · Clear site data",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed confirmation. Cancel returns to the backing screen; Clear site data confirms the destructive action."
+    ],
+    [
+      "1551:32848",
+      "Cloud browser · Remove login",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed confirmation. Cancel returns to the backing screen; Remove login confirms the destructive action."
+    ],
+    [
+      "1561:12422",
+      "Cloud browser · Clear all site data",
+      "Proposed",
+      "SharedCloudBrowserSettingsView.swift",
+      "Proposed global confirmation. Cancel returns to Cloud browser; Clear all site data removes cookies and sessions across all sites while keeping saved credentials."
+    ]
+  ]
+}

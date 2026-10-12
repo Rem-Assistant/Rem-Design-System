@@ -8,25 +8,43 @@ name: screenshots
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to verify (both by default)
+        type: choice
+        default: both
+        options: [both, ios, android]
+      ios_test:
+        description: Optional comma-separated iOS test methods for a focused run
+        type: string
+        default: ''
   pull_request:
     paths:
+      - "tools/playground-ios/**"
       - "Sources/**"
       - "compose/**"
       - "tokens/generated/**"
       - "tools/render-evidence/**"
       - "tools/render-swift/**"
+      - "docs/playground/evidence/**"
+      - "docs/playground/expansion-design/**"
+      - "docs/contracts/playground-expansion.md"
+      - "docs/playground/artifacts.json"
+      - "docs/playground/verification.md"
+      - ".github/workflows/screenshots.yml"
       - "docs/agent-factory/routing-smoke.md"
 
 permissions:
   contents: read
 
 concurrency:
-  group: screenshots-${{ github.ref }}
+  group: screenshots-${{ github.ref }}-${{ inputs.platform || 'both' }}
   cancel-in-progress: true
 
 jobs:
   swiftui:
     name: Render SwiftUI (iOS)
+    if: inputs.platform != 'android'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +84,7 @@ jobs:
 
   compose:
     name: Render Compose (Android)
+    if: inputs.platform != 'ios'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -96,9 +115,168 @@ jobs:
           path: artifacts/compose/*.png
           if-no-files-found: error
 
+  settings-ios:
+    name: Exercise Settings playground (iOS)
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence') || (github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'claude/build9-shell-integration' && github.event.pull_request.head.repo.full_name == github.repository)) && inputs.platform != 'android'
+    runs-on: macos-14
+    timeout-minutes: 45
+    # Full runs split the inventory (tools/playground-ios/ios_test_shards.py) across three parallel jobs on
+    # the standard runner; a focused dispatch (inputs.ios_test) runs its own list in one job.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(inputs.ios_test != '' && '["focused"]' || '["0", "1", "2"]') }}
+    steps:
+      - name: Constrain expansion native evidence target
+        if: github.event.pull_request.base.ref == 'codex/playground-expansion'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          [[ "$HEAD_REF" =~ ^agent-factory/playground-issue-[0-9]+$ ]]
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Run the actual playground journeys
+        timeout-minutes: 40
+        env:
+          IOS_TEST: ${{ inputs.ios_test }}
+          IOS_SHARD_COUNT: ${{ matrix.shard != 'focused' && '3' || '' }}
+          IOS_SHARD_INDEX: ${{ matrix.shard != 'focused' && matrix.shard || '' }}
+        run: bash tools/playground-ios/run-hosted-journeys.sh
+      # Raw diagnostics upload before the optional screenshot extraction, and each post-test step has its
+      # own limit, so a journeys step that reaches its limit still leaves its build log and result bundle.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-ios-build-log-${{ matrix.shard }}
+          path: |
+            ${{ runner.temp }}/settings-ios-build.log
+            ${{ runner.temp }}/settings-ios-enumerate.log
+            ${{ runner.temp }}/ios-test-inventory.json
+            ${{ runner.temp }}/settings-ios-main-thread*.txt
+          if-no-files-found: error
+      - name: Package iOS journey diagnostics
+        if: always()
+        timeout-minutes: 3
+        run: |
+          if [ -d "$RUNNER_TEMP/SettingsPlayground.xcresult" ]; then
+            # Written under a temporary name: a packaging step stopped at its limit leaves no archive (and the
+            # upload reports it missing) rather than a truncated one.
+            tar -czf "$RUNNER_TEMP/settings-ios-journeys.tar.gz.partial" -C "$RUNNER_TEMP" SettingsPlayground.xcresult
+            mv "$RUNNER_TEMP/settings-ios-journeys.tar.gz.partial" "$RUNNER_TEMP/settings-ios-journeys.tar.gz"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-ios-journeys-${{ matrix.shard }}
+          path: ${{ runner.temp }}/settings-ios-journeys.tar.gz
+          if-no-files-found: error
+      - name: Extract actual playground screenshots
+        if: always()
+        timeout-minutes: 5
+        env:
+          # Job 114570250708 spent 14+ minutes here, largely in Homebrew's auto-update; skip it and cleanup.
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: |
+          set -euo pipefail
+          brew install xcparse || brew install chargepoint/xcparse/xcparse
+          mkdir -p artifacts/settings-swiftui "$RUNNER_TEMP/settings-attachments"
+          xcparse attachments "$RUNNER_TEMP/SettingsPlayground.xcresult" "$RUNNER_TEMP/settings-attachments"
+          find "$RUNNER_TEMP/settings-attachments" -name '*.png' | while IFS= read -r f; do
+            b=$(basename "$f")
+            cp "$f" "artifacts/settings-swiftui/${b%%_*}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-swiftui-screenshots-${{ matrix.shard }}
+          path: artifacts/settings-swiftui/*.png
+          if-no-files-found: error
+
+  settings-ios-shards:
+    name: Check iOS shard coverage
+    needs: settings-ios
+    # Every full run: the three shards together ran the whole inventory, each test exactly once. A shard
+    # that failed still uploads its build log, so a failing run is checked too (and stays failed).
+    if: always() && needs.settings-ios.result != 'skipped' && inputs.ios_test == ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: settings-ios-build-log-*
+          path: shard-logs
+      - name: Shard planner self-test
+        run: python3 -m unittest discover -s tools/playground-ios -p 'test_*.py'
+      - name: Every inventory test ran exactly once across the shards
+        run: |
+          set -euo pipefail
+          python3 tools/playground-ios/ios_test_shards.py check-aggregate --count 3 shard-logs/*/settings-ios-build.log
+
+  settings-android:
+    name: Exercise Settings playground (Android)
+    if: (github.event.pull_request.base.ref == 'codex/settings-integration' || github.ref_name == 'codex/settings-integration' || (github.event.pull_request.base.ref == 'codex/playground-expansion' && startsWith(github.event.pull_request.head.ref, 'agent-factory/playground-issue-')) || (github.event.pull_request.base.ref == 'codex/settings-review-contracts' && github.event.pull_request.head.ref == 'codex/settings-review-native') || (github.event.pull_request.base.ref == 'codex/settings-review-native' && github.event.pull_request.head.ref == 'codex/settings-review-evidence') || (github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'claude/build9-shell-integration' && github.event.pull_request.head.repo.full_name == github.repository)) && inputs.platform != 'ios'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Constrain expansion native evidence target
+        if: github.event.pull_request.base.ref == 'codex/playground-expansion'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          [[ "$HEAD_REF" =~ ^agent-factory/playground-issue-[0-9]+$ ]]
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          disable-animations: true
+          working-directory: compose
+          # The action starts a separate shell per line; folded syntax keeps
+          # test status and capture collection in one shell process.
+          script: >-
+            result=0;
+            gradle :demo:connectedDebugAndroidTest --stacktrace --no-daemon || result=$?;
+            mkdir -p ../artifacts/settings-compose;
+            adb pull /sdcard/Pictures/RemSettingsPlayground/. ../artifacts/settings-compose/ || true;
+            exit "$result"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-compose-screenshots
+          path: artifacts/settings-compose/*.png
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settings-android-journeys
+          path: |
+            compose/demo/build/reports/androidTests/
+            compose/demo/build/outputs/androidTest-results/
+          if-no-files-found: error
+
   evidence:
     name: Assemble render evidence
-    needs: [swiftui, compose]
+    needs: [swiftui, compose, settings-ios, settings-android]
     if: ${{ always() && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
@@ -123,6 +301,8 @@ jobs:
           mkdir -p out/swiftui out/compose out/delivery
           cp dl/swiftui-screenshots/*.png out/swiftui/ 2>/dev/null || true
           cp dl/compose-screenshots/*.png out/compose/ 2>/dev/null || true
+          cp dl/settings-swiftui-screenshots*/*.png out/swiftui/ 2>/dev/null || true
+          cp dl/settings-compose-screenshots/*.png out/compose/ 2>/dev/null || true
           python3 - <<'PY'
           import hashlib, json, os, subprocess
           from pathlib import Path

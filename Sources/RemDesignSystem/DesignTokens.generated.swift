@@ -67,6 +67,10 @@ public enum DesignTokens {
         public static let systemOrange = SwiftUI.Color.orange
         public static let systemIndigo = SwiftUI.Color.indigo
         public static let systemPurple = SwiftUI.Color.purple
+        public static let systemPink = SwiftUI.Color.pink
+        public static let systemMint = SwiftUI.Color.mint
+        public static let systemTeal = SwiftUI.Color.teal
+        public static let systemCyan = SwiftUI.Color.cyan
         public static let brandBlue = SwiftUI.Color(red: 12/255, green: 80/255, blue: 255/255)
         public static let brandBlueOnFill: SwiftUI.Color = {
         #if os(iOS)
@@ -102,6 +106,7 @@ public enum DesignTokens {
         public static let largeTitle = Font.system(.largeTitle, design: .default)
         public static let title1 = Font.system(.title, design: .default)
         public static let title1Bold = Font.system(.title, design: .default).weight(.bold)
+        public static let title2Bold = Font.system(.title2, design: .default).weight(.bold)
         public static let title3 = Font.system(.title3, design: .default)
         public static let title3Bold = Font.system(.title3, design: .default).weight(.bold)
         public static let body = Font.system(.body, design: .default)

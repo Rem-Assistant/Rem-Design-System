@@ -1,23 +1,24 @@
-// url=https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=741-311
+// url=https://www.figma.com/design/af4yDqCzp57jds9lkFiIaO/Rem-Design-System?node-id=1307-667
 // source=Sources/RemDesignSystem/Rows/RemSection.swift
-// component=RemSection
+// component=SwiftUI.Section
 import figma from 'figma'
-
 const instance = figma.selectedInstance
 const rows = instance.getSlot('Rows')
-const showHeader = instance.getBoolean('Show Header')
-const showFooter = instance.getBoolean('Show Footer')
-
+const header = instance.getBoolean('Show Header') ? instance.findInstance('SectionHeader') : null
+const footer = instance.getBoolean('Show Footer') ? instance.findInstance('SectionFooter') : null
+const headerCode = header?.type === 'INSTANCE' ? header.executeTemplate().example : undefined
+const footerCode = footer?.type === 'INSTANCE' ? footer.executeTemplate().example : undefined
+const style = instance.getEnum('Style', { 'Inset Grouped': '.insetGrouped', 'Plain': '.plain' })
 export default {
-  example: figma.code`
-    RemSection(
-      header: ${showHeader ? '"Section Header"' : 'nil'},
-      footer: ${showFooter ? '"Explanatory footer text."' : 'nil'}
-    ) {
-      ${rows}
-    }
-  `,
-  imports: ['import RemDesignSystem'],
-  id: 'rem-section-swiftui',
-  metadata: { nestable: true },
+    example: figma.code`// Native List context: apply ${style} to the owning List's listStyle.
+    // Rows must use ListRow(layout: .nativeList); NavigationLink owns disclosure.
+    Section {
+        ${rows}
+    } header: {
+        ${headerCode}
+    } footer: {
+        ${footerCode}
+    }`,
+    imports: ['import SwiftUI', 'import RemDesignSystem'],
+    id: 'rem-section-swiftui', metadata: { nestable: true },
 }

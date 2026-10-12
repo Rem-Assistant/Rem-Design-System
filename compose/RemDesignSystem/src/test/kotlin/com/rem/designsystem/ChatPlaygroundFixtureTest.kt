@@ -1,0 +1,397 @@
+package com.rem.designsystem
+
+import com.rem.designsystem.chat.ChatHeaderStatus
+import com.rem.designsystem.chat.MessageDelivery
+import com.rem.designsystem.screens.AgentActivityCurrent
+import com.rem.designsystem.screens.ChatAutoReplyStep
+import com.rem.designsystem.chat.MessageReaction
+import com.rem.designsystem.screens.ChatComposerAction
+import com.rem.designsystem.screens.ChatMessageAction
+import com.rem.designsystem.screens.ChatMessageActionsDisplay
+import com.rem.designsystem.screens.ChatPlaygroundEffect
+import com.rem.designsystem.screens.ChatPlaygroundFixture
+import com.rem.designsystem.screens.ChatReplyContext
+import com.rem.designsystem.screens.ChatScreenAction
+import com.rem.designsystem.screens.ChatTranscriptAction
+import com.rem.designsystem.screens.ChatTranscriptEntry
+import com.rem.designsystem.screens.ChatTranscriptRules
+import com.rem.designsystem.screens.ComposerPhase
+import com.rem.designsystem.screens.InboxAction
+import com.rem.designsystem.screens.InboxItemState
+import com.rem.designsystem.screens.InboxPlaygroundFixture
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** Twin of `ChatPlaygroundFixtureTests.swift`: no fabricated receipts, truthful Inbox routing. */
+class ChatPlaygroundFixtureTest {
+    private fun ChatPlaygroundFixture.act(action: ChatScreenAction) = handle(action).first
+    private fun ChatPlaygroundFixture.latest() = ChatTranscriptRules.latestOutgoingId(entries)!!
+
+    @Test fun populatedShowsOnlyTheLatestReceiptAndAConsistentTimeline() {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated)
+        assertNull(fixture.emptyState)
+        assertEquals("u2", fixture.latest())
+        assertEquals(MessageDelivery.None, ChatTranscriptRules.displayedDelivery(fixture.message("u1")!!, "u2"))
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message("u2")!!.delivery)
+        assertEquals("Connected", fixture.header.activity)
+    }
+
+    /** Jump-to-latest journeys: earlier history above the populated conversation, same latest receipt. */
+    @Test fun longPrependsHistoryAndKeepsTheLatestReceipt() {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Long)
+        val populated = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated).entries
+        assertEquals(17 + populated.size, fixture.entries.size)
+        assertEquals(populated, fixture.entries.takeLast(populated.size))
+        assertEquals("h0", fixture.entries.first().id)
+        assertEquals("u2", fixture.latest())
+        assertEquals(MessageDelivery.None, ChatTranscriptRules.displayedDelivery(fixture.message("h1")!!, "u2"))
+        assertEquals("a2", fixture.entries.last().id)
+    }
+
+    @Test fun emptyHasStartersAndNoTranscript() {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+        assertEquals(ChatPlaygroundFixture.Starters, fixture.emptyState!!.starters)
+        assertTrue(fixture.entries.isEmpty())
+    }
+
+    @Test fun starterSendsWithoutAReceipt() {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty).act(ChatScreenAction.Starter("plan-day"))
+        assertNull(fixture.emptyState)
+        val sent = (fixture.entries.last() as ChatTranscriptEntry.Message).message
+        assertEquals("Help me plan my day", sent.text)
+        assertEquals("No host acceptance, no receipt", MessageDelivery.None, sent.delivery)
+        assertEquals(ComposerPhase.Sending, fixture.composer.state.phase)
+        assertTrue(fixture.header.isWorking)
+    }
+
+    @Test fun sendStopAndHostAcceptanceJourney() {
+        var fixture = ChatPlaygroundFixture()
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val id = fixture.latest()
+        assertEquals(MessageDelivery.None, fixture.message(id)!!.delivery)
+        assertEquals(ChatComposerAction.Cancel, fixture.composer.state.primaryAction)
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+        assertEquals("Stop never fabricates a receipt", MessageDelivery.None, fixture.message(id)!!.delivery)
+
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Again")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+            .simulateHostAcceptance()
+        val again = fixture.latest()
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(again)!!.delivery)
+        assertEquals(ComposerPhase.Streaming, fixture.composer.state.phase)
+        fixture = fixture.simulateReadAcknowledgement()
+        assertEquals(MessageDelivery.Read(ChatPlaygroundFixture.FixtureTime), fixture.message(again)!!.delivery)
+        val before = fixture.entries.size
+        fixture = fixture.simulateReplyComplete()
+        assertEquals(before + 1, fixture.entries.size)
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+    }
+
+    @Test fun readNeverAppearsWithoutDelivery() {
+        val fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Hi")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+            .simulateReadAcknowledgement()
+        assertEquals(MessageDelivery.None, fixture.message(fixture.latest())!!.delivery)
+    }
+
+    @Test fun failureAndRetryJourney() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Share the agenda")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+            .simulateDeliveryFailure()
+        val id = fixture.latest()
+        assertEquals(MessageDelivery.Failed, fixture.message(id)!!.delivery)
+        assertTrue(fixture.message(id)!!.canRetry)
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(id)))
+        assertEquals("Retry waits for host acceptance", MessageDelivery.None, fixture.message(id)!!.delivery)
+        assertEquals(ChatPlaygroundFixture.RetryNote, fixture.note)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(id)))
+        assertEquals("Retry is not offered twice", MessageDelivery.None, fixture.message(id)!!.delivery)
+    }
+
+    /**
+     * Release-review regression: fail A, send + accept + complete B, then retry A. Host evidence must
+     * apply to A (the active turn), not to B (the latest outgoing), and the turn must complete.
+     */
+    @Test fun retryOfOlderFailedMessageCompletesItsOwnTurn() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.latest()
+        fixture = fixture.simulateDeliveryFailure()
+        assertEquals(MessageDelivery.Failed, fixture.message(a)!!.delivery)
+
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("B")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val b = fixture.latest()
+        assertTrue(a != b)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+        assertEquals("Retry never switches the active turn mid-flight", b, fixture.activeOutgoingId)
+        assertEquals(MessageDelivery.Failed, fixture.message(a)!!.delivery)
+        fixture = fixture.simulateHostAcceptance().simulateReplyComplete()
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(b)!!.delivery)
+        assertNull(fixture.activeOutgoingId)
+
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+        assertEquals(a, fixture.activeOutgoingId)
+        assertEquals(ComposerPhase.Sending, fixture.composer.state.phase)
+        fixture = fixture.simulateHostAcceptance()
+        assertEquals("Acceptance applies to A", MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(a)!!.delivery)
+        assertEquals("B is untouched", MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(b)!!.delivery)
+        assertEquals(ComposerPhase.Streaming, fixture.composer.state.phase)
+        val before = fixture.entries.size
+        fixture = fixture.simulateReplyComplete()
+        assertEquals(before + 1, fixture.entries.size)
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+        assertNull(fixture.activeOutgoingId)
+
+        // Latest-only receipt display is unchanged: B is still the latest outgoing message.
+        val latest = ChatTranscriptRules.latestOutgoingId(fixture.entries)
+        assertEquals(b, latest)
+        assertEquals(MessageDelivery.None, ChatTranscriptRules.displayedDelivery(fixture.message(a)!!, latest))
+    }
+
+    @Test fun retryFailureAppliesToTheRetriedMessage() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.latest()
+        fixture = fixture.simulateDeliveryFailure()
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("B")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val b = fixture.latest()
+        fixture = fixture.simulateHostAcceptance().simulateReplyComplete()
+            .act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+            .simulateDeliveryFailure()
+        assertEquals(MessageDelivery.Failed, fixture.message(a)!!.delivery)
+        assertTrue(fixture.message(a)!!.canRetry)
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(b)!!.delivery)
+        assertEquals(ComposerPhase.Idle, fixture.composer.state.phase)
+    }
+
+    @Test fun cancelledRetryRestoresNotDeliveredAndTryAgain() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.activeOutgoingId!!
+        fixture = fixture.simulateDeliveryFailure()
+            .act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a)))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertNull(fixture.activeOutgoingId)
+        assertEquals("A cancelled retry is still not delivered", MessageDelivery.Failed, fixture.message(a)!!.delivery)
+        assertTrue("and can be retried again", fixture.message(a)!!.canRetry)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.Retry(a))).simulateHostAcceptance()
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message(a)!!.delivery)
+    }
+
+    @Test fun cancelEndsTheActiveTurnWithoutAReceipt() {
+        var fixture = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Empty)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("A")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val a = fixture.activeOutgoingId!!
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertNull(fixture.activeOutgoingId)
+        fixture = fixture.simulateHostAcceptance()
+        assertEquals("No acceptance after cancel", MessageDelivery.None, fixture.message(a)!!.delivery)
+    }
+
+    @Test fun headerAndAddEffects() {
+        val fixture = ChatPlaygroundFixture()
+        assertEquals(ChatPlaygroundEffect.Exit, fixture.handle(ChatScreenAction.Back).second)
+        assertEquals(ChatPlaygroundEffect.PresentHostControls, fixture.handle(ChatScreenAction.Overflow).second)
+        assertEquals(ChatPlaygroundEffect.PresentAddToChat, fixture.handle(ChatScreenAction.Composer(ChatComposerAction.Add)).second)
+        val (opened, effect) = fixture.handle(ChatScreenAction.ActivityDetails)
+        assertEquals("The header identity opens Agent activity", ChatPlaygroundEffect.PresentActivity, effect)
+        assertEquals("Opening activity changes nothing in the conversation", fixture, opened)
+        assertNull(opened.note)
+    }
+
+    @Test fun activityScreenCarriesTheHeadersCurrentState() {
+        var fixture = ChatPlaygroundFixture()
+        assertEquals(AgentActivityCurrent.of(fixture.header), fixture.activity.display.current)
+        fixture = fixture.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val current = fixture.activity.display.current
+        assertEquals("Opened mid-turn, it shows the live state", "Working on your request", current.activity)
+        assertTrue(current.isWorking)
+        val task = InboxPlaygroundFixture().route(InboxAction.Open("venue-booking"))!!
+        assertEquals(task.header.activity, task.activity.display.current.activity)
+        assertEquals(ChatHeaderStatus.NeedsYou, task.activity.display.current.status)
+    }
+
+    @Test fun longPressPresentsTheMessageActionSheetForThatMessage() {
+        val fixture = ChatPlaygroundFixture()
+        val (same, effect) = fixture.handle(ChatScreenAction.Transcript(ChatTranscriptAction.RequestActions("a1")))
+        assertEquals(ChatPlaygroundEffect.PresentMessageActions(ChatMessageActionsDisplay(fixture.message("a1")!!)), effect)
+        assertEquals("Presenting the sheet changes nothing else", fixture, same)
+        val own = fixture.handle(ChatScreenAction.Transcript(ChatTranscriptAction.RequestActions("u1"))).second
+        assertEquals(
+            "No Report on the person's own message",
+            listOf(listOf(ChatMessageAction.Reply), listOf(ChatMessageAction.Copy, ChatMessageAction.SelectText)),
+            (own as ChatPlaygroundEffect.PresentMessageActions).display.groups,
+        )
+        assertNull(fixture.handle(ChatScreenAction.Transcript(ChatTranscriptAction.RequestActions("missing"))).second)
+    }
+
+    @Test fun sheetReactionAndReplyChangeOnlyPresentation() {
+        var fixture = ChatPlaygroundFixture().act(ChatScreenAction.Transcript(ChatTranscriptAction.React("a1", MessageReaction.Fire)))
+        assertEquals(MessageReaction.Fire, fixture.message("a1")!!.reaction)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.MessageAction("a1", ChatMessageAction.Reply)))
+        assertEquals(ChatReplyContext("a1", ChatPlaygroundFixture.ReplyTitle, fixture.message("a1")!!.text), fixture.replyContext)
+        fixture = fixture.act(ChatScreenAction.Transcript(ChatTranscriptAction.MessageAction("u2", ChatMessageAction.Reply)))
+        assertEquals(ChatPlaygroundFixture.OwnReplyTitle, fixture.replyContext!!.title)
+        assertEquals("u2", fixture.replyContext!!.targetId)
+        assertEquals("Receipts untouched", MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), fixture.message("u2")!!.delivery)
+    }
+
+    @Test fun hostOwnedSheetActionsSendNothing() {
+        val notes = listOf(
+            ChatTranscriptAction.RequestMoreReactions("a1") to ChatPlaygroundFixture.MoreReactionsNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.MarkUnread) to ChatPlaygroundFixture.MarkUnreadNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.Copy) to ChatPlaygroundFixture.CopyNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.SelectText) to ChatPlaygroundFixture.SelectTextNote,
+            ChatTranscriptAction.MessageAction("a1", ChatMessageAction.Report) to ChatPlaygroundFixture.ReportNote,
+        )
+        for ((action, note) in notes) {
+            val before = ChatPlaygroundFixture()
+            val (after, effect) = before.handle(ChatScreenAction.Transcript(action))
+            assertNull(effect)
+            assertEquals(note, after.note)
+            assertEquals(before.entries, after.entries)
+            assertEquals(before.composer, after.composer)
+        }
+    }
+
+    @Test fun callButtonIsAnInAppVoiceEntryThatDialsNothing() {
+        val fixture = ChatPlaygroundFixture()
+        assertFalse("call would replace overflow, the Playground's host-controls route", fixture.header.showsCall)
+        val (called, effect) = fixture.handle(ChatScreenAction.Call)
+        assertNull("no presentation, transcript or composer change", effect)
+        assertEquals(ChatPlaygroundFixture.CallNote, called.note)
+        assertEquals(fixture.entries, called.entries)
+        assertEquals(fixture.composer, called.composer)
+    }
+
+    @Test fun inboxRoutesEachStateIntoTaskReplyWithTheSameTruth() {
+        val inbox = InboxPlaygroundFixture()
+        for (item in inbox.items) {
+            val chat = inbox.route(InboxAction.Open(item.id))!!
+            assertEquals(item.id, chat.taskId)
+            assertEquals(ChatReplyContext(item.id, ChatPlaygroundFixture.ReplyTitle, item.title), chat.replyContext)
+            assertEquals(item.state.header(), chat.header)
+            assertEquals("Write your reply…", chat.composer.state.placeholder)
+        }
+        assertNull(inbox.route(InboxAction.Open("missing")))
+        assertTrue(InboxPlaygroundFixture.content(InboxPlaygroundFixture.Content.Empty).items.isEmpty())
+    }
+
+    @Test fun inboxStatesMapToLabelsAndAttention() {
+        assertNull(InboxItemState.None.statusLabel)
+        assertEquals("Status unknown", InboxItemState.Unknown.statusLabel)
+        assertTrue(InboxItemState.NeedsApproval.needsPerson)
+        assertTrue(InboxItemState.Blocked.needsPerson)
+        assertFalse(InboxItemState.Completed.needsPerson)
+        assertEquals(ChatHeaderStatus.NeedsYou, InboxItemState.Blocked.header().status)
+        assertTrue(InboxItemState.Executing.header().isWorking)
+        assertEquals("Connected", InboxItemState.None.header().activity)
+    }
+
+    @Test fun dismissClearsOnlyTheMatchingTarget() {
+        var chat = InboxPlaygroundFixture().route(InboxAction.Open("venue-booking"))!!
+        chat = chat.act(ChatScreenAction.DismissReplyContext("other"))
+        assertNotNull(chat.replyContext)
+        chat = chat.act(ChatScreenAction.DismissReplyContext("venue-booking"))
+        assertNull(chat.replyContext)
+        assertEquals("Task identity survives dismissing the reply target", "venue-booking", chat.taskId)
+    }
+
+    /** Build 9 shell: an agent's root conversation names the agent and opens the sidebar instead of Back. */
+    @Test fun rootConversationOpensSidebarAndNamesTheAgent() {
+        val main = ChatPlaygroundFixture.root()
+        assertEquals("Rem", main.header.name)
+        assertEquals(true, main.header.showsSidebar)
+        assertEquals("No Back on a root conversation", false, main.header.showsBack)
+        assertEquals("Host controls live under Developer", false, main.header.showsOverflow)
+        val (same, effect) = main.handle(ChatScreenAction.OpenSidebar)
+        assertEquals(ChatPlaygroundEffect.OpenSidebar, effect)
+        assertEquals("Opening the sidebar changes nothing in the conversation", main, same)
+
+        val side = ChatPlaygroundFixture.root(ChatPlaygroundFixture.Conversation.Empty, agentName = "Health")
+        assertEquals("Health", side.header.name)
+        assertEquals("Start a conversation with Health. Plan your day, explore an idea or get a task moving.", side.emptyState!!.message)
+        assertEquals("The agent name survives a turn", "Health", side.handle(ChatScreenAction.Starter("plan-day")).first.header.name)
+
+        val ordinary = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated).header
+        assertEquals("Ordinary chat keeps Back", true, ordinary.showsBack)
+        assertEquals(false, ordinary.showsSidebar)
+        assertEquals(ChatPlaygroundFixture.EmptyMessage, ChatPlaygroundFixture.agentEmptyMessage("Rem"))
+    }
+
+    /**
+     * Build 9 shell: a root conversation simulates its reply — acceptance, then completion — fenced to the
+     * turn it belongs to (route-map "Simulated reply"; twin `testRootConversationSimulatesAcceptanceThenReply`).
+     */
+    @Test fun rootConversationSimulatesAcceptanceThenReply() {
+        var chat = ChatPlaygroundFixture.root()
+        assertNull("Nothing to simulate before a send", chat.autoReplyStep)
+        chat = chat.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val accept = ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, "sent.1")
+        assertEquals(accept, chat.autoReplyStep)
+        assertEquals(600L, accept.delayMillis)
+        assertEquals("No receipt before acceptance", MessageDelivery.None, chat.message("sent.1")!!.delivery)
+
+        chat = chat.advanceAutoReply(accept)
+        assertEquals(MessageDelivery.Delivered(ChatPlaygroundFixture.FixtureTime), chat.message("sent.1")!!.delivery)
+        assertEquals(ComposerPhase.Streaming, chat.composer.state.phase)
+        val complete = ChatAutoReplyStep(ChatAutoReplyStep.Kind.Completion, "sent.1")
+        assertEquals(complete, chat.autoReplyStep)
+        assertEquals(1500L, complete.delayMillis)
+        assertEquals("A step that already applied is stale", chat, chat.advanceAutoReply(accept))
+
+        chat = chat.advanceAutoReply(complete)
+        assertEquals("reply.2", chat.entries.last().id)
+        assertEquals(ComposerPhase.Idle, chat.composer.state.phase)
+        assertFalse(chat.header.isWorking)
+        assertNull("The turn has ended", chat.autoReplyStep)
+        assertNull(chat.activeOutgoingId)
+    }
+
+    /** Stop ends the turn, so a pending step no longer applies; and only root conversations simulate. */
+    @Test fun autoReplyStopsOnCancelAndStaysOffOutsideTheShell() {
+        var chat = ChatPlaygroundFixture.root()
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Hold on")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        val accept = checkNotNull(chat.autoReplyStep)
+        chat = chat.act(ChatScreenAction.Composer(ChatComposerAction.Cancel))
+        assertNull("Stop cancels the simulated reply", chat.autoReplyStep)
+        assertEquals("A step from the cancelled turn changes nothing", chat, chat.advanceAutoReply(accept))
+        assertEquals("Stop never fabricates a receipt", MessageDelivery.None, chat.message("sent.1")!!.delivery)
+
+        // The next turn has its own step; the cancelled turn's step stays stale.
+        chat = chat.act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Again")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        assertEquals(ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, "sent.2"), chat.autoReplyStep)
+        assertEquals(chat, chat.advanceAutoReply(accept))
+
+        // The Developer hub's Chat and task chat keep their explicit host controls.
+        val hub = ChatPlaygroundFixture.conversation(ChatPlaygroundFixture.Conversation.Populated)
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Plan my afternoon")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        assertNull("Only a root conversation simulates its reply", hub.autoReplyStep)
+        assertEquals(hub, hub.advanceAutoReply(ChatAutoReplyStep(ChatAutoReplyStep.Kind.Acceptance, "sent.1")))
+        assertEquals(ComposerPhase.Sending, hub.composer.state.phase)
+        val task = ChatPlaygroundFixture.taskReply(InboxPlaygroundFixture().items[0])
+            .act(ChatScreenAction.Composer(ChatComposerAction.DraftChanged("Next step")))
+            .act(ChatScreenAction.Composer(ChatComposerAction.Send))
+        assertNull(task.autoReplyStep)
+    }
+}

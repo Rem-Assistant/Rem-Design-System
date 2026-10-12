@@ -30,7 +30,9 @@ form diverges.
   - `OnboardingSequencer.kt` — the ordered-flow driver (progress + Continue/Skip forward/back, ordered
     step slots; the #12 middle steps plug in as more slots). No deploy/provisioning slot.
   - `OnboardingScaffold.kt` — the shared step chrome (back · hero `ContainedIcon` · title/subtitle ·
-    scrollable content · bottom CTA bar + legal footer), all token-bound.
+    scrollable content · bottom CTA bar + legal footer), all token-bound. Its optional `bottomToast`
+    slot is the shared recoverable-failure pattern: a transient, non-actionable Toast above the action
+    group while the persistent retry remains the primary CTA.
   - `SignInStep.kt` — the **sign-in screen** (`OnboardingSignInScreen`), built to
     `docs/contracts/onboarding-sign-in.md`: its **own centered screen** (one block centered in the
     safe area, left-aligned, ≤560dp — **not** the scaffold's bottom-pinned CTA bar), state-driven by
@@ -55,6 +57,14 @@ form diverges.
     **excluded from the build** (dormant-but-ready), same as `ContainedIcon.figma.kt`.
   Reproduce fidelity is verified on the render runners against `tasks/refs/onboarding/01-sign-in.png`
   and `02-consent.png` (this repo has no Android/iOS toolchain — the reference-vs-evidence split).
+
+- **`compose/RemDesignSystem/navigation/*.kt`** — the sidebar (`RemSidebar`, `RemSidebarContainer`,
+  `RemAccountPill`, inputs `RemSidebarModel.kt`) and **`compose/RemDesignSystem/agents/*.kt`** — New
+  agent setup, agent avatar and agent profile About (`NewAgentSetupScreen`, `AgentAvatar`,
+  `AgentProfileHeader` / `AgentProfileAbout`, inputs `AgentModels.kt` / `NewAgentSetupModel.kt` /
+  `AgentProfileModel.kt`). Twins of `Sources/RemDesignSystem/Navigation` + `Agents`; contract
+  `docs/contracts/sidebar-new-agent.md`. Display models + callbacks only. Tests:
+  `RemSidebarModelTest`, `AgentDisplayModelTest`, Paparazzi `SidebarEvidence` (run from `EvidenceSnapshots`).
 
 ## Status / verify
 Generator output is verified here (Node). **Compose compilation is not** — this repo has no Android

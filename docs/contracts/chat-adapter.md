@@ -1,0 +1,171 @@
+# Contract — Chat / Inbox app-adapter boundary
+
+**Outcome:** a consuming app and the Playground drive the **same** canonical Chat, task reply and Inbox
+compositions through one typed boundary. The design system renders supplied values and emits typed
+actions. The app owns everything that can be true or false about the world.
+
+**Authority:** Samuel's architecture direction (2026-10-10); Figma composition board `2681:21977`, shell
+`2054:21958`, header `2054:19725`, composer `2071:11555`, reply context `2682:22298`, empty `2054:22089`,
+populated `2054:21981`, receipt / reaction acceptance `2659:21942` (read-only exports, 2026-10-10 15:59
+UTC). Component contract: [`chat.md`](chat.md).
+
+## Ownership
+
+| Layer | Owns | Never owns |
+|---|---|---|
+| **App** | auth, conversations, tool execution, networking, persistence, business state, task store, routing, **authoritative delivery and read evidence**, voice session, attachment content | layout, presentation rules |
+| **Thin adapter** (in the app) | app state → DS values; DS actions → app operations; evidence → `MessageBubble.Delivery` | storage, effects of its own |
+| **Design system** | layout, full-screen composition, interaction presentation states, presentation rules (send eligibility display, latest-receipt placement) | provider SDKs, credentials, networking, business logic, receipt truth |
+
+## Inputs (Swift / Kotlin names are identical except where noted)
+
+| Type | Purpose |
+|---|---|
+| `ChatHeaderDisplay` | name, agent activity copy, status (connected / needs you), working face, which header controls are shown |
+| `ChatComposerState` | draft, placeholder, model label, attachments, `ComposerAvailability` (`enabled` / `disabled(reason)`), `ComposerPhase` (`idle` / `sending` / `streaming`), `voiceAvailable`, `isFocused`, `modelMenuEnabled` (optional override; `nil`/`null` = disabled while input is disabled or a turn is in flight) |
+| `ChatMessageDisplay` | id, role, text, meta, **host-supplied** `delivery`, reaction, `canRetry`, optional **host-formatted** `time` (swipe-to-reveal timestamp), `additionalReactions` (additive, default empty: further reactions drawn as stacked tapbacks behind `reaction`; `reactions` is the drawn set, own reaction first) |
+| `ChatTranscriptEntry` | `.message` / `.timestamp` / `.hostContent(id)` (Kotlin: `Message` / `Timestamp` / `HostContent`). `hostContent` places a host-rendered card in transcript order (a proposal with approve buttons, a tool result, the daily brief); `ChatTranscriptList(hostContent:)` renders it by id. It has no receipt and is never a message. |
+| `ChatReplyContext` | `targetID` (Kotlin `targetId`), title, summary — the task and conversation ids stay in the app |
+| `ChatEmptyState`, `ChatStarter` | empty conversation copy and starters (host lists only what it can do) |
+| `ChatMessageActionsDisplay` | the long-press sheet for one message: the reaction grid (`MessageReaction.sheetChoices`), the current reaction, whether the `+` cell is shown, and the action groups for its role, narrowed to the host's `available` actions |
+| `InboxItemDisplay`, `InboxItemState` | Inbox rows and their host-reported run state: none / loading / executing / needsApproval / blocked / unknown / completed |
+| `AgentActivityDisplay` | the Agent activity screen: `current` (`AgentActivityCurrent` — name, activity, status, working; built from the same `ChatHeaderDisplay`) and `days` (`AgentActivityDay` → `AgentActivityEvent`: action title, outcome, host-formatted time) |
+
+## Actions
+
+`ChatScreenAction`: `back`, `openSidebar`, `overflow`, `call`, `activityDetails`, `starter(id)`, `dismissReplyContext(targetID)`,
+`composer(ChatComposerAction)`, `transcript(ChatTranscriptAction)`.
+`ChatComposerAction`: `draftChanged`, `send`, `cancel`, `speak`, `add`, `removeAttachment(id)`, `focusChanged`.
+`ChatTranscriptAction`: `retry(messageID)`, `requestActions(messageID)`, `react(messageID, reaction?)`,
+`requestMoreReactions(messageID)`, `messageAction(messageID, ChatMessageAction)` (Kotlin `RequestActions`,
+`RequestMoreReactions`, `MessageAction`). `requestActions` replaces the former `requestReaction`: a long press now
+asks for the whole message sheet, not only reactions.
+`ChatMessageAction`: `reply`, `markUnread`, `copy`, `selectText`, `report` (Kotlin `Reply`, `MarkUnread`, …).
+`InboxAction`: `open(itemID)`.
+
+`activityDetails` (tapping the identity / activity capsule under the Rem face) **routes to the Agent activity
+screen** (`AgentActivityScreen`, Figma master `2002:76914`); Back returns to Chat with the conversation unchanged.
+The host builds `AgentActivityDisplay` and owns the route: iOS pushes the screen on its `NavigationStack` (native
+bar, "‹ Chat" back), Compose shows it with its own top app bar and routes system Back to Chat. The Figma master has
+no prototype reaction; this routing is explicit.
+
+`openSidebar` (Build 9; Swift `ChatScreenAction.openSidebar`, Kotlin `ChatScreenAction.OpenSidebar`) is emitted by
+the header's sidebar button, which shows only when the host sets `ChatHeaderDisplay.showsSidebar` on its root
+conversation (the button replaces Back, never sits beside it). The host opens its sidebar. **Adapters on a
+non-root conversation ignore it** (they never set `showsSidebar`, so it is not emitted there).
+- **Migration (source-breaking for Swift):** a Swift adapter that switches exhaustively over
+  `ChatScreenAction` with no `default` (for example RemClaw's `ChatActionRouter.handle(_:)`) fails to compile
+  against this case. Add `case .openSidebar: break` (or the sidebar route) in the same change that bumps the
+  design-system pin. Kotlin adapters with an `else` branch are unaffected; a Kotlin `when` used as an
+  exhaustive expression needs `ChatScreenAction.OpenSidebar -> Unit`.
+
+## Rules the DS applies (presentation only)
+
+1. **Send** is available only when input is enabled, no turn is in flight, and there is visible text **or a
+   content attachment**. A capability chip (Cloud browser) alone never makes a message.
+2. **Stop** is shown while sending or streaming and emits `.cancel` — never `.send`. Cancel remains
+   available when input is externally disabled mid-turn.
+3. **Speak** is shown only when the host says voice is available, input is enabled and nothing is in flight;
+   it emits `.speak`.
+4. **Receipt placement:** only the latest outgoing message shows its Delivered / Read receipt; older outgoing
+   messages show none; a Not delivered failure stays visible wherever it is.
+5. **Header:** one avatar and one identity/activity capsule; the header owns back and one trailing action:
+   overflow, or — when the host sets `showsCall` because in-app voice is available — the call entry, which
+   **replaces** overflow (never a second icon beside it; in-app voice only, no PSTN). A host that shows the call entry keeps every action it had in overflow reachable through an existing surface it already owns (for example its agent settings or the activity screen). The DS adds no new menu for them. The platform
+   navigation bar is hidden by the composition. The empty state has no second face. A **root
+   conversation** (`ChatHeaderDisplay.showsSidebar`, Figma A2 · Chat `2702:2351`) swaps Back for the
+   sidebar button (`line.3.horizontal` / `Menu`, "Open sidebar", `chat.header.menu`), which emits
+   `openSidebar`; the host owns the sidebar (Playground: `docs/playground/route-map.md`).
+6. **Reply context** is an accessory above the same composer. Dismiss reports the target id only.
+7. **Agent activity** shows the identity with the **current** activity (`AgentActivityDisplay.current`, the same
+   state as the Chat header), an Activity / Approvals segmented control (iOS segmented `Picker`; Compose Material 3
+   `SingleChoiceSegmentedButtonRow`) and the Today / Yesterday timeline. Historical events never overwrite the
+   current state. Rows are not interactive (no verified destination). Approvals has no verified design (`2002:76915`
+   only repeats timeline rows), so it shows a labeled data gap, never invented approvals or an implied "none". The
+   screen is separate from agent settings, card outcomes and voice state.
+8. **Message actions** (Figma `2603:19498`): a long press emits `.requestActions`; the host presents
+   `MessageActionSheet` with `ChatMessageActionsDisplay(message:)` over the dimmed chat. An assistant message
+   shows the 2 × 6 reaction grid (eleven reactions and `+`) and the groups [Reply, Mark as unread],
+   [Copy, Select Text], [Report]. The person's own message shows [Reply], [Copy, Select Text]: **Report is
+   never offered on it**, and Mark as unread does not apply. Actions the host cannot perform are left out
+   (`available`); an emptied group disappears, with no placeholder. Choosing the current reaction clears it.
+   Every row, the `+` cell and each reaction are presentation-only actions: the host performs them (reply
+   target, unread state, clipboard, text selection, report flow, full emoji picker) and dismisses the sheet.
+   Identifiers: `message.<id>.actions.reactions.<index>`, `….reactions.more`, `message.<id>.actions.<action>`.
+
+9. **Transcript placement.** A transcript shorter than the visible area is **bottom-anchored**: its rows sit
+   just above the docked composer, with the free space under the header (iOS: content `minHeight` =
+   viewport, `.bottom` alignment, `defaultScrollAnchor(.bottom)`; Compose: `Arrangement.spacedBy(lg,
+   Alignment.Bottom)` inside the scroll, whose minimum height is the viewport). The **empty state** is
+   top-placed on both. A longer transcript opens at the latest message.
+10. **Following new content.** The transcript follows growth (a streamed reply, an expanded card) only
+   while the person is at or near the latest message (within the jump-to-latest threshold, rule 11);
+   scrolled up, their position is kept. Compose re-pins to the bottom on a content-height change only while
+   within that threshold (#120 replaced the unconditional re-pin noted in review of #106, P2-4). iOS relies
+   on `defaultScrollAnchor(.bottom)`; how it treats growth while the person is scrolled up is not yet
+   verified by a journey (contract question).
+11. **Jump to latest** is presentation the composition owns ([`chat.md`](chat.md) rule 10): a centred
+   down-arrow above the dock while the person is scrolled more than 200pt/dp above the newest message. No
+   input, action or host wiring; it emits no `ChatScreenAction`. Identifier `chat.jumpToLatest`.
+12. **Swipe down to dismiss the keyboard** is presentation the composer owns ([`chat.md`](chat.md) rule 11): a
+   clear downward swipe (24pt/dp, vertical dominating) that starts on the focused composer ends editing, and
+   Compose also hides the IME on a transcript drag toward older messages (iOS already dismisses interactively).
+   No new input or action: the host hears the existing `focusChanged(false)` and must not re-request focus in
+   response. The focused field offers a "Dismiss keyboard" accessibility action.
+13. **Edge backdrops** are presentation the composition owns ([`chat.md`](chat.md) rule 12): the transcript scrolls
+   under the header and the composer dock, whose backdrops are progressive blurs (iOS material; Compose Haze
+   blur on API 32+, scrim below) instead of solid fills, and the transcript's top and bottom insets equal
+   their heights. No input, action or host wiring; hosts still add no navigation bar or app bar above the
+   composition, and supply the window and keyboard / IME insets as before.
+
+## Rules the adapter applies (truth)
+
+- `.delivered(at:)` only with durable **host acceptance** evidence; `at` is the host-formatted acceptance time.
+- `.read(at:)` only with an **explicit acknowledgement**, keeping the delivered time. Never because a reply appeared.
+- `.failed` only when the host reports the send failed; `canRetry` only when the host can actually retry.
+- `time` is the host's formatted send or receive time for that message (for example "10:24"). The DS never reads a clock or formats dates; `nil` shows no timestamp. A left swipe on `ChatTranscriptList` reveals these times in a right-side column for incoming and outgoing messages alike, and every row moves together while the header and composer stay fixed. Each time is centred on its own bubble, not on the bubble plus its receipt. The receipt stays below the latest outgoing bubble. The swipe is a temporary peek: on release the rows snap back. Assistive technology hears "Sent at …" or "Received at …" without the gesture: the bubble is one element that speaks its text, then the time (iOS `accessibilityValue`, Compose `stateDescription` on the merged bubble node), and the visual time column is hidden from assistive technology. **Right-to-left:** the peek mirrors — a rightward swipe moves the rows right and the times come in from the left edge (Compose: layout-relative drag, `placeRelative`; render `ChatTimestamps-revealed-rtl-light`). iOS RTL is unverified (no RTL render or journey). The 64pt column width is provisional, to be validated against long localized times and large text sizes; it is not a specified value. Thresholds and timing follow platform conventions. Snapback is covered by the reveal tests and journeys, not by screenshots.
+- Otherwise `.none` — no receipt.
+- `ComposerAvailability.disabled`, `voiceAvailable`, attachment content and `InboxItemState` come from runtime
+  state; a fixture or mock must not imply capability.
+
+The reference adapter `MockChatAdapter` in `ChatAdapterContractTests.swift` / `ChatAdapterContractTest.kt`
+(test targets only) proves these mappings; it is not shipped.
+
+## Fixtures (presentation-only)
+
+`ChatComposerFixture`, `ChatPlaygroundFixture`, `InboxPlaygroundFixture` and `AgentActivityFixture` drive the
+Playground exactly as an adapter would. `ChatPlaygroundFixture` answers `activityDetails` with the
+`presentActivity` effect (Kotlin `PresentActivity`) and exposes `activity`, built from its current header plus
+neutral sample history (the Figma master's sample rows are not reproduced). A message sent in a fixture carries **no receipt**. Delivered / Read / Not delivered appear only
+through the explicitly named `simulateHost…` controls (Playground: header overflow → *Fixture host*), at the
+illustrative `fixtureTime` "10:24". The one exception is a root conversation (the Build 9 shell, which has no
+overflow): its host applies the same acceptance and reply completion itself after fixed delays
+(`autoReplyStep` / `advanceAutoReply`, route-map "Simulated reply"). They prove composition and interaction,
+never runtime behaviour.
+In the message sheet, a reaction updates the message, Reply targets the reply accessory at that message
+("Replying to Rem" / "Replying to yourself"), and the host-owned actions (Mark as unread, Copy, Select Text,
+Report, `+`) only show a fixture note naming what the app does; nothing is copied, reported or stored.
+
+## Parity acceptance
+
+- A short transcript (`ChatComposition-default-light`) is bottom-anchored above the composer on both
+  platforms; the empty state (`ChatComposition-empty-light`) is top-placed on both.
+- Only the latest outgoing message carries its Delivered / Read receipt; a Not delivered failure stays
+  visible wherever it is.
+- The header shows one avatar and one identity capsule, back and one trailing action, and no platform
+  navigation bar.
+- Swipe timestamps: rows move together and snap back on release or cancel; each time is centred on its
+  bubble; the bubble speaks "Sent at …" / "Received at …" (journeys: `chatSwipeLeftPeeksTimesAndSnapsBack`
+  asserts the merged bubble node on Android; the iOS bubble carries `accessibilityValue`). RTL mirrors the
+  peek (`ChatTimestamps-revealed-light` / `-rtl-light`, Compose only).
+- A vertical drag that starts on a long-pressable bubble scrolls and opens nothing (iOS journey
+  `testCatalogChatReactionsDeliveryModelMenuAndAttachments`, right after the model menu closes). In the
+  transcript a vertical drag that starts on or beside a bubble scrolls too ([`chat.md`](chat.md) rule 13;
+  journeys `testChatTranscriptDragThatStartsOnABubbleScrolls` / `testChatTranscriptDragBesideABubbleScrolls`
+  and their Android twins).
+
+## Not claimed
+
+No native compilation, render or journey result is claimed from the cloud session that produced this slice; see
+the delivery manifest. Actual-app adoption, runtime receipts, voice, attachments and task routing are verified
+only in the app against its runtime.

@@ -1,0 +1,274 @@
+package com.rem.designsystem.demo
+
+import android.content.Intent
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.runtime.staticCompositionLocalOf
+import kotlinx.coroutines.delay
+import com.rem.designsystem.agents.NewAgentSetupScreen
+import com.rem.designsystem.navigation.RemSidebar
+import com.rem.designsystem.navigation.RemSidebarContainer
+import com.rem.designsystem.navigation.RemSidebarSelection
+import com.rem.designsystem.screens.AgentSettingsDestination
+import com.rem.designsystem.screens.ChatPlaygroundFixture
+import com.rem.designsystem.screens.PlaygroundShellFixture
+import com.rem.designsystem.screens.PlaygroundShellPresentation
+import com.rem.designsystem.screens.SettingsAboutFixture
+import com.rem.designsystem.screens.SettingsAboutScreen
+import com.rem.designsystem.screens.SettingsBillingScreen
+import com.rem.designsystem.screens.SettingsEntryContent
+import com.rem.designsystem.screens.SettingsEntryDestination
+import com.rem.designsystem.screens.SettingsHelpScreen
+import com.rem.designsystem.screens.SettingsPermissionsScreen
+import com.rem.designsystem.tokens.RemColors
+import com.rem.designsystem.tokens.RemTypography
+
+// The Playground app shell (Build 9) — twin of the iOS `PlaygroundShell`. Root: one full-screen
+// conversation (`2702:2351`); the header's sidebar button opens the sidebar (`2702:2479`): Main agent,
+// Side agents, New agent, and the account pill, which opens Settings. Every state transition goes
+// through the DS `PlaygroundShellFixture`; this file draws the native chrome only. Fixtures only: no
+// backend, auth, voice, telephony or provider. The Developer hub (catalog, fixture pickers, every
+// screen) is reached from Settings' "Developer" action. Route map: `docs/playground/route-map.md`.
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Playground() {
+    // Returning from Settings, New agent or Developer (with no fixture change) finds the same agent,
+    // conversation (sent messages and draft included) and scroll position.
+    var shell by remember { mutableStateOf(PlaygroundShellFixture()) }
+    var developerOpen by rememberSaveable { mutableStateOf(false) }
+    // Developer-owned fixtures the shell reads; changed only in the Developer hub.
+    var settingsFixture by rememberSaveable { mutableStateOf(LoadFixture.Success) }
+    var chatConversation by rememberSaveable { mutableStateOf(ChatPlaygroundFixture.Conversation.Populated) }
+    // Hoisted so the shell can leave the composition under the Developer hub without losing work: the live
+    // conversation's fixture (messages, draft) lives here, and the saveable state holder keeps its transcript
+    // scroll position. Only the live key survives (twin of iOS `.id(conversationKey|fixture)`): switching
+    // agents or choosing a different Chat fixture in Developer replaces the conversation, and returning to the
+    // earlier key starts it afresh.
+    val conversationKey = "${shell.conversationKey}|${chatConversation.name}"
+    val conversations = remember { mutableMapOf<String, MutableState<ChatPlaygroundFixture>>() }
+    val saveable = rememberSaveableStateHolder()
+    val liveConversation = conversations.getOrPut(conversationKey) {
+        mutableStateOf(
+            if (shell.selection == RemSidebarSelection.Main) ChatPlaygroundFixture.root(chatConversation)
+            else ChatPlaygroundFixture.root(ChatPlaygroundFixture.Conversation.Empty, agentName = shell.selectedAgent.name),
+        )
+    }
+    // The shell has no fixture-host controls, so the root conversation simulates its reply (twin of the iOS
+    // `.task(id: fixture.autoReplyStep)`): the host accepts, then the reply completes, after the fixture's fixed
+    // delays. Keyed by the conversation and the step, so Stop, the next step or a key change cancels the wait.
+    // It runs here, above the shell, so it keeps running under Settings and Developer as on iOS.
+    val holdsReplies = LocalPlaygroundHoldsReplies.current
+    val autoReplyStep = liveConversation.value.autoReplyStep
+    LaunchedEffect(conversationKey, autoReplyStep) {
+        val step = autoReplyStep ?: return@LaunchedEffect
+        if (holdsReplies) return@LaunchedEffect
+        delay(step.delayMillis)
+        liveConversation.value = liveConversation.value.advanceAutoReply(step)
+    }
+    LaunchedEffect(conversationKey) {
+        // Runs after the old key's provider has left the composition (and saved), so its state is dropped.
+        conversations.keys.filter { it != conversationKey }.forEach { old ->
+            conversations.remove(old)
+            saveable.removeState(old)
+        }
+    }
+    val settingsOpen = shell.presented == PlaygroundShellPresentation.Settings && !developerOpen
+    val covered = developerOpen || settingsOpen
+    // Leaving the conversation (sidebar, Settings, Developer) ends editing: the composer loses focus and the
+    // IME hides, so it never covers the next surface. The draft is fixture state and stays. New agent is
+    // excluded: its sheet focuses the name field itself.
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val leftConversation = shell.isSidebarOpen || covered
+    LaunchedEffect(leftConversation) {
+        if (leftConversation) {
+            focusManager.clearFocus(force = true)
+            keyboard?.hide()
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        // Under Settings the shell stays composed and leaves the merged semantics tree. The Developer hub hosts
+        // its own Chat with the same test tags, and clearAndSetSemantics does not remove nodes from the unmerged
+        // tree, so the shell is not composed under Developer; its selection, conversation, draft and scroll
+        // position are hoisted above, so closing Developer finds them unchanged.
+        if (!developerOpen) Box(Modifier.fillMaxSize().then(if (covered) Modifier.clearAndSetSemantics {} else Modifier)) {
+            RemSidebarContainer(
+                isOpen = shell.isSidebarOpen,
+                onOpenChange = { open -> shell = if (open) shell.openSidebar() else shell.closeSidebar() },
+                sidebar = {
+                    RemSidebar(
+                        display = shell.sidebar,
+                        onAction = { shell = shell.handle(it) },
+                        modifier = Modifier.statusBarsPadding().navigationBarsPadding(),
+                    )
+                },
+            ) {
+                // A different agent (or a different fixture chosen in Developer) is a different conversation.
+                key(conversationKey) {
+                    saveable.SaveableStateProvider(conversationKey) {
+                        PlaygroundChatScreen(liveConversation.value, onExit = {}, onOpenSidebar = { shell = shell.openSidebar() },
+                            fixtureState = liveConversation)
+                    }
+                }
+            }
+        }
+        // System Back closes an open sidebar before it leaves the app.
+        BackHandler(shell.isSidebarOpen && !covered) { shell = shell.closeSidebar() }
+
+        if (shell.presented == PlaygroundShellPresentation.NewAgent && !developerOpen) {
+            val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            ModalBottomSheet(
+                onDismissRequest = { shell = shell.handle(com.rem.designsystem.agents.NewAgentSetupAction.Cancel) },
+                sheetState = sheet,
+                dragHandle = null,
+                containerColor = RemColors.current.backgroundPrimary,
+                modifier = Modifier.testTag("shell.newAgentSheet"),
+            ) {
+                NewAgentSetupScreen(
+                    draft = shell.draft,
+                    onDraftChange = { shell = shell.editDraft(it) },
+                    onAction = { shell = shell.handle(it) },
+                )
+            }
+        }
+        if (settingsOpen) {
+            CoveringLayer {
+                ShellSettings(
+                    fixture = settingsFixture,
+                    onDone = { shell = shell.dismissPresentation() },
+                    onDeveloper = { shell = shell.dismissPresentation(); developerOpen = true },
+                )
+            }
+        }
+        if (developerOpen) {
+            CoveringLayer {
+                DeveloperHub(
+                    fixture = settingsFixture,
+                    onFixture = { settingsFixture = it },
+                    chatConversation = chatConversation,
+                    onChatConversation = { chatConversation = it },
+                    onClose = { developerOpen = false },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Launch seam (route-map "Test seams"): true holds the shell's simulated reply in flight, so Stop stays shown.
+ * Provided by [MainActivity.PlaygroundContent] from the `holdReplies` intent extra; only the active-reply journey
+ * sets it. Twin of iOS `--hold-replies`.
+ */
+val LocalPlaygroundHoldsReplies = staticCompositionLocalOf { false }
+
+/** An opaque full-screen layer that takes every touch, so nothing below it reacts. */
+@Composable
+private fun CoveringLayer(content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(RemColors.current.backgroundPrimary)
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } },
+    ) { content() }
+}
+
+/**
+ * Settings opened from the account pill: the Build 8 Settings entry and its linked destinations, over the
+ * unchanged conversation. Back pops one level; at the entry it returns to the chat. The top bar's
+ * **Developer** action (`settings.developer`) is the one route into the Developer hub.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShellSettings(fixture: LoadFixture, onDone: () -> Unit, onDeveloper: () -> Unit) {
+    val context = LocalContext.current
+    var page by rememberSaveable { mutableStateOf<SettingsEntryDestination?>(null) }
+    var agent by rememberSaveable { mutableStateOf(false) }
+    var destination by rememberSaveable { mutableStateOf<AgentSettingsDestination?>(null) }
+    // Destinations and entry pages draw their own chrome and own Back.
+    val fullScreen = page != null || destination != null
+    val back = {
+        when {
+            agent -> agent = false
+            else -> onDone()
+        }
+    }
+    BackHandler(!fullScreen) { back() }
+    Scaffold(containerColor = RemColors.current.backgroundPrimary, topBar = {
+        if (!fullScreen) {
+            CenterAlignedTopAppBar(
+                title = { Text(if (agent) "Agent settings" else "Settings", style = RemTypography.bodyBold) },
+                navigationIcon = {
+                    IconButton(onClick = back, modifier = Modifier.testTag("back")) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (agent) "Back" else "Back to chat")
+                    }
+                },
+                actions = {
+                    if (!agent) TextButton(onClick = onDeveloper, modifier = Modifier.testTag("settings.developer")) { Text("Developer") }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = RemColors.current.backgroundPrimary),
+            )
+        }
+    }) { padding ->
+        Box(Modifier.then(if (!fullScreen) Modifier.padding(padding) else Modifier).fillMaxSize()) {
+            when {
+                page == SettingsEntryDestination.Billing -> SettingsBillingScreen(onBack = { page = null })
+                page == SettingsEntryDestination.Permissions -> SettingsPermissionsScreen(onBack = { page = null })
+                page == SettingsEntryDestination.About -> SettingsAboutScreen(onBack = { page = null },
+                    version = SettingsAboutFixture.versionLabel(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString()))
+                page == SettingsEntryDestination.HelpSupport -> SettingsHelpScreen(onBack = { page = null })
+                agent -> AgentPreview(fixture, destination = destination,
+                    onOpenDestination = { destination = it }, onDestinationBack = { destination = null },
+                    onCancel = { agent = false })
+                else -> Column(Modifier.verticalScroll(rememberScrollState()).testTag("shell.settings")) {
+                    SettingsEntryContent(openAgent = { agent = true }, onShare = {
+                        val share = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, "Rem — a personal AI assistant.")
+                        }
+                        context.startActivity(Intent.createChooser(share, null))
+                    }, availableDestinations = SettingsEntryDestination.entries.toSet(),
+                        openDestination = { page = it })
+                }
+            }
+        }
+    }
+}

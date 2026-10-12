@@ -4,6 +4,60 @@ Read by the Agent Factory reviewer via `project.context_files`. This turns the p
 *evidence* into a *gate* — the rule that moves cross-platform drift-catching off the founder and onto
 the Reviewer.
 
+## Review contract and stopping rule
+
+Review the exact lane evidence packet supplied for the current revision. Do not reconstruct the
+project from chat history, inspect unrelated surfaces, or expand the assignment into a new product
+design exercise. One full pass may report observed blockers across the submitted scope. A repair
+pass reviews only the changed nodes and directly affected transitions. After that pass, return any
+unresolved product or taste decision to the Director and any evidence or capability blocker to the
+Steward. Do not continue a standing feedback loop.
+
+Keep these verdicts separate:
+
+- **Topology complete:** required states are present and the connector graph is structurally valid.
+- **Screen design complete:** every counted state is an editable canonical screen or an explicitly
+  proposed editable screen that passes the visual contract.
+- **Research complete:** competitive evidence is source-authentic and remains on the single
+  research-only FigJam page; it is not a Rem screen.
+
+A lane may pass one verdict and fail another. Never collapse them into a general `done` status.
+Screenshots used as FigJam references do not prove editable Figma completion; verify the referenced
+Figma master. Reject hand-built imitations, flattened screenshots, SVG reconstructions, blank
+frames, and component-only fragments when they are presented as finished screens.
+
+A full-screen state composed in FigJam from valid remote components is useful topology evidence,
+but still fails the screen-design verdict until an editable Figma Design master owns that
+composition. Report it as `FigJam-composed`, not as a fake screen and not as complete.
+
+## Design-only visual review gate
+
+Do not approve a design lane from a zoomed-out topology overview. Inspect a readable native-size
+render of every changed screen and at least one screen from each unchanged state family affected by
+the change. The overview proves hierarchy and routing; the closeups prove visual fidelity.
+
+For a surface with many states, identify the canonical base screen and its invariants—navigation,
+safe area, background, composer or toolbar, typography, and recurring content regions. Compare
+siblings against that base. Only the cue named by the state may vary unless product evidence
+requires another change. An unexplained missing model control, altered composer, absent user bubble,
+different keyboard generation, missing home indicator, or shifted safe-area treatment is blocking.
+
+Inspect Figma structure as well as pixels. Text must use canonical styles; reusable controls must be
+component instances; platform menus, keyboards, pickers, and progress indicators must use approved
+current-platform assets; semantic icon colors must remain intentional. A visually similar ad hoc
+substitute does not pass. Verify that screen/component descriptions state the purpose,
+distinguishing state, and canonical source, and that any temporary TODO is bounded and removed after
+repair.
+
+Topology labels name screens and states. Connector labels describe only the action or transition.
+Reject connector text that duplicates or overlaps a screen label.
+
+Compare the submitted state inventory with the preservation inventory from before the pass. A
+previously visible canonical screen that became a gap card, lost its image/component provenance, or
+disappeared without an explicit approved removal is a blocking regression. The same rule applies to
+deleted state-family siblings and connectors. When preservation evidence is unavailable, fail the
+affected state as unverified instead of accepting the replacement.
+
 ## Cross-platform parity gate (blocking)
 
 For any change that renders a screen on **both** iOS (SwiftUI) and Android (Compose), the reviewer

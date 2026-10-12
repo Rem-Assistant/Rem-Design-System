@@ -5,6 +5,7 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
+        id("com.android.application") version "8.5.2"
         id("com.android.library") version "8.5.2"
         id("org.jetbrains.kotlin.android") version "2.0.21"
         id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
@@ -22,3 +23,5 @@ dependencyResolutionManagement {
 rootProject.name = "rem-compose-design-system"
 include(":RemDesignSystem")
 project(":RemDesignSystem").projectDir = file("RemDesignSystem")
+include(":demo")
+project(":demo").projectDir = file("demo")
