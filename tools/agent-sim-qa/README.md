@@ -49,7 +49,7 @@ frames, checks and the trust boundary are identical.
 
 - `xctest` (default): the XCTest bridge below. Its input is XCTest-synthesized, the same mechanism as the
   scripted journeys, so it inherits any synthesis artifact they have.
-- `idb`: Meta's idb (`idb-companion` 1.1.8 from the `facebook/fb` tap, `fb-idb` 1.1.7 in a venv;
+- `idb`: Meta's idb (`idb-companion` 1.1.8 from Meta's sha256-pinned release archive, `fb-idb` 1.1.7 in a venv;
   installed only for this arm, before the token step, and the job fails if other versions resolve). The
   controller installs the verified build with `simctl install`, launches it with `simctl launch` and the
   profile's arguments (`simqa.LAUNCH_ARGS`, kept equal to the bridge's), starts `idb_companion` on port
@@ -138,7 +138,7 @@ Artifact `agent-sim-qa-<scenario>-<sha>-<run id>` (7 days): `frames/frame-NN.png
   (`model_quota`, `model_auth`) and never retried with other credentials.
 - Residual: the candidate app and its UI tests run on the same runner user as the controller while the
   token is in the controller's environment. That is why the SHA is an allow-listed choice.
-- idb arm: Homebrew and pip code (pinned versions, but the tap itself is fetched at its current head) runs
+- idb arm: the pinned idb-companion archive (sha256-checked) and pip code (pinned versions) run
   as the same runner user, and `idb_companion` listens on a TCP port on the disposable runner for the
   run's duration. It and every `idb` call get the credential-free environment; the model cannot reach
   it (Read tool only).
@@ -146,7 +146,7 @@ Artifact `agent-sim-qa-<scenario>-<sha>-<run id>` (7 days): `frames/frame-NN.png
 ## Cost
 
 About 15 to 30 `macos-14` minutes per run (build is most of it; macOS minutes bill at 10x Linux on
-private repositories), plus up to 14 (22 for the gesture scenarios) short Read-only model calls charged to the existing subscription
+private repositories), plus up to 14 (16 for the account-settings scenario, 22 for the gesture scenarios) short Read-only model calls charged to the existing subscription
 token's usage limits. No new paid service.
 
 ## PR compile-only check
