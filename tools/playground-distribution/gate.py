@@ -32,6 +32,11 @@ NATIVE_EXCEPTIONS = {
         'approved_on': '2026-10-12',
         'reason': 'Build 9 Play internal testing: owner shipped without waiting for a full native run',
     },
+    ('8aa4e6ed0c1411cd3ccdcc750a7976dee9dfcafc', 'android', '10'): {
+        'approved_by': 'samuelalake',
+        'approved_on': '2026-10-12',
+        'reason': 'Android build 10 (Build 9 + store readiness, #132) to Play internal testing without a full native run',
+    },
 }
 
 
