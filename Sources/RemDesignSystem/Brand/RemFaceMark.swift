@@ -431,3 +431,32 @@ extension EnvironmentValues {
     .padding(40)
 }
 #endif
+
+// MARK: - Avatar slot
+
+/// **RemAvatarSlot** — an optional replacement for the Rem face wherever a component draws the agent's
+/// avatar (`ChatHeader`, `ChatScreen`, `RemSidebar`'s main-agent row). The component calls it with the
+/// face mode it would have drawn (`.idle`, or `.thinking` while the agent works) and the face size in
+/// points, and places the returned view exactly where `RemFaceMark` would be: inside the same frame,
+/// background well and accessibility treatment (the avatar is decorative; the name carries the
+/// meaning). `nil` (every default) keeps the Rem face, so Rem is unchanged.
+///
+/// An adopting product passes its own mascot, e.g.
+/// `avatar: { mode, size in AnyView(MayMascot(thinking: mode == .thinking).frame(width: size, height: size)) }`.
+/// Compose twin: `RemAvatarSlot` in `brand/RemFaceMark.kt`.
+public typealias RemAvatarSlot = (_ mode: RemFaceMark.Mode, _ size: CGFloat) -> AnyView
+
+/// Draws `slot` when given, otherwise the Rem face in brand blue.
+struct RemAvatar: View {
+    let slot: RemAvatarSlot?
+    let mode: RemFaceMark.Mode
+    let size: CGFloat
+
+    var body: some View {
+        if let slot {
+            slot(mode, size)
+        } else {
+            RemFaceMark(mode: mode, tint: DesignTokens.Color.brandBlue, size: size)
+        }
+    }
+}

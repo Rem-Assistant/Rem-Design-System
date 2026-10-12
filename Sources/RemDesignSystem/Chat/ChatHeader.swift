@@ -12,6 +12,9 @@ import SwiftUI
 /// (`line.3.horizontal`, "Open sidebar"; Figma A2 · Chat, sidebar closed `2702:2351`). Activity text is host
 /// data for the agent's lifecycle, not transport evidence; the Playground passes neutral fixture copy.
 ///
+/// `avatar` replaces the Rem face with a product's own mascot (`RemAvatarSlot`); it receives the face
+/// mode and the 48pt face size and is drawn inside the same 64pt well. Default `nil`: the Rem face.
+///
 /// Figma canonical: **Rem/Chat v2/Header** (`2054:19725`). Compose sibling: `chat/ChatHeader.kt`.
 public struct ChatHeader: View {
     /// Drives the status dot: green when connected, orange when Rem needs the person.
@@ -30,6 +33,7 @@ public struct ChatHeader: View {
     private let onMenu: (() -> Void)?
     private let onOverflow: (() -> Void)?
     private let onCall: (() -> Void)?
+    private let avatar: RemAvatarSlot?
 
     /// Height of the header-owned controls; their centre sits on the 64pt avatar's centre.
     public static let controlSize: CGFloat = 44
@@ -45,7 +49,8 @@ public struct ChatHeader: View {
         onBack: (() -> Void)? = nil,
         onOverflow: (() -> Void)? = nil,
         onCall: (() -> Void)? = nil,
-        onMenu: (() -> Void)? = nil
+        onMenu: (() -> Void)? = nil,
+        avatar: RemAvatarSlot? = nil
     ) {
         self.name = name
         self.activity = activity
@@ -57,6 +62,7 @@ public struct ChatHeader: View {
         self.onMenu = onMenu
         self.onOverflow = onOverflow
         self.onCall = onCall
+        self.avatar = avatar
     }
 
     public var body: some View {
@@ -107,7 +113,9 @@ public struct ChatHeader: View {
 
     private var identityStack: some View {
         VStack(spacing: 6) {
-            RemFaceMark(mode: faceMode, tint: DesignTokens.Color.brandBlue, size: 48)
+            // `avatar` (default `nil`: the Rem face) lets a product draw its own mascot in the same 48pt
+            // face position inside the 64pt well.
+            RemAvatar(slot: avatar, mode: faceMode, size: 48)
                 // A fresh mark per mode: leaving `.thinking` otherwise keeps its repeat-forever outline
                 // draw running (the idle trim target equals the loop's end value, so nothing replaces
                 // it) and the idle face can be caught with no outline.

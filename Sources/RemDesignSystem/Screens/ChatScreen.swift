@@ -53,6 +53,7 @@ public struct ChatScreen<Transcript: View>: View {
         let replyContext: ChatReplyContext?
         let emptyState: ChatEmptyState?
         let modelMenu: ChatModelMenu?
+        let avatar: RemAvatarSlot?
         let onAction: (ChatScreenAction) -> Void
     }
 
@@ -73,7 +74,8 @@ public struct ChatScreen<Transcript: View>: View {
     /// The full-screen Chat composition. `transcript` is the rich-content slot: compose
     /// `ChatTranscriptList` and any host cards (tool results, proposals, browser) inside it. When
     /// `emptyState` is non-nil it is shown instead of the transcript. Ordinary and task chat use the
-    /// same composition; a task reply only adds `replyContext`.
+    /// same composition; a task reply only adds `replyContext`. `avatar` replaces the header's Rem face
+    /// with a product's own mascot (`RemAvatarSlot`); `nil` keeps the Rem face.
     public init(
         header: ChatHeaderDisplay,
         composer: ChatComposerState,
@@ -81,6 +83,7 @@ public struct ChatScreen<Transcript: View>: View {
         emptyState: ChatEmptyState? = nil,
         modelMenu: ChatModelMenu? = nil,
         voiceBar: VoiceBarState? = nil,
+        avatar: RemAvatarSlot? = nil,
         onAction: @escaping (ChatScreenAction) -> Void,
         @ViewBuilder transcript: @escaping () -> Transcript
     ) {
@@ -88,7 +91,7 @@ public struct ChatScreen<Transcript: View>: View {
                   voiceBar: voiceBar, transcript: transcript)
         self.composition = Composition(
             header: header, composer: composer, replyContext: replyContext, emptyState: emptyState,
-            modelMenu: modelMenu, onAction: onAction
+            modelMenu: modelMenu, avatar: avatar, onAction: onAction
         )
     }
 
@@ -240,7 +243,8 @@ public struct ChatScreen<Transcript: View>: View {
                 onBack: c.header.showsBack ? { c.onAction(.back) } : nil,
                 onOverflow: c.header.showsOverflow ? { c.onAction(.overflow) } : nil,
                 onCall: c.header.showsCall ? { c.onAction(.call) } : nil,
-                onMenu: c.header.showsSidebar ? { c.onAction(.openSidebar) } : nil
+                onMenu: c.header.showsSidebar ? { c.onAction(.openSidebar) } : nil,
+                avatar: c.avatar
             )
             .padding(.bottom, DesignTokens.Spacing.sm)
             .background(GeometryReader { header in

@@ -39,7 +39,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rem.designsystem.agents.AgentSectionHeader
-import com.rem.designsystem.brand.RemFaceMark
+import com.rem.designsystem.brand.RemAvatar
+import com.rem.designsystem.brand.RemAvatarSlot
 import com.rem.designsystem.brand.RemFaceMarkMode
 import com.rem.designsystem.icons.RemMaterialSymbol
 import com.rem.designsystem.icons.RemMaterialSymbols
@@ -56,12 +57,15 @@ import com.rem.designsystem.tokens.RemTypography
  *
  * Figma: sidebar column `2702:2514` + bottom actions `2702:2682` in `2702:2479`; account pill
  * `2709:2648`. Host it in [RemSidebarContainer] for the push-open behaviour. Display + callbacks only.
+ * [mainAgentAvatar] replaces the Rem face on the Main agent row with a product's own mascot
+ * ([RemAvatarSlot], called with [RemFaceMarkMode.Idle] and the 24dp face size); `null` keeps the Rem face.
  */
 @Composable
 fun RemSidebar(
     display: RemSidebarDisplay,
     onAction: (RemSidebarAction) -> Unit,
     modifier: Modifier = Modifier,
+    mainAgentAvatar: RemAvatarSlot? = null,
 ) {
     val colors = RemColors.current
     Box(
@@ -86,6 +90,7 @@ fun RemSidebar(
                         agent = display.mainAgent,
                         isMain = true,
                         isSelected = display.isMainSelected,
+                        avatar = mainAgentAvatar,
                         modifier = Modifier.testTag("sidebar.agent.main"),
                         onClick = { onAction(RemSidebarAction.SelectMain) },
                     )
@@ -152,6 +157,7 @@ private fun SidebarAgentRow(
     isMain: Boolean,
     isSelected: Boolean,
     modifier: Modifier = Modifier,
+    avatar: RemAvatarSlot? = null,
     onClick: () -> Unit,
 ) {
     val colors = RemColors.current
@@ -178,7 +184,7 @@ private fun SidebarAgentRow(
     ) {
         Box(Modifier.size(29.dp), contentAlignment = Alignment.Center) {
             if (isMain) {
-                RemFaceMark(mode = RemFaceMarkMode.Idle, tint = colors.brandBlue, size = 24.dp)
+                RemAvatar(avatar, RemFaceMarkMode.Idle, 24.dp)
             } else {
                 SymbolGlyph(RemMaterialSymbols.SideAgentChat, 20, colors.labelPrimary)
             }

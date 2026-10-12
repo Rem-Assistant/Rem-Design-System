@@ -207,3 +207,25 @@ private fun faceMarkReduceMotion(): Boolean {
     }
     return reduced
 }
+
+// Avatar slot
+/**
+ * **RemAvatarSlot** — an optional replacement for the Rem face wherever a component draws the agent's
+ * avatar ([com.rem.designsystem.chat.ChatHeader], [com.rem.designsystem.screens.ChatScreen],
+ * [com.rem.designsystem.navigation.RemSidebar]'s main-agent row). The component calls it with the face
+ * mode it would have drawn ([RemFaceMarkMode.Idle], or [RemFaceMarkMode.Thinking] while the agent works)
+ * and the face size, and places it exactly where [RemFaceMark] would be: inside the same frame, background
+ * well and semantics (the avatar is decorative; the name carries the meaning). `null` (every default)
+ * keeps the Rem face, so Rem is unchanged.
+ *
+ * An adopting product passes its own mascot, e.g.
+ * `avatar = { mode, size -> MayMascot(thinking = mode == RemFaceMarkMode.Thinking, modifier = Modifier.size(size)) }`.
+ * SwiftUI twin: `RemAvatarSlot` in `Brand/RemFaceMark.swift`.
+ */
+typealias RemAvatarSlot = @Composable (mode: RemFaceMarkMode, size: Dp) -> Unit
+
+/** Draws [slot] when given, otherwise the Rem face in brand blue. */
+@Composable
+internal fun RemAvatar(slot: RemAvatarSlot?, mode: RemFaceMarkMode, size: Dp) {
+    if (slot != null) slot(mode, size) else RemFaceMark(mode = mode, tint = RemColors.current.brandBlue, size = size)
+}
