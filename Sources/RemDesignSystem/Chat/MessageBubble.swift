@@ -390,7 +390,7 @@ private struct LongPressAction: ViewModifier {
     static let maximumDistance: CGFloat = 10
 
     func body(content: Content) -> some View {
-        if let action {
+        if let action, !ProcessInfo.processInfo.arguments.contains("--probe-no-longpress") {  // PROBE only
             content
                 // An explicit long press with a drag threshold, attached simultaneously, instead of
                 // `onLongPressGesture`: it never claims the touch from the enclosing ScrollView, and once

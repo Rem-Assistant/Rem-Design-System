@@ -1608,4 +1608,11 @@ final class PlaygroundNavigationUITests: XCTestCase {
         }
         probe3Outcome("C gutter long x4, scrolling DISABLED (should fail)")
     }
+
+    func testProbe4_OnBubbleNoLongPress() {
+        app.terminate()
+        app.launchArguments = JourneyLaunch.arguments(["--developer", "--settings-light", "--probe-no-longpress"])
+        app.launch()
+        testProbe3A_OnBubbleLongDrags()
+    }
 }
