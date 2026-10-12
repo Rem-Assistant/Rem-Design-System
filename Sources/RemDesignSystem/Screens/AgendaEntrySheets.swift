@@ -160,7 +160,9 @@ func calendarColor(_ calendar: AgendaCreationDraft.EventCalendar) -> Color {
 /// **Add to Today** (or Tomorrow / a date, for the viewed day) opens **Pick a Time** for that day; **Plan**
 /// opens **Pick a Date**, then Next → **Pick a Time**. Pick a Time's Date row expands the calendar. Done
 /// schedules every selected task together at the chosen slot (default 9:00 AM); the close control leaves
-/// the Agenda unchanged. Native `DatePicker`s render the calendar and time wheel. Compose twin:
+/// the Agenda unchanged. An empty filter shows the canonical `RemContentUnavailableView` (the filter's
+/// `emptySymbol`, `emptyText` and `emptyMessage`; identifier `agendaSchedule.empty`). The filter and the
+/// creation mode stay native `.segmented` pickers on iOS — Compose's `RemSegmentedPicker` reproduces them. Native `DatePicker`s render the calendar and time wheel. Compose twin:
 /// `AgendaScheduleSheet` in `screens/AgendaEntrySheets.kt`.
 public struct AgendaScheduleSheet: View {
     private enum Step { case select, pickDate, pickTime }
@@ -176,14 +178,17 @@ public struct AgendaScheduleSheet: View {
     @State private var time: AgendaTime = .scheduleDefault
     @State private var dateExpanded = false
 
+    /// - Parameter initialFilter: the filter the sheet opens on (default `.all`, unchanged).
     public init(
         fixture: AgendaEntryFixture,
+        initialFilter: AgendaScheduleFilter = .all,
         onCancel: @escaping () -> Void = {},
         onDone: @escaping (AgendaScheduleRequest) -> Void = { _ in }
     ) {
         self.fixture = fixture
         self.onCancel = onCancel
         self.onDone = onDone
+        _filter = State(initialValue: initialFilter)
         _day = State(initialValue: fixture.viewedDay)
     }
 
@@ -259,13 +264,15 @@ public struct AgendaScheduleSheet: View {
             let tasks = fixture.candidates(filter)
             ScrollView {
                 if tasks.isEmpty {
-                    Text(filter.emptyText)
-                        .font(DesignTokens.Typography.footnote)
-                        .foregroundStyle(DesignTokens.Color.labelSecondary)
-                        .frame(maxWidth: .infinity, minHeight: 88)
-                        .background(DesignTokens.Color.backgroundSecondary,
-                                    in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium))
-                        .accessibilityIdentifier("agendaSchedule.empty")
+                    // The canonical empty state (as the Agenda's "No agenda yet"): a glyph, the filter's
+                    // title and a short message, read by VoiceOver as one element.
+                    RemContentUnavailableView(
+                        symbol: filter.emptySymbol,
+                        title: filter.emptyText,
+                        message: filter.emptyMessage
+                    )
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("agendaSchedule.empty")
                 } else {
                     VStack(spacing: 0) {
                         ForEach(Array(tasks.enumerated()), id: \.element.id) { index, task in

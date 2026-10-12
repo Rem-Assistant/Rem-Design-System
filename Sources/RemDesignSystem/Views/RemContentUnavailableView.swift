@@ -33,6 +33,8 @@ public struct RemContentUnavailableView: View {
             Image(systemName: symbol)
                 .font(.system(size: 52, weight: .regular))
                 .foregroundStyle(DesignTokens.Color.labelTertiary)
+                // Decorative, as in Compose (`contentDescription = null`): the title carries the meaning.
+                .accessibilityHidden(true)
             VStack(spacing: DesignTokens.Spacing.xs) {
                 Text(title)
                     .font(DesignTokens.Typography.title3Bold)

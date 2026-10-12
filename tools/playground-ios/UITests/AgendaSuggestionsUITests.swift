@@ -302,7 +302,11 @@ final class AgendaSuggestionsUITests: XCTestCase {
         XCTAssertFalse(app.buttons["agendaSchedule.task.dentist"].exists)
         app.buttons["agendaSchedule.task.specs"].tap()
         filter.buttons["Inbox"].tap()
-        XCTAssertEqual(app.staticTexts["agendaSchedule.empty"].label, "No tasks in Inbox", "The empty filter state")
+        // The empty state is one combined element: the filter's title, then its message.
+        let empty = app.descendants(matching: .any).matching(identifier: "agendaSchedule.empty").firstMatch
+        XCTAssertTrue(empty.exists, "The empty filter state")
+        XCTAssertTrue(empty.label.hasPrefix("No tasks in Inbox"), "The empty filter state leads with its title: \(empty.label)")
+        XCTAssertTrue(empty.label.contains("Tasks you capture without a date land here."), "and carries its message")
         XCTAssertTrue(app.buttons["agendaSchedule.plan"].isEnabled, "Selection is retained across filters")
         app.buttons["agendaSchedule.plan"].tap()
         let next = app.buttons["agendaSchedule.next"]

@@ -29,6 +29,9 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -37,9 +40,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
@@ -60,10 +60,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.IntrinsicSize
+import com.rem.designsystem.primitives.RemContentUnavailableView
+import com.rem.designsystem.primitives.RemSegmentedPicker
+import com.rem.designsystem.primitives.RemSegmentedPickerStyle
 import com.rem.designsystem.buttons.RemButton
 import com.rem.designsystem.buttons.RemButtonSize
 import com.rem.designsystem.buttons.RemButtonVariant
@@ -106,7 +108,9 @@ private fun SheetHeader(
  * **AgendaCreationSheet** — Compose twin of the SwiftUI `AgendaCreationSheet`. Add New's destination:
  * the authored creation form (Creation `2390:28498`; the create menu's "New Task or Event" `2049:10336`)
  * in a native modal bottom sheet. Save returns the draft to the host, which applies it in memory; Cancel
- * (or dismissing the sheet) leaves the Agenda unchanged.
+ * (or dismissing the sheet) leaves the Agenda unchanged. [segmentedStyle] picks the New Task · New Event
+ * control's renderer: [RemSegmentedPickerStyle.Material] (default, unchanged) or the iOS-look
+ * [RemSegmentedPickerStyle.Ios] parity alternate. Its `agendaCreate.mode.<Mode>` tags are the same in both.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,13 +118,14 @@ fun AgendaCreationSheet(
     onCancel: () -> Unit,
     onSave: (AgendaCreationDraft) -> Unit,
     initialDraft: AgendaCreationDraft = AgendaCreationDraft(),
+    segmentedStyle: RemSegmentedPickerStyle = RemSegmentedPickerStyle.Material,
 ) {
     ModalBottomSheet(
         onDismissRequest = onCancel,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = RemColors.current.backgroundPrimary,
     ) {
-        AgendaCreationContent(initialDraft = initialDraft, onCancel = onCancel, onSave = onSave)
+        AgendaCreationContent(initialDraft = initialDraft, onCancel = onCancel, onSave = onSave, segmentedStyle = segmentedStyle)
     }
 }
 
@@ -135,6 +140,7 @@ fun AgendaCreationContent(
     initialDraft: AgendaCreationDraft = AgendaCreationDraft(),
     onCancel: () -> Unit = {},
     onSave: (AgendaCreationDraft) -> Unit = {},
+    segmentedStyle: RemSegmentedPickerStyle = RemSegmentedPickerStyle.Material,
 ) {
     val colors = RemColors.current
     var draft by remember { mutableStateOf(initialDraft) }
@@ -154,12 +160,13 @@ fun AgendaCreationContent(
             modifier = Modifier.padding(horizontal = RemSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(RemSpacing.sm),
         ) {
-            Segmented(
+            RemSegmentedPicker(
                 options = AgendaCreationDraft.Mode.entries,
                 selected = draft.mode,
+                onSelect = { draft = draft.copy(mode = it) },
                 label = { it.title },
                 tag = { "agendaCreate.mode.${it.name}" },
-                onSelect = { draft = draft.copy(mode = it) },
+                style = segmentedStyle,
             )
             Row(
                 modifier = Modifier.padding(top = RemSpacing.sm),
@@ -291,29 +298,6 @@ private fun Summary(icon: ImageVector, text: String) {
     }
 }
 
-/** Material 3 single-choice segmented buttons, the Android counterpart of the iOS `.segmented` picker. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun <T> Segmented(
-    options: List<T>,
-    selected: T,
-    label: (T) -> String,
-    tag: (T) -> String,
-    onSelect: (T) -> Unit,
-) {
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = option == selected,
-                onClick = { onSelect(option) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                modifier = Modifier.testTag(tag(option)),
-                label = { Text(label(option), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            )
-        }
-    }
-}
-
 // MARK: - Schedule · Schedule Tasks sheet
 
 private enum class ScheduleStep(val title: String) { Select("Schedule Tasks"), PickDate("Pick a Date"), PickTime("Pick a Time") }
@@ -325,7 +309,10 @@ private enum class ScheduleStep(val title: String) { Select("Schedule Tasks"), P
  * Tomorrow / a date) opens **Pick a Time** for the viewed day; **Plan** opens **Pick a Date**, then Next →
  * **Pick a Time**, whose Date row expands the calendar. Done schedules every selected task together
  * (default 9:00 AM); close leaves the Agenda unchanged. Material 3 `DatePicker` / `TimePicker` render
- * the native calendar and clock.
+ * the native calendar and clock. An empty filter shows the canonical [RemContentUnavailableView] (glyph,
+ * title, message; tag `agendaSchedule.empty`). [segmentedStyle] picks the All / Inbox / Overdue control's
+ * renderer: [RemSegmentedPickerStyle.Material] (default, unchanged) or the iOS-look
+ * [RemSegmentedPickerStyle.Ios]; its `agendaSchedule.filter.<Filter>` tags are the same in both.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -333,13 +320,14 @@ fun AgendaScheduleSheet(
     fixture: AgendaEntryFixture,
     onCancel: () -> Unit,
     onDone: (AgendaScheduleRequest) -> Unit,
+    segmentedStyle: RemSegmentedPickerStyle = RemSegmentedPickerStyle.Material,
 ) {
     ModalBottomSheet(
         onDismissRequest = onCancel,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = RemColors.current.backgroundPrimary,
     ) {
-        AgendaScheduleContent(fixture = fixture, onCancel = onCancel, onDone = onDone)
+        AgendaScheduleContent(fixture = fixture, onCancel = onCancel, onDone = onDone, segmentedStyle = segmentedStyle)
     }
 }
 
@@ -351,9 +339,11 @@ fun AgendaScheduleContent(
     modifier: Modifier = Modifier,
     onCancel: () -> Unit = {},
     onDone: (AgendaScheduleRequest) -> Unit = {},
+    segmentedStyle: RemSegmentedPickerStyle = RemSegmentedPickerStyle.Material,
+    initialFilter: AgendaScheduleFilter = AgendaScheduleFilter.All,
 ) {
     val colors = RemColors.current
-    var filter by remember { mutableStateOf(AgendaScheduleFilter.All) }
+    var filter by remember { mutableStateOf(initialFilter) }
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var step by remember { mutableStateOf(ScheduleStep.Select) }
     var dateExpanded by remember { mutableStateOf(false) }
@@ -399,24 +389,27 @@ fun AgendaScheduleContent(
                 modifier = Modifier.padding(horizontal = RemSpacing.lg).padding(top = RemSpacing.sm, bottom = RemSpacing.lg),
                 verticalArrangement = Arrangement.spacedBy(RemSpacing.lg),
             ) {
-                Segmented(
+                RemSegmentedPicker(
                     options = AgendaScheduleFilter.entries,
                     selected = filter,
+                    onSelect = { filter = it },
                     label = { it.title },
                     tag = { "agendaSchedule.filter.${it.name}" },
-                    onSelect = { filter = it },
+                    style = segmentedStyle,
                 )
                 val tasks = fixture.candidates(filter)
                 if (tasks.isEmpty()) {
-                    Text(
-                        filter.emptyText,
-                        style = RemTypography.footnote,
-                        color = colors.labelSecondary,
-                        textAlign = TextAlign.Center,
+                    // The canonical empty state (as the Agenda's "No agenda yet"): a glyph, the filter's title
+                    // and a short message. Sized to its content (the primitive fills its bounds), and one
+                    // merged node, so `agendaSchedule.empty` reads the title then the message.
+                    RemContentUnavailableView(
+                        icon = filter.emptyIcon,
+                        title = filter.emptyText,
+                        message = filter.emptyMessage,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(colors.backgroundSecondary, RoundedCornerShape(RemRadius.medium))
-                            .padding(vertical = 35.dp)
+                            .height(IntrinsicSize.Min)
+                            .semantics(mergeDescendants = true) {}
                             .testTag("agendaSchedule.empty"),
                     )
                 } else {
@@ -489,6 +482,14 @@ fun AgendaScheduleContent(
         }
     }
 }
+
+/** The empty state's glyph: the closest Material Symbols to the SwiftUI `emptySymbol`s. */
+private val AgendaScheduleFilter.emptyIcon: ImageVector
+    get() = when (this) {
+        AgendaScheduleFilter.All -> Icons.Outlined.Checklist // checklist
+        AgendaScheduleFilter.Inbox -> Icons.Outlined.Inbox // tray
+        AgendaScheduleFilter.Overdue -> Icons.Outlined.CheckCircle // checkmark.circle
+    }
 
 /** `ScheduleTaskRow` (`2302:11932` / `2302:11938`): title, metadata, selection glyph. */
 @Composable
