@@ -141,28 +141,32 @@ fun RemTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable ()
     }
 }
 
+/** Material 3's default type scale, the metrics [RemMaterialTypography] keeps. */
+private val MaterialDefaults = Typography()
+
 /**
- * Material 3 [Typography] on the Rem ramp (`typography.material3` in tokens.json), all Inter. [RemTheme] installs
- * it; pass it to your own `MaterialTheme(typography = RemMaterialTypography)` if you theme Material outside
+ * Material 3 [Typography] in Inter (`typography.material3` in tokens.json): every slot keeps Material's own size,
+ * line height, weight and tracking and only swaps the family, so Material widgets change face, not size. [RemTheme]
+ * installs it; pass it to your own `MaterialTheme(typography = RemMaterialTypography)` if you theme Material outside
  * RemTheme. Inter is bundled as Regular (400), Medium (500), SemiBold (600) and Bold (700); 100 to 300 render
  * Regular and 800 to 900 render Bold (nearest-weight matching; no synthetic bold).
  */
 val RemMaterialTypography: Typography = Typography(
-    displayLarge = RemTypography.largeTitle,
-    displayMedium = RemTypography.largeTitle,
-    displaySmall = RemTypography.largeTitle,
-    headlineLarge = RemTypography.title1,
-    headlineMedium = RemTypography.title2Bold,
-    headlineSmall = RemTypography.title3,
-    titleLarge = RemTypography.title3,
-    titleMedium = RemTypography.bodyBold,
-    titleSmall = RemTypography.subheadline,
-    bodyLarge = RemTypography.body,
-    bodyMedium = RemTypography.subheadline,
-    bodySmall = RemTypography.footnote,
-    labelLarge = RemTypography.body,
-    labelMedium = RemTypography.footnote,
-    labelSmall = RemTypography.caption1,
+    displayLarge = MaterialDefaults.displayLarge.copy(fontFamily = Inter),
+    displayMedium = MaterialDefaults.displayMedium.copy(fontFamily = Inter),
+    displaySmall = MaterialDefaults.displaySmall.copy(fontFamily = Inter),
+    headlineLarge = MaterialDefaults.headlineLarge.copy(fontFamily = Inter),
+    headlineMedium = MaterialDefaults.headlineMedium.copy(fontFamily = Inter),
+    headlineSmall = MaterialDefaults.headlineSmall.copy(fontFamily = Inter),
+    titleLarge = MaterialDefaults.titleLarge.copy(fontFamily = Inter),
+    titleMedium = MaterialDefaults.titleMedium.copy(fontFamily = Inter),
+    titleSmall = MaterialDefaults.titleSmall.copy(fontFamily = Inter),
+    bodyLarge = MaterialDefaults.bodyLarge.copy(fontFamily = Inter),
+    bodyMedium = MaterialDefaults.bodyMedium.copy(fontFamily = Inter),
+    bodySmall = MaterialDefaults.bodySmall.copy(fontFamily = Inter),
+    labelLarge = MaterialDefaults.labelLarge.copy(fontFamily = Inter),
+    labelMedium = MaterialDefaults.labelMedium.copy(fontFamily = Inter),
+    labelSmall = MaterialDefaults.labelSmall.copy(fontFamily = Inter),
 )
 
 object RemColors {

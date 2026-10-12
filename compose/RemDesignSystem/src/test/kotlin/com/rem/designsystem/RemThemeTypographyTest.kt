@@ -7,6 +7,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.TextStyle
@@ -50,8 +51,9 @@ class RemThemeTypographyTest {
             DropdownMenuItem(text = { Text("Rename", onTextLayout = { style = it.layoutInput.style }) }, onClick = {})
         }
         assertEquals(Inter, style!!.fontFamily)
-        // labelLarge on the Rem ramp: menu items are body, as on iOS.
-        assertEquals(RemTypography.body.fontSize, style!!.fontSize)
+        // Material's own labelLarge metrics (14sp Medium): only the face changes.
+        assertEquals(Typography().labelLarge.fontSize, style!!.fontSize)
+        assertEquals(FontWeight.Medium, style!!.fontWeight)
     }
 
     @Test
@@ -66,14 +68,22 @@ class RemThemeTypographyTest {
 
     @Test
     fun everyMaterialSlotIsInter() {
-        var installed: androidx.compose.material3.Typography? = null
+        var installed: Typography? = null
         render { installed = MaterialTheme.typography }
         assertSame(RemMaterialTypography, installed)
         with(RemMaterialTypography) {
             listOf(
                 displayLarge, displayMedium, displaySmall, headlineLarge, headlineMedium, headlineSmall,
                 titleLarge, titleMedium, titleSmall, bodyLarge, bodyMedium, bodySmall, labelLarge, labelMedium, labelSmall,
-            ).forEachIndexed { index, slot -> assertEquals("slot $index", Inter, slot.fontFamily) }
+            ).zip(Typography().run {
+                listOf(
+                    displayLarge, displayMedium, displaySmall, headlineLarge, headlineMedium, headlineSmall,
+                    titleLarge, titleMedium, titleSmall, bodyLarge, bodyMedium, bodySmall, labelLarge, labelMedium, labelSmall,
+                )
+            }).forEachIndexed { index, (slot, material) ->
+                assertEquals("slot $index is Inter", Inter, slot.fontFamily)
+                assertEquals("slot $index keeps Material's metrics", material.copy(fontFamily = Inter), slot)
+            }
         }
     }
 

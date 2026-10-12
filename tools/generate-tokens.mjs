@@ -259,11 +259,9 @@ function buildKotlin() {
   }).join("\n");
   const aliases = Object.entries(T.typography.roleAliases).filter(([k]) => !k.startsWith("$"))
     .map(([k, v]) => `    val ${k} = ${v}`).join("\n");
-  const material = Object.entries(T.typography.material3).filter(([k]) => !k.startsWith("$"))
-    .map(([slot, role]) => {
-      if (!roles[role]) throw new Error(`typography.material3.${slot} names unknown role ${role}`);
-      return `    ${slot} = RemTypography.${role},`;
-    }).join("\n");
+  const m3 = T.typography.material3;
+  if (m3.fontFamily !== "Inter") throw new Error("typography.material3.fontFamily: only Inter is bundled");
+  const material = m3.slots.map((slot) => `    ${slot} = MaterialDefaults.${slot}.copy(fontFamily = Inter),`).join("\n");
   return `${HEADER_KT}@file:Suppress("MagicNumber", "unused")
 
 package com.rem.designsystem.tokens
@@ -336,9 +334,13 @@ fun RemTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable ()
     }
 }
 
+/** Material 3's default type scale, the metrics [RemMaterialTypography] keeps. */
+private val MaterialDefaults = Typography()
+
 /**
- * Material 3 [Typography] on the Rem ramp (\`typography.material3\` in tokens.json), all Inter. [RemTheme] installs
- * it; pass it to your own \`MaterialTheme(typography = RemMaterialTypography)\` if you theme Material outside
+ * Material 3 [Typography] in Inter (\`typography.material3\` in tokens.json): every slot keeps Material's own size,
+ * line height, weight and tracking and only swaps the family, so Material widgets change face, not size. [RemTheme]
+ * installs it; pass it to your own \`MaterialTheme(typography = RemMaterialTypography)\` if you theme Material outside
  * RemTheme. Inter is bundled as Regular (400), Medium (500), SemiBold (600) and Bold (700); 100 to 300 render
  * Regular and 800 to 900 render Bold (nearest-weight matching; no synthetic bold).
  */

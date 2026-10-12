@@ -12,11 +12,11 @@ form diverges.
   resolve to the light/dark hex approximation and switch on `isSystemInDarkTheme()` (Compose has no
   Apple system palette) — exactly the CSS target's behavior. **Do not edit; run the generator.**
   - **Inter by default.** `RemTheme` also sets `LocalTextStyle` to `RemTypography.body` and installs
-    `RemMaterialTypography` (Material 3 `Typography` mapped onto the Rem ramp by `typography.material3` in
-    `tokens.json`) through an inner `MaterialTheme` that keeps the surrounding color scheme, shapes, indication and
-    text-selection colors. So a bare `Text`, `TextField`, `DropdownMenuItem`, `TopAppBar` / `Scaffold` titles,
-    `AlertDialog` and `ModalBottomSheet` content render in Inter at Rem sizes (menu items and button labels are
-    `body`, 17sp, as on iOS) instead of falling back to Roboto. A consumer's own `MaterialTheme` *inside* `RemTheme`
+    `RemMaterialTypography` (Material 3's own type scale with the family swapped to Inter, `typography.material3`
+    in `tokens.json`) through an inner `MaterialTheme` that keeps the surrounding color scheme, shapes, indication
+    and text-selection colors. So a bare `Text`, `TextField`, `DropdownMenuItem`, `SegmentedButton`, `TopAppBar` /
+    `Scaffold` titles, `AlertDialog` and `ModalBottomSheet` content render in Inter instead of falling back to
+    Roboto. Material widgets keep Material's sizes and weights (a menu item is 14sp Medium); only the face changes. A consumer's own `MaterialTheme` *inside* `RemTheme`
     still wins; outside it, its typography is replaced by Rem's (pass `RemMaterialTypography` to keep them aligned).
     Proven by `RemThemeTypographyTest`.
   - **Weights.** Inter is bundled as four static faces from InterVariable 4.001 (Inter 4.1 release):
