@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.rem.designsystem.demo"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.rem.designsystem.demo"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         val playgroundSha = providers.gradleProperty("playgroundSourceSha").orElse("unversioned").get()

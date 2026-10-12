@@ -1,6 +1,10 @@
 # Rem Compose design system
 
 `RemDesignSystem` is the reusable Android library. `demo` is an installable test app that renders the library's screen and section components on a device or emulator.
+The demo ships as the **Rem Playground** (`com.rem.designsystem.demo`, minSdk 24, compileSdk/targetSdk 36 as Play
+packaging requires; the library still compiles against 34). Its launcher icon reuses the iOS Playground artwork
+(`tools/playground-ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png`): an adaptive icon (`#0C50FF` background,
+white mark inside the 66dp safe zone) plus legacy square and round mipmaps for API 24–25.
 
 Open this `compose` directory in Android Studio, select the `demo` run configuration, and run it on an Android 7.0+ device or emulator.
 
