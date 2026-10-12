@@ -626,8 +626,7 @@ struct ChatTimestampRevealPan: UIViewRepresentable {
                 if live { parent.onEnded() }
             }
             host = scrollView
-            guard let scrollView, false else { return }  // PROBE: pan disabled (never merged)
-            _ = scrollView
+            guard let scrollView else { return }
             let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handle(_:)))
             recognizer.delegate = self
             recognizer.cancelsTouchesInView = false
