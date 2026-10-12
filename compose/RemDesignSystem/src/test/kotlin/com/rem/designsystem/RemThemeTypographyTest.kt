@@ -19,8 +19,8 @@ import com.rem.designsystem.tokens.RemMaterialTypography
 import com.rem.designsystem.tokens.RemTheme
 import com.rem.designsystem.tokens.RemTypography
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -85,22 +85,23 @@ class RemThemeTypographyTest {
         assertEquals(FontFamily.SansSerif, style!!.fontFamily)
     }
 
-    /** Only Regular (400) and Bold (700) are bundled: 100 to 500 resolve to Regular, 600 to 900 to Bold. */
+    /**
+     * Regular (400), Medium (500), SemiBold (600) and Bold (700) are bundled: each resolves to its own face, and the
+     * weights in between take the nearest one (100–300 Regular, 800–900 Bold). The typeface's weight is read from the
+     * resolved font file (OS/2 usWeightClass), so a SemiBold request that fell back to Bold would fail here.
+     */
     @Test
-    fun inBetweenWeightsResolveToTheNearestBundledFace() {
+    fun weightsResolveToTheirOwnFaceOrTheNearestBundledOne() {
+        val expected = mapOf(100 to 400, 300 to 400, 400 to 400, 500 to 500, 600 to 600, 700 to 700, 800 to 700, 900 to 700)
         val resolved = mutableMapOf<Int, Typeface>()
         render {
             val resolver = LocalFontFamilyResolver.current
-            for (weight in listOf(300, 400, 500, 600, 700, 900)) {
-                resolved[weight] = resolver.resolve(Inter, FontWeight(weight)).value as Typeface
-            }
+            for (weight in expected.keys) resolved[weight] = resolver.resolve(Inter, FontWeight(weight)).value as Typeface
         }
-        val regular = resolved.getValue(400)
-        val bold = resolved.getValue(700)
-        assertNotNull(regular)
-        assertEquals(400, regular.weight)
-        assertEquals(700, bold.weight)
-        for (w in listOf(300, 500)) assertEquals("weight $w renders Regular", 400, resolved.getValue(w).weight)
-        for (w in listOf(600, 900)) assertEquals("weight $w renders Bold", 700, resolved.getValue(w).weight)
+        for ((weight, face) in expected) {
+            val typeface = resolved.getValue(weight)
+            assertEquals("weight $weight renders the $face face", face, typeface.weight)
+        }
+        assertTrue("Medium and SemiBold are distinct faces", resolved.getValue(500) !== resolved.getValue(600))
     }
 }

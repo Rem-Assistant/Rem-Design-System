@@ -23,11 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rem.designsystem.R
 
-/** The Rem type family on Android: Inter, instanced to static Regular (400) and Bold (700) from
- *  InterVariable and bundled in res/font. iOS uses the system font (SF Pro) through DesignTokens;
- *  Android substitutes Inter — the closest match — rather than Material's Roboto default. */
+/** The Rem type family on Android: Inter, instanced to static Regular (400), Medium (500), SemiBold (600) and
+ *  Bold (700) from InterVariable 4.001 (tools/inter/instance.py, SIL OFL 1.1) and bundled in res/font. iOS uses the
+ *  system font (SF Pro) through DesignTokens; Android substitutes Inter — the closest match — rather than
+ *  Material's Roboto default. Other weights take the nearest face (100–300 Regular, 800–900 Bold), no synthetic bold. */
 val Inter = FontFamily(
     Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
     Font(R.font.inter_bold, FontWeight.Bold),
 )
 
@@ -141,8 +144,8 @@ fun RemTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable ()
 /**
  * Material 3 [Typography] on the Rem ramp (`typography.material3` in tokens.json), all Inter. [RemTheme] installs
  * it; pass it to your own `MaterialTheme(typography = RemMaterialTypography)` if you theme Material outside
- * RemTheme. Inter is bundled as Regular (400) and Bold (700) only: weights 100 to 500 render Regular, 600 to 900
- * render Bold (nearest-weight matching; no synthetic bold).
+ * RemTheme. Inter is bundled as Regular (400), Medium (500), SemiBold (600) and Bold (700); 100 to 300 render
+ * Regular and 800 to 900 render Bold (nearest-weight matching; no synthetic bold).
  */
 val RemMaterialTypography: Typography = Typography(
     displayLarge = RemTypography.largeTitle,

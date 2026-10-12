@@ -19,11 +19,18 @@ form diverges.
     `body`, 17sp, as on iOS) instead of falling back to Roboto. A consumer's own `MaterialTheme` *inside* `RemTheme`
     still wins; outside it, its typography is replaced by Rem's (pass `RemMaterialTypography` to keep them aligned).
     Proven by `RemThemeTypographyTest`.
-  - **Weights.** Only Inter **Regular (400)** and **Bold (700)** are bundled (`res/font/inter_regular.ttf`,
-    `inter_bold.ttf`). Compose picks the nearest bundled face (CSS font matching), with no synthetic bold: weights
-    100–500 (Thin … Medium) render **Regular**; 600–900 (SemiBold … Black) render **Bold**. So `FontWeight.SemiBold`
-    (e.g. ChatHeader's name) is Bold on Android while iOS draws SF Pro Semibold. Adding Inter Medium / SemiBold
-    statics would close that gap; it is not done here.
+  - **Weights.** Inter is bundled as four static faces from InterVariable 4.001 (Inter 4.1 release):
+    **Regular (400)**, **Medium (500)**, **SemiBold (600)** and **Bold (700)** (`res/font/inter_*.ttf`), made by
+    `tools/inter/instance.py` (fontTools `instancer`, `opsz` 14, `wght` W; rerunning it reproduces the existing
+    Regular and Bold table for table). SIL Open Font License 1.1: `tools/inter/OFL.txt`, and each file keeps the
+    font's own copyright and licence records. Compose picks the nearest bundled face (CSS font matching) with no
+    synthetic bold: 100–300 render Regular, 800–900 render Bold. Static faces rather than the variable font with
+    `FontVariation.Settings`: variation settings need API 26 (minSdk is 24, so API 24–25 would draw every weight as
+    Regular) and layoutlib does not reliably apply them (the reason `tools/material-symbols/subset.py` bakes static
+    files); the cost is size, ~1.37 MB for four statics against ~0.88 MB for the variable font.
+  - **Ramp.** `tokens.json` defines only 400 and 700 roles (iOS draws them as SF Pro regular / bold), so no token
+    role moved to 600. Components that ask for `FontWeight.SemiBold` / `Medium` directly (where iOS uses
+    `.semibold` / `.medium`) now get the real face instead of Bold / Regular.
 - **`compose/RemDesignSystem/primitives/ContainedIcon*.kt`** — the worked exemplar, in the same
   **3-file Fluent shape** as the Swift reference (`ContainedIcon.swift` / `…TokenSet.swift` /
   `….figma.swift`):
