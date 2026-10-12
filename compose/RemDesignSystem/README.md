@@ -11,6 +11,19 @@ form diverges.
   `RemSpacing`/`RemRadius` (`Dp`), `RemTypography` (`TextStyle`), `RemOpacity`. Reference tokens
   resolve to the light/dark hex approximation and switch on `isSystemInDarkTheme()` (Compose has no
   Apple system palette) — exactly the CSS target's behavior. **Do not edit; run the generator.**
+  - **Inter by default.** `RemTheme` also sets `LocalTextStyle` to `RemTypography.body` and installs
+    `RemMaterialTypography` (Material 3 `Typography` mapped onto the Rem ramp by `typography.material3` in
+    `tokens.json`) through an inner `MaterialTheme` that keeps the surrounding color scheme, shapes, indication and
+    text-selection colors. So a bare `Text`, `TextField`, `DropdownMenuItem`, `TopAppBar` / `Scaffold` titles,
+    `AlertDialog` and `ModalBottomSheet` content render in Inter at Rem sizes (menu items and button labels are
+    `body`, 17sp, as on iOS) instead of falling back to Roboto. A consumer's own `MaterialTheme` *inside* `RemTheme`
+    still wins; outside it, its typography is replaced by Rem's (pass `RemMaterialTypography` to keep them aligned).
+    Proven by `RemThemeTypographyTest`.
+  - **Weights.** Only Inter **Regular (400)** and **Bold (700)** are bundled (`res/font/inter_regular.ttf`,
+    `inter_bold.ttf`). Compose picks the nearest bundled face (CSS font matching), with no synthetic bold: weights
+    100–500 (Thin … Medium) render **Regular**; 600–900 (SemiBold … Black) render **Bold**. So `FontWeight.SemiBold`
+    (e.g. ChatHeader's name) is Bold on Android while iOS draws SF Pro Semibold. Adding Inter Medium / SemiBold
+    statics would close that gap; it is not done here.
 - **`compose/RemDesignSystem/primitives/ContainedIcon*.kt`** — the worked exemplar, in the same
   **3-file Fluent shape** as the Swift reference (`ContainedIcon.swift` / `…TokenSet.swift` /
   `….figma.swift`):

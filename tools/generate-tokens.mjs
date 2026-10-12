@@ -259,10 +259,19 @@ function buildKotlin() {
   }).join("\n");
   const aliases = Object.entries(T.typography.roleAliases).filter(([k]) => !k.startsWith("$"))
     .map(([k, v]) => `    val ${k} = ${v}`).join("\n");
+  const material = Object.entries(T.typography.material3).filter(([k]) => !k.startsWith("$"))
+    .map(([slot, role]) => {
+      if (!roles[role]) throw new Error(`typography.material3.${slot} names unknown role ${role}`);
+      return `    ${slot} = RemTypography.${role},`;
+    }).join("\n");
   return `${HEADER_KT}@file:Suppress("MagicNumber", "unused")
 
 package com.rem.designsystem.tokens
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -301,11 +310,38 @@ ${scheme(false)}
 
 val LocalRemColors = staticCompositionLocalOf { RemLightColors }
 
-/** Wrap the app (or a preview) so component TokenSets can read RemColors.current. */
+/**
+ * Wrap the app (or a preview) so component TokenSets can read RemColors.current, and so text that names no Rem
+ * style is still Inter: [LocalTextStyle] is [RemTypography.body] (a bare \`Text\`, \`TextField\`), and Material 3
+ * widgets read [RemMaterialTypography] (DropdownMenuItem, TopAppBar and Scaffold titles, AlertDialog,
+ * ModalBottomSheet content). Only typography changes: the surrounding Material color scheme and shapes are kept,
+ * and the indication and text-selection colors in effect outside RemTheme are restored inside it.
+ */
 @Composable
 fun RemTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalRemColors provides (if (darkTheme) RemDarkColors else RemLightColors), content = content)
+    val indication = LocalIndication.current
+    val selectionColors = LocalTextSelectionColors.current
+    CompositionLocalProvider(LocalRemColors provides (if (darkTheme) RemDarkColors else RemLightColors)) {
+        MaterialTheme(colorScheme = MaterialTheme.colorScheme, shapes = MaterialTheme.shapes, typography = RemMaterialTypography) {
+            CompositionLocalProvider(
+                LocalIndication provides indication,
+                LocalTextSelectionColors provides selectionColors,
+                LocalTextStyle provides RemTypography.body,
+                content = content,
+            )
+        }
+    }
 }
+
+/**
+ * Material 3 [Typography] on the Rem ramp (\`typography.material3\` in tokens.json), all Inter. [RemTheme] installs
+ * it; pass it to your own \`MaterialTheme(typography = RemMaterialTypography)\` if you theme Material outside
+ * RemTheme. Inter is bundled as Regular (400) and Bold (700) only: weights 100 to 500 render Regular, 600 to 900
+ * render Bold (nearest-weight matching; no synthetic bold).
+ */
+val RemMaterialTypography: Typography = Typography(
+${material}
+)
 
 object RemColors {
     val current: RemColorScheme
