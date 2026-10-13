@@ -13,6 +13,13 @@ description: >-
 Build one durable system across design and implementation without forcing Figma,
 SwiftUI, Compose, or the web to share the same internal representation.
 
+This is a child workflow of `product-design-delivery`. Product design owns the
+user outcome, product authority, lifecycle decision, and approved composition.
+This workflow begins when that work needs canonical components, patterns,
+templates, migrations, or cross-platform synchronization. Competitive audit is
+a further child reference workflow: it supplies evidence and never becomes the
+target product UI by itself.
+
 ## Start with the project adapter
 
 Read the adopting project's local design-system skill or configuration first. It
@@ -27,7 +34,14 @@ Classify the task as one or more of:
   consumers away from loose copies.
 - **Flow:** document a screen journey, its branches, and a separate interactive
   prototype from real product behavior.
+- **Competitive audit:** organize source-app screenshots into evidence-backed,
+  navigable reference flows without treating the source UI as adopted product design.
 - **Migration:** reconcile older frames or code with a newly canonical component.
+
+For a competitive audit, read `references/competitive-audit.md`. It is a child workflow of this
+skill, alongside the component and flow methods. Keep the parent skill responsible for shared
+abstraction, reuse, evidence, and delivery rules; keep project-specific page names, node ids,
+tokens, and source-app inventory in the adopting project's adapter.
 
 ## Organize by product domain
 
@@ -43,6 +57,13 @@ inventory or reference Section until their flow documentation replaces them. No
 screen, master, or prototype destination may remain a loose page-level sibling.
 Place section pairs on a simple grid and verify their bounds so later additions do
 not overlap.
+
+Keep canonical screen masters for that domain in one clearly named component
+Section on the same page, aligned with the flow grid. Screen masters are product
+artifacts, while reusable primitives and compositions remain on their taxonomy
+pages. This keeps one product domain from being split across a flow page and a
+second screen-master page without turning the component index into another
+canvas.
 
 When white device frames sit inside a screen inventory, use the adopting project's
 neutral canvas contrast surface for the inventory Section so device bounds remain
@@ -73,6 +94,12 @@ Keep the flow chassis small and composable:
 
 Use the product's real screen dimensions for the final slot. Stretching a screen into a
 nearby size can expose unresponsive internal layers even when the aspect ratio looks close.
+
+Treat trailing controls according to behavior. A chevron communicates navigation;
+a Play, Pause, Retry, or Connect control performs an action in place. Do not pair a
+direct action with a chevron, and do not add a decorative leading icon when the row
+already communicates its purpose through label, value, and explicit trailing
+control.
 
 ## Make one canonical component
 
@@ -146,6 +173,11 @@ the primitive layer. Composition roots inherit the surface on which they are pla
 owning a background is part of their contract. In a horizontal action group, equal-priority
 actions fill the available width equally rather than sizing from their labels.
 
+Classify controls by interaction semantics before naming a product-specific component. Test
+whether the proposed control is an existing primitive with different content, state, or slot
+placement. For example, icon-only affordances belong to the Button family. Product state may
+change the Button's icon and accessible label, but it does not define a new control.
+
 Keep the component index as an index. Put aggregate composition masters and their documentation on
 a dedicated Compositions page; put indivisible controls and assets on Primitives. The page boundary
 should communicate abstraction level without making the index itself another component canvas.
@@ -180,6 +212,10 @@ independent axes. Theme should usually switch semantic color variables. Platform
 may switch typography values, native chrome, icon sources, metrics, or a nested
 component. Do not multiply them into four hand-maintained screen copies when
 independent variable modes and component properties can express the same system.
+Treat authentication providers and system-owned surfaces as platform capabilities,
+not visual variants. Verify product and platform support before claiming parity. For
+example, do not expose Sign in with Apple on Android unless the product explicitly
+implements a supported web authorization path.
 For system chrome such as a status bar, expose Platform switching and keep Theme
 switching available inside each platform treatment. Map semantic icons to the
 platform's native source; do not assume that swapping a font family preserves

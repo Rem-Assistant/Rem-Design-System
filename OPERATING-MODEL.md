@@ -67,6 +67,47 @@ Worked examples:
 The correction that produced this table: **Figma/feature building is the Builder's lane, not the
 Orchestrator's.** The Orchestrator sets the machine up and keeps it honest.
 
+### Current design-program mode — 2026-10-05
+
+The active Rem program is **design-only until Samuel explicitly opens the code phase**. Figma Design
+owns editable canonical screens and components. FigJam owns topology, connectors, and competitive
+research. SwiftUI, Compose, Code Connect, and runtime changes remain separate implementation work;
+an approved topology or screen does not authorize them.
+
+Use one persistent lane chat for each owned surface: **Settings, Onboarding, Agenda, Chat**, and one
+**Competitive Audits** lane. Reuse that chat for corrections instead of creating a chat per task or
+review pass. The root coordinator owns the durable program goal and routes Samuel's feedback. Lane
+agents receive bounded assignments and do not create parallel goals, new chats, or sub-lanes unless
+the coordinator explicitly splits ownership. A lane returns to idle after its evidence packet is
+delivered; it does not continuously poll or review its own work.
+
+Samuel sends cross-lane design feedback to the root coordinator, including when he reviews several
+topologies in one pass. The coordinator records each observation under its owning surface, preserves
+the original wording and screenshot or node reference, separates product decisions from execution
+defects, and sends each existing lane chat only its own consolidated delta. A lane never needs the
+entire conversation replayed and should not ask Samuel to repeat feedback already captured by the
+coordinator. Direct lane feedback is still valid evidence, but the lane must return the resulting
+decision and artifact evidence to the coordinator so the shared ledger remains authoritative.
+
+Cloud lane chats cannot be assumed to read an unpushed local workspace. The coordinator's dispatch
+must therefore be self-contained: include the lane's complete correction set, exact Figma/FigJam
+file and node references, acceptance criteria, and the design-only/code boundary directly in the
+message. A local ledger path may be included as optional context for a local agent, but it is never a
+prerequisite for a cloud lane to start. If a required product detail is absent from both the brief and
+accessible design evidence, the lane records that detail as unresolved instead of inventing it.
+
+The evidence packet is deliberately small so a lane can resume without replaying the full project:
+
+- exact Figma file, page, and Section IDs;
+- the screens changed and their canonical source or `Proposed` status;
+- topology-screen count, connector count, and structural validation result;
+- the latest rendered overview plus only the closeups needed to judge changed states;
+- unresolved product decisions and explicit gaps; and
+- the next bounded action, if one remains.
+
+Report **topology completion** and **screen-design completion** separately. A correct graph cannot
+make a fake, flattened, blank, or otherwise unverified screen complete.
+
 ---
 
 ## 4. The skills — each one's unique value
@@ -115,6 +156,19 @@ pattern it mirrors, the user outcome in user words, and explicit in/out of scope
   the configured deadline and remains blocking if no valid replacement arrives.
 - **Final authority:** `automatic_promotion: false` retains Director sign-off. Steward must
   bring the current head to a green, evidence-backed decision; no force-merge past a red gate.
+
+### Bounded design review
+
+Design review is event-driven, not a permanent commentary loop. The Builder submits one current
+evidence packet after its own structural and visual checks. The Reviewer gets one full pass against
+the explicit acceptance contract and returns only observed, evidenced blockers, ordered by impact.
+The Builder repairs those findings and submits a delta packet containing the changed nodes and fresh
+renders. A second review is limited to the repaired nodes and any directly affected transitions.
+
+After two review passes, unresolved taste or product decisions go to the Director as a compact
+decision list. Missing access, missing source evidence, or a tool limitation goes to the Steward as
+a capability blocker. Do not keep the Reviewer and Builder in an open-ended exchange, re-review
+unchanged nodes, or generate additional critique merely because the lane is still open.
 
 ---
 
