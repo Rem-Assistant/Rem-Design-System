@@ -26,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import com.rem.designsystem.primitives.ContainedIcon
 import com.rem.designsystem.primitives.ContainedIconFill
 import com.rem.designsystem.primitives.ContainedIconSize
+import com.rem.designsystem.feedback.RemToast
+import com.rem.designsystem.feedback.RemToastVariant
 import com.rem.designsystem.tokens.RemColors
 import com.rem.designsystem.tokens.RemRadius
 import com.rem.designsystem.tokens.RemSpacing
@@ -46,7 +47,8 @@ import com.rem.designsystem.icons.RemMaterialSymbol
  * The **shared onboarding chrome** — the reusable layout every sequencer step renders into. It is the
  * Compose sibling of the SwiftUI onboarding shell (`OnboardingFlow.swift` step scaffold): a back
  * affordance + optional progress + a centered hero/title/subtitle over a scrollable content slot,
- * with a bottom-pinned CTA bar (primary + optional secondary) and an optional legal footer.
+ * with an action region inside the fill-height Body (primary + optional secondary) and an optional
+ * legal footer.
  *
  * It is **presentational and state-driven** — it owns no navigation or auth logic; the
  * [OnboardingSequencer] drives it and the host wires real behaviour through the [OnboardingAction]
@@ -65,6 +67,12 @@ fun OnboardingScaffold(
     subtitle: String? = null,
     secondary: OnboardingAction? = null,
     legalFooter: String? = null,
+    /**
+     * A transient, non-actionable error toast directly above the action group. This shared scaffold
+     * slot is for recoverable onboarding failures; the persistent retry remains [primary]. Null in
+     * every non-error state. [RemToast] owns the four-second default dismissal lifecycle.
+     */
+    bottomToast: String? = null,
     background: OnboardingBackground = OnboardingBackground.Primary,
     progress: OnboardingProgress? = null,
     onBack: (() -> Unit)? = null,
@@ -74,8 +82,7 @@ fun OnboardingScaffold(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(background.color())
-            .padding(horizontal = RemSpacing.xl),
+            .background(background.color()),
     ) {
         // Top bar — back chevron (leading) mirrors the reference frames' top-left back button. When
         // there is nowhere to go back to, the sequencer passes onBack = null and we keep the same
@@ -83,7 +90,8 @@ fun OnboardingScaffold(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp),
+                .height(44.dp)
+                .padding(horizontal = RemSpacing.xl),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (onBack != null) {
@@ -112,100 +120,115 @@ fun OnboardingScaffold(
             }
         }
 
-        // Scrollable body: hero → title → subtitle → step content. Scrolls so tall steps (voice
-        // sliders, long consent copy) never clip on small devices; the CTA bar stays pinned below.
+        // Body is the explicit fill-height region below the top bar. It owns the one shared 24dp
+        // horizontal inset and contains both the scrollable content and the pinned ActionArea.
+        // Device navigation chrome remains outside this scaffold in the host.
         Column(
             modifier = Modifier
-                .widthIn(max = 560.dp)
                 .fillMaxWidth()
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = RemSpacing.xl),
         ) {
-            Spacer(Modifier.height(RemSpacing.xxl))
-            if (hero != null) {
-                val heroTint = ContainedIconFill.Tint(hero.tint ?: colors.brandBlue)
-                // The onboarding hero is the large brand squircle in every reference frame. It reuses
-                // the canonical ContainedIcon (anti-drift Rule 0) at its Large size (64dp). The
-                // reference hero reads slightly larger (~88pt); logged as a metric-reconcile item (a
-                // dedicated `hero` size token) rather than forking a bespoke tile here.
-                //
-                // A glyph hero (consent's shield-lock) renders the Material Symbols font glyph at its
-                // registry FILL — never a legacy `Icons.Filled.*` — so its FILL matches the iOS SF
-                // Symbol. A vector hero (other steps) still uses the ImageVector overload.
-                if (hero.symbol != null) {
-                    ContainedIcon(
-                        symbol = hero.symbol,
-                        fill = heroTint,
-                        size = ContainedIconSize.Large,
-                        contentDescription = hero.contentDescription,
-                    )
-                } else if (hero.icon != null) {
-                    ContainedIcon(
-                        icon = hero.icon,
-                        fill = heroTint,
-                        size = ContainedIconSize.Large,
-                        contentDescription = hero.contentDescription,
-                    )
+            // Scrollable content: hero → title → subtitle → step content. It scrolls so tall steps
+            // never clip on small devices while the ActionArea remains pinned below.
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .align(Alignment.CenterHorizontally)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(Modifier.height(RemSpacing.xxl))
+                if (hero != null) {
+                    val heroTint = ContainedIconFill.Tint(hero.tint ?: colors.brandBlue)
+                    // The onboarding hero is the large brand squircle in every reference frame. It reuses
+                    // the canonical ContainedIcon (anti-drift Rule 0) at its Large size (64dp). The
+                    // reference hero reads slightly larger (~88pt); logged as a metric-reconcile item (a
+                    // dedicated `hero` size token) rather than forking a bespoke tile here.
+                    //
+                    // A glyph hero (consent's shield-lock) renders the Material Symbols font glyph at its
+                    // registry FILL — never a legacy `Icons.Filled.*` — so its FILL matches the iOS SF
+                    // Symbol. A vector hero (other steps) still uses the ImageVector overload.
+                    if (hero.symbol != null) {
+                        ContainedIcon(
+                            symbol = hero.symbol,
+                            fill = heroTint,
+                            size = ContainedIconSize.Large,
+                            contentDescription = hero.contentDescription,
+                        )
+                    } else if (hero.icon != null) {
+                        ContainedIcon(
+                            icon = hero.icon,
+                            fill = heroTint,
+                            size = ContainedIconSize.Large,
+                            contentDescription = hero.contentDescription,
+                        )
+                    }
+                    Spacer(Modifier.height(RemSpacing.lg))
                 }
-                Spacer(Modifier.height(RemSpacing.lg))
-            }
-            if (title != null) {
-                Text(
-                    text = title,
-                    // largeTitle **semibold** — matches iOS `largeTitle.weight(.semibold)`, the contract's
-                    // "largeTitle semibold", and the sibling sign-in Compose title. (Was Bold, which read
-                    // heavier than the iOS render.)
-                    style = RemTypography.largeTitle.copy(fontWeight = FontWeight.SemiBold),
-                    color = colors.labelPrimary,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(RemSpacing.sm))
-            }
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = RemTypography.body,
-                    color = colors.labelSecondary,
-                    textAlign = TextAlign.Center,
-                )
+                if (title != null) {
+                    Text(
+                        text = title,
+                        // largeTitle **semibold** — matches iOS `largeTitle.weight(.semibold)`, the contract's
+                        // "largeTitle semibold", and the sibling sign-in Compose title. (Was Bold, which read
+                        // heavier than the iOS render.)
+                        style = RemTypography.largeTitle.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.labelPrimary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(RemSpacing.sm))
+                }
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = RemTypography.body,
+                        color = colors.labelSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(RemSpacing.xl))
+                }
+                content()
                 Spacer(Modifier.height(RemSpacing.xl))
             }
-            content()
-            Spacer(Modifier.height(RemSpacing.xl))
-        }
 
-        // Bottom CTA region — pinned; does not scroll. The legal footnote sits below the action.
-        //
-        // Spacing mirrors the iOS `OnboardingConsentTemplate` bottom bar EXACTLY so the paired render
-        // has the same density in every state: top `sm`, `md` from CTA to footnote, and `md` below.
-        // The actions fill the available parent until the shared 560dp responsive cap. This screen
-        // owns the outer inset/background; ActionArea and ButtonGroup remain background-neutral.
-        Column(
-            modifier = Modifier
-                .widthIn(max = 560.dp)
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally)
-                .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
-            if (secondary != null) {
-                Spacer(Modifier.height(RemSpacing.sm))
-                OnboardingActionButton(action = secondary, modifier = Modifier.fillMaxWidth())
-            }
-            if (legalFooter != null) {
-                Spacer(Modifier.height(RemSpacing.md))
-                // caption1 + labelSecondary, matching iOS + the contract's footnote role.
-                Text(
-                    text = legalFooter,
-                    style = RemTypography.caption1,
-                    color = colors.labelSecondary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = RemSpacing.sm),
-                )
+            // Actions are the second Body region. They share Body's outer inset with the content and
+            // stay pinned below it; ActionArea itself adds no screen-level horizontal inset.
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = RemSpacing.sm, bottom = RemSpacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (bottomToast != null) {
+                    RemToast(
+                        message = bottomToast,
+                        variant = RemToastVariant.Error,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                    Spacer(Modifier.height(RemSpacing.md))
+                }
+                OnboardingActionButton(action = primary, modifier = Modifier.fillMaxWidth())
+                if (secondary != null) {
+                    Spacer(Modifier.height(RemSpacing.sm))
+                    OnboardingActionButton(action = secondary, modifier = Modifier.fillMaxWidth())
+                }
+                if (legalFooter != null) {
+                    Spacer(Modifier.height(RemSpacing.md))
+                    // caption1 + labelSecondary, matching iOS + the contract's footnote role.
+                    Text(
+                        text = legalFooter,
+                        style = RemTypography.caption1,
+                        color = colors.labelSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = RemSpacing.sm),
+                    )
+                }
             }
         }
     }
@@ -285,8 +308,17 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             val filled = action.style == OnboardingActionStyle.Primary
             // Primary = buttonBackground (black in light / white in dark) with the inverted label
             // (backgroundPrimary). Secondary = the neutral fill used for a second provider button.
-            val containerColor = if (filled) colors.buttonBackground else colors.fillTertiary
-            val labelColor = if (filled) colors.backgroundPrimary else colors.labelPrimary
+            val baseContainer = if (filled) colors.buttonBackground else colors.fillTertiary
+            val labelColor = if (!interactive) {
+                colors.labelTertiary
+            } else if (filled) {
+                colors.backgroundPrimary
+            } else {
+                colors.labelPrimary
+            }
+            // Disabled is an explicit semantic state shared with Figma Button.State=Disabled. It
+            // changes container and label tokens; it never lowers opacity on the complete control.
+            val containerColor = if (interactive) baseContainer else colors.fillTertiary
             Box(
                 modifier = modifier
                     .heightIn(min = 50.dp)
@@ -294,7 +326,6 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
                     // `SignInButton`, so the paired CTA reads as the same treatment on both platforms.
                     .clip(RoundedCornerShape(RemRadius.medium))
                     .background(containerColor)
-                    .alpha(if (interactive) 1f else RemOnboardingMetrics.disabledAlpha)
                     .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)
                     .padding(vertical = RemSpacing.md, horizontal = RemSpacing.lg),
                 contentAlignment = Alignment.Center,
@@ -323,7 +354,9 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
         }
 
         OnboardingActionStyle.TextAccent, OnboardingActionStyle.TextSubtle -> {
-            val labelColor = if (action.style == OnboardingActionStyle.TextAccent) {
+            val labelColor = if (!interactive) {
+                colors.labelTertiary
+            } else if (action.style == OnboardingActionStyle.TextAccent) {
                 colors.systemBlue
             } else {
                 colors.labelSecondary
@@ -331,7 +364,6 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
             Box(
                 modifier = modifier
                     .heightIn(min = 44.dp)
-                    .alpha(if (interactive) 1f else RemOnboardingMetrics.disabledAlpha)
                     .then(if (interactive) Modifier.clickableRole(action.onClick, action.label) else Modifier)
                     .padding(vertical = RemSpacing.sm),
                 contentAlignment = Alignment.Center,
@@ -341,13 +373,3 @@ private fun OnboardingActionButton(action: OnboardingAction, modifier: Modifier 
         }
     }
 }
-
-/** Onboarding metrics that are not (yet) token-backed. Centralized so no view holds a literal. */
-internal object RemOnboardingMetrics {
-    /** Dimming applied to a disabled/loading CTA (matches the greyed "Saving…" reference button). */
-    const val disabledAlpha: Float = RemDisabledAlpha
-}
-
-// The disabled dimming has no token on tokens.json yet; kept as one named constant to reconcile
-// alongside the other flagged onboarding metrics rather than sprinkled as a call-site literal.
-private const val RemDisabledAlpha: Float = 0.4f

@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -249,12 +248,13 @@ private fun SignInButton(
 ) {
     val colors = RemColors.current
     val interactive = enabled && !loading
+    val containerColor = if (interactive) colors.buttonBackground else colors.fillTertiary
+    val contentColor = if (interactive) colors.backgroundPrimary else colors.labelTertiary
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(RemRadius.medium))
-            .background(colors.buttonBackground)
-            .alpha(if (interactive) 1f else RemOnboardingMetrics.disabledAlpha)
+            .background(containerColor)
             .then(if (interactive) Modifier.clickableRole(onClick, label) else Modifier)
             .padding(RemSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -262,7 +262,7 @@ private fun SignInButton(
     ) {
         if (loading) {
             CircularProgressIndicator(
-                color = colors.backgroundPrimary,
+                color = contentColor,
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(18.dp),
             )
@@ -272,12 +272,12 @@ private fun SignInButton(
                 imageVector = leadingIcon,
                 contentDescription = null,
                 // Color.Unspecified keeps a multicolor mark (Google "G") at its own colors.
-                tint = if (tintLeadingIcon) colors.backgroundPrimary else Color.Unspecified,
+                tint = if (tintLeadingIcon) contentColor else Color.Unspecified,
                 modifier = Modifier.size(18.dp),
             )
             Spacer(Modifier.width(RemSpacing.sm))
         }
-        Text(text = label, style = RemTypography.bodyBold, color = colors.backgroundPrimary)
+        Text(text = label, style = RemTypography.bodyBold, color = contentColor)
     }
 }
 

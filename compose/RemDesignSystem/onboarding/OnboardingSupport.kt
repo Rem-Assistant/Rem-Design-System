@@ -57,8 +57,7 @@ data class OnboardingProgress(
 /**
  * The shared onboarding **error/recovery notice** — `systemRed` at 12% on a `medium`-radius surface,
  * leading warning glyph + `caption1` message. One treatment reused by both sign-in (below the centered
- * actions) and the scaffold (directly above the bottom-pinned CTA), so the paired iOS⟷Android evidence
- * reads as the same card wherever it appears. The leading glyph resolves through the icon registry by
+ * actions). The leading glyph resolves through the icon registry by
  * meaning + FILL: the Material Symbols `error` glyph at **FILL 1** (pairs with the iOS
  * `exclamationmark.triangle.fill`).
  */
